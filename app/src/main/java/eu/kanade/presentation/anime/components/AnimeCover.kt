@@ -35,6 +35,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ui.UiPreferences
@@ -116,57 +117,51 @@ enum class AnimeCover(val ratio: Float) {
                     },
                 ),
         ) {
+            if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Empty) {
+                SkeletonItem(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = shape,
+                    color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f)
+                )
+            }
+
             AsyncImage(
                 model = remember(data) {
                     ImageRequest.Builder(context)
                         .data(data)
-                        .crossfade(true)
+                        .crossfade(600) // Longer crossfade for smoothness
                         .build()
                 },
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 1f },
+                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
                 contentScale = scale,
                 onState = { state = it },
             )
 
-            if (state is AsyncImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    color = tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-                    modifier = Modifier
-                        .size(
-                            when (size) {
-                                Size.Big -> COVER_TEMPLATE_SIZE_BIG
-                                Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
-                                else -> COVER_TEMPLATE_SIZE_NORMAL
-                            },
-                        )
-                        .align(Alignment.Center),
-                    strokeWidth = when (size) {
-                        Size.Normal -> 3.dp
-                        else -> 2.dp
-                    },
-                )
-            }
-
             if (isError) {
-                androidx.compose.foundation.Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
-                    contentDescription = contentDescription,
+                Box(
                     modifier = Modifier
-                        .size(
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.foundation.Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
+                        contentDescription = contentDescription,
+                        modifier = Modifier.size(
                             when (size) {
                                 Size.Big -> COVER_TEMPLATE_SIZE_BIG
                                 Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
                                 else -> COVER_TEMPLATE_SIZE_NORMAL
                             },
-                        )
-                        .align(Alignment.Center),
-                    colorFilter = ColorFilter.tint(
-                        tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-                    ),
-                )
+                        ),
+                        colorFilter = ColorFilter.tint(
+                            tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
+                        ),
+                    )
+                }
             }
         }
     }

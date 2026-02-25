@@ -35,6 +35,7 @@ import eu.kanade.tachiyomi.ui.anime.AnimeScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ListGroupHeader
+import tachiyomi.presentation.core.components.SkeletonAnimeCard
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.plus
@@ -104,7 +105,15 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
             horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
             modifier = Modifier.fillMaxSize()
         ) {
-            state.items.forEach { (keyword, animes) ->
+            if (state.items.isEmpty()) {
+                items(12) {
+                    SkeletonAnimeCard(
+                        modifier = Modifier.padding(4.dp),
+                        width = 120.dp, // Match comfortable grid width roughly
+                    )
+                }
+            } else {
+                state.items.forEach { (keyword, animes) ->
                 item(key = "header-$keyword", span = { GridItemSpan(maxLineSpan) }) {
                     ListGroupHeader(
                         text = keyword.uppercase(),

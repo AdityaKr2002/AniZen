@@ -51,6 +51,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.components.SkeletonFeedIsland
 
 @Composable
 fun FeedScreen(
@@ -148,7 +149,15 @@ fun FeedScreen(
                 }
 
                 if (items == null) {
-                    LoadingScreen(Modifier.padding(top = if (visibleCategories.size > 1) 0.dp else contentPadding.calculateTopPadding()))
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = listPadding,
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        items(3) {
+                            SkeletonFeedIsland()
+                        }
+                    }
                 } else if (items.isEmpty()) {
                     Column(
                         modifier = Modifier
