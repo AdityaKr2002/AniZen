@@ -35,6 +35,7 @@ import uy.kohesive.injekt.api.get
 import tachiyomi.domain.history.interactor.GetActivityLog
 import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.history.model.ActivityLog
+import tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal
 import tachiyomi.domain.source.model.FeedSavedSearch
 import tachiyomi.domain.source.service.SourceManager
 import kotlinx.coroutines.flow.combine
@@ -156,9 +157,6 @@ class StatsScreenModel(
 
             // Watch Habits
             val watchHabits = calculateWatchHabits(history, distinctLibraryAnime)
-
-            // Feed Activity (Suggestions #3)
-            val feedActivity = calculateFeedActivity()
 
             // Score Distribution
             val scoreDistribution = StatsData.ScoreDistribution(
