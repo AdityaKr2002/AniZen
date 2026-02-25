@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.components.AppBar
-import eu.kanade.presentation.util.secondaryItemAlpha
 import kotlinx.coroutines.launch
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
@@ -59,6 +58,7 @@ import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.components.SkeletonFeedIsland
 import tachiyomi.presentation.core.components.SkeletonAnimeCard
 import tachiyomi.presentation.core.util.plus
+import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
 fun FeedScreen(
