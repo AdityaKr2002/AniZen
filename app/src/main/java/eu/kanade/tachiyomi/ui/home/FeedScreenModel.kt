@@ -108,24 +108,28 @@ class FeedScreenModel(
                         // Fetch saved searches for the current category
                         val savedSearches = getSavedSearchGlobalFeed.await(category.id)
                         
-                        // 1. Establish structural placeholders immediately
+                        // 1. Establish structural placeholders immediately and CLEAN UP removed feeds
                         val initialItems = feedSavedSearches.mapNotNull { feed ->
                             val source = sourceManager.get(feed.source) as? AnimeCatalogueSource ?: return@mapNotNull null
+                            
+                            // Preserve existing anime list if it exists to avoid flickering
+                            val existingAnime = state.items[category.id]?.find { it.feed.id == feed.id }?.animeList ?: persistentListOf()
+                            
                             FeedItem(
                                 feed = feed,
                                 source = source,
                                 savedSearch = savedSearches.find { it.id == feed.savedSearch },
-                                animeList = persistentListOf(),
+                                animeList = existingAnime,
                             )
                         }.toImmutableList()
 
                         mutableState.update { state ->
-                            val newItems = state.items.toMutableMap()
-                            newItems[category.id] = initialItems
-                            state.copy(items = newItems.toImmutableMap())
+                            val newItemsMap = state.items.toMutableMap()
+                            newItemsMap[category.id] = initialItems
+                            state.copy(items = newItemsMap.toImmutableMap())
                         }
 
-                        // 2. Load content in parallel
+                        // 2. Load content in parallel with buffered updates to reduce lag
                         coroutineScope {
                             feedSavedSearches.forEach { feed ->
                                 launch {

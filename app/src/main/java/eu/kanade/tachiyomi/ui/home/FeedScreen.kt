@@ -78,6 +78,13 @@ fun FeedScreen(
     val visibleCategories = state.categories
     val pagerState = rememberPagerState { visibleCategories.size }
 
+    // Update pagerState when categories change to avoid OOB
+    LaunchedEffect(visibleCategories.size) {
+        if (pagerState.currentPage >= visibleCategories.size && visibleCategories.isNotEmpty()) {
+            pagerState.scrollToPage(visibleCategories.size - 1)
+        }
+    }
+
     Scaffold(
         topBar = {
             if (visibleCategories.size > 1) {
