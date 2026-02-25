@@ -252,13 +252,10 @@ class StatsScreenModel(
     }
 
     private fun calculateFeedActivity(allLogs: List<ActivityLog>, feedSavedSearches: List<FeedSavedSearch>): StatsData.FeedActivity {
-        val now = Calendar.getInstance()
-        val today = (now.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
-        val sevenDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -7) }.time
-        val thirtyDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+        val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
         
         val activity = allLogs
-            .filter { it.eventType == ActivityLog.TYPE_FETCH || it.eventType == ActivityLog.TYPE_FEED_UPDATE }
+            .filter { it.eventType == ActivityLog.TYPE_OPEN || it.eventType == ActivityLog.TYPE_PLAY || it.eventType == ActivityLog.TYPE_COMPLETE }
             .groupBy { it.sourceId to it.feedId }
             .map { (ids, logs) ->
                 val (sourceId, feedId) = ids
@@ -275,12 +272,14 @@ class StatsScreenModel(
                     sourceId = sourceId,
                     sourceName = "${source.name}$feedLabel",
                     feedName = feedLabel.trim().removeSurrounding("(", ")").ifBlank { "Library" },
-                    fetchCount = logs.filter { it.eventType == ActivityLog.TYPE_FETCH || it.eventType == ActivityLog.TYPE_FEED_UPDATE }.sumOf { it.count ?: 1 }.toInt(), // 30d Published
-                    openCount = logs.count { it.eventType == ActivityLog.TYPE_OPEN }, // Total Opened from feed
-                    playCount = logs.count { it.eventType == ActivityLog.TYPE_PLAY }, // Total Played
-                    completeCount = logs.count { it.eventType == ActivityLog.TYPE_COMPLETE }, // Total Finished
+                    fetchCount = 0, // Unused: Publication count removed
+                    openCount = logs.count { it.eventType == ActivityLog.TYPE_OPEN },
+                    playCount = logs.count { it.eventType == ActivityLog.TYPE_PLAY },
+                    completeCount = logs.count { it.eventType == ActivityLog.TYPE_COMPLETE },
                 )
-            }.sortedByDescending { it.fetchCount }
+            }
+            .filter { it.openCount + it.playCount + it.completeCount > 0 }
+            .sortedByDescending { it.openCount + it.playCount + it.completeCount }
         
         return StatsData.FeedActivity(activity)
     }

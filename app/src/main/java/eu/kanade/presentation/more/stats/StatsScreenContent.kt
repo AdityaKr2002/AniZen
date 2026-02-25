@@ -514,36 +514,37 @@ private fun FeedActivitySection(feedActivity: StatsData.FeedActivity) {
 
 @Composable
 private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.SourceActivity, maxActivity: Int) {
+    val totalEngagement = activity.openCount + activity.playCount + activity.completeCount
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = activity.sourceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
             Text(
-                text = "${activity.fetchCount} Items",
+                text = "$totalEngagement Actions",
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                 modifier = Modifier.secondaryItemAlpha()
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
-            val progress = activity.fetchCount.toFloat() / maxActivity
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(progress)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.primary)
-            )
+            val totalF = totalEngagement.toFloat().coerceAtLeast(1f)
+            val openWeight = activity.openCount.toFloat() / totalF
+            val playWeight = activity.playCount.toFloat() / totalF
+            val completeWeight = activity.completeCount.toFloat() / totalF
+
+            if (openWeight > 0) Box(modifier = Modifier.weight(openWeight).fillMaxHeight().background(MaterialTheme.colorScheme.secondary))
+            if (playWeight > 0) Box(modifier = Modifier.weight(playWeight).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
+            if (completeWeight > 0) Box(modifier = Modifier.weight(completeWeight).fillMaxHeight().background(Color(0xFF4CAF50)))
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ActivityLegendItem(MaterialTheme.colorScheme.primary, "Published", activity.fetchCount)
             ActivityLegendItem(MaterialTheme.colorScheme.secondary, "Opened", activity.openCount)
             ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "Started", activity.playCount)
             ActivityLegendItem(Color(0xFF4CAF50), "Finished", activity.completeCount)
