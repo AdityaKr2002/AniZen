@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState as collectAsStateFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -138,25 +137,6 @@ enum class AnimeCover(val ratio: Float) {
                 contentScale = scale,
                 onState = { state = it },
             )
-
-            if (state is AsyncImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    color = tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-                    modifier = Modifier
-                        .size(
-                            when (size) {
-                                Size.Big -> COVER_TEMPLATE_SIZE_BIG
-                                Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
-                                else -> COVER_TEMPLATE_SIZE_NORMAL
-                            },
-                        )
-                        .align(Alignment.Center),
-                    strokeWidth = when (size) {
-                        Size.Normal -> 3.dp
-                        else -> 2.dp
-                    },
-                )
-            }
 
             if (isError) {
                 androidx.compose.foundation.Image(
