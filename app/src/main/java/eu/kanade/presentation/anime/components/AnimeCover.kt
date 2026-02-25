@@ -2,6 +2,11 @@
 
 package eu.kanade.presentation.anime.components
 
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
 import androidx.annotation.ColorInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,8 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState as collectAsStateFlow
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +49,7 @@ import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.domain.anime.model.AnimeCover as DomainMangaCover
+import androidx.compose.runtime.collectAsState as collectAsStateFlow
 
 enum class AnimeCover(val ratio: Float) {
     Square(1f / 1f),
@@ -168,7 +173,13 @@ enum class AnimeCover(val ratio: Float) {
 
         @Composable
         fun getRatio(animeId: Long): Float {
-            return getEntry(animeId).second
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            
+            return remember(animeId, usePanorama, ratios) {
+                if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+            }
         }
 
         @Composable

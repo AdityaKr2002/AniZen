@@ -264,6 +264,7 @@ private fun SearchResultItem(
                 AnimeCover.Book(
                     data = trackSearch.cover_url,
                     modifier = Modifier.height(96.dp),
+                    ratio = AnimeCover.Book.ratio,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {

@@ -252,6 +252,7 @@ private fun UpdatesUiItem(
                 .fillMaxHeight(),
             data = update.coverData,
             onClick = onClickCover,
+            ratio = AnimeCover.Square.ratio,
         )
         Column(
             modifier = Modifier

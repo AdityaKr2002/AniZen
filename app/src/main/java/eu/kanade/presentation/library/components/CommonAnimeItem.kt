@@ -90,22 +90,23 @@ fun AnimeCompactGridItem(
     coverAlpha: Float = 1f,
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
+GridItemSelectable(
+    isSelected = isSelected,
+    onClick = onClick,
+    onLongClick = onLongClick,
 ) {
-    GridItemSelectable(
-        isSelected = isSelected,
-        onClick = onClick,
-        onLongClick = onLongClick,
-    ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
-        AnimeGridCover(
-            cover = {
-                entry(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
-                    data = coverData,
-                    ratio = ratio,
-                )
+    val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
+    AnimeGridCover(
+        cover = {
+            entry(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                data = coverData,
+                ratio = ratio,
+            )
+        },
+        ratio = ratio,
             },
             ratio = ratio,
             badgesStart = coverBadgeStart,
@@ -206,16 +207,17 @@ fun AnimeComfortableGridItem(
         onLongClick = onLongClick,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
-        Column {
-            AnimeGridCover(
-                cover = {
-                    entry(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
-                        data = coverData,
-                        ratio = ratio,
-                    )
+        AnimeGridCover(
+            cover = {
+                entry(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                    data = coverData,
+                    ratio = ratio,
+                )
+            },
+            ratio = ratio,
                 },
                 ratio = ratio,
                 badgesStart = coverBadgeStart,
@@ -420,6 +422,7 @@ fun AnimeListItem(
                 .graphicsLayer { alpha = coverAlpha },
             data = coverData,
             ratio = ratio,
+        )
         )
         Text(
             text = title,
