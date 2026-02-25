@@ -270,7 +270,7 @@ private fun FeedCard(
     anime: Anime,
     onClick: () -> Unit,
 ) {
-    val entry = AnimeCover.getEntry(anime.id)
+    val (entry, ratio) = AnimeCover.getEntry(anime.id)
     val width = if (entry == AnimeCover.Panorama) 200.dp else 100.dp
 
     Column(
@@ -280,7 +280,8 @@ private fun FeedCard(
         entry(
             data = anime,
             onClick = onClick,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            ratio = ratio,
         )
         Text(
             text = anime.title,

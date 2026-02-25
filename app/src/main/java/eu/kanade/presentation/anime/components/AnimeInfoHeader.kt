@@ -379,8 +379,7 @@ private fun AnimeAndSourceTitlesLarge(
         horizontalArrangement = Arrangement.spacedBy(24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val entry = AnimeCover.getEntry(anime.id)
-        val ratio = AnimeCover.getRatio(anime.id)
+        val (entry, ratio) = AnimeCover.getEntry(anime.id)
         entry(
             modifier = Modifier.width(if (entry == AnimeCover.Panorama) 200.dp else 160.dp),
             data = anime.asAnimeCover(),
@@ -424,8 +423,7 @@ private fun AnimeAndSourceTitlesSmall(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val entry = AnimeCover.getEntry(anime.id)
-        val ratio = AnimeCover.getRatio(anime.id)
+        val (entry, ratio) = AnimeCover.getEntry(anime.id)
         entry(
             modifier = Modifier.width(if (entry == AnimeCover.Panorama) 140.dp else 100.dp),
             data = anime.asAnimeCover(),
