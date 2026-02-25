@@ -491,19 +491,19 @@ private fun GenreBar(genre: String, count: Int, maxCount: Int) {
 
 @Composable
 private fun FeedActivitySection(feedActivity: StatsData.FeedActivity) {
-    StatsSectionCard(title = "Feed Engagement (Last 30 Days)") {
+    StatsSectionCard(title = "Feed Statistics") {
         Column(modifier = Modifier.padding(MaterialTheme.padding.medium)) {
             if (feedActivity.activity.isEmpty()) {
                 Text(
-                    text = "No activity recorded yet.",
+                    text = "No updates recorded yet.",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.secondaryItemAlpha()
                 )
             } else {
-                val maxActivity = feedActivity.activity.maxOf { it.fetchCount + it.openCount + it.playCount + it.completeCount }.coerceAtLeast(1)
+                val maxActivity = feedActivity.activity.maxOf { it.fetchCount }.coerceAtLeast(1)
                 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    feedActivity.activity.take(8).forEach { activity ->
+                    feedActivity.activity.take(10).forEach { activity ->
                         SourceActivityBar(activity, maxActivity)
                     }
                 }
@@ -514,42 +514,38 @@ private fun FeedActivitySection(feedActivity: StatsData.FeedActivity) {
 
 @Composable
 private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.SourceActivity, maxActivity: Int) {
-    val total = activity.fetchCount + activity.openCount + activity.playCount + activity.completeCount
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = activity.sourceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+            Text(text = activity.sourceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
             Text(
-                text = total.toString(),
+                text = "${activity.fetchCount} Items",
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                 modifier = Modifier.secondaryItemAlpha()
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
-            val fetchWeight = activity.fetchCount.toFloat() / maxActivity
-            val openWeight = activity.openCount.toFloat() / maxActivity
-            val playWeight = activity.playCount.toFloat() / maxActivity
-            val completeWeight = activity.completeCount.toFloat() / maxActivity
-
-            if (fetchWeight > 0) Box(modifier = Modifier.fillMaxWidth(fetchWeight).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
-            if (openWeight > 0) Box(modifier = Modifier.fillMaxWidth(openWeight).fillMaxHeight().background(MaterialTheme.colorScheme.secondary))
-            if (playWeight > 0) Box(modifier = Modifier.fillMaxWidth(playWeight).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
-            if (completeWeight > 0) Box(modifier = Modifier.fillMaxWidth(completeWeight).fillMaxHeight().background(Color(0xFF4CAF50)))
+            val progress = activity.fetchCount.toFloat() / maxActivity
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.primary)
+            )
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ActivityLegendItem(MaterialTheme.colorScheme.primary, "Fetch", activity.fetchCount)
-            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "Open", activity.openCount)
-            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "Play", activity.playCount)
-            ActivityLegendItem(Color(0xFF4CAF50), "Done", activity.completeCount)
+            ActivityLegendItem(Color(0xFF4CAF50), "Today", activity.playCount) // Today is playCount
+            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "7 Days", activity.openCount) // 7d is openCount
+            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "30 Days", activity.fetchCount) // 30d is fetchCount
         }
     }
 }

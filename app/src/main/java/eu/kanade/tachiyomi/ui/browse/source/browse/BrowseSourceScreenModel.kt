@@ -63,8 +63,6 @@ import tachiyomi.domain.source.interactor.GetSavedSearchBySourceId
 import tachiyomi.domain.source.interactor.InsertSavedSearch
 import tachiyomi.domain.source.model.SavedSearch
 import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.domain.history.interactor.LogActivity
-import tachiyomi.domain.history.model.ActivityLog
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
@@ -93,7 +91,6 @@ class BrowseSourceScreenModel(
     private val filterSerializer: FilterSerializer = Injekt.get(),
     private val getFavorites: tachiyomi.domain.anime.interactor.GetFavorites = Injekt.get(),
     private val trackPreferences: eu.kanade.domain.track.service.TrackPreferences = Injekt.get(),
-    private val logActivity: LogActivity = Injekt.get(),
 ) : StateScreenModel<BrowseSourceScreenModel.State>(State(Listing.valueOf(listingQuery))) {
 
     var displayMode by sourcePreferences.sourceDisplayMode().asState(screenModelScope)
@@ -101,9 +98,6 @@ class BrowseSourceScreenModel(
     val source = sourceManager.getOrStub(sourceId)
 
     init {
-        screenModelScope.launchIO {
-            logActivity.awaitIO(sourceId, ActivityLog.TYPE_OPEN)
-        }
         if (source is CatalogueSource) {
             mutableState.update {
                 var query: String? = null

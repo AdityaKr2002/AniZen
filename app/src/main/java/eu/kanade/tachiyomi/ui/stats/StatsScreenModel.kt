@@ -220,24 +220,38 @@ class StatsScreenModel(
     }
 
     private suspend fun calculateFeedActivity(): StatsData.FeedActivity {
-        val thirtyDaysAgo = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, -30)
-        }.time
+        val now = Calendar.getInstance()
+        val today = (now.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
+        val sevenDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -7) }.time
+        val thirtyDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -30) }.time
         
-        val counts = getActivityLog.awaitCountsByPeriod(thirtyDaysAgo)
-        val sourceIds = counts.keys.map { it.first }.distinct()
+        val allLogs = getActivityLog.awaitByPeriod(thirtyDaysAgo)
+        val feedSavedSearches = Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().await()
         
-        val activity = sourceIds.map { sourceId ->
-            val source = sourceManager.getOrStub(sourceId)
-            SourceActivity(
-                sourceId = sourceId,
-                sourceName = source.name,
-                fetchCount = counts[sourceId to ActivityLog.TYPE_FETCH]?.toInt() ?: 0,
-                openCount = counts[sourceId to ActivityLog.TYPE_OPEN]?.toInt() ?: 0,
-                playCount = counts[sourceId to ActivityLog.TYPE_PLAY]?.toInt() ?: 0,
-                completeCount = counts[sourceId to ActivityLog.TYPE_COMPLETE]?.toInt() ?: 0,
-            )
-        }.sortedByDescending { it.fetchCount + it.openCount + it.playCount + it.completeCount }
+        val activity = allLogs
+            .filter { it.eventType == ActivityLog.TYPE_FETCH || it.eventType == ActivityLog.TYPE_FEED_UPDATE }
+            .groupBy { it.sourceId to it.feedId }
+            .map { (ids, logs) ->
+                val (sourceId, feedId) = ids
+                val source = sourceManager.getOrStub(sourceId)
+                val feed = feedSavedSearches.find { it.id == feedId }
+                
+                val feedLabel = when {
+                    feed == null -> ""
+                    feed.savedSearch != null -> " (Saved Search)"
+                    else -> " (${FeedSavedSearch.Type.from(feed.type).name})"
+                }
+
+                SourceActivity(
+                    sourceId = sourceId,
+                    sourceName = "${source.name}$feedLabel",
+                    feedName = feedLabel.trim().removeSurrounding("(", ")").ifBlank { "Library" },
+                    fetchCount = logs.filter { it.timestamp >= thirtyDaysAgo }.sumOf { it.count ?: 1 }.toInt(), // 30d
+                    openCount = logs.filter { it.timestamp >= sevenDaysAgo }.sumOf { it.count ?: 1 }.toInt(), // 7d
+                    playCount = logs.filter { it.timestamp >= today }.sumOf { it.count ?: 1 }.toInt(), // Today
+                    completeCount = 0, // Unused
+                )
+            }.sortedByDescending { it.fetchCount }
         
         return StatsData.FeedActivity(activity)
     }
