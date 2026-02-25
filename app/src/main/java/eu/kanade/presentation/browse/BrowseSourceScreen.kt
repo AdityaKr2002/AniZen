@@ -24,6 +24,7 @@ import eu.kanade.presentation.browse.components.BrowseSourceList
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.source.Source
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.anime.model.Anime
@@ -53,7 +54,7 @@ fun BrowseSourceContent(
     onLocalSourceHelpClick: () -> Unit,
     onAnimeClick: (Anime) -> Unit,
     onAnimeLongClick: (Anime) -> Unit,
-    selection: List<Anime> = emptyList(),
+    selection: ImmutableList<Anime>,
     favoriteIds: Set<Long> = emptySet(),
     onBatchIncrement: (Int) -> Unit = {},
 ) {

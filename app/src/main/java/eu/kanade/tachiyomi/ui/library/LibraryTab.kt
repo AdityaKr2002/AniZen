@@ -227,9 +227,9 @@ data object LibraryTab : Tab {
                 }
                 else -> {
                     LibraryContent(
-                        categories = state.categories,
+                        categories = state.categories.toImmutableList(),
                         searchQuery = state.searchQuery,
-                        selection = state.selection,
+                        selection = state.selection.toImmutableList(),
                         contentPadding = contentPadding,
                         currentPage = { screenModel.activeCategoryIndex },
                         hasActiveFilters = state.hasActiveFilters,
@@ -261,7 +261,8 @@ data object LibraryTab : Tab {
                                 it,
                             )
                         },
-                    ) { state.getAnimelibItemsByPage(it) }
+                        getAnimeLibraryForPage = { state.getAnimelibItemsByPage(it).toImmutableList() },
+                    )
                 }
             }
         }

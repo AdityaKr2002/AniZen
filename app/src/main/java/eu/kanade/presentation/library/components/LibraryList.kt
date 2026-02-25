@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import eu.kanade.tachiyomi.ui.library.LibraryItem
+import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.domain.anime.model.AnimeCover
 import tachiyomi.domain.library.model.LibraryAnime
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
@@ -18,11 +19,11 @@ import tachiyomi.presentation.core.util.plus
 
 @Composable
 internal fun LibraryList(
-    items: List<LibraryItem>,
+    items: ImmutableList<LibraryItem>,
     entries: Int,
     containerHeight: Int,
     contentPadding: PaddingValues,
-    selection: List<LibraryAnime>,
+    selection: ImmutableList<LibraryAnime>,
     onClick: (LibraryAnime) -> Unit,
     onLongClick: (LibraryAnime) -> Unit,
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
