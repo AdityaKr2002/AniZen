@@ -35,6 +35,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ui.UiPreferences
@@ -116,17 +117,24 @@ enum class AnimeCover(val ratio: Float) {
                     },
                 ),
         ) {
+            // Pulsing background
+            SkeletonItem(
+                modifier = Modifier.fillMaxSize(),
+                shape = shape,
+                color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f)
+            )
+
             AsyncImage(
                 model = remember(data) {
                     ImageRequest.Builder(context)
                         .data(data)
-                        .crossfade(true)
+                        .crossfade(true) // Fast default crossfade
                         .build()
                 },
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 1f },
+                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
                 contentScale = scale,
                 onState = { state = it },
             )
