@@ -114,21 +114,22 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
                 }
             } else {
                 state.items.forEach { (keyword, animes) ->
-                item(key = "header-$keyword", span = { GridItemSpan(maxLineSpan) }) {
-                    ListGroupHeader(
-                        text = keyword.uppercase(),
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
-                    )
-                }
-                itemsIndexed(
-                    items = animes,
-                    key = { index: Int, it: tachiyomi.domain.anime.model.Anime -> "anime-$keyword-${it.id}-$index" },
-                ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                    BrowseSourceComfortableGridItem(
-                        anime = anime,
-                        isFavorite = anime.favorite,
-                        onClick = { onAnimeClick(anime) },
-                    )
+                    item(key = "header-$keyword", span = { GridItemSpan(maxLineSpan) }) {
+                        ListGroupHeader(
+                            text = keyword.uppercase(),
+                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                        )
+                    }
+                    itemsIndexed(
+                        items = animes,
+                        key = { index: Int, it: tachiyomi.domain.anime.model.Anime -> "anime-$keyword-${it.id}-$index" },
+                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                        BrowseSourceComfortableGridItem(
+                            anime = anime,
+                            isFavorite = anime.favorite,
+                            onClick = { onAnimeClick(anime) },
+                        )
+                    }
                 }
             }
         }
