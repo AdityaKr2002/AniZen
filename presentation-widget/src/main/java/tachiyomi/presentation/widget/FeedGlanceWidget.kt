@@ -32,7 +32,6 @@ import coil3.request.transformations
 import coil3.size.Precision
 import coil3.size.Scale
 import coil3.transform.RoundedCornersTransformation
-import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
 import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.util.system.dpToPx
 import kotlinx.collections.immutable.ImmutableList
