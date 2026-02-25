@@ -78,6 +78,9 @@ fun FeedScreen(
     val visibleCategories = state.categories
     val pagerState = rememberPagerState { visibleCategories.size }
 
+    // Use derivedStateOf for smooth tab tracking at high refresh rates
+    val currentPage by remember { derivedStateOf { pagerState.currentPage } }
+
     // Update pagerState when categories change to avoid OOB
     LaunchedEffect(visibleCategories.size) {
         if (pagerState.currentPage >= visibleCategories.size && visibleCategories.isNotEmpty()) {
@@ -91,7 +94,6 @@ fun FeedScreen(
             .padding(top = contentPadding.calculateTopPadding()),
     ) {
         if (visibleCategories.size > 1) {
-            val currentPage by remember { derivedStateOf { pagerState.currentPage } }
             ScrollableTabRow(
                 selectedTabIndex = currentPage.coerceIn(0, visibleCategories.lastIndex),
                 edgePadding = 0.dp,
@@ -129,6 +131,7 @@ fun FeedScreen(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.Top,
+            key = { page -> visibleCategories.getOrNull(page)?.id ?: page },
         ) { page ->
             val category = visibleCategories.getOrNull(page) ?: return@HorizontalPager
             val items = state.items[category.id]
@@ -147,7 +150,7 @@ fun FeedScreen(
                     contentPadding = listPadding,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(3) {
+                    items(3, key = { "skeleton-$it" }) {
                         SkeletonFeedIsland()
                     }
                 }
@@ -182,6 +185,7 @@ fun FeedScreen(
                     items(
                         items = items,
                         key = { "feed-${it.feed.id}" },
+                        contentType = { "feed_island" }
                     ) { item ->
                         FeedIsland(
                             item = item,
@@ -199,10 +203,13 @@ private fun FeedIsland(
     item: FeedScreenModel.FeedItem,
     onAnimeClick: (Anime) -> Unit,
 ) {
-    val title = if (item.savedSearch != null) {
-        "${item.source.name} (${item.savedSearch.name})"
-    } else {
-        "${item.source.name} (${tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type).name})"
+    // Memoize the title to avoid re-generating strings on every scroll frame
+    val title = remember(item.feed.id, item.feed.type, item.savedSearch?.id) {
+        if (item.savedSearch != null) {
+            "${item.source.name} (${item.savedSearch.name})"
+        } else {
+            "${item.source.name} (${tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type).name})"
+        }
     }
 
     Surface(
@@ -243,6 +250,7 @@ private fun FeedIsland(
                     items(
                         items = item.animeList,
                         key = { anime -> "anime-${item.feed.id}-${anime.id}" },
+                        contentType = { "anime_card" }
                     ) { anime ->
                         FeedCard(
                             anime = anime,
