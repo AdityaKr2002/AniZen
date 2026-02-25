@@ -1,5 +1,4 @@
-package tachiyomi.presentation.widget
-
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -15,6 +14,7 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.provideContent
@@ -36,12 +36,10 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.util.system.dpToPx
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
-import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.updates.interactor.GetUpdates
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.presentation.widget.R
@@ -58,17 +56,17 @@ import java.time.ZonedDateTime
 class FeedGlanceWidget(
     private val context: Context = Injekt.get<Application>(),
     private val getUpdates: GetUpdates = Injekt.get(),
-    private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val securityPreferences: SecurityPreferences = Injekt.get(),
 ) : GlanceAppWidget() {
 
     override val sizeMode = SizeMode.Exact
 
-    private val foreground = ColorProvider(R.color.appwidget_on_secondary_container)
-    private val background = ImageProvider(R.drawable.appwidget_background)
-    private val topPadding = 16.dp
-    private val bottomPadding = 16.dp
+    @SuppressLint("RestrictedApi")
+    val foreground = ColorProvider(R.color.appwidget_on_secondary_container)
+    val background = ImageProvider(R.drawable.appwidget_background)
+    val topPadding = 16.dp
+    val bottomPadding = 16.dp
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val locked = securityPreferences.useAuthenticator().get()
@@ -79,10 +77,9 @@ class FeedGlanceWidget(
             .padding(top = topPadding, bottom = bottomPadding)
             .appWidgetBackgroundRadius()
 
-        val manager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
-        val ids = manager.getGlanceIds(javaClass)
-        val (rowCount, columnCount) = ids
-            .flatMap { manager.getAppWidgetSizes(it) }
+        val manager = GlanceAppWidgetManager(context)
+        val sizes = try { manager.getAppWidgetSizes(id) } catch (e: Exception) { emptyList() }
+        val (rowCount, columnCount) = sizes
             .maxByOrNull { it.height.value * it.width.value }
             ?.calculateRowAndColumnCount(topPadding, bottomPadding)
             ?: Pair(2, 4)
@@ -96,16 +93,18 @@ class FeedGlanceWidget(
             val flow = remember {
                 getUpdates.subscribe(false, ZonedDateTime.now().minusMonths(3).toInstant().toEpochMilli())
                     .map { updates ->
-                        val animeList = updates.map { 
-                            Anime.create().copy(
-                                id = it.animeId,
-                                source = it.sourceId,
-                                favorite = true,
-                                coverLastModified = it.coverData.lastModified,
-                                ogTitle = it.animeTitle,
-                                ogThumbnailUrl = it.coverData.url,
-                            )
-                        }
+                        val animeList = updates
+                            .distinctBy { it.animeId }
+                            .map { 
+                                Anime.create().copy(
+                                    id = it.animeId,
+                                    source = it.sourceId,
+                                    favorite = true,
+                                    coverLastModified = it.coverData.lastModified,
+                                    ogTitle = it.animeTitle,
+                                    ogThumbnailUrl = it.coverData.url,
+                                )
+                            }
                         prepareAnimeData(animeList, rowCount, columnCount)
                     }
             }
