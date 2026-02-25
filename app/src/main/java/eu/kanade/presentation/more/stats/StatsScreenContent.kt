@@ -141,6 +141,12 @@ fun StatsScreenContent(
             ExtensionUsageSection(state.extensions)
         }
 
+        if (state.feedActivity != null) {
+            item {
+                FeedActivitySection(state.feedActivity)
+            }
+        }
+
         if (state.infrastructure != null) {
             item {
                 InfrastructureSection(state.infrastructure, onClickExtensionReport)
@@ -478,6 +484,87 @@ private fun GenreBar(genre: String, count: Int, maxCount: Int) {
                     .fillMaxHeight()
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary) // 10% Accent
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedActivitySection(feedActivity: StatsData.FeedActivity) {
+    StatsSectionCard(title = "Feed Engagement (Last 30 Days)") {
+        Column(modifier = Modifier.padding(MaterialTheme.padding.medium)) {
+            if (feedActivity.activity.isEmpty()) {
+                Text(
+                    text = "No activity recorded yet.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.secondaryItemAlpha()
+                )
+            } else {
+                val maxActivity = feedActivity.activity.maxOf { it.fetchCount + it.openCount + it.playCount + it.completeCount }.coerceAtLeast(1)
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    feedActivity.activity.take(8).forEach { activity ->
+                        SourceActivityBar(activity, maxActivity)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.SourceActivity, maxActivity: Int) {
+    val total = activity.fetchCount + activity.openCount + activity.playCount + activity.completeCount
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = activity.sourceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+            Text(
+                text = total.toString(),
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                modifier = Modifier.secondaryItemAlpha()
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        ) {
+            val fetchWeight = activity.fetchCount.toFloat() / maxActivity
+            val openWeight = activity.openCount.toFloat() / maxActivity
+            val playWeight = activity.playCount.toFloat() / maxActivity
+            val completeWeight = activity.completeCount.toFloat() / maxActivity
+
+            if (fetchWeight > 0) Box(modifier = Modifier.fillMaxWidth(fetchWeight).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
+            if (openWeight > 0) Box(modifier = Modifier.fillMaxWidth(openWeight).fillMaxHeight().background(MaterialTheme.colorScheme.secondary))
+            if (playWeight > 0) Box(modifier = Modifier.fillMaxWidth(playWeight).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
+            if (completeWeight > 0) Box(modifier = Modifier.fillMaxWidth(completeWeight).fillMaxHeight().background(Color(0xFF4CAF50)))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActivityLegendItem(MaterialTheme.colorScheme.primary, "Fetch", activity.fetchCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "Open", activity.openCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "Play", activity.playCount)
+            ActivityLegendItem(Color(0xFF4CAF50), "Done", activity.completeCount)
+        }
+    }
+}
+
+@Composable
+private fun ActivityLegendItem(color: Color, label: String, count: Int) {
+    if (count > 0) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "$label: $count",
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 8.sp,
+                modifier = Modifier.secondaryItemAlpha()
             )
         }
     }

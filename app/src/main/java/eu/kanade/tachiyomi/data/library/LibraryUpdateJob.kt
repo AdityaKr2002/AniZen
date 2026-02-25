@@ -55,6 +55,8 @@ import tachiyomi.domain.anime.interactor.GetLibraryAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.episode.model.Episode
+import tachiyomi.domain.history.interactor.LogActivity
+import tachiyomi.domain.history.model.ActivityLog
 import tachiyomi.domain.library.model.GroupLibraryMode
 import tachiyomi.domain.library.model.LibraryAnime
 import tachiyomi.domain.library.model.LibraryGroup
@@ -94,6 +96,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val getTracks: GetTracks = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val filterEpisodesForDownload: FilterEpisodesForDownload = Injekt.get()
+    private val logActivity: LogActivity = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
 
@@ -351,6 +354,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             .sortedByDescending { it.sourceOrder }
 
                                         if (newEpisodes.isNotEmpty()) {
+                                            logActivity.await(anime.source, ActivityLog.TYPE_FETCH)
                                             val episodesToDownload = filterEpisodesForDownload.await(anime, newEpisodes)
 
                                             if (episodesToDownload.isNotEmpty()) {

@@ -1,0 +1,36 @@
+import java.util.Date;
+
+CREATE TABLE activity_log(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    source_id INTEGER NOT NULL,
+    type INTEGER NOT NULL, -- FETCH (1), OPEN (2), PLAY (3), COMPLETE (4)
+    timestamp INTEGER AS Date NOT NULL
+);
+
+CREATE INDEX activity_log_source_id_index ON activity_log(source_id);
+CREATE INDEX activity_log_timestamp_index ON activity_log(timestamp);
+
+insert:
+INSERT INTO activity_log(source_id, type, timestamp)
+VALUES (:sourceId, :type, :timestamp);
+
+getActivityByPeriod:
+SELECT *
+FROM activity_log
+WHERE timestamp >= :after;
+
+getCountsByPeriod:
+SELECT source_id, type, count(*) as count
+FROM activity_log
+WHERE timestamp >= :after
+GROUP BY source_id, type;
+
+getRecentActivity:
+SELECT *
+FROM activity_log
+ORDER BY timestamp DESC
+LIMIT :limit;
+
+removeOldActivity:
+DELETE FROM activity_log
+WHERE timestamp < :before;

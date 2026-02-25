@@ -46,6 +46,7 @@ class StatsScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val extensionManager: eu.kanade.tachiyomi.extension.ExtensionManager = Injekt.get(),
+    private val getActivityLog: tachiyomi.domain.history.interactor.GetActivityLog = Injekt.get(),
     private val aiPreferences: AiPreferences = Injekt.get(),
 ) : StateScreenModel<StatsScreenState>(StatsScreenState.Loading) {
 
@@ -146,6 +147,9 @@ class StatsScreenModel(
             // Watch Habits
             val watchHabits = calculateWatchHabits(history, distinctLibraryAnime)
 
+            // Feed Activity (Suggestions #3)
+            val feedActivity = calculateFeedActivity()
+
             // Score Distribution
             val scoreDistribution = StatsData.ScoreDistribution(
                 scoredAnimeCount = distinctLibraryAnime.count { it.anime.score != null } + scoredAnimeTrackerMap.size,
@@ -205,12 +209,36 @@ class StatsScreenModel(
                     watchHabits = watchHabits,
                     scores = scoreDistribution,
                     statuses = statusBreakdown,
+                    feedActivity = feedActivity,
                     infrastructure = infrastructure,
                     aiAnalysis = aiPreferences.lastStatsAnalysis().get().takeIf { it.isNotBlank() },
                     isAiLoading = false,
                 )
             }
         }
+    }
+
+    private suspend fun calculateFeedActivity(): StatsData.FeedActivity {
+        val thirtyDaysAgo = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -30)
+        }.time
+        
+        val counts = getActivityLog.awaitCountsByPeriod(thirtyDaysAgo)
+        val sourceIds = counts.keys.map { it.first }.distinct()
+        
+        val activity = sourceIds.map { sourceId ->
+            val source = sourceManager.getOrStub(sourceId)
+            SourceActivity(
+                sourceId = sourceId,
+                sourceName = source.name,
+                fetchCount = counts[sourceId to ActivityLog.TYPE_FETCH]?.toInt() ?: 0,
+                openCount = counts[sourceId to ActivityLog.TYPE_OPEN]?.toInt() ?: 0,
+                playCount = counts[sourceId to ActivityLog.TYPE_PLAY]?.toInt() ?: 0,
+                completeCount = counts[sourceId to ActivityLog.TYPE_COMPLETE]?.toInt() ?: 0,
+            )
+        }.sortedByDescending { it.fetchCount + it.openCount + it.playCount + it.completeCount }
+        
+        return StatsData.FeedActivity(activity)
     }
 
     fun generateAiAnalysis() {

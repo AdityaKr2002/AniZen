@@ -118,7 +118,9 @@ import tachiyomi.domain.episode.interactor.UpdateEpisode
 import tachiyomi.domain.episode.model.EpisodeUpdate
 import tachiyomi.domain.episode.service.getEpisodeSort
 import tachiyomi.domain.history.interactor.GetNextEpisodes
+import tachiyomi.domain.history.interactor.LogActivity
 import tachiyomi.domain.history.interactor.UpsertHistory
+import tachiyomi.domain.history.model.ActivityLog
 import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
@@ -156,6 +158,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val getTracks: GetTracks = Injekt.get(),
     private val upsertHistory: UpsertHistory = Injekt.get(),
     private val updateEpisode: UpdateEpisode = Injekt.get(),
+    private val logActivity: LogActivity = Injekt.get(),
     private val setAnimeViewerFlags: SetAnimeViewerFlags = Injekt.get(),
     internal val playerPreferences: PlayerPreferences = Injekt.get(),
     internal val gesturePreferences: GesturePreferences = Injekt.get(),
@@ -549,6 +552,7 @@ class PlayerViewModel @JvmOverloads constructor(
             hasTriggeredWatching = true
             val anime = currentAnime.value ?: return
             viewModelScope.launchNonCancellable {
+                logActivity.await(anime.source, ActivityLog.TYPE_PLAY)
                 trackEpisode.trackStatus(activity, anime.id, eu.kanade.tachiyomi.data.track.local.LocalTracker.WATCHING)
             }
         }
@@ -1829,6 +1833,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val context = Injekt.get<Application>()
 
         viewModelScope.launchNonCancellable {
+            logActivity.await(anime.source, ActivityLog.TYPE_COMPLETE)
             trackEpisode.await(context, anime.id, episode.episode_number.toDouble())
         }
     }

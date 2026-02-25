@@ -61,6 +61,10 @@ sealed interface StatsData {
         val avgSessionsPerWeek: Double,
     ) : StatsData
 
+    data class FeedActivity(
+        val activity: List<SourceActivity>,
+    ) : StatsData
+
     data class InfrastructureAnalytics(
         val latencyMatrix: List<Pair<String, Int>>,
         val throughputDistribution: List<Pair<String, Long>>,
@@ -74,4 +78,13 @@ data class ExtensionInfo(
     val name: String,
     val count: Int,
     val repo: String?,
+)
+
+data class SourceActivity(
+    val sourceId: Long,
+    val sourceName: String,
+    val fetchCount: Int,
+    val openCount: Int,
+    val playCount: Int,
+    val completeCount: Int,
 )

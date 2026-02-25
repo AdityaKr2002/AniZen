@@ -91,6 +91,7 @@ class BrowseSourceScreenModel(
     private val filterSerializer: FilterSerializer = Injekt.get(),
     private val getFavorites: tachiyomi.domain.anime.interactor.GetFavorites = Injekt.get(),
     private val trackPreferences: eu.kanade.domain.track.service.TrackPreferences = Injekt.get(),
+    private val logActivity: LogActivity = Injekt.get(),
 ) : StateScreenModel<BrowseSourceScreenModel.State>(State(Listing.valueOf(listingQuery))) {
 
     var displayMode by sourcePreferences.sourceDisplayMode().asState(screenModelScope)
@@ -98,6 +99,7 @@ class BrowseSourceScreenModel(
     val source = sourceManager.getOrStub(sourceId)
 
     init {
+        logActivity.awaitIO(sourceId, tachiyomi.domain.history.model.ActivityLog.TYPE_OPEN)
         if (source is CatalogueSource) {
             mutableState.update {
                 var query: String? = null
