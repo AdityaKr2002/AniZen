@@ -49,6 +49,7 @@ class FeedScreenModel(
 ) : StateScreenModel<FeedScreenModel.State>(State()) {
 
     private val feedJobs = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.Job>()
+    private val lastTopUrls = java.util.concurrent.ConcurrentHashMap<Long, String>()
 
     init {
         screenModelScope.launchIO {
@@ -128,8 +129,20 @@ class FeedScreenModel(
                                             }
                                         }.awaitAll()
 
-                                        if (animeList.isNotEmpty()) {
-                                            logActivity.await(source.id, ActivityLog.TYPE_FEED_UPDATE, feedId = feed.id, count = animeList.size.toLong())
+                                        val currentTopUrl = results.firstOrNull()?.url
+                                        val previousTopUrl = lastTopUrls[feed.id]
+                                        if (currentTopUrl != null && currentTopUrl != previousTopUrl) {
+                                            val newItemsCount = if (previousTopUrl == null) {
+                                                results.size
+                                            } else {
+                                                val index = results.indexOfFirst { it.url == previousTopUrl }
+                                                if (index == -1) results.size else index
+                                            }
+                                            
+                                            if (newItemsCount > 0) {
+                                                logActivity.await(source.id, ActivityLog.TYPE_FEED_UPDATE, feedId = feed.id, count = newItemsCount.toLong())
+                                            }
+                                            lastTopUrls[feed.id] = currentTopUrl
                                         }
 
                                         FeedItem(
