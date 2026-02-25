@@ -113,7 +113,7 @@ class FeedScreenModel(
                             val source = sourceManager.get(feed.source) as? AnimeCatalogueSource ?: return@mapNotNull null
                             
                             // Preserve existing anime list if it exists to avoid flickering
-                            val existingAnime = state.items[category.id]?.find { it.feed.id == feed.id }?.animeList ?: persistentListOf()
+                            val existingAnime = mutableState.value.items[category.id]?.find { it.feed.id == feed.id }?.animeList ?: persistentListOf<Anime>()
                             
                             FeedItem(
                                 feed = feed,
