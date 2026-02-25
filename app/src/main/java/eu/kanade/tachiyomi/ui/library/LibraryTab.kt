@@ -56,7 +56,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import tachiyomi.core.common.i18n.stringResource
+import tachiyomi.core.common.i18n.stringResource as stringResourceCommon
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.category.model.Category
@@ -127,7 +127,7 @@ data object LibraryTab : Tab {
             // SY <--
             scope.launch {
                 val msgRes = if (started) MR.strings.updating_category else MR.strings.update_already_running
-                snackbarHostState.showSnackbar(context.stringResource(msgRes))
+                snackbarHostState.showSnackbar(context.stringResourceCommon(msgRes))
             }
             started
         }

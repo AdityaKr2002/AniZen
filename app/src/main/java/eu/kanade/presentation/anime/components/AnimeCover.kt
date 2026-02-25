@@ -69,7 +69,6 @@ enum class AnimeCover(val ratio: Float) {
     @Composable
     operator fun invoke(
         data: Any?,
-        ratio: Float,
         modifier: Modifier = Modifier,
         contentDescription: String = "",
         shape: Shape = MaterialTheme.shapes.medium,
@@ -82,6 +81,7 @@ enum class AnimeCover(val ratio: Float) {
         onCoverLoaded: ((DomainMangaCover, result: AsyncImagePainter.State.Success) -> Unit)? = null,
         size: Size = Size.Normal,
         scale: ContentScale = ContentScale.Crop,
+        ratio: Float = this.ratio,
         // KMK <--
     ) {
         val context = LocalContext.current
