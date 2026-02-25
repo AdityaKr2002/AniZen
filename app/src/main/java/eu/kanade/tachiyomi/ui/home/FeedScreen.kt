@@ -85,44 +85,46 @@ fun FeedScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            if (visibleCategories.size > 1) {
-                val currentPage by remember { derivedStateOf { pagerState.currentPage } }
-                ScrollableTabRow(
-                    selectedTabIndex = currentPage.coerceIn(0, visibleCategories.lastIndex),
-                    modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
-                    edgePadding = 0.dp,
-                    divider = {},
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[currentPage.coerceIn(0, tabPositions.lastIndex)]),
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                ) {
-                    visibleCategories.forEachIndexed { index, category ->
-                        Tab(
-                            selected = currentPage == index,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = category.name,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                        )
-                    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = contentPadding.calculateTopPadding()),
+    ) {
+        if (visibleCategories.size > 1) {
+            val currentPage by remember { derivedStateOf { pagerState.currentPage } }
+            ScrollableTabRow(
+                selectedTabIndex = currentPage.coerceIn(0, visibleCategories.lastIndex),
+                edgePadding = 0.dp,
+                containerColor = MaterialTheme.colorScheme.surface,
+                divider = {},
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[currentPage.coerceIn(0, tabPositions.lastIndex)]),
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                },
+            ) {
+                visibleCategories.forEachIndexed { index, category ->
+                    Tab(
+                        selected = currentPage == index,
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = category.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                    )
                 }
             }
-        },
-    ) { paddingValues ->
+        }
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -134,7 +136,7 @@ fun FeedScreen(
             val listPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = (if (visibleCategories.size > 1) 8.dp else paddingValues.calculateTopPadding() + 8.dp),
+                top = 8.dp,
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             )
 
