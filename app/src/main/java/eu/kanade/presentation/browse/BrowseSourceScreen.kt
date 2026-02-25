@@ -35,6 +35,8 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.components.SkeletonAnimeCard
+import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.source.local.LocalSource
 
 @Composable
@@ -133,9 +135,20 @@ fun BrowseSourceContent(
                 )
             }
             "Loading" -> {
-                LoadingScreen(
+                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                    columns = columns,
+                    contentPadding = contentPadding + PaddingValues(8.dp),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(eu.kanade.presentation.library.components.CommonAnimeItemDefaults.GridVerticalSpacer),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(eu.kanade.presentation.library.components.CommonAnimeItemDefaults.GridHorizontalSpacer),
                     modifier = Modifier.padding(contentPadding),
-                )
+                ) {
+                    items(12) {
+                        SkeletonAnimeCard(
+                            modifier = Modifier.padding(4.dp),
+                            width = 120.dp,
+                        )
+                    }
+                }
             }
             "Content" -> {
                 when (displayMode) {

@@ -64,7 +64,15 @@ fun FeedScreen(
     val scope = rememberCoroutineScope()
 
     if (state.categories.isEmpty()) {
-        LoadingScreen(Modifier.padding(contentPadding))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding + PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            items(3) {
+                SkeletonFeedIsland()
+            }
+        }
         return
     }
 
