@@ -135,18 +135,16 @@ class FeedScreenModel(
                             state.copy(items = newItemsMap.toImmutableMap())
                         }
 
-                        // 2. Load content in parallel with buffered updates to reduce lag
+                        // 2. Load content in parallel with TIMEOUT and NO RETRIES to prevent hangs
                         coroutineScope {
                             feedSavedSearches.forEach { feed ->
                                 launch {
                                     val source = sourceManager.get(feed.source) as? AnimeCatalogueSource
                                     if (source == null) return@launch
 
-                                    var retryCount = 0
-                                    var loadedAnime: ImmutableList<Anime>? = null
-
-                                    while (retryCount < 3 && loadedAnime == null) {
-                                        try {
+                                    try {
+                                        // Use withTimeout to ensure a slow source cannot hang the UI infinitely
+                                        kotlinx.coroutines.withTimeout(30000L) {
                                             val results = when (FeedSavedSearch.Type.from(feed.type)) {
                                                 FeedSavedSearch.Type.Latest -> {
                                                     try {
@@ -196,28 +194,24 @@ class FeedScreenModel(
                                                 )
                                             }
 
-                                            loadedAnime = animeList
-                                        } catch (e: Exception) {
-                                            retryCount++
-                                            if (retryCount < 3) kotlinx.coroutines.delay(1000L * retryCount)
+                                            mutableState.update { state ->
+                                                val currentCategoryItems = state.items[category.id] ?: initialItems
+                                                val updatedItems = currentCategoryItems.map { item ->
+                                                    if (item.feed.id == feed.id) {
+                                                        item.copy(animeList = animeList)
+                                                    } else {
+                                                        item
+                                                    }
+                                                }.toImmutableList()
+                                                
+                                                val newItemsMap = state.items.toMutableMap()
+                                                newItemsMap[category.id] = updatedItems
+                                                state.copy(items = newItemsMap.toImmutableMap())
+                                            }
                                         }
-                                    }
-
-                                    if (loadedAnime != null) {
-                                        mutableState.update { state ->
-                                            val currentCategoryItems = state.items[category.id] ?: initialItems
-                                            val updatedItems = currentCategoryItems.map { item ->
-                                                if (item.feed.id == feed.id) {
-                                                    item.copy(animeList = loadedAnime!!)
-                                                } else {
-                                                    item
-                                                }
-                                            }.toImmutableList()
-                                            
-                                            val newItemsMap = state.items.toMutableMap()
-                                            newItemsMap[category.id] = updatedItems
-                                            state.copy(items = newItemsMap.toImmutableMap())
-                                        }
+                                    } catch (e: Exception) {
+                                        logcat(LogPriority.ERROR, e) { "Feed fetch failed or timed out for ${source.name}" }
+                                        // On failure, we just leave the container with placeholders or its last state
                                     }
                                 }
                             }
