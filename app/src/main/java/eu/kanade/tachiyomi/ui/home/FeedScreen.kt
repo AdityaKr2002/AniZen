@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -24,12 +25,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.components.AppBar
+import eu.kanade.presentation.util.secondaryItemAlpha
 import kotlinx.coroutines.launch
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
@@ -52,6 +57,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.components.SkeletonFeedIsland
+import tachiyomi.presentation.core.components.SkeletonAnimeCard
 import tachiyomi.presentation.core.util.plus
 
 @Composable
@@ -65,162 +71,113 @@ fun FeedScreen(
     val scope = rememberCoroutineScope()
 
     if (state.categories.isEmpty()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding + PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            items(3) {
-                SkeletonFeedIsland()
-            }
-        }
+        LoadingScreen(Modifier.padding(contentPadding))
         return
     }
 
-    val visibleCategories = remember(state.categories, state.items) {
-        state.categories.filter { category ->
-            !category.name.equals("Global", ignoreCase = true) || (state.items[category.id]?.isNotEmpty() == true)
-        }
-    }
-
-    if (state.categories.isEmpty() || (visibleCategories.isEmpty() && state.items.isEmpty())) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding + PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            items(3) {
-                SkeletonFeedIsland()
-            }
-        }
-        return
-    }
-
-    if (visibleCategories.isEmpty()) {
-         // If Global is hidden and no other categories exist, show empty state (effectively Global's empty state)
-         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            EmptyScreen(
-                stringRes = SYMR.strings.feed_tab_empty,
-            )
-            Button(
-                onClick = onAddSourceClick,
-                modifier = Modifier.padding(top = 16.dp),
-            ) {
-                Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(text = "Add Sources")
-            }
-        }
-        return
-    }
-
+    val visibleCategories = state.categories
     val pagerState = rememberPagerState { visibleCategories.size }
 
-    LaunchedEffect(pagerState.currentPage) {
-        // Optional: Persist selected category or other logic
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (visibleCategories.size > 1) {
-            ScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage.coerceIn(0, visibleCategories.lastIndex),
-                modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
-                edgePadding = 0.dp,
-                divider = {}, // Remove default divider if desired, or keep it
-            ) {
-                visibleCategories.forEachIndexed { index: Int, category: FeedSavedSearchCategory ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch { pagerState.animateScrollToPage(index) }
-                        },
-                        text = { Text(text = category.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    )
+    Scaffold(
+        topBar = {
+            if (visibleCategories.size > 1) {
+                val currentPage by remember { derivedStateOf { pagerState.currentPage } }
+                ScrollableTabRow(
+                    selectedTabIndex = currentPage.coerceIn(0, visibleCategories.lastIndex),
+                    modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
+                    edgePadding = 0.dp,
+                    divider = {},
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[currentPage.coerceIn(0, tabPositions.lastIndex)]),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                ) {
+                    visibleCategories.forEachIndexed { index, category ->
+                        Tab(
+                            selected = currentPage == index,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = category.name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                        )
+                    }
                 }
             }
-        }
-
+        },
+    ) { paddingValues ->
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = true,
+            verticalAlignment = Alignment.Top,
         ) { page ->
-            val category = visibleCategories.getOrNull(page)
-            if (category != null) {
-                val items = state.items[category.id]
-                val listPadding = if (visibleCategories.size > 1) {
-                    PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 8.dp,
-                        bottom = contentPadding.calculateBottomPadding() + 8.dp
-                    )
-                } else {
-                    PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = contentPadding.calculateTopPadding() + 8.dp,
-                        bottom = contentPadding.calculateBottomPadding() + 8.dp
-                    )
-                }
+            val category = visibleCategories.getOrNull(page) ?: return@HorizontalPager
+            val items = state.items[category.id]
 
-                if (items == null || (items.isEmpty() && state.items[category.id]?.isEmpty() == true)) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = listPadding,
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        items(3) {
-                            SkeletonFeedIsland()
-                        }
+            val listPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = (if (visibleCategories.size > 1) 8.dp else paddingValues.calculateTopPadding() + 8.dp),
+                bottom = contentPadding.calculateBottomPadding() + 8.dp
+            )
+
+            if (items == null) {
+                // Initial loading of the structure
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = listPadding,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(3) {
+                        SkeletonFeedIsland()
                     }
-                } else if (items.isEmpty() && state.items.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = contentPadding.calculateBottomPadding()),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                }
+            } else if (items.isEmpty()) {
+                // Category is loaded but has no feeds
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = contentPadding.calculateBottomPadding()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    EmptyScreen(
+                        stringRes = SYMR.strings.feed_tab_empty,
+                    )
+                    Button(
+                        onClick = onAddSourceClick,
+                        modifier = Modifier.padding(top = 16.dp),
                     ) {
-                        EmptyScreen(
-                            stringRes = SYMR.strings.feed_tab_empty,
+                        Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(text = "Add Sources")
+                    }
+                }
+            } else {
+                // Show established containers
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = listPadding,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(
+                        items = items,
+                        key = { "feed-${it.feed.id}" },
+                    ) { item ->
+                        FeedIsland(
+                            item = item,
+                            onAnimeClick = onAnimeClick,
                         )
-                        Button(
-                            onClick = onAddSourceClick,
-                            modifier = Modifier.padding(top = 16.dp),
-                        ) {
-                            Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(text = "Add Sources")
-                        }
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = listPadding,
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        items(
-                            items = items,
-                            key = { "feed-${it.feed.id}" },
-                        ) { item ->
-                            val title = if (item.savedSearch != null) {
-                                "${item.source.name} (${item.savedSearch.name})"
-                            } else {
-                                "${item.source.name} (${tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type).name})"
-                            }
-                            FeedIsland(
-                                title = title,
-                                animeList = item.animeList,
-                                onAnimeClick = onAnimeClick,
-                            )
-                        }
                     }
                 }
             }
@@ -230,14 +187,19 @@ fun FeedScreen(
 
 @Composable
 private fun FeedIsland(
-    title: String,
-    animeList: List<Anime>,
+    item: FeedScreenModel.FeedItem,
     onAnimeClick: (Anime) -> Unit,
 ) {
+    val title = if (item.savedSearch != null) {
+        "${item.source.name} (${item.savedSearch.name})"
+    } else {
+        "${item.source.name} (${tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type).name})"
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow, // 30% Secondary
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = 2.dp
     ) {
         Column(
@@ -252,18 +214,32 @@ private fun FeedIsland(
                 overflow = TextOverflow.Ellipsis
             )
             
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = animeList,
-                    key = { anime: tachiyomi.domain.anime.model.Anime -> "anime-${anime.id}" },
-                ) { anime: tachiyomi.domain.anime.model.Anime ->
-                    FeedCard(
-                        anime = anime,
-                        onClick = { onAnimeClick(anime) }
-                    )
+            if (item.animeList.isEmpty()) {
+                // PULSING PLACEHOLDERS INSIDE THE SECTION WHILE FETCHING
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    repeat(4) {
+                        SkeletonAnimeCard(width = 100.dp)
+                    }
+                }
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = item.animeList,
+                        key = { anime -> "anime-${item.feed.id}-${anime.id}" },
+                    ) { anime ->
+                        FeedCard(
+                            anime = anime,
+                            onClick = { onAnimeClick(anime) }
+                        )
+                    }
                 }
             }
         }

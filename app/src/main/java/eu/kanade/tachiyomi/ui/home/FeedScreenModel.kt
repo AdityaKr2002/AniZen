@@ -93,16 +93,34 @@ class FeedScreenModel(
                         // Fetch saved searches for the current category
                         val savedSearches = getSavedSearchGlobalFeed.await(category.id)
                         
+                        // 1. Establish structural placeholders immediately
+                        val initialItems = feedSavedSearches.mapNotNull { feed ->
+                            val source = sourceManager.get(feed.source) as? AnimeCatalogueSource ?: return@mapNotNull null
+                            FeedItem(
+                                feed = feed,
+                                source = source,
+                                savedSearch = savedSearches.find { it.id == feed.savedSearch },
+                                animeList = persistentListOf(),
+                            )
+                        }.toImmutableList()
+
+                        mutableState.update { state ->
+                            val newItems = state.items.toMutableMap()
+                            newItems[category.id] = initialItems
+                            state.copy(items = newItems.toImmutableMap())
+                        }
+
+                        // 2. Load content in parallel
                         coroutineScope {
                             feedSavedSearches.forEach { feed ->
-                                launch { // Launch each feed fetch in parallel
+                                launch {
                                     val source = sourceManager.get(feed.source) as? AnimeCatalogueSource
                                     if (source == null) return@launch
 
                                     var retryCount = 0
-                                    var feedItem: FeedItem? = null
+                                    var loadedAnime: ImmutableList<Anime>? = null
 
-                                    while (retryCount < 3 && feedItem == null) {
+                                    while (retryCount < 3 && loadedAnime == null) {
                                         try {
                                             val results = when (FeedSavedSearch.Type.from(feed.type)) {
                                                 FeedSavedSearch.Type.Latest -> {
@@ -129,8 +147,9 @@ class FeedScreenModel(
                                                     val domainAnime = it.toDomainAnime(source.id)
                                                     networkToLocalAnime.await(domainAnime)
                                                 }
-                                            }.awaitAll()
+                                            }.awaitAll().filterNotNull().distinctBy { it.id }.toImmutableList()
 
+                                            // Delta tracking for stats
                                             val currentTopUrl = results.firstOrNull()?.url
                                             val previousTopUrl = lastTopUrls[feed.id]
                                             if (currentTopUrl != null && currentTopUrl != previousTopUrl) {
@@ -147,30 +166,27 @@ class FeedScreenModel(
                                                 lastTopUrls[feed.id] = currentTopUrl
                                             }
 
-                                            feedItem = FeedItem(
-                                                feed = feed,
-                                                source = source,
-                                                savedSearch = savedSearches.find { it.id == feed.savedSearch },
-                                                animeList = animeList.distinctBy { it.id }.toImmutableList(),
-                                            )
+                                            loadedAnime = animeList
                                         } catch (e: Exception) {
                                             retryCount++
-                                            if (retryCount < 3) {
-                                                kotlinx.coroutines.delay(1000L * retryCount)
-                                            }
+                                            if (retryCount < 3) kotlinx.coroutines.delay(1000L * retryCount)
                                         }
                                     }
 
-                                    if (feedItem != null) {
+                                    if (loadedAnime != null) {
                                         mutableState.update { state ->
-                                            val currentCategoryItems = state.items[category.id] ?: persistentListOf()
-                                            // Update or add the new item and maintain original order
-                                            val newCategoryItems = (currentCategoryItems.filterNot { it.feed.id == feed.id } + feedItem)
-                                                .sortedBy { item -> feedSavedSearches.indexOfFirst { it.id == item.feed.id } }
+                                            val currentCategoryItems = state.items[category.id] ?: initialItems
+                                            val updatedItems = currentCategoryItems.map { item ->
+                                                if (item.feed.id == feed.id) {
+                                                    item.copy(animeList = loadedAnime!!)
+                                                } else {
+                                                    item
+                                                }
+                                            }.toImmutableList()
                                             
-                                            val newItems = state.items.toMutableMap()
-                                            newItems[category.id] = newCategoryItems.toImmutableList()
-                                            state.copy(items = newItems.toImmutableMap())
+                                            val newItemsMap = state.items.toMutableMap()
+                                            newItemsMap[category.id] = updatedItems
+                                            state.copy(items = newItemsMap.toImmutableMap())
                                         }
                                     }
                                 }
