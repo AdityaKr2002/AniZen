@@ -11,6 +11,7 @@ object FeedSavedSearchMapper {
         feedOrder: Long,
         searchType: Long,
         category: Long,
+        last_top_url: String?,
     ): FeedSavedSearch {
         return FeedSavedSearch(
             id = id,
@@ -20,6 +21,7 @@ object FeedSavedSearchMapper {
             feedOrder = feedOrder,
             type = searchType.toInt(),
             category = category,
+            lastTopUrl = last_top_url,
         )
     }
 }

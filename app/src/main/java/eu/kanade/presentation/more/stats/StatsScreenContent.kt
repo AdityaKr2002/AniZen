@@ -543,9 +543,10 @@ private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.S
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ActivityLegendItem(Color(0xFF4CAF50), "Today", activity.playCount, forceShow = true) // Always show today label
-            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "7 Days", activity.openCount)
-            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "30 Days", activity.fetchCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.primary, "Published", activity.fetchCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "Opened", activity.openCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "Started", activity.playCount)
+            ActivityLegendItem(Color(0xFF4CAF50), "Finished", activity.completeCount)
         }
     }
 }

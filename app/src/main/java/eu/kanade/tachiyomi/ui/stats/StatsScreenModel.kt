@@ -275,10 +275,10 @@ class StatsScreenModel(
                     sourceId = sourceId,
                     sourceName = "${source.name}$feedLabel",
                     feedName = feedLabel.trim().removeSurrounding("(", ")").ifBlank { "Library" },
-                    fetchCount = logs.filter { it.timestamp >= thirtyDaysAgo }.sumOf { it.count ?: 1 }.toInt(), // 30d
-                    openCount = logs.filter { it.timestamp >= sevenDaysAgo }.sumOf { it.count ?: 1 }.toInt(), // 7d
-                    playCount = logs.filter { it.timestamp >= today }.sumOf { it.count ?: 1 }.toInt(), // Today
-                    completeCount = 0, // Unused
+                    fetchCount = logs.filter { it.eventType == ActivityLog.TYPE_FETCH || it.eventType == ActivityLog.TYPE_FEED_UPDATE }.sumOf { it.count ?: 1 }.toInt(), // 30d Published
+                    openCount = logs.count { it.eventType == ActivityLog.TYPE_OPEN }, // Total Opened from feed
+                    playCount = logs.count { it.eventType == ActivityLog.TYPE_PLAY }, // Total Played
+                    completeCount = logs.count { it.eventType == ActivityLog.TYPE_COMPLETE }, // Total Finished
                 )
             }.sortedByDescending { it.fetchCount }
         

@@ -45,11 +45,11 @@ class FeedScreenModel(
     private val getAnime: GetAnime = Injekt.get(),
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
+    private val updateFeedSavedSearch: tachiyomi.domain.source.interactor.UpdateFeedSavedSearch = Injekt.get(),
     private val logActivity: LogActivity = Injekt.get(),
 ) : StateScreenModel<FeedScreenModel.State>(State()) {
 
     private val feedJobs = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.Job>()
-    private val lastTopUrls = java.util.concurrent.ConcurrentHashMap<Long, String>()
 
     init {
         screenModelScope.launchIO {
@@ -82,6 +82,12 @@ class FeedScreenModel(
                     setupFeedSubscriptions(updatedCategories)
                 }
                 .launchIn(screenModelScope)
+        }
+    }
+
+    fun onAnimeClicked(anime: Anime, feedId: Long?) {
+        screenModelScope.launchIO {
+            logActivity.await(anime.source, ActivityLog.TYPE_OPEN, feedId = feedId)
         }
     }
 
@@ -168,9 +174,9 @@ class FeedScreenModel(
                                                 }
                                             }.awaitAll().filterNotNull().distinctBy { it.id }.toImmutableList()
 
-                                            // Delta tracking for stats
+                                            // Delta tracking for stats (PERSISTENT)
                                             val currentTopUrl = results.firstOrNull()?.url
-                                            val previousTopUrl = lastTopUrls[feed.id]
+                                            val previousTopUrl = feed.lastTopUrl
                                             if (currentTopUrl != null && currentTopUrl != previousTopUrl) {
                                                 val newItemsCount = if (previousTopUrl == null) {
                                                     results.size
@@ -182,7 +188,12 @@ class FeedScreenModel(
                                                 if (newItemsCount > 0) {
                                                     logActivity.await(source.id, ActivityLog.TYPE_FEED_UPDATE, feedId = feed.id, count = newItemsCount.toLong())
                                                 }
-                                                lastTopUrls[feed.id] = currentTopUrl
+                                                updateFeedSavedSearch.await(
+                                                    tachiyomi.domain.source.model.FeedSavedSearchUpdate(
+                                                        id = feed.id,
+                                                        lastTopUrl = currentTopUrl
+                                                    )
+                                                )
                                             }
 
                                             loadedAnime = animeList

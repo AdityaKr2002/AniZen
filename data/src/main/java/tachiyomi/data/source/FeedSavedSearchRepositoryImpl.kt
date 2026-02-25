@@ -54,11 +54,12 @@ class FeedSavedSearchRepositoryImpl(
         // KMK -->
         return handler.awaitOneExecutable(true) {
             feed_saved_searchQueries.insert(
-                feedSavedSearch.source,
-                feedSavedSearch.savedSearch,
-                feedSavedSearch.global,
-                feedSavedSearch.type.toLong(),
-                feedSavedSearch.category,
+                sourceId = feedSavedSearch.source,
+                savedSearch = feedSavedSearch.savedSearch,
+                global = feedSavedSearch.global,
+                searchType = feedSavedSearch.type.toLong(),
+                category = feedSavedSearch.category,
+                lastTopUrl = feedSavedSearch.lastTopUrl,
             )
             feed_saved_searchQueries.selectLastInsertedRowId()
         }
@@ -68,11 +69,12 @@ class FeedSavedSearchRepositoryImpl(
         return handler.await(true) {
             feedSavedSearch.forEach {
                 feed_saved_searchQueries.insert(
-                    it.source,
-                    it.savedSearch,
-                    it.global,
-                    it.type.toLong(),
-                    it.category,
+                    sourceId = it.source,
+                    savedSearch = it.savedSearch,
+                    global = it.global,
+                    searchType = it.type.toLong(),
+                    category = it.category,
+                    lastTopUrl = it.lastTopUrl,
                 )
             }
         }
@@ -102,6 +104,7 @@ class FeedSavedSearchRepositoryImpl(
             feed_order = update.feedOrder,
             search_type = update.searchType,
             category = update.category,
+            last_top_url = update.lastTopUrl,
             id = update.id,
         )
     }

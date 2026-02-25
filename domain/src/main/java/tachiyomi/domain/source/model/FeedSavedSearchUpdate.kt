@@ -17,4 +17,5 @@ data class FeedSavedSearchUpdate(
     val feedOrder: Long? = null,
     val searchType: Long? = null,
     val category: Long? = null,
+    val lastTopUrl: String? = null,
 )

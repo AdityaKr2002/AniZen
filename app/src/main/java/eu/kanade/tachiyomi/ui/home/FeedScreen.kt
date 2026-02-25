@@ -63,7 +63,7 @@ import tachiyomi.presentation.core.util.secondaryItemAlpha
 @Composable
 fun FeedScreen(
     screenModel: FeedScreenModel,
-    onAnimeClick: (Anime) -> Unit,
+    onAnimeClick: (Anime, Long?) -> Unit,
     onAddSourceClick: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -185,7 +185,7 @@ fun FeedScreen(
                     ) { item ->
                         FeedIsland(
                             item = item,
-                            onAnimeClick = onAnimeClick,
+                            onAnimeClick = { onAnimeClick(it, item.feed.id) },
                         )
                     }
                 }
