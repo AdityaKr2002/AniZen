@@ -83,6 +83,7 @@ data class ExtensionInfo(
 data class SourceActivity(
     val sourceId: Long,
     val sourceName: String,
+    val feedName: String,
     val fetchCount: Int,
     val openCount: Int,
     val playCount: Int,

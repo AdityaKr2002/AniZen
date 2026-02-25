@@ -8,6 +8,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.util.fastCountNot
 import eu.kanade.core.util.fastFilterNot
 import eu.kanade.domain.ai.AiPreferences
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.more.stats.StatsScreenState
 import eu.kanade.presentation.more.stats.data.*
 import eu.kanade.tachiyomi.network.model.*
@@ -49,6 +50,7 @@ class StatsScreenModel(
     private val sourceManager: SourceManager = Injekt.get(),
     private val extensionManager: eu.kanade.tachiyomi.extension.ExtensionManager = Injekt.get(),
     private val getActivityLog: tachiyomi.domain.history.interactor.GetActivityLog = Injekt.get(),
+    private val uiPreferences: UiPreferences = Injekt.get(),
     private val aiPreferences: AiPreferences = Injekt.get(),
 ) : StateScreenModel<StatsScreenState>(StatsScreenState.Loading) {
 
@@ -220,7 +222,9 @@ class StatsScreenModel(
         }
     }
 
-    private suspend fun calculateFeedActivity(): StatsData.FeedActivity {
+    private suspend fun calculateFeedActivity(): StatsData.FeedActivity? {
+        if (!uiPreferences.enableFeed().get()) return null
+
         val now = Calendar.getInstance()
         val today = (now.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
         val sevenDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -7) }.time
