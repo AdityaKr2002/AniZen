@@ -64,6 +64,7 @@ enum class AnimeCover(val ratio: Float) {
     @Composable
     operator fun invoke(
         data: Any?,
+        ratio: Float,
         modifier: Modifier = Modifier,
         contentDescription: String = "",
         shape: Shape = MaterialTheme.shapes.medium,
@@ -167,17 +168,20 @@ enum class AnimeCover(val ratio: Float) {
 
         @Composable
         fun getRatio(animeId: Long): Float {
-            return getEntry(animeId).ratio
+            return getEntry(animeId).second
         }
 
         @Composable
-        fun getEntry(animeId: Long): AnimeCover {
+        fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val usePanorama = uiPreferences.panoramaCover().collectAsStatePref().value
-            if (!usePanorama) return Book
-            val ratios = CoverColorObserver.ratios.collectAsStateFlow().value
-            val ratio = ratios[animeId] ?: Book.ratio
-            return if (ratio > RatioSwitchToPanorama) Panorama else Book
+            val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            
+            return remember(animeId, usePanorama, ratios) {
+                val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+                val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
+                entry to ratio
+            }
         }
     }
 }

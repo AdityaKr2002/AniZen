@@ -96,7 +96,7 @@ fun AnimeCompactGridItem(
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val entry = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
         AnimeGridCover(
             cover = {
                 entry(
@@ -104,9 +104,10 @@ fun AnimeCompactGridItem(
                         .fillMaxWidth()
                         .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                     data = coverData,
+                    ratio = ratio,
                 )
             },
-            ratio = entry.ratio,
+            ratio = ratio,
             badgesStart = coverBadgeStart,
             badgesEnd = coverBadgeEnd,
             content = {
@@ -204,7 +205,7 @@ fun AnimeComfortableGridItem(
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val entry = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
         Column {
             AnimeGridCover(
                 cover = {
@@ -213,9 +214,10 @@ fun AnimeComfortableGridItem(
                             .fillMaxWidth()
                             .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                         data = coverData,
+                        ratio = ratio,
                     )
                 },
-                ratio = entry.ratio,
+                ratio = ratio,
                 badgesStart = coverBadgeStart,
                 badgesEnd = coverBadgeEnd,
                 content = {
@@ -411,12 +413,13 @@ fun AnimeListItem(
             .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val entry = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
         entry(
             modifier = Modifier
                 .fillMaxHeight()
                 .graphicsLayer { alpha = coverAlpha },
             data = coverData,
+            ratio = ratio,
         )
         Text(
             text = title,
