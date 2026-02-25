@@ -354,7 +354,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             .sortedByDescending { it.sourceOrder }
 
                                         if (newEpisodes.isNotEmpty()) {
-                                            logActivity.await(anime.source, ActivityLog.TYPE_FETCH)
+                                            logActivity.await(anime.source, ActivityLog.TYPE_FETCH, count = newEpisodes.size.toLong())
                                             val episodesToDownload = filterEpisodesForDownload.await(anime, newEpisodes)
 
                                             if (episodesToDownload.isNotEmpty()) {
