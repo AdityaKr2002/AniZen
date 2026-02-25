@@ -5,7 +5,7 @@ import java.util.Date
 data class ActivityLog(
     val id: Long,
     val sourceId: Long,
-    val type: Int,
+    val eventType: Int,
     val timestamp: Date,
 ) {
     companion object {
