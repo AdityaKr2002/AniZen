@@ -101,7 +101,9 @@ class BrowseSourceScreenModel(
     val source = sourceManager.getOrStub(sourceId)
 
     init {
-        logActivity.awaitIO(sourceId, ActivityLog.TYPE_OPEN)
+        screenModelScope.launchIO {
+            logActivity.awaitIO(sourceId, ActivityLog.TYPE_OPEN)
+        }
         if (source is CatalogueSource) {
             mutableState.update {
                 var query: String? = null
