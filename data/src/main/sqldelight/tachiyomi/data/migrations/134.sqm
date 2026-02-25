@@ -1,0 +1,18 @@
+-- Create activity_log table
+CREATE TABLE activity_log(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    source_id INTEGER NOT NULL,
+    feed_id INTEGER,
+    anime_id INTEGER,
+    event_type INTEGER NOT NULL,
+    count INTEGER,
+    timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX activity_log_source_id_index ON activity_log(source_id);
+CREATE INDEX activity_log_timestamp_index ON activity_log(timestamp);
+CREATE INDEX activity_log_feed_id_index ON activity_log(feed_id);
+CREATE INDEX activity_log_anime_id_index ON activity_log(anime_id);
+
+-- Add last_top_url to feed_saved_search
+ALTER TABLE feed_saved_search ADD COLUMN last_top_url TEXT;
