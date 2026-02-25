@@ -59,6 +59,18 @@ class FeedScreenModel(
                 categories = getFeedSavedSearchCategories.await()
             }
             mutableState.update { it.copy(categories = categories.toImmutableList()) }
+            
+            // Pre-initialize empty maps for all categories to ensure they show up
+            mutableState.update { state ->
+                val newItems = state.items.toMutableMap()
+                categories.forEach { category ->
+                    if (!newItems.containsKey(category.id)) {
+                        newItems[category.id] = persistentListOf()
+                    }
+                }
+                state.copy(items = newItems.toImmutableMap())
+            }
+
             setupFeedSubscriptions(categories)
 
             getFeedSavedSearchCategories.subscribe()
