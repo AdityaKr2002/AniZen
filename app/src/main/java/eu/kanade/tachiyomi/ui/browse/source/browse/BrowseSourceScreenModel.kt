@@ -63,6 +63,8 @@ import tachiyomi.domain.source.interactor.GetSavedSearchBySourceId
 import tachiyomi.domain.source.interactor.InsertSavedSearch
 import tachiyomi.domain.source.model.SavedSearch
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.history.interactor.LogActivity
+import tachiyomi.domain.history.model.ActivityLog
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
@@ -99,7 +101,7 @@ class BrowseSourceScreenModel(
     val source = sourceManager.getOrStub(sourceId)
 
     init {
-        logActivity.awaitIO(sourceId, tachiyomi.domain.history.model.ActivityLog.TYPE_OPEN)
+        logActivity.awaitIO(sourceId, ActivityLog.TYPE_OPEN)
         if (source is CatalogueSource) {
             mutableState.update {
                 var query: String? = null
