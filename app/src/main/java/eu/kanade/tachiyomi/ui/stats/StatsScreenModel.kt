@@ -32,11 +32,17 @@ import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import tachiyomi.domain.history.interactor.GetActivityLog
 import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.history.model.ActivityLog
 import tachiyomi.domain.source.model.FeedSavedSearch
 import tachiyomi.domain.source.service.SourceManager
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.util.Calendar
 
 class StatsScreenModel(
@@ -213,25 +219,45 @@ class StatsScreenModel(
                     watchHabits = watchHabits,
                     scores = scoreDistribution,
                     statuses = statusBreakdown,
-                    feedActivity = feedActivity,
+                    feedActivity = null, // Will be updated by subscription
                     infrastructure = infrastructure,
                     aiAnalysis = aiPreferences.lastStatsAnalysis().get().takeIf { it.isNotBlank() },
                     isAiLoading = false,
                 )
             }
+
+            // Reactive Feed Statistics
+            uiPreferences.enableFeed().changes()
+                .flatMapLatest { enabled ->
+                    if (!enabled) return@flatMapLatest flowOf(null)
+                    
+                    val thirtyDaysAgo = Calendar.getInstance().apply {
+                        add(Calendar.DAY_OF_YEAR, -30)
+                    }.time
+                    
+                    getActivityLog.subscribeByPeriod(thirtyDaysAgo)
+                        .combine(Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().subscribe()) { logs, feeds ->
+                            calculateFeedActivity(logs, feeds)
+                        }
+                }
+                .onEach { feedActivity ->
+                    mutableState.update { state ->
+                        if (state is StatsScreenState.SuccessAnime) {
+                            state.copy(feedActivity = feedActivity)
+                        } else {
+                            state
+                        }
+                    }
+                }
+                .launchIn(screenModelScope)
         }
     }
 
-    private suspend fun calculateFeedActivity(): StatsData.FeedActivity? {
-        if (!uiPreferences.enableFeed().get()) return null
-
+    private fun calculateFeedActivity(allLogs: List<ActivityLog>, feedSavedSearches: List<FeedSavedSearch>): StatsData.FeedActivity {
         val now = Calendar.getInstance()
         val today = (now.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.time
         val sevenDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -7) }.time
         val thirtyDaysAgo = (now.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -30) }.time
-        
-        val allLogs = getActivityLog.awaitByPeriod(thirtyDaysAgo)
-        val feedSavedSearches = Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().await()
         
         val activity = allLogs
             .filter { it.eventType == ActivityLog.TYPE_FETCH || it.eventType == ActivityLog.TYPE_FEED_UPDATE }

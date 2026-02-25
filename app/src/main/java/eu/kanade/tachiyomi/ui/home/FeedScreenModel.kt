@@ -32,6 +32,8 @@ import tachiyomi.domain.source.model.FeedSavedSearch
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
 import tachiyomi.domain.source.model.SavedSearch
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.history.interactor.LogActivity
+import tachiyomi.domain.history.model.ActivityLog
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -43,6 +45,7 @@ class FeedScreenModel(
     private val getAnime: GetAnime = Injekt.get(),
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
+    private val logActivity: LogActivity = Injekt.get(),
 ) : StateScreenModel<FeedScreenModel.State>(State()) {
 
     private val feedJobs = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.Job>()
@@ -124,6 +127,10 @@ class FeedScreenModel(
                                                 networkToLocalAnime.await(domainAnime)
                                             }
                                         }.awaitAll()
+
+                                        if (animeList.isNotEmpty()) {
+                                            logActivity.await(source.id, ActivityLog.TYPE_FEED_UPDATE, feedId = feed.id, count = animeList.size.toLong())
+                                        }
 
                                         FeedItem(
                                             feed = feed,
