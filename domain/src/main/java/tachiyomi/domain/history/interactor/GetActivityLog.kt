@@ -20,4 +20,8 @@ class GetActivityLog(
     fun subscribeByPeriod(after: Date): Flow<List<ActivityLog>> {
         return repository.subscribeByPeriod(after)
     }
+
+    suspend fun awaitRemoveOldActivity(before: Date) {
+        repository.removeOldActivity(before)
+    }
 }

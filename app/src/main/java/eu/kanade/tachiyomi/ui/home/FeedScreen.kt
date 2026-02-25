@@ -136,12 +136,14 @@ fun FeedScreen(
             val category = visibleCategories.getOrNull(page) ?: return@HorizontalPager
             val items = state.items[category.id]
 
-            val listPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = contentPadding.calculateBottomPadding() + 8.dp
-            )
+            val listPadding = remember(paddingValues, contentPadding) {
+                PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = contentPadding.calculateBottomPadding() + 8.dp
+                )
+            }
 
             if (items == null) {
                 // Initial loading of the structure

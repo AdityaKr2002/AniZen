@@ -164,6 +164,10 @@ class StatsScreenModel(
                 distribution = getCombinedScoreDistribution(distinctLibraryAnime, scoredAnimeTrackerMap)
             )
 
+            // Cleanup old logs (older than 30 days) to prevent database bloat
+            val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+            getActivityLog.awaitRemoveOldActivity(thirtyDaysAgo)
+
             // Status Breakdown
             val statusBreakdown = run {
                 var completed = 0
