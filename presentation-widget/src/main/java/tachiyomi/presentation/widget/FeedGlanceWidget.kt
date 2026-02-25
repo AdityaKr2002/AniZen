@@ -93,7 +93,7 @@ class FeedGlanceWidget(
             }
 
             val flow = remember {
-                getUpdates.subscribeAll(ZonedDateTime.now().minusMonths(3).toInstant().toEpochMilli())
+                getUpdates.subscribe(ZonedDateTime.now().minusMonths(3).toInstant())
                     .map { updates ->
                         val animeList = updates
                             .distinctBy { it.animeId }
@@ -111,7 +111,7 @@ class FeedGlanceWidget(
                     }
             }
 
-            val data by flow.collectAsState(initial = null)
+            val data by flow.collectAsState(initial = null as ImmutableList<Pair<Long, Bitmap?>>?)
             UpdatesWidget(
                 data = data,
                 contentColor = foreground,

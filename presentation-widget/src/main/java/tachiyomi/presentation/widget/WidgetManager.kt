@@ -21,7 +21,7 @@ class WidgetManager(
 
     fun Context.init(scope: LifecycleCoroutineScope) {
         combine(
-            getUpdates.subscribeAll(after = BaseUpdatesGridGlanceWidget.DateLimit.toEpochMilli()),
+            getUpdates.subscribe(BaseUpdatesGridGlanceWidget.DateLimit),
             securityPreferences.useAuthenticator().changes(),
             transform = { a, b -> a to b },
         )
