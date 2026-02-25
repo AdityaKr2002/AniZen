@@ -32,6 +32,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 import tachiyomi.domain.history.interactor.GetHistory
+import tachiyomi.domain.history.model.ActivityLog
 import tachiyomi.domain.source.service.SourceManager
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
