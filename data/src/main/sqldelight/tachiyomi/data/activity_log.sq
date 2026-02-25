@@ -20,7 +20,7 @@ FROM activity_log
 WHERE timestamp >= :after;
 
 getCountsByPeriod:
-SELECT source_id, type, count(*) as count
+SELECT source_id, type, count(*) as event_count
 FROM activity_log
 WHERE timestamp >= :after
 GROUP BY source_id, type;

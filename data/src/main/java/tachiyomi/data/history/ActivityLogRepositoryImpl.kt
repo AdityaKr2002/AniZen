@@ -27,8 +27,8 @@ class ActivityLogRepositoryImpl(
     override suspend fun getCountsByPeriod(after: Date): Map<Pair<Long, Int>, Long> {
         return handler.awaitList {
             activity_logQueries.getCountsByPeriod(after)
-        }.associate { (source_id, type, count) ->
-            Pair(source_id, type.toInt()) to count
+        }.associate { (source_id, type, event_count) ->
+            Pair(source_id, type.toInt()) to event_count
         }
     }
 
