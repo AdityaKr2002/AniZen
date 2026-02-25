@@ -16,7 +16,7 @@ plugins {
 }
 
 detekt {
-    toolVersion = libs.versions.detekt.get()
+    toolVersion = libs.versions.detekt.asProvider().get()
     config.setFrom(file("config/detekt/detekt.yml"))
     baseline = file("config/detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
