@@ -83,6 +83,19 @@ fun FeedScreen(
         }
     }
 
+    if (state.categories.isEmpty() || (visibleCategories.isEmpty() && state.items.isEmpty())) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding + PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            items(3) {
+                SkeletonFeedIsland()
+            }
+        }
+        return
+    }
+
     if (visibleCategories.isEmpty()) {
          // If Global is hidden and no other categories exist, show empty state (effectively Global's empty state)
          Column(
@@ -157,7 +170,7 @@ fun FeedScreen(
                     )
                 }
 
-                if (items == null) {
+                if (items == null || (items.isEmpty() && state.items[category.id]?.isEmpty() == true)) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = listPadding,
@@ -167,7 +180,7 @@ fun FeedScreen(
                             SkeletonFeedIsland()
                         }
                     }
-                } else if (items.isEmpty()) {
+                } else if (items.isEmpty() && state.items.isEmpty()) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
