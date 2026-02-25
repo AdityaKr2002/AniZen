@@ -9,6 +9,7 @@ sqlite = "2.5.2"
 voyager = "1.1.0-beta03"
 spotless = "7.2.1"
 detekt = "1.23.7"
+detekt-compose = "0.4.22"
 ktlint-core = "1.5.0"
 firebase-bom = "33.16.0"
 markdown = "0.35.0"
@@ -106,6 +107,9 @@ voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", vers
 
 spotless-gradle = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 ktlint-core = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint-core" }
+
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+detekt-compose = { module = "io.nlopez.compose.rules:detekt", version.ref = "detekt-compose" }
 
 markdown-core = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "markdown" }
 markdown-coil = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "markdown" }
