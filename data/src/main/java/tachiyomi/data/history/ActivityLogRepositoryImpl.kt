@@ -10,11 +10,13 @@ class ActivityLogRepositoryImpl(
     private val handler: DatabaseHandler,
 ) : ActivityLogRepository {
 
-    override suspend fun insert(sourceId: Long, eventType: Int, timestamp: Date) {
+    override suspend fun insert(sourceId: Long, feedId: Long?, eventType: Int, count: Long?, timestamp: Date) {
         handler.await {
             activity_logQueries.insert(
                 sourceId = sourceId,
+                feedId = feedId,
                 eventType = eventType.toLong(),
+                count = count,
                 timestamp = timestamp
             )
         }
@@ -22,24 +24,27 @@ class ActivityLogRepositoryImpl(
 
     override suspend fun getActivityByPeriod(after: Date): List<ActivityLog> {
         return handler.awaitList {
-            activity_logQueries.getActivityByPeriod(after) { id, sourceId, event_type, ts ->
-                ActivityLog(id, sourceId, event_type.toInt(), ts)
+            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, event_type, count, ts ->
+                ActivityLog(id, sourceId, feedId, event_type.toInt(), count, ts)
             }
         }
     }
 
     override suspend fun getCountsByPeriod(after: Date): Map<Pair<Long, Int>, Long> {
+        // Simplified for stats: Group by (sourceId, eventType) and sum the count/event_count
         return handler.awaitList {
             activity_logQueries.getCountsByPeriod(after)
-        }.associate { (source_id, event_type, count) ->
-            Pair(source_id, event_type.toInt()) to count
+        }.associate { (source_id, _, event_type, total_count, event_count) ->
+            // Use total_count if available (for items), otherwise use event_count (for occurrences)
+            val resultCount = total_count ?: event_count
+            Pair(source_id, event_type.toInt()) to resultCount.toLong()
         }
     }
 
     override fun subscribeByPeriod(after: Date): Flow<List<ActivityLog>> {
         return handler.subscribeToList {
-            activity_logQueries.getActivityByPeriod(after) { id, sourceId, event_type, ts ->
-                ActivityLog(id, sourceId, event_type.toInt(), ts)
+            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, event_type, count, ts ->
+                ActivityLog(id, sourceId, feedId, event_type.toInt(), count, ts)
             }
         }
     }

@@ -543,16 +543,16 @@ private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.S
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ActivityLegendItem(Color(0xFF4CAF50), "Today", activity.playCount) // Today is playCount
-            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "7 Days", activity.openCount) // 7d is openCount
-            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "30 Days", activity.fetchCount) // 30d is fetchCount
+            ActivityLegendItem(Color(0xFF4CAF50), "Today", activity.playCount, forceShow = true) // Always show today label
+            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "7 Days", activity.openCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "30 Days", activity.fetchCount)
         }
     }
 }
 
 @Composable
-private fun ActivityLegendItem(color: Color, label: String, count: Int) {
-    if (count > 0) {
+private fun ActivityLegendItem(color: Color, label: String, count: Int, forceShow: Boolean = false) {
+    if (count > 0 || forceShow) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
             Spacer(modifier = Modifier.width(4.dp))
