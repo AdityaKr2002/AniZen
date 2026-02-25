@@ -93,33 +93,50 @@ class FeedScreenModel(
                         // Fetch saved searches for the current category
                         val savedSearches = getSavedSearchGlobalFeed.await(category.id)
                         
-                        val feedItems = coroutineScope {
-                            feedSavedSearches.map { feed ->
-                                async {
-                                    val source = sourceManager.get(feed.source) as? AnimeCatalogueSource
-                                    if (source != null) {
-                                        val results = try {
-                                            when (FeedSavedSearch.Type.from(feed.type)) {
-                                                FeedSavedSearch.Type.Latest -> {
-                                                    try {
-                                                        source.getLatestUpdates(1).animes
-                                                    } catch (e: Exception) {
-                                                        source.getPopularAnime(1).animes
-                                                    }
-                                                }
-                                                FeedSavedSearch.Type.Popular -> source.getPopularAnime(1).animes
-                                                FeedSavedSearch.Type.SavedSearch -> {
-                                                    val savedSearch = savedSearches.find { it.id == feed.savedSearch }
-                                                    if (savedSearch != null) {
-                                                        val filters = source.getFilterList()
-                                                        source.getSearchAnime(1, savedSearch.query ?: "", filters).animes
-                                                    } else {
-                                                        emptyList()
-                                                    }
+                        // Pre-initialize with placeholders to establish containers immediately
+                        val placeholders = feedSavedSearches.mapNotNull { feed ->
+                            val source = sourceManager.get(feed.source) as? AnimeCatalogueSource ?: return@mapNotNull null
+                            FeedItem(
+                                feed = feed,
+                                source = source,
+                                savedSearch = savedSearches.find { it.id == feed.savedSearch },
+                                animeList = persistentListOf(),
+                            )
+                        }
+                        mutableState.update { state ->
+                            val newItems = state.items.toMutableMap()
+                            newItems[category.id] = placeholders.toImmutableList()
+                            state.copy(items = newItems.toImmutableMap())
+                        }
+
+                        feedSavedSearches.forEach { feed ->
+                            launch { // Launch each feed fetch in parallel
+                                val source = sourceManager.get(feed.source) as? AnimeCatalogueSource
+                                if (source == null) return@launch
+
+                                var retryCount = 0
+                                var feedItem: FeedItem? = null
+
+                                while (retryCount < 3 && feedItem == null) {
+                                    try {
+                                        val results = when (FeedSavedSearch.Type.from(feed.type)) {
+                                            FeedSavedSearch.Type.Latest -> {
+                                                try {
+                                                    source.getLatestUpdates(1).animes
+                                                } catch (e: Exception) {
+                                                    source.getPopularAnime(1).animes
                                                 }
                                             }
-                                        } catch (e: Exception) {
-                                            emptyList()
+                                            FeedSavedSearch.Type.Popular -> source.getPopularAnime(1).animes
+                                            FeedSavedSearch.Type.SavedSearch -> {
+                                                val savedSearch = savedSearches.find { it.id == feed.savedSearch }
+                                                if (savedSearch != null) {
+                                                    val filters = source.getFilterList()
+                                                    source.getSearchAnime(1, savedSearch.query ?: "", filters).animes
+                                                } else {
+                                                    emptyList()
+                                                }
+                                            }
                                         }
 
                                         val animeList = results.map {
@@ -145,23 +162,33 @@ class FeedScreenModel(
                                             lastTopUrls[feed.id] = currentTopUrl
                                         }
 
-                                        FeedItem(
+                                        feedItem = FeedItem(
                                             feed = feed,
                                             source = source,
                                             savedSearch = savedSearches.find { it.id == feed.savedSearch },
                                             animeList = animeList.distinctBy { it.id }.toImmutableList(),
                                         )
-                                    } else {
-                                        null
+                                    } catch (e: Exception) {
+                                        retryCount++
+                                        if (retryCount < 3) {
+                                            kotlinx.coroutines.delay(1000L * retryCount)
+                                        }
                                     }
                                 }
-                            }.awaitAll().filterNotNull()
-                        }
 
-                        mutableState.update { state ->
-                            val newItems = state.items.toMutableMap()
-                            newItems[category.id] = feedItems.toImmutableList()
-                            state.copy(items = newItems.toImmutableMap())
+                                if (feedItem != null) {
+                                    mutableState.update { state ->
+                                        val currentCategoryItems = state.items[category.id] ?: persistentListOf()
+                                        // Update or add the new item and maintain original order
+                                        val newCategoryItems = (currentCategoryItems.filterNot { it.feed.id == feed.id } + feedItem)
+                                            .sortedBy { item -> feedSavedSearches.indexOfFirst { it.id == item.feed.id } }
+                                        
+                                        val newItems = state.items.toMutableMap()
+                                        newItems[category.id] = newCategoryItems.toImmutableList()
+                                        state.copy(items = newItems.toImmutableMap())
+                                    }
+                                }
+                            }
                         }
                     }
                 }
