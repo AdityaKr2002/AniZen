@@ -45,6 +45,7 @@ import tachiyomi.domain.anime.model.AnimeCover
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.presentation.widget.R
 import tachiyomi.presentation.widget.components.CoverHeight
 import tachiyomi.presentation.widget.components.CoverWidth
 import tachiyomi.presentation.widget.components.LockedWidget
@@ -78,6 +79,14 @@ class FeedGlanceWidget(
             .padding(top = topPadding, bottom = bottomPadding)
             .appWidgetBackgroundRadius()
 
+        val manager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
+        val ids = manager.getGlanceIds(javaClass)
+        val (rowCount, columnCount) = ids
+            .flatMap { manager.getAppWidgetSizes(it) }
+            .maxByOrNull { it.height.value * it.width.value }
+            ?.calculateRowAndColumnCount(topPadding, bottomPadding)
+            ?: Pair(2, 4)
+
         provideContent {
             if (locked) {
                 LockedWidget(foreground = foreground, modifier = containerModifier)
@@ -93,13 +102,9 @@ class FeedGlanceWidget(
                     if (!isInitialized) return@map null
                     val category = categories.firstOrNull() ?: return@map null
                     val feedItems = getFeedSavedSearchGlobal.await(category.id)
-                    // Simplify: take first source's latest
-                    val firstFeed = feedItems.firstOrNull() ?: return@map null
-                    val source = sourceManager.get(firstFeed.source) as? AnimeCatalogueSource ?: return@map null
                     
-                    // Note: In real implementation we'd need to fetch actual data.
-                    // For the widget, we'll reuse UpdatesWidget UI which takes Pairs of (Id, Bitmap).
-                    emptyList<Pair<Long, Bitmap?>>().toImmutableList()
+                    val animeList = feedItems.flatMap { it.animeList }.distinctBy { it.id }
+                    animeList.prepareData(rowCount, columnCount)
                 }
             }
 
@@ -111,6 +116,50 @@ class FeedGlanceWidget(
                 bottomPadding = bottomPadding,
                 modifier = containerModifier,
             )
+        }
+    }
+
+    @OptIn(ExperimentalCoilApi::class)
+    private suspend fun List<Anime>.prepareData(
+        rowCount: Int,
+        columnCount: Int,
+    ): ImmutableList<Pair<Long, Bitmap?>> {
+        val widthPx = CoverWidth.value.toInt().dpToPx
+        val heightPx = CoverHeight.value.toInt().dpToPx
+        val roundPx = context.resources.getDimension(R.dimen.appwidget_inner_radius)
+        return withIOContext {
+            this@prepareData
+                .take(rowCount * columnCount)
+                .map { anime ->
+                    val request = ImageRequest.Builder(context)
+                        .data(
+                            AnimeCover(
+                                animeId = anime.id,
+                                sourceId = anime.source,
+                                isAnimeFavorite = anime.favorite,
+                                ogUrl = anime.thumbnailUrl,
+                                lastModified = anime.coverLastModified,
+                            ),
+                        )
+                        .memoryCachePolicy(CachePolicy.DISABLED)
+                        .precision(Precision.EXACT)
+                        .size(widthPx, heightPx)
+                        .scale(Scale.FILL)
+                        .let {
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                                it.transformations(RoundedCornersTransformation(roundPx))
+                            } else {
+                                it
+                            }
+                        }
+                        .build()
+                    val bitmap = context.imageLoader.executeBlocking(request)
+                        .image
+                        ?.asDrawable(context.resources)
+                        ?.toBitmap()
+                    Pair(anime.id, bitmap)
+                }
+                .toImmutableList()
         }
     }
 }
