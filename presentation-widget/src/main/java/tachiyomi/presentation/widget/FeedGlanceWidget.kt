@@ -42,7 +42,7 @@ import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
-import tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal
+import tachiyomi.domain.updates.interactor.GetUpdates
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.presentation.widget.R
 import tachiyomi.presentation.widget.components.CoverHeight
@@ -53,10 +53,11 @@ import tachiyomi.presentation.widget.util.appWidgetBackgroundRadius
 import tachiyomi.presentation.widget.util.calculateRowAndColumnCount
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.time.ZonedDateTime
 
 class FeedGlanceWidget(
     private val context: Context = Injekt.get<Application>(),
-    private val getFeedSavedSearchGlobal: GetFeedSavedSearchGlobal = Injekt.get(),
+    private val getUpdates: GetUpdates = Injekt.get(),
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val securityPreferences: SecurityPreferences = Injekt.get(),
@@ -64,7 +65,7 @@ class FeedGlanceWidget(
 
     override val sizeMode = SizeMode.Exact
 
-    private val foreground = ColorProvider(day = Color.Black, night = Color.White)
+    private val foreground = ColorProvider(R.color.appwidget_on_secondary_container)
     private val background = ImageProvider(R.drawable.appwidget_background)
     private val topPadding = 16.dp
     private val bottomPadding = 16.dp
@@ -93,18 +94,20 @@ class FeedGlanceWidget(
             }
 
             val flow = remember {
-                combine(
-                    getFeedSavedSearchCategories.subscribe(),
-                    sourceManager.isInitialized,
-                    ::Pair
-                ).map { (categories, isInitialized) ->
-                    if (!isInitialized) return@map null
-                    val category = categories.firstOrNull() ?: return@map null
-                    val feedItems = getFeedSavedSearchGlobal.await(category.id)
-                    
-                    val animeList = feedItems.flatMap { it.animeList }.distinctBy { it.id }
-                    animeList.prepareData(rowCount, columnCount)
-                }
+                getUpdates.subscribe(false, ZonedDateTime.now().minusMonths(3).toInstant().toEpochMilli())
+                    .map { updates ->
+                        val animeList = updates.map { 
+                            Anime.create().copy(
+                                id = it.animeId,
+                                source = it.sourceId,
+                                favorite = true,
+                                coverLastModified = it.coverData.lastModified,
+                                ogTitle = it.animeTitle,
+                                ogThumbnailUrl = it.coverData.url,
+                            )
+                        }
+                        prepareAnimeData(animeList, rowCount, columnCount)
+                    }
             }
 
             val data by flow.collectAsState(initial = null)
@@ -119,7 +122,8 @@ class FeedGlanceWidget(
     }
 
     @OptIn(ExperimentalCoilApi::class)
-    private suspend fun List<Anime>.prepareData(
+    private suspend fun prepareAnimeData(
+        animeList: List<Anime>,
         rowCount: Int,
         columnCount: Int,
     ): ImmutableList<Pair<Long, Bitmap?>> {
@@ -127,7 +131,7 @@ class FeedGlanceWidget(
         val heightPx = CoverHeight.value.toInt().dpToPx
         val roundPx = context.resources.getDimension(R.dimen.appwidget_inner_radius)
         return withIOContext {
-            this@prepareData
+            animeList
                 .take(rowCount * columnCount)
                 .map { anime ->
                     val request = ImageRequest.Builder(context)
