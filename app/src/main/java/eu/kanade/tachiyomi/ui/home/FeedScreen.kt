@@ -52,6 +52,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.components.SkeletonFeedIsland
+import tachiyomi.presentation.core.util.plus
 
 @Composable
 fun FeedScreen(
