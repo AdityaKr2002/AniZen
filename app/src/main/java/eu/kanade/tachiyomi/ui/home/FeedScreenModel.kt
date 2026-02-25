@@ -34,6 +34,8 @@ import tachiyomi.domain.source.model.SavedSearch
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.history.interactor.LogActivity
 import tachiyomi.domain.history.model.ActivityLog
+import logcat.LogPriority
+import tachiyomi.core.common.util.system.logcat
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
