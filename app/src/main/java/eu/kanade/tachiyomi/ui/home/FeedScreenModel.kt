@@ -87,7 +87,7 @@ class FeedScreenModel(
 
     fun onAnimeClicked(anime: Anime, feedId: Long?) {
         screenModelScope.launchIO {
-            logActivity.await(anime.source, ActivityLog.TYPE_OPEN, feedId = feedId)
+            logActivity.await(anime.source, ActivityLog.TYPE_OPEN, feedId = feedId, animeId = anime.id)
         }
     }
 

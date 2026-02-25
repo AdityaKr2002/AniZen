@@ -272,10 +272,10 @@ class StatsScreenModel(
                     sourceId = sourceId,
                     sourceName = "${source.name}$feedLabel",
                     feedName = feedLabel.trim().removeSurrounding("(", ")").ifBlank { "Library" },
-                    fetchCount = 0, // Unused: Publication count removed
-                    openCount = logs.count { it.eventType == ActivityLog.TYPE_OPEN },
-                    playCount = logs.count { it.eventType == ActivityLog.TYPE_PLAY },
-                    completeCount = logs.count { it.eventType == ActivityLog.TYPE_COMPLETE },
+                    fetchCount = 0, // Unused
+                    openCount = logs.filter { it.eventType == ActivityLog.TYPE_OPEN }.mapNotNull { it.animeId }.distinct().size,
+                    playCount = logs.filter { it.eventType == ActivityLog.TYPE_PLAY }.mapNotNull { it.animeId }.distinct().size,
+                    completeCount = logs.filter { it.eventType == ActivityLog.TYPE_COMPLETE }.mapNotNull { it.animeId }.distinct().size,
                 )
             }
             .filter { it.openCount + it.playCount + it.completeCount > 0 }

@@ -6,6 +6,7 @@ data class ActivityLog(
     val id: Long,
     val sourceId: Long,
     val feedId: Long?,
+    val animeId: Long?,
     val eventType: Int,
     val count: Long?,
     val timestamp: Date,

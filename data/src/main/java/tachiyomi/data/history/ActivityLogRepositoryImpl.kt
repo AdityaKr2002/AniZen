@@ -10,11 +10,12 @@ class ActivityLogRepositoryImpl(
     private val handler: DatabaseHandler,
 ) : ActivityLogRepository {
 
-    override suspend fun insert(sourceId: Long, feedId: Long?, eventType: Int, count: Long?, timestamp: Date) {
+    override suspend fun insert(sourceId: Long, feedId: Long?, animeId: Long?, eventType: Int, count: Long?, timestamp: Date) {
         handler.await {
             activity_logQueries.insert(
                 sourceId = sourceId,
                 feedId = feedId,
+                animeId = animeId,
                 eventType = eventType.toLong(),
                 count = count,
                 timestamp = timestamp
@@ -24,8 +25,8 @@ class ActivityLogRepositoryImpl(
 
     override suspend fun getActivityByPeriod(after: Date): List<ActivityLog> {
         return handler.awaitList {
-            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, event_type, count, ts ->
-                ActivityLog(id, sourceId, feedId, event_type.toInt(), count, ts)
+            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, animeId, event_type, count, ts ->
+                ActivityLog(id, sourceId, feedId, animeId, event_type.toInt(), count, ts)
             }
         }
     }
@@ -43,8 +44,8 @@ class ActivityLogRepositoryImpl(
 
     override fun subscribeByPeriod(after: Date): Flow<List<ActivityLog>> {
         return handler.subscribeToList {
-            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, event_type, count, ts ->
-                ActivityLog(id, sourceId, feedId, event_type.toInt(), count, ts)
+            activity_logQueries.getActivityByPeriod(after) { id, sourceId, feedId, animeId, event_type, count, ts ->
+                ActivityLog(id, sourceId, feedId, animeId, event_type.toInt(), count, ts)
             }
         }
     }

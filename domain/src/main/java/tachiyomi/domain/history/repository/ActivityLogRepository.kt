@@ -6,7 +6,7 @@ import java.util.Date
 
 interface ActivityLogRepository {
 
-    suspend fun insert(sourceId: Long, feedId: Long?, eventType: Int, count: Long?, timestamp: Date)
+    suspend fun insert(sourceId: Long, feedId: Long?, animeId: Long?, eventType: Int, count: Long?, timestamp: Date)
 
     suspend fun getActivityByPeriod(after: Date): List<ActivityLog>
 
