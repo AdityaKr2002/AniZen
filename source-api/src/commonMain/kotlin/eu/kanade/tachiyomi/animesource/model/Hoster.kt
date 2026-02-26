@@ -6,12 +6,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-open class Hoster(
+open class Hoster @JvmOverloads constructor(
     val hosterUrl: String = "",
     val hosterName: String = "",
     val videoList: List<Video>? = null,
     val internalData: String = "",
-    val lazy: Boolean = false,
+    val selected: Boolean = false,
 ) {
     @Transient
     @Volatile
@@ -29,9 +29,9 @@ open class Hoster(
         hosterName: String = this.hosterName,
         videoList: List<Video>? = this.videoList,
         internalData: String = this.internalData,
-        lazy: Boolean = this.lazy,
+        selected: Boolean = this.selected,
     ): Hoster {
-        return Hoster(hosterUrl, hosterName, videoList, internalData, lazy)
+        return Hoster(hosterUrl, hosterName, videoList, internalData, selected)
     }
 
     companion object {
@@ -55,7 +55,7 @@ data class SerializableHoster(
     val hosterName: String = "",
     val videoList: String? = null,
     val internalData: String = "",
-    val lazy: Boolean = false,
+    val selected: Boolean = false,
 ) {
     companion object {
         fun List<Hoster>.serialize(): String =
@@ -66,7 +66,7 @@ data class SerializableHoster(
                         host.hosterName,
                         host.videoList?.serialize(),
                         host.internalData,
-                        host.lazy,
+                        host.selected,
                     )
                 },
             )
@@ -79,7 +79,7 @@ data class SerializableHoster(
                         sHost.hosterName,
                         sHost.videoList?.toVideoList(),
                         sHost.internalData,
-                        sHost.lazy,
+                        sHost.selected,
                     )
                 }
     }
