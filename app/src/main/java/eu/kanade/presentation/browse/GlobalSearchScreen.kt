@@ -17,6 +17,11 @@ import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SourceFilter
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.presentation.core.components.material.Scaffold
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun GlobalSearchScreen(
@@ -69,8 +74,8 @@ internal fun GlobalSearchContent(
     onLongClickItem: (Anime) -> Unit,
     fromSourceId: Long? = null,
 ) {
-    val uiPreferences = remember { uy.kohesive.injekt.Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
-    val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+    val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
 
     LazyColumn(
         contentPadding = contentPadding,
