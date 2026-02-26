@@ -16,16 +16,25 @@ plugins {
 }
 
 detekt {
-    toolVersion = libs.versions.detekt.get()
+    toolVersion = libs.versions.detekt.asProvider().get()
     config.setFrom(file("config/detekt/detekt.yml"))
+    baseline = file("config/detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
+    allRules = false
+}
+
+dependencies {
+    detektPlugins(libs.detekt.formatting)
+    detektPlugins(libs.detekt.compose)
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "17"
     reports {
         html.required.set(true)
-        xml.required.set(false)
+        xml.required.set(true)
         txt.required.set(false)
+        sarif.required.set(true)
     }
 }
 

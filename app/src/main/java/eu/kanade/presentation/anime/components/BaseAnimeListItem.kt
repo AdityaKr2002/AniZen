@@ -55,12 +55,13 @@ fun BaseAnimeListItem(
 }
 
 private val defaultCover: @Composable RowScope.(Anime, () -> Unit) -> Unit = { anime, onClick ->
-    val entry = AnimeCover.getEntry(anime.id)
+    val (entry, ratio) = AnimeCover.getEntry(anime.id)
     entry(
         modifier = Modifier
             .fillMaxHeight(),
         data = anime.asAnimeCover(),
         onClick = onClick,
+        ratio = ratio,
     )
 }
 

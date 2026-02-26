@@ -49,6 +49,7 @@ fun UpcomingItem(
             data = mangaCover,
             bgColor = bgColor,
             tint = onBgColor,
+            ratio = AnimeCover.Book.ratio,
         )
         Text(
             modifier = Modifier.weight(1f),

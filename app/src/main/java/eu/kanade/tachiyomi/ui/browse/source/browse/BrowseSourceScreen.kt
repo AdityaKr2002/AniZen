@@ -73,6 +73,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import logcat.LogPriority
 import tachiyomi.core.common.Constants
 import tachiyomi.core.common.util.lang.launchIO
@@ -395,7 +397,7 @@ data class BrowseSourceScreen(
                     }
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
-                selection = state.selection,
+                selection = state.selection.toImmutableList(),
                 favoriteIds = state.favoriteIds,
                 onBatchIncrement = { /* Manual increment only via Select All button */ },
             )

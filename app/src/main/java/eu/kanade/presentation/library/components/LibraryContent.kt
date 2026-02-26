@@ -25,6 +25,10 @@ import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryAnime
 import tachiyomi.domain.library.model.LibraryDisplayMode
@@ -39,9 +43,9 @@ import uy.kohesive.injekt.api.get
 
 @Composable
 fun LibraryContent(
-    categories: List<Category>,
+    categories: ImmutableList<Category>,
     searchQuery: String?,
-    selection: List<LibraryAnime>,
+    selection: ImmutableList<LibraryAnime>,
     contentPadding: PaddingValues,
     currentPage: () -> Int,
     hasActiveFilters: Boolean,
@@ -56,7 +60,7 @@ fun LibraryContent(
     getNumberOfAnimeForCategory: (Category) -> Int?,
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
-    getAnimeLibraryForPage: (Int) -> List<LibraryItem>,
+    getAnimeLibraryForPage: (Int) -> ImmutableList<LibraryItem>,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsState()

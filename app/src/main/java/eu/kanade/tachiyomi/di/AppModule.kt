@@ -33,6 +33,7 @@ import nl.adaptivity.xmlutil.XmlDeclMode.Charset
 import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import tachiyomi.core.common.storage.AndroidStorageFolderProvider
+import tachiyomi.data.Activity_log
 import tachiyomi.data.AndroidDatabaseHandler
 import tachiyomi.data.Animes
 import tachiyomi.data.Database
@@ -91,6 +92,9 @@ class AppModule(val app: Application) : InjektModule {
                 animesAdapter = Animes.Adapter(
                     genreAdapter = StringListColumnAdapter,
                     update_strategyAdapter = UpdateStrategyColumnAdapter,
+                ),
+                activity_logAdapter = Activity_log.Adapter(
+                    timestampAdapter = DateColumnAdapter,
                 ),
             )
         }

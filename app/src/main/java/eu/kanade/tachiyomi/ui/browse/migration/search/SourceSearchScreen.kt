@@ -46,6 +46,7 @@ import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.SourceFilterSheet
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.Constants
 import tachiyomi.domain.anime.model.Anime
@@ -145,6 +146,7 @@ data class SourceSearchScreen(
                 onLocalSourceHelpClick = { uriHandler.openUri(LocalSource.HELP_URL) },
                 onAnimeClick = openMigrateDialog,
                 onAnimeLongClick = { navigator.push(AnimeScreen(it.id, true)) },
+                selection = state.selection.toImmutableList(),
             )
         }
 

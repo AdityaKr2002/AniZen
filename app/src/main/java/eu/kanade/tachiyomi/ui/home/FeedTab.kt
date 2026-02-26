@@ -80,7 +80,10 @@ data object FeedTab : Tab {
         
         FeedScreen(
             screenModel = screenModel,
-            onAnimeClick = { navigator.push(AnimeScreen(it.id)) },
+            onAnimeClick = { anime, feedId -> 
+                screenModel.onAnimeClicked(anime, feedId)
+                navigator.push(AnimeScreen(anime.id)) 
+            },
             onAddSourceClick = { 
                 scope.launch {
                     tabNavigator.current = BrowseTab

@@ -1,0 +1,35 @@
+import java.util.Date;
+
+CREATE TABLE activity_log(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    source_id INTEGER NOT NULL,
+    feed_id INTEGER, -- Null if not specific to a feed (e.g. global source open)
+    anime_id INTEGER, -- The anime being interacted with
+    event_type INTEGER NOT NULL, -- FETCH (1), OPEN (2), PLAY (3), COMPLETE (4), FEED_UPDATE (5)
+    count INTEGER, -- Number of items (e.g. new episodes fetched or items in feed)
+    timestamp INTEGER AS Date NOT NULL
+);
+
+CREATE INDEX activity_log_source_id_index ON activity_log(source_id);
+CREATE INDEX activity_log_timestamp_index ON activity_log(timestamp);
+CREATE INDEX activity_log_feed_id_index ON activity_log(feed_id);
+CREATE INDEX activity_log_anime_id_index ON activity_log(anime_id);
+
+insert:
+INSERT INTO activity_log(source_id, feed_id, anime_id, event_type, count, timestamp)
+VALUES (:sourceId, :feedId, :animeId, :eventType, :count, :timestamp);
+
+getActivityByPeriod:
+SELECT *
+FROM activity_log
+WHERE timestamp >= :after;
+
+getCountsByPeriod:
+SELECT source_id, feed_id, event_type, SUM(count) AS total_count, COUNT(*) AS event_count
+FROM activity_log
+WHERE timestamp >= :after
+GROUP BY source_id, feed_id, event_type;
+
+removeOldActivity:
+DELETE FROM activity_log
+WHERE timestamp < :before;

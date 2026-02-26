@@ -21,7 +21,7 @@ class WidgetManager(
 
     fun Context.init(scope: LifecycleCoroutineScope) {
         combine(
-            getUpdates.subscribe(seen = false, after = BaseUpdatesGridGlanceWidget.DateLimit.toEpochMilli()),
+            getUpdates.subscribe(BaseUpdatesGridGlanceWidget.DateLimit),
             securityPreferences.useAuthenticator().changes(),
             transform = { a, b -> a to b },
         )
@@ -33,6 +33,7 @@ class WidgetManager(
                 try {
                     UpdatesGridGlanceWidget().updateAll(this)
                     UpdatesGridCoverScreenGlanceWidget().updateAll(this)
+                    FeedGlanceWidget().updateAll(this)
                 } catch (e: Exception) {
                     logcat(LogPriority.ERROR, e) { "Failed to update widget" }
                 }

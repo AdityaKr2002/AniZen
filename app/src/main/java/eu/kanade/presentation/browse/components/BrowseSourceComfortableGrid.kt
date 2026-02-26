@@ -13,7 +13,7 @@ import androidx.paging.compose.LazyPagingItems
 import eu.kanade.presentation.library.components.AnimeComfortableGridItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import tachiyomi.domain.anime.model.Anime
-import tachiyomi.domain.anime.model.AnimeCover
+import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.presentation.core.util.plus
 
 @Composable
@@ -79,13 +79,7 @@ internal fun BrowseSourceComfortableGridItem(
     AnimeComfortableGridItem(
         title = anime.title,
         coverData = remember(anime.id, isFavorite) {
-            AnimeCover(
-                animeId = anime.id,
-                sourceId = anime.source,
-                isAnimeFavorite = isFavorite,
-                ogUrl = anime.thumbnailUrl,
-                lastModified = anime.coverLastModified,
-            )
+            anime.asAnimeCover().copy(isAnimeFavorite = isFavorite)
         },
         coverAlpha = if (isFavorite) CommonAnimeItemDefaults.BrowseFavoriteCoverAlpha else 1f,
         coverBadgeStart = {

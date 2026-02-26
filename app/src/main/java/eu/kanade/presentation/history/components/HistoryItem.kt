@@ -52,6 +52,7 @@ fun HistoryItem(
             modifier = Modifier.fillMaxHeight(),
             data = history.coverData,
             onClick = onClickCover,
+            ratio = AnimeCover.Book.ratio,
         )
         Column(
             modifier = Modifier

@@ -8,6 +8,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.util.fastCountNot
 import eu.kanade.core.util.fastFilterNot
 import eu.kanade.domain.ai.AiPreferences
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.more.stats.StatsScreenState
 import eu.kanade.presentation.more.stats.data.*
 import eu.kanade.tachiyomi.network.model.*
@@ -31,9 +32,18 @@ import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import tachiyomi.domain.history.interactor.GetActivityLog
 import tachiyomi.domain.history.interactor.GetHistory
+import tachiyomi.domain.history.model.ActivityLog
+import tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal
+import tachiyomi.domain.source.model.FeedSavedSearch
 import tachiyomi.domain.source.service.SourceManager
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.util.Calendar
 
 class StatsScreenModel(
@@ -46,6 +56,8 @@ class StatsScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val extensionManager: eu.kanade.tachiyomi.extension.ExtensionManager = Injekt.get(),
+    private val getActivityLog: tachiyomi.domain.history.interactor.GetActivityLog = Injekt.get(),
+    private val uiPreferences: UiPreferences = Injekt.get(),
     private val aiPreferences: AiPreferences = Injekt.get(),
 ) : StateScreenModel<StatsScreenState>(StatsScreenState.Loading) {
 
@@ -152,6 +164,10 @@ class StatsScreenModel(
                 distribution = getCombinedScoreDistribution(distinctLibraryAnime, scoredAnimeTrackerMap)
             )
 
+            // Cleanup old logs (older than 30 days) to prevent database bloat
+            val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+            getActivityLog.awaitRemoveOldActivity(thirtyDaysAgo)
+
             // Status Breakdown
             val statusBreakdown = run {
                 var completed = 0
@@ -205,12 +221,71 @@ class StatsScreenModel(
                     watchHabits = watchHabits,
                     scores = scoreDistribution,
                     statuses = statusBreakdown,
+                    feedActivity = null, // Will be updated by subscription
                     infrastructure = infrastructure,
                     aiAnalysis = aiPreferences.lastStatsAnalysis().get().takeIf { it.isNotBlank() },
                     isAiLoading = false,
                 )
             }
+
+            // Reactive Feed Statistics
+            uiPreferences.enableFeed().changes()
+                .flatMapLatest { enabled ->
+                    if (!enabled) return@flatMapLatest flowOf(null)
+                    
+                    val thirtyDaysAgo = Calendar.getInstance().apply {
+                        add(Calendar.DAY_OF_YEAR, -30)
+                    }.time
+                    
+                    getActivityLog.subscribeByPeriod(thirtyDaysAgo)
+                        .combine(Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().subscribe()) { logs, feeds ->
+                            calculateFeedActivity(logs, feeds)
+                        }
+                }
+                .onEach { feedActivity ->
+                    mutableState.update { state ->
+                        if (state is StatsScreenState.SuccessAnime) {
+                            state.copy(feedActivity = feedActivity)
+                        } else {
+                            state
+                        }
+                    }
+                }
+                .launchIn(screenModelScope)
         }
+    }
+
+    private fun calculateFeedActivity(allLogs: List<ActivityLog>, feedSavedSearches: List<FeedSavedSearch>): StatsData.FeedActivity {
+        val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+        
+        val activity = allLogs
+            .filter { it.eventType == ActivityLog.TYPE_OPEN || it.eventType == ActivityLog.TYPE_PLAY || it.eventType == ActivityLog.TYPE_COMPLETE }
+            .groupBy { it.sourceId to it.feedId }
+            .map { (ids, logs) ->
+                val (sourceId, feedId) = ids
+                val source = sourceManager.getOrStub(sourceId)
+                val feed = feedSavedSearches.find { it.id == feedId }
+                
+                val feedLabel = when {
+                    feed == null -> ""
+                    feed.savedSearch != null -> " (Saved Search)"
+                    else -> " (${FeedSavedSearch.Type.from(feed.type).name})"
+                }
+
+                SourceActivity(
+                    sourceId = sourceId,
+                    sourceName = "${source.name}$feedLabel",
+                    feedName = feedLabel.trim().removeSurrounding("(", ")").ifBlank { "Library" },
+                    fetchCount = 0, // Unused
+                    openCount = logs.filter { it.eventType == ActivityLog.TYPE_OPEN }.mapNotNull { it.animeId }.distinct().size,
+                    playCount = logs.filter { it.eventType == ActivityLog.TYPE_PLAY }.mapNotNull { it.animeId }.distinct().size,
+                    completeCount = logs.filter { it.eventType == ActivityLog.TYPE_COMPLETE }.mapNotNull { it.animeId }.distinct().size,
+                )
+            }
+            .filter { it.openCount + it.playCount + it.completeCount > 0 }
+            .sortedByDescending { it.openCount + it.playCount + it.completeCount }
+        
+        return StatsData.FeedActivity(activity)
     }
 
     fun generateAiAnalysis() {

@@ -38,33 +38,34 @@ class RelatedAnimeScreenModel(
             val anime = getAnime.await(animeId) ?: return@launchIO
             mutableState.update { it.copy(title = anime.title) }
 
-            var suggestionsFound = false
-
-            // 1. Source-provided related anime
-            getRelatedAnime.subscribe(anime).collect { (keyword, animes) ->
-                if (animes.isNotEmpty()) {
-                    val domainAnimes = coroutineScope {
-                        animes.map {
-                            async {
-                                val localAnime = networkToLocalAnime.await(it.toDomainAnime(anime.source))
-                                getAnime.await(localAnime.id)
-                            }
-                        }.awaitAll().filterNotNull()
+            // 1. Source-provided related anime (Flow)
+            val sourceJob = launchIO {
+                getRelatedAnime.subscribe(anime).collect { (keyword, animes) ->
+                    if (animes.isNotEmpty()) {
+                        val domainAnimes = coroutineScope {
+                            animes.map {
+                                async {
+                                    val localAnime = networkToLocalAnime.await(it.toDomainAnime(anime.source))
+                                    getAnime.await(localAnime.id)
+                                }
+                            }.awaitAll().filterNotNull()
+                        }
+                        
+                        mutableState.update { state ->
+                            state.copy(
+                                items = state.items.put(keyword, domainAnimes.toImmutableList()),
+                            )
+                        }
                     }
-                    
-                    mutableState.update { state ->
-                        state.copy(
-                            items = state.items.put(keyword, domainAnimes.toImmutableList()),
-                        )
-                    }
-                    suggestionsFound = true
                 }
             }
 
-            // 2. Hybrid Intelligence Fallback
-            if (!suggestionsFound || state.value.items.isEmpty()) {
-                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
+            // 2. Hybrid Intelligence Fallback (Calculated)
+            launchIO {
+                // Wait a bit for source to provide results first to avoid UI jump
+                kotlinx.coroutines.delay(1000)
                 
+                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
                 val query = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
                 if (query.isBlank()) return@launchIO
 
@@ -84,7 +85,6 @@ class RelatedAnimeScreenModel(
                                         intersect.toDouble() / anime.genre!!.size.coerceAtLeast(1)
                                     } else 0.0
                                     
-                                    // SMOOTH ADAPTIVE SCORING
                                     val totalScore = eu.kanade.tachiyomi.util.lang.StringSimilarity.adaptiveScore(titleSim, genreOverlap)
                                     
                                     if (totalScore < 0.25) return@async null
@@ -93,14 +93,19 @@ class RelatedAnimeScreenModel(
                             }.awaitAll().filterNotNull()
                             .sortedByDescending { it.second }
                             .map { it.first }
-                            .take(24) // Show more in full screen
+                            .take(24)
                     }
                     
                     if (domainAnimes.isNotEmpty()) {
                         mutableState.update { state ->
-                            state.copy(
-                                items = state.items.put("Recommended Intelligence", domainAnimes.toImmutableList()),
-                            )
+                            // Only add if not already present or if we want to augment
+                            if (!state.items.containsKey("Recommended Intelligence")) {
+                                state.copy(
+                                    items = state.items.put("Recommended Intelligence", domainAnimes.toImmutableList()),
+                                )
+                            } else {
+                                state
+                            }
                         }
                     }
                 } catch (e: Exception) {

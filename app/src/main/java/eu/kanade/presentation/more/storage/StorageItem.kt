@@ -68,6 +68,7 @@ fun StorageItem(
                 modifier = Modifier.height(48.dp),
                 data = item.thumbnail,
                 contentDescription = item.title,
+                ratio = AnimeCover.Square.ratio,
             )
             Column(
                 modifier = Modifier.weight(1f),

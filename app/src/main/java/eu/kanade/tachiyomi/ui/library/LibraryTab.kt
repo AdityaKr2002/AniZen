@@ -51,11 +51,12 @@ import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import tachiyomi.core.common.i18n.stringResource
+import tachiyomi.core.common.i18n.stringResource as stringResourceCommon
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.category.model.Category
@@ -126,7 +127,7 @@ data object LibraryTab : Tab {
             // SY <--
             scope.launch {
                 val msgRes = if (started) MR.strings.updating_category else MR.strings.update_already_running
-                snackbarHostState.showSnackbar(context.stringResource(msgRes))
+                snackbarHostState.showSnackbar(context.stringResourceCommon(msgRes))
             }
             started
         }
@@ -177,7 +178,7 @@ data object LibraryTab : Tab {
                                 navigator.push(AnimeScreen(randomItem.libraryAnime.anime.id))
                             } else {
                                 snackbarHostState.showSnackbar(
-                                    context.stringResource(MR.strings.information_no_entries_found),
+                                    context.stringResourceCommon(MR.strings.information_no_entries_found),
                                 )
                             }
                         }
@@ -227,9 +228,9 @@ data object LibraryTab : Tab {
                 }
                 else -> {
                     LibraryContent(
-                        categories = state.categories,
+                        categories = state.categories.toImmutableList(),
                         searchQuery = state.searchQuery,
-                        selection = state.selection,
+                        selection = state.selection.toImmutableList(),
                         contentPadding = contentPadding,
                         currentPage = { screenModel.activeCategoryIndex },
                         hasActiveFilters = state.hasActiveFilters,
@@ -261,7 +262,8 @@ data object LibraryTab : Tab {
                                 it,
                             )
                         },
-                    ) { state.getAnimelibItemsByPage(it) }
+                        getAnimeLibraryForPage = { state.getAnimelibItemsByPage(it).toImmutableList() },
+                    )
                 }
             }
         }

@@ -10,12 +10,15 @@ import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.model.Episode
 import tachiyomi.domain.episode.model.EpisodeUpdate
 import tachiyomi.domain.episode.repository.EpisodeRepository
+import tachiyomi.domain.history.interactor.LogActivity
+import tachiyomi.domain.history.model.ActivityLog
 
 class SetSeenStatus(
     private val downloadPreferences: DownloadPreferences,
     private val deleteDownload: DeleteDownload,
     private val animeRepository: AnimeRepository,
     private val episodeRepository: EpisodeRepository,
+    private val logActivity: LogActivity,
 ) {
 
     private val mapper = { episode: Episode, seen: Boolean ->
@@ -41,6 +44,21 @@ class SetSeenStatus(
             episodeRepository.updateAll(
                 episodesToUpdate.map { mapper(it, seen) },
             )
+            
+            // Log engagement for manual actions
+            if (seen) {
+                episodesToUpdate.firstOrNull()?.let { ep ->
+                    val anime = animeRepository.getAnimeById(ep.animeId)
+                    val allEpisodes = episodeRepository.getEpisodeByAnimeId(anime.id)
+                    val isFinished = allEpisodes.all { it.seen || episodesToUpdate.any { updated -> updated.id == it.id } }
+                    
+                    if (isFinished) {
+                        logActivity.await(anime.source, ActivityLog.TYPE_COMPLETE, animeId = anime.id)
+                    } else {
+                        logActivity.await(anime.source, ActivityLog.TYPE_PLAY, animeId = anime.id)
+                    }
+                }
+            }
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             return@withNonCancellableContext Result.InternalError(e)

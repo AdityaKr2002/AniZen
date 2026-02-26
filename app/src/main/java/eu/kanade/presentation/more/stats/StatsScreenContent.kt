@@ -141,6 +141,12 @@ fun StatsScreenContent(
             ExtensionUsageSection(state.extensions)
         }
 
+        if (state.feedActivity != null) {
+            item {
+                FeedActivitySection(state.feedActivity)
+            }
+        }
+
         if (state.infrastructure != null) {
             item {
                 InfrastructureSection(state.infrastructure, onClickExtensionReport)
@@ -478,6 +484,85 @@ private fun GenreBar(genre: String, count: Int, maxCount: Int) {
                     .fillMaxHeight()
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary) // 10% Accent
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedActivitySection(feedActivity: StatsData.FeedActivity) {
+    StatsSectionCard(title = "Feed Statistics") {
+        Column(modifier = Modifier.padding(MaterialTheme.padding.medium)) {
+            if (feedActivity.activity.isEmpty()) {
+                Text(
+                    text = "No updates recorded yet.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.secondaryItemAlpha()
+                )
+            } else {
+                val maxActivity = feedActivity.activity.maxOf { it.fetchCount }.coerceAtLeast(1)
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    feedActivity.activity.take(10).forEach { activity ->
+                        SourceActivityBar(activity, maxActivity)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceActivityBar(activity: eu.kanade.presentation.more.stats.data.SourceActivity, maxActivity: Int) {
+    val totalEngagement = activity.openCount + activity.playCount + activity.completeCount
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = activity.sourceName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            Text(
+                text = "$totalEngagement Actions",
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                modifier = Modifier.secondaryItemAlpha()
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        ) {
+            val totalF = totalEngagement.toFloat().coerceAtLeast(1f)
+            val openWeight = activity.openCount.toFloat() / totalF
+            val playWeight = activity.playCount.toFloat() / totalF
+            val completeWeight = activity.completeCount.toFloat() / totalF
+
+            if (openWeight > 0) Box(modifier = Modifier.weight(openWeight).fillMaxHeight().background(MaterialTheme.colorScheme.secondary))
+            if (playWeight > 0) Box(modifier = Modifier.weight(playWeight).fillMaxHeight().background(MaterialTheme.colorScheme.tertiary))
+            if (completeWeight > 0) Box(modifier = Modifier.weight(completeWeight).fillMaxHeight().background(Color(0xFF4CAF50)))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ActivityLegendItem(MaterialTheme.colorScheme.secondary, "Opened", activity.openCount)
+            ActivityLegendItem(MaterialTheme.colorScheme.tertiary, "Started", activity.playCount)
+            ActivityLegendItem(Color(0xFF4CAF50), "Finished", activity.completeCount)
+        }
+    }
+}
+
+@Composable
+private fun ActivityLegendItem(color: Color, label: String, count: Int, forceShow: Boolean = false) {
+    if (count > 0 || forceShow) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "$label: $count",
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 8.sp,
+                modifier = Modifier.secondaryItemAlpha()
             )
         }
     }

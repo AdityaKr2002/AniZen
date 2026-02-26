@@ -2,6 +2,11 @@
 
 package eu.kanade.presentation.anime.components
 
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
 import androidx.annotation.ColorInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,11 +14,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState as collectAsStateFlow
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +39,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ui.UiPreferences
@@ -44,6 +49,7 @@ import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.domain.anime.model.AnimeCover as DomainMangaCover
+import androidx.compose.runtime.collectAsState as collectAsStateFlow
 
 enum class AnimeCover(val ratio: Float) {
     Square(1f / 1f),
@@ -75,6 +81,7 @@ enum class AnimeCover(val ratio: Float) {
         onCoverLoaded: ((DomainMangaCover, result: AsyncImagePainter.State.Success) -> Unit)? = null,
         size: Size = Size.Normal,
         scale: ContentScale = ContentScale.Crop,
+        ratio: Float = this.ratio,
         // KMK <--
     ) {
         val context = LocalContext.current
@@ -116,39 +123,27 @@ enum class AnimeCover(val ratio: Float) {
                     },
                 ),
         ) {
+            // Pulsing background
+            SkeletonItem(
+                modifier = Modifier.fillMaxSize(),
+                shape = shape,
+                color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f)
+            )
+
             AsyncImage(
                 model = remember(data) {
                     ImageRequest.Builder(context)
                         .data(data)
-                        .crossfade(true)
+                        .crossfade(true) // Fast default crossfade
                         .build()
                 },
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 1f },
+                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
                 contentScale = scale,
                 onState = { state = it },
             )
-
-            if (state is AsyncImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    color = tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-                    modifier = Modifier
-                        .size(
-                            when (size) {
-                                Size.Big -> COVER_TEMPLATE_SIZE_BIG
-                                Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
-                                else -> COVER_TEMPLATE_SIZE_NORMAL
-                            },
-                        )
-                        .align(Alignment.Center),
-                    strokeWidth = when (size) {
-                        Size.Normal -> 3.dp
-                        else -> 2.dp
-                    },
-                )
-            }
 
             if (isError) {
                 androidx.compose.foundation.Image(
@@ -178,17 +173,26 @@ enum class AnimeCover(val ratio: Float) {
 
         @Composable
         fun getRatio(animeId: Long): Float {
-            return getEntry(animeId).ratio
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            
+            return remember(animeId, usePanorama, ratios) {
+                if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+            }
         }
 
         @Composable
-        fun getEntry(animeId: Long): AnimeCover {
+        fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val usePanorama = uiPreferences.panoramaCover().collectAsStatePref().value
-            if (!usePanorama) return Book
-            val ratios = CoverColorObserver.ratios.collectAsStateFlow().value
-            val ratio = ratios[animeId] ?: Book.ratio
-            return if (ratio > RatioSwitchToPanorama) Panorama else Book
+            val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            
+            return remember(animeId, usePanorama, ratios) {
+                val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+                val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
+                entry to ratio
+            }
         }
     }
 }
