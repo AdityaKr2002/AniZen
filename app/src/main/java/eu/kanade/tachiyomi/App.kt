@@ -136,6 +136,9 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
             Injekt.get<SourceManager>()
             Injekt.get<DownloadManager>()
+            Injekt.get<eu.kanade.tachiyomi.data.download.DownloadCache>()
+            Injekt.get<eu.kanade.tachiyomi.data.cache.ChapterCache>()
+            Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
             Injekt.get<CustomAnimeRepository>()
             
             val syncPreferences: SyncPreferences = Injekt.get()
