@@ -7,6 +7,7 @@ import android.app.SearchManager
 import android.app.assist.AssistContent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -554,7 +555,8 @@ class MainActivity : BaseActivity() {
             videoIndex: Int = -1,
             hosterList: List<Hoster>? = null,
         ) {
-            if (extPlayer) {
+            val isTv = context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+            if (extPlayer && !isTv) {
                 val intent = try {
                     ExternalIntents.newIntent(context, animeId, episodeId, video)
                 } catch (e: Exception) {

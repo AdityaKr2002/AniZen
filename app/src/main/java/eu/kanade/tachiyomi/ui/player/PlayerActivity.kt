@@ -149,6 +149,10 @@ class PlayerActivity : BaseActivity() {
 
     private var pipReceiver: BroadcastReceiver? = null
 
+    val isTv by lazy {
+        packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    }
+
     private val noisyReceiver = object : BroadcastReceiver() {
         var initialized = false
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -1163,6 +1167,12 @@ class PlayerActivity : BaseActivity() {
         if (video == null) return
 
         setHttpOptions(video)
+
+        // Set mime-type for TV or if provided
+        val mime = video.mimeType ?: if (isTv) "video/mp4" else null
+        mime?.let {
+            MPVLib.setOptionString("android-mime-type", it)
+        }
 
         if (viewModel.isLoadingEpisode.value) {
             viewModel.currentEpisode.value?.let { episode ->
