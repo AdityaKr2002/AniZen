@@ -321,7 +321,12 @@ fun PlayerControls(
                     currentPlayerUpdate is PlayerUpdates.DoubleSpeed,
                     enter = fadeIn(),
                     exit = fadeOut(),
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.constrainAs(createRef()) {
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    },
                 ) {
                     DoubleSpeedPlayerUpdate()
                 }

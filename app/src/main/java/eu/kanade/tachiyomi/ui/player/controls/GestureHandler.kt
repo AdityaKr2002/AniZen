@@ -173,7 +173,7 @@ fun GestureHandler(
                             isLongPressing = false
                             speedRampJob?.cancel()
                             speedRampJob = scope.launch {
-                                if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 val currentSpeed = MPVLib.getPropertyDouble("speed")
                                 val duration = 200L
                                 val startTime = System.currentTimeMillis()
@@ -181,7 +181,7 @@ fun GestureHandler(
                                     val progress = (System.currentTimeMillis() - startTime).toFloat() / duration
                                     val speed = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
                                     MPVLib.setPropertyDouble("speed", speed)
-                                    delay(16)
+                                    delay(32)
                                 }
                                 MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
                                 viewModel.playerUpdate.update { PlayerUpdates.None }
@@ -198,13 +198,14 @@ fun GestureHandler(
                             val originalSpeed = viewModel.playbackSpeed.value.toDouble()
                             speedRampJob?.cancel()
                             speedRampJob = scope.launch {
+                                val currentSpeed = MPVLib.getPropertyDouble("speed")
                                 val duration = 200L
                                 val startTime = System.currentTimeMillis()
                                 while (System.currentTimeMillis() - startTime < duration) {
                                     val progress = (System.currentTimeMillis() - startTime).toFloat() / duration
-                                    val speed = originalSpeed + (longPressSpeed.toDouble() - originalSpeed) * progress
+                                    val speed = currentSpeed + (longPressSpeed.toDouble() - currentSpeed) * progress
                                     MPVLib.setPropertyDouble("speed", speed)
-                                    delay(16)
+                                    delay(32)
                                 }
                                 MPVLib.setPropertyDouble("speed", longPressSpeed.toDouble())
                             }
