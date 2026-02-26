@@ -36,6 +36,9 @@ open class Video(
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
     val timestamps: List<TimeStamp> = emptyList(),
+    val mpvArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegStreamArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegVideoArgs: List<Pair<String, String>> = emptyList(),
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
@@ -140,36 +143,9 @@ open class Video(
         subtitleTracks: List<Track> = this.subtitleTracks,
         audioTracks: List<Track> = this.audioTracks,
         timestamps: List<TimeStamp> = this.timestamps,
-        internalData: String = this.internalData,
-        type: VideoType = this.type,
-        mimeType: String? = this.mimeType,
-    ): Video {
-        return Video(
-            videoUrl = videoUrl,
-            videoTitle = videoTitle,
-            resolution = resolution,
-            bitrate = bitrate,
-            headers = headers,
-            preferred = preferred,
-            subtitleTracks = subtitleTracks,
-            audioTracks = audioTracks,
-            timestamps = timestamps,
-            internalData = internalData,
-            type = type,
-            mimeType = mimeType,
-        )
-    }
-
-    fun copy(
-        videoUrl: String = this.videoUrl,
-        videoTitle: String = this.videoTitle,
-        resolution: Int? = this.resolution,
-        bitrate: Int? = this.bitrate,
-        headers: Headers? = this.headers,
-        preferred: Boolean = this.preferred,
-        subtitleTracks: List<Track> = this.subtitleTracks,
-        audioTracks: List<Track> = this.audioTracks,
-        timestamps: List<TimeStamp> = this.timestamps,
+        mpvArgs: List<Pair<String, String>> = this.mpvArgs,
+        ffmpegStreamArgs: List<Pair<String, String>> = this.ffmpegStreamArgs,
+        ffmpegVideoArgs: List<Pair<String, String>> = this.ffmpegVideoArgs,
         internalData: String = this.internalData,
         initialized: Boolean = this.initialized,
         type: VideoType = this.type,
@@ -186,6 +162,9 @@ open class Video(
             subtitleTracks = subtitleTracks,
             audioTracks = audioTracks,
             timestamps = timestamps,
+            mpvArgs = mpvArgs,
+            ffmpegStreamArgs = ffmpegStreamArgs,
+            ffmpegVideoArgs = ffmpegVideoArgs,
             internalData = internalData,
             initialized = initialized,
             type = type,
@@ -200,6 +179,10 @@ open class Video(
         READY,
         ERROR,
     }
+
+    companion object {
+        const val MPV_ARGS_TAG = "ANIYOMI_MPV_ARGS"
+    }
 }
 
 @Serializable
@@ -213,6 +196,9 @@ data class SerializableVideo(
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
     val timestamps: List<TimeStamp> = emptyList(),
+    val mpvArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegStreamArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegVideoArgs: List<Pair<String, String>> = emptyList(),
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
@@ -235,6 +221,9 @@ data class SerializableVideo(
                         vid.subtitleTracks,
                         vid.audioTracks,
                         vid.timestamps,
+                        vid.mpvArgs,
+                        vid.ffmpegStreamArgs,
+                        vid.ffmpegVideoArgs,
                         vid.internalData,
                         vid.initialized,
                         vid.type,
@@ -259,6 +248,9 @@ data class SerializableVideo(
                         sVid.subtitleTracks,
                         sVid.audioTracks,
                         sVid.timestamps,
+                        sVid.mpvArgs,
+                        sVid.ffmpegStreamArgs,
+                        sVid.ffmpegVideoArgs,
                         sVid.internalData,
                         sVid.initialized,
                         sVid.type,
