@@ -71,6 +71,7 @@ import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.torrentServer.service.TorrentServerService
 import eu.kanade.tachiyomi.databinding.PlayerLayoutBinding
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.source.isNsfw
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -132,6 +133,7 @@ class PlayerActivity : BaseActivity() {
     private val audioPreferences: AudioPreferences = Injekt.get()
     private val advancedPlayerPreferences: AdvancedPlayerPreferences = Injekt.get()
     private val networkPreferences: NetworkPreferences = Injekt.get()
+    private val networkHelper: NetworkHelper = Injekt.get()
     private val storageManager: StorageManager = Injekt.get()
 
     // Cast -->
@@ -1261,16 +1263,15 @@ class PlayerActivity : BaseActivity() {
             .mapValues { it.value.firstOrNull() ?: "" }
             .toMutableMap()
 
+        if (headers["User-Agent"].isNullOrEmpty()) {
+            headers["User-Agent"] = networkHelper.defaultUserAgentProvider()
+        }
+
         val httpHeaderString = headers.map {
             it.key + ": " + it.value.replace(",", "\\,")
         }.joinToString(",")
 
         MPVLib.setOptionString("http-header-fields", httpHeaderString)
-
-        // need to fix the cache
-        // MPVLib.setOptionString("cache-on-disk", "yes")
-        // val cacheDir = File(applicationContext.filesDir, "media").path
-        // MPVLib.setOptionString("cache-dir", cacheDir)
     }
 
     /**

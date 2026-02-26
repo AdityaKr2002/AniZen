@@ -23,6 +23,7 @@ import android.os.Environment
 import android.util.AttributeSet
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.player.controls.components.panels.toColorHexString
 import eu.kanade.tachiyomi.ui.player.settings.AdvancedPlayerPreferences
@@ -48,6 +49,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     private val audioPreferences: AudioPreferences by injectLazy()
     private val advancedPreferences: AdvancedPlayerPreferences by injectLazy()
     private val networkPreferences: NetworkPreferences by injectLazy()
+    private val networkHelper: NetworkHelper by injectLazy()
     private val anime4kManager: Anime4KManager by injectLazy()
 
     var isExiting = false
@@ -206,6 +208,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
+
+        // Network optimizations
+        MPVLib.setOptionString("http-proxy", "")
+        MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
+        MPVLib.setOptionString("cookies", "yes")
+        MPVLib.setOptionString("cache-on-disk", "no")
 
         // Limit demuxer cache since the defaults are too high for mobile devices
         // Increased for smoother seeking/skipping
