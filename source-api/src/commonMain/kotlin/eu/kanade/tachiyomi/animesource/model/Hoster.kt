@@ -11,7 +11,7 @@ open class Hoster(
     val hosterName: String = "",
     val videoList: List<Video>? = null,
     val internalData: String = "",
-    val selected: Boolean = false,
+    val lazy: Boolean = false,
 ) {
     @Transient
     @Volatile
@@ -29,9 +29,9 @@ open class Hoster(
         hosterName: String = this.hosterName,
         videoList: List<Video>? = this.videoList,
         internalData: String = this.internalData,
-        selected: Boolean = this.selected,
+        lazy: Boolean = this.lazy,
     ): Hoster {
-        return Hoster(hosterUrl, hosterName, videoList, internalData, selected)
+        return Hoster(hosterUrl, hosterName, videoList, internalData, lazy)
     }
 
     companion object {
@@ -55,7 +55,7 @@ data class SerializableHoster(
     val hosterName: String = "",
     val videoList: String? = null,
     val internalData: String = "",
-    val selected: Boolean = false,
+    val lazy: Boolean = false,
 ) {
     companion object {
         fun List<Hoster>.serialize(): String =
@@ -66,7 +66,7 @@ data class SerializableHoster(
                         host.hosterName,
                         host.videoList?.serialize(),
                         host.internalData,
-                        host.selected,
+                        host.lazy,
                     )
                 },
             )
@@ -79,7 +79,7 @@ data class SerializableHoster(
                         sHost.hosterName,
                         sHost.videoList?.toVideoList(),
                         sHost.internalData,
-                        sHost.selected,
+                        sHost.lazy,
                     )
                 }
     }
