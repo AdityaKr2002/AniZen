@@ -297,7 +297,7 @@ fun PlayerControls(
                     viewModel.playerUpdate.update { PlayerUpdates.None }
                 }
                 AnimatedVisibility(
-                    currentPlayerUpdate !is PlayerUpdates.None && currentPlayerUpdate !is PlayerUpdates.DoubleSpeed,
+                    currentPlayerUpdate !is PlayerUpdates.None,
                     enter = fadeIn(playerControlsEnterAnimationSpec()),
                     exit = fadeOut(playerControlsExitAnimationSpec()),
                     modifier = Modifier.constrainAs(playerUpdates) {
@@ -306,6 +306,7 @@ fun PlayerControls(
                     },
                 ) {
                     when (currentPlayerUpdate) {
+                        is PlayerUpdates.DoubleSpeed -> DoubleSpeedPlayerUpdate()
                         is PlayerUpdates.AspectRatio -> TextPlayerUpdate(stringResource(aspectRatio.titleRes))
                         is PlayerUpdates.ShowText -> TextPlayerUpdate(
                             (currentPlayerUpdate as PlayerUpdates.ShowText).value,
@@ -315,20 +316,6 @@ fun PlayerControls(
                         )
                         else -> {}
                     }
-                }
-
-                AnimatedVisibility(
-                    currentPlayerUpdate is PlayerUpdates.DoubleSpeed,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    modifier = Modifier.constrainAs(createRef()) {
-                        top.linkTo(parent.top)
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    },
-                ) {
-                    DoubleSpeedPlayerUpdate()
                 }
 
                 AnimatedVisibility(

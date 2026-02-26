@@ -56,37 +56,33 @@ fun DoubleSpeedIndicator(
     )
 
     Box(
-        modifier = modifier.padding(top = 32.dp),
-        contentAlignment = Alignment.TopCenter
+        modifier = modifier
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.Black.copy(alpha = 0.5f))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.FastForward,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = alpha),
-                    modifier = Modifier
-                        .size(18.dp)
-                        .graphicsLayer {
-                            translationX = translation.dp.toPx()
-                        }
-                )
+            Icon(
+                imageVector = Icons.Default.FastForward,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = alpha),
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer {
+                        translationX = translation.dp.toPx()
+                    }
+            )
 
-                Text(
-                    text = stringResource(MR.strings.player_speed, speed),
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            Text(
+                text = stringResource(MR.strings.player_speed, speed),
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }

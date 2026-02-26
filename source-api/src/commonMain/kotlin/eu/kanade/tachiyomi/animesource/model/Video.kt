@@ -36,13 +36,15 @@ open class Video(
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
     val timestamps: List<TimeStamp> = emptyList(),
+    val mpvArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegStreamArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegVideoArgs: List<Pair<String, String>> = emptyList(),
     val internalData: String = "",
     val initialized: Boolean = false,
-    val type: VideoType = VideoType.VIDEO,
-    var mimeType: String? = null,
-    // TODO(1.6): Remove after ext lib bump
-    val videoPageUrl: String = "",
 ) {
+
+    var type: VideoType = VideoType.VIDEO
+    var mimeType: String? = null
 
     // TODO(1.6): Remove after ext lib bump
     @Deprecated("Use videoTitle instead", ReplaceWith("videoTitle"))
@@ -50,9 +52,11 @@ open class Video(
         get() = videoTitle
 
     // TODO(1.6): Remove after ext lib bump
-    @Deprecated("Use videoPageUrl instead", ReplaceWith("videoPageUrl"))
     val url: String
         get() = videoPageUrl
+
+    // TODO(1.6): Remove after ext lib bump
+    var videoPageUrl: String = ""
 
     // TODO(1.6): Remove after ext lib bump
     constructor(
@@ -63,42 +67,14 @@ open class Video(
         subtitleTracks: List<Track> = emptyList(),
         audioTracks: List<Track> = emptyList(),
     ) : this(
-        videoPageUrl = url,
         videoTitle = quality,
         videoUrl = videoUrl ?: "null",
         headers = headers,
         subtitleTracks = subtitleTracks,
         audioTracks = audioTracks,
-        type = VideoType.VIDEO, // Default to VIDEO
-    )
-
-    // TODO(1.6): Remove after ext lib bump
-    constructor(
-        videoUrl: String = "",
-        videoTitle: String = "",
-        resolution: Int? = null,
-        bitrate: Int? = null,
-        headers: Headers? = null,
-        preferred: Boolean = false,
-        subtitleTracks: List<Track> = emptyList(),
-        audioTracks: List<Track> = emptyList(),
-        timestamps: List<TimeStamp> = emptyList(),
-        internalData: String = "",
-        type: VideoType = VideoType.VIDEO,
-    ) : this(
-        videoUrl = videoUrl,
-        videoTitle = videoTitle,
-        resolution = resolution,
-        bitrate = bitrate,
-        headers = headers,
-        preferred = preferred,
-        subtitleTracks = subtitleTracks,
-        audioTracks = audioTracks,
-        timestamps = timestamps,
-        internalData = internalData,
-        type = type,
-        videoPageUrl = "",
-    )
+    ) {
+        this.videoPageUrl = url
+    }
 
     // TODO(1.6): Remove after ext lib bump
     @Suppress("UNUSED_PARAMETER")
@@ -109,12 +85,12 @@ open class Video(
         uri: Uri? = null,
         headers: Headers? = null,
     ) : this(
-        videoPageUrl = url,
         videoTitle = quality,
         videoUrl = videoUrl ?: "null",
         headers = headers,
-        type = VideoType.VIDEO,
-    )
+    ) {
+        this.videoPageUrl = url
+    }
 
     @Transient
     @Volatile
@@ -140,9 +116,11 @@ open class Video(
         subtitleTracks: List<Track> = this.subtitleTracks,
         audioTracks: List<Track> = this.audioTracks,
         timestamps: List<TimeStamp> = this.timestamps,
+        mpvArgs: List<Pair<String, String>> = this.mpvArgs,
+        ffmpegStreamArgs: List<Pair<String, String>> = this.ffmpegStreamArgs,
+        ffmpegVideoArgs: List<Pair<String, String>> = this.ffmpegVideoArgs,
         internalData: String = this.internalData,
-        type: VideoType = this.type,
-        mimeType: String? = this.mimeType,
+        initialized: Boolean = this.initialized,
     ): Video {
         return Video(
             videoUrl = videoUrl,
@@ -154,10 +132,16 @@ open class Video(
             subtitleTracks = subtitleTracks,
             audioTracks = audioTracks,
             timestamps = timestamps,
+            mpvArgs = mpvArgs,
+            ffmpegStreamArgs = ffmpegStreamArgs,
+            ffmpegVideoArgs = ffmpegVideoArgs,
             internalData = internalData,
-            type = type,
-            mimeType = mimeType,
-        )
+            initialized = initialized,
+        ).also {
+            it.type = this.type
+            it.mimeType = this.mimeType
+            it.videoPageUrl = this.videoPageUrl
+        }
     }
 
     fun copy(
@@ -170,6 +154,9 @@ open class Video(
         subtitleTracks: List<Track> = this.subtitleTracks,
         audioTracks: List<Track> = this.audioTracks,
         timestamps: List<TimeStamp> = this.timestamps,
+        mpvArgs: List<Pair<String, String>> = this.mpvArgs,
+        ffmpegStreamArgs: List<Pair<String, String>> = this.ffmpegStreamArgs,
+        ffmpegVideoArgs: List<Pair<String, String>> = this.ffmpegVideoArgs,
         internalData: String = this.internalData,
         initialized: Boolean = this.initialized,
         type: VideoType = this.type,
@@ -186,12 +173,16 @@ open class Video(
             subtitleTracks = subtitleTracks,
             audioTracks = audioTracks,
             timestamps = timestamps,
+            mpvArgs = mpvArgs,
+            ffmpegStreamArgs = ffmpegStreamArgs,
+            ffmpegVideoArgs = ffmpegVideoArgs,
             internalData = internalData,
             initialized = initialized,
-            type = type,
-            mimeType = mimeType,
-            videoPageUrl = videoPageUrl,
-        )
+        ).also {
+            it.type = type
+            it.mimeType = mimeType
+            it.videoPageUrl = videoPageUrl
+        }
     }
 
     enum class State {
@@ -199,6 +190,10 @@ open class Video(
         LOAD_VIDEO,
         READY,
         ERROR,
+    }
+
+    companion object {
+        const val MPV_ARGS_TAG = "ANIYOMI_MPV_ARGS"
     }
 }
 
@@ -213,6 +208,9 @@ data class SerializableVideo(
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
     val timestamps: List<TimeStamp> = emptyList(),
+    val mpvArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegStreamArgs: List<Pair<String, String>> = emptyList(),
+    val ffmpegVideoArgs: List<Pair<String, String>> = emptyList(),
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
@@ -235,6 +233,9 @@ data class SerializableVideo(
                         vid.subtitleTracks,
                         vid.audioTracks,
                         vid.timestamps,
+                        vid.mpvArgs,
+                        vid.ffmpegStreamArgs,
+                        vid.ffmpegVideoArgs,
                         vid.internalData,
                         vid.initialized,
                         vid.type,
@@ -259,12 +260,16 @@ data class SerializableVideo(
                         sVid.subtitleTracks,
                         sVid.audioTracks,
                         sVid.timestamps,
+                        sVid.mpvArgs,
+                        sVid.ffmpegStreamArgs,
+                        sVid.ffmpegVideoArgs,
                         sVid.internalData,
                         sVid.initialized,
-                        sVid.type,
-                        sVid.mimeType,
-                        sVid.videoPageUrl,
-                    )
+                    ).apply {
+                        type = sVid.type
+                        mimeType = sVid.mimeType
+                        videoPageUrl = sVid.videoPageUrl
+                    }
                 }
     }
 }
