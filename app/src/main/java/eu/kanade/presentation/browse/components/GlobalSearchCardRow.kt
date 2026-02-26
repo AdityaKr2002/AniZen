@@ -40,11 +40,12 @@ fun GlobalSearchCardRow(
         contentPadding = PaddingValues(MaterialTheme.padding.small),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
     ) {
-        itemsIndexed(
+        items(
             items = titles,
-            key = { index: Int, it: tachiyomi.domain.anime.model.Anime -> "anime-${it.id}-$index" },
-        ) { _: Int, it: tachiyomi.domain.anime.model.Anime ->
-            val title by getAnime(it)
+            key = { it.id },
+        ) { it: tachiyomi.domain.anime.model.Anime ->
+            val animeState = getAnime(it)
+            val title by animeState
             AnimeItem(
                 title = title.title,
                 cover = title.asAnimeCover(),

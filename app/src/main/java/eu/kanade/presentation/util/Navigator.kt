@@ -73,6 +73,7 @@ fun DefaultNavigatorScreenTransition(
     navigator: Navigator,
     modifier: Modifier = Modifier,
 ) {
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
     val slideDistance = rememberSlideDistance()
     ScreenTransition(
         navigator = navigator,
@@ -80,7 +81,7 @@ fun DefaultNavigatorScreenTransition(
             materialSharedAxisX(
                 forward = navigator.lastEvent != StackEvent.Pop,
                 slideDistance = slideDistance,
-                durationMillis = 250, // Slightly increased from 200 for smoother, premium feel
+                durationMillis = if (animatedTransitions) 250 else 0,
             )
         },
         modifier = modifier,

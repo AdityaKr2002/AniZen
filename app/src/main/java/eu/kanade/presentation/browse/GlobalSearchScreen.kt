@@ -40,7 +40,7 @@ fun GlobalSearchScreen(
                 navigateUp = navigateUp,
                 onChangeSearchQuery = onChangeSearchQuery,
                 onSearch = onSearch,
-                sourceFilter = state.sourceFilter,
+                sourceFilter = state.actualSourceFilter,
                 onChangeSearchFilter = onChangeSearchFilter,
                 onlyShowHasResults = state.onlyShowHasResults,
                 onToggleResults = onToggleResults,
@@ -69,6 +69,9 @@ internal fun GlobalSearchContent(
     onLongClickItem: (Anime) -> Unit,
     fromSourceId: Long? = null,
 ) {
+    val uiPreferences = remember { uy.kohesive.injekt.Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+
     LazyColumn(
         contentPadding = contentPadding,
     ) {
@@ -80,7 +83,7 @@ internal fun GlobalSearchContent(
                     } ?: source.name,
                     subtitle = LocaleHelper.getLocalizedDisplayName(source.lang),
                     onClick = { onClickSource(source) },
-                    modifier = Modifier.animateItem(),
+                    modifier = if (animatedTransitions) Modifier.animateItem() else Modifier,
                 ) {
                     when (result) {
                         SearchItemResult.Loading -> {

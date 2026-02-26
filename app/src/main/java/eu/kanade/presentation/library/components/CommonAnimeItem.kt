@@ -310,9 +310,11 @@ private fun GridItemSelectable(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scale by animateFloatAsState(
-        if (isSelected) 0.95f else 1f,
+        if (isSelected && animatedTransitions) 0.95f else 1f,
         label = "selection_scale",
     )
     val shape = MaterialTheme.shapes.medium

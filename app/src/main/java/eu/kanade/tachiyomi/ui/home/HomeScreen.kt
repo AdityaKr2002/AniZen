@@ -84,7 +84,6 @@ object HomeScreen : Screen() {
     private val openTabEvent = Channel<Tab>()
     private val showBottomNavEvent = Channel<Boolean>()
 
-    private const val TAB_FADE_DURATION = 200
     private const val TAB_NAVIGATOR_KEY = "HomeTabs"
 
     private val uiPreferences: UiPreferences by injectLazy()
@@ -96,6 +95,9 @@ object HomeScreen : Screen() {
     @Composable
     override fun Content() {
         val navStyle by uiPreferences.navStyle().collectAsState()
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+        val tabFadeDuration = remember(animatedTransitions) { if (animatedTransitions) 200 else 0 }
+
         val navigator = LocalNavigator.currentOrThrow
         // SY -->
         val scope = rememberCoroutineScope()
@@ -138,8 +140,8 @@ object HomeScreen : Screen() {
 
                                 AnimatedVisibility(
                                     visible = bottomNavVisible && (navStyle == NavStyle.SHOW_ALL || tabNavigator.current != navStyle.moreTab),
-                                    enter = expandVertically(animationSpec = androidx.compose.animation.core.tween(100)),
-                                    exit = shrinkVertically(animationSpec = androidx.compose.animation.core.tween(100)),
+                                    enter = expandVertically(animationSpec = androidx.compose.animation.core.tween(if (animatedTransitions) 100 else 0)),
+                                    exit = shrinkVertically(animationSpec = androidx.compose.animation.core.tween(if (animatedTransitions) 100 else 0)),
                                 ) {
                                     NavigationBar(
                                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -166,10 +168,10 @@ object HomeScreen : Screen() {
                             targetState = tabNavigator.current,
                             transitionSpec = {
                                 materialFadeThroughIn(
-                                    durationMillis = TAB_FADE_DURATION,
+                                    durationMillis = tabFadeDuration,
                                 ) togetherWith
                                     materialFadeThroughOut(
-                                        durationMillis = TAB_FADE_DURATION,
+                                        durationMillis = tabFadeDuration,
                                     )
                             },
                             label = "tabContent",
@@ -302,9 +304,10 @@ object HomeScreen : Screen() {
     @Composable
     private fun NavigationIconItem(tab: eu.kanade.presentation.util.Tab) {
         val tabNavigator = LocalTabNavigator.current
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
         val selected = tabNavigator.current.key == tab.key
         val scale by androidx.compose.animation.core.animateFloatAsState(
-            targetValue = if (selected) 1.2f else 1f,
+            targetValue = if (selected && animatedTransitions) 1.2f else 1f,
             animationSpec = androidx.compose.animation.core.spring(
                 dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
                 stiffness = androidx.compose.animation.core.Spring.StiffnessLow,

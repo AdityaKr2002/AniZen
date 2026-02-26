@@ -301,9 +301,14 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * be the preferred hoster.
      *
      * @since extensions-lib 16
+     * @param anime the anime.
      * @param episode the episode.
      * @return the hosters for the episode.
      */
+    override suspend fun getHosterList(anime: SAnime, episode: SEpisode): List<Hoster> {
+        return getHosterList(episode)
+    }
+
     override suspend fun getHosterList(episode: SEpisode): List<Hoster> {
         return client.newCall(hosterListRequest(episode))
             .awaitSuccess()

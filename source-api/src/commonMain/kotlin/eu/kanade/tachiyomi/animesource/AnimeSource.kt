@@ -54,9 +54,13 @@ interface AnimeSource {
      * be the preferred hoster.
      *
      * @since extensions-lib 16
+     * @param anime the anime.
      * @param episode the episode.
      * @return the hosters for the episode.
      */
+    suspend fun getHosterList(anime: SAnime, episode: SEpisode): List<Hoster> = getHosterList(episode)
+
+    @Deprecated("Use the version with anime instead", ReplaceWith("getHosterList(anime, episode)"))
     suspend fun getHosterList(episode: SEpisode): List<Hoster> = throw IllegalStateException("Not used")
 
     /**

@@ -35,13 +35,11 @@ fun LibraryCompactGrid(
     ) {
         globalSearchItem(searchQuery, onGlobalSearchClicked)
 
-        // Rationale: Using the anime ID as a stable key prevents the entire grid from 
-        // recomposing when the list order changes or when individual items are updated.
-        itemsIndexed(
+        items(
             items = items,
-            key = { index: Int, it: eu.kanade.tachiyomi.ui.library.LibraryItem -> "anime-${it.libraryAnime.anime.id}-$index" },
-            contentType = { _: Int, _: eu.kanade.tachiyomi.ui.library.LibraryItem -> "anime_library_compact_grid_item" },
-        ) { _: Int, libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
+            key = { it.libraryAnime.anime.id },
+            contentType = { "anime_library_compact_grid_item" },
+        ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime
             AnimeCompactGridItem(
                 isSelected = libraryItem.libraryAnime.id in selectedIds,
