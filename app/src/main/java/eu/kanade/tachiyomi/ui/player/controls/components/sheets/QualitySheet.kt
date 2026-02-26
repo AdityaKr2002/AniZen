@@ -168,7 +168,10 @@ fun QualitySheetVideoContent(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxWidth()) {
-        itemsIndexed(videoList) { videoIdx, video ->
+        itemsIndexed(
+            items = videoList,
+            key = { index, video -> "video-$index-${video.url.hashCode()}" }
+        ) { videoIdx, video ->
             VideoTrack(
                 video = video,
                 videoState = videoState[videoIdx],
