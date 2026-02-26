@@ -39,7 +39,7 @@ open class Video(
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
-    val mimeType: String? = null,
+    var mimeType: String? = null,
     // TODO(1.6): Remove after ext lib bump
     val videoPageUrl: String = "",
 ) {
@@ -222,7 +222,7 @@ data class SerializableVideo(
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
-    val mimeType: String? = null,
+    var mimeType: String? = null,
     // TODO(1.6): Remove after ext lib bump
     val videoPageUrl: String = "",
 ) {
