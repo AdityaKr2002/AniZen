@@ -357,7 +357,7 @@ class MainActivity : BaseActivity() {
         // App updates
         LaunchedEffect(Unit) {
             if (updaterEnabled) {
-                kotlinx.coroutines.delay(2000) // Delay to let the app settle
+                kotlinx.coroutines.delay(15000) // Delay to let the app settle
                 try {
                     // KMK -->
                     AppUpdateJob.setupTask(context)
@@ -380,7 +380,7 @@ class MainActivity : BaseActivity() {
 
         // Extensions updates
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(3000) // Further delay for extension checks
+            kotlinx.coroutines.delay(20000) // Further delay for extension checks
             try {
                 ExtensionApi().checkForUpdates(context)
             } catch (e: Exception) {

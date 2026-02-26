@@ -130,6 +130,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             initializeMigrator()
 
             // Eagerly initialize expensive singletons on background thread
+            Injekt.get<Database>()
+            Injekt.get<UiPreferences>()
             Injekt.get<NetworkHelper>()
             Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
             Injekt.get<SourceManager>()
