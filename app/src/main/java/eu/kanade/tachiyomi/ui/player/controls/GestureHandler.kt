@@ -17,6 +17,7 @@
 
 package eu.kanade.tachiyomi.ui.player.controls
 
+import android.content.pm.PackageManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -51,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
@@ -65,7 +67,6 @@ import eu.kanade.tachiyomi.ui.player.controls.components.DoubleTapSeekTriangles
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
-import eu.kanade.tachiyomi.util.system.isDeviceAndroidTV
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -117,6 +118,8 @@ fun GestureHandler(
     val currentBrightness by viewModel.currentBrightness.collectAsState()
     val volumeBoostingCap = audioPreferences.volumeBoostCap().get()
     val haptics = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val isTv = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) }
     val scope = rememberCoroutineScope()
     var speedRampJob by remember { mutableStateOf<Job?>(null) }
 
@@ -170,7 +173,7 @@ fun GestureHandler(
                             isLongPressing = false
                             speedRampJob?.cancel()
                             speedRampJob = scope.launch {
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val currentSpeed = MPVLib.getPropertyDouble("speed")
                                 val duration = 200L
                                 val startTime = System.currentTimeMillis()
@@ -187,7 +190,7 @@ fun GestureHandler(
                         interactionSource.emit(PressInteraction.Release(press))
                     },
                     onLongPress = {
-                        if (areControlsLocked || isDeviceAndroidTV) return@detectTapGestures
+                        if (areControlsLocked || isTv) return@detectTapGestures
                         if (!isLongPressing) {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             isLongPressing = true
