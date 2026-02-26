@@ -26,7 +26,7 @@ data class TimeStamp(
     val type: ChapterType = ChapterType.Other,
 )
 
-data class Video(
+open class Video(
     var videoUrl: String = "",
     val videoTitle: String = "",
     val resolution: Int? = null,
