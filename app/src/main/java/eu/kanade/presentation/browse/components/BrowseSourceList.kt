@@ -41,11 +41,8 @@ fun BrowseSourceList(
 
             items(
                 count = animeList.itemCount,
-                key = { index -> 
-                    val anime = animeList.peek(index)
-                    if (anime != null) "anime-${anime.id}-$index" else "placeholder_$index"
-                },
-                contentType = { "anime" },
+                key = animeList.itemKey { it.id },
+                contentType = animeList.itemContentType { "anime" },
             ) { index ->
                 val anime = animeList[index] ?: return@items
                 onBatchIncrement(index)
