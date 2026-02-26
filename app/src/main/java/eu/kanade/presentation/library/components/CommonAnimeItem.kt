@@ -48,6 +48,10 @@ import androidx.compose.ui.unit.sp
 import eu.kanade.presentation.anime.components.AnimeCover
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.BadgeGroup
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import eu.kanade.domain.ui.UiPreferences
+import androidx.compose.runtime.collectAsState
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.selectedBackground
 import tachiyomi.domain.anime.model.AnimeCover as EntryCoverModel
@@ -311,7 +315,7 @@ private fun GridItemSelectable(
     content: @Composable () -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scale by animateFloatAsState(
         if (isSelected && animatedTransitions) 0.95f else 1f,

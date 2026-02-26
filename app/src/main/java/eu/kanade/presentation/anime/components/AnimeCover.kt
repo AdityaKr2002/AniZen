@@ -40,7 +40,7 @@ import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import tachiyomi.presentation.core.components.SkeletonItem
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import tachiyomi.presentation.core.util.collectAsState
 import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.tachiyomi.util.system.CoverColorObserver
@@ -49,7 +49,8 @@ import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.domain.anime.model.AnimeCover as DomainMangaCover
-import androidx.compose.runtime.collectAsState as collectAsStateFlow
+import androidx.compose.runtime.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 enum class AnimeCover(val ratio: Float) {
     Square(1f / 1f),
@@ -86,7 +87,7 @@ enum class AnimeCover(val ratio: Float) {
     ) {
         val context = LocalContext.current
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val animatedTransitions by uiPreferences.animatedTransitions().collectAsStateFlow()
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         var state by remember(data) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
         val isSuccess = state is AsyncImagePainter.State.Success
         val isError = state is AsyncImagePainter.State.Error
@@ -179,7 +180,7 @@ enum class AnimeCover(val ratio: Float) {
         fun getRatio(animeId: Long): Float {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            val ratios by CoverColorObserver.ratios.collectAsState()
             
             return remember(animeId, usePanorama, ratios) {
                 if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
@@ -190,7 +191,7 @@ enum class AnimeCover(val ratio: Float) {
         fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsStateFlow()
+            val ratios by CoverColorObserver.ratios.collectAsState()
             
             return remember(animeId, usePanorama, ratios) {
                 val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
