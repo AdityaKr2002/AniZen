@@ -62,6 +62,8 @@ class UiPreferences(
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
     fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
+
+    fun animatedTransitions() = preferenceStore.getBoolean("animated_transitions", true)
     // SY <--
 
     companion object {

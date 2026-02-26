@@ -46,11 +46,11 @@ internal fun LibraryList(
             }
         }
 
-        itemsIndexed(
+        items(
             items = items,
-            key = { index: Int, it: eu.kanade.tachiyomi.ui.library.LibraryItem -> "anime-${it.libraryAnime.anime.id}-$index" },
-            contentType = { _: Int, _: eu.kanade.tachiyomi.ui.library.LibraryItem -> "anime_library_list_item" },
-        ) { _: Int, libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
+            key = { it.libraryAnime.anime.id },
+            contentType = { "anime_library_list_item" },
+        ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime
             AnimeListItem(
                 isSelected = libraryItem.libraryAnime.id in selectedIds,

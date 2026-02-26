@@ -123,7 +123,7 @@ abstract class SearchScreenModel(
 
     fun search() {
         val query = state.value.searchQuery
-        val sourceFilter = state.value.sourceFilter
+        val sourceFilter = state.value.actualSourceFilter
 
         if (query.isNullOrBlank()) return
         val sameQuery = this.lastQuery == query
@@ -200,10 +200,17 @@ abstract class SearchScreenModel(
     data class State(
         val fromSourceId: Long? = null,
         val searchQuery: String? = null,
-        val sourceFilter: SourceFilter = SourceFilter.PinnedOnly,
+        val sourceFilter: SourceFilter? = null,
         val onlyShowHasResults: Boolean = false,
         val items: PersistentMap<CatalogueSource, SearchItemResult> = persistentMapOf(),
     ) {
+        val actualSourceFilter: SourceFilter
+            get() = sourceFilter ?: if (Injekt.get<SourcePreferences>().pinnedSources().get().isEmpty()) {
+                SourceFilter.All
+            } else {
+                SourceFilter.PinnedOnly
+            }
+
         val progress: Int = items.count { it.value !is SearchItemResult.Loading }
         val total: Int = items.size
         val filteredItems = items.filter { (_, result) -> result.isVisible(onlyShowHasResults) }

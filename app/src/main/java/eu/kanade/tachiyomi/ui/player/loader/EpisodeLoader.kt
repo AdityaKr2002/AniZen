@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.player.loader
 
 import eu.kanade.domain.episode.model.toSEpisode
+import tachiyomi.domain.anime.model.toSAnime
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.Hoster.Companion.toHosterList
@@ -37,7 +38,7 @@ class EpisodeLoader {
             val isDownloaded = isDownload(episode, anime, skipCache = false)
             return when {
                 isDownloaded -> getHostersOnDownloaded(episode, anime, source)
-                source is AnimeHttpSource -> getHostersOnHttp(episode, source)
+                source is AnimeHttpSource -> getHostersOnHttp(episode, anime, source)
                 source is LocalSource -> getHostersOnLocal(episode)
                 else -> error("source not supported")
             }
@@ -64,9 +65,10 @@ class EpisodeLoader {
          * Returns a list of hosters when the [episode] is online.
          *
          * @param episode the episode being parsed.
+         * @param anime the anime of the episode.
          * @param source the online source of the episode.
          */
-        private suspend fun getHostersOnHttp(episode: Episode, source: AnimeHttpSource): List<Hoster> {
+        private suspend fun getHostersOnHttp(episode: Episode, anime: Anime, source: AnimeHttpSource): List<Hoster> {
             val sourceClass = source.javaClass.name
             val hasMethod = hasHosterListMethod.getOrPut(sourceClass) {
                 source.javaClass.declaredMethods.any { it.name == "getHosterList" }
@@ -75,7 +77,7 @@ class EpisodeLoader {
             return try {
                 kotlinx.coroutines.withTimeout(15000) {
                     if (hasMethod) {
-                        source.getHosterList(episode.toSEpisode())
+                        source.getHosterList(anime.toSAnime(), episode.toSEpisode())
                     } else {
                         source.getVideoList(episode.toSEpisode()).toHosterList()
                     }

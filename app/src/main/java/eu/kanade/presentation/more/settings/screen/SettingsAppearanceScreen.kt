@@ -238,6 +238,11 @@ object SettingsAppearanceScreen : SearchableSettings {
                         animeItemSpacingPref.set(it)
                     },
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.animatedTransitions(),
+                    title = stringResource(KMR.strings.pref_animated_transitions),
+                    subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
+                ),
             ),
         )
     }

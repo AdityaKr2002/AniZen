@@ -85,6 +85,8 @@ enum class AnimeCover(val ratio: Float) {
         // KMK <--
     ) {
         val context = LocalContext.current
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsStateFlow()
         var state by remember(data) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
         val isSuccess = state is AsyncImagePainter.State.Success
         val isError = state is AsyncImagePainter.State.Error
@@ -124,17 +126,19 @@ enum class AnimeCover(val ratio: Float) {
                 ),
         ) {
             // Pulsing background
-            SkeletonItem(
-                modifier = Modifier.fillMaxSize(),
-                shape = shape,
-                color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f)
-            )
+            if (animatedTransitions) {
+                SkeletonItem(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = shape,
+                    color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f),
+                )
+            }
 
             AsyncImage(
-                model = remember(data) {
+                model = remember(data, animatedTransitions) {
                     ImageRequest.Builder(context)
                         .data(data)
-                        .crossfade(true) // Fast default crossfade
+                        .crossfade(animatedTransitions)
                         .build()
                 },
                 contentDescription = contentDescription,
