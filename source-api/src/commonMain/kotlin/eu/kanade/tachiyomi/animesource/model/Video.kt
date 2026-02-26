@@ -62,7 +62,6 @@ open class Video(
         headers: Headers? = null,
         subtitleTracks: List<Track> = emptyList(),
         audioTracks: List<Track> = emptyList(),
-        mimeType: String? = null,
     ) : this(
         videoPageUrl = url,
         videoTitle = quality,
@@ -71,7 +70,6 @@ open class Video(
         subtitleTracks = subtitleTracks,
         audioTracks = audioTracks,
         type = VideoType.VIDEO, // Default to VIDEO
-        mimeType = mimeType,
     )
 
     // TODO(1.6): Remove after ext lib bump
@@ -87,7 +85,6 @@ open class Video(
         timestamps: List<TimeStamp> = emptyList(),
         internalData: String = "",
         type: VideoType = VideoType.VIDEO,
-        mimeType: String? = null,
     ) : this(
         videoUrl = videoUrl,
         videoTitle = videoTitle,
@@ -100,7 +97,6 @@ open class Video(
         timestamps = timestamps,
         internalData = internalData,
         type = type,
-        mimeType = mimeType,
         videoPageUrl = "",
     )
 
@@ -112,14 +108,12 @@ open class Video(
         videoUrl: String?,
         uri: Uri? = null,
         headers: Headers? = null,
-        mimeType: String? = null,
     ) : this(
         videoPageUrl = url,
         videoTitle = quality,
         videoUrl = videoUrl ?: "null",
         headers = headers,
         type = VideoType.VIDEO,
-        mimeType = mimeType,
     )
 
     @Transient
