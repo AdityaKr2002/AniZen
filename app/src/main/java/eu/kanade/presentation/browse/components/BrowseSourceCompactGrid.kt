@@ -42,8 +42,13 @@ fun BrowseSourceCompactGrid(
 
         items(
             count = animeList.itemCount,
-            key = animeList.itemKey { it.id },
-            contentType = animeList.itemContentType { "anime" },
+            key = { index ->
+                val anime = animeList.peek(index)
+                anime?.id ?: "placeholder_$index"
+            },
+            contentType = { index ->
+                if (animeList.peek(index) != null) "anime" else "placeholder"
+            },
         ) { index ->
             val anime = animeList[index] ?: return@items
             onBatchIncrement(index)
