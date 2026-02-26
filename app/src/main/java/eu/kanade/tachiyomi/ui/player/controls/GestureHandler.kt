@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,9 +65,12 @@ import eu.kanade.tachiyomi.ui.player.controls.components.DoubleTapSeekTriangles
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.util.system.isDeviceAndroidTV
 import `is`.xyz.mpv.MPVLib
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.util.collectAsState
@@ -113,6 +117,8 @@ fun GestureHandler(
     val currentBrightness by viewModel.currentBrightness.collectAsState()
     val volumeBoostingCap = audioPreferences.volumeBoostCap().get()
     val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    var speedRampJob by remember { mutableStateOf<Job?>(null) }
 
     Box(
         modifier = modifier
@@ -162,18 +168,43 @@ fun GestureHandler(
                         tryAwaitRelease()
                         if (isLongPressing) {
                             isLongPressing = false
-                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                            viewModel.playerUpdate.update { PlayerUpdates.None }
+                            speedRampJob?.cancel()
+                            speedRampJob = scope.launch {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                val currentSpeed = MPVLib.getPropertyDouble("speed")
+                                val duration = 200L
+                                val startTime = System.currentTimeMillis()
+                                while (System.currentTimeMillis() - startTime < duration) {
+                                    val progress = (System.currentTimeMillis() - startTime).toFloat() / duration
+                                    val speed = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
+                                    MPVLib.setPropertyDouble("speed", speed)
+                                    delay(16)
+                                }
+                                MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
+                                viewModel.playerUpdate.update { PlayerUpdates.None }
+                            }
                         }
                         interactionSource.emit(PressInteraction.Release(press))
                     },
                     onLongPress = {
-                        if (areControlsLocked) return@detectTapGestures
+                        if (areControlsLocked || isDeviceAndroidTV) return@detectTapGestures
                         if (!isLongPressing) {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             isLongPressing = true
                             val longPressSpeed = playerPreferences.playerSpeedLongPress().get()
-                            MPVLib.setPropertyDouble("speed", longPressSpeed.toDouble())
+                            val originalSpeed = viewModel.playbackSpeed.value.toDouble()
+                            speedRampJob?.cancel()
+                            speedRampJob = scope.launch {
+                                val duration = 200L
+                                val startTime = System.currentTimeMillis()
+                                while (System.currentTimeMillis() - startTime < duration) {
+                                    val progress = (System.currentTimeMillis() - startTime).toFloat() / duration
+                                    val speed = originalSpeed + (longPressSpeed.toDouble() - originalSpeed) * progress
+                                    MPVLib.setPropertyDouble("speed", speed)
+                                    delay(16)
+                                }
+                                MPVLib.setPropertyDouble("speed", longPressSpeed.toDouble())
+                            }
                             viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed }
                         }
                     },
