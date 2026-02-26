@@ -10,20 +10,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +37,7 @@ fun DoubleSpeedIndicator(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "speed_arrows")
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
+        initialValue = 0.4f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = LinearEasing),
@@ -48,8 +46,8 @@ fun DoubleSpeedIndicator(
         label = "arrow_alpha"
     )
     val translation by infiniteTransition.animateFloat(
-        initialValue = -4f,
-        targetValue = 4f,
+        initialValue = -2f,
+        targetValue = 2f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
@@ -58,54 +56,33 @@ fun DoubleSpeedIndicator(
     )
 
     Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+        modifier = modifier
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.Black.copy(alpha = 0.5f))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        // Subtle top vignette/glow
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Black.copy(alpha = 0.3f),
-                        0.2f to Color.Transparent
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(top = 32.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black.copy(alpha = 0.55f))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.graphicsLayer {
+            Icon(
+                imageVector = Icons.Default.FastForward,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = alpha),
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer {
                         translationX = translation.dp.toPx()
-                    },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FastForward,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = alpha),
-                        modifier = Modifier.graphicsLayer { scaleX = 0.8f; scaleY = 0.8f }
-                    )
-                }
+                    }
+            )
 
-                Text(
-                    text = stringResource(MR.strings.player_speed, speed),
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
-            }
+            Text(
+                text = stringResource(MR.strings.player_speed, speed),
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }
