@@ -99,6 +99,7 @@ fun SubtitleSettingsPanel(
                 )
                 HorizontalPager(
                     state = pagerState,
+                    key = { it },
                     pageSize = PageSize.Fixed(LocalConfiguration.current.screenWidthDp.dp * 0.9f),
                     verticalAlignment = Alignment.Top,
                     pageSpacing = MaterialTheme.padding.small,

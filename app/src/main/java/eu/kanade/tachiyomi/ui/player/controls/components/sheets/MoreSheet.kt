@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -162,10 +163,10 @@ fun MoreSheet(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             ) {
-                items(
+                itemsIndexed(
                     items = Decoder.entries.minus(Decoder.Auto),
-                    key = { "decoder-${it.name}" }
-                ) { decoder ->
+                    key = { index, it -> "decoder-$index-${it.name}" }
+                ) { _, decoder ->
                     FilterChip(
                         selected = decoder == selectedDecoder,
                         onClick = { onSelectDecoder(decoder) },
@@ -272,10 +273,10 @@ fun MoreSheet(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             ) {
-                items(
+                itemsIndexed(
                     items = AudioChannels.entries,
-                    key = { "audio-channels-${it.name}" }
-                ) {
+                    key = { index, it -> "audio-channels-$index-${it.name}" }
+                ) { _, it ->
                     FilterChip(
                         selected = audioChannels == it,
                         onClick = {
