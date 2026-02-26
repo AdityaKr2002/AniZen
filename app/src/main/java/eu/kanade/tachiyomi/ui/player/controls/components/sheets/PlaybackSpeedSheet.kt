@@ -100,7 +100,8 @@ fun PlaybackSpeedSheet(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                 ) {
                     items(
-                        playbackSpeedPresets.map { it.toFloat() }.sorted(),
+                        items = playbackSpeedPresets.map { it.toFloat() }.distinct().sorted(),
+                        key = { "speed-$it" },
                     ) {
                         InputChip(
                             selected = speed == it,

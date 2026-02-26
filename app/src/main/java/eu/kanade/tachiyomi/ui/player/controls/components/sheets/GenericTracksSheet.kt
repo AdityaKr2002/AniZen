@@ -59,7 +59,10 @@ fun <T> GenericTracksSheet(
         Column(modifier) {
             header()
             LazyColumn {
-                items(tracks) {
+                items(
+                    items = tracks,
+                    key = { it.hashCode() }
+                ) {
                     track(it)
                 }
                 item {

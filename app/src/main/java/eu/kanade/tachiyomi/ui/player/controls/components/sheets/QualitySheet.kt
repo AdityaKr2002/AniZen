@@ -243,7 +243,7 @@ internal fun LazyListScope.hosterContent(
     hosters.forEach { (hosterIdx, hoster) ->
         val isExpanded = expandedState.getOrNull(hosterIdx) ?: false
 
-        item {
+        item(key = "hoster-$hosterIdx-${hoster.name}") {
             HosterTrack(
                 hoster = hoster,
                 selected = selectedVideoIndex.first == hosterIdx,
