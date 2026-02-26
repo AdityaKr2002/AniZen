@@ -169,8 +169,8 @@ class EpisodeLoader {
                         if (video.videoUrl != "null" && video.videoUrl.isNotBlank() && !video.videoUrl.contains("placeholder")) return@async video
 
                         try {
-                            // High-speed resolution: Reduced timeout for individual quality links
-                            kotlinx.coroutines.withTimeout(10000) {
+                            // High-speed resolution: Increased timeout for individual quality links
+                            kotlinx.coroutines.withTimeout(15000) {
                                 val newVideoUrl = source.getVideoUrl(video)
                                 video.copy(videoUrl = newVideoUrl)
                             }
