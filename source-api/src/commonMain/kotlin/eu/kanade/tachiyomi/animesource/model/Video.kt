@@ -39,6 +39,7 @@ open class Video(
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
+    var mimeType: String? = null,
     // TODO(1.6): Remove after ext lib bump
     val videoPageUrl: String = "",
 ) {
@@ -61,6 +62,7 @@ open class Video(
         headers: Headers? = null,
         subtitleTracks: List<Track> = emptyList(),
         audioTracks: List<Track> = emptyList(),
+        mimeType: String? = null,
     ) : this(
         videoPageUrl = url,
         videoTitle = quality,
@@ -69,6 +71,7 @@ open class Video(
         subtitleTracks = subtitleTracks,
         audioTracks = audioTracks,
         type = VideoType.VIDEO, // Default to VIDEO
+        mimeType = mimeType,
     )
 
     // TODO(1.6): Remove after ext lib bump
@@ -84,6 +87,7 @@ open class Video(
         timestamps: List<TimeStamp> = emptyList(),
         internalData: String = "",
         type: VideoType = VideoType.VIDEO,
+        mimeType: String? = null,
     ) : this(
         videoUrl = videoUrl,
         videoTitle = videoTitle,
@@ -96,6 +100,7 @@ open class Video(
         timestamps = timestamps,
         internalData = internalData,
         type = type,
+        mimeType = mimeType,
         videoPageUrl = "",
     )
 
@@ -107,12 +112,14 @@ open class Video(
         videoUrl: String?,
         uri: Uri? = null,
         headers: Headers? = null,
+        mimeType: String? = null,
     ) : this(
         videoPageUrl = url,
         videoTitle = quality,
         videoUrl = videoUrl ?: "null",
         headers = headers,
         type = VideoType.VIDEO,
+        mimeType = mimeType,
     )
 
     @Transient
@@ -141,6 +148,7 @@ open class Video(
         timestamps: List<TimeStamp> = this.timestamps,
         internalData: String = this.internalData,
         type: VideoType = this.type,
+        mimeType: String? = this.mimeType,
     ): Video {
         return Video(
             videoUrl = videoUrl,
@@ -154,6 +162,7 @@ open class Video(
             timestamps = timestamps,
             internalData = internalData,
             type = type,
+            mimeType = mimeType,
         )
     }
 
@@ -170,6 +179,7 @@ open class Video(
         internalData: String = this.internalData,
         initialized: Boolean = this.initialized,
         type: VideoType = this.type,
+        mimeType: String? = this.mimeType,
         videoPageUrl: String = this.videoPageUrl,
     ): Video {
         return Video(
@@ -185,6 +195,7 @@ open class Video(
             internalData = internalData,
             initialized = initialized,
             type = type,
+            mimeType = mimeType,
             videoPageUrl = videoPageUrl,
         )
     }
@@ -211,6 +222,7 @@ data class SerializableVideo(
     val internalData: String = "",
     val initialized: Boolean = false,
     val type: VideoType = VideoType.VIDEO,
+    var mimeType: String? = null,
     // TODO(1.6): Remove after ext lib bump
     val videoPageUrl: String = "",
 ) {
@@ -232,6 +244,7 @@ data class SerializableVideo(
                         vid.internalData,
                         vid.initialized,
                         vid.type,
+                        vid.mimeType,
                         vid.videoPageUrl,
                     )
                 },
@@ -255,6 +268,7 @@ data class SerializableVideo(
                         sVid.internalData,
                         sVid.initialized,
                         sVid.type,
+                        sVid.mimeType,
                         sVid.videoPageUrl,
                     )
                 }

@@ -192,7 +192,10 @@ class DownloadManager(
             "download: " + file.uri.toString(),
             file.uri.toString(),
             file.uri,
-        ).apply { status = Video.State.READY }
+        ).apply {
+            status = Video.State.READY
+            mimeType = "video/mp4"
+        }
     }
 
     /**
