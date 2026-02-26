@@ -50,6 +50,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.BadgeGroup
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import eu.kanade.domain.ui.UiPreferences
 import androidx.compose.runtime.collectAsState
 import tachiyomi.presentation.core.i18n.stringResource

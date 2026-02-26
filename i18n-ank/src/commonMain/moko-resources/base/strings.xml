@@ -228,8 +228,4 @@
 
     <string name="action_clear_anime">Clear anime</string>
     <string name="episodes_from_database">Episodes &amp; History from Database</string>
-
-    <!-- Performance/Animations -->
-    <string name="pref_animated_transitions">Animated transitions</string>
-    <string name="pref_animated_transitions_summary">Enable navigation and list animations. Disabling can improve performance on some devices.</string>
 </resources>
