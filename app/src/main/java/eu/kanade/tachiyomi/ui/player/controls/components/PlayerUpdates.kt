@@ -71,12 +71,5 @@ fun DoubleSpeedPlayerUpdate(
 ) {
     val preferences = remember { Injekt.get<PlayerPreferences>() }
     val speed by preferences.playerSpeedLongPress().collectAsState()
-    PlayerUpdate(modifier) {
-        androidx.compose.foundation.layout.Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
-        ) {
-            Text(text = stringResource(MR.strings.player_speed, speed))
-        }
-    }
+    DoubleSpeedIndicator(speed = speed, modifier = modifier)
 }
