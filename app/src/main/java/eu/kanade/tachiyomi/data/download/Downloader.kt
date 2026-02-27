@@ -289,7 +289,7 @@ class Downloader(
                             download.partProgress[i] = 1f
                             downloadedBytes.addAndGet(existing)
                             synchronized(download) { download.downloadedSegments++ }
-                            return@launch
+                            return@async
                         }
 
                         retry {
