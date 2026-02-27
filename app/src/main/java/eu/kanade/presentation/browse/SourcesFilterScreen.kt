@@ -10,7 +10,6 @@ import androidx.compose.ui.platform.LocalContext
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
-import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.ui.browse.source.SourcesFilterScreenModel
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.source.model.Source
@@ -69,7 +68,7 @@ private fun SourcesFilterContent(
                 contentType = "source-filter-header",
             ) {
                 SourcesFilterHeader(
-                    modifier = Modifier.animateItemFastScroll(),
+                    modifier = Modifier,
                     language = language,
                     enabled = enabled,
                     onClickItem = onClickLanguage,
@@ -82,7 +81,7 @@ private fun SourcesFilterContent(
                     contentType = { "source-filter-item" },
                 ) { source ->
                     SourcesFilterItem(
-                        modifier = Modifier.animateItemFastScroll(),
+                        modifier = Modifier,
                         source = source,
                         isEnabled = "${source.id}" !in state.disabledSources,
                         onClickItem = onClickSource,

@@ -34,18 +34,14 @@ fun BrowseSourceCompactGrid(
         verticalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridVerticalSpacer),
         horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
     ) {
-        if (animeList.loadState.prepend is LoadState.Loading) {
-            item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
+        item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
+            if (animeList.loadState.prepend is LoadState.Loading) {
                 BrowseSourceLoadingItem()
             }
         }
 
         items(
             count = animeList.itemCount,
-            key = { index ->
-                val anime = animeList.peek(index)
-                anime?.let { "browse-grid-compact-${it.id}-${it.url.hashCode()}" } ?: "browse-grid-compact-placeholder-$index"
-            },
             contentType = { index ->
                 if (animeList.peek(index) != null) "anime" else "placeholder"
             },
@@ -62,8 +58,8 @@ fun BrowseSourceCompactGrid(
             )
         }
 
-        if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
-            item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
+        item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
+            if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
                 BrowseSourceLoadingItem()
             }
         }

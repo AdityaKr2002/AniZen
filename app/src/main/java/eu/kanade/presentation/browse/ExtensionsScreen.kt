@@ -54,7 +54,6 @@ import eu.kanade.presentation.browse.components.BaseBrowseItem
 import eu.kanade.presentation.browse.components.ExtensionIcon
 import eu.kanade.presentation.components.WarningBanner
 import eu.kanade.presentation.more.settings.screen.browse.ExtensionReposScreen
-import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.presentation.util.rememberRequestPackageInstallsPermissionState
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
@@ -210,14 +209,14 @@ private fun ExtensionContent(
                             }
                         ExtensionHeader(
                             textRes = header.textRes,
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                             action = action,
                         )
                     }
                     is ExtensionUiModel.Header.Text -> {
                         ExtensionHeader(
                             text = header.text,
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                         )
                     }
                 }
@@ -245,7 +244,7 @@ private fun ExtensionContent(
                         tonalElevation = 2.dp
                     ) {
                         ExtensionItem(
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                             item = item,
                             onClickItem = {
                                 when (it) {
@@ -284,7 +283,7 @@ private fun ExtensionContent(
                     }
                 } else {
                     ExtensionItem(
-                        modifier = Modifier.animateItemFastScroll(),
+                        modifier = Modifier,
                         item = item,
                         onClickItem = {
                             when (it) {
