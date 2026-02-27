@@ -145,6 +145,7 @@ fun VideoFiltersPanel(
 fun FilterPresetsCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     var isExpanded by remember { mutableStateOf(false) }
+    val panelId = remember { Any().hashCode() }
 
     // Collect current values for matching
     val brightness by decoderPreferences.brightnessFilter().collectAsState()
@@ -184,7 +185,7 @@ fun FilterPresetsCard() {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 VideoFilterTheme.entries.forEach { theme ->
-                    key(theme.name) {
+                    key("presets-$panelId-${theme.name}") {
                         InputChip(
                             selected = currentPreset == theme,
                             onClick = {
@@ -215,6 +216,7 @@ fun FilterPresetsCard() {
 fun FiltersCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     var isExpanded by remember { mutableStateOf(true) }
+    val panelId = remember { Any().hashCode() }
 
     ExpandableCard(
         isExpanded = isExpanded,
@@ -269,7 +271,7 @@ fun FiltersCard() {
             }
 
             VideoFilters.entries.forEach { filter ->
-                key(filter.name) {
+                key("filters-$panelId-${filter.name}") {
                     val value by filter.preference(decoderPreferences).collectAsState()
                     SliderItem(
                         label = stringResource(filter.titleRes),
@@ -293,6 +295,7 @@ fun DebandCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     val debandMode by decoderPreferences.videoDebanding().collectAsState()
     var isExpanded by remember { mutableStateOf(false) }
+    val panelId = remember { Any().hashCode() }
 
     ExpandableCard(
         isExpanded = isExpanded,
@@ -314,7 +317,7 @@ fun DebandCard() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
-                    key(mode.name) {
+                    key("deband-mode-$panelId-${mode.name}") {
                         val isSelected = debandMode == mode
                         IconToggleButton(
                             checked = isSelected,
@@ -346,7 +349,7 @@ fun DebandCard() {
             }
 
             DebandSettings.entries.forEach { setting ->
-                key(setting.name) {
+                key("deband-setting-$panelId-${setting.name}") {
                     val value by setting.preference(decoderPreferences).collectAsState()
                     SliderItem(
                         label = stringResource(setting.titleRes),

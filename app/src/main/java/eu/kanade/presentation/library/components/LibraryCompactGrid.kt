@@ -37,7 +37,7 @@ fun LibraryCompactGrid(
 
         items(
             items = items,
-            key = { it.libraryAnime.anime.id },
+            key = { "library-grid-compact-${it.libraryAnime.anime.id}" },
             contentType = { "anime_library_compact_grid_item" },
         ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime

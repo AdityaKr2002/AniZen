@@ -101,7 +101,7 @@ fun AnimeSeasonSection(
             ) {
                 items(
                     items = sortedSeasons,
-                    key = { it.anime.id }
+                    key = { "anime-season-${it.anime.id}" }
                 ) { season ->
                     SeasonItem(
                         season = season,
