@@ -14,6 +14,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.ConcurrentHashMap
 
+import java.util.concurrent.atomic.AtomicLong
+
 data class Download(
     val source: HttpSource,
     val anime: Anime,
@@ -60,7 +62,7 @@ data class Download(
     @Transient var lastNotifiedTime: Long = 0L
     
     private var lastUpdateTime: Long = System.currentTimeMillis()
-    private var lastBytesRead: Long = 0
+    private val lastBytesRead = AtomicLong(0)
     private val speedSamples = mutableListOf<Double>()
 
     /**
@@ -92,7 +94,7 @@ data class Download(
         val now = System.currentTimeMillis()
         val timeDiff = (now - lastUpdateTime) / 1000.0
         if (timeDiff >= 0.5) { // Update every 500ms for smoothness
-            val bytesDiff = bytesRead - lastBytesRead
+            val bytesDiff = bytesRead - lastBytesRead.get()
             val currentSpeed = bytesDiff / timeDiff
             
             // Moving Average (Last 5 samples) for 1DM+ style smoothness
@@ -122,7 +124,7 @@ data class Download(
             }
 
             lastUpdateTime = now
-            lastBytesRead = bytesRead
+            lastBytesRead.set(bytesRead)
         }
     }
 

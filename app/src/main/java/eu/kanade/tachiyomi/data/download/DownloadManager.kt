@@ -86,7 +86,7 @@ class DownloadManager(
      * Tells the downloader to pause downloads.
      */
     fun pauseDownloads() {
-        downloader.stop()
+        downloader.pause()
     }
 
     /**

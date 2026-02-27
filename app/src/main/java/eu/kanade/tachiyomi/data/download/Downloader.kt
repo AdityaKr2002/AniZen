@@ -382,10 +382,12 @@ class Downloader(
         }
     }
 
+    private var lastNotifiedTime = 0L
+
     private fun throttleNotification(download: Download) {
         val now = System.currentTimeMillis()
-        if (now - download.lastNotifiedTime > 1000) {
-            download.lastNotifiedTime = now
+        if (now - lastNotifiedTime > 1000) { // Global throttle for all active downloads
+            lastNotifiedTime = now
             notifier.onProgressChange(download)
         }
     }
