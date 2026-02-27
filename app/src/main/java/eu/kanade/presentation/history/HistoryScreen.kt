@@ -19,7 +19,6 @@ import eu.kanade.presentation.components.SearchToolbar
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.history.components.HistoryItem
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
-import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.ui.history.HistoryScreenModel
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.domain.history.model.HistoryWithRelations
@@ -139,7 +138,7 @@ private fun HistoryScreenContent(
                 if (model is HistoryUiModel.Header) {
                     item(key = "historyHeader-${model.hashCode()}") {
                         ListGroupHeader(
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                             text = relativeDateText(model.date),
                         )
                     }
@@ -161,7 +160,7 @@ private fun HistoryScreenContent(
                             Column {
                                 groupItems.forEach { historyItem ->
                                     HistoryItem(
-                                        modifier = Modifier.animateItemFastScroll(),
+                                        modifier = Modifier,
                                         history = historyItem,
                                         onClickCover = { onClickCover(historyItem) },
                                         onClickResume = { onClickResume(historyItem) },
@@ -183,7 +182,7 @@ private fun HistoryScreenContent(
                             tonalElevation = 2.dp
                         ) {
                             HistoryItem(
-                                modifier = Modifier.animateItemFastScroll(),
+                                modifier = Modifier,
                                 history = value,
                                 onClickCover = { onClickCover(value) },
                                 onClickResume = { onClickResume(value) },
@@ -200,7 +199,7 @@ private fun HistoryScreenContent(
                 key = { "history-${it.item.id}" },
             ) { model ->
                 HistoryItem(
-                    modifier = Modifier.animateItemFastScroll(),
+                    modifier = Modifier,
                     history = model.item,
                     onClickCover = { onClickCover(model.item) },
                     onClickResume = { onClickResume(model.item) },

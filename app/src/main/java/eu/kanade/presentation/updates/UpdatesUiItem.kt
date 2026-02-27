@@ -45,7 +45,6 @@ import eu.kanade.presentation.anime.components.DotSeparatorText
 import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeDownloadIndicator
 import eu.kanade.presentation.components.relativeDateText
-import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.presentation.util.relativeTimeSpanString
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
@@ -98,7 +97,7 @@ internal fun LazyListScope.updatesUiItems(
                 if (useContainer) {
                     item(key = "animeUpdatesHeader-${model.date}") {
                         ListGroupHeader(
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                             text = relativeDateText(model.date),
                         )
                     }
@@ -170,7 +169,7 @@ internal fun LazyListScope.updatesUiItems(
                         }
                     } else {
                         UpdatesUiItem(
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier,
                             update = updatesItem.update,
                             selected = updatesItem.selected,
                             watchProgress = updatesItem.update.lastSecondSeen
