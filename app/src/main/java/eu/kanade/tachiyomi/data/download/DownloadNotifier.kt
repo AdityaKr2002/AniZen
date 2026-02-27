@@ -58,12 +58,20 @@ internal class DownloadNotifier(private val context: Context) {
         context.notify(id, build())
     }
 
+    private fun getNotificationId(download: Download): Int {
+        return Notifications.ID_DOWNLOAD_EPISODE_PROGRESS + download.episode.id.toInt()
+    }
+
     /**
      * Dismiss the downloader's notification. Downloader error notifications use a different id, so
      * those can only be dismissed by the user.
      */
     fun dismissProgress() {
         context.notificationManager.cancel(Notifications.ID_DOWNLOAD_EPISODE_PROGRESS)
+    }
+
+    fun dismissProgress(download: Download) {
+        context.notificationManager.cancel(getNotificationId(download))
     }
 
     /**
@@ -74,31 +82,36 @@ internal class DownloadNotifier(private val context: Context) {
     fun onProgressChange(download: Download) {
         val now = System.currentTimeMillis()
         if (now - lastNotificationTime < 250 && download.status == Download.State.DOWNLOADING && download.progress < 100) {
-            return
+            // Keep updating if it's a new download or finished
+        } else {
+            lastNotificationTime = now
         }
-        lastNotificationTime = now
 
-        with(progressNotificationBuilder) {
-            if (!isDownloading) {
-                setSmallIcon(android.R.drawable.stat_sys_download)
-                clearActions()
-                // Open download manager when clicked
-                setContentIntent(
-                    NotificationHandler.openAnimeDownloadManagerPendingActivity(context),
-                )
-                isDownloading = true
-                // Pause action
-                addAction(
-                    R.drawable.ic_pause_24dp,
-                    context.stringResource(MR.strings.action_pause),
-                    NotificationReceiver.pauseAnimeDownloadsPendingBroadcast(context),
-                )
-                addAction(
-                    R.drawable.ic_book_24dp,
-                    context.stringResource(MR.strings.action_show_anime),
-                    NotificationReceiver.openAnimeEntryPendingActivity(context, download.anime.id),
-                )
-            }
+        val notificationId = getNotificationId(download)
+
+        with(context.notificationBuilder(Notifications.CHANNEL_DOWNLOADER_PROGRESS)) {
+            setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
+            setAutoCancel(false)
+            setOnlyAlertOnce(true)
+            setSmallIcon(android.R.drawable.stat_sys_download)
+            setGroup(Notifications.GROUP_DOWNLOADER)
+            
+            // Open download manager when clicked
+            setContentIntent(
+                NotificationHandler.openAnimeDownloadManagerPendingActivity(context),
+            )
+            
+            // Actions
+            addAction(
+                R.drawable.ic_pause_24dp,
+                context.stringResource(MR.strings.action_pause),
+                NotificationReceiver.pauseAnimeDownloadsPendingBroadcast(context),
+            )
+            addAction(
+                R.drawable.ic_book_24dp,
+                context.stringResource(MR.strings.action_show_anime),
+                NotificationReceiver.openAnimeEntryPendingActivity(context, download.anime.id),
+            )
 
             val downloadingProgressText = if (download.progress <= 0 && download.downloadedSize.isEmpty()) {
                 context.stringResource(MR.strings.update_check_notification_download_in_progress)
@@ -130,27 +143,47 @@ internal class DownloadNotifier(private val context: Context) {
                 setContentTitle("$title - $episode".chop(30))
                 setContentText(downloadingProgressText)
             }
-            if (download.progress == 0) {
-                setProgress(100, download.progress, true)
+            
+            if (download.progress <= 0) {
+                setProgress(100, 0, true)
             } else {
                 setProgress(100, download.progress, false)
             }
             setOngoing(true)
 
-            show(Notifications.ID_DOWNLOAD_EPISODE_PROGRESS)
+            show(notificationId)
         }
+        
+        // Show summary notification
+        showSummaryNotification()
+    }
+
+    private fun showSummaryNotification() {
+        val summary = context.notificationBuilder(Notifications.CHANNEL_DOWNLOADER_PROGRESS) {
+            setSmallIcon(android.R.drawable.stat_sys_download)
+            setContentTitle(context.stringResource(MR.strings.download_notifier_downloader_title))
+            setContentText(context.stringResource(MR.strings.update_check_notification_download_in_progress))
+            setGroup(Notifications.GROUP_DOWNLOADER)
+            setGroupSummary(true)
+            setAutoCancel(false)
+            setOngoing(true)
+            setOnlyAlertOnce(true)
+        }
+        summary.show(Notifications.ID_DOWNLOAD_EPISODE_PROGRESS)
     }
 
     /**
      * Show notification when download is paused.
      */
     fun onPaused() {
-        with(progressNotificationBuilder) {
+        with(context.notificationBuilder(Notifications.CHANNEL_DOWNLOADER_PROGRESS)) {
             setContentTitle(context.stringResource(MR.strings.download_paused))
             setContentText(context.stringResource(MR.strings.download_notifier_download_paused_episodes))
             setSmallIcon(R.drawable.ic_pause_24dp)
             setProgress(0, 0, false)
             setOngoing(false)
+            setGroup(Notifications.GROUP_DOWNLOADER)
+            setGroupSummary(true)
             clearActions()
             // Open download manager when clicked
             setContentIntent(NotificationHandler.openAnimeDownloadManagerPendingActivity(context))

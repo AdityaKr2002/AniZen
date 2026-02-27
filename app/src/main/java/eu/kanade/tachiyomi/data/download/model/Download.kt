@@ -64,10 +64,10 @@ data class Download(
         if (contentLength > 0) {
             totalSize = contentLength
         }
-        val newProgress = if (totalSize > 0) {
-            (100 * bytesRead / totalSize).toInt()
-        } else {
-            -1
+        val newProgress = when {
+            totalSize > 0 -> (100 * bytesRead / totalSize).toInt()
+            totalSegments > 0 -> (100 * downloadedSegments / totalSegments).toInt()
+            else -> -1
         }
         
         calculateSpeed(bytesRead)

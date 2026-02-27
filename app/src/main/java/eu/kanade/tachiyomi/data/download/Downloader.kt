@@ -131,6 +131,7 @@ class Downloader(
                 val maxConcurrent = preferences.concurrentDownloads().get()
                 if (activeDownloads < maxConcurrent) {
                     val pending = queue.filter { it.status == Download.State.QUEUE }
+                        .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
                     pending.take(maxConcurrent - activeDownloads).forEach { download ->
                         launch {
                             downloadEpisode(download)
@@ -142,38 +143,24 @@ class Downloader(
         }
     }
 
-    fun stop(reason: String? = null) {
-        downloaderJob?.cancel()
-        downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
-        if (reason != null) notifier.onWarning(reason)
-        else if (queueState.value.isNotEmpty()) notifier.onPaused()
-        else notifier.onComplete()
-        DownloadJob.stop(context)
-    }
-
-    fun pause() {
-        downloaderJob?.cancel()
-        downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
-    }
-
-    fun clearQueue() {
-        downloaderJob?.cancel()
-        downloaderJob = null
-        _queueState.update {
-            it.forEach { download -> download.status = Download.State.NOT_DOWNLOADED }
-            store.clear()
-            emptyList()
+    private suspend fun <T> retry(
+        times: Int = 3,
+        initialDelay: Long = 1000,
+        maxDelay: Long = 5000,
+        factor: Double = 2.0,
+        block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        repeat(times - 1) {
+            try {
+                return block()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                delay(currentDelay)
+                currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+            }
         }
-        notifier.dismissProgress()
-    }
-
-    fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
-        val source = sourceManager.get(anime.source) as? HttpSource ?: return
-        val downloads = episodes.map { Download(source, anime, it, alt, video) }
-        addAllToQueue(downloads)
-        if (autoStart || !DownloadJob.isRunning(context)) DownloadJob.start(context)
+        return block()
     }
 
     private suspend fun downloadEpisode(download: Download) {
@@ -183,10 +170,12 @@ class Downloader(
         download.status = Download.State.DOWNLOADING
         notifier.onProgressChange(download)
         try {
-            val video = download.video ?: run {
-                val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
-                HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
-            } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+            val video = retry {
+                download.video ?: run {
+                    val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
+                    HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
+                } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+            }
             download.video = video
             val filename = DiskUtil.buildValidFilename(download.episode.name)
             val url = video.videoUrl
@@ -207,6 +196,7 @@ class Downloader(
                 internalDownload(download, tmpDir, filename)
             }
             ensureSuccessfulAnimeDownload(download, animeDir, tmpDir, episodeDirname)
+            notifier.dismissProgress(download)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             download.status = Download.State.ERROR
@@ -219,7 +209,9 @@ class Downloader(
         val client = networkHelper.downloadClient
         val threadCount = calculateDynamicConcurrency()
         download.activeThreads = threadCount
-        val headRes = client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
+        val headRes = retry { 
+            client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
+        }
         val size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
         download.totalSize = size
         headRes.close()
@@ -234,11 +226,12 @@ class Downloader(
                         download.downloadedSegments = 0
                         (0 until threadCount).map { i ->
                             launch {
-                                val start = i * partSize
-                                val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                                val request = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).header("Range", "bytes=$start-$end").build()
-                                try {
+                                retry {
+                                    val start = i * partSize
+                                    val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
+                                    val request = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).header("Range", "bytes=$start-$end").build()
                                     client.newCall(request).execute().use { res ->
+                                        if (!res.isSuccessful) throw IOException("Failed to download part $i: ${res.code}")
                                         val source = res.body?.source() ?: throw IOException("Empty Part")
                                         val buffer = ByteArray(64 * 1024)
                                         var bytesRead: Int
@@ -253,23 +246,26 @@ class Downloader(
                                         }
                                         synchronized(download) { download.downloadedSegments++ }
                                     }
-                                } catch (e: Exception) { Log.e("AniZen", "Part $i failed", e) }
+                                }
                             }
                         }
                     } else {
                         download.totalSegments = 1
-                        client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-                            val source = res.body?.source() ?: throw IOException("Empty Body")
-                            val buffer = ByteArray(64 * 1024)
-                            var bytesRead: Int
-                            while (source.read(buffer).also { bytesRead = it } != -1) {
-                                ensureActive()
-                                channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
-                                val total = downloadedBytes.addAndGet(bytesRead.toLong())
-                                download.update(total, size, false)
-                                notifier.onProgressChange(download)
+                        retry {
+                            client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                if (!res.isSuccessful) throw IOException("Failed to download: ${res.code}")
+                                val source = res.body?.source() ?: throw IOException("Empty Body")
+                                val buffer = ByteArray(64 * 1024)
+                                var bytesRead: Int
+                                while (source.read(buffer).also { bytesRead = it } != -1) {
+                                    ensureActive()
+                                    channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
+                                    val total = downloadedBytes.addAndGet(bytesRead.toLong())
+                                    download.update(total, size, false)
+                                    notifier.onProgressChange(download)
+                                }
+                                download.downloadedSegments = 1
                             }
-                            download.downloadedSegments = 1
                         }
                     }
                 }
@@ -284,12 +280,15 @@ class Downloader(
         val client = networkHelper.downloadClient
         val threadCount = calculateDynamicConcurrency()
         download.activeThreads = threadCount
-        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).await()
+        val playlistRes = retry {
+            client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).await()
+        }
         val playlistBody = playlistRes.body?.string() ?: throw IOException("Empty HLS")
         val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
         val segments = playlistBody.lines().filter { it.isNotBlank() && !it.startsWith("#") }
             .map { if (it.startsWith("http")) it else baseUrl + it }
         download.totalSegments = segments.size
+        download.downloadedSegments = 0
         val videoFile = tmpDir.createFile("$filename.tmp")!!
         val nextWriteIdx = AtomicInteger(0)
         val downloadedBytes = AtomicLong(0)
@@ -297,31 +296,28 @@ class Downloader(
         context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                 coroutineScope {
-                    val segmentsToDownload = AtomicInteger(0)
                     segments.forEachIndexed { index, segUrl ->
                         launch {
                             memorySemaphore.withPermit {
-                                try {
-                                    val res = client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
-                                    val data = res.body?.bytes() ?: throw IOException("Empty segment")
-                                    segmentCache[index] = data
-                                    synchronized(channel) {
-                                        while (segmentCache.containsKey(nextWriteIdx.get())) {
-                                            val writeData = segmentCache.remove(nextWriteIdx.get())!!
-                                            channel.write(ByteBuffer.wrap(writeData))
-                                            val total = downloadedBytes.addAndGet(writeData.size.toLong())
-                                            nextWriteIdx.incrementAndGet()
-                                            download.downloadedSegments = nextWriteIdx.get()
-                                            download.update(total, -1, false)
-                                            if (nextWriteIdx.get() % 5 == 0) notifier.onProgressChange(download)
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    segmentCache[index] = ByteArray(0)
-                                    synchronized(channel) {
-                                        while (segmentCache.containsKey(nextWriteIdx.get())) {
-                                            segmentCache.remove(nextWriteIdx.get())
-                                            nextWriteIdx.incrementAndGet()
+                                retry {
+                                    client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                        if (!res.isSuccessful) throw IOException("Failed to download segment $index: ${res.code}")
+                                        val data = res.body?.bytes() ?: throw IOException("Empty segment")
+                                        segmentCache[index] = data
+                                        synchronized(channel) {
+                                            while (segmentCache.containsKey(nextWriteIdx.get())) {
+                                                val writeData = segmentCache.remove(nextWriteIdx.get())!!
+                                                if (writeData.isNotEmpty()) {
+                                                    channel.write(ByteBuffer.wrap(writeData))
+                                                    downloadedBytes.addAndGet(writeData.size.toLong())
+                                                }
+                                                val currentIdx = nextWriteIdx.incrementAndGet()
+                                                download.downloadedSegments = currentIdx
+                                                download.update(downloadedBytes.get(), -1, false)
+                                                if (currentIdx % 5 == 0 || currentIdx == download.totalSegments) {
+                                                    notifier.onProgressChange(download)
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -338,21 +334,35 @@ class Downloader(
     private fun isTor(video: Video) = video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")
 
     private suspend fun torrentDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
-        TorrentServerService.start()
-        TorrentServerService.wait(10)
-        val currentTorrent = TorrentServerApi.addTorrent(download.video!!.videoUrl, download.video!!.quality, "", "", false)
+        retry {
+            TorrentServerService.start()
+            TorrentServerService.wait(10)
+        }
+        val currentTorrent = retry {
+            TorrentServerApi.addTorrent(download.video!!.videoUrl, download.video!!.quality, "", "", false)
+        }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
         download.video!!.videoUrl = torrentUrl
         return internalDownload(download, tmpDir, filename)
     }
 
     private suspend fun ensureSuccessfulAnimeDownload(download: Download, animeDir: UniFile, tmpDir: UniFile, dirname: String) {
+        // Wait a bit for file system to settle
+        delay(500)
         val downloadedVideo = tmpDir.listFiles().orEmpty().filterNot { it.getName()?.endsWith(".tmp") == true }
-        if (downloadedVideo.size >= 1) {
+        if (downloadedVideo.isNotEmpty()) {
             tmpDir.renameTo(dirname)
             cache.addEpisode(dirname, animeDir, download.anime)
             download.status = Download.State.DOWNLOADED
-        } else throw Exception("Unable to finalize download")
+        } else {
+            // Check if it was already renamed (race condition)
+            val alreadyRenamed = animeDir.findFile(dirname)
+            if (alreadyRenamed != null && alreadyRenamed.isDirectory) {
+                download.status = Download.State.DOWNLOADED
+            } else {
+                throw Exception("Unable to finalize download: No video file found in ${tmpDir.uri}")
+            }
+        }
     }
 
     private fun areAllDownloadsFinished() = queueState.value.none { it.status.value <= Download.State.DOWNLOADING.value }
