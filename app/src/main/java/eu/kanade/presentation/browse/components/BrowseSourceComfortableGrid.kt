@@ -35,7 +35,7 @@ fun BrowseSourceComfortableGrid(
         horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
     ) {
         if (animeList.loadState.prepend is LoadState.Loading) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "browse-grid-comfortable-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }
@@ -44,7 +44,7 @@ fun BrowseSourceComfortableGrid(
             count = animeList.itemCount,
             key = { index ->
                 val anime = animeList.peek(index)
-                if (anime != null) "browse-grid-comfortable-$index-${anime.id}" else "browse-grid-comfortable-placeholder-$index"
+                anime?.let { "browse-grid-comfortable-${it.id}-${it.url.hashCode()}" } ?: "browse-grid-comfortable-placeholder-$index"
             },
             contentType = { index ->
                 if (animeList.peek(index) != null) "anime" else "placeholder"
@@ -63,7 +63,7 @@ fun BrowseSourceComfortableGrid(
         }
 
         if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "browse-grid-comfortable-load-append", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }

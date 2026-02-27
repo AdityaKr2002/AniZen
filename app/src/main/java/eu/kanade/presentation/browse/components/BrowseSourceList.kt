@@ -33,8 +33,8 @@ fun BrowseSourceList(
             contentPadding = contentPadding + PaddingValues(vertical = 8.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item {
-                if (animeList.loadState.prepend is LoadState.Loading) {
+            if (animeList.loadState.prepend is LoadState.Loading) {
+                item(key = "browse-list-load-prepend") {
                     BrowseSourceLoadingItem()
                 }
             }
@@ -43,7 +43,8 @@ fun BrowseSourceList(
                 count = animeList.itemCount,
                 key = { index ->
                     val anime = animeList.peek(index)
-                    if (anime != null) "browse-list-$index-${anime.id}" else "browse-list-placeholder-$index"
+                    // Use ID + URL Hash for stable, unique identity independent of index
+                    anime?.let { "browse-list-${it.id}-${it.url.hashCode()}" } ?: "browse-list-placeholder-$index"
                 },
                 contentType = { index ->
                     if (animeList.peek(index) != null) "anime" else "placeholder"
@@ -63,8 +64,8 @@ fun BrowseSourceList(
                 )
             }
 
-            item {
-                if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+            if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+                item(key = "browse-list-load-append") {
                     BrowseSourceLoadingItem()
                 }
             }
