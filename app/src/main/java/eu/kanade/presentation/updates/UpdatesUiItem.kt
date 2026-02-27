@@ -96,7 +96,7 @@ internal fun LazyListScope.updatesUiItems(
         when (model) {
             is UpdatesUiModel.Header -> {
                 if (useContainer) {
-                    item(key = "animeUpdatesHeader-${model.hashCode()}") {
+                    item(key = "animeUpdatesHeader-${model.date}") {
                         ListGroupHeader(
                             modifier = Modifier.animateItemFastScroll(),
                             text = relativeDateText(model.date),
