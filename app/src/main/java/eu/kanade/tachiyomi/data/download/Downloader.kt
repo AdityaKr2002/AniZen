@@ -143,6 +143,40 @@ class Downloader(
         }
     }
 
+    fun stop(reason: String? = null) {
+        downloaderJob?.cancel()
+        downloaderJob = null
+        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
+        if (reason != null) notifier.onWarning(reason)
+        else if (queueState.value.isNotEmpty()) notifier.onPaused()
+        else notifier.onComplete()
+        DownloadJob.stop(context)
+    }
+
+    fun pause() {
+        downloaderJob?.cancel()
+        downloaderJob = null
+        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
+    }
+
+    fun clearQueue() {
+        downloaderJob?.cancel()
+        downloaderJob = null
+        _queueState.update {
+            it.forEach { download -> download.status = Download.State.NOT_DOWNLOADED }
+            store.clear()
+            emptyList()
+        }
+        notifier.dismissProgress()
+    }
+
+    fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
+        val source = sourceManager.get(anime.source) as? HttpSource ?: return
+        val downloads = episodes.map { Download(source, anime, it, alt, video) }
+        addAllToQueue(downloads)
+        if (autoStart || !DownloadJob.isRunning(context)) DownloadJob.start(context)
+    }
+
     private suspend fun <T> retry(
         times: Int = 3,
         initialDelay: Long = 1000,
