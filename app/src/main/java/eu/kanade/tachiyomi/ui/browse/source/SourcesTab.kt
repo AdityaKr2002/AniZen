@@ -89,7 +89,7 @@ fun Screen.sourcesTab(): TabContent {
                         onDismissRequest = screenModel::closeDialog,
                         title = { Text(text = "Add to Feed Category") },
                         text = {
-                            val dialogId = remember { Any().hashCode() }
+                            val dialogId = remember(source.id) { source.id }
                             LazyColumn {
                                 items(
                                     items = state.categories,
