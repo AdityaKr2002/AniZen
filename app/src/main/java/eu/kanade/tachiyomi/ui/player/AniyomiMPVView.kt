@@ -105,8 +105,8 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     inner class TrackDelegate(private val name: String) {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
             val v = getPropertyString(name)
-            // we can get null here for "no" or other invalid value
-            return v?.toIntOrNull() ?: -1
+            if (v == "no" || v == null) return -1
+            return v.toIntOrNull() ?: -1
         }
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
             if (value == -1) {

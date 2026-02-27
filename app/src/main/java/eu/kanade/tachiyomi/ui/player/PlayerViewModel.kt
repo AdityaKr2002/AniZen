@@ -421,7 +421,7 @@ class PlayerViewModel @JvmOverloads constructor(
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
 
-            if (!isLoadingTracks.value) {
+            if (isLoadingTracks.value) {
                 onFinishLoadingTracks()
             }
         }
