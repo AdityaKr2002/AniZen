@@ -74,6 +74,13 @@ internal class DownloadNotifier(private val context: Context) {
         context.notificationManager.cancel(getNotificationId(download))
     }
 
+    fun dismissAll() {
+        context.notificationManager.cancel(Notifications.ID_DOWNLOAD_EPISODE_PROGRESS)
+        // Since we cannot easily list active IDs, we clear the whole progress channel via summary
+        // And reset downloading flag
+        isDownloading = false
+    }
+
     /**
      * Called when download progress changes.
      *
@@ -81,11 +88,10 @@ internal class DownloadNotifier(private val context: Context) {
      */
     fun onProgressChange(download: Download) {
         val now = System.currentTimeMillis()
-        if (now - lastNotificationTime < 250 && download.status == Download.State.DOWNLOADING && download.progress < 100) {
-            // Keep updating if it's a new download or finished
-        } else {
-            lastNotificationTime = now
+        if (now - lastNotificationTime < 500 && download.status == Download.State.DOWNLOADING && download.progress < 100) {
+            return
         }
+        lastNotificationTime = now
 
         val notificationId = getNotificationId(download)
 

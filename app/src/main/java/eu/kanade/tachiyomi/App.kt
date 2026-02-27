@@ -141,6 +141,12 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
             Injekt.get<CustomAnimeRepository>()
             
+            // Dismiss stuck downloader notifications
+            val downloadManager = Injekt.get<DownloadManager>()
+            withUIContext {
+                downloadManager.dismissNotifications()
+            }
+            
             val syncPreferences: SyncPreferences = Injekt.get()
             val syncTriggerOpt = syncPreferences.getSyncTriggerOptions()
             if (syncPreferences.isSyncEnabled() && syncTriggerOpt.syncOnAppStart) {

@@ -96,10 +96,11 @@ class Downloader(
 
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var downloaderJob: Job? = null
+    private val _isRunningFlow = MutableStateFlow(false)
+    val isRunningFlow = _isRunningFlow.asStateFlow()
 
     val isRunning: Boolean
-        get() = downloaderJob?.isActive ?: false
+        get() = _isRunningFlow.value
 
     init {
         launchIO {
@@ -118,7 +119,7 @@ class Downloader(
         if (isRunning || queueState.value.isEmpty()) return false
         val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
         pending.forEach { 
-            if (it.status != Download.State.QUEUE && it.status != Download.State.DOWNLOADING) {
+            if (it.status == Download.State.PAUSED || it.status == Download.State.ERROR || it.status == Download.State.NOT_DOWNLOADED) {
                 it.status = Download.State.QUEUE 
             }
         }
@@ -126,39 +127,60 @@ class Downloader(
         return pending.isNotEmpty()
     }
 
+    private var downloaderJob: Job? = null
+
     @OptIn(FlowPreview::class)
     private fun launchDownloaderJob() {
         if (downloaderJob?.isActive == true) return
         downloaderJob = scope.launch {
-            queueState.debounce(100).collectLatest { queue ->
-                val activeDownloads = queue.count { it.status == Download.State.DOWNLOADING }
-                val maxConcurrent = preferences.concurrentDownloads().get()
-                if (activeDownloads < maxConcurrent) {
-                    val pending = queue.filter { it.status == Download.State.QUEUE }
-                        .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
-                    pending.take(maxConcurrent - activeDownloads).forEach { download ->
-                        launch {
-                            downloadEpisode(download)
+            _isRunningFlow.value = true
+            try {
+                queueState.debounce(100).collectLatest { queue ->
+                    val activeDownloads = queue.count { it.status == Download.State.DOWNLOADING }
+                    val maxConcurrent = preferences.concurrentDownloads().get()
+                    
+                    if (activeDownloads < maxConcurrent) {
+                        val pending = queue.filter { it.status == Download.State.QUEUE }
+                            .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
+                        
+                        pending.take(maxConcurrent - activeDownloads).forEach { download ->
+                            launch {
+                                downloadEpisode(download)
+                            }
                         }
                     }
+                    
+                    if (queue.isEmpty() || areAllDownloadsFinished()) {
+                        stop()
+                    }
                 }
-                if (areAllDownloadsFinished()) stop()
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    logcat(LogPriority.ERROR, e) { "Downloader job failed" }
+                }
+            } finally {
+                _isRunningFlow.value = false
             }
         }
     }
 
     fun stop(reason: String? = null) {
+        _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
         queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
             .forEach { it.status = Download.State.PAUSED }
         if (reason != null) notifier.onWarning(reason)
         else if (queueState.value.isNotEmpty()) notifier.onPaused()
-        else notifier.onComplete()
+        else {
+            notifier.onComplete()
+            notifier.dismissAll()
+        }
         DownloadJob.stop(context)
     }
 
     fun pause() {
+        _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
         queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
@@ -166,9 +188,14 @@ class Downloader(
         notifier.onPaused()
     }
 
+    fun dismissAll() {
+        notifier.dismissAll()
+    }
+
     fun clearQueue() {
         downloaderJob?.cancel()
         downloaderJob = null
+        _isRunningFlow.value = false
         val currentQueue = queueState.value
         _queueState.update {
             it.forEach { download -> 
@@ -179,6 +206,7 @@ class Downloader(
             emptyList()
         }
         notifier.dismissProgress()
+        notifier.dismissAll()
     }
 
     fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
@@ -214,6 +242,11 @@ class Downloader(
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         val tmpDir = animeDir.createDirectory(episodeDirname + TMP_DIR_SUFFIX)!!
         download.status = Download.State.DOWNLOADING
+        
+        // Reset granular progress for new attempt
+        download.partProgress.clear()
+        download.segmentProgress.clear()
+        
         notifier.onProgressChange(download)
         try {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()

@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -111,7 +113,9 @@ class DownloadQueueScreenModel(
         .stateIn(screenModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun getDownloadStatusFlow() = downloadManager.statusFlow()
+        .sample(1000)
     fun getDownloadProgressFlow() = downloadManager.progressFlow()
+        .sample(1000)
 
     fun startDownloads() = downloadManager.startDownloads()
     fun pauseDownloads() = downloadManager.pauseDownloads()
