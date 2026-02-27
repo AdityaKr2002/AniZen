@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -88,8 +89,12 @@ fun Screen.sourcesTab(): TabContent {
                         onDismissRequest = screenModel::closeDialog,
                         title = { Text(text = "Add to Feed Category") },
                         text = {
+                            val dialogId = remember { Any().hashCode() }
                             LazyColumn {
-                                items(state.categories, key = { it.id }) { category ->
+                                items(
+                                    items = state.categories,
+                                    key = { "source-category-$dialogId-${it.id}" }
+                                ) { category ->
                                     ListItem(
                                         headlineContent = { Text(category.name) },
                                         modifier = Modifier
