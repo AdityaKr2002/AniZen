@@ -173,7 +173,7 @@ fun GestureHandler(
                             isLongPressing = false
                             speedRampJob?.cancel()
                             speedRampJob = scope.launch {
-                                if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 val currentSpeed = MPVLib.getPropertyDouble("speed")
                                 val duration = 200L
                                 val startTime = System.currentTimeMillis()
