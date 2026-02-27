@@ -36,7 +36,7 @@ object Notifications {
     /**
      * Notification channel and ids used by the downloader.
      */
-    private const val GROUP_DOWNLOADER = "group_downloader"
+    const val GROUP_DOWNLOADER = "group_downloader"
     const val CHANNEL_DOWNLOADER_PROGRESS = "downloader_progress_channel"
     const val ID_DOWNLOAD_CHAPTER_PROGRESS = -201
     const val ID_DOWNLOAD_EPISODE_PROGRESS = -203
