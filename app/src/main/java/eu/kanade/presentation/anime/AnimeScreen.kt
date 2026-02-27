@@ -503,7 +503,7 @@ private fun AnimeScreenSmallImpl(
                                 bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
-                            item(key = AnimeScreenItem.INFO_BOX, contentType = AnimeScreenItem.INFO_BOX) {
+                            item(key = "info-box", contentType = AnimeScreenItem.INFO_BOX) {
                                 AnimeInfoBox(
                                     isTabletUi = false,
                                     appBarPadding = topPadding,
@@ -525,7 +525,7 @@ private fun AnimeScreenSmallImpl(
                                     )
                                 }
                             }
-                            item(key = AnimeScreenItem.ACTION_ROW, contentType = AnimeScreenItem.ACTION_ROW) {
+                            item(key = "action-row", contentType = AnimeScreenItem.ACTION_ROW) {
                                 val isWatching = remember(state.episodes) {
                                     state.episodes.fastAny { it.episode.seen }
                                 }
@@ -639,7 +639,7 @@ private fun AnimeScreenSmallImpl(
                                 }
                             }
 
-                            item(key = AnimeScreenItem.DESCRIPTION_WITH_TAG, contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
+                            item(key = "description-with-tag", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
                                 ExpandableAnimeDescription(
                                     modifier = Modifier.padding(bottom = 8.dp),
                                     defaultExpandState = autoExpandDescription,
@@ -650,7 +650,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
                             
-                            item(key = AnimeScreenItem.EPISODE_HEADER, contentType = AnimeScreenItem.EPISODE_HEADER) {
+                            item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                 val missingEpisodeCount = remember(episodes) {
                                     episodes.map { it.episode.episodeNumber }.missingEpisodesCount()
                                 }
@@ -662,7 +662,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
                             if (state.airingTime > 0L) {
-                                item(key = AnimeScreenItem.AIRING_TIME, contentType = AnimeScreenItem.AIRING_TIME) {
+                                item(key = "airing-time", contentType = AnimeScreenItem.AIRING_TIME) {
                                     var timer by remember { mutableLongStateOf(state.airingTime) }
                                     LaunchedEffect(key1 = timer) {
                                         if (timer > 0L) {
@@ -1049,7 +1049,7 @@ fun AnimeScreenLargeImpl(
                                         bottom = contentPadding.calculateBottomPadding(),
                                     ),
                                 ) {
-                                    item(key = AnimeScreenItem.EPISODE_HEADER, contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                    item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         val missingEpisodeCount = remember(episodes) {
                                             episodes.map { it.episode.episodeNumber }.missingEpisodesCount()
                                         }
@@ -1061,7 +1061,7 @@ fun AnimeScreenLargeImpl(
                                         )
                                     }
                                     if (state.airingTime > 0L) {
-                                        item(key = AnimeScreenItem.AIRING_TIME, contentType = AnimeScreenItem.AIRING_TIME) {
+                                        item(key = "airing-time", contentType = AnimeScreenItem.AIRING_TIME) {
                                             var timer by remember { mutableLongStateOf(state.airingTime) }
                                             LaunchedEffect(key1 = timer) {
                                                 if (timer > 0L) {
@@ -1395,8 +1395,8 @@ private fun LazyListScope.sharedEpisodeItems(
         items = episodes,
         key = { index, item ->
             when (item) {
-                is EpisodeList.Item -> "ep-${item.episode.id}-$index"
-                is EpisodeList.MissingCount -> "ms-${item.id}-$index"
+                is EpisodeList.Item -> "anime-ep-${item.episode.id}-$index"
+                is EpisodeList.MissingCount -> "anime-ms-${item.id}-$index"
             }
         },
     ) { _, item ->

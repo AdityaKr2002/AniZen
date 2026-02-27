@@ -202,7 +202,7 @@ object SettingsMainScreen : Screen() {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     groupedItems.forEach { (category, items) ->
-                        item(key = category) {
+                        item(key = "settings-category-$category") {
                             MoreSection(title = category) {
                                 Column {
                                     items.forEach { item ->

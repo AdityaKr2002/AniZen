@@ -141,7 +141,7 @@ fun SourcesScreen(
                         }
                     } else if (model is SourceUiModel.Item) {
                         // Handle cases where items might appear before a header (e.g. pinned)
-                        item(key = "source-${model.source.key()}") {
+                        item(key = "source-${model.source.id}") {
                             if (useContainer) {
                                 Surface(
                                     modifier = Modifier
