@@ -67,6 +67,17 @@
             app:trackThickness="5dp"
             app:trackCornerRadius="4dp" />
 
+        <eu.kanade.tachiyomi.ui.download.GranularProgressView
+            android:id="@+id/granular_progress"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/download_progress"
+            app:layout_constraintStart_toStartOf="@+id/download_progress"
+            app:layout_constraintTop_toBottomOf="@+id/download_progress"
+            tools:visibility="visible" />
+
         <ImageView
             android:id="@+id/engine_icon"
             android:layout_width="16dp"

@@ -117,7 +117,11 @@ class Downloader(
     fun start(): Boolean {
         if (isRunning || queueState.value.isEmpty()) return false
         val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
-        pending.forEach { if (it.status != Download.State.QUEUE) it.status = Download.State.QUEUE }
+        pending.forEach { 
+            if (it.status != Download.State.QUEUE && it.status != Download.State.DOWNLOADING) {
+                it.status = Download.State.QUEUE 
+            }
+        }
         launchDownloaderJob()
         return pending.isNotEmpty()
     }
@@ -146,7 +150,8 @@ class Downloader(
     fun stop(reason: String? = null) {
         downloaderJob?.cancel()
         downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
+        queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
+            .forEach { it.status = Download.State.PAUSED }
         if (reason != null) notifier.onWarning(reason)
         else if (queueState.value.isNotEmpty()) notifier.onPaused()
         else notifier.onComplete()
@@ -156,7 +161,9 @@ class Downloader(
     fun pause() {
         downloaderJob?.cancel()
         downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING }.forEach { it.status = Download.State.QUEUE }
+        queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
+            .forEach { it.status = Download.State.PAUSED }
+        notifier.onPaused()
     }
 
     fun clearQueue() {

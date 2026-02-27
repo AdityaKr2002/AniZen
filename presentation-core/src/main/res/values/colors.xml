@@ -23,4 +23,8 @@
     <color name="md_black_1000_12">#1F000000</color>
     <color name="md_white_1000_12">#1FFFFFFF</color>
 
+    <!-- Download Progress Colors -->
+    <color name="download_progress_foreground">#4CAF50</color>
+    <color name="download_progress_background">#33000000</color>
+
 </resources>

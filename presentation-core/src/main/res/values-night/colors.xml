@@ -4,4 +4,8 @@
 
     <!-- Default Theme -->
     <color name="divider_default">@color/md_white_1000_12</color>
+
+    <!-- Download Progress Colors -->
+    <color name="download_progress_foreground">#81C784</color>
+    <color name="download_progress_background">#33FFFFFF</color>
 </resources>
