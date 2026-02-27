@@ -69,6 +69,10 @@ interface AssistContentScreen {
     fun onProvideAssistUrl(): String?
 }
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+
 @Composable
 fun DefaultNavigatorScreenTransition(
     navigator: Navigator,
@@ -79,11 +83,14 @@ fun DefaultNavigatorScreenTransition(
     ScreenTransition(
         navigator = navigator,
         transition = {
-            materialSharedAxisX(
-                forward = navigator.lastEvent != StackEvent.Pop,
-                slideDistance = slideDistance,
-                durationMillis = if (animatedTransitions) 250 else 0,
-            )
+            if (animatedTransitions) {
+                materialSharedAxisX(
+                    forward = navigator.lastEvent != StackEvent.Pop,
+                    slideDistance = slideDistance,
+                )
+            } else {
+                fadeIn() togetherWith fadeOut()
+            }
         },
         modifier = modifier,
     )

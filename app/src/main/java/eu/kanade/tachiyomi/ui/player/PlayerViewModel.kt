@@ -443,7 +443,7 @@ class PlayerViewModel @JvmOverloads constructor(
             activity.player.aid = it.id
         }
 
-        isLoadingTracks.update { _ -> false }
+        isLoadingTracks.update { _ -> true }
         updateIsLoadingEpisode(false)
         setPausedState()
     }
