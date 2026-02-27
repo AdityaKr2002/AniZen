@@ -126,8 +126,7 @@ internal fun LazyListScope.updatesUiItems(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 12.dp)
-                                .padding(top = topPadding, bottom = bottomPadding)
-                                .animateItemFastScroll(),
+                                .padding(top = topPadding, bottom = bottomPadding),
                             shape = shape,
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             tonalElevation = 2.dp,
