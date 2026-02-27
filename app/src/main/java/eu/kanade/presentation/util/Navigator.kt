@@ -3,6 +3,9 @@ package eu.kanade.presentation.util
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -68,10 +71,6 @@ val ScreenModel.ioCoroutineScope: CoroutineScope
 interface AssistContentScreen {
     fun onProvideAssistUrl(): String?
 }
-
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 
 @Composable
 fun DefaultNavigatorScreenTransition(
