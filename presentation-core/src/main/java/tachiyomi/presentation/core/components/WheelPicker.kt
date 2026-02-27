@@ -198,7 +198,10 @@ private fun <T> WheelPicker(
                 contentPadding = PaddingValues(vertical = size.height / ROW_COUNT * ((ROW_COUNT - 1) / 2)),
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState),
             ) {
-                itemsIndexed(items) { index, item ->
+                itemsIndexed(
+                    items = items,
+                    key = { index, _ -> "wheel-item-$index" }
+                ) { index, item ->
                     Box(
                         modifier = Modifier
                             .height(size.height / ROW_COUNT)

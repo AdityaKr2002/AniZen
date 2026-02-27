@@ -91,6 +91,7 @@ fun VideoFiltersPanel(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val panelId = remember { Any().hashCode() }
     ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
@@ -132,7 +133,7 @@ fun VideoFiltersPanel(
                 FilterPresetsCard()
                 FiltersCard()
                 DebandCard()
-                Anime4KCard()
+                Anime4KCard(panelId)
             }
         }
     }
@@ -356,7 +357,7 @@ fun DebandCard() {
 }
 
 @Composable
-fun Anime4KCard() {
+fun Anime4KCard(panelId: Int = 0) {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     val anime4kManager = remember { Injekt.get<Anime4KManager>() }
     val enableAnime4K by decoderPreferences.enableAnime4K().collectAsState()
@@ -410,7 +411,7 @@ fun Anime4KCard() {
                 ) {
                     itemsIndexed(
                         items = Anime4KManager.Mode.entries,
-                        key = { index, it -> "anime4k-mode-$index-${it.name}" }
+                        key = { index, it -> "anime4k-$panelId-mode-$index-${it.name}" }
                     ) { _, mode ->
                         if (mode == Anime4KManager.Mode.OFF) return@itemsIndexed
                         InputChip(
@@ -433,7 +434,7 @@ fun Anime4KCard() {
                 ) {
                     itemsIndexed(
                         items = Anime4KManager.Quality.entries,
-                        key = { index, it -> "anime4k-quality-$index-${it.name}" }
+                        key = { index, it -> "anime4k-$panelId-quality-$index-${it.name}" }
                     ) { _, quality ->
                         val label = when (quality) {
                             Anime4KManager.Quality.FAST -> stringResource(MR.strings.anime4k_quality_fast)

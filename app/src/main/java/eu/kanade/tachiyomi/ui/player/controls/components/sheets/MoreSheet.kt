@@ -95,6 +95,7 @@ fun MoreSheet(
     val advancedPreferences = remember { Injekt.get<AdvancedPlayerPreferences>() }
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
     val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
+    val sheetId = remember { Any().hashCode() }
 
     PlayerSheet(
         onDismissRequest = onDismissRequest,
@@ -165,7 +166,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = Decoder.entries.minus(Decoder.Auto),
-                    key = { index, it -> "decoder-$index-${it.name}" }
+                    key = { index, it -> "decoder-$sheetId-$index-${it.name}" }
                 ) { _, decoder ->
                     FilterChip(
                         selected = decoder == selectedDecoder,
@@ -181,7 +182,7 @@ fun MoreSheet(
             ) {
                 items(
                     count = 7,
-                    key = { "stats-page-$it" }
+                    key = { "stats-page-$sheetId-$it" }
                 ) { page ->
                     FilterChip(
                         label = {
@@ -275,7 +276,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = AudioChannels.entries,
-                    key = { index, it -> "audio-channels-$index-${it.name}" }
+                    key = { index, it -> "audio-channels-$sheetId-$index-${it.name}" }
                 ) { _, it ->
                     FilterChip(
                         selected = audioChannels == it,

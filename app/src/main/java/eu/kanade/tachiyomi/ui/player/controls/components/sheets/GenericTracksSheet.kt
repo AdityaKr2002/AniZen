@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -56,17 +57,18 @@ fun <T> GenericTracksSheet(
     track: @Composable (T) -> Unit = {},
     footer: @Composable () -> Unit = {},
 ) {
+    val sheetId = remember { Any().hashCode() }
     PlayerSheet(onDismissRequest, dismissEvent = dismissEvent) {
         Column(modifier) {
             header()
             LazyColumn {
                 itemsIndexed(
                     items = tracks,
-                    key = { index, it -> "track-$index-${it.hashCode()}" }
+                    key = { index, it -> "track-$sheetId-$index-${it.hashCode()}" }
                 ) { _, it ->
                     track(it)
                 }
-                item(key = "footer") {
+                item(key = "footer-$sheetId") {
                     footer()
                 }
             }
