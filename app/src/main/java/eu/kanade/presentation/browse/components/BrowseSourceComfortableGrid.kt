@@ -44,7 +44,7 @@ fun BrowseSourceComfortableGrid(
             count = animeList.itemCount,
             key = { index ->
                 val anime = animeList.peek(index)
-                if (anime != null) "browse-grid-comfortable-${anime.id}" else "browse-grid-comfortable-placeholder-$index"
+                if (anime != null) "browse-grid-comfortable-$index-${anime.id}" else "browse-grid-comfortable-placeholder-$index"
             },
             contentType = { index ->
                 if (animeList.peek(index) != null) "anime" else "placeholder"
