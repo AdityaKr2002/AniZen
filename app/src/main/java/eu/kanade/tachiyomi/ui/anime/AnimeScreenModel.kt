@@ -836,7 +836,7 @@ class AnimeScreenModel(
             LibraryPreferences.EpisodeSwipeAction.ToggleFillermark -> fillermarkEpisodes(listOf(episode), !episode.fillermark)
             LibraryPreferences.EpisodeSwipeAction.Download -> {
                 val downloadAction: EpisodeDownloadAction = when (episodeItem.downloadState) {
-                    Download.State.ERROR, Download.State.NOT_DOWNLOADED -> EpisodeDownloadAction.START_NOW
+                    Download.State.ERROR, Download.State.NOT_DOWNLOADED, Download.State.PAUSED -> EpisodeDownloadAction.START_NOW
                     Download.State.QUEUE, Download.State.DOWNLOADING -> EpisodeDownloadAction.CANCEL
                     Download.State.DOWNLOADED -> EpisodeDownloadAction.DELETE
                 }

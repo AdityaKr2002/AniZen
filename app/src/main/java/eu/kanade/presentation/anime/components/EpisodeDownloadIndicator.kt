@@ -62,7 +62,7 @@ fun EpisodeDownloadIndicator(
     modifier: Modifier = Modifier,
 ) {
     when (val downloadState = downloadStateProvider()) {
-        Download.State.NOT_DOWNLOADED -> NotDownloadedIndicator(
+        Download.State.NOT_DOWNLOADED, Download.State.PAUSED -> NotDownloadedIndicator(
             enabled = enabled,
             modifier = modifier,
             onClick = onClick,
