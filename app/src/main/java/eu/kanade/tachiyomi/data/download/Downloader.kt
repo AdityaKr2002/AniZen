@@ -162,8 +162,12 @@ class Downloader(
     fun clearQueue() {
         downloaderJob?.cancel()
         downloaderJob = null
+        val currentQueue = queueState.value
         _queueState.update {
-            it.forEach { download -> download.status = Download.State.NOT_DOWNLOADED }
+            it.forEach { download -> 
+                download.status = Download.State.NOT_DOWNLOADED
+                notifier.dismissProgress(download)
+            }
             store.clear()
             emptyList()
         }
@@ -187,6 +191,7 @@ class Downloader(
         var currentDelay = initialDelay
         repeat(times - 1) {
             try {
+                ensureActive()
                 return block()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -204,6 +209,7 @@ class Downloader(
         download.status = Download.State.DOWNLOADING
         notifier.onProgressChange(download)
         try {
+            ensureActive()
             val video = retry {
                 download.video ?: run {
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
@@ -219,6 +225,7 @@ class Downloader(
                 isHls = false; isDash = false
             }
             if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
+            ensureActive()
             if (isTor(video)) {
                 download.engineType = "Torrent"
                 torrentDownload(download, tmpDir, filename)
@@ -232,7 +239,11 @@ class Downloader(
             ensureSuccessfulAnimeDownload(download, animeDir, tmpDir, episodeDirname)
             notifier.dismissProgress(download)
         } catch (e: Exception) {
-            if (e is CancellationException) throw e
+            if (e is CancellationException) {
+                // Keep status as QUEUE if cancelled
+                download.status = Download.State.QUEUE
+                throw e
+            }
             download.status = Download.State.ERROR
             notifier.onError(e.message, download.episode.name, download.anime.title, download.anime.id)
         }
@@ -251,6 +262,11 @@ class Downloader(
         headRes.close()
         val videoFile = tmpDir.findFile("$filename.tmp") ?: tmpDir.createFile("$filename.tmp")!!
         val downloadedBytes = AtomicLong(0)
+        
+        // Initialize granular progress
+        download.partProgress.clear()
+        (0 until threadCount).forEach { download.partProgress[it] = 0f }
+
         context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                 coroutineScope {
@@ -275,6 +291,12 @@ class Downloader(
                                             channel.write(ByteBuffer.wrap(buffer, 0, bytesRead), currentPos)
                                             currentPos += bytesRead
                                             val total = downloadedBytes.addAndGet(bytesRead.toLong())
+                                            
+                                            // Update part progress
+                                            val partTotalSize = (end - start + 1).toDouble()
+                                            val partDownloaded = (currentPos - start).toDouble()
+                                            download.partProgress[i] = (partDownloaded / partTotalSize).toFloat()
+
                                             download.update(total, size, false)
                                             notifier.onProgressChange(download)
                                         }
@@ -295,6 +317,10 @@ class Downloader(
                                     ensureActive()
                                     channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
                                     val total = downloadedBytes.addAndGet(bytesRead.toLong())
+                                    
+                                    // Update single part progress
+                                    if (size > 0) download.partProgress[0] = (total.toFloat() / size)
+                                    
                                     download.update(total, size, false)
                                     notifier.onProgressChange(download)
                                 }
@@ -323,6 +349,11 @@ class Downloader(
             .map { if (it.startsWith("http")) it else baseUrl + it }
         download.totalSegments = segments.size
         download.downloadedSegments = 0
+        
+        // Initialize segment progress
+        download.segmentProgress.clear()
+        (0 until segments.size).forEach { download.segmentProgress[it] = false }
+
         val videoFile = tmpDir.createFile("$filename.tmp")!!
         val nextWriteIdx = AtomicInteger(0)
         val downloadedBytes = AtomicLong(0)
@@ -334,10 +365,15 @@ class Downloader(
                         launch {
                             memorySemaphore.withPermit {
                                 retry {
+                                    ensureActive()
                                     client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                         if (!res.isSuccessful) throw IOException("Failed to download segment $index: ${res.code}")
                                         val data = res.body?.bytes() ?: throw IOException("Empty segment")
                                         segmentCache[index] = data
+                                        
+                                        // Update segment progress
+                                        download.segmentProgress[index] = true
+
                                         synchronized(channel) {
                                             while (segmentCache.containsKey(nextWriteIdx.get())) {
                                                 val writeData = segmentCache.remove(nextWriteIdx.get())!!
@@ -369,10 +405,12 @@ class Downloader(
 
     private suspend fun torrentDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
         retry {
+            ensureActive()
             TorrentServerService.start()
             TorrentServerService.wait(10)
         }
         val currentTorrent = retry {
+            ensureActive()
             TorrentServerApi.addTorrent(download.video!!.videoUrl, download.video!!.quality, "", "", false)
         }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
@@ -383,6 +421,7 @@ class Downloader(
     private suspend fun ensureSuccessfulAnimeDownload(download: Download, animeDir: UniFile, tmpDir: UniFile, dirname: String) {
         // Wait a bit for file system to settle
         delay(500)
+        ensureActive()
         val downloadedVideo = tmpDir.listFiles().orEmpty().filterNot { it.getName()?.endsWith(".tmp") == true }
         if (downloadedVideo.isNotEmpty()) {
             tmpDir.renameTo(dirname)
@@ -415,6 +454,7 @@ class Downloader(
             if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
                 download.status = Download.State.NOT_DOWNLOADED
             }
+            notifier.dismissProgress(download)
             it - download
         }
     }
@@ -424,7 +464,10 @@ class Downloader(
         _queueState.update { queue ->
             val downloads = queue.filter { it.episode.id in episodeIds }
             store.removeAll(downloads)
-            downloads.forEach { it.status = Download.State.NOT_DOWNLOADED }
+            downloads.forEach { 
+                it.status = Download.State.NOT_DOWNLOADED 
+                notifier.dismissProgress(it)
+            }
             queue - downloads.toSet()
         }
     }
@@ -433,7 +476,10 @@ class Downloader(
         _queueState.update { queue ->
             val downloads = queue.filter { it.anime.id == anime.id }
             store.removeAll(downloads)
-            downloads.forEach { it.status = Download.State.NOT_DOWNLOADED }
+            downloads.forEach { 
+                it.status = Download.State.NOT_DOWNLOADED 
+                notifier.dismissProgress(it)
+            }
             queue - downloads.toSet()
         }
     }

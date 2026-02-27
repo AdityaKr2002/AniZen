@@ -53,8 +53,8 @@ class DownloadPreferences(
     fun numberOfDownloads() = preferenceStore.getInt("download_slots", 1)
     fun downloadSpeedLimit() = preferenceStore.getInt("download_speed_limit", 0)
 
-    fun concurrentDownloads() = preferenceStore.getInt("concurrent_downloads", 10)
-    fun downloadThreads() = preferenceStore.getInt("download_threads", 4)
+    fun concurrentDownloads() = preferenceStore.getInt("concurrent_downloads", 1)
+    fun downloadThreads() = preferenceStore.getInt("download_threads", 8)
 
     fun alwaysUseInternalDownloader() = preferenceStore.getBoolean("always_use_internal_downloader", false)
 

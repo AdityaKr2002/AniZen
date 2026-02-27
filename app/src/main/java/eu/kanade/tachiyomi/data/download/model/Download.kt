@@ -53,6 +53,10 @@ data class Download(
     @Transient var activeThreads: Int = 0
     @Transient var engineType: String = "" // "HLS" or "Normal"
     
+    // 1DM-style granular progress
+    @Transient val partProgress = mutableMapOf<Int, Float>()
+    @Transient val segmentProgress = mutableMapOf<Int, Boolean>()
+    
     private var lastUpdateTime: Long = System.currentTimeMillis()
     private var lastBytesRead: Long = 0
     private val speedSamples = mutableListOf<Double>()
