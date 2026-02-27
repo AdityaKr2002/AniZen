@@ -752,7 +752,7 @@ private fun QueueDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     client?.mediaInfo?.let { currentMediaInfo ->
-                        item {
+                        item(key = "current-media") {
                             ExpandedControllerQueueItem(
                                 item = MediaQueueItem.Builder(currentMediaInfo).build(),
                                 castManager = castManager,
@@ -765,7 +765,10 @@ private fun QueueDialog(
                         }
                     }
 
-                    itemsIndexed(queueItems.filter { it.itemId != client?.currentItem?.itemId }) { index, item ->
+                    itemsIndexed(
+                        items = queueItems.filter { it.itemId != client?.currentItem?.itemId },
+                        key = { index, item -> "queue-$index-${item.itemId}" }
+                    ) { index, item ->
                         ExpandedControllerQueueItem(
                             item = item,
                             castManager = castManager,
@@ -938,7 +941,7 @@ private fun TracksSelectionDialog(
                 val audioTracks = tracks.filter { it.type == MediaTrack.TYPE_AUDIO }
 
                 if (subtitleTracks.isNotEmpty()) {
-                    item {
+                    item(key = "subtitle-header") {
                         Text(
                             text = stringResource(AMR.strings.cast_subtitles),
                             style = MaterialTheme.typography.titleMedium,
@@ -963,7 +966,10 @@ private fun TracksSelectionDialog(
                         )
                     }
 
-                    items(subtitleTracks) { track ->
+                    items(
+                        items = subtitleTracks,
+                        key = { "sub-${it.id}" }
+                    ) { track ->
                         TrackItem(
                             track = track,
                             name = track.name ?: "Unknown",
@@ -985,7 +991,7 @@ private fun TracksSelectionDialog(
                 }
 
                 if (audioTracks.isNotEmpty()) {
-                    item {
+                    item(key = "audio-header") {
                         Text(
                             text = stringResource(AMR.strings.cast_audio_tracks),
                             style = MaterialTheme.typography.titleMedium,
@@ -993,7 +999,10 @@ private fun TracksSelectionDialog(
                         )
                     }
 
-                    items(audioTracks) { track ->
+                    items(
+                        items = audioTracks,
+                        key = { "audio-${it.id}" }
+                    ) { track ->
                         TrackItem(
                             track = track,
                             name = track.name ?: "Unknown",

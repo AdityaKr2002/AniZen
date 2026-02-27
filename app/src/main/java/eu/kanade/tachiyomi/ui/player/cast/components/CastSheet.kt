@@ -79,7 +79,10 @@ fun CastSheet(
                 LazyColumn(
                     modifier = Modifier.height(120.dp),
                 ) {
-                    items(devices) { device ->
+                    items(
+                        items = devices,
+                        key = { "cast-device-${it.id}" }
+                    ) { device ->
                         ListItem(
                             headlineContent = {
                                 Text(
@@ -152,7 +155,10 @@ fun CastSheet(
                             modifier = Modifier.height(120.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            items(queueItems) { item ->
+                            items(
+                                items = queueItems,
+                                key = { "cast-sheet-${it.itemId}" }
+                            ) { item ->
                                 QueueItemRow(item = item, castManager = castManager)
                             }
                         }

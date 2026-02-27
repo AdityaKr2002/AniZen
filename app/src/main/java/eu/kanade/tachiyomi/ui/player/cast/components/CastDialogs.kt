@@ -50,7 +50,10 @@ fun CastQualityDialog(
                         .filterIsInstance<HosterState.Ready>()
                         .firstOrNull()
                     val videoList = hosterState?.videoList ?: emptyList()
-                    items(videoList.size) { index ->
+                    items(
+                        count = videoList.size,
+                        key = { "cast-quality-$it" }
+                    ) { index ->
                         val video = videoList[index]
                         val isSelected = index == viewModel.selectedHosterVideoIndex.value.second
                         QualityListItem(

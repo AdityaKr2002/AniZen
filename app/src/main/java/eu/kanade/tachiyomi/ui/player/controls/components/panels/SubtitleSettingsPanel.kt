@@ -60,6 +60,7 @@ fun SubtitleSettingsPanel(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val panelId = remember { Any().hashCode() }
     BackHandler(onBack = onDismissRequest)
     val orientation = LocalConfiguration.current.orientation
 
@@ -99,7 +100,7 @@ fun SubtitleSettingsPanel(
                 )
                 HorizontalPager(
                     state = pagerState,
-                    key = { it },
+                    key = { "sub-settings-$panelId-$it" },
                     pageSize = PageSize.Fixed(LocalConfiguration.current.screenWidthDp.dp * 0.9f),
                     verticalAlignment = Alignment.Top,
                     pageSpacing = MaterialTheme.padding.small,
