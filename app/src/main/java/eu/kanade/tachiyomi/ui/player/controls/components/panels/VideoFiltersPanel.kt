@@ -183,14 +183,16 @@ fun FilterPresetsCard() {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 VideoFilterTheme.entries.forEach { theme ->
-                    InputChip(
-                        selected = currentPreset == theme,
-                        onClick = {
-                            decoderPreferences.videoFilterTheme().set(theme.ordinal)
-                            applyTheme(theme, decoderPreferences)
-                        },
-                        label = { Text(stringResource(theme.titleRes)) },
-                    )
+                    key(theme.name) {
+                        InputChip(
+                            selected = currentPreset == theme,
+                            onClick = {
+                                decoderPreferences.videoFilterTheme().set(theme.ordinal)
+                                applyTheme(theme, decoderPreferences)
+                            },
+                            label = { Text(stringResource(theme.titleRes)) },
+                        )
+                    }
                 }
             }
             
@@ -266,18 +268,20 @@ fun FiltersCard() {
             }
 
             VideoFilters.entries.forEach { filter ->
-                val value by filter.preference(decoderPreferences).collectAsState()
-                SliderItem(
-                    label = stringResource(filter.titleRes),
-                    value = value.toFloat(),
-                    valueText = value.toString(),
-                    onChange = {
-                        filter.preference(decoderPreferences).set(it.toInt())
-                        applyFilter(filter, it.toInt(), decoderPreferences)
-                    },
-                    max = filter.max.toFloat(),
-                    min = filter.min.toFloat(),
-                )
+                key(filter.name) {
+                    val value by filter.preference(decoderPreferences).collectAsState()
+                    SliderItem(
+                        label = stringResource(filter.titleRes),
+                        value = value.toFloat(),
+                        valueText = value.toString(),
+                        onChange = {
+                            filter.preference(decoderPreferences).set(it.toInt())
+                            applyFilter(filter, it.toInt(), decoderPreferences)
+                        },
+                        max = filter.max.toFloat(),
+                        min = filter.min.toFloat(),
+                    )
+                }
             }
         }
     }
@@ -309,20 +313,22 @@ fun DebandCard() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
-                    val isSelected = debandMode == mode
-                    IconToggleButton(
-                        checked = isSelected,
-                        onCheckedChange = {
-                            decoderPreferences.videoDebanding().set(mode)
-                            applyDebandMode(mode, decoderPreferences)
+                    key(mode.name) {
+                        val isSelected = debandMode == mode
+                        IconToggleButton(
+                            checked = isSelected,
+                            onCheckedChange = {
+                                decoderPreferences.videoDebanding().set(mode)
+                                applyDebandMode(mode, decoderPreferences)
+                            }
+                        ) {
+                            val icon = when (mode) {
+                                Debanding.None -> Icons.Default.NotInterested
+                                Debanding.CPU -> Icons.Default.Memory
+                                Debanding.GPU -> Icons.Default.Gradient
+                            }
+                            Icon(icon, null)
                         }
-                    ) {
-                        val icon = when (mode) {
-                            Debanding.None -> Icons.Default.NotInterested
-                            Debanding.CPU -> Icons.Default.Memory
-                            Debanding.GPU -> Icons.Default.Gradient
-                        }
-                        Icon(icon, null)
                     }
                 }
                 Text(text = debandMode.name)
@@ -339,18 +345,20 @@ fun DebandCard() {
             }
 
             DebandSettings.entries.forEach { setting ->
-                val value by setting.preference(decoderPreferences).collectAsState()
-                SliderItem(
-                    label = stringResource(setting.titleRes),
-                    value = value.toFloat(),
-                    valueText = value.toString(),
-                    onChange = {
-                        setting.preference(decoderPreferences).set(it.toInt())
-                        applyDebandSetting(setting, it.toInt())
-                    },
-                    max = setting.end.toFloat(),
-                    min = setting.start.toFloat(),
-                )
+                key(setting.name) {
+                    val value by setting.preference(decoderPreferences).collectAsState()
+                    SliderItem(
+                        label = stringResource(setting.titleRes),
+                        value = value.toFloat(),
+                        valueText = value.toString(),
+                        onChange = {
+                            setting.preference(decoderPreferences).set(it.toInt())
+                            applyDebandSetting(setting, it.toInt())
+                        },
+                        max = setting.end.toFloat(),
+                        min = setting.start.toFloat(),
+                    )
+                }
             }
         }
     }
