@@ -279,7 +279,7 @@ class Downloader(
                 val partSize = size / threadCount
                 download.totalSegments = threadCount
                 (0 until threadCount).map { i ->
-                    launch {
+                    async {
                         val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
                         val existing = partFile.length()
                         val start = i * partSize + existing
@@ -408,16 +408,16 @@ class Downloader(
         val downloadedBytes = AtomicLong(0)
         
         coroutineScope {
-            segments.forEachIndexed { index, segUrl ->
-                val segFile = tmpDir.findFile("$index.seg")
-                if (segFile != null && segFile.length() > 0) {
-                    download.segmentProgress[index] = true
-                    downloadedBytes.addAndGet(segFile.length())
-                    synchronized(download) { download.downloadedSegments++ }
-                    return@forEachIndexed
-                }
-                
-                launch {
+            segments.mapIndexed { index, segUrl ->
+                launch { // Use launch within coroutineScope for parallelism
+                    val segFile = tmpDir.findFile("$index.seg")
+                    if (segFile != null && segFile.length() > 0) {
+                        download.segmentProgress[index] = true
+                        downloadedBytes.addAndGet(segFile.length())
+                        synchronized(download) { download.downloadedSegments++ }
+                        return@launch
+                    }
+                    
                     memorySemaphore.withPermit {
                         retry {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
