@@ -191,7 +191,7 @@ class Downloader(
         var currentDelay = initialDelay
         repeat(times - 1) {
             try {
-                ensureActive()
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 return block()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -209,7 +209,7 @@ class Downloader(
         download.status = Download.State.DOWNLOADING
         notifier.onProgressChange(download)
         try {
-            ensureActive()
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             val video = retry {
                 download.video ?: run {
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
@@ -225,7 +225,7 @@ class Downloader(
                 isHls = false; isDash = false
             }
             if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
-            ensureActive()
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             if (isTor(video)) {
                 download.engineType = "Torrent"
                 torrentDownload(download, tmpDir, filename)
@@ -287,7 +287,7 @@ class Downloader(
                                         var bytesRead: Int
                                         var currentPos = start
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
-                                            ensureActive()
+                                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                             channel.write(ByteBuffer.wrap(buffer, 0, bytesRead), currentPos)
                                             currentPos += bytesRead
                                             val total = downloadedBytes.addAndGet(bytesRead.toLong())
@@ -314,7 +314,7 @@ class Downloader(
                                 val buffer = ByteArray(64 * 1024)
                                 var bytesRead: Int
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
-                                    ensureActive()
+                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                     channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
                                     val total = downloadedBytes.addAndGet(bytesRead.toLong())
                                     
@@ -365,7 +365,7 @@ class Downloader(
                         launch {
                             memorySemaphore.withPermit {
                                 retry {
-                                    ensureActive()
+                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                     client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                         if (!res.isSuccessful) throw IOException("Failed to download segment $index: ${res.code}")
                                         val data = res.body?.bytes() ?: throw IOException("Empty segment")
@@ -405,12 +405,12 @@ class Downloader(
 
     private suspend fun torrentDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
         retry {
-            ensureActive()
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             TorrentServerService.start()
             TorrentServerService.wait(10)
         }
         val currentTorrent = retry {
-            ensureActive()
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             TorrentServerApi.addTorrent(download.video!!.videoUrl, download.video!!.quality, "", "", false)
         }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
@@ -421,7 +421,7 @@ class Downloader(
     private suspend fun ensureSuccessfulAnimeDownload(download: Download, animeDir: UniFile, tmpDir: UniFile, dirname: String) {
         // Wait a bit for file system to settle
         delay(500)
-        ensureActive()
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
         val downloadedVideo = tmpDir.listFiles().orEmpty().filterNot { it.getName()?.endsWith(".tmp") == true }
         if (downloadedVideo.isNotEmpty()) {
             tmpDir.renameTo(dirname)
