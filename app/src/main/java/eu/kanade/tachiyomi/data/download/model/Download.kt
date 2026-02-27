@@ -12,6 +12,7 @@ import tachiyomi.domain.episode.model.Episode
 import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.ConcurrentHashMap
 
 data class Download(
     val source: HttpSource,
@@ -54,8 +55,9 @@ data class Download(
     @Transient var engineType: String = "" // "HLS" or "Normal"
     
     // 1DM-style granular progress
-    @Transient val partProgress = mutableMapOf<Int, Float>()
-    @Transient val segmentProgress = mutableMapOf<Int, Boolean>()
+    @Transient val partProgress = ConcurrentHashMap<Int, Float>()
+    @Transient val segmentProgress = ConcurrentHashMap<Int, Boolean>()
+    @Transient var lastNotifiedTime: Long = 0L
     
     private var lastUpdateTime: Long = System.currentTimeMillis()
     private var lastBytesRead: Long = 0
