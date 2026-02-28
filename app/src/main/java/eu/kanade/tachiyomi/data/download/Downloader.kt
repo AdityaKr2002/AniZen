@@ -189,8 +189,10 @@ class Downloader(
                 it.status = Download.State.PAUSED 
                 notifier.dismissProgress(it)
             }
+        
+        val hasPending = queueState.value.any { it.status == Download.State.PAUSED || it.status == Download.State.QUEUE }
         if (reason != null) notifier.onWarning(reason)
-        else if (queueState.value.isNotEmpty()) notifier.onPaused()
+        else if (hasPending) notifier.onPaused()
         else {
             notifier.onComplete()
             notifier.dismissAll()
@@ -583,11 +585,17 @@ class Downloader(
             tmpDir.renameTo(dirname)
             cache.addEpisode(dirname, animeDir, download.anime)
             download.status = Download.State.DOWNLOADED
+            
+            // Remove from queue since it's finished
+            _queueState.update { it - download }
+            store.remove(download)
         } else {
             // Check if it was already renamed (race condition)
             val alreadyRenamed = animeDir.findFile(dirname)
             if (alreadyRenamed != null && alreadyRenamed.isDirectory) {
                 download.status = Download.State.DOWNLOADED
+                _queueState.update { it - download }
+                store.remove(download)
             } else {
                 throw Exception("Unable to finalize download: No video file found in ${tmpDir.uri}")
             }
@@ -604,12 +612,23 @@ class Downloader(
         }
     }
 
+    private fun deleteTempFiles(download: Download) {
+        try {
+            val animeDir = provider.findAnimeDir(download.anime.title, download.source) ?: return
+            val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
+            animeDir.findFile(episodeDirname + TMP_DIR_SUFFIX)?.delete()
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to delete temp files for ${download.episode.name}" }
+        }
+    }
+
     fun removeFromQueue(download: Download) {
         _queueState.update {
             store.remove(download)
             if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
                 download.status = Download.State.NOT_DOWNLOADED
             }
+            deleteTempFiles(download)
             download.clearProgress()
             notifier.dismissProgress(download)
             it - download
@@ -623,6 +642,7 @@ class Downloader(
             store.removeAll(downloads)
             downloads.forEach { 
                 it.status = Download.State.NOT_DOWNLOADED 
+                deleteTempFiles(it)
                 it.clearProgress()
                 notifier.dismissProgress(it)
             }
@@ -636,6 +656,7 @@ class Downloader(
             store.removeAll(downloads)
             downloads.forEach { 
                 it.status = Download.State.NOT_DOWNLOADED 
+                deleteTempFiles(it)
                 it.clearProgress()
                 notifier.dismissProgress(it)
             }

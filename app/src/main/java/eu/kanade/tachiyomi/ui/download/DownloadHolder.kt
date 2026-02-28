@@ -48,7 +48,12 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
             binding.downloadProgress.progress = 0
             binding.downloadProgress.max = 1
             binding.downloadProgressText.text = ""
-            binding.granularProgress.visibility = View.GONE
+            if (download.status == Download.State.DOWNLOADING) {
+                binding.granularProgress.visibility = View.VISIBLE
+                binding.granularProgress.bind(download)
+            } else {
+                binding.granularProgress.visibility = View.GONE
+            }
         } else {
             binding.downloadProgress.max = 100
             notifyProgress()
