@@ -246,10 +246,6 @@ class Downloader(
         val tmpDir = animeDir.createDirectory(episodeDirname + TMP_DIR_SUFFIX)!!
         download.status = Download.State.DOWNLOADING
         
-        // Reset granular progress for new attempt
-        download.partProgress.clear()
-        download.segmentProgress.clear()
-        
         notifier.onProgressChange(download)
         try {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -308,22 +304,30 @@ class Downloader(
         val downloadedBytes = AtomicLong(0)
         
         download.partProgress.clear()
-        (0 until threadCount).forEach { download.partProgress[it] = 0f }
-
+        
         coroutineScope {
             if (size > 0 && threadCount > 1) {
                 val partSize = size / threadCount
                 download.totalSegments = threadCount
+                
+                // Pre-calculate existing bytes to start global progress correctly
+                for (i in 0 until threadCount) {
+                    val partFile = tmpDir.findFile("$filename.part$i")
+                    val existing = partFile?.length() ?: 0L
+                    downloadedBytes.addAndGet(existing)
+                    val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
+                    download.partProgress[i] = (existing.toDouble() / partTotalSize).toFloat()
+                }
+
                 (0 until threadCount).map { i ->
                     async {
                         val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
                         val existing = partFile.length()
                         val start = i * partSize + existing
                         val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
+                        val partTotalSize = end - (i * partSize) + 1
                         
-                        if (start > end) {
-                            download.partProgress[i] = 1f
-                            downloadedBytes.addAndGet(existing)
+                        if (existing >= partTotalSize) {
                             synchronized(download) { download.downloadedSegments++ }
                             return@async
                         }
@@ -336,7 +340,13 @@ class Downloader(
                                 .build()
                             
                             client.newCall(request).execute().use { res ->
-                                if (!res.isSuccessful) throw IOException("Part $i failed: ${res.code}")
+                                if (!res.isSuccessful) {
+                                    if (res.code == 416) { // Range not satisfiable, might be finished
+                                        synchronized(download) { download.downloadedSegments++ }
+                                        return@use
+                                    }
+                                    throw IOException("Part $i failed: ${res.code}")
+                                }
                                 val source = res.body?.source() ?: throw IOException("Empty Part")
                                 
                                 context.contentResolver.openFileDescriptor(partFile.uri, "wa")?.use { pfd ->
@@ -344,7 +354,6 @@ class Downloader(
                                         val buffer = ByteArray(128 * 1024)
                                         var bytesRead: Int
                                         var localPartDownloaded = existing
-                                        val partTotalSize = end - (i * partSize) + 1
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                             channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
@@ -370,8 +379,15 @@ class Downloader(
             } else {
                 download.totalSegments = 1
                 val existing = videoFile.length()
-                if (size > 0 && existing >= size) return@coroutineScope
+                if (size > 0 && existing >= size) {
+                    download.partProgress[0] = 1f
+                    download.downloadedSegments = 1
+                    return@coroutineScope
+                }
                 
+                downloadedBytes.set(existing)
+                download.partProgress[0] = if (size > 0) (existing.toFloat() / size) else 0f
+
                 retry {
                     val request = Request.Builder()
                         .url(video.videoUrl)
@@ -380,7 +396,13 @@ class Downloader(
                         .build()
                         
                     client.newCall(request).execute().use { res ->
-                        if (!res.isSuccessful && res.code != 416) throw IOException("Failed: ${res.code}")
+                        if (!res.isSuccessful) {
+                            if (res.code == 416) {
+                                download.downloadedSegments = 1
+                                return@use
+                            }
+                            throw IOException("Failed: ${res.code}")
+                        }
                         val source = res.body?.source() ?: return@use
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
@@ -394,7 +416,7 @@ class Downloader(
                                     localDownloaded += bytesRead
                                     val total = downloadedBytes.addAndGet(bytesRead.toLong())
                                     if (size > 0) download.partProgress[0] = (localDownloaded.toFloat() / size)
-                                    download.update(existing + total, size, false)
+                                    download.update(total, size, false)
                                     throttleNotification(download)
                                     kotlinx.coroutines.yield()
                                 }
@@ -454,18 +476,26 @@ class Downloader(
         
         download.segmentProgress.clear()
         val downloadedBytes = AtomicLong(0)
+        var initialDownloadedSegments = 0
         
+        // Initialize existing progress
+        for (i in segments.indices) {
+            val segFile = tmpDir.findFile("$i.seg")
+            if (segFile != null && segFile.length() > 0) {
+                download.segmentProgress[i] = true
+                downloadedBytes.addAndGet(segFile.length())
+                initialDownloadedSegments++
+            } else {
+                download.segmentProgress[i] = false
+            }
+        }
+        download.downloadedSegments = initialDownloadedSegments
+
         coroutineScope {
             segments.mapIndexed { index, segUrl ->
+                if (download.segmentProgress[index] == true) return@mapIndexed null
+                
                 async {
-                    val segFile = tmpDir.findFile("$index.seg")
-                    if (segFile != null && segFile.length() > 0) {
-                        download.segmentProgress[index] = true
-                        downloadedBytes.addAndGet(segFile.length())
-                        synchronized(download) { download.downloadedSegments++ }
-                        return@async
-                    }
-                    
                     memorySemaphore.withPermit {
                         retry {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -486,7 +516,7 @@ class Downloader(
                         }
                     }
                 }
-            }.awaitAll()
+            }.filterNotNull().awaitAll()
         }
         
         // Merge segments
