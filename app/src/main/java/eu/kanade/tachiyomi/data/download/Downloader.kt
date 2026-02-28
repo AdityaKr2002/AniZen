@@ -131,6 +131,7 @@ class Downloader(
     }
 
     private var downloaderJob: Job? = null
+    private val activeJobs = mutableMapOf<Download, Job>()
 
     @OptIn(FlowPreview::class)
     private fun launchDownloaderJob() {
@@ -138,16 +139,27 @@ class Downloader(
         downloaderJob = scope.launch {
             try {
                 queueState.debounce(100).collectLatest { queue ->
-                    val activeDownloads = queue.count { it.status == Download.State.DOWNLOADING }
+                    // Cancel jobs no longer in queue or not downloading/queued
+                    val activeDownloads = queue.filter { it.status == Download.State.DOWNLOADING }.toSet()
+                    activeJobs.keys.filter { it !in activeDownloads }.forEach { download ->
+                        activeJobs.remove(download)?.cancel()
+                        notifier.dismissProgress(download)
+                    }
+
+                    val activeCount = queue.count { it.status == Download.State.DOWNLOADING }
                     val maxConcurrent = preferences.concurrentDownloads().get()
                     
-                    val pending = queue.filter { it.status == Download.State.QUEUE }
-                        .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
-
-                    if (activeDownloads < maxConcurrent && pending.isNotEmpty()) {
-                        pending.take(maxConcurrent - activeDownloads).forEach { download ->
-                            launch {
-                                downloadEpisode(download)
+                    if (activeCount < maxConcurrent) {
+                        val pending = queue.filter { it.status == Download.State.QUEUE }
+                            .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
+                        
+                        pending.take(maxConcurrent - activeCount).forEach { download ->
+                            activeJobs[download] = launch {
+                                try {
+                                    downloadEpisode(download)
+                                } finally {
+                                    activeJobs.remove(download)
+                                }
                             }
                         }
                     }
@@ -161,6 +173,8 @@ class Downloader(
                     logcat(LogPriority.ERROR, e) { "Downloader job failed" }
                 }
             } finally {
+                activeJobs.values.forEach { it.cancel() }
+                activeJobs.clear()
                 _isRunningFlow.value = false
             }
         }
@@ -171,7 +185,10 @@ class Downloader(
         downloaderJob?.cancel()
         downloaderJob = null
         queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
-            .forEach { it.status = Download.State.PAUSED }
+            .forEach { 
+                it.status = Download.State.PAUSED 
+                notifier.dismissProgress(it)
+            }
         if (reason != null) notifier.onWarning(reason)
         else if (queueState.value.isNotEmpty()) notifier.onPaused()
         else {
@@ -186,7 +203,10 @@ class Downloader(
         downloaderJob?.cancel()
         downloaderJob = null
         queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
-            .forEach { it.status = Download.State.PAUSED }
+            .forEach { 
+                it.status = Download.State.PAUSED 
+                notifier.dismissProgress(it)
+            }
         notifier.onPaused()
     }
 
