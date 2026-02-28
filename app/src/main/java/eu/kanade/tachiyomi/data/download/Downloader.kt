@@ -315,12 +315,66 @@ class Downloader(
         val client = networkHelper.downloadClient
         val threadCount = calculateDynamicConcurrency()
         download.activeThreads = threadCount
-        val headRes = retry { 
-            client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
+        var size = -1L
+        try {
+            val headRes = retry { 
+                client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
+            }
+            if (headRes.isSuccessful) {
+                size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
+            }
+            headRes.close()
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "HEAD request failed for size detection" }
         }
-        val size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
+
+        // If size is less than 1MB or invalid, fallback to GET Range to get the true size
+        if (size <= 1024 * 1024) { 
+            try {
+                val getRes = retry {
+                    client.newCall(
+                        Request.Builder()
+                            .url(video.videoUrl)
+                            .headers(video.headers ?: Headers.headersOf())
+                            .header("Range", "bytes=0-0")
+                            .build()
+                    ).await()
+                }
+                if (getRes.isSuccessful || getRes.code == 416 || getRes.code == 206) {
+                    val contentRange = getRes.header("Content-Range")
+                    if (contentRange != null) {
+                        size = contentRange.substringAfterLast("/").toLongOrNull() ?: size
+                    } else if (getRes.code == 200) {
+                        size = getRes.header("Content-Length")?.toLongOrNull() ?: size
+                    }
+                }
+                getRes.close()
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "GET Range request failed for size detection" }
+            }
+        }
+        
+        // If still invalid, try a normal GET just to read headers
+        if (size <= 1024 * 1024) {
+            try {
+                val getRes = retry {
+                    client.newCall(
+                        Request.Builder()
+                            .url(video.videoUrl)
+                            .headers(video.headers ?: Headers.headersOf())
+                            .build()
+                    ).await()
+                }
+                if (getRes.isSuccessful) {
+                    size = getRes.header("Content-Length")?.toLongOrNull() ?: size
+                }
+                getRes.close()
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "GET request failed for size detection" }
+            }
+        }
+
         download.totalSize = size
-        headRes.close()
         
         val videoFile = tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
         val downloadedBytes = AtomicLong(0)
