@@ -313,8 +313,18 @@ class Downloader(
     private suspend fun internalDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
         val video = download.video!!
         val client = networkHelper.downloadClient
-        val threadCount = calculateDynamicConcurrency()
-        download.activeThreads = threadCount
+        
+        // Recover thread count on resume to prevent progress bar desync
+        var threadCount = download.activeThreads
+        if (threadCount <= 0 || tmpDir.findFile("$filename.part0") != null) {
+            var count = 0
+            for (i in 0 until 64) {
+                if (tmpDir.findFile("$filename.part$i") != null) count++ else break
+            }
+            threadCount = if (count > 0) count else calculateDynamicConcurrency()
+            download.activeThreads = threadCount
+        }
+
         var size = -1L
         var contentType = ""
 
@@ -397,28 +407,28 @@ class Downloader(
                 download.totalSegments = threadCount
                 
                 // Pre-calculate existing bytes to start global progress correctly
+                var completedParts = 0
                 for (i in 0 until threadCount) {
                     val partFile = tmpDir.findFile("$filename.part$i")
                     val existing = partFile?.length() ?: 0L
                     downloadedBytes.addAndGet(existing)
                     val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                    download.partProgress[i] = (existing.toDouble() / partTotalSize).toFloat()
+                    download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
+                    if (existing >= partTotalSize) completedParts++
                 }
+                download.downloadedSegments = completedParts
 
                 (0 until threadCount).map { i ->
                     async {
                         val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
-                        val existing = partFile.length()
+                        var existing = partFile.length()
                         val start = i * partSize + existing
                         val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
                         val partTotalSize = end - (i * partSize) + 1
                         
-                        if (existing >= partTotalSize) {
-                            synchronized(download) { download.downloadedSegments++ }
-                            return@async
-                        }
+                        if (existing >= partTotalSize) return@async
 
-                        retry {
+                        retry(times = 5) {
                             val request = Request.Builder()
                                 .url(video.videoUrl)
                                 .headers(video.headers ?: Headers.headersOf())
@@ -439,18 +449,24 @@ class Downloader(
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                         val buffer = ByteArray(128 * 1024)
                                         var bytesRead: Int
-                                        var localPartDownloaded = existing
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                            channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
-                                            val total = downloadedBytes.addAndGet(bytesRead.toLong())
                                             
-                                            localPartDownloaded += bytesRead
-                                            download.partProgress[i] = (localPartDownloaded.toDouble() / partTotalSize).toFloat()
+                                            // Prevent over-downloading beyond the assigned part size
+                                            val maxToWrite = Math.min(bytesRead.toLong(), partTotalSize - existing).toInt()
+                                            if (maxToWrite <= 0) break
+                                            
+                                            channel.write(ByteBuffer.wrap(buffer, 0, maxToWrite))
+                                            val total = downloadedBytes.addAndGet(maxToWrite.toLong())
+                                            
+                                            existing += maxToWrite.toLong()
+                                            download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                                             download.update(total, size, false)
                                             throttleNotification(download)
                                             kotlinx.coroutines.yield()
+                                            
+                                            if (existing >= partTotalSize) break
                                         }
                                     }
                                 }
@@ -472,9 +488,9 @@ class Downloader(
                 }
                 
                 downloadedBytes.set(existing)
-                download.partProgress[0] = if (size > 0) (existing.toFloat() / size) else 0f
+                download.partProgress[0] = if (size > 0) (existing.toFloat() / size).coerceIn(0f, 1f) else 0f
 
-                retry {
+                retry(times = 5) {
                     val request = Request.Builder()
                         .url(video.videoUrl)
                         .headers(video.headers ?: Headers.headersOf())
@@ -498,13 +514,20 @@ class Downloader(
                                 var localDownloaded = existing
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
                                     kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                    channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
-                                    localDownloaded += bytesRead
-                                    val total = downloadedBytes.addAndGet(bytesRead.toLong())
-                                    if (size > 0) download.partProgress[0] = (localDownloaded.toFloat() / size)
+                                    
+                                    val maxToWrite = if (size > 0) Math.min(bytesRead.toLong(), size - localDownloaded).toInt() else bytesRead
+                                    if (maxToWrite <= 0 && size > 0) break
+                                    
+                                    channel.write(ByteBuffer.wrap(buffer, 0, maxToWrite))
+                                    localDownloaded += maxToWrite.toLong()
+                                    val total = downloadedBytes.addAndGet(maxToWrite.toLong())
+                                    
+                                    if (size > 0) download.partProgress[0] = (localDownloaded.toFloat() / size).coerceIn(0f, 1f)
                                     download.update(total, size, false)
                                     throttleNotification(download)
                                     kotlinx.coroutines.yield()
+                                    
+                                    if (size > 0 && localDownloaded >= size) break
                                 }
                             }
                         }
