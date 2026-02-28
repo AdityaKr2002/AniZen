@@ -66,15 +66,24 @@ class DownloadManager(
     fun downloaderStart() = downloader.start()
     fun downloaderStop(reason: String? = null) = downloader.stop(reason)
 
-    val isDownloaderRunning
+    fun dismissNotifications() {
+        downloader.dismissAll()
+    }
+
+    val isDownloaderRunning: Flow<Boolean>
         get() = DownloadJob.isRunningFlow(context)
+            .flatMapLatest { isJobRunning ->
+                if (isJobRunning) {
+                    downloader.isRunningFlow
+                } else {
+                    kotlinx.coroutines.flow.flowOf(false)
+                }
+            }
 
     /**
      * Tells the downloader to begin downloads.
      */
     fun startDownloads() {
-        if (downloader.isRunning) return
-
         if (DownloadJob.isRunning(context)) {
             downloader.start()
         } else {
