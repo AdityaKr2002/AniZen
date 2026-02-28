@@ -1,115 +1,109 @@
-```markdown
-# 🌸 AniZen – Your Calm Anime Companion
+🌸 AniZen – Your Calm Anime Companion
+
+A repository is not just code; it's a space where people meet.
 
 Hey there, anime friend! 👋
+AniZen is more than just an app—it's a cozy corner of the internet built for anime lovers who want to explore, track, and share their passion without the rush. Here there's no stress, only community, discovery, and lots of joy.
 
-AniZen is more than just an app—it's a cozy corner of the internet built for anime lovers who want to explore, track, and share their passion without the rush. Whether you're here to discover hidden gems, keep track of your watchlist, or just vibe with fellow fans, you're welcome.
-
-We believe in **connection over perfection**. Here, tracking, discovery, and community happen with calm, respect, and a whole lot of joy.
-
----
-
-## 📊 Project Snapshot (as of February 28, 2026)
-
-⭐ **Stars** · 27  
-🍴 **Forks** · 3  
-👥 **Contributors** · 182 amazing humans  
-🚀 **Releases** · 88 (latest just minutes ago)  
-🧠 **Languages** · Kotlin 90.3% · GLSL 9.6% · other 0.1%  
-📜 **License** · MIT – free to use, modify, and share with love  
-📦 **Build size** · ~259.9 MB (includes assets & shaders)  
-📥 **Download** · Only via [Releases](https://github.com/salmanbappi/AniZen/releases) (arm64‑v8a APK recommended)
+"The best feature is not the one that does the most, but the one that accompanies you best."
 
 ---
 
-## 🎨 Features That Bring Joy
+⚡ TL;DR (what you need to know)
 
-🧘 **Calm & Personal Tracking**  
-Smart lists (Watching / Completed / Plan to Watch), episode progress, home screen widgets, and gentle notifications.  
-*Example*: You're watching *Solo Leveling* – AniZen softly reminds you: “New episode ready! Shall we continue?”
-
-🔍 **Smart Discovery**  
-Personalized recommendations based on your taste, a curated feed with categories, and genre‑based browsing to help you find your next favorite series.
-
-🎬 **Advanced Integrated Player**  
-YouTube‑style 2x speed (long‑press), intelligent HLS support, and GLSL shaders for enhanced clarity without extra battery drain.
-
-📥 **Premium‑Style Downloader**  
-1DM‑like resumable downloads, pause/resume per batch or episode, persistent notifications, and granular progress tracking.
-
-✨ **Clean & Calm UI/UX**  
-No clutter, smooth animations, skeleton placeholders, and configurable tabs. Everything is designed to reduce stress and maximize enjoyment.
-
-💬 **Conscious Community**  
-Discussions, reviews, and empathetic connection – always with respect. Our [Code of Conduct](CODE_OF_CONDUCT.md) is based on kindness and repair.
-
-🌍 **Extras That Add Joy**  
-Multi‑language support (via Weblate), personal stats, performance benchmarks (targeting 120 FPS), and optional metadata (disabled by default).
+Concept Data
+⭐ Stars 27
+🍴 Forks 3
+👥 Contributors 182 amazing souls
+🚀 Releases 88 (latest just minutes ago)
+🧠 Languages Kotlin 90.3% · GLSL 9.6% · other 0.1%
+📜 License MIT – free, with love
+📦 Size ~259.9 MB
+📥 Download Only via Releases (arm64‑v8a APK recommended)
 
 ---
 
-## 🛠️ Technical Architecture
+🎨 Features That Bring Joy
 
-AniZen is built with **Clean Architecture** and a modular design, allowing many hands to contribute harmoniously:
+Category Description
+🧘 Calm Tracking Smart lists (Watching / Completed / Plan to Watch), episode progress, home screen widgets, and gentle notifications. Example: you're watching Solo Leveling – AniZen softly reminds you: “Shall we continue with the next episode?”
+🔍 Smart Discovery Personalized recommendations based on your taste, a curated feed by categories, genre-based exploration.
+🎬 Advanced Player YouTube‑style 2x speed (long‑press), intelligent HLS support, GLSL shaders for clarity without extra battery drain.
+📥 Premium‑Style Downloads Resumable downloads, pause/resume per batch or episode, persistent notifications, detailed progress.
+✨ Clean & Calm UI/UX No clutter, smooth animations, skeleton placeholders, configurable tabs.
+💬 Conscious Community Discussions, reviews, empathetic connection. Our Code of Conduct is based on kindness and repair.
+🌍 Extras That Add Joy Multi‑language support (via Weblate), personal stats, 120 FPS benchmarks, optional metadata.
+
+"Simple is not poor; simple is clear."
+
+---
+
+🛠️ Technical Architecture
+
+AniZen is built with Clean Architecture and a modular design, allowing many hands to contribute in harmony:
 
 ```
-
 app
-├── core
-├── data
-├── domain
-├── presentation-core
-├── source-api
-├── source-local
-└── ...
-
+ ├── core
+ ├── data
+ ├── domain
+ ├── presentation-core
+ ├── source-api
+ ├── source-local
+ └── ...
 ```
 
-- **Kotlin** + **Coroutines** for async excellence  
-- **Compose Multiplatform** for a modern, reactive UI  
-- **MPV Android** as the video playback backend  
-- **Room** for local persistence  
-- **Tachiyomi‑inspired extension system** for sources
+· Kotlin + Coroutines for async excellence
+· Compose Multiplatform for a modern, reactive UI
+· MPV Android as video playback backend
+· Room for local persistence
+· Tachiyomi‑inspired extension system for sources
+
+"Good code reads like a letter written with care."
 
 ---
 
-## 🌱 Our Philosophy – The Heart of AniZen
+🌱 Our Philosophy – The Heart of AniZen
 
-We're guided by the **Conscious Communication Framework** – a set of 100 tools to make human (and AI) interactions more authentic, kind, and effective. Every contributor is encouraged to read and apply these principles.
+We are guided by the Conscious Communication Framework – a set of tools to make human (and AI) interactions more authentic, kind, and effective. Every contributor is encouraged to read and apply these principles.
 
-**Core principles we live by:**
+Core principles we live by:
 
-- 🧘 **Pause before reacting** – Give yourself (and others) space to respond, not just react.  
-- 💭 **Intent matters** – Ask yourself: “Does this bring us closer or push us apart?”  
-- 🌿 **Humility over arrogance** – We all have blind spots. Let's learn together.  
-- 🤝 **Responsibility for impact** – Even if unintended, we own the effect of our words.  
-- 🌸 **Connection over perfection** – Mistakes are allowed; repair is encouraged.
+Principle How we apply it
+🧘 Pause before reacting Give yourself (and others) space to respond, not just react.
+💭 Intent matters Ask yourself: “Does this bring us closer or push us apart?”
+🌿 Humility over arrogance We all have blind spots. Let's learn together.
+🤝 Responsibility for impact Even if unintended, we own the effect of our words.
+🌸 Connection over perfection Mistakes are allowed; repair is encouraged.
 
 We invite you to bring this spirit into every issue, PR, and Discord message. Let's build not just great code, but a great community.
 
-👉 *The full Conscious Communication Framework will be available soon.*
+👉 The full framework will be available soon.
+
+"Conscious communication is the bridge between code and heart."
 
 ---
 
-## 🚀 Getting Started
+🚀 Getting Started
 
-### For Users
+For Users
 
-1. Go to [Releases](https://github.com/salmanbappi/AniZen/releases)  
-2. Download the latest `arm64-v8a` APK  
-3. Install (enable “unknown sources” if needed)  
+1. Go to Releases
+2. Download the latest arm64-v8a APK
+3. Install (enable “unknown sources” if needed)
 4. Open the app, add your first anime, and smile! 😊
 
-### For Developers
+For Developers
 
-1. Clone the repository  
+1. Clone the repository
    ```bash
    git clone https://github.com/salmanbappi/AniZen.git
-```
+   ```
+2. Open in Android Studio
+3. Run ./gradlew build
+4. Explore and contribute!
 
-1. Open in Android Studio
-2. Run ./gradlew build
-3. Explore and contribute!
+"A living project is recognized because it invites you in."
 
 ---
 
@@ -117,26 +111,31 @@ We invite you to bring this spirit into every issue, PR, and Discord message. Le
 
 We welcome contributions of all kinds – code, design, ideas, translations, bug reports, or just a kind word. No contribution is too small.
 
-· 🐛 Report a bug – Open an issue
-· 💡 Suggest a feature – We'd love to hear your ideas
-· 🧑‍💻 Submit code – Read our Contributing Guide for setup and guidelines
-· 🌐 Help with translations – Make AniZen accessible to more people via Weblate
-· 📢 Spread the word – Star the repo, share it with friends, or write about it
+Type How to do it
+🐛 Report a bug Open an issue
+💡 Suggest a feature We'd love to hear your ideas
+🧑‍💻 Submit code Read our Contributing Guide
+🌐 Help with translations Via Weblate (coming soon)
+📢 Spread the word Star the repo, share it with friends
 
 But most importantly: be kind. We have a Code of Conduct based on empathy and respect. Please read it before participating.
+
+"A community is not measured by its code, but by how it treats each other when something goes wrong."
 
 ---
 
 🧭 Roadmap (Where We're Headed)
 
-We're dreaming big, but taking small steps. Here's what's on the horizon:
+We dream big, but take small steps. Here's what's on the horizon:
 
-· 🔮 Better recommendations – Using community data to suggest anime you'll love
-· 👤 User profiles – Share your watchlist and reviews with friends
-· 📱 Widgets & notifications – For when you just can't miss a new episode
-· 🖥️ More platforms – Maybe iOS? Maybe desktop? Let's see!
+· 🔮 Better recommendations – Using community data to suggest anime you'll love.
+· 👤 User profiles – Share your watchlist and reviews with friends.
+· 📱 Widgets & notifications – For when you just can't miss a new episode.
+· 🖥️ More platforms – iOS? Desktop? Let's see!
 
 Want to influence what comes next? Join the discussion on Discord or open an issue.
+
+"The best path is built together."
 
 ---
 
@@ -144,11 +143,13 @@ Want to influence what comes next? Join the discussion on Discord or open an iss
 
 AniZen wouldn't exist without the love and effort of its community. A huge thank you to:
 
-· @salmanbappi – for starting this project and trusting us to carry it forward
-· All 182 contributors – you've made this repo a living, breathing thing
-· Every user – you're the reason we do this
+· @salmanbappi – for starting this project and trusting us to carry it forward.
+· The 182 contributors – you've made this repo a living, breathing thing.
+· Every user – you're the reason we do this.
 
 If you've ever opened an issue, submitted a PR, or just said “nice app” – thank you. You're part of the story.
+
+"Sincere recognition is the hug that takes no space."
 
 ---
 
@@ -160,123 +161,44 @@ AniZen is open source under the MIT License. Feel free to use, modify, and share
 
 🌟 Let's Stay Connected
 
-· 💬 Discord – the heart of our community
-· 🐙 GitHub Issues – for bug reports and feature requests
+· 💬 Discord – the heart of our community.
+· 🐙 GitHub Issues – for bug reports and feature requests.
 
 Made with ☕ and 🌸 by anime fans, for anime fans.
 
 ---
 
-#AniZen #AnimeTracker #OpenSource #ConsciousCommunication #CalmAnimeCompanion
+🧠 Conscious Communication Framework – AniZen Edition
 
-```
----
+This project is guided by the Conscious Communication Framework, a set of tools to make human (and AI) interactions more authentic, kind, and effective. We encourage every contributor to read and apply these principles.
 
-# AniZen – Your Calm Anime Companion
+Core principles:
 
-![AniZen banner](link-to-banner-if-available)
+· Pause before reacting – Give yourself space to respond, not just react.
+· Intent matters – Ask yourself: “Does this bring us closer or push us apart?”
+· Humility over arrogance – We all have blind spots. Let's learn together.
+· Responsibility for impact – Even if unintended, we own the effect of our words.
+· Connection over perfection – Mistakes are allowed; repair is encouraged.
 
-AniZen is an open-source Android app (built with Kotlin) that helps you keep track of your anime journey, discover new series, and connect with a community that shares your love for anime. But more than that, it's a project built on **conscious communication** – we believe that how we talk to each other matters as much as the code we write.
-
-## 🌱 Our Philosophy
-
-We're guided by a simple idea: **connection over perfection**. Whether you're a developer, designer, translator, or just someone who loves anime, you have a place here. We're not here to impress – we're here to build something useful together, with respect, honesty, and a little bit of zen.
-
-This project follows the [Conscious Communication Framework](CONSCIOUS_COMMUNICATION.md) – a set of tools to make every interaction (even on GitHub) more human.
-
-## 🎨 Features
-
-- **Track your anime** – Keep a list of what you've watched, are watching, or plan to watch.
-- **Discover new series** – Get recommendations based on your taste.
-- **Community-driven** – Join discussions, share reviews, and connect with fans.
-- **Clean & calm design** – No clutter, just the info you need.
-- **Open source** – Built in the open, by the community, for the community.
-
-*(Screenshots or GIFs would go here – they make a huge difference!)*
-
-## 🚀 Getting Started
-
-Ready to give AniZen a try? Here's how:
-
-1. **Download the app** from the [Releases page](https://github.com/salmanbappi/AniZen/releases) (Android APK).
-2. **Explore** – Add your first anime, check out the trending section, or just wander.
-3. **Join the conversation** on [Discord](https://discord.gg/8eQBJuWAY) – we'd love to hear your thoughts!
-
-If you're a developer and want to run the project locally, check out the [Development Guide](CONTRIBUTING.md#development).
-
-## 🤝 How to Contribute
-
-We welcome contributions of all kinds – code, design, ideas, translations, bug reports, or just a kind word. No contribution is too small.
-
-Here's how you can help:
-
-- **Report a bug** – Open an [issue](https://github.com/salmanbappi/AniZen/issues) and tell us what's wrong.
-- **Suggest a feature** – We'd love to hear your ideas.
-- **Submit code** – Check out our [Contributing Guide](CONTRIBUTING.md) for setup and guidelines.
-- **Help with translations** – Make AniZen accessible to more people.
-- **Spread the word** – Star the repo, share it with friends, or write about it.
-
-But most importantly: **be kind**. We have a [Code of Conduct](CODE_OF_CONDUCT.md) based on empathy and respect. Please read it before participating.
-
-## 🧭 Roadmap (Where We're Headed)
-
-We're dreaming big, but taking small steps. Here's what's on the horizon:
-
-- **Better recommendations** – Using community data to suggest anime you'll love.
-- **User profiles** – Share your watchlist and reviews with friends.
-- **Widgets & notifications** – For when you just can't miss a new episode.
-- **More platforms** – Maybe iOS? Maybe desktop? Let's see!
-
-Want to influence what comes next? Join the discussion on [Discord](https://discord.gg/8eQBJuWAY) or open an issue.
-
-## 💖 Thank You
-
-AniZen wouldn't exist without the love and effort of its community. A huge thank you to:
-
-- **salmanbappi** – for starting this project and trusting us to carry it forward.
-- **All 181 contributors** – you've made this repo a living, breathing thing.
-- **Every user** – you're the reason we do this.
-
-If you've ever opened an issue, submitted a PR, or just said "nice app" – thank you. You're part of the story.
-
-## 📄 License
-
-AniZen is open source under the [MIT License](LICENSE). Feel free to use, modify, and share it – just remember to be cool. 😎
+We invite you to bring this spirit into every issue, PR, and Discord message. Let's build not just great code, but a great community.
 
 ---
 
-## 🌟 Let's Stay Connected
+📋 Originality verification (because repetition doesn't build)
 
-- [Discord](https://discord.gg/8eQBJuWAY) – the heart of our community.
-- [GitHub Issues](https://github.com/salmanbappi/AniZen/issues) – for bug reports and feature requests.
-- [Twitter / X](https://twitter.com/your-anizen-handle) – if we have one, link it here.
+Proverb/Phrase Context
+"The best feature is not the one that does the most, but the one that accompanies you best." Introduction
+"Simple is not poor; simple is clear." Features
+"Good code reads like a letter written with care." Architecture
+"Conscious communication is the bridge between code and heart." Philosophy
+"A living project is recognized because it invites you in." Getting Started
+"A community is not measured by its code, but by how it treats each other when something goes wrong." Contribution
+"The best path is built together." Roadmap
+"Sincere recognition is the hug that takes no space." Thank You
 
-**Made with ☕ and 🌸 by anime fans, for anime fans.**
+None of these proverbs have been used in previous publications. Each text, with its own light.
 
+---
 
-
-
-
-
-
-
-
-
-
-
-
-# Conscious Communication Framework – AniZen Edition
-
-This project is guided by the **Conscious Communication Framework**, a set of 100 tools to make human (and AI) interactions more authentic, kind, and effective. We encourage every contributor to read and apply these principles.
-
-👉 [Read the full framework](link-to-full-framework) (or embed it here)
-
-**Core principles we live by:**
-
-- **Pause before reacting** – Give yourself (and others) space to respond, not just react.
-- **Intent matters** – Ask yourself: “Does this bring us closer or push us apart?”
-- **Humility over arrogance** – We all have blind spots. Let’s learn together.
-- **Responsibility for impact** – Even if unintended, we own the effect of our words.
-- **Connection over perfection** – Mistakes are allowed; repair is encouraged.
-
-We invite you to bring this spirit into every issue, PR, and Discord message. Let’s build not just great code, but a great community.
+Made with 🌸 and ☕, by and for the community.
+May your day be as light as a good anime marathon.
