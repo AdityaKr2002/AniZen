@@ -327,23 +327,28 @@ class Downloader(
         
         download.partProgress.clear()
         
+        if (size > 0 && threadCount > 1) {
+            val partSize = size / threadCount
+            for (i in 0 until threadCount) {
+                val partFile = tmpDir.findFile("$filename.part$i")
+                val existing = partFile?.length() ?: 0L
+                initialDownloadedBytes += existing
+                val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
+                download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat()
+            }
+        } else {
+            initialDownloadedBytes = videoFile.length()
+            download.partProgress[0] = if (size > 0) (initialDownloadedBytes.toFloat() / size) else 0f
+        }
+
+        val downloadedBytes = AtomicLong(initialDownloadedBytes)
+        download.update(initialDownloadedBytes, size, false)
+
         coroutineScope {
             if (size > 0 && threadCount > 1) {
                 val partSize = size / threadCount
                 download.totalSegments = threadCount
                 
-                // Pre-calculate existing bytes to start global progress correctly
-                for (i in 0 until threadCount) {
-                    val partFile = tmpDir.findFile("$filename.part$i")
-                    val existing = partFile?.length() ?: 0L
-                    initialDownloadedBytes += existing
-                    val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                    download.partProgress[i] = (existing.toDouble() / partTotalSize).toFloat()
-                }
-                
-                val downloadedBytes = AtomicLong(initialDownloadedBytes)
-                download.update(initialDownloadedBytes, size, false)
-
                 (0 until threadCount).map { i ->
                     async {
                         val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
@@ -366,7 +371,7 @@ class Downloader(
                             
                             client.newCall(request).execute().use { res ->
                                 if (!res.isSuccessful) {
-                                    if (res.code == 416) { // Range not satisfiable, might be finished
+                                    if (res.code == 416) {
                                         synchronized(download) { download.downloadedSegments++ }
                                         return@use
                                     }
@@ -398,22 +403,14 @@ class Downloader(
                         }
                     }
                 }.awaitAll()
-                
-                // Merge parts
-                mergeParts(download, tmpDir, filename, threadCount, videoFile)
             } else {
                 download.totalSegments = 1
                 val existing = videoFile.length()
                 if (size > 0 && existing >= size) {
-                    download.partProgress[0] = 1f
                     download.downloadedSegments = 1
                     return@coroutineScope
                 }
                 
-                downloadedBytes.set(existing)
-                download.partProgress[0] = if (size > 0) (existing.toFloat() / size) else 0f
-                download.update(existing, size, false)
-
                 retry {
                     val request = Request.Builder()
                         .url(video.videoUrl)
@@ -453,6 +450,12 @@ class Downloader(
                 }
             }
         }
+
+        // Merge parts after coroutineScope finishes all threads
+        if (size > 0 && threadCount > 1) {
+            mergeParts(download, tmpDir, filename, threadCount, videoFile)
+        }
+
         return videoFile
     }
 
