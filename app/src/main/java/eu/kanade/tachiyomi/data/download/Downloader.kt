@@ -316,12 +316,15 @@ class Downloader(
         val threadCount = calculateDynamicConcurrency()
         download.activeThreads = threadCount
         var size = -1L
+        var contentType = ""
+
         try {
             val headRes = retry { 
                 client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
             }
             if (headRes.isSuccessful) {
                 size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
+                contentType = headRes.header("Content-Type") ?: ""
             }
             headRes.close()
         } catch (e: Exception) {
@@ -341,6 +344,7 @@ class Downloader(
                     ).await()
                 }
                 if (getRes.isSuccessful || getRes.code == 416 || getRes.code == 206) {
+                    contentType = getRes.header("Content-Type") ?: contentType
                     val contentRange = getRes.header("Content-Range")
                     if (contentRange != null) {
                         size = contentRange.substringAfterLast("/").toLongOrNull() ?: size
@@ -354,7 +358,7 @@ class Downloader(
             }
         }
         
-        // If still invalid, try a normal GET just to read headers
+        // If still invalid, try a normal GET just to read headers (GET Abort Strategy)
         if (size <= 1024 * 1024) {
             try {
                 val getRes = retry {
@@ -366,12 +370,18 @@ class Downloader(
                     ).await()
                 }
                 if (getRes.isSuccessful) {
+                    contentType = getRes.header("Content-Type") ?: contentType
                     size = getRes.header("Content-Length")?.toLongOrNull() ?: size
                 }
                 getRes.close()
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { "GET request failed for size detection" }
             }
+        }
+
+        // 1DM Content-Type Validation: If it's a small file and it's HTML, it's a redirect/error page, not a video.
+        if (size <= 5 * 1024 * 1024 && contentType.contains("text/html", ignoreCase = true)) {
+            throw Exception("Download blocked: Server returned an HTML page instead of a video. This is usually due to anti-leech protection or an expired link.")
         }
 
         download.totalSize = size
