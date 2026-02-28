@@ -33,6 +33,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 @Composable
 fun DoubleSpeedIndicator(
     speed: Float,
+    isDragging: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "speed_arrows")

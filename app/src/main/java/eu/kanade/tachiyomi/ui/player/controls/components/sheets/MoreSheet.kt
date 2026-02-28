@@ -47,6 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
@@ -66,11 +67,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import eu.kanade.presentation.player.components.PlayerSheet
 import eu.kanade.tachiyomi.ui.player.Decoder
+import eu.kanade.tachiyomi.ui.player.LongPressAction
+import eu.kanade.tachiyomi.ui.player.PausedLongPressAction
 import eu.kanade.tachiyomi.ui.player.execute
 import eu.kanade.tachiyomi.ui.player.executeLongPress
 import eu.kanade.tachiyomi.ui.player.settings.AdvancedPlayerPreferences
 import eu.kanade.tachiyomi.ui.player.settings.AudioChannels
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
+import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import `is`.xyz.mpv.MPVLib
 import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.domain.custombuttons.model.CustomButton
@@ -94,7 +98,11 @@ fun MoreSheet(
 ) {
     val advancedPreferences = remember { Injekt.get<AdvancedPlayerPreferences>() }
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
+    val gesturePreferences = remember { Injekt.get<GesturePreferences>() }
     val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
+    val longPressAction by gesturePreferences.longPressAction().collectAsState()
+    val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsState()
+    val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
     val sheetId = remember { Any().hashCode() }
 
     PlayerSheet(
@@ -290,6 +298,52 @@ fun MoreSheet(
                             MPVLib.setPropertyString(it.property, it.value)
                         },
                         label = { Text(text = stringResource(it.titleRes)) },
+                    )
+                }
+            }
+
+            Text(text = "Long press action (Playing)")
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            ) {
+                itemsIndexed(
+                    items = LongPressAction.entries,
+                    key = { index, it -> "long-press-action-$sheetId-$index-${it.name}" }
+                ) { _, action ->
+                    FilterChip(
+                        selected = longPressAction == action,
+                        onClick = { gesturePreferences.longPressAction().set(action) },
+                        label = { Text(text = stringResource(action.stringRes)) },
+                    )
+                }
+            }
+
+            Text(text = "Long press action (Paused)")
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            ) {
+                itemsIndexed(
+                    items = PausedLongPressAction.entries,
+                    key = { index, it -> "paused-long-press-action-$sheetId-$index-${it.name}" }
+                ) { _, action ->
+                    FilterChip(
+                        selected = pausedLongPressAction == action,
+                        onClick = { gesturePreferences.pausedLongPressAction().set(action) },
+                        label = { Text(text = stringResource(action.stringRes)) },
+                    )
+                }
+            }
+
+            if (longPressAction == LongPressAction.Speed) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(text = "Speed sliding")
+                    Switch(
+                        checked = longPressSliding,
+                        onCheckedChange = { gesturePreferences.gestureLongPressSpeedSliding().set(it) },
                     )
                 }
             }

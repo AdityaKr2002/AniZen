@@ -554,6 +554,7 @@
 
     <!-- Sheets - screenshot -->
     <string name="screenshot_show_subs">Include Subtitles</string>
+    <string name="screenshot_header">Screenshot / Share</string>
 
     <!-- Sheets - Chapters -->
     <string name="player_sheets_chapters_title">Chapters</string>
