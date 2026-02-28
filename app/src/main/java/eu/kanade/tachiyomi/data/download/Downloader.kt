@@ -323,7 +323,7 @@ class Downloader(
         headRes.close()
         
         val videoFile = tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
-        val downloadedBytes = AtomicLong(0)
+        var initialDownloadedBytes = 0L
         
         download.partProgress.clear()
         
@@ -336,10 +336,13 @@ class Downloader(
                 for (i in 0 until threadCount) {
                     val partFile = tmpDir.findFile("$filename.part$i")
                     val existing = partFile?.length() ?: 0L
-                    downloadedBytes.addAndGet(existing)
+                    initialDownloadedBytes += existing
                     val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
                     download.partProgress[i] = (existing.toDouble() / partTotalSize).toFloat()
                 }
+                
+                val downloadedBytes = AtomicLong(initialDownloadedBytes)
+                download.update(initialDownloadedBytes, size, false)
 
                 (0 until threadCount).map { i ->
                     async {
@@ -409,6 +412,7 @@ class Downloader(
                 
                 downloadedBytes.set(existing)
                 download.partProgress[0] = if (size > 0) (existing.toFloat() / size) else 0f
+                download.update(existing, size, false)
 
                 retry {
                     val request = Request.Builder()
@@ -474,7 +478,7 @@ class Downloader(
                             outChannel.position(currentPos)
                             
                             download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                            throttleNotification(download)
+                            notifier.onProgressChange(download)
                             kotlinx.coroutines.yield()
                         }
                     }
@@ -576,7 +580,7 @@ class Downloader(
                             outChannel.position(currentPos)
 
                             download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                            throttleNotification(download)
+                            notifier.onProgressChange(download)
                             kotlinx.coroutines.yield()
                         }
                     }

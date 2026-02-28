@@ -29,10 +29,10 @@ data class Download(
 
     @Transient
     val statusFlow = _statusFlow.asStateFlow()
-    var status: State
-        get() = _statusFlow.value
-        set(status) {
-            _statusFlow.value = status
+    var status: State = State.NOT_DOWNLOADED
+        set(value) {
+            field = value
+            _statusFlow.update { value }
         }
 
     @Transient
@@ -40,10 +40,10 @@ data class Download(
 
     @Transient
     val progressFlow = progressStateFlow.asStateFlow()
-    var progress: Int
-        get() = progressStateFlow.value
+    var progress: Int = 0
         set(value) {
-            progressStateFlow.value = value
+            field = value
+            progressStateFlow.update { value }
         }
 
     // Rich Notification Fields
