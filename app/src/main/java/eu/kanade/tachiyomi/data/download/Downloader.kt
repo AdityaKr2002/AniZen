@@ -461,7 +461,7 @@ class Downloader(
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
                 val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
-                var mergedSo far = 0L
+                var mergedSoFar = 0L
                 
                 for (i in 0 until count) {
                     val partFile = dir.findFile("$filename.part$i") ?: continue
@@ -470,10 +470,10 @@ class Downloader(
                             val size = inChannel.size()
                             inChannel.transferTo(0, size, outChannel)
                             currentPos += size
-                            mergedSo far += size
+                            mergedSoFar += size
                             outChannel.position(currentPos)
                             
-                            download.progress = (100 * mergedSo far / totalToMerge.coerceAtLeast(1L)).toInt()
+                            download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
                             throttleNotification(download)
                             kotlinx.coroutines.yield()
                         }
@@ -563,7 +563,7 @@ class Downloader(
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
                 val totalToMerge = (0 until segments.size).sumOf { i -> tmpDir.findFile("$i.seg")?.length() ?: 0L }
-                var mergedSo far = 0L
+                var mergedSoFar = 0L
 
                 for (i in 0 until segments.size) {
                     val segFile = tmpDir.findFile("$i.seg") ?: continue
@@ -572,10 +572,10 @@ class Downloader(
                             val size = inChannel.size()
                             inChannel.transferTo(0, size, outChannel)
                             currentPos += size
-                            mergedSo far += size
+                            mergedSoFar += size
                             outChannel.position(currentPos)
 
-                            download.progress = (100 * mergedSo far / totalToMerge.coerceAtLeast(1L)).toInt()
+                            download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
                             throttleNotification(download)
                             kotlinx.coroutines.yield()
                         }
