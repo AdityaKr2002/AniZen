@@ -119,7 +119,7 @@ class Downloader(
         if (isRunning || queueState.value.isEmpty()) return false
         val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
         pending.forEach { 
-            if (it.status == Download.State.PAUSED || it.status == Download.State.ERROR || it.status == Download.State.NOT_DOWNLOADED) {
+            if (it.status == Download.State.PAUSED || it.status == Download.State.ERROR || it.status == Download.State.NOT_DOWNLOADED || it.status == Download.State.DOWNLOADING) {
                 it.status = Download.State.QUEUE 
             }
         }
@@ -340,16 +340,19 @@ class Downloader(
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                         val buffer = ByteArray(128 * 1024)
                                         var bytesRead: Int
+                                        var localPartDownloaded = existing
+                                        val partTotalSize = end - (i * partSize) + 1
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                             channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
                                             val total = downloadedBytes.addAndGet(bytesRead.toLong())
                                             
-                                            val partDownloaded = partFile.length()
-                                            download.partProgress[i] = (partDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                            localPartDownloaded += bytesRead
+                                            download.partProgress[i] = (localPartDownloaded.toDouble() / partTotalSize).toFloat()
 
                                             download.update(total, size, false)
                                             throttleNotification(download)
+                                            kotlinx.coroutines.yield()
                                         }
                                     }
                                 }
@@ -381,13 +384,16 @@ class Downloader(
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                 val buffer = ByteArray(128 * 1024)
                                 var bytesRead: Int
+                                var localDownloaded = existing
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
                                     kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                     channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
-                                    val total = existing + downloadedBytes.addAndGet(bytesRead.toLong())
-                                    if (size > 0) download.partProgress[0] = (total.toFloat() / size)
-                                    download.update(total, size, false)
+                                    localDownloaded += bytesRead
+                                    val total = downloadedBytes.addAndGet(bytesRead.toLong())
+                                    if (size > 0) download.partProgress[0] = (localDownloaded.toFloat() / size)
+                                    download.update(existing + total, size, false)
                                     throttleNotification(download)
+                                    kotlinx.coroutines.yield()
                                 }
                             }
                         }
@@ -400,13 +406,17 @@ class Downloader(
     }
 
     private suspend fun mergeParts(dir: UniFile, filename: String, count: Int, outputFile: UniFile) {
-        context.contentResolver.openFileDescriptor(outputFile.uri, "wa")?.use { pfd ->
+        context.contentResolver.openFileDescriptor(outputFile.uri, "w")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
+                var currentPos = 0L
                 for (i in 0 until count) {
                     val partFile = dir.findFile("$filename.part$i") ?: continue
                     context.contentResolver.openFileDescriptor(partFile.uri, "r")?.use { ppfd ->
                         java.io.FileInputStream(ppfd.fileDescriptor).channel.use { inChannel ->
-                            inChannel.transferTo(0, inChannel.size(), outChannel)
+                            val size = inChannel.size()
+                            inChannel.transferTo(0, size, outChannel)
+                            currentPos += size
+                            outChannel.position(currentPos)
                         }
                     }
                     partFile.delete()
@@ -444,13 +454,13 @@ class Downloader(
         
         coroutineScope {
             segments.mapIndexed { index, segUrl ->
-                launch { // Use launch within coroutineScope for parallelism
+                async {
                     val segFile = tmpDir.findFile("$index.seg")
                     if (segFile != null && segFile.length() > 0) {
                         download.segmentProgress[index] = true
                         downloadedBytes.addAndGet(segFile.length())
                         synchronized(download) { download.downloadedSegments++ }
-                        return@launch
+                        return@async
                     }
                     
                     memorySemaphore.withPermit {
@@ -468,11 +478,12 @@ class Downloader(
                                 synchronized(download) { download.downloadedSegments++ }
                                 download.update(currentTotal, -1, false)
                                 throttleNotification(download)
+                                kotlinx.coroutines.yield()
                             }
                         }
                     }
                 }
-            }
+            }.awaitAll()
         }
         
         // Merge segments

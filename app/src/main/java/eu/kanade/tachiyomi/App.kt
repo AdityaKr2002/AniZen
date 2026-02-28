@@ -144,7 +144,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             
             // Dismiss stuck downloader notifications
             val downloadManager = Injekt.get<DownloadManager>()
-            withUIContext {
+            withUIContext<Unit> {
                 downloadManager.dismissNotifications()
             }
             
