@@ -90,6 +90,21 @@ data class Download(
         calculateSpeed(bytesRead)
     }
 
+    fun clearProgress() {
+        progress = 0
+        speed = ""
+        eta = ""
+        downloadedSize = ""
+        downloadedSegments = 0
+        totalSegments = 0
+        activeThreads = 0
+        partProgress.clear()
+        segmentProgress.clear()
+        lastUpdateTime = System.currentTimeMillis()
+        lastBytesRead.set(0)
+        speedSamples.clear()
+    }
+
     private fun calculateSpeed(bytesRead: Long) {
         synchronized(this) {
             val now = System.currentTimeMillis()

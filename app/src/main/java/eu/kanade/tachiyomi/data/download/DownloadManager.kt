@@ -71,14 +71,7 @@ class DownloadManager(
     }
 
     val isDownloaderRunning: Flow<Boolean>
-        get() = DownloadJob.isRunningFlow(context)
-            .flatMapLatest { isJobRunning ->
-                if (isJobRunning) {
-                    downloader.isRunningFlow
-                } else {
-                    kotlinx.coroutines.flow.flowOf(false)
-                }
-            }
+        get() = downloader.isRunningFlow
 
     /**
      * Tells the downloader to begin downloads.

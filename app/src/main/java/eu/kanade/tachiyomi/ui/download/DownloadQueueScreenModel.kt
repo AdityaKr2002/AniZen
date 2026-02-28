@@ -110,7 +110,7 @@ class DownloadQueueScreenModel(
     }
 
     val isDownloaderRunning = downloadManager.isDownloaderRunning
-        .stateIn(screenModelScope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(screenModelScope, SharingStarted.Eagerly, false)
 
     fun getDownloadStatusFlow() = downloadManager.statusFlow()
         .sample(1000)

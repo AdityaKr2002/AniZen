@@ -118,13 +118,16 @@ class Downloader(
     fun start(): Boolean {
         if (isRunning || queueState.value.isEmpty()) return false
         val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
+        if (pending.isEmpty()) return false
+        
         pending.forEach { 
             if (it.status == Download.State.PAUSED || it.status == Download.State.ERROR || it.status == Download.State.NOT_DOWNLOADED || it.status == Download.State.DOWNLOADING) {
                 it.status = Download.State.QUEUE 
             }
         }
+        _isRunningFlow.value = true
         launchDownloaderJob()
-        return pending.isNotEmpty()
+        return true
     }
 
     private var downloaderJob: Job? = null
@@ -133,16 +136,15 @@ class Downloader(
     private fun launchDownloaderJob() {
         if (downloaderJob?.isActive == true) return
         downloaderJob = scope.launch {
-            _isRunningFlow.value = true
             try {
                 queueState.debounce(100).collectLatest { queue ->
                     val activeDownloads = queue.count { it.status == Download.State.DOWNLOADING }
                     val maxConcurrent = preferences.concurrentDownloads().get()
                     
-                    if (activeDownloads < maxConcurrent) {
-                        val pending = queue.filter { it.status == Download.State.QUEUE }
-                            .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
-                        
+                    val pending = queue.filter { it.status == Download.State.QUEUE }
+                        .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
+
+                    if (activeDownloads < maxConcurrent && pending.isNotEmpty()) {
                         pending.take(maxConcurrent - activeDownloads).forEach { download ->
                             launch {
                                 downloadEpisode(download)
@@ -150,7 +152,7 @@ class Downloader(
                         }
                     }
                     
-                    if (queue.isEmpty() || areAllDownloadsFinished()) {
+                    if (queue.all { it.status == Download.State.DOWNLOADED || it.status == Download.State.PAUSED || it.status == Download.State.ERROR }) {
                         stop()
                     }
                 }
@@ -200,6 +202,7 @@ class Downloader(
         _queueState.update {
             it.forEach { download -> 
                 download.status = Download.State.NOT_DOWNLOADED
+                download.clearProgress()
                 notifier.dismissProgress(download)
             }
             store.clear()
@@ -557,6 +560,7 @@ class Downloader(
             if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
                 download.status = Download.State.NOT_DOWNLOADED
             }
+            download.clearProgress()
             notifier.dismissProgress(download)
             it - download
         }
@@ -569,6 +573,7 @@ class Downloader(
             store.removeAll(downloads)
             downloads.forEach { 
                 it.status = Download.State.NOT_DOWNLOADED 
+                it.clearProgress()
                 notifier.dismissProgress(it)
             }
             queue - downloads.toSet()
@@ -581,6 +586,7 @@ class Downloader(
             store.removeAll(downloads)
             downloads.forEach { 
                 it.status = Download.State.NOT_DOWNLOADED 
+                it.clearProgress()
                 notifier.dismissProgress(it)
             }
             queue - downloads.toSet()
@@ -592,7 +598,10 @@ class Downloader(
         val wasRunning = isRunning
         pause()
         _queueState.update {
-            it.forEach { download -> download.status = Download.State.NOT_DOWNLOADED }
+            it.forEach { download -> 
+                download.status = Download.State.NOT_DOWNLOADED
+                download.clearProgress()
+            }
             store.clear()
             emptyList()
         }
