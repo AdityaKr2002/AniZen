@@ -59,6 +59,18 @@ enum class SingleActionGesture(val stringRes: StringResource) {
     Custom(stringRes = MR.strings.single_action_custom),
 }
 
+enum class LongPressAction(val stringRes: StringResource) {
+    None(stringRes = MR.strings.single_action_none),
+    Speed(stringRes = MR.strings.player_sheets_speed_slider_label),
+    Screenshot(stringRes = MR.strings.screenshot_header),
+}
+
+enum class PausedLongPressAction(val stringRes: StringResource) {
+    DoNothing(stringRes = MR.strings.single_action_none),
+    Screenshot(stringRes = MR.strings.screenshot_header),
+    Play2x(stringRes = MR.strings.player_sheets_speed_slider_label),
+}
+
 /**
  * Key codes sent through the `Custom` option in gestures
  */
@@ -126,7 +138,7 @@ sealed class Dialogs {
 
 sealed class PlayerUpdates {
     data object None : PlayerUpdates()
-    data object DoubleSpeed : PlayerUpdates()
+    data class DoubleSpeed(val speed: Float, val isDragging: Boolean = false) : PlayerUpdates()
     data object AspectRatio : PlayerUpdates()
     data class ShowText(val value: String) : PlayerUpdates()
     data class ShowTextResource(val textResource: StringResource) : PlayerUpdates()

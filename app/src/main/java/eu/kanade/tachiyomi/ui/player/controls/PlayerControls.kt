@@ -306,7 +306,10 @@ fun PlayerControls(
                     },
                 ) {
                     when (currentPlayerUpdate) {
-                        is PlayerUpdates.DoubleSpeed -> DoubleSpeedPlayerUpdate()
+                        is PlayerUpdates.DoubleSpeed -> eu.kanade.tachiyomi.ui.player.controls.components.DoubleSpeedIndicator(
+                            speed = (currentPlayerUpdate as PlayerUpdates.DoubleSpeed).speed,
+                            isDragging = (currentPlayerUpdate as PlayerUpdates.DoubleSpeed).isDragging,
+                        )
                         is PlayerUpdates.AspectRatio -> TextPlayerUpdate(stringResource(aspectRatio.titleRes))
                         is PlayerUpdates.ShowText -> TextPlayerUpdate(
                             (currentPlayerUpdate as PlayerUpdates.ShowText).value,
