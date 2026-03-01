@@ -118,7 +118,6 @@ fun AnimeEpisodeListItem(
                         onClick()
                     },
                     onLongClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
                     },
                 )

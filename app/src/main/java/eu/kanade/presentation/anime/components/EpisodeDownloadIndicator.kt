@@ -296,7 +296,6 @@ internal fun Modifier.commonClickable(
     enabled = enabled,
     onLongClick = {
         onLongClick()
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
     },
     onClick = onClick,
     role = Role.Button,

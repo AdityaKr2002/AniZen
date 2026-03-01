@@ -1170,7 +1170,6 @@ private fun EpisodeItemWrapper(
                 episodeSwipeEndAction = episodeSwipeEndAction,
                 onLongClick = {
                     onEpisodeSelected(item, !item.selected, true, true)
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
                 onClick = {
                     onEpisodeItemClick(

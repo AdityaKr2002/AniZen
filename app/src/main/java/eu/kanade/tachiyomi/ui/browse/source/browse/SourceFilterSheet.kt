@@ -165,7 +165,6 @@ private fun SavedSearches(
                             .combinedClickable(
                                 onClick = { onSavedSearchClick(savedSearch) },
                                 onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onSavedSearchLongClick(savedSearch)
                                 },
                             ),

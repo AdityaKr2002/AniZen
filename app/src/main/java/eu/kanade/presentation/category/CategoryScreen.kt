@@ -93,7 +93,6 @@ fun CategoryScreen(
                 add(to.index, removeAt(from.index))
             }.toImmutableList()
             onReorder(categories)
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
 
         LazyColumn(

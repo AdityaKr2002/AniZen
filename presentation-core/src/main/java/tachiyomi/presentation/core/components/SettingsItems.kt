@@ -222,7 +222,6 @@ fun SliderItem(
                 onValueChange = f@{
                     if (it == value) return@f
                     onChange(it)
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 },
                 onValueChangeFinished = onValueChangeFinished,
                 valueRange = min..max,

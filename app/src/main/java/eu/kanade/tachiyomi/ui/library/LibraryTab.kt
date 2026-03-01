@@ -247,7 +247,6 @@ data object LibraryTab : Tab {
                         onToggleSelection = screenModel::toggleSelection,
                         onToggleRangeSelection = {
                             screenModel.toggleRangeSelection(it)
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         },
                         onRefresh = onClickRefresh,
                         onGlobalSearchClicked = {

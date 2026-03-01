@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
@@ -135,7 +137,7 @@ fun SourcesScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                top = searchHeight, // Offset list content by search bar height
+                top = searchHeight + (searchOffsetHeightPx / LocalDensity.current.density).dp,
                 end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
@@ -247,7 +249,7 @@ fun SourcesScreen(
             }
         }
 
-        // Search bar floating on top with zIndex
+        // Search bar floating on top
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -267,6 +269,7 @@ fun SourcesScreen(
                         .weight(1f)
                         .onFocusChanged { 
                             isSearchFocused = it.isFocused 
+                            // If we lose focus and it's empty, clear text completely to revert icon
                             if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
                                 onChangeSearchQuery(null)
                             }

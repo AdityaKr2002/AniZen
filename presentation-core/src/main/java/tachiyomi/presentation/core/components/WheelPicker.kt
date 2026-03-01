@@ -128,7 +128,6 @@ private fun <T> WheelPicker(
             .map { calculateSnappedItemIndex(lazyListState) }
             .distinctUntilChanged()
             .collectLatest {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 internalOnSelectionChanged(it)
             }
     }

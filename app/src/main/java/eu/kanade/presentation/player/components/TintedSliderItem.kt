@@ -78,7 +78,6 @@ fun TintedSliderItem(
                 val newValue = it.toInt()
                 if (newValue != value) {
                     onChange(newValue)
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 }
             },
             modifier = Modifier.weight(1.5f),

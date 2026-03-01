@@ -64,7 +64,6 @@ fun LogoHeader() {
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     context.toast("User: $displayName")
                 },
             contentAlignment = Alignment.Center
