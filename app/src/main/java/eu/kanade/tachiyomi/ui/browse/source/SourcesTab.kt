@@ -26,7 +26,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.SourceOptionsDialog
 import eu.kanade.presentation.browse.SourcesScreen
 import eu.kanade.presentation.components.AppBar
-import eu.kanade.presentation.components.NsfwIcon
 import eu.kanade.presentation.components.TabContent
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
@@ -45,15 +44,6 @@ fun Screen.sourcesTab(): TabContent {
     return TabContent(
         titleRes = MR.strings.label_sources,
         actions = persistentListOf(
-            AppBar.Action(
-                title = "NSFW Only",
-                onClick = { screenModel.toggleNsfwOnly() },
-                iconContent = {
-                    NsfwIcon(
-                        color = if (state.nsfwOnly) MaterialTheme.colorScheme.error else LocalContentColor.current
-                    )
-                }
-            ),
             AppBar.Action(
                 title = stringResource(MR.strings.action_global_search),
                 icon = Icons.Outlined.TravelExplore,

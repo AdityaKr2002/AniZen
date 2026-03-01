@@ -67,7 +67,7 @@ import uy.kohesive.injekt.api.get
 
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.util.fastForEach
 
 @Composable
@@ -93,7 +93,6 @@ fun SourcesScreen(
                 .fillMaxWidth()
                 .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
         ) {
             OutlinedTextField(
                 value = state.searchQuery ?: "",
@@ -119,7 +118,9 @@ fun SourcesScreen(
                 ),
             )
 
-            // BOLD and BIG NSFW Toggle
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(MaterialTheme.padding.small))
+
+            // BOLD and BIG NSFW Toggle - Improved positioning
             FilterChip(
                 selected = state.nsfwOnly,
                 onClick = onToggleNsfwOnly,
@@ -130,6 +131,7 @@ fun SourcesScreen(
                             fontWeight = FontWeight.Black,
                             fontSize = 14.sp
                         ),
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
@@ -142,7 +144,7 @@ fun SourcesScreen(
                     selectedBorderColor = MaterialTheme.colorScheme.error,
                     selectedBorderWidth = 2.dp,
                 ),
-                modifier = Modifier.size(height = 48.dp, width = 64.dp)
+                modifier = Modifier.height(48.dp)
             )
         }
 

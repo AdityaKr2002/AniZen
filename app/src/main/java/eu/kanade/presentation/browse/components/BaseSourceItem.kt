@@ -118,10 +118,6 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
             if (name.contains("api") || name.contains("json") || sourceClass.contains("Api") || sourceClass.contains("Json")) {
                 StatusBadge("API", Color(0xFF43A047))
             }
-
-            if (source.isNsfw) {
-                StatusBadge("18+", MaterialTheme.colorScheme.error)
-            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -158,6 +154,10 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
                         }
                     )
             )
+
+            if (source.isNsfw) {
+                StatusBadge("18+", MaterialTheme.colorScheme.error)
+            }
         }
     }
 }
