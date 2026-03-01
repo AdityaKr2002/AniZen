@@ -2,6 +2,7 @@ package eu.kanade.presentation.browse
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -154,96 +155,46 @@ fun SourcesScreen(
                     )
                 }
             } else {
-                val items = state.items
-                var i = 0
-                while (i < items.size) {
-                    val model = items[i]
-                    if (model is SourceUiModel.Header) {
-                        item(key = "header-${model.language}") {
-                            SourceHeader(
-                                language = model.language,
-                                modifier = Modifier.animateItem()
-                            )
+                state.items.forEach { model ->
+                    when (model) {
+                        is SourceUiModel.Header -> {
+                            item(key = "header-${model.language}") {
+                                SourceHeader(
+                                    language = model.language,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
                         }
-                        i++
-                        val groupItems = mutableListOf<SourceUiModel.Item>()
-                        while (i < items.size && items[i] is SourceUiModel.Item) {
-                            groupItems.add(items[i] as SourceUiModel.Item)
-                            i++
-                        }
-                        item(key = "island-${model.language}") {
-                            if (useContainer) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = MaterialTheme.shapes.large,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Column {
-                                        groupItems.forEachIndexed { index, item ->
-                                            SourceItem(
-                                                source = item.source,
-                                                onClickItem = onClickItem,
-                                                onLongClickItem = onLongClickItem,
-                                                onClickPin = onClickPin,
-                                                modifier = Modifier.animateItem()
-                                            )
-                                            if (index < groupItems.size - 1) {
-                                                GroupSeparator(true)
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                ) {
-                                    groupItems.forEach { item ->
+                        is SourceUiModel.Item -> {
+                            item(key = "source-${model.source.id}") {
+                                if (useContainer) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        shape = MaterialTheme.shapes.large,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        tonalElevation = 2.dp
+                                    ) {
                                         SourceItem(
-                                            source = item.source,
+                                            source = model.source,
                                             onClickItem = onClickItem,
                                             onLongClickItem = onLongClickItem,
                                             onClickPin = onClickPin,
                                             modifier = Modifier.animateItem()
                                         )
                                     }
-                                }
-                            }
-                        }
-                    } else if (model is SourceUiModel.Item) {
-                        item(key = "source-${model.source.id}") {
-                            if (useContainer) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = MaterialTheme.shapes.large,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    tonalElevation = 2.dp
-                                ) {
+                                } else {
                                     SourceItem(
                                         source = model.source,
                                         onClickItem = onClickItem,
                                         onLongClickItem = onLongClickItem,
                                         onClickPin = onClickPin,
-                                        modifier = Modifier.animateItem()
+                                        modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
                                     )
                                 }
-                            } else {
-                                SourceItem(
-                                    source = model.source,
-                                    onClickItem = onClickItem,
-                                    onLongClickItem = onLongClickItem,
-                                    onClickPin = onClickPin,
-                                    modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
-                                )
                             }
                         }
-                        i++
                     }
                 }
             }
@@ -269,7 +220,7 @@ fun SourcesScreen(
                         .weight(1f)
                         .onFocusChanged { 
                             isSearchFocused = it.isFocused 
-                            // If we lose focus and it's empty, clear text completely to revert icon
+                            // Revert icon if unfocused and empty
                             if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
                                 onChangeSearchQuery(null)
                             }

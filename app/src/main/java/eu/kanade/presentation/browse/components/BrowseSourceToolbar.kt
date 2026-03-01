@@ -5,8 +5,6 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.SelectAll
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -45,8 +43,6 @@ fun BrowseSourceToolbar(
     onSelectAll: () -> Unit = {},
     onInvertSelection: () -> Unit = {},
     selectedCount: Int = 0,
-    isNsfwOnly: Boolean = false,
-    onToggleNsfwOnly: () -> Unit = {},
 ) {
     // Avoid capturing unstable source in actions lambda
     val title = source?.name
@@ -90,13 +86,6 @@ fun BrowseSourceToolbar(
                 AppBarActions(
                     actions = persistentListOf<AppBar.AppBarAction>().builder()
                         .apply {
-                            add(
-                                AppBar.Action(
-                                    title = "Toggle NSFW",
-                                    icon = if (isNsfwOnly) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    onClick = onToggleNsfwOnly,
-                                ),
-                            )
                             add(
                                 AppBar.Action(
                                     title = stringResource(MR.strings.action_display_mode),
