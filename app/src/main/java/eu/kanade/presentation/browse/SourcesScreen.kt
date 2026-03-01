@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Edit
@@ -34,12 +35,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -83,11 +88,13 @@ fun SourcesScreen(
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsState()
     val useContainer = remember(containerStyles) { ContainerStyle.BROWSE in containerStyles }
+    val focusManager = LocalFocusManager.current
+    var isSearchFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
     ) {
-        // Redesigned Search Bar with Big NSFW Toggle
+        // Redesigned Reactive Search Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,9 +104,24 @@ fun SourcesScreen(
             OutlinedTextField(
                 value = state.searchQuery ?: "",
                 onValueChange = onChangeSearchQuery,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { isSearchFocused = it.isFocused },
                 placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                leadingIcon = {
+                    if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
+                        IconButton(onClick = {
+                            if (!state.searchQuery.isNullOrEmpty()) {
+                                onChangeSearchQuery("")
+                            }
+                            focusManager.clearFocus()
+                        }) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
+                        }
+                    } else {
+                        Icon(Icons.Outlined.Search, contentDescription = null)
+                    }
+                },
                 trailingIcon = {
                     if (!state.searchQuery.isNullOrEmpty()) {
                         IconButton(onClick = { onChangeSearchQuery("") }) {
@@ -120,7 +142,7 @@ fun SourcesScreen(
 
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(MaterialTheme.padding.small))
 
-            // BOLD and BIG NSFW Toggle - Improved positioning
+            // BOLD and BIG NSFW Toggle
             FilterChip(
                 selected = state.nsfwOnly,
                 onClick = onToggleNsfwOnly,
