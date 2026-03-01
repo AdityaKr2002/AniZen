@@ -81,7 +81,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.pluralStringResource
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -96,7 +96,7 @@ fun GestureHandler(
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
 
     val panelShown by viewModel.panelShown.collectAsState()
-    val allowGesturesInPanels by playerPreferences.allowGestures().collectAsState()
+    val allowGesturesInPanels by playerPreferences.allowGestures().collectAsStatePref()
     val duration by viewModel.duration.collectAsState()
     val position by viewModel.pos.collectAsState()
     val controlsShown by viewModel.controlsShown.collectAsState()
@@ -115,14 +115,14 @@ fun GestureHandler(
     }
 
     val gestureVolumeBrightness = gesturePreferences.gestureVolumeBrightness().get()
-    val swapVolumeBrightness by gesturePreferences.swapVolumeBrightness().collectAsState()
-    val seekGesture by gesturePreferences.gestureHorizontalSeek().collectAsState()
-    val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsState()
-    val showSeekbar by gesturePreferences.showSeekBar().collectAsState()
+    val swapVolumeBrightness by gesturePreferences.swapVolumeBrightness().collectAsStatePref()
+    val seekGesture by gesturePreferences.gestureHorizontalSeek().collectAsStatePref()
+    val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsStatePref()
+    val showSeekbar by gesturePreferences.showSeekBar().collectAsStatePref()
     
-    val longPressAction by gesturePreferences.longPressAction().collectAsState()
-    val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsState()
-    val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
+    val longPressAction by gesturePreferences.longPressAction().collectAsStatePref()
+    val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsStatePref()
+    val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsStatePref()
 
     var isLongPressing by remember { mutableStateOf(false) }
     val currentVolume by viewModel.currentVolume.collectAsState()
