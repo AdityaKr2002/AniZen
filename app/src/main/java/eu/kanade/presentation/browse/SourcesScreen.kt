@@ -1,10 +1,6 @@
 package eu.kanade.presentation.browse
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,8 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
@@ -42,7 +36,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,16 +43,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,7 +70,6 @@ import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import kotlin.math.roundToInt
 
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -106,235 +92,203 @@ fun SourcesScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFocused by remember { mutableStateOf(false) }
 
-    val searchHeight = 64.dp
-    val searchHeightPx = with(LocalDensity.current) { searchHeight.roundToPx().toFloat() }
-    var searchOffsetHeightPx by remember { mutableFloatStateOf(0f) }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val newOffset = searchOffsetHeightPx + delta
-                searchOffsetHeightPx = newOffset.coerceIn(-searchHeightPx, 0f)
-                return Offset.Zero
-            }
-        }
-    }
-
     // Handle system back button: 1 click to clear text and focus if text exists.
     BackHandler(enabled = !state.searchQuery.isNullOrEmpty()) {
         onChangeSearchQuery("")
         focusManager.clearFocus()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = contentPadding.calculateTopPadding())
-            .nestedScroll(nestedScrollConnection),
+    ScrollbarLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
+            top = contentPadding.calculateTopPadding(),
+            end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
+            bottom = contentPadding.calculateBottomPadding() + 8.dp
+        ),
     ) {
-        Column(
-            modifier = Modifier
-                .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
-        ) {
-            // Redesigned Reactive Search Bar with hiding behavior
-            Box(
+        item(key = "search-bar") {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(searchHeight)
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-                ) {
-                    OutlinedTextField(
-                        value = state.searchQuery ?: "",
-                        onValueChange = onChangeSearchQuery,
-                        modifier = Modifier
-                            .weight(1f)
-                            .onFocusChanged { 
-                                isSearchFocused = it.isFocused 
-                                // Reset icon if unfocused and empty
-                                if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
-                                    onChangeSearchQuery(null)
-                                }
-                            },
-                        placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
-                        leadingIcon = {
-                            // Icon only turns into Back if there is text OR if focused
-                            if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
-                                IconButton(onClick = {
-                                    onChangeSearchQuery("")
-                                    focusManager.clearFocus()
-                                }) {
-                                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
-                                }
-                            } else {
-                                Icon(Icons.Outlined.Search, contentDescription = null)
+                OutlinedTextField(
+                    value = state.searchQuery ?: "",
+                    onValueChange = onChangeSearchQuery,
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { 
+                            isSearchFocused = it.isFocused 
+                            if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
+                                onChangeSearchQuery(null)
                             }
                         },
-                        trailingIcon = {
-                            if (!state.searchQuery.isNullOrEmpty()) {
-                                IconButton(onClick = { 
-                                    onChangeSearchQuery("") 
-                                }) {
-                                    Icon(Icons.Outlined.Close, contentDescription = null)
-                                }
+                    placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
+                    leadingIcon = {
+                        if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
+                            IconButton(onClick = {
+                                onChangeSearchQuery("")
+                                focusManager.clearFocus()
+                            }) {
+                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
                             }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    )
+                        } else {
+                            Icon(Icons.Outlined.Search, contentDescription = null)
+                        }
+                    },
+                    trailingIcon = {
+                        if (!state.searchQuery.isNullOrEmpty()) {
+                            IconButton(onClick = { onChangeSearchQuery("") }) {
+                                Icon(Icons.Outlined.Close, contentDescription = null)
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                )
 
-                    // BOLD and BIG NSFW Toggle
-                    FilterChip(
-                        selected = state.nsfwOnly,
-                        onClick = onToggleNsfwOnly,
-                        label = {
-                            Text(
-                                text = "18+",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
-                            selectedLabelColor = MaterialTheme.colorScheme.error,
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = state.nsfwOnly,
-                            selectedBorderColor = MaterialTheme.colorScheme.error,
-                            selectedBorderWidth = 2.dp,
-                        ),
-                        modifier = Modifier.height(48.dp)
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when {
-                    state.isLoading -> LoadingScreen()
-                    state.isEmpty -> EmptyScreen(
-                        stringRes = if (state.searchQuery.isNullOrEmpty()) MR.strings.source_empty_screen else MR.strings.no_results_found,
-                    )
-                    else -> {
-                        ScrollbarLazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                                end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
-                                bottom = contentPadding.calculateBottomPadding() + searchHeight + 8.dp
+                FilterChip(
+                    selected = state.nsfwOnly,
+                    onClick = onToggleNsfwOnly,
+                    label = {
+                        Text(
+                            text = "18+",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                fontSize = 14.sp
                             ),
-                        ) {
-                            val items = state.items
-                            var i = 0
-                            while (i < items.size) {
-                                val model = items[i]
-                                if (model is SourceUiModel.Header) {
-                                    item(key = "header-${model.language}") {
-                                        SourceHeader(
-                                            language = model.language,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                        selectedLabelColor = MaterialTheme.colorScheme.error,
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = state.nsfwOnly,
+                        selectedBorderColor = MaterialTheme.colorScheme.error,
+                        selectedBorderWidth = 2.dp,
+                    ),
+                    modifier = Modifier.height(48.dp)
+                )
+            }
+        }
+
+        if (state.isLoading) {
+            item(key = "loading") {
+                LoadingScreen(modifier = Modifier.fillParentMaxSize())
+            }
+        } else if (state.isEmpty) {
+            item(key = "empty") {
+                EmptyScreen(
+                    stringRes = if (state.searchQuery.isNullOrEmpty()) MR.strings.source_empty_screen else MR.strings.no_results_found,
+                    modifier = Modifier.fillParentMaxSize()
+                )
+            }
+        } else {
+            val items = state.items
+            var i = 0
+            while (i < items.size) {
+                val model = items[i]
+                if (model is SourceUiModel.Header) {
+                    item(key = "header-${model.language}") {
+                        SourceHeader(
+                            language = model.language,
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+                    i++
+                    val groupItems = mutableListOf<SourceUiModel.Item>()
+                    while (i < items.size && items[i] is SourceUiModel.Item) {
+                        groupItems.add(items[i] as SourceUiModel.Item)
+                        i++
+                    }
+                    item(key = "island-${model.language}") {
+                        if (useContainer) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                tonalElevation = 2.dp
+                            ) {
+                                Column {
+                                    groupItems.forEachIndexed { index, item ->
+                                        SourceItem(
+                                            source = item.source,
+                                            onClickItem = onClickItem,
+                                            onLongClickItem = onLongClickItem,
+                                            onClickPin = onClickPin,
                                             modifier = Modifier.animateItem()
                                         )
-                                    }
-                                    i++
-                                    val groupItems = mutableListOf<SourceUiModel.Item>()
-                                    while (i < items.size && items[i] is SourceUiModel.Item) {
-                                        groupItems.add(items[i] as SourceUiModel.Item)
-                                        i++
-                                    }
-                                    item(key = "island-${model.language}") {
-                                        if (useContainer) {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                                shape = MaterialTheme.shapes.large,
-                                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                                tonalElevation = 2.dp
-                                            ) {
-                                                Column {
-                                                    groupItems.forEach { item ->
-                                                        SourceItem(
-                                                            source = item.source,
-                                                            onClickItem = onClickItem,
-                                                            onLongClickItem = onLongClickItem,
-                                                            onClickPin = onClickPin,
-                                                            modifier = Modifier.animateItem()
-                                                        )
-                                                        GroupSeparator(groupItems.last() != item)
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                            ) {
-                                                groupItems.forEach { item ->
-                                                    SourceItem(
-                                                        source = item.source,
-                                                        onClickItem = onClickItem,
-                                                        onLongClickItem = onLongClickItem,
-                                                        onClickPin = onClickPin,
-                                                        modifier = Modifier.animateItem()
-                                                    )
-                                                }
-                                            }
+                                        if (index < groupItems.size - 1) {
+                                            GroupSeparator(true)
                                         }
                                     }
-                                } else if (model is SourceUiModel.Item) {
-                                    // Handle cases where items might appear before a header (e.g. pinned)
-                                    item(key = "source-${model.source.id}") {
-                                        if (useContainer) {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                                shape = MaterialTheme.shapes.large,
-                                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                                tonalElevation = 2.dp
-                                            ) {
-                                                SourceItem(
-                                                    source = model.source,
-                                                    onClickItem = onClickItem,
-                                                    onLongClickItem = onLongClickItem,
-                                                    onClickPin = onClickPin,
-                                                    modifier = Modifier.animateItem()
-                                                )
-                                            }
-                                        } else {
-                                            SourceItem(
-                                                source = model.source,
-                                                onClickItem = onClickItem,
-                                                onLongClickItem = onLongClickItem,
-                                                onClickPin = onClickPin,
-                                                modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
-                                            )
-                                        }
-                                    }
-                                    i++
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                            ) {
+                                groupItems.forEach { item ->
+                                    SourceItem(
+                                        source = item.source,
+                                        onClickItem = onClickItem,
+                                        onLongClickItem = onLongClickItem,
+                                        onClickPin = onClickPin,
+                                        modifier = Modifier.animateItem()
+                                    )
                                 }
                             }
                         }
                     }
+                } else if (model is SourceUiModel.Item) {
+                    item(key = "source-${model.source.id}") {
+                        if (useContainer) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                tonalElevation = 2.dp
+                            ) {
+                                SourceItem(
+                                    source = model.source,
+                                    onClickItem = onClickItem,
+                                    onLongClickItem = onLongClickItem,
+                                    onClickPin = onClickPin,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
+                        } else {
+                            SourceItem(
+                                source = model.source,
+                                onClickItem = onClickItem,
+                                onLongClickItem = onLongClickItem,
+                                onClickPin = onClickPin,
+                                modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    i++
                 }
             }
         }
