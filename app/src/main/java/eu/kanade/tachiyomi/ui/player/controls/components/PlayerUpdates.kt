@@ -71,5 +71,5 @@ fun DoubleSpeedPlayerUpdate(
 ) {
     val preferences = remember { Injekt.get<PlayerPreferences>() }
     val speed by preferences.playerSpeedLongPress().collectAsState()
-    DoubleSpeedIndicator(speed = speed, modifier = modifier)
+    DoubleSpeedIndicator(speed = speed, isDragging = false, modifier = modifier)
 }
