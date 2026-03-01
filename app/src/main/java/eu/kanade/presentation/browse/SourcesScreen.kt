@@ -92,16 +92,10 @@ fun SourcesScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFocused by remember { mutableStateOf(false) }
 
-    // Handle system back button properly:
-    // 1. If keyboard is up (focused): 1st click close keyboard.
-    // 2. If keyboard is down AND has text: 1 click clear text (icon changes to Search).
-    // 3. If keyboard is down AND empty: System handles exit (BackHandler disabled).
-    BackHandler(enabled = isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
-        if (isSearchFocused) {
-            focusManager.clearFocus()
-        } else {
-            onChangeSearchQuery("")
-        }
+    // Handle system back button: 1 click to clear text and focus if text exists.
+    BackHandler(enabled = !state.searchQuery.isNullOrEmpty()) {
+        onChangeSearchQuery("")
+        focusManager.clearFocus()
     }
 
     Column(
@@ -126,11 +120,8 @@ fun SourcesScreen(
                     // Icon only turns into Back if there is text OR if focused
                     if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
                         IconButton(onClick = {
-                            if (isSearchFocused) {
-                                focusManager.clearFocus()
-                            } else {
-                                onChangeSearchQuery("")
-                            }
+                            onChangeSearchQuery("")
+                            focusManager.clearFocus()
                         }) {
                             Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
                         }
