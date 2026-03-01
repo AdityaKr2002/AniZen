@@ -16,6 +16,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.ExtensionScreen
 import eu.kanade.presentation.components.AppBar
+import eu.kanade.presentation.components.NsfwIcon
 import eu.kanade.presentation.components.TabContent
 import eu.kanade.presentation.more.settings.screen.browse.ExtensionReposScreen
 import eu.kanade.tachiyomi.extension.model.Extension
@@ -40,8 +41,6 @@ fun extensionsTab(
         titleRes = MR.strings.label_extensions,
         badgeNumber = state.updates.takeIf { it > 0 },
         searchEnabled = true,
-        searchQuery = state.searchQuery,
-        onChangeSearchQuery = extensionsScreenModel::search,
         actions = persistentListOf(
             AppBar.Action(
                 title = "NSFW Only",
