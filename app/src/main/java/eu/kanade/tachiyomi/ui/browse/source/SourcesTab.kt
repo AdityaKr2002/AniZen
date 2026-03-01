@@ -62,6 +62,7 @@ fun Screen.sourcesTab(): TabContent {
                 },
                 onClickPin = screenModel::togglePin,
                 onLongClickItem = screenModel::showSourceDialog,
+                onChangeSearchQuery = screenModel::search,
             )
 
             when (val dialog = state.dialog) {

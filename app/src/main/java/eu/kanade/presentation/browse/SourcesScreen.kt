@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +54,7 @@ import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import eu.kanade.presentation.components.SearchToolbar
 
 @Composable
 fun SourcesScreen(
@@ -61,55 +63,81 @@ fun SourcesScreen(
     onClickItem: (Source, Listing) -> Unit,
     onClickPin: (Source) -> Unit,
     onLongClickItem: (Source) -> Unit,
+    onChangeSearchQuery: (String?) -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsState()
     val useContainer = remember(containerStyles) { ContainerStyle.BROWSE in containerStyles }
 
-    when {
-        state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
-        state.isEmpty -> EmptyScreen(
-            stringRes = MR.strings.source_empty_screen,
-            modifier = Modifier.padding(contentPadding),
+    Column(
+        modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
+    ) {
+        SearchToolbar(
+            searchQuery = state.searchQuery,
+            onChangeSearchQuery = onChangeSearchQuery,
+            searchEnabled = true,
         )
-        else -> {
-            ScrollbarLazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    top = contentPadding.calculateTopPadding() + 8.dp,
-                    bottom = contentPadding.calculateBottomPadding() + 8.dp
-                ),
-            ) {
-                val items = state.items
-                var i = 0
-                while (i < items.size) {
-                    val model = items[i]
-                    if (model is SourceUiModel.Header) {
-                        item(key = "header-${model.language}") {
-                            SourceHeader(
-                                language = model.language,
-                                modifier = Modifier.animateItem()
-                            )
-                        }
-                        i++
-                        val groupItems = mutableListOf<SourceUiModel.Item>()
-                        while (i < items.size && items[i] is SourceUiModel.Item) {
-                            groupItems.add(items[i] as SourceUiModel.Item)
+
+        when {
+            state.isLoading -> LoadingScreen()
+            state.isEmpty -> EmptyScreen(
+                stringRes = if (state.searchQuery.isNullOrEmpty()) MR.strings.source_empty_screen else MR.strings.no_results_found,
+            )
+            else -> {
+                ScrollbarLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
+                        bottom = contentPadding.calculateBottomPadding() + 8.dp
+                    ),
+                ) {
+                    val items = state.items
+                    var i = 0
+                    while (i < items.size) {
+                        val model = items[i]
+                        if (model is SourceUiModel.Header) {
+                            item(key = "header-${model.language}") {
+                                SourceHeader(
+                                    language = model.language,
+                                    modifier = Modifier.animateItem()
+                                )
+                            }
                             i++
-                        }
-                        item(key = "island-${model.language}") {
-                            if (useContainer) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = MaterialTheme.shapes.large,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Column {
+                            val groupItems = mutableListOf<SourceUiModel.Item>()
+                            while (i < items.size && items[i] is SourceUiModel.Item) {
+                                groupItems.add(items[i] as SourceUiModel.Item)
+                                i++
+                            }
+                            item(key = "island-${model.language}") {
+                                if (useContainer) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        shape = MaterialTheme.shapes.large,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        tonalElevation = 2.dp
+                                    ) {
+                                        Column {
+                                            groupItems.forEach { item ->
+                                                SourceItem(
+                                                    source = item.source,
+                                                    onClickItem = onClickItem,
+                                                    onLongClickItem = onLongClickItem,
+                                                    onClickPin = onClickPin,
+                                                    modifier = Modifier.animateItem()
+                                                )
+                                            GroupSeparator(groupItems.last() != item)
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    ) {
                                         groupItems.forEach { item ->
                                             SourceItem(
                                                 source = item.source,
@@ -121,59 +149,54 @@ fun SourcesScreen(
                                         }
                                     }
                                 }
-                            } else {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                ) {
-                                    groupItems.forEach { item ->
+                            }
+                        } else if (model is SourceUiModel.Item) {
+                            // Handle cases where items might appear before a header (e.g. pinned)
+                            item(key = "source-${model.source.id}") {
+                                if (useContainer) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                                        shape = MaterialTheme.shapes.large,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        tonalElevation = 2.dp
+                                    ) {
                                         SourceItem(
-                                            source = item.source,
+                                            source = model.source,
                                             onClickItem = onClickItem,
                                             onLongClickItem = onLongClickItem,
                                             onClickPin = onClickPin,
                                             modifier = Modifier.animateItem()
                                         )
                                     }
-                                }
-                            }
-                        }
-                    } else if (model is SourceUiModel.Item) {
-                        // Handle cases where items might appear before a header (e.g. pinned)
-                        item(key = "source-${model.source.id}") {
-                            if (useContainer) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = MaterialTheme.shapes.large,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    tonalElevation = 2.dp
-                                ) {
+                                } else {
                                     SourceItem(
                                         source = model.source,
                                         onClickItem = onClickItem,
                                         onLongClickItem = onLongClickItem,
                                         onClickPin = onClickPin,
-                                        modifier = Modifier.animateItem()
+                                        modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
                                     )
                                 }
-                            } else {
-                                SourceItem(
-                                    source = model.source,
-                                    onClickItem = onClickItem,
-                                    onLongClickItem = onLongClickItem,
-                                    onClickPin = onClickPin,
-                                    modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
-                                )
                             }
+                            i++
                         }
-                        i++
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GroupSeparator(enabled: Boolean) {
+    if (enabled) {
+        androidx.compose.material3.HorizontalDivider(
+            modifier = Modifier.padding(horizontal = MaterialTheme.padding.medium),
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+        )
     }
 }
 
@@ -254,7 +277,7 @@ fun SourceOptionsDialog(
     source: Source,
     onClickPin: () -> Unit,
     onClickDisable: () -> Unit,
-    onClickAddToFeed: () -> Unit,
+    onClickAddToFeed: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -272,13 +295,15 @@ fun SourceOptionsDialog(
                         .padding(vertical = 16.dp),
                 )
                 if (!source.isLocal()) {
-                    Text(
-                        text = "Add to Feed",
-                        modifier = Modifier
-                            .clickable(onClick = onClickAddToFeed)
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                    )
+                    if (onClickAddToFeed != null) {
+                        Text(
+                            text = "Add to Feed",
+                            modifier = Modifier
+                                .clickable(onClick = onClickAddToFeed)
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                        )
+                    }
                     Text(
                         text = stringResource(MR.strings.action_disable),
                         modifier = Modifier

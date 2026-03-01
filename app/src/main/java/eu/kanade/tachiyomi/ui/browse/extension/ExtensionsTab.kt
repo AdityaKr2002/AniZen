@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.ui.browse.extension
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,7 +40,18 @@ fun extensionsTab(
         titleRes = MR.strings.label_extensions,
         badgeNumber = state.updates.takeIf { it > 0 },
         searchEnabled = true,
+        searchQuery = state.searchQuery,
+        onChangeSearchQuery = extensionsScreenModel::search,
         actions = persistentListOf(
+            AppBar.Action(
+                title = "NSFW Only",
+                onClick = { extensionsScreenModel.toggleNsfwOnly() },
+                iconContent = {
+                    NsfwIcon(
+                        color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                    )
+                }
+            ),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.action_filter),
                 onClick = {
