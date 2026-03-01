@@ -125,6 +125,7 @@ fun GestureHandler(
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
 
     var isLongPressing by remember { mutableStateOf(false) }
+    var longPressJob by remember { mutableStateOf<Job?>(null) }
     val currentVolume by viewModel.currentVolume.collectAsState()
     val currentMPVVolume by viewModel.currentMPVVolume.collectAsState()
     val currentBrightness by viewModel.currentBrightness.collectAsState()
@@ -148,6 +149,7 @@ fun GestureHandler(
                 }
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
+                    val startPosition = down.position
                     val originalSpeed = viewModel.playbackSpeed.value
                     
                     val press = PressInteraction.Press(
@@ -155,75 +157,43 @@ fun GestureHandler(
                     )
                     scope.launch { interactionSource.emit(press) }
 
-                    val longPressTimeout = viewConfiguration.longPressTimeoutMillis
-                    val up = withTimeoutOrNull(longPressTimeout) {
-                        waitForUpOrCancellation()
-                    }
-
-                    if (up == null) { // Long press detected
+                    longPressJob?.cancel()
+                    longPressJob = scope.launch {
+                        delay(viewConfiguration.longPressTimeoutMillis)
                         val isPaused = viewModel.paused.value
-                        val isPosInMiddle = down.position.x > size.width / 5 && down.position.x < size.width * 4 / 5
-                        
                         if (isPaused) {
                             when (pausedLongPressAction) {
                                 PausedLongPressAction.Screenshot -> {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.sheetShown.update { Sheets.Screenshot }
-                                    waitForUpOrCancellation()
                                 }
                                 PausedLongPressAction.Play2x -> {
-                                    if (isPosInMiddle) {
-                                        isLongPressing = true
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.unpause()
-                                        val targetSpeed = 2.0f
-                                        
-                                        // Smoothly increase speed to 2x
-                                        speedRampJob?.cancel()
-                                        speedRampJob = scope.launch {
-                                            val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                            val dur = 200L
-                                            val startTime = System.currentTimeMillis()
-                                            while (System.currentTimeMillis() - startTime < dur) {
-                                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                                val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
-                                                MPVLib.setPropertyDouble("speed", s)
-                                                delay(32)
-                                            }
-                                            MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
+                                    isLongPressing = true
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.unpause()
+                                    val targetSpeed = 2.0f
+                                    speedRampJob?.cancel()
+                                    speedRampJob = scope.launch {
+                                        val currentSpeed = MPVLib.getPropertyDouble("speed")
+                                        val dur = 200L
+                                        val startTime = System.currentTimeMillis()
+                                        while (System.currentTimeMillis() - startTime < dur) {
+                                            val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
+                                            val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
+                                            MPVLib.setPropertyDouble("speed", s)
+                                            delay(32)
                                         }
-                                        viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
-                                        
-                                        waitForUpOrCancellation() // Wait until user lifts finger
-                                        
-                                        // Smoothly return to original speed
-                                        speedRampJob?.cancel()
-                                        speedRampJob = scope.launch {
-                                            val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                            val dur = 200L
-                                            val startTime = System.currentTimeMillis()
-                                            while (System.currentTimeMillis() - startTime < dur) {
-                                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                                val s = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
-                                                MPVLib.setPropertyDouble("speed", s)
-                                                delay(32)
-                                            }
-                                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                                            viewModel.pause() // Pause again since we were originally paused
-                                            viewModel.playerUpdate.update { PlayerUpdates.None }
-                                        }
-                                    } else {
-                                        waitForUpOrCancellation()
+                                        MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
                                     }
+                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
                                 }
-                                else -> waitForUpOrCancellation()
+                                else -> {}
                             }
                         } else {
-                            if (longPressAction == LongPressAction.Speed && isPosInMiddle) {
+                            if (longPressAction == LongPressAction.Speed) {
                                 isLongPressing = true
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
-                                
-                                // Smoothly increase speed
                                 speedRampJob?.cancel()
                                 speedRampJob = scope.launch {
                                     val currentSpeed = MPVLib.getPropertyDouble("speed")
@@ -238,74 +208,85 @@ fun GestureHandler(
                                     MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
                                 }
                                 viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
-                                
-                                if (longPressSliding) {
-                                    var lastX = down.position.x
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val dragChange = event.changes.firstOrNull()
-                                        if (dragChange == null || dragChange.changedToUp()) break
-                                        
-                                        val diffX = dragChange.position.x - lastX
-                                        if (Math.abs(diffX) > 1f) {
-                                            val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                            val newSpeed = (currentSpeed + diffX * 0.005).coerceIn(0.25, 4.0)
-                                            speedRampJob?.cancel() // Stop the initial ramp if they start sliding right away
-                                            MPVLib.setPropertyDouble("speed", newSpeed)
-                                            viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(newSpeed.toFloat(), true) }
-                                            lastX = dragChange.position.x
-                                        }
-                                        dragChange.consume()
-                                    }
-                                } else {
-                                    waitForUpOrCancellation()
-                                }
-                                
-                                // Smoothly decrease speed on release
-                                speedRampJob?.cancel()
-                                speedRampJob = scope.launch {
-                                    if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    val dur = 200L
-                                    val startTime = System.currentTimeMillis()
-                                    while (System.currentTimeMillis() - startTime < dur) {
-                                        val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                        val s = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
-                                        MPVLib.setPropertyDouble("speed", s)
-                                        delay(32)
-                                    }
-                                    MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                                    viewModel.playerUpdate.update { PlayerUpdates.None }
-                                }
                             } else if (longPressAction == LongPressAction.Screenshot) {
-                                isLongPressing = true
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.sheetShown.update { Sheets.Screenshot }
-                                waitForUpOrCancellation()
-                            } else {
-                                waitForUpOrCancellation()
                             }
                         }
-                        isLongPressing = false
-                    } else {
-                        if (up.changedToUp()) {
-                            val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
-                                awaitFirstDown(requireUnconsumed = false)
+                    }
+
+                    var up: androidx.compose.ui.input.pointer.PointerInputChange? = null
+                    var lastX = down.position.x
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
+                        
+                        if (pointer.changedToUp()) {
+                            up = pointer
+                            break
+                        }
+                        
+                        if (!isLongPressing) {
+                            val distance = (pointer.position - startPosition).getDistance()
+                            if (distance > viewConfiguration.touchSlop) {
+                                longPressJob?.cancel()
                             }
-                            if (secondDown == null) { // Single tap
-                                if (controlsShown) viewModel.hideControls() else viewModel.showControls()
-                            } else { // Double tap
-                                if (secondDown.position.x > size.width * 3 / 5) {
-                                    if (!isSeekingForwards) viewModel.updateSeekAmount(0)
-                                    viewModel.handleRightDoubleTap()
-                                    isDoubleTapSeeking = true
-                                } else if (secondDown.position.x < size.width * 2 / 5) {
-                                    if (isSeekingForwards) viewModel.updateSeekAmount(0)
-                                    viewModel.handleLeftDoubleTap()
-                                    isDoubleTapSeeking = true
-                                } else {
-                                    viewModel.handleCenterDoubleTap()
+                        } else {
+                            if (longPressSliding && !viewModel.paused.value && longPressAction == LongPressAction.Speed) {
+                                val diffX = pointer.position.x - lastX
+                                if (Math.abs(diffX) > 1f) {
+                                    val currentSpeed = MPVLib.getPropertyDouble("speed")
+                                    val newSpeed = (currentSpeed + diffX * 0.005).coerceIn(0.25, 4.0)
+                                    speedRampJob?.cancel() // Stop the initial ramp if they start sliding right away
+                                    MPVLib.setPropertyDouble("speed", newSpeed)
+                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(newSpeed.toFloat(), true) }
+                                    lastX = pointer.position.x
                                 }
+                                pointer.consume()
+                            }
+                        }
+                    }
+
+                    longPressJob?.cancel()
+
+                    if (isLongPressing) {
+                        isLongPressing = false
+                        val targetSpeed = originalSpeed
+                        speedRampJob?.cancel()
+                        speedRampJob = scope.launch {
+                            if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            val currentSpeed = MPVLib.getPropertyDouble("speed")
+                            val dur = 200L
+                            val startTime = System.currentTimeMillis()
+                            while (System.currentTimeMillis() - startTime < dur) {
+                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
+                                val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
+                                MPVLib.setPropertyDouble("speed", s)
+                                delay(32)
+                            }
+                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
+                            if (viewModel.paused.value && pausedLongPressAction == PausedLongPressAction.Play2x) {
+                                viewModel.pause()
+                            }
+                            viewModel.playerUpdate.update { PlayerUpdates.None }
+                        }
+                    } else if (up != null) {
+                        val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                            awaitFirstDown(requireUnconsumed = false)
+                        }
+                        if (secondDown == null) { // Single tap
+                            if (controlsShown) viewModel.hideControls() else viewModel.showControls()
+                        } else { // Double tap
+                            if (secondDown.position.x > size.width * 3 / 5) {
+                                if (!isSeekingForwards) viewModel.updateSeekAmount(0)
+                                viewModel.handleRightDoubleTap()
+                                isDoubleTapSeeking = true
+                            } else if (secondDown.position.x < size.width * 2 / 5) {
+                                if (isSeekingForwards) viewModel.updateSeekAmount(0)
+                                viewModel.handleLeftDoubleTap()
+                                isDoubleTapSeeking = true
+                            } else {
+                                viewModel.handleCenterDoubleTap()
                             }
                         }
                     }
@@ -319,6 +300,7 @@ fun GestureHandler(
                 var wasPlayerAlreadyPause = false
                 detectHorizontalDragGestures(
                     onDragStart = {
+                        longPressJob?.cancel()
                         startingPosition = position.toInt()
                         startingX = it.x
                         wasPlayerAlreadyPause = viewModel.paused.value
@@ -371,6 +353,7 @@ fun GestureHandler(
                 detectVerticalDragGestures(
                     onDragEnd = { startingY = 0f },
                     onDragStart = {
+                        longPressJob?.cancel()
                         startingY = 0f
                         mpvVolumeStartingY = 0f
                         originalVolume = currentVolume

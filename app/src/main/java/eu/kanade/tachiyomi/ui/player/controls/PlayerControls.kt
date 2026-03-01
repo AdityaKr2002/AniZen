@@ -237,8 +237,7 @@ fun PlayerControls(
                 ) {
                     BrightnessSlider(
                         brightness = brightness,
-                        positiveRange = 0f..1f,
-                        negativeRange = 0f..0.75f,
+                        range = 0f..1f,
                     )
                 }
 
