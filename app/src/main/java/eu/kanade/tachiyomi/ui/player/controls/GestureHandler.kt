@@ -214,9 +214,8 @@ fun GestureHandler(
 
                     var up: androidx.compose.ui.input.pointer.PointerInputChange? = null
                     var lastX = down.position.x
-                    // Use a local variable to track the 'real' unsnapped speed during the drag
-                    // to prevent getting 'stuck' at a snapped value.
-                    var unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
+                    var unsnappedCurrentSpeed = originalSpeed.toDouble()
+                    var hasInitializedDragSpeed = false
                     
                     while (true) {
                         val event = awaitPointerEvent()
@@ -239,12 +238,17 @@ fun GestureHandler(
                             }
                         } else {
                             if (longPressSliding && !viewModel.paused.value && longPressAction == LongPressAction.Speed) {
+                                // Initialize speed to current player speed (which is now 2x) only once when drag starts
+                                if (!hasInitializedDragSpeed) {
+                                    unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
+                                    hasInitializedDragSpeed = true
+                                }
+
                                 val diffX = pointer.position.x - lastX
                                 if (Math.abs(diffX) > 1f) {
-                                    // Update the internal unsnapped speed
-                                    unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.008).coerceIn(0.25, 4.0)
+                                    // Increased multiplier (0.012) for more responsive snapping
+                                    unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.012).coerceIn(0.25, 4.0)
                                     
-                                    // Derive the snapped speed for the UI and Player
                                     val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
                                     
                                     speedRampJob?.cancel() 
