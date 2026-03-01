@@ -18,7 +18,6 @@
 package eu.kanade.tachiyomi.ui.player.controls
 
 import android.content.pm.PackageManager
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -54,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -238,7 +236,7 @@ fun GestureHandler(
                             }
                         } else {
                             if (longPressSliding && !viewModel.paused.value && longPressAction == LongPressAction.Speed) {
-                                // Initialize speed to current player speed (which is now 2x) only once when drag starts
+                                // Initialize speed to current player speed (which could be custom) when drag starts
                                 if (!hasInitializedDragSpeed) {
                                     unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
                                     hasInitializedDragSpeed = true
@@ -246,8 +244,8 @@ fun GestureHandler(
 
                                 val diffX = pointer.position.x - lastX
                                 if (Math.abs(diffX) > 1f) {
-                                    // Increased multiplier (0.012) for more responsive snapping
-                                    unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.012).coerceIn(0.25, 4.0)
+                                    // Adjusted multiplier (0.007) for better balanced responsiveness
+                                    unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.007).coerceIn(0.25, 4.0)
                                     
                                     val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
                                     
@@ -314,7 +312,6 @@ fun GestureHandler(
                 var wasPlayerAlreadyPause = false
                 detectHorizontalDragGestures(
                     onDragStart = {
-                        longPressJob?.cancel()
                         startingPosition = position.toInt()
                         startingX = it.x
                         wasPlayerAlreadyPause = viewModel.paused.value
@@ -367,7 +364,6 @@ fun GestureHandler(
                 detectVerticalDragGestures(
                     onDragEnd = { startingY = 0f },
                     onDragStart = {
-                        longPressJob?.cancel()
                         startingY = 0f
                         mpvVolumeStartingY = 0f
                         originalVolume = currentVolume

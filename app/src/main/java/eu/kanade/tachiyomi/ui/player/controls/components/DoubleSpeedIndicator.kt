@@ -42,11 +42,13 @@ fun DoubleSpeedIndicator(
 ) {
     var showFullBar by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isDragging, speed) {
+    // Logic to show/hide the full slider bar
+    LaunchedEffect(isDragging) {
         if (isDragging) {
             showFullBar = true
         } else {
-            delay(1500)
+            // If dragging stops, wait a bit before minimizing to just text
+            delay(1000)
             showFullBar = false
         }
     }
@@ -149,6 +151,7 @@ fun DoubleSpeedIndicator(
                 }
             }
         } else {
+            // Minimized View (Only Text)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
