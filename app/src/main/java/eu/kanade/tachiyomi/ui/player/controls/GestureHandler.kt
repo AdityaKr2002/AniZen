@@ -214,6 +214,10 @@ fun GestureHandler(
 
                     var up: androidx.compose.ui.input.pointer.PointerInputChange? = null
                     var lastX = down.position.x
+                    // Use a local variable to track the 'real' unsnapped speed during the drag
+                    // to prevent getting 'stuck' at a snapped value.
+                    var unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
+                    
                     while (true) {
                         val event = awaitPointerEvent()
                         val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -237,10 +241,11 @@ fun GestureHandler(
                             if (longPressSliding && !viewModel.paused.value && longPressAction == LongPressAction.Speed) {
                                 val diffX = pointer.position.x - lastX
                                 if (Math.abs(diffX) > 1f) {
-                                    val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    // Use a smaller multiplier for more controlled sliding towards fixed points
-                                    val newSpeed = (currentSpeed + diffX * 0.005).coerceIn(0.5, 4.0)
-                                    val snappedSpeed = (Math.round(newSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
+                                    // Update the internal unsnapped speed
+                                    unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.008).coerceIn(0.25, 4.0)
+                                    
+                                    // Derive the snapped speed for the UI and Player
+                                    val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
                                     
                                     speedRampJob?.cancel() 
                                     MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
