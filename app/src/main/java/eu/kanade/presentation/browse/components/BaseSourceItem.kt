@@ -78,6 +78,11 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
 
     val extensionManager: ExtensionManager = Injekt.get()
     val extensionName = remember(source.id) { extensionManager.getExtensionNameForSource(source.id) }
+    val isNsfw = remember(source.id) {
+        extensionManager.installedExtensionsFlow.value.find { ext ->
+            ext.sources.any { s -> s.id == source.id }
+        }?.isNsfw ?: source.isNsfw
+    }
 
     Column(
         modifier = Modifier
@@ -155,7 +160,7 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
                     )
             )
 
-            if (source.isNsfw) {
+            if (isNsfw) {
                 StatusBadge("18+", MaterialTheme.colorScheme.error)
             }
         }

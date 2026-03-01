@@ -1,5 +1,6 @@
 package eu.kanade.presentation.browse
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,6 +92,14 @@ fun SourcesScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFocused by remember { mutableStateOf(false) }
 
+    // Handle system back button properly
+    BackHandler(enabled = isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
+        if (!state.searchQuery.isNullOrEmpty()) {
+            onChangeSearchQuery("")
+        }
+        focusManager.clearFocus()
+    }
+
     Column(
         modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
     ) {
@@ -142,7 +151,7 @@ fun SourcesScreen(
 
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(MaterialTheme.padding.small))
 
-            // BOLD and BIG NSFW Toggle
+            // BOLD and BIG NSFW Toggle - Enclosed within a rounded border
             FilterChip(
                 selected = state.nsfwOnly,
                 onClick = onToggleNsfwOnly,
@@ -156,6 +165,7 @@ fun SourcesScreen(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 },
+                shape = RoundedCornerShape(12.dp),
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
                     selectedLabelColor = MaterialTheme.colorScheme.error,

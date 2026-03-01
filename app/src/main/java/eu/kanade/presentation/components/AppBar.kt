@@ -416,18 +416,20 @@ fun NsfwIcon(
     Box(
         modifier = modifier
             .border(
-                width = 1.dp,
+                width = 2.dp,
                 color = color,
-                shape = RoundedCornerShape(2.dp),
+                shape = RoundedCornerShape(6.dp),
             )
-            .padding(horizontal = 2.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "18",
+            text = "18+",
             color = color,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.SansSerif,
+            lineHeight = 12.sp,
         )
     }
 }
