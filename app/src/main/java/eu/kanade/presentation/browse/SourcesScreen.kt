@@ -87,6 +87,7 @@ import kotlin.math.roundToInt
 
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.util.fastForEach
 
 @Composable
@@ -132,13 +133,15 @@ fun SourcesScreen(
             .padding(top = contentPadding.calculateTopPadding())
             .nestedScroll(nestedScrollConnection),
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
+        ) {
             // Redesigned Reactive Search Bar with hiding behavior
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(searchHeight)
-                    .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
             ) {
@@ -151,7 +154,13 @@ fun SourcesScreen(
                         onValueChange = onChangeSearchQuery,
                         modifier = Modifier
                             .weight(1f)
-                            .onFocusChanged { isSearchFocused = it.isFocused },
+                            .onFocusChanged { 
+                                isSearchFocused = it.isFocused 
+                                // Reset icon if unfocused and empty
+                                if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
+                                    onChangeSearchQuery(null)
+                                }
+                            },
                         placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
                         leadingIcon = {
                             // Icon only turns into Back if there is text OR if focused
@@ -169,8 +178,7 @@ fun SourcesScreen(
                         trailingIcon = {
                             if (!state.searchQuery.isNullOrEmpty()) {
                                 IconButton(onClick = { 
-                                    onChangeSearchQuery("")
-                                    // Optionally keep focus when clearing via X
+                                    onChangeSearchQuery("") 
                                 }) {
                                     Icon(Icons.Outlined.Close, contentDescription = null)
                                 }
@@ -218,9 +226,7 @@ fun SourcesScreen(
             }
 
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
+                modifier = Modifier.fillMaxSize()
             ) {
                 when {
                     state.isLoading -> LoadingScreen()
@@ -233,7 +239,7 @@ fun SourcesScreen(
                             contentPadding = PaddingValues(
                                 start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
                                 end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
-                                bottom = contentPadding.calculateBottomPadding() + 8.dp
+                                bottom = contentPadding.calculateBottomPadding() + searchHeight + 8.dp
                             ),
                         ) {
                             val items = state.items
