@@ -26,15 +26,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +71,8 @@ val LocalPlayerButtonsClickEvent = staticCompositionLocalOf { {} }
 @Composable
 fun PlayerControls(
     viewModel: PlayerViewModel,
+    onBackPress: () -> Unit,
+    castManager: eu.kanade.tachiyomi.ui.player.CastManager?,
     modifier: Modifier = Modifier,
 ) {
     val playerPreferences = remember { Injekt.get<PlayerPreferences>() }
@@ -148,6 +151,8 @@ fun PlayerControls(
 
                 TopControls(
                     viewModel = viewModel,
+                    onBackPress = onBackPress,
+                    castManager = castManager,
                     modifier = Modifier.constrainAs(topControls) {
                         linkTo(parent.start, parent.end)
                         top.linkTo(parent.top)
