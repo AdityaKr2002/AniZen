@@ -43,12 +43,13 @@ fun DoubleSpeedIndicator(
     var showFullBar by remember { mutableStateOf(false) }
 
     // Logic to show/hide the full slider bar
-    LaunchedEffect(isDragging) {
+    // If dragging, always show. If stopped dragging, hide after a short delay.
+    LaunchedEffect(isDragging, speed) {
         if (isDragging) {
             showFullBar = true
         } else {
-            // If dragging stops, wait a bit before minimizing to just text
-            delay(1000)
+            // Keep visible for 1.5 seconds after dragging stops or speed snaps
+            delay(1500)
             showFullBar = false
         }
     }
