@@ -92,12 +92,13 @@ fun SourcesScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFocused by remember { mutableStateOf(false) }
 
-    // Handle system back button properly
+    // Handle system back button properly: first hide keyboard/unfocus, then clear text
     BackHandler(enabled = isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
-        if (!state.searchQuery.isNullOrEmpty()) {
+        if (isSearchFocused) {
+            focusManager.clearFocus()
+        } else {
             onChangeSearchQuery("")
         }
-        focusManager.clearFocus()
     }
 
     Column(
