@@ -110,6 +110,7 @@ fun SourcesScreen(
                 .fillMaxWidth()
                 .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
         ) {
             OutlinedTextField(
                 value = state.searchQuery ?: "",
@@ -149,8 +150,6 @@ fun SourcesScreen(
                     unfocusedIndicatorColor = Color.Transparent,
                 ),
             )
-
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(MaterialTheme.padding.small))
 
             // BOLD and BIG NSFW Toggle - Enclosed within a rounded border
             FilterChip(
