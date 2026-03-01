@@ -133,209 +133,204 @@ fun SourcesScreen(
             .padding(top = contentPadding.calculateTopPadding())
             .nestedScroll(nestedScrollConnection),
     ) {
-        Column(
-            modifier = Modifier
-                .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
+        ScrollbarLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
+                top = searchHeight + (searchOffsetHeightPx / LocalDensity.current.density).dp,
+                end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = contentPadding.calculateBottomPadding() + 8.dp
+            ),
         ) {
-            // Redesigned Reactive Search Bar with hiding behavior
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(searchHeight)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-                ) {
-                    OutlinedTextField(
-                        value = state.searchQuery ?: "",
-                        onValueChange = onChangeSearchQuery,
-                        modifier = Modifier
-                            .weight(1f)
-                            .onFocusChanged { 
-                                isSearchFocused = it.isFocused 
-                                // Reset icon if unfocused and empty
-                                if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
-                                    onChangeSearchQuery(null)
-                                }
-                            },
-                        placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
-                        leadingIcon = {
-                            // Icon only turns into Back if there is text OR if focused
-                            if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
-                                IconButton(onClick = {
-                                    onChangeSearchQuery("")
-                                    focusManager.clearFocus()
-                                }) {
-                                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
-                                }
-                            } else {
-                                Icon(Icons.Outlined.Search, contentDescription = null)
-                            }
-                        },
-                        trailingIcon = {
-                            if (!state.searchQuery.isNullOrEmpty()) {
-                                IconButton(onClick = { 
-                                    onChangeSearchQuery("") 
-                                }) {
-                                    Icon(Icons.Outlined.Close, contentDescription = null)
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    )
-
-                    // BOLD and BIG NSFW Toggle
-                    FilterChip(
-                        selected = state.nsfwOnly,
-                        onClick = onToggleNsfwOnly,
-                        label = {
-                            Text(
-                                text = "18+",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
-                            selectedLabelColor = MaterialTheme.colorScheme.error,
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = state.nsfwOnly,
-                            selectedBorderColor = MaterialTheme.colorScheme.error,
-                            selectedBorderWidth = 2.dp,
-                        ),
-                        modifier = Modifier.height(48.dp)
+            if (state.isLoading) {
+                item(key = "loading") {
+                    LoadingScreen(modifier = Modifier.fillParentMaxSize())
+                }
+            } else if (state.isEmpty) {
+                item(key = "empty") {
+                    EmptyScreen(
+                        stringRes = if (state.searchQuery.isNullOrEmpty()) MR.strings.source_empty_screen else MR.strings.no_results_found,
+                        modifier = Modifier.fillParentMaxSize()
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when {
-                    state.isLoading -> LoadingScreen()
-                    state.isEmpty -> EmptyScreen(
-                        stringRes = if (state.searchQuery.isNullOrEmpty()) MR.strings.source_empty_screen else MR.strings.no_results_found,
-                    )
-                    else -> {
-                        ScrollbarLazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                                end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
-                                bottom = contentPadding.calculateBottomPadding() + searchHeight + 8.dp
-                            ),
-                        ) {
-                            val items = state.items
-                            var i = 0
-                            while (i < items.size) {
-                                val model = items[i]
-                                if (model is SourceUiModel.Header) {
-                                    item(key = "header-${model.language}") {
-                                        SourceHeader(
-                                            language = model.language,
-                                            modifier = Modifier.animateItem()
-                                        )
-                                    }
-                                    i++
-                                    val groupItems = mutableListOf<SourceUiModel.Item>()
-                                    while (i < items.size && items[i] is SourceUiModel.Item) {
-                                        groupItems.add(items[i] as SourceUiModel.Item)
-                                        i++
-                                    }
-                                    item(key = "island-${model.language}") {
-                                        if (useContainer) {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                                shape = MaterialTheme.shapes.large,
-                                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                                tonalElevation = 2.dp
-                                            ) {
-                                                Column {
-                                                    groupItems.forEach { item ->
-                                                        SourceItem(
-                                                            source = item.source,
-                                                            onClickItem = onClickItem,
-                                                            onLongClickItem = onLongClickItem,
-                                                            onClickPin = onClickPin,
-                                                            modifier = Modifier.animateItem()
-                                                        )
-                                                        GroupSeparator(groupItems.last() != item)
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                            ) {
-                                                groupItems.forEach { item ->
-                                                    SourceItem(
-                                                        source = item.source,
-                                                        onClickItem = onClickItem,
-                                                        onLongClickItem = onLongClickItem,
-                                                        onClickPin = onClickPin,
-                                                        modifier = Modifier.animateItem()
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else if (model is SourceUiModel.Item) {
-                                    // Handle cases where items might appear before a header (e.g. pinned)
-                                    item(key = "source-${model.source.id}") {
-                                        if (useContainer) {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                                shape = MaterialTheme.shapes.large,
-                                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                                tonalElevation = 2.dp
-                                            ) {
-                                                SourceItem(
-                                                    source = model.source,
-                                                    onClickItem = onClickItem,
-                                                    onLongClickItem = onLongClickItem,
-                                                    onClickPin = onClickPin,
-                                                    modifier = Modifier.animateItem()
-                                                )
-                                            }
-                                        } else {
+            } else {
+                val items = state.items
+                var i = 0
+                while (i < items.size) {
+                    val model = items[i]
+                    if (model is SourceUiModel.Header) {
+                        item(key = "header-${model.language}") {
+                            SourceHeader(
+                                language = model.language,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        i++
+                        val groupItems = mutableListOf<SourceUiModel.Item>()
+                        while (i < items.size && items[i] is SourceUiModel.Item) {
+                            groupItems.add(items[i] as SourceUiModel.Item)
+                            i++
+                        }
+                        item(key = "island-${model.language}") {
+                            if (useContainer) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    tonalElevation = 2.dp
+                                ) {
+                                    Column {
+                                        groupItems.forEachIndexed { index, item ->
                                             SourceItem(
-                                                source = model.source,
+                                                source = item.source,
                                                 onClickItem = onClickItem,
                                                 onLongClickItem = onLongClickItem,
                                                 onClickPin = onClickPin,
-                                                modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
+                                                modifier = Modifier.animateItem()
                                             )
+                                            if (index < groupItems.size - 1) {
+                                                GroupSeparator(true)
+                                            }
                                         }
                                     }
-                                    i++
+                                }
+                            } else {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                ) {
+                                    groupItems.forEach { item ->
+                                        SourceItem(
+                                            source = item.source,
+                                            onClickItem = onClickItem,
+                                            onLongClickItem = onLongClickItem,
+                                            onClickPin = onClickPin,
+                                            modifier = Modifier.animateItem()
+                                        )
+                                    }
                                 }
                             }
                         }
+                    } else if (model is SourceUiModel.Item) {
+                        item(key = "source-${model.source.id}") {
+                            if (useContainer) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    tonalElevation = 2.dp
+                                ) {
+                                    SourceItem(
+                                        source = model.source,
+                                        onClickItem = onClickItem,
+                                        onLongClickItem = onLongClickItem,
+                                        onClickPin = onClickPin,
+                                        modifier = Modifier.animateItem()
+                                    )
+                                }
+                            } else {
+                                SourceItem(
+                                    source = model.source,
+                                    onClickItem = onClickItem,
+                                    onLongClickItem = onLongClickItem,
+                                    onClickPin = onClickPin,
+                                    modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                        i++
                     }
                 }
+            }
+        }
+
+        // Search bar floating on top
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(searchHeight)
+                .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            ) {
+                OutlinedTextField(
+                    value = state.searchQuery ?: "",
+                    onValueChange = onChangeSearchQuery,
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { 
+                            isSearchFocused = it.isFocused 
+                            // If we lose focus and it's empty, clear text completely to revert icon
+                            if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
+                                onChangeSearchQuery(null)
+                            }
+                        },
+                    placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
+                    leadingIcon = {
+                        if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
+                            IconButton(onClick = {
+                                onChangeSearchQuery("")
+                                focusManager.clearFocus()
+                            }) {
+                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
+                            }
+                        } else {
+                            Icon(Icons.Outlined.Search, contentDescription = null)
+                        }
+                    },
+                    trailingIcon = {
+                        if (!state.searchQuery.isNullOrEmpty()) {
+                            IconButton(onClick = { onChangeSearchQuery("") }) {
+                                Icon(Icons.Outlined.Close, contentDescription = null)
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                )
+
+                FilterChip(
+                    selected = state.nsfwOnly,
+                    onClick = onToggleNsfwOnly,
+                    label = {
+                        Text(
+                            text = "18+",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                fontSize = 14.sp
+                            ),
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                        selectedLabelColor = MaterialTheme.colorScheme.error,
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = state.nsfwOnly,
+                        selectedBorderColor = MaterialTheme.colorScheme.error,
+                        selectedBorderWidth = 2.dp,
+                    ),
+                    modifier = Modifier.height(48.dp)
+                )
             }
         }
     }
