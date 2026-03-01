@@ -9,6 +9,7 @@ data class Source(
     val pin: Pins = Pins.unpinned,
     val isUsedLast: Boolean = false,
     // SY -->
+    val isNsfw: Boolean = false,
     val category: String? = null,
     val isExcludedFromDataSaver: Boolean = false,
     val categories: Set<String> = emptySet(),

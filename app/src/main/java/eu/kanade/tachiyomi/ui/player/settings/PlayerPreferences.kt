@@ -23,6 +23,7 @@ class PlayerPreferences(
     fun allowGestures() = preferenceStore.getBoolean("pref_allow_gestures_in_panels", false)
     fun showLoadingCircle() = preferenceStore.getBoolean("pref_show_loading", true)
     fun showCurrentChapter() = preferenceStore.getBoolean("pref_show_current_chapter", true)
+    fun adjustSpeedOnDrag() = preferenceStore.getBoolean("pref_adjust_speed_on_drag_v2", true)
     fun rememberPlayerBrightness() = preferenceStore.getBoolean("pref_remember_brightness", false)
     fun playerBrightnessValue() = preferenceStore.getFloat("player_brightness_value", -1.0F)
     fun rememberPlayerVolume() = preferenceStore.getBoolean("pref_remember_volume", false)
@@ -79,6 +80,10 @@ class PlayerPreferences(
     fun speedPresets() = preferenceStore.getStringSet(
         "default_speed_presets",
         setOf("0.25", "0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0", "2.5", "3.0", "3.5", "4.0"),
+    )
+    fun longPressSpeedPresets() = preferenceStore.getStringSet(
+        "default_long_press_speed_presets",
+        setOf("0.5", "1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0"),
     )
     fun invertDuration() = preferenceStore.getBoolean("invert_duration", false)
     fun aspectState() = preferenceStore.getEnum("pref_player_aspect_state", VideoAspect.Fit)

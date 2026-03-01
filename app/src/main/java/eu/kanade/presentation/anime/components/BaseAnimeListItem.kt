@@ -36,11 +36,9 @@ fun BaseAnimeListItem(
         modifier = modifier
             .combinedClickable(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     onClickItem()
                 },
                 onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongClickItem()
                 },
             )

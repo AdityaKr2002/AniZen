@@ -9,6 +9,7 @@ import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.browse.SourceUiModel
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.util.system.LAST_USED_KEY
 import eu.kanade.tachiyomi.util.system.PINNED_KEY
 import kotlinx.collections.immutable.ImmutableList
@@ -17,6 +18,8 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import logcat.LogPriority
@@ -43,6 +46,7 @@ class SourcesScreenModel(
     private val insertFeedSavedSearch: InsertFeedSavedSearch = Injekt.get(),
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
+    private val extensionManager: ExtensionManager = Injekt.get(),
 ) : StateScreenModel<SourcesScreenModel.State>(State()) {
 
     private val _events = Channel<Event>(Int.MAX_VALUE)
@@ -50,12 +54,16 @@ class SourcesScreenModel(
 
     init {
         screenModelScope.launchIO {
-            getEnabledSources.subscribe()
-                .catch {
-                    logcat(LogPriority.ERROR, it)
-                    _events.send(Event.FailedFetchingSources)
-                }
-                .collectLatest(::collectLatestAnimeSources)
+            combine(
+                getEnabledSources.subscribe(),
+                extensionManager.installedExtensionsFlow,
+                ::Pair
+            ).catch {
+                logcat(LogPriority.ERROR, it)
+                _events.send(Event.FailedFetchingSources)
+            }.collectLatest { (sources, _) ->
+                collectLatestAnimeSources(sources)
+            }
         }
         
         screenModelScope.launchIO {
@@ -65,10 +73,24 @@ class SourcesScreenModel(
         }
     }
 
-    // ... collectLatestAnimeSources ...
-
     private fun collectLatestAnimeSources(sources: List<Source>) {
         mutableState.update { state ->
+            val query = state.searchQuery
+            val nsfwOnly = state.nsfwOnly
+            
+            // Map source IDs to their extension's NSFW status for reliable filtering
+            val extensions = extensionManager.installedExtensionsFlow.value
+            val nsfwSourceIds = extensions.flatMap { ext -> 
+                if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
+            }.toSet()
+
+            val filteredSources = sources.filter { source ->
+                val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
+                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
+                val matchesNsfw = !nsfwOnly || isNsfw
+                matchesQuery && matchesNsfw
+            }
+
             val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
                 // Sources without a lang defined will be placed at the end
                 when {
@@ -81,7 +103,7 @@ class SourcesScreenModel(
                     else -> d1.compareTo(d2)
                 }
             }
-            val byLang = sources.groupByTo(map) {
+            val byLang = filteredSources.groupByTo(map) {
                 when {
                     it.isUsedLast -> LAST_USED_KEY
                     Pin.Actual in it.pin -> PINNED_KEY
@@ -102,6 +124,20 @@ class SourcesScreenModel(
                     }
                     .toImmutableList(),
             )
+        }
+    }
+
+    fun search(query: String?) {
+        mutableState.update { it.copy(searchQuery = query) }
+        screenModelScope.launchIO {
+            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
+        }
+    }
+
+    fun toggleNsfwOnly() {
+        mutableState.update { it.copy(nsfwOnly = !it.nsfwOnly) }
+        screenModelScope.launchIO {
+            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
         }
     }
 
@@ -180,6 +216,8 @@ class SourcesScreenModel(
         val isLoading: Boolean = true,
         val items: ImmutableList<SourceUiModel> = persistentListOf(),
         val categories: ImmutableList<FeedSavedSearchCategory> = persistentListOf(),
+        val searchQuery: String? = null,
+        val nsfwOnly: Boolean = false,
     ) {
         val isEmpty = items.isEmpty()
     }

@@ -427,7 +427,6 @@ private fun SourceSwitchPreference(
             }
         },
         onPreferenceClick = {
-            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
             onClickSource(source.source.id)
         },
     )

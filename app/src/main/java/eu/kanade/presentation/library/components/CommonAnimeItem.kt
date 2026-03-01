@@ -332,11 +332,9 @@ private fun GridItemSelectable(
             .clip(shape)
             .combinedClickable(
                 onClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                     onClick()
                 },
                 onLongClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     onLongClick()
                 },
             )
@@ -405,11 +403,9 @@ fun AnimeListItem(
             .height(height)
             .combinedClickable(
                 onClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                     onClick()
                 },
                 onLongClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     onLongClick()
                 },
             )

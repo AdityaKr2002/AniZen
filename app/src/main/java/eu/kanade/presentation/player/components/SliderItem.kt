@@ -79,7 +79,6 @@ fun SliderItem(
                 val newValue = it.toInt()
                 if (newValue != value) {
                     onChange(newValue)
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 }
             },
             modifier = Modifier.weight(1.5f),
@@ -128,7 +127,6 @@ fun SliderItem(
                 val newValue = it
                 if (newValue != value) {
                     onChange(newValue)
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 }
             },
             modifier = Modifier.weight(1.5f),
@@ -167,7 +165,6 @@ fun VerticalSliderItem(
             min = min,
             max = max,
             onValueChange = {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onChange(it)
             },
             modifier = Modifier.weight(1f),

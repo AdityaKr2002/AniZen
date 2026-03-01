@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.ui.browse.extension
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -14,6 +16,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.ExtensionScreen
 import eu.kanade.presentation.components.AppBar
+import eu.kanade.presentation.components.NsfwIcon
 import eu.kanade.presentation.components.TabContent
 import eu.kanade.presentation.more.settings.screen.browse.ExtensionReposScreen
 import eu.kanade.tachiyomi.extension.model.Extension
@@ -39,6 +42,15 @@ fun extensionsTab(
         badgeNumber = state.updates.takeIf { it > 0 },
         searchEnabled = true,
         actions = persistentListOf(
+            AppBar.Action(
+                title = "NSFW Only",
+                onClick = { extensionsScreenModel.toggleNsfwOnly() },
+                iconContent = {
+                    NsfwIcon(
+                        color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                    )
+                }
+            ),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.action_filter),
                 onClick = {

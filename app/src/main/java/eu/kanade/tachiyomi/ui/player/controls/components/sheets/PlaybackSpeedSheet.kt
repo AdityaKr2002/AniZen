@@ -133,8 +133,10 @@ fun PlaybackSpeedSheet(
                     Icon(Icons.Default.Add, null)
                 }
             }
+            
             val pitchCorrection by audioPreferences.enablePitchCorrection().collectAsState()
             val longPressSpeed by preferences.playerSpeedLongPress().collectAsState()
+            
             SliderItem(
                 label = "Long press speed",
                 value = longPressSpeed,
@@ -143,6 +145,59 @@ fun PlaybackSpeedSheet(
                 max = 6f,
                 min = 0.01f,
             )
+
+            val longPressSpeedPresets by preferences.longPressSpeedPresets().collectAsState()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = MaterialTheme.padding.medium),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
+            ) {
+                FilledTonalIconButton(onClick = {
+                    preferences.longPressSpeedPresets().delete()
+                }) {
+                    Icon(Icons.Default.RestartAlt, null)
+                }
+                LazyRow(
+                    modifier = Modifier
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                ) {
+                    items(
+                        items = longPressSpeedPresets.map { it.toFloat() }.distinct().sorted(),
+                        key = { "lp-speed-$sheetId-$it" },
+                    ) {
+                        InputChip(
+                            selected = longPressSpeed == it,
+                            onClick = { preferences.playerSpeedLongPress().set(it) },
+                            label = { Text(stringResource(MR.strings.player_speed, it)) },
+                            modifier = Modifier
+                                .animateItem(),
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.Close,
+                                    null,
+                                    modifier = Modifier
+                                        .clickable {
+                                            preferences.longPressSpeedPresets().set(
+                                                longPressSpeedPresets.minus(it.toFixed(2).toString()),
+                                            )
+                                        },
+                                )
+                            },
+                        )
+                    }
+                }
+                FilledTonalIconButton(
+                    onClick = {
+                        preferences.longPressSpeedPresets().set(longPressSpeedPresets.plus(longPressSpeed.toFixed(2).toString()))
+                    },
+                ) {
+                    Icon(Icons.Default.Add, null)
+                }
+            }
+
             SwitchPreference(
                 value = pitchCorrection,
                 onValueChange = {
@@ -177,6 +232,7 @@ fun PlaybackSpeedSheet(
                 FilledIconButton(
                     onClick = {
                         preferences.playerSpeed().delete()
+                        preferences.playerSpeedLongPress().delete()
                         onSpeedChange(1f)
                     },
                 ) {

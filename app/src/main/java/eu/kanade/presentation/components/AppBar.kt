@@ -1,13 +1,18 @@
 package eu.kanade.presentation.components
 
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,9 +37,9 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,20 +51,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import tachiyomi.presentation.core.util.secondaryItemAlpha
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.Pill
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.clearFocusOnSoftKeyboardHide
 import tachiyomi.presentation.core.util.runOnEnterKeyPressed
-import tachiyomi.presentation.core.util.secondaryItemAlpha
 import tachiyomi.presentation.core.util.showSoftKeyboard
 
 const val SEARCH_DEBOUNCE_MILLIS = 250L
@@ -143,22 +152,18 @@ fun AppBar(
                             contentDescription = stringResource(MR.strings.action_cancel),
                         )
                     }
-                } else {
-                    navigateUp?.let {
-                        IconButton(onClick = it) {
-                            UpIcon(navigationIcon = navigationIcon)
-                        }
+                } else if (navigateUp != null) {
+                    IconButton(onClick = navigateUp) {
+                        UpIcon(navigationIcon = navigationIcon)
                     }
                 }
             },
             title = titleContent,
             actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = backgroundColor ?: if (isActionMode) {
-                    MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                } else {
-                    MaterialTheme.colorScheme.background
-                },
+                containerColor = backgroundColor ?: MaterialTheme.colorScheme.surfaceColorAtElevation(
+                    elevation = if (isActionMode) 3.dp else 0.dp,
+                ),
             ),
             scrollBehavior = scrollBehavior,
         )
@@ -218,7 +223,7 @@ fun AppBarActions(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    actions.filterIsInstance<AppBar.Action>().map {
+    actions.filterIsInstance<AppBar.Action>().forEach {
         TooltipBox(
             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
             tooltip = {
@@ -232,11 +237,15 @@ fun AppBarActions(
                 onClick = it.onClick,
                 enabled = it.enabled,
             ) {
-                Icon(
-                    imageVector = it.icon,
-                    tint = it.iconTint ?: LocalContentColor.current,
-                    contentDescription = it.title,
-                )
+                if (it.iconContent != null) {
+                    it.iconContent.invoke()
+                } else if (it.icon != null) {
+                    Icon(
+                        imageVector = it.icon,
+                        tint = it.iconTint ?: LocalContentColor.current,
+                        contentDescription = it.title,
+                    )
+                }
             }
         }
     }
@@ -266,7 +275,7 @@ fun AppBarActions(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
         ) {
-            overflowActions.map {
+            overflowActions.forEach {
                 DropdownMenuItem(
                     onClick = {
                         it.onClick()
@@ -348,7 +357,7 @@ fun SearchToolbar(
                         placeholder = {
                             Text(
                                 modifier = Modifier.secondaryItemAlpha(),
-                                text = (placeholderText ?: stringResource(MR.strings.action_search_hint)),
+                                text = placeholderText ?: stringResource(MR.strings.action_search_hint),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.titleMedium.copy(
@@ -358,62 +367,26 @@ fun SearchToolbar(
                             )
                         },
                         container = {},
+                        contentPadding = PaddingValues(0.dp),
                     )
                 },
             )
-        },
-        navigateUp = if (searchQuery == null) navigateUp else onClickCloseSearch,
-        actions = {
-            key("search") {
-                val onClick = { onChangeSearchQuery("") }
 
-                if (!searchEnabled) {
-                    // Don't show search action
-                } else if (searchQuery == null) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(MR.strings.action_search))
-                            }
-                        },
-                        state = rememberTooltipState(),
-                    ) {
-                        IconButton(
-                            onClick = onClick,
-                        ) {
-                            Icon(
-                                Icons.Outlined.Search,
-                                contentDescription = stringResource(MR.strings.action_search),
-                            )
-                        }
-                    }
-                } else if (searchQuery.isNotEmpty()) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(MR.strings.action_reset))
-                            }
-                        },
-                        state = rememberTooltipState(),
-                    ) {
-                        IconButton(
-                            onClick = {
-                                onClick()
-                                focusRequester.requestFocus()
-                            },
-                        ) {
-                            Icon(
-                                Icons.Outlined.Close,
-                                contentDescription = stringResource(MR.strings.action_reset),
-                            )
-                        }
-                    }
+            LaunchedEffect(focusRequester) {
+                focusRequester.requestFocus()
+            }
+        },
+        navigateUp = if (searchQuery != null) onClickCloseSearch else navigateUp,
+        actions = {
+            if (searchQuery == null && searchEnabled) {
+                IconButton(onClick = { onChangeSearchQuery("") }) {
+                    Icon(
+                        Icons.Outlined.Search,
+                        contentDescription = stringResource(MR.strings.action_search),
+                    )
                 }
             }
-
-            key("actions") { actions() }
+            actions()
         },
         isActionMode = false,
         scrollBehavior = scrollBehavior,
@@ -422,16 +395,44 @@ fun SearchToolbar(
 
 @Composable
 fun UpIcon(
-    modifier: Modifier = Modifier,
     navigationIcon: ImageVector? = null,
 ) {
     val icon = navigationIcon
-        ?: Icons.AutoMirrored.Outlined.ArrowBack
+        ?: if (LocalLayoutDirection.current == LayoutDirection.Ltr) {
+            Icons.AutoMirrored.Outlined.ArrowBack
+        } else {
+            Icons.AutoMirrored.Outlined.ArrowBack
+        }
     Icon(
         imageVector = icon,
-        contentDescription = stringResource(MR.strings.action_bar_up_description),
-        modifier = modifier,
+        contentDescription = stringResource(MR.strings.action_webview_back),
     )
+}
+
+@Composable
+fun NsfwIcon(
+    modifier: Modifier = Modifier,
+    color: Color = LocalContentColor.current,
+) {
+    Box(
+        modifier = modifier
+            .border(
+                width = 2.dp,
+                color = color,
+                shape = RoundedCornerShape(6.dp),
+            )
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "18+",
+            color = color,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.SansSerif,
+            lineHeight = 12.sp,
+        )
+    }
 }
 
 sealed interface AppBar {
@@ -439,10 +440,11 @@ sealed interface AppBar {
 
     data class Action(
         val title: String,
-        val icon: ImageVector,
+        val icon: ImageVector? = null,
         val iconTint: Color? = null,
         val onClick: () -> Unit,
         val enabled: Boolean = true,
+        val iconContent: (@Composable () -> Unit)? = null,
     ) : AppBarAction
 
     data class OverflowAction(

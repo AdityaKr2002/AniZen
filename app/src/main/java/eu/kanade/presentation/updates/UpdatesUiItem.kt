@@ -237,7 +237,6 @@ private fun UpdatesUiItem(
                 onClick = onClick,
                 onLongClick = {
                     onLongClick()
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
             )
             .height(56.dp)
