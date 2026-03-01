@@ -18,20 +18,30 @@
 package eu.kanade.tachiyomi.ui.player.controls
 
 import android.content.pm.PackageManager
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,18 +50,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import eu.kanade.presentation.player.components.LeftSideOvalShape
+import eu.kanade.presentation.player.components.RightSideOvalShape
+import eu.kanade.presentation.theme.playerRippleConfiguration
 import eu.kanade.tachiyomi.ui.player.LongPressAction
 import eu.kanade.tachiyomi.ui.player.Panels
 import eu.kanade.tachiyomi.ui.player.PausedLongPressAction
 import eu.kanade.tachiyomi.ui.player.PlayerUpdates
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel
 import eu.kanade.tachiyomi.ui.player.Sheets
+import eu.kanade.tachiyomi.ui.player.controls.components.DoubleTapSeekTriangles
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
@@ -61,6 +80,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -109,7 +130,6 @@ fun GestureHandler(
     val currentMPVVolume by viewModel.currentMPVVolume.collectAsState()
     val currentBrightness by viewModel.currentBrightness.collectAsState()
     val volumeBoostingCap = audioPreferences.volumeBoostCap().get()
-    val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
     val isTv = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) }
     val scope = rememberCoroutineScope()
@@ -121,7 +141,7 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeGestures)
-            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding, controlsShown) {
+            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding) {
                 if (areControlsLocked || isTv) {
                     detectTapGestures(
                         onTap = { if (controlsShown) viewModel.hideControls() else viewModel.showControls() }
@@ -145,12 +165,10 @@ fun GestureHandler(
                         if (isPaused) {
                             when (pausedLongPressAction) {
                                 PausedLongPressAction.Screenshot -> {
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.sheetShown.update { Sheets.Screenshot }
                                 }
                                 PausedLongPressAction.Play2x -> {
                                     isLongPressing = true
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.unpause()
                                     val targetSpeed = 2.0f
                                     speedRampJob?.cancel()
@@ -173,7 +191,6 @@ fun GestureHandler(
                         } else {
                             if (longPressAction == LongPressAction.Speed) {
                                 isLongPressing = true
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                 speedRampJob?.cancel()
                                 speedRampJob = scope.launch {
@@ -190,7 +207,6 @@ fun GestureHandler(
                                 }
                                 viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
                             } else if (longPressAction == LongPressAction.Screenshot) {
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.sheetShown.update { Sheets.Screenshot }
                             }
                         }
@@ -198,7 +214,6 @@ fun GestureHandler(
 
                     var up: androidx.compose.ui.input.pointer.PointerInputChange? = null
                     var lastX = down.position.x
-                    var lastHapticSpeed = -1f
                     while (true) {
                         val event = awaitPointerEvent()
                         val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -223,17 +238,12 @@ fun GestureHandler(
                                 val diffX = pointer.position.x - lastX
                                 if (Math.abs(diffX) > 1f) {
                                     val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    val newSpeed = (currentSpeed + diffX * 0.005).coerceIn(0.5, 4.0)
-                                    val snappedSpeed = (Math.round(newSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
+                                    val newSpeed = (currentSpeed + diffX * 0.01).coerceIn(0.25, 4.0)
                                     
                                     speedRampJob?.cancel() // Stop the initial ramp if they start sliding right away
-                                    MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
-                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(snappedSpeed, isDragging = true) }
+                                    MPVLib.setPropertyDouble("speed", newSpeed)
+                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(newSpeed.toFloat(), isDragging = true) }
                                     
-                                    if (snappedSpeed != lastHapticSpeed) {
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        lastHapticSpeed = snappedSpeed
-                                    }
                                     lastX = pointer.position.x
                                 }
                                 pointer.consume()
@@ -248,7 +258,6 @@ fun GestureHandler(
                         isLongPressing = false
                         speedRampJob?.cancel()
                         speedRampJob = scope.launch {
-                            if (!isTv) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             val currentSpeed = MPVLib.getPropertyDouble("speed")
                             val dur = 200L
                             val startTime = System.currentTimeMillis()
@@ -383,9 +392,6 @@ fun GestureHandler(
                                     change.position.y,
                                     volumeGestureSens,
                                 )
-                            if ((newVal <= 0 && currentVolume > 0) || (newVal >= viewModel.maxVolume && currentVolume < viewModel.maxVolume)) {
-                                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                            }
                             viewModel.changeVolumeTo(newVal)
                         }
                         viewModel.displayVolumeSlider()
@@ -398,9 +404,6 @@ fun GestureHandler(
                                 change.position.y,
                                 brightnessGestureSens,
                             )
-                        if ((newVal <= 0f && currentBrightness > 0f) || (newVal >= 1f && currentBrightness < 1f)) {
-                            haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                        }
                         viewModel.changeBrightnessTo(newVal)
                         viewModel.displayBrightnessSlider()
                     }

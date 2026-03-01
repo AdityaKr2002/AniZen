@@ -389,7 +389,7 @@ data class BrowseSourceScreen(
                     } else {
                         screenModel.toggleSelection(anime)
                     }
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    
                 },
                 selection = state.selection.toImmutableList(),
                 favoriteIds = state.favoriteIds,
