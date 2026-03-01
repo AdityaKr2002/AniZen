@@ -152,6 +152,8 @@ fun PlayerControls(
         viewModel = viewModel,
         interactionSource = interactionSource,
     )
+    val seekText by viewModel.seekText.collectAsState()
+    DoubleTapToSeekOvals(doubleTapSeekAmount, seekText, interactionSource)
     CompositionLocalProvider(
         LocalRippleConfiguration provides playerRippleConfiguration,
         LocalPlayerButtonsClickEvent provides { resetControls = !resetControls },

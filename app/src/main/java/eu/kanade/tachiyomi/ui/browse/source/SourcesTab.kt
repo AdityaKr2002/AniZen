@@ -9,6 +9,8 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.TravelExplore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.SourceOptionsDialog
 import eu.kanade.presentation.browse.SourcesScreen
 import eu.kanade.presentation.components.AppBar
+import eu.kanade.presentation.components.NsfwIcon
 import eu.kanade.presentation.components.TabContent
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
@@ -42,6 +45,15 @@ fun Screen.sourcesTab(): TabContent {
     return TabContent(
         titleRes = MR.strings.label_sources,
         actions = persistentListOf(
+            AppBar.Action(
+                title = "NSFW Only",
+                onClick = { screenModel.toggleNsfwOnly() },
+                iconContent = {
+                    NsfwIcon(
+                        color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                    )
+                }
+            ),
             AppBar.Action(
                 title = stringResource(MR.strings.action_global_search),
                 icon = Icons.Outlined.TravelExplore,
@@ -63,6 +75,7 @@ fun Screen.sourcesTab(): TabContent {
                 onClickPin = screenModel::togglePin,
                 onLongClickItem = screenModel::showSourceDialog,
                 onChangeSearchQuery = screenModel::search,
+                onToggleNsfwOnly = screenModel::toggleNsfwOnly,
             )
 
             when (val dialog = state.dialog) {

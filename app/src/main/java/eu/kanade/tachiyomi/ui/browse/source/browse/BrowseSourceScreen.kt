@@ -15,31 +15,25 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.NewReleases
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,7 +44,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -190,54 +183,12 @@ data class BrowseSourceScreen(
                         },
                     )
 
-                    // Redesigned Search Bar
-                    OutlinedTextField(
-                        value = state.toolbarQuery ?: "",
-                        onValueChange = screenModel::setToolbarQuery,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-                        placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
-                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (!state.toolbarQuery.isNullOrEmpty()) {
-                                IconButton(onClick = { screenModel.setToolbarQuery("") }) {
-                                    Icon(Icons.Outlined.Close, contentDescription = null)
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    )
-
                     Row(
                         modifier = Modifier
                             .horizontalScroll(rememberScrollState())
                             .padding(horizontal = MaterialTheme.padding.small),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                     ) {
-                        if (state.filters.isNotEmpty()) {
-                            FilterChip(
-                                selected = state.listing is Listing.Search && state.currentSavedSearch == null,
-                                onClick = screenModel::openFilterSheet,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.FilterList,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
-                                    )
-                                },
-                                label = { Text(text = stringResource(MR.strings.action_filter)) },
-                            )
-                        }
-
                         FilterChip(
                             selected = state.listing == Listing.Popular,
                             onClick = {
@@ -248,10 +199,13 @@ data class BrowseSourceScreen(
                                 Icon(
                                     imageVector = Icons.Outlined.Favorite,
                                     contentDescription = null,
-                                    modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    modifier = Modifier
+                                        .size(FilterChipDefaults.IconSize),
                                 )
                             },
-                            label = { Text(text = stringResource(MR.strings.popular)) },
+                            label = {
+                                Text(text = stringResource(MR.strings.popular))
+                            },
                         )
                         if ((screenModel.source as CatalogueSource).supportsLatest) {
                             FilterChip(
@@ -264,10 +218,30 @@ data class BrowseSourceScreen(
                                     Icon(
                                         imageVector = Icons.Outlined.NewReleases,
                                         contentDescription = null,
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                        modifier = Modifier
+                                            .size(FilterChipDefaults.IconSize),
                                     )
                                 },
-                                label = { Text(text = stringResource(MR.strings.latest)) },
+                                label = {
+                                    Text(text = stringResource(MR.strings.latest))
+                                },
+                            )
+                        }
+                        if (state.filters.isNotEmpty()) {
+                            FilterChip(
+                                selected = state.listing is Listing.Search && state.currentSavedSearch == null,
+                                onClick = screenModel::openFilterSheet,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.FilterList,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(FilterChipDefaults.IconSize),
+                                    )
+                                },
+                                label = {
+                                    Text(text = stringResource(MR.strings.action_filter))
+                                },
                             )
                         }
 

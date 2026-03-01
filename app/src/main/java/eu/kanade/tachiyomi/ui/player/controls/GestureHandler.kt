@@ -421,58 +421,7 @@ fun GestureHandler(
                     }
                 }
             },
-    ) {
-        val seekText by viewModel.seekText.collectAsState()
-        DoubleTapToSeekOvals(
-            amount = seekAmount,
-            text = seekText,
-            interactionSource = interactionSource,
-        )
-    }
-}
-
-@Composable
-fun DoubleTapToSeekOvals(
-    amount: Int,
-    text: String?,
-    interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier,
-) {
-    val alpha by animateFloatAsState(if (amount == 0) 0f else 0.2f, label = "double_tap_animation_alpha")
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = if (amount > 0) Alignment.CenterEnd else Alignment.CenterStart,
-    ) {
-        CompositionLocalProvider(
-            LocalRippleConfiguration provides playerRippleConfiguration,
-        ) {
-            if (amount != 0 || text != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.4f), // 2 fifths
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(if (amount > 0) RightSideOvalShape else LeftSideOvalShape)
-                            .background(Color.White.copy(alpha))
-                            .indication(interactionSource, ripple()),
-                    )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        DoubleTapSeekTriangles(isForward = amount > 0)
-                        Text(
-                            text = text ?: pluralStringResource(MR.plurals.seconds, amount, amount),
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                            color = Color.White,
-                        )
-                    }
-                }
-            }
-        }
-    }
+    ) {}
 }
 
 fun calculateNewVerticalGestureValue(originalValue: Int, startingY: Float, newY: Float, sensitivity: Float): Int {
