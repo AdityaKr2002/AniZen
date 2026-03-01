@@ -17,6 +17,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import logcat.LogPriority
@@ -65,10 +66,16 @@ class SourcesScreenModel(
         }
     }
 
-    // ... collectLatestAnimeSources ...
-
     private fun collectLatestAnimeSources(sources: List<Source>) {
         mutableState.update { state ->
+            val query = state.searchQuery
+            val nsfwOnly = state.nsfwOnly
+            val filteredSources = sources.filter { source ->
+                val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
+                val matchesNsfw = !nsfwOnly || source.isNsfw
+                matchesQuery && matchesNsfw
+            }
+
             val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
                 // Sources without a lang defined will be placed at the end
                 when {
@@ -81,7 +88,7 @@ class SourcesScreenModel(
                     else -> d1.compareTo(d2)
                 }
             }
-            val byLang = sources.groupByTo(map) {
+            val byLang = filteredSources.groupByTo(map) {
                 when {
                     it.isUsedLast -> LAST_USED_KEY
                     Pin.Actual in it.pin -> PINNED_KEY
@@ -102,6 +109,20 @@ class SourcesScreenModel(
                     }
                     .toImmutableList(),
             )
+        }
+    }
+
+    fun search(query: String?) {
+        mutableState.update { it.copy(searchQuery = query) }
+        screenModelScope.launchIO {
+            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
+        }
+    }
+
+    fun toggleNsfwOnly() {
+        mutableState.update { it.copy(nsfwOnly = !it.nsfwOnly) }
+        screenModelScope.launchIO {
+            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
         }
     }
 
@@ -180,6 +201,8 @@ class SourcesScreenModel(
         val isLoading: Boolean = true,
         val items: ImmutableList<SourceUiModel> = persistentListOf(),
         val categories: ImmutableList<FeedSavedSearchCategory> = persistentListOf(),
+        val searchQuery: String? = null,
+        val nsfwOnly: Boolean = false,
     ) {
         val isEmpty = items.isEmpty()
     }
