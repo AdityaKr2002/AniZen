@@ -162,6 +162,7 @@ fun GestureHandler(
 
                     if (up == null) { // Long press detected
                         val isPaused = viewModel.paused.value
+                        val isPosInMiddle = down.position.x > size.width / 5 && down.position.x < size.width * 4 / 5
                         
                         if (isPaused) {
                             when (pausedLongPressAction) {
@@ -170,50 +171,54 @@ fun GestureHandler(
                                     waitForUpOrCancellation()
                                 }
                                 PausedLongPressAction.Play2x -> {
-                                    isLongPressing = true
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.unpause()
-                                    val targetSpeed = 2.0f
-                                    
-                                    // Smoothly increase speed to 2x
-                                    speedRampJob?.cancel()
-                                    speedRampJob = scope.launch {
-                                        val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                        val dur = 200L
-                                        val startTime = System.currentTimeMillis()
-                                        while (System.currentTimeMillis() - startTime < dur) {
-                                            val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                            val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
-                                            MPVLib.setPropertyDouble("speed", s)
-                                            delay(32)
+                                    if (isPosInMiddle) {
+                                        isLongPressing = true
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.unpause()
+                                        val targetSpeed = 2.0f
+                                        
+                                        // Smoothly increase speed to 2x
+                                        speedRampJob?.cancel()
+                                        speedRampJob = scope.launch {
+                                            val currentSpeed = MPVLib.getPropertyDouble("speed")
+                                            val dur = 200L
+                                            val startTime = System.currentTimeMillis()
+                                            while (System.currentTimeMillis() - startTime < dur) {
+                                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
+                                                val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
+                                                MPVLib.setPropertyDouble("speed", s)
+                                                delay(32)
+                                            }
+                                            MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
                                         }
-                                        MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
-                                    }
-                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
-                                    
-                                    waitForUpOrCancellation() // Wait until user lifts finger
-                                    
-                                    // Smoothly return to original speed
-                                    speedRampJob?.cancel()
-                                    speedRampJob = scope.launch {
-                                        val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                        val dur = 200L
-                                        val startTime = System.currentTimeMillis()
-                                        while (System.currentTimeMillis() - startTime < dur) {
-                                            val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                            val s = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
-                                            MPVLib.setPropertyDouble("speed", s)
-                                            delay(32)
+                                        viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
+                                        
+                                        waitForUpOrCancellation() // Wait until user lifts finger
+                                        
+                                        // Smoothly return to original speed
+                                        speedRampJob?.cancel()
+                                        speedRampJob = scope.launch {
+                                            val currentSpeed = MPVLib.getPropertyDouble("speed")
+                                            val dur = 200L
+                                            val startTime = System.currentTimeMillis()
+                                            while (System.currentTimeMillis() - startTime < dur) {
+                                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
+                                                val s = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
+                                                MPVLib.setPropertyDouble("speed", s)
+                                                delay(32)
+                                            }
+                                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
+                                            viewModel.pause() // Pause again since we were originally paused
+                                            viewModel.playerUpdate.update { PlayerUpdates.None }
                                         }
-                                        MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                                        viewModel.pause() // Pause again since we were originally paused
-                                        viewModel.playerUpdate.update { PlayerUpdates.None }
+                                    } else {
+                                        waitForUpOrCancellation()
                                     }
                                 }
                                 else -> waitForUpOrCancellation()
                             }
                         } else {
-                            if (longPressAction == LongPressAction.Speed) {
+                            if (longPressAction == LongPressAction.Speed && isPosInMiddle) {
                                 isLongPressing = true
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
