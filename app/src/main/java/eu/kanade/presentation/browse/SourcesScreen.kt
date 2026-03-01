@@ -151,13 +151,7 @@ fun SourcesScreen(
                         onValueChange = onChangeSearchQuery,
                         modifier = Modifier
                             .weight(1f)
-                            .onFocusChanged { 
-                                isSearchFocused = it.isFocused 
-                                // If we lose focus and it's empty, clear text completely to revert icon
-                                if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
-                                    onChangeSearchQuery(null)
-                                }
-                            },
+                            .onFocusChanged { isSearchFocused = it.isFocused },
                         placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
                         leadingIcon = {
                             // Icon only turns into Back if there is text OR if focused
@@ -175,7 +169,8 @@ fun SourcesScreen(
                         trailingIcon = {
                             if (!state.searchQuery.isNullOrEmpty()) {
                                 IconButton(onClick = { 
-                                    onChangeSearchQuery("") 
+                                    onChangeSearchQuery("")
+                                    // Optionally keep focus when clearing via X
                                 }) {
                                     Icon(Icons.Outlined.Close, contentDescription = null)
                                 }
