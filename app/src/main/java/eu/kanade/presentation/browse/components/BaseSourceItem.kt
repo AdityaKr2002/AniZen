@@ -118,6 +118,10 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
             if (name.contains("api") || name.contains("json") || sourceClass.contains("Api") || sourceClass.contains("Json")) {
                 StatusBadge("API", Color(0xFF43A047))
             }
+
+            if (source.isNsfw) {
+                StatusBadge("18+", MaterialTheme.colorScheme.error)
+            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -169,9 +173,10 @@ private fun StatusBadge(text: String, color: Color) {
         Text(
             text = text,
             color = color,
-            fontSize = 9.sp,
+            fontSize = 11.sp,
+            lineHeight = 13.sp,
             fontWeight = FontWeight.ExtraBold,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.SansSerif
         )
     }
 }

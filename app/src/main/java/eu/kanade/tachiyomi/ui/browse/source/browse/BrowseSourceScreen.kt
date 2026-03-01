@@ -6,42 +6,52 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.NewReleases
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -69,31 +79,23 @@ import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel.Listing
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import logcat.LogPriority
 import tachiyomi.core.common.Constants
-import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 
 data class BrowseSourceScreen(
     private val sourceId: Long,
@@ -188,12 +190,54 @@ data class BrowseSourceScreen(
                         },
                     )
 
+                    // Redesigned Search Bar
+                    OutlinedTextField(
+                        value = state.toolbarQuery ?: "",
+                        onValueChange = screenModel::setToolbarQuery,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+                        placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (!state.toolbarQuery.isNullOrEmpty()) {
+                                IconButton(onClick = { screenModel.setToolbarQuery("") }) {
+                                    Icon(Icons.Outlined.Close, contentDescription = null)
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                    )
+
                     Row(
                         modifier = Modifier
                             .horizontalScroll(rememberScrollState())
                             .padding(horizontal = MaterialTheme.padding.small),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                     ) {
+                        if (state.filters.isNotEmpty()) {
+                            FilterChip(
+                                selected = state.listing is Listing.Search && state.currentSavedSearch == null,
+                                onClick = screenModel::openFilterSheet,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.FilterList,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                },
+                                label = { Text(text = stringResource(MR.strings.action_filter)) },
+                            )
+                        }
+
                         FilterChip(
                             selected = state.listing == Listing.Popular,
                             onClick = {
@@ -204,13 +248,10 @@ data class BrowseSourceScreen(
                                 Icon(
                                     imageVector = Icons.Outlined.Favorite,
                                     contentDescription = null,
-                                    modifier = Modifier
-                                        .size(FilterChipDefaults.IconSize),
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize),
                                 )
                             },
-                            label = {
-                                Text(text = stringResource(MR.strings.popular))
-                            },
+                            label = { Text(text = stringResource(MR.strings.popular)) },
                         )
                         if ((screenModel.source as CatalogueSource).supportsLatest) {
                             FilterChip(
@@ -223,30 +264,10 @@ data class BrowseSourceScreen(
                                     Icon(
                                         imageVector = Icons.Outlined.NewReleases,
                                         contentDescription = null,
-                                        modifier = Modifier
-                                            .size(FilterChipDefaults.IconSize),
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
                                     )
                                 },
-                                label = {
-                                    Text(text = stringResource(MR.strings.latest))
-                                },
-                            )
-                        }
-                        if (state.filters.isNotEmpty()) {
-                            FilterChip(
-                                selected = state.listing is Listing.Search && state.currentSavedSearch == null,
-                                onClick = screenModel::openFilterSheet,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.FilterList,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(FilterChipDefaults.IconSize),
-                                    )
-                                },
-                                label = {
-                                    Text(text = stringResource(MR.strings.action_filter))
-                                },
+                                label = { Text(text = stringResource(MR.strings.latest)) },
                             )
                         }
 
@@ -270,7 +291,6 @@ data class BrowseSourceScreen(
                 }
             },
             bottomBar = {
-                val context = LocalContext.current
                 androidx.compose.animation.AnimatedVisibility(
                     visible = state.selectionMode,
                     enter = androidx.compose.animation.expandVertically(),
@@ -279,7 +299,7 @@ data class BrowseSourceScreen(
                     val allFavorite = remember(state.selection, state.favoriteIds) {
                         state.selection.all { it.id in state.favoriteIds }
                     }
-                    androidx.compose.material3.Surface(
+                    Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                         shape = MaterialTheme.shapes.large.copy(
                             bottomEnd = androidx.compose.foundation.shape.ZeroCornerSize,
@@ -289,15 +309,15 @@ data class BrowseSourceScreen(
                         Row(
                             modifier = Modifier
                                 .padding(
-                                    androidx.compose.foundation.layout.WindowInsets.navigationBars
-                                        .only(androidx.compose.foundation.layout.WindowInsetsSides.Bottom)
+                                    WindowInsets.navigationBars
+                                        .only(WindowInsetsSides.Bottom)
                                         .asPaddingValues(),
                                 )
                                 .padding(horizontal = 8.dp, vertical = 12.dp)
                                 .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
-                            androidx.compose.material3.TextButton(
+                            TextButton(
                                 onClick = { 
                                     if (allFavorite) {
                                         screenModel.removeSelectionFromLibrary()
