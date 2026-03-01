@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,12 +40,15 @@ fun DoubleSpeedIndicator(
     isDragging: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    var showFullBar by remember { mutableStateOf(true) }
+    var showFullBar by remember { mutableStateOf(false) }
 
-    LaunchedEffect(speed) {
-        showFullBar = true
-        delay(2000)
-        showFullBar = false
+    LaunchedEffect(isDragging, speed) {
+        if (isDragging) {
+            showFullBar = true
+        } else {
+            delay(1500)
+            showFullBar = false
+        }
     }
 
     Box(
@@ -54,14 +58,14 @@ fun DoubleSpeedIndicator(
             .animateContentSize(),
         contentAlignment = Alignment.Center,
     ) {
-        if (showFullBar && isDragging) {
+        if (showFullBar) {
             val trackWidth = 240.dp
             val speedStops = listOf(0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             ) {
-                // Top labels — positioned using same progress formula as dots
+                // Top labels
                 Box(
                     modifier = Modifier.width(trackWidth).padding(bottom = 6.dp),
                 ) {
@@ -70,7 +74,7 @@ fun DoubleSpeedIndicator(
                         val label = String.format("%.1fx", stopVal)
                         Text(
                             text = label,
-                            color = if (speed == stopVal) Color(0xFF4A90E2) else Color.White,
+                            color = if (Math.abs(speed - stopVal) < 0.1f) Color(0xFF4A90E2) else Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.offset(x = trackWidth * labelProgress - 12.dp),
@@ -102,7 +106,7 @@ fun DoubleSpeedIndicator(
                             .clip(RoundedCornerShape(2.dp))
                             .background(Color(0xFF4A90E2)),
                     )
-                    // Dot markers at each stop
+                    // Dot markers
                     speedStops.forEach { stopVal ->
                         val dotProgress = ((stopVal - 0.5f) / 3.5f).coerceIn(0f, 1f)
                         val dotOffset = (trackWidth * dotProgress - 3.dp).coerceAtLeast(0.dp)
@@ -111,11 +115,11 @@ fun DoubleSpeedIndicator(
                                 .offset(x = dotOffset)
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(if (speed >= stopVal) Color(0xFF4A90E2) else Color.White.copy(alpha = 0.7f)),
+                                .background(if (speed >= stopVal - 0.1f) Color(0xFF4A90E2) else Color.White.copy(alpha = 0.7f)),
                         )
                     }
                     // Thumb
-                    val thumbOffset = (trackWidth * ((speed - 0.5f) / 3.5f).coerceIn(0f, 1f) - 5.dp).coerceAtLeast(0.dp)
+                    val thumbOffset = (trackWidth * progress - 5.dp).coerceAtLeast(0.dp)
                     Box(
                         modifier = Modifier
                             .offset(x = thumbOffset)

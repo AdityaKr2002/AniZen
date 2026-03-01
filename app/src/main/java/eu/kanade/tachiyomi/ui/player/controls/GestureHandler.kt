@@ -238,11 +238,13 @@ fun GestureHandler(
                                 val diffX = pointer.position.x - lastX
                                 if (Math.abs(diffX) > 1f) {
                                     val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    val newSpeed = (currentSpeed + diffX * 0.01).coerceIn(0.25, 4.0)
+                                    // Use a smaller multiplier for more controlled sliding towards fixed points
+                                    val newSpeed = (currentSpeed + diffX * 0.005).coerceIn(0.5, 4.0)
+                                    val snappedSpeed = (Math.round(newSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
                                     
-                                    speedRampJob?.cancel() // Stop the initial ramp if they start sliding right away
-                                    MPVLib.setPropertyDouble("speed", newSpeed)
-                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(newSpeed.toFloat(), isDragging = true) }
+                                    speedRampJob?.cancel() 
+                                    MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
+                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(snappedSpeed, isDragging = true) }
                                     
                                     lastX = pointer.position.x
                                 }
