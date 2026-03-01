@@ -77,11 +77,16 @@ class SourcesScreenModel(
         mutableState.update { state ->
             val query = state.searchQuery
             val nsfwOnly = state.nsfwOnly
+            
+            // Map source IDs to their extension's NSFW status for reliable filtering
+            val extensions = extensionManager.installedExtensionsFlow.value
+            val nsfwSourceIds = extensions.flatMap { ext -> 
+                if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
+            }.toSet()
+
             val filteredSources = sources.filter { source ->
                 val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
-                val isNsfw = extensionManager.installedExtensionsFlow.value.find { ext ->
-                    ext.sources.any { s -> s.id == source.id }
-                }?.isNsfw ?: source.isNsfw
+                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
                 val matchesNsfw = !nsfwOnly || isNsfw
                 matchesQuery && matchesNsfw
             }

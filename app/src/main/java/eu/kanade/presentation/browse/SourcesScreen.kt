@@ -93,10 +93,10 @@ fun SourcesScreen(
     var isSearchFocused by remember { mutableStateOf(false) }
 
     // Handle system back button properly:
-    // 1. If focused and NOT empty: 1st click close keyboard, 2nd click clear text.
-    // 2. If focused and IS empty: 1 click exit screen (BackHandler disabled).
-    // 3. If NOT focused and NOT empty: 1 click clear text.
-    BackHandler(enabled = !state.searchQuery.isNullOrEmpty()) {
+    // 1. If keyboard is up (focused): 1st click close keyboard.
+    // 2. If keyboard is down AND has text: 1 click clear text (icon changes to Search).
+    // 3. If keyboard is down AND empty: System handles exit (BackHandler disabled).
+    BackHandler(enabled = isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
         if (isSearchFocused) {
             focusManager.clearFocus()
         } else {
@@ -123,11 +123,10 @@ fun SourcesScreen(
                     .onFocusChanged { isSearchFocused = it.isFocused },
                 placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
                 leadingIcon = {
+                    // Icon only turns into Back if there is text OR if focused
                     if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
                         IconButton(onClick = {
-                            if (isSearchFocused && state.searchQuery.isNullOrEmpty()) {
-                                focusManager.clearFocus()
-                            } else if (isSearchFocused) {
+                            if (isSearchFocused) {
                                 focusManager.clearFocus()
                             } else {
                                 onChangeSearchQuery("")
@@ -141,7 +140,10 @@ fun SourcesScreen(
                 },
                 trailingIcon = {
                     if (!state.searchQuery.isNullOrEmpty()) {
-                        IconButton(onClick = { onChangeSearchQuery("") }) {
+                        IconButton(onClick = { 
+                            onChangeSearchQuery("")
+                            // Optionally keep focus when clearing via X
+                        }) {
                             Icon(Icons.Outlined.Close, contentDescription = null)
                         }
                     }
@@ -157,7 +159,7 @@ fun SourcesScreen(
                 ),
             )
 
-            // BOLD and BIG NSFW Toggle - Enclosed within a rounded border
+            // BOLD and BIG NSFW Toggle
             FilterChip(
                 selected = state.nsfwOnly,
                 onClick = onToggleNsfwOnly,
