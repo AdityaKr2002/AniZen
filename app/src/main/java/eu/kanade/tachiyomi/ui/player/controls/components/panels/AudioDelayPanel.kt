@@ -17,6 +17,8 @@
 
 package eu.kanade.tachiyomi.ui.player.controls.components.panels
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +59,11 @@ fun AudioDelayPanel(
     ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest,
+            )
             .padding(MaterialTheme.padding.medium),
     ) {
         val delayControlCard = createRef()
@@ -72,10 +79,16 @@ fun AudioDelayPanel(
             onReset = { delay = 0 },
             title = { AudioDelayCardTitle(onClose = onDismissRequest) },
             delayType = DelayType.Audio,
-            modifier = Modifier.constrainAs(delayControlCard) {
-                linkTo(parent.top, parent.bottom, bias = 0.8f)
-                end.linkTo(parent.end)
-            },
+            modifier = Modifier
+                .constrainAs(delayControlCard) {
+                    linkTo(parent.top, parent.bottom, bias = 0.8f)
+                    end.linkTo(parent.end)
+                }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
         )
     }
 }

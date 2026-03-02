@@ -19,6 +19,7 @@ package eu.kanade.tachiyomi.ui.player.controls.components.panels
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -81,6 +82,11 @@ fun SubtitleDelayPanel(
     ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest,
+            )
             .padding(MaterialTheme.padding.medium),
     ) {
         val delayControlCard = createRef()
@@ -136,10 +142,16 @@ fun SubtitleDelayPanel(
                 speed = 1f
             },
             onClose = onDismissRequest,
-            modifier = Modifier.constrainAs(delayControlCard) {
-                linkTo(parent.top, parent.bottom, bias = 0.8f)
-                end.linkTo(parent.end)
-            },
+            modifier = Modifier
+                .constrainAs(delayControlCard) {
+                    linkTo(parent.top, parent.bottom, bias = 0.8f)
+                    end.linkTo(parent.end)
+                }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
         )
     }
 }

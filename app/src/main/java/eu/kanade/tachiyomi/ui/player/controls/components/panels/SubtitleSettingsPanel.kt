@@ -19,6 +19,8 @@ package eu.kanade.tachiyomi.ui.player.controls.components.panels
 
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -65,7 +67,15 @@ fun SubtitleSettingsPanel(
     BackHandler(onBack = onDismissRequest)
     val orientation = LocalConfiguration.current.orientation
 
-    ConstraintLayout(modifier = modifier.fillMaxSize()) {
+    ConstraintLayout(
+        modifier = modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest,
+            ),
+    ) {
         val subSettingsCards = createRef()
         val cards: @Composable (Int, Modifier) -> Unit = { value, cardsModifier ->
             when (value) {
@@ -79,10 +89,16 @@ fun SubtitleSettingsPanel(
         val pagerState = rememberPagerState { 3 }
         if (orientation == ORIENTATION_PORTRAIT) {
             Column(
-                modifier = Modifier.constrainAs(subSettingsCards) {
-                    top.linkTo(parent.top, 32.dp)
-                    start.linkTo(parent.start)
-                },
+                modifier = Modifier
+                    .constrainAs(subSettingsCards) {
+                        top.linkTo(parent.top, 32.dp)
+                        start.linkTo(parent.start)
+                    }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                    ),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
             ) {
                 TopAppBar(
@@ -120,7 +136,12 @@ fun SubtitleSettingsPanel(
                         top.linkTo(parent.top)
                         end.linkTo(parent.end, 32.dp)
                     }
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                    ),
             ) {
                 Spacer(Modifier.height(16.dp))
                 Row(
