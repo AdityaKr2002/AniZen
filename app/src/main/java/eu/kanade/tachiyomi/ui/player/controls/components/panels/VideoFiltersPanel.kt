@@ -19,7 +19,9 @@ package eu.kanade.tachiyomi.ui.player.controls.components.panels
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -96,6 +98,11 @@ fun VideoFiltersPanel(
     ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest,
+            )
             .padding(MaterialTheme.padding.medium),
     ) {
         val settingsCard = createRef()
@@ -106,7 +113,12 @@ fun VideoFiltersPanel(
                     top.linkTo(parent.top)
                     end.linkTo(parent.end)
                 }
-                .widthIn(max = CARDS_MAX_WIDTH),
+                .widthIn(max = CARDS_MAX_WIDTH)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {},
+                ),
             colors = panelCardsColors(),
             shape = MaterialTheme.shapes.large,
         ) {
