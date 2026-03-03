@@ -197,6 +197,18 @@ class FeedManageScreenModel(
         }
     }
 
+    fun reorder(categoryId: Long, items: List<FeedSavedSearch>) {
+        screenModelScope.launchIO {
+            val updates = items.mapIndexed { index, feed ->
+                FeedSavedSearchUpdate(
+                    id = feed.id,
+                    feedOrder = index.toLong(),
+                )
+            }
+            reorderFeed.execute(updates)
+        }
+    }
+
     fun delete(feed: FeedSavedSearch) {
         screenModelScope.launchIO {
             deleteFeedSavedSearchById.await(feed.id)
