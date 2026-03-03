@@ -85,6 +85,7 @@ class SyncPreferences(
         return SyncTriggerOptions(
             syncOnAppStart = preferenceStore.getBoolean("sync_on_app_start", false).get(),
             syncOnAppResume = preferenceStore.getBoolean("sync_on_app_resume", false).get(),
+            syncOnLibraryUpdate = preferenceStore.getBoolean("sync_on_library_update", true).get(),
 
             // Anime
             syncOnEpisodeSeen = preferenceStore.getBoolean("sync_on_episode_seen", false).get(),
@@ -97,6 +98,8 @@ class SyncPreferences(
             .set(syncTriggerOptions.syncOnAppStart)
         preferenceStore.getBoolean("sync_on_app_resume", false)
             .set(syncTriggerOptions.syncOnAppResume)
+        preferenceStore.getBoolean("sync_on_library_update", true)
+            .set(syncTriggerOptions.syncOnLibraryUpdate)
 
         // Anime
         preferenceStore.getBoolean("sync_on_episode_seen", false)

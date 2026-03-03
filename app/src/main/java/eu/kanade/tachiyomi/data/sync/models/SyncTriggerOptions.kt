@@ -10,18 +10,21 @@ data class SyncTriggerOptions(
     val syncOnEpisodeOpen: Boolean = false,
     val syncOnAppStart: Boolean = false,
     val syncOnAppResume: Boolean = false,
+    val syncOnLibraryUpdate: Boolean = true,
 ) {
     fun asBooleanArray() = booleanArrayOf(
         syncOnEpisodeSeen,
         syncOnEpisodeOpen,
         syncOnAppStart,
         syncOnAppResume,
+        syncOnLibraryUpdate,
     )
 
     fun anyEnabled() = syncOnEpisodeSeen ||
         syncOnEpisodeOpen ||
         syncOnAppStart ||
-        syncOnAppResume
+        syncOnAppResume ||
+        syncOnLibraryUpdate
 
     companion object {
         val mainOptions = persistentListOf(
@@ -36,6 +39,11 @@ data class SyncTriggerOptions(
                 setter = { options, enabled -> options.copy(syncOnAppResume = enabled) },
             ),
             Entry(
+                label = SYMR.strings.sync_on_library_update,
+                getter = SyncTriggerOptions::syncOnLibraryUpdate,
+                setter = { options, enabled -> options.copy(syncOnLibraryUpdate = enabled) },
+            ),
+            Entry(
                 label = AMR.strings.sync_on_episode_seen,
                 getter = SyncTriggerOptions::syncOnEpisodeSeen,
                 setter = { options, enabled -> options.copy(syncOnEpisodeSeen = enabled) },
@@ -48,10 +56,11 @@ data class SyncTriggerOptions(
         )
 
         fun fromBooleanArray(array: BooleanArray) = SyncTriggerOptions(
-            syncOnEpisodeSeen = array[1],
-            syncOnEpisodeOpen = array[2],
+            syncOnEpisodeSeen = array[0],
+            syncOnEpisodeOpen = array[1],
             syncOnAppStart = array[2],
             syncOnAppResume = array[3],
+            syncOnLibraryUpdate = array[4],
         )
     }
 
