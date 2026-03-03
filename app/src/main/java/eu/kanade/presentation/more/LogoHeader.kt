@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.tachiyomi.BuildConfig
-import eu.kanade.R
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.util.system.toast
 import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.secondaryItemAlpha
