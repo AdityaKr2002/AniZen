@@ -63,6 +63,13 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.outlined.DragHandle
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import sh.calvin.reorderable.*
+import tachiyomi.domain.source.model.FeedSavedSearchUpdate
+
 class FeedManageScreen : Screen() {
 
     @Composable
@@ -71,6 +78,7 @@ class FeedManageScreen : Screen() {
         val screenModel = rememberScreenModel { FeedManageScreenModel() }
         val state by screenModel.state.collectAsState()
         val scope = rememberCoroutineScope()
+        val haptic = LocalHapticFeedback.current
 
         var deleteDialogItem by remember { mutableStateOf<FeedSavedSearch?>(null) }
         var editFeedItem by remember { mutableStateOf<FeedManageScreenModel.FeedItem?>(null) }
@@ -148,27 +156,45 @@ class FeedManageScreen : Screen() {
                                 stringRes = MR.strings.information_empty_category,
                             )
                         } else {
+                            var currentItems by remember(items) { mutableStateOf(items) }
+                            val lazyListState = rememberLazyListState()
+                            val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
+                                currentItems = currentItems.toMutableList().apply {
+                                    add(to.index, removeAt(from.index))
+                                }.toImmutableList()
+                                screenModel.reorder(category.id, currentItems.map { it.feed })
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
+                                state = lazyListState,
                             ) {
-                                itemsIndexed(
-                                    items = items,
-                                    key = { _, item -> "feed-${item.feed.id}" },
-                                ) { index, item ->
-                                    FeedManageItem(
-                                        title = item.title,
-                                        type = item.subtitle,
-                                        canMoveUp = index != 0,
-                                        canMoveDown = index != items.lastIndex,
-                                        onMoveUp = { screenModel.moveUp(item.feed) },
-                                        onMoveDown = { screenModel.moveDown(item.feed) },
-                                        onDuplicate = { screenModel.duplicate(item.feed) },
-                                        onDelete = { deleteDialogItem = item.feed },
-                                        onClick = { editFeedItem = item },
-                                    )
-                                    if (index != items.lastIndex) {
-                                        HorizontalDivider()
+                                items(
+                                    items = currentItems,
+                                    key = { item -> "feed-${item.feed.id}" },
+                                ) { item ->
+                                    ReorderableItem(
+                                        state = reorderableState,
+                                        key = "feed-${item.feed.id}",
+                                    ) { isDragging ->
+                                        FeedManageItem(
+                                            title = item.title,
+                                            type = item.subtitle,
+                                            onDuplicate = { screenModel.duplicate(item.feed) },
+                                            onDelete = { deleteDialogItem = item.feed },
+                                            onClick = { editFeedItem = item },
+                                            dragHandle = {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.DragHandle,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.draggableHandle()
+                                                )
+                                            },
+                                            modifier = Modifier.animateItem(),
+                                        )
                                     }
+                                    HorizontalDivider()
                                 }
                             }
                         }
@@ -419,13 +445,10 @@ class FeedManageScreen : Screen() {
 private fun FeedManageItem(
     title: String,
     type: String,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     onClick: () -> Unit,
+    dragHandle: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -435,7 +458,8 @@ private fun FeedManageItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        dragHandle()
+        Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -447,18 +471,6 @@ private fun FeedManageItem(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = onMoveUp,
-                enabled = canMoveUp,
-            ) {
-                Icon(imageVector = Icons.Outlined.ArrowDropUp, contentDescription = null)
-            }
-            IconButton(
-                onClick = onMoveDown,
-                enabled = canMoveDown,
-            ) {
-                Icon(imageVector = Icons.Outlined.ArrowDropDown, contentDescription = null)
-            }
             IconButton(onClick = onDuplicate) {
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,

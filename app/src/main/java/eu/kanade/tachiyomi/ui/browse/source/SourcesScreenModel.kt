@@ -71,6 +71,12 @@ class SourcesScreenModel(
                 mutableState.update { it.copy(categories = categories.toImmutableList()) }
             }
         }
+
+        screenModelScope.launchIO {
+            sourcePreferences.hideLatest().changes().collectLatest { hideLatest ->
+                mutableState.update { it.copy(hideLatest = hideLatest) }
+            }
+        }
     }
 
     private fun collectLatestAnimeSources(sources: List<Source>) {
@@ -218,6 +224,7 @@ class SourcesScreenModel(
         val categories: ImmutableList<FeedSavedSearchCategory> = persistentListOf(),
         val searchQuery: String? = null,
         val nsfwOnly: Boolean = false,
+        val hideLatest: Boolean = false,
     ) {
         val isEmpty = items.isEmpty()
     }

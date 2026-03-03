@@ -65,6 +65,8 @@ class SourcePreferences(
         false,
     )
 
+    fun hideLatest() = preferenceStore.getBoolean("browse_hide_latest", false)
+
     // SY -->
 
     // fun enableSourceBlacklist() = preferenceStore.getBoolean("eh_enable_source_blacklist", true)

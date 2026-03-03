@@ -188,6 +188,7 @@ fun SourcesScreen(
                                                 onClickItem = onClickItem,
                                                 onLongClickItem = onLongClickItem,
                                                 onClickPin = onClickPin,
+                                                hideLatest = state.hideLatest,
                                                 modifier = Modifier.animateItem()
                                             )
                                             if (index < groupItems.size - 1) {
@@ -208,6 +209,7 @@ fun SourcesScreen(
                                             onClickItem = onClickItem,
                                             onLongClickItem = onLongClickItem,
                                             onClickPin = onClickPin,
+                                            hideLatest = state.hideLatest,
                                             modifier = Modifier.animateItem()
                                         )
                                     }
@@ -230,6 +232,7 @@ fun SourcesScreen(
                                         onClickItem = onClickItem,
                                         onLongClickItem = onLongClickItem,
                                         onClickPin = onClickPin,
+                                        hideLatest = state.hideLatest,
                                         modifier = Modifier.animateItem()
                                     )
                                 }
@@ -239,6 +242,7 @@ fun SourcesScreen(
                                     onClickItem = onClickItem,
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
+                                    hideLatest = state.hideLatest,
                                     modifier = Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)
                                 )
                             }
@@ -370,6 +374,7 @@ private fun SourceItem(
     onClickItem: (Source, Listing) -> Unit,
     onLongClickItem: (Source) -> Unit,
     onClickPin: (Source) -> Unit,
+    hideLatest: Boolean,
     modifier: Modifier = Modifier,
 ) {
     BaseSourceItem(
@@ -378,7 +383,7 @@ private fun SourceItem(
         onClickItem = { onClickItem(source, Listing.Popular) },
         onLongClickItem = { onLongClickItem(source) },
         action = {
-            if (source.supportsLatest) {
+            if (source.supportsLatest && !hideLatest) {
                 TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
                     Text(
                         text = stringResource(MR.strings.latest),
