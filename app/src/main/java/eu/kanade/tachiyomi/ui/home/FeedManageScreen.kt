@@ -63,10 +63,12 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.collections.immutable.toImmutableList
 import sh.calvin.reorderable.*
 import tachiyomi.domain.source.model.FeedSavedSearchUpdate
 
@@ -171,7 +173,7 @@ class FeedManageScreen : Screen() {
                                 state = lazyListState,
                             ) {
                                 items(
-                                    items = currentItems,
+                                    currentItems,
                                     key = { item -> "feed-${item.feed.id}" },
                                 ) { item ->
                                     ReorderableItem(
