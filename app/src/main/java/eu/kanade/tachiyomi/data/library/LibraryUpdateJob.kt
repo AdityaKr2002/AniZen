@@ -595,9 +595,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             )
 
             val syncPreferences: SyncPreferences = Injekt.get()
+            val syncTriggerOpt = syncPreferences.getSyncTriggerOptions()
 
             // Always sync the data before library update if syncing is enabled.
-            if (syncPreferences.isSyncEnabled()) {
+            if (syncPreferences.isSyncEnabled() && syncTriggerOpt.syncOnLibraryUpdate) {
                 // Check if SyncDataJob is already running
                 if (SyncDataJob.isRunning(context)) {
                     // SyncDataJob is already running
