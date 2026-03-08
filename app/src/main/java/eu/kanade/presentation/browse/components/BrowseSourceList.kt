@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.items
 import eu.kanade.presentation.library.components.AnimeListItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import tachiyomi.domain.anime.model.Anime
