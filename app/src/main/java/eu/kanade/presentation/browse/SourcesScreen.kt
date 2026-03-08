@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -154,21 +155,21 @@ fun SourcesScreen(
                     )
                 }
             } else {
-                items(
+                itemsIndexed(
                     items = state.items,
-                    key = { model ->
+                    key = { index, model ->
                         when (model) {
-                            is SourceUiModel.Header -> "header-${model.language}"
-                            is SourceUiModel.Item -> "source-${model.source.id}"
+                            is SourceUiModel.Header -> "header-${model.language}-$index"
+                            is SourceUiModel.Item -> "source-${model.source.id}-$index"
                         }
                     },
-                    contentType = { model ->
+                    contentType = { _, model ->
                         when (model) {
                             is SourceUiModel.Header -> "header"
                             is SourceUiModel.Item -> "item"
                         }
                     },
-                ) { model ->
+                ) { _, model ->
                     when (model) {
                         is SourceUiModel.Header -> {
                             SourceHeader(
