@@ -26,6 +26,7 @@ import eu.kanade.presentation.more.settings.widget.AppThemePreferenceWidget
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.toPersistentList
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
@@ -138,128 +139,131 @@ object SettingsAppearanceScreen : SearchableSettings {
 
         val dynamicAnimeTheme by uiPreferences.dynamicAnimeTheme().collectAsState()
 
-        return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_category_display),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.TextPreference(
-                    title = stringResource(MR.strings.pref_app_language),
-                    onClick = { navigator.push(AppLanguageScreen()) },
-                ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.tabletUiMode(),
-                    title = stringResource(MR.strings.pref_tablet_ui_mode),
-                    entries = TabletUiMode.entries
-                        .associateWith { stringResource(it.titleRes) }
-                        .toImmutableMap(),
-                    onValueChanged = {
-                        context.toast(MR.strings.requires_app_restart)
-                        true
-                    },
-                ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.startScreen(),
-                    title = stringResource(MR.strings.pref_start_screen),
-                    entries = remember(uiPreferences.enableFeed().collectAsState().value) {
-                        StartScreen.entries
-                            .filter { it != StartScreen.FEED || uiPreferences.enableFeed().get() }
-                            .associateWith { it.titleRes }
-                    }.mapValues { stringResource(it.value) }
-                        .toImmutableMap(),
-                    onValueChanged = {
-                        context.toast(MR.strings.requires_app_restart)
-                        true
-                    },
-                ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.navStyle(),
-                    title = "Navigation Style",
-                    entries = NavStyle.entries
-                        .associateWith { stringResource(it.titleRes) }
-                        .toImmutableMap(),
-                    onValueChanged = { true },
-                ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.dateFormat(),
-                    title = stringResource(MR.strings.pref_date_format),
-                    entries = DateFormats
-                        .associateWith {
-                            val formattedDate = UiPreferences.dateFormat(it).format(now)
-                            "${it.ifEmpty { stringResource(MR.strings.label_default) }} ($formattedDate)"
-                        }
-                        .toImmutableMap(),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.relativeTime(),
-                    title = stringResource(MR.strings.pref_relative_format),
-                    subtitle = stringResource(
-                        MR.strings.pref_relative_format_summary,
-                        stringResource(MR.strings.relative_time_today),
-                        formattedNow,
-                    ),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.dynamicAnimeTheme(),
-                    title = "Dynamic Anime Theme",
-                    subtitle = "Adapts app colors to the current anime cover",
-                ),
-            ).run {
-                if (dynamicAnimeTheme) {
-                    this.add(
-                        Preference.PreferenceItem.SwitchPreference(
-                            pref = uiPreferences.dynamicPlayerTheme(),
-                            title = "Dynamic Player Theme",
-                            subtitle = "Adapts player colors to the current anime cover",
-                        ),
-                    )
-                }
-                this
-            }.addAll(
-                persistentListOf(
-                    Preference.PreferenceItem.SwitchPreference(
-                        pref = uiPreferences.panoramaCover(),
-                        title = stringResource(KMR.strings.pref_panorama_cover),
-                        subtitle = stringResource(KMR.strings.pref_panorama_cover_summary),
-                    ),
-                    Preference.PreferenceItem.SwitchPreference(
-                        pref = uiPreferences.autoExpandAnimeDescription(),
-                        title = "Auto-expand details",
-                        subtitle = "Expand anime description by default",
-                    ),
-                    Preference.PreferenceItem.MultiSelectListPreference(
-                        pref = uiPreferences.containerStyles(),
-                        title = "Container Style",
-                        subtitle = "Enable rounded containers for selected screens",
-                        entries = mapOf(
-                            ContainerStyle.LIBRARY to "Library",
-                            ContainerStyle.UPDATES to "Updates",
-                            ContainerStyle.HISTORY to "History",
-                            ContainerStyle.DETAILS to "Details (Seasons)",
-                            ContainerStyle.SETTINGS to "Settings",
-                            ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
-                        ).toImmutableMap(),
-                    ),
-                    Preference.PreferenceItem.SwitchPreference(
-                        pref = uiPreferences.showSeasonsSection(),
-                        title = "Show seasons section",
-                        subtitle = "Show series seasons in anime details",
-                    ),
-                    Preference.PreferenceItem.SliderPreference(
-                        value = animeItemSpacing,
-                        min = 0,
-                        max = 80,
-                        title = "Anime action row spacing",
-                        subtitle = "Adjust vertical spacing between cover and action buttons",
-                        onValueChangeFinished = {
-                            animeItemSpacingPref.set(it)
-                        },
-                    ),
-                    Preference.PreferenceItem.SwitchPreference(
-                        pref = uiPreferences.animatedTransitions(),
-                        title = stringResource(KMR.strings.pref_animated_transitions),
-                        subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
-                    ),
+        val preferenceItems = mutableListOf(
+            Preference.PreferenceItem.TextPreference(
+                title = stringResource(MR.strings.pref_app_language),
+                onClick = { navigator.push(AppLanguageScreen()) },
+            ),
+            Preference.PreferenceItem.ListPreference(
+                pref = uiPreferences.tabletUiMode(),
+                title = stringResource(MR.strings.pref_tablet_ui_mode),
+                entries = TabletUiMode.entries
+                    .associateWith { stringResource(it.titleRes) }
+                    .toImmutableMap(),
+                onValueChanged = {
+                    context.toast(MR.strings.requires_app_restart)
+                    true
+                },
+            ),
+            Preference.PreferenceItem.ListPreference(
+                pref = uiPreferences.startScreen(),
+                title = stringResource(MR.strings.pref_start_screen),
+                entries = remember(uiPreferences.enableFeed().collectAsState().value) {
+                    StartScreen.entries
+                        .filter { it != StartScreen.FEED || uiPreferences.enableFeed().get() }
+                        .associateWith { it.titleRes }
+                }.mapValues { stringResource(it.value) }
+                    .toImmutableMap(),
+                onValueChanged = {
+                    context.toast(MR.strings.requires_app_restart)
+                    true
+                },
+            ),
+            Preference.PreferenceItem.ListPreference(
+                pref = uiPreferences.navStyle(),
+                title = "Navigation Style",
+                entries = NavStyle.entries
+                    .associateWith { stringResource(it.titleRes) }
+                    .toImmutableMap(),
+                onValueChanged = { true },
+            ),
+            Preference.PreferenceItem.ListPreference(
+                pref = uiPreferences.dateFormat(),
+                title = stringResource(MR.strings.pref_date_format),
+                entries = DateFormats
+                    .associateWith {
+                        val formattedDate = UiPreferences.dateFormat(it).format(now)
+                        "${it.ifEmpty { stringResource(MR.strings.label_default) }} ($formattedDate)"
+                    }
+                    .toImmutableMap(),
+            ),
+            Preference.PreferenceItem.SwitchPreference(
+                pref = uiPreferences.relativeTime(),
+                title = stringResource(MR.strings.pref_relative_format),
+                subtitle = stringResource(
+                    MR.strings.pref_relative_format_summary,
+                    stringResource(MR.strings.relative_time_today),
+                    formattedNow,
                 ),
             ),
+            Preference.PreferenceItem.SwitchPreference(
+                pref = uiPreferences.dynamicAnimeTheme(),
+                title = "Dynamic Anime Theme",
+                subtitle = "Adapts app colors to the current anime cover",
+            ),
+        )
+
+        if (dynamicAnimeTheme) {
+            preferenceItems.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.dynamicPlayerTheme(),
+                    title = "Dynamic Player Theme",
+                    subtitle = "Adapts player colors to the current anime cover",
+                ),
+            )
+        }
+
+        preferenceItems.addAll(
+            listOf(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.panoramaCover(),
+                    title = stringResource(KMR.strings.pref_panorama_cover),
+                    subtitle = stringResource(KMR.strings.pref_panorama_cover_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.autoExpandAnimeDescription(),
+                    title = "Auto-expand details",
+                    subtitle = "Expand anime description by default",
+                ),
+                Preference.PreferenceItem.MultiSelectListPreference(
+                    pref = uiPreferences.containerStyles(),
+                    title = "Container Style",
+                    subtitle = "Enable rounded containers for selected screens",
+                    entries = mapOf(
+                        ContainerStyle.LIBRARY to "Library",
+                        ContainerStyle.UPDATES to "Updates",
+                        ContainerStyle.HISTORY to "History",
+                        ContainerStyle.DETAILS to "Details (Seasons)",
+                        ContainerStyle.SETTINGS to "Settings",
+                        ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
+                    ).toImmutableMap(),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.showSeasonsSection(),
+                    title = "Show seasons section",
+                    subtitle = "Show series seasons in anime details",
+                ),
+                Preference.PreferenceItem.SliderPreference(
+                    value = animeItemSpacing,
+                    min = 0,
+                    max = 80,
+                    title = "Anime action row spacing",
+                    subtitle = "Adjust vertical spacing between cover and action buttons",
+                    onValueChangeFinished = {
+                        animeItemSpacingPref.set(it)
+                    },
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.animatedTransitions(),
+                    title = stringResource(KMR.strings.pref_animated_transitions),
+                    subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
+                ),
+            ),
+        )
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_category_display),
+            preferenceItems = preferenceItems.toPersistentList(),
         )
     }
 
