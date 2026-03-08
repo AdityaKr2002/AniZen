@@ -173,7 +173,7 @@ fun GestureHandler(
                                     speedRampJob = scope.launch {
                                         val currentSpeed = MPVLib.getPropertyDouble("speed")
                                         originalSpeed = currentSpeed.toFloat()
-                                        val dur = 800L
+                                        val dur = 1200L
                                         val startTime = System.currentTimeMillis()
                                         while (System.currentTimeMillis() - startTime < dur) {
                                             val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
@@ -195,7 +195,7 @@ fun GestureHandler(
                                 speedRampJob = scope.launch {
                                     val currentSpeed = MPVLib.getPropertyDouble("speed")
                                     originalSpeed = currentSpeed.toFloat()
-                                    val dur = 800L
+                                    val dur = 1200L
                                     val startTime = System.currentTimeMillis()
                                     while (System.currentTimeMillis() - startTime < dur) {
                                         val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
@@ -269,9 +269,9 @@ fun GestureHandler(
                         isLongPressing = false
                         speedRampJob?.cancel()
                         speedRampJob = scope.launch {
-                            delay(100) // breathing space
+                            delay(200) // breathing space
                             val currentSpeed = MPVLib.getPropertyDouble("speed")
-                            val dur = 800L
+                            val dur = 1200L
                             val startTime = System.currentTimeMillis()
                             while (System.currentTimeMillis() - startTime < dur) {
                                 val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
