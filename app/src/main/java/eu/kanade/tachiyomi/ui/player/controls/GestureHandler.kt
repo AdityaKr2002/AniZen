@@ -138,21 +138,18 @@ fun GestureHandler(
     fun rampSpeed(targetSpeed: Float, onComplete: () -> Unit = {}) {
         speedRampJob?.cancel()
         speedRampJob = scope.launch {
-            val currentSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-            val steps = if (Math.abs(targetSpeed - currentSpeed) > 1f) {
-                // Large jump, e.g. 4x to 1x
-                listOf(3f, 2f, 1.5f, 1f).filter { if (targetSpeed < currentSpeed) it < currentSpeed && it >= targetSpeed else it > currentSpeed && it <= targetSpeed }
-            } else if (Math.abs(targetSpeed - currentSpeed) > 0.4f) {
-                // Medium jump, e.g. 1x to 2x or 2x to 1x
-                if (targetSpeed > currentSpeed) listOf(1.5f, targetSpeed) else listOf(1.5f, targetSpeed)
-            } else {
-                listOf(targetSpeed)
-            }
-
-            steps.forEach { step ->
-                MPVLib.setPropertyDouble("speed", step.toDouble())
-                viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(step, false) }
-                delay(50) // Adjust delay for smoothness
+            var currentSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+            val step = if (targetSpeed > currentSpeed) 0.1f else -0.1f
+            
+            while (if (step > 0) currentSpeed < targetSpeed else currentSpeed > targetSpeed) {
+                currentSpeed += step
+                // Coerce to avoid overshooting significantly
+                if (step > 0 && currentSpeed > targetSpeed) currentSpeed = targetSpeed
+                if (step < 0 && currentSpeed < targetSpeed) currentSpeed = targetSpeed
+                
+                MPVLib.setPropertyDouble("speed", currentSpeed.toDouble())
+                viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(currentSpeed, false) }
+                delay(16) // ~60fps smooth ramp
             }
             MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
             viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
