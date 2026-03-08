@@ -309,8 +309,8 @@ object HomeScreen : Screen() {
         val scale by androidx.compose.animation.core.animateFloatAsState(
             targetValue = if (selected && animatedTransitions) 1.2f else 1f,
             animationSpec = androidx.compose.animation.core.tween(
-                durationMillis = 350,
-                easing = androidx.compose.animation.core.LinearOutSlowInEasing
+                durationMillis = 600,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
             ),
             label = "iconScale",
         )
