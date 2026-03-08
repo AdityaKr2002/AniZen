@@ -168,7 +168,7 @@ fun GestureHandler(
                                 PausedLongPressAction.Play2x -> {
                                     isLongPressing = true
                                     viewModel.unpause()
-                                    val targetSpeed = 2.0f
+                                    val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                     speedRampJob?.cancel()
                                     originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
                                     MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
