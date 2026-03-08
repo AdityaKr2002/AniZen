@@ -51,7 +51,9 @@ class UiPreferences(
     // SY -->
     fun bottomBarLabels() = preferenceStore.getBoolean("pref_show_bottom_bar_labels", true)
 
-    fun dynamicMangaTheme() = preferenceStore.getBoolean("pref_dynamic_manga_theme", true)
+    fun dynamicAnimeTheme() = preferenceStore.getBoolean("pref_dynamic_manga_theme", true)
+
+    fun dynamicPlayerTheme() = preferenceStore.getBoolean("pref_dynamic_player_theme", true)
 
     fun autoExpandAnimeDescription() = preferenceStore.getBoolean("pref_auto_expand_anime_description", false)
 

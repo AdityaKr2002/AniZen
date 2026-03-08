@@ -22,14 +22,14 @@ fun DynamicTachiyomiTheme(
     animate: Boolean = true,
     colorSeed: Int? = null,
     contrast: Double = 0.0,
+    enabled: Boolean = Injekt.get<UiPreferences>().dynamicAnimeTheme().collectAsState().value,
     content: @Composable () -> Unit,
 ) {
     val uiPreferences = Injekt.get<UiPreferences>()
     val isAmoled by uiPreferences.themeDarkAmoled().collectAsState()
     val isDark = isSystemInDarkTheme()
-    val isDynamicEnabled by uiPreferences.dynamicMangaTheme().collectAsState()
 
-    if (colorSeed != null && isDynamicEnabled) {
+    if (colorSeed != null && enabled) {
         val colorScheme = rememberDynamicColorScheme(colorSeed, isDark, isAmoled, contrast)
         MaterialTheme(
             colorScheme = colorScheme,

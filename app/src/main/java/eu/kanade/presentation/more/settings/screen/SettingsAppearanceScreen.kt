@@ -196,9 +196,14 @@ object SettingsAppearanceScreen : SearchableSettings {
                     ),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.dynamicMangaTheme(),
-                    title = "Dynamic Manga Theme",
-                    subtitle = "Adapts app colors to the current manga cover",
+                    pref = uiPreferences.dynamicAnimeTheme(),
+                    title = "Dynamic Anime Theme",
+                    subtitle = "Adapts app colors to the current anime cover",
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.dynamicPlayerTheme(),
+                    title = "Dynamic Player Theme",
+                    subtitle = "Adapts player colors to the current anime cover",
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.panoramaCover(),

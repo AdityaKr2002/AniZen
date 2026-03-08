@@ -59,6 +59,7 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.hippo.unifile.UniFile
 import eu.kanade.domain.connections.service.ConnectionsPreferences
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.theme.DynamicTachiyomiTheme
 import eu.kanade.presentation.theme.TachiyomiTheme
 import eu.kanade.tachiyomi.animesource.model.ChapterType
@@ -284,11 +285,16 @@ class PlayerActivity : BaseActivity() {
         castManager
         // <-- Cast
 
-        binding.controls.setContent {
+ binding.controls.setContent {
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val dynamicPlayerTheme by uiPreferences.dynamicPlayerTheme().collectAsState()
             val anime by viewModel.currentAnime.collectAsState()
             val vibrantColors by eu.kanade.tachiyomi.util.system.CoverColorObserver.vibrantColors.collectAsState()
             val vibrantColor = anime?.let { vibrantColors[it.id] ?: it.asAnimeCover().vibrantCoverColor }
-            DynamicTachiyomiTheme(colorSeed = vibrantColor) {
+            DynamicTachiyomiTheme(
+                colorSeed = vibrantColor,
+                enabled = dynamicPlayerTheme,
+            ) {
                 PlayerControls(
                     viewModel = viewModel,
                     castManager = castManager, // Pass the castManager instance
