@@ -172,7 +172,8 @@ fun GestureHandler(
                                     speedRampJob?.cancel()
                                     speedRampJob = scope.launch {
                                         val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                        val dur = 200L
+                                        originalSpeed = currentSpeed.toFloat()
+                                        val dur = 800L
                                         val startTime = System.currentTimeMillis()
                                         while (System.currentTimeMillis() - startTime < dur) {
                                             val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
@@ -193,7 +194,8 @@ fun GestureHandler(
                                 speedRampJob?.cancel()
                                 speedRampJob = scope.launch {
                                     val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    val dur = 200L
+                                    originalSpeed = currentSpeed.toFloat()
+                                    val dur = 800L
                                     val startTime = System.currentTimeMillis()
                                     while (System.currentTimeMillis() - startTime < dur) {
                                         val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
@@ -267,8 +269,9 @@ fun GestureHandler(
                         isLongPressing = false
                         speedRampJob?.cancel()
                         speedRampJob = scope.launch {
+                            delay(100) // breathing space
                             val currentSpeed = MPVLib.getPropertyDouble("speed")
-                            val dur = 200L
+                            val dur = 800L
                             val startTime = System.currentTimeMillis()
                             while (System.currentTimeMillis() - startTime < dur) {
                                 val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
