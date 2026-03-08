@@ -135,6 +135,31 @@ fun GestureHandler(
     var longPressJob by remember { mutableStateOf<Job?>(null) }
     var originalSpeed by remember { mutableFloatStateOf(1f) }
 
+    fun rampSpeed(targetSpeed: Float, onComplete: () -> Unit = {}) {
+        speedRampJob?.cancel()
+        speedRampJob = scope.launch {
+            val currentSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+            val steps = if (Math.abs(targetSpeed - currentSpeed) > 1f) {
+                // Large jump, e.g. 4x to 1x
+                listOf(3f, 2f, 1.5f, 1f).filter { if (targetSpeed < currentSpeed) it < currentSpeed && it >= targetSpeed else it > currentSpeed && it <= targetSpeed }
+            } else if (Math.abs(targetSpeed - currentSpeed) > 0.4f) {
+                // Medium jump, e.g. 1x to 2x or 2x to 1x
+                if (targetSpeed > currentSpeed) listOf(1.5f, targetSpeed) else listOf(1.5f, targetSpeed)
+            } else {
+                listOf(targetSpeed)
+            }
+
+            steps.forEach { step ->
+                MPVLib.setPropertyDouble("speed", step.toDouble())
+                viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(step, false) }
+                delay(50) // Adjust delay for smoothness
+            }
+            MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
+            viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
+            onComplete()
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -169,10 +194,8 @@ fun GestureHandler(
                                     isLongPressing = true
                                     viewModel.unpause()
                                     val targetSpeed = playerPreferences.playerSpeedLongPress().get()
-                                    speedRampJob?.cancel()
                                     originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-                                    MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
-                                    viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
+                                    rampSpeed(targetSpeed)
                                 }
                                 else -> {}
                             }
@@ -180,10 +203,8 @@ fun GestureHandler(
                             if (longPressAction == LongPressAction.Speed) {
                                 isLongPressing = true
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
-                                speedRampJob?.cancel()
                                 originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-                                MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
-                                viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
+                                rampSpeed(targetSpeed)
                             } else if (longPressAction == LongPressAction.Screenshot) {
                                 viewModel.sheetShown.update { Sheets.Screenshot }
                             }
@@ -245,12 +266,12 @@ fun GestureHandler(
                     if (isLongPressing) {
                         val wasPausedOriginally = viewModel.paused.value || (pausedLongPressAction == PausedLongPressAction.Play2x)
                         isLongPressing = false
-                        speedRampJob?.cancel()
-                        MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                        if (wasPausedOriginally) {
-                            viewModel.pause()
+                        rampSpeed(originalSpeed) {
+                            if (wasPausedOriginally) {
+                                viewModel.pause()
+                            }
+                            viewModel.playerUpdate.update { PlayerUpdates.None }
                         }
-                        viewModel.playerUpdate.update { PlayerUpdates.None }
                     } else if (up != null) {
                         val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
                             awaitFirstDown(requireUnconsumed = false)
