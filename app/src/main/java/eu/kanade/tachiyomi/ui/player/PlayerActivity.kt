@@ -50,6 +50,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.core.view.WindowCompat
@@ -290,7 +291,7 @@ class PlayerActivity : BaseActivity() {
 
  binding.controls.setContent {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val dynamicPlayerTheme by uiPreferences.dynamicPlayerTheme().collectAsState()
+            val dynamicPlayerTheme by uiPreferences.dynamicPlayerTheme().collectAsStatePref()
             val anime by viewModel.currentAnime.collectAsState()
             val vibrantColors by eu.kanade.tachiyomi.util.system.CoverColorObserver.vibrantColors.collectAsState()
             val vibrantColor = anime?.let { vibrantColors[it.id] ?: it.asAnimeCover().vibrantCoverColor }
