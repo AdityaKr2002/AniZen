@@ -136,6 +136,8 @@ object SettingsAppearanceScreen : SearchableSettings {
         val animeItemSpacingPref = uiPreferences.animeItemSpacing()
         val animeItemSpacing by animeItemSpacingPref.collectAsState()
 
+        val dynamicAnimeTheme by uiPreferences.dynamicAnimeTheme().collectAsState()
+
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_display),
             preferenceItems = persistentListOf(
@@ -200,53 +202,62 @@ object SettingsAppearanceScreen : SearchableSettings {
                     title = "Dynamic Anime Theme",
                     subtitle = "Adapts app colors to the current anime cover",
                 ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.dynamicPlayerTheme(),
-                    title = "Dynamic Player Theme",
-                    subtitle = "Adapts player colors to the current anime cover",
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.panoramaCover(),
-                    title = stringResource(KMR.strings.pref_panorama_cover),
-                    subtitle = stringResource(KMR.strings.pref_panorama_cover_summary),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.autoExpandAnimeDescription(),
-                    title = "Auto-expand details",
-                    subtitle = "Expand anime description by default",
-                ),
-                Preference.PreferenceItem.MultiSelectListPreference(
-                    pref = uiPreferences.containerStyles(),
-                    title = "Container Style",
-                    subtitle = "Enable rounded containers for selected screens",
-                    entries = mapOf(
-                        ContainerStyle.LIBRARY to "Library",
-                        ContainerStyle.UPDATES to "Updates",
-                        ContainerStyle.HISTORY to "History",
-                        ContainerStyle.DETAILS to "Details (Seasons)",
-                        ContainerStyle.SETTINGS to "Settings",
-                        ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
-                    ).toImmutableMap(),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showSeasonsSection(),
-                    title = "Show seasons section",
-                    subtitle = "Show series seasons in anime details",
-                ),
-                Preference.PreferenceItem.SliderPreference(
-                    value = animeItemSpacing,
-                    min = 0,
-                    max = 80,
-                    title = "Anime action row spacing",
-                    subtitle = "Adjust vertical spacing between cover and action buttons",
-                    onValueChangeFinished = {
-                        animeItemSpacingPref.set(it)
-                    },
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.animatedTransitions(),
-                    title = stringResource(KMR.strings.pref_animated_transitions),
-                    subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
+            ).run {
+                if (dynamicAnimeTheme) {
+                    this.add(
+                        Preference.PreferenceItem.SwitchPreference(
+                            pref = uiPreferences.dynamicPlayerTheme(),
+                            title = "Dynamic Player Theme",
+                            subtitle = "Adapts player colors to the current anime cover",
+                        ),
+                    )
+                }
+                this
+            }.addAll(
+                persistentListOf(
+                    Preference.PreferenceItem.SwitchPreference(
+                        pref = uiPreferences.panoramaCover(),
+                        title = stringResource(KMR.strings.pref_panorama_cover),
+                        subtitle = stringResource(KMR.strings.pref_panorama_cover_summary),
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        pref = uiPreferences.autoExpandAnimeDescription(),
+                        title = "Auto-expand details",
+                        subtitle = "Expand anime description by default",
+                    ),
+                    Preference.PreferenceItem.MultiSelectListPreference(
+                        pref = uiPreferences.containerStyles(),
+                        title = "Container Style",
+                        subtitle = "Enable rounded containers for selected screens",
+                        entries = mapOf(
+                            ContainerStyle.LIBRARY to "Library",
+                            ContainerStyle.UPDATES to "Updates",
+                            ContainerStyle.HISTORY to "History",
+                            ContainerStyle.DETAILS to "Details (Seasons)",
+                            ContainerStyle.SETTINGS to "Settings",
+                            ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
+                        ).toImmutableMap(),
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        pref = uiPreferences.showSeasonsSection(),
+                        title = "Show seasons section",
+                        subtitle = "Show series seasons in anime details",
+                    ),
+                    Preference.PreferenceItem.SliderPreference(
+                        value = animeItemSpacing,
+                        min = 0,
+                        max = 80,
+                        title = "Anime action row spacing",
+                        subtitle = "Adjust vertical spacing between cover and action buttons",
+                        onValueChangeFinished = {
+                            animeItemSpacingPref.set(it)
+                        },
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        pref = uiPreferences.animatedTransitions(),
+                        title = stringResource(KMR.strings.pref_animated_transitions),
+                        subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
+                    ),
                 ),
             ),
         )
