@@ -139,7 +139,7 @@ object SettingsAppearanceScreen : SearchableSettings {
 
         val dynamicAnimeTheme by uiPreferences.dynamicAnimeTheme().collectAsState()
 
-        val preferenceItems = mutableListOf(
+        val preferenceItems = mutableListOf<Preference.PreferenceItem<out Any>>(
             Preference.PreferenceItem.TextPreference(
                 title = stringResource(MR.strings.pref_app_language),
                 onClick = { navigator.push(AppLanguageScreen()) },
@@ -214,7 +214,7 @@ object SettingsAppearanceScreen : SearchableSettings {
         }
 
         preferenceItems.addAll(
-            listOf(
+            listOf<Preference.PreferenceItem<out Any>>(
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.panoramaCover(),
                     title = stringResource(KMR.strings.pref_panorama_cover),
