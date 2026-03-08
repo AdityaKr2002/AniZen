@@ -170,19 +170,8 @@ fun GestureHandler(
                                     viewModel.unpause()
                                     val targetSpeed = 2.0f
                                     speedRampJob?.cancel()
-                                    speedRampJob = scope.launch {
-                                        val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                        originalSpeed = currentSpeed.toFloat()
-                                        val dur = 1200L
-                                        val startTime = System.currentTimeMillis()
-                                        while (System.currentTimeMillis() - startTime < dur) {
-                                            val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                            val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
-                                            MPVLib.setPropertyDouble("speed", s)
-                                            delay(32)
-                                        }
-                                        MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
-                                    }
+                                    originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+                                    MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
                                     viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
                                 }
                                 else -> {}
@@ -192,19 +181,8 @@ fun GestureHandler(
                                 isLongPressing = true
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                 speedRampJob?.cancel()
-                                speedRampJob = scope.launch {
-                                    val currentSpeed = MPVLib.getPropertyDouble("speed")
-                                    originalSpeed = currentSpeed.toFloat()
-                                    val dur = 1200L
-                                    val startTime = System.currentTimeMillis()
-                                    while (System.currentTimeMillis() - startTime < dur) {
-                                        val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                        val s = currentSpeed + (targetSpeed.toDouble() - currentSpeed) * progress
-                                        MPVLib.setPropertyDouble("speed", s)
-                                        delay(32)
-                                    }
-                                    MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
-                                }
+                                originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+                                MPVLib.setPropertyDouble("speed", targetSpeed.toDouble())
                                 viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(targetSpeed, false) }
                             } else if (longPressAction == LongPressAction.Screenshot) {
                                 viewModel.sheetShown.update { Sheets.Screenshot }
@@ -268,23 +246,11 @@ fun GestureHandler(
                         val wasPausedOriginally = viewModel.paused.value || (pausedLongPressAction == PausedLongPressAction.Play2x)
                         isLongPressing = false
                         speedRampJob?.cancel()
-                        speedRampJob = scope.launch {
-                            delay(200) // breathing space
-                            val currentSpeed = MPVLib.getPropertyDouble("speed")
-                            val dur = 1200L
-                            val startTime = System.currentTimeMillis()
-                            while (System.currentTimeMillis() - startTime < dur) {
-                                val progress = (System.currentTimeMillis() - startTime).toFloat() / dur
-                                val s = currentSpeed + (originalSpeed.toDouble() - currentSpeed) * progress
-                                MPVLib.setPropertyDouble("speed", s)
-                                delay(32)
-                            }
-                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
-                            if (wasPausedOriginally) {
-                                viewModel.pause()
-                            }
-                            viewModel.playerUpdate.update { PlayerUpdates.None }
+                        MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
+                        if (wasPausedOriginally) {
+                            viewModel.pause()
                         }
+                        viewModel.playerUpdate.update { PlayerUpdates.None }
                     } else if (up != null) {
                         val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
                             awaitFirstDown(requireUnconsumed = false)
