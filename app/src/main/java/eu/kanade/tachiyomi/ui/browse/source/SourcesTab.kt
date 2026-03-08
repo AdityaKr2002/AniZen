@@ -39,98 +39,100 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun Screen.sourcesTab(): TabContent {
     val navigator = LocalNavigator.currentOrThrow
     val screenModel = rememberScreenModel { SourcesScreenModel() }
-    val state by screenModel.state.collectAsState()
 
-    return TabContent(
-        titleRes = MR.strings.label_sources,
-        actions = persistentListOf(
-            AppBar.Action(
-                title = stringResource(MR.strings.action_global_search),
-                icon = Icons.Outlined.TravelExplore,
-                onClick = { navigator.push(GlobalSearchScreen()) },
+    return remember {
+        TabContent(
+            titleRes = MR.strings.label_sources,
+            actions = persistentListOf(
+                AppBar.Action(
+                    title = stringResource(MR.strings.action_global_search),
+                    icon = Icons.Outlined.TravelExplore,
+                    onClick = { navigator.push(GlobalSearchScreen()) },
+                ),
+                AppBar.Action(
+                    title = stringResource(MR.strings.action_filter),
+                    icon = Icons.Outlined.FilterList,
+                    onClick = { navigator.push(SourcesFilterScreen()) },
+                ),
             ),
-            AppBar.Action(
-                title = stringResource(MR.strings.action_filter),
-                icon = Icons.Outlined.FilterList,
-                onClick = { navigator.push(SourcesFilterScreen()) },
-            ),
-        ),
-        content = { contentPadding, snackbarHostState ->
-            SourcesScreen(
-                state = state,
-                contentPadding = contentPadding,
-                onClickItem = { source, listing ->
-                    navigator.push(BrowseSourceScreen(source.id, listing.query))
-                },
-                onClickPin = screenModel::togglePin,
-                onLongClickItem = screenModel::showSourceDialog,
-                onChangeSearchQuery = screenModel::search,
-                onToggleNsfwOnly = screenModel::toggleNsfwOnly,
-            )
+            content = { contentPadding, snackbarHostState ->
+                val state by screenModel.state.collectAsState()
+                SourcesScreen(
+                    state = state,
+                    contentPadding = contentPadding,
+                    onClickItem = { source, listing ->
+                        navigator.push(BrowseSourceScreen(source.id, listing.query))
+                    },
+                    onClickPin = screenModel::togglePin,
+                    onLongClickItem = screenModel::showSourceDialog,
+                    onChangeSearchQuery = screenModel::search,
+                    onToggleNsfwOnly = screenModel::toggleNsfwOnly,
+                )
 
-            when (val dialog = state.dialog) {
-                is SourcesScreenModel.Dialog.SourceOptions -> {
-                    val source = dialog.source
-                    SourceOptionsDialog(
-                        source = source,
-                        onClickPin = {
-                            screenModel.togglePin(source)
-                            screenModel.closeDialog()
-                        },
-                        onClickDisable = {
-                            screenModel.toggleSource(source)
-                            screenModel.closeDialog()
-                        },
-                        onClickAddToFeed = {
-                            screenModel.onAddToFeedClicked(source)
-                        },
-                        onDismiss = screenModel::closeDialog,
-                    )
-                }
-                is SourcesScreenModel.Dialog.FeedCategorySelect -> {
-                    val source = dialog.source
-                    AlertDialog(
-                        onDismissRequest = screenModel::closeDialog,
-                        title = { Text(text = "Add to Feed Category") },
-                        text = {
-                            val dialogId = remember(source.id) { source.id }
-                            LazyColumn {
-                                items(
-                                    items = state.categories,
-                                    key = { "source-category-$dialogId-${it.id}" }
-                                ) { category ->
-                                    ListItem(
-                                        headlineContent = { Text(category.name) },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                screenModel.addToFeed(source, category.id)
-                                                screenModel.closeDialog()
-                                            }
-                                    )
+                when (val dialog = state.dialog) {
+                    is SourcesScreenModel.Dialog.SourceOptions -> {
+                        val source = dialog.source
+                        SourceOptionsDialog(
+                            source = source,
+                            onClickPin = {
+                                screenModel.togglePin(source)
+                                screenModel.closeDialog()
+                            },
+                            onClickDisable = {
+                                screenModel.toggleSource(source)
+                                screenModel.closeDialog()
+                            },
+                            onClickAddToFeed = {
+                                screenModel.onAddToFeedClicked(source)
+                            },
+                            onDismiss = screenModel::closeDialog,
+                        )
+                    }
+                    is SourcesScreenModel.Dialog.FeedCategorySelect -> {
+                        val source = dialog.source
+                        AlertDialog(
+                            onDismissRequest = screenModel::closeDialog,
+                            title = { Text(text = "Add to Feed Category") },
+                            text = {
+                                val dialogId = remember(source.id) { source.id }
+                                LazyColumn {
+                                    items(
+                                        items = state.categories,
+                                        key = { "source-category-$dialogId-${it.id}" }
+                                    ) { category ->
+                                        ListItem(
+                                            headlineContent = { Text(category.name) },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    screenModel.addToFeed(source, category.id)
+                                                    screenModel.closeDialog()
+                                                }
+                                        )
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = screenModel::closeDialog) {
+                                    Text(text = stringResource(MR.strings.action_cancel))
                                 }
                             }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = screenModel::closeDialog) {
-                                Text(text = stringResource(MR.strings.action_cancel))
-                            }
-                        }
-                    )
+                        )
+                    }
+                    null -> {}
                 }
-                null -> {}
-            }
 
-            val internalErrString = stringResource(MR.strings.internal_error)
-            LaunchedEffect(Unit) {
-                screenModel.events.collectLatest { event ->
-                    when (event) {
-                        SourcesScreenModel.Event.FailedFetchingSources -> {
-                            launch { snackbarHostState.showSnackbar(internalErrString) }
+                val internalErrString = stringResource(MR.strings.internal_error)
+                LaunchedEffect(Unit) {
+                    screenModel.events.collectLatest { event ->
+                        when (event) {
+                            SourcesScreenModel.Event.FailedFetchingSources -> {
+                                launch { snackbarHostState.showSnackbar(internalErrString) }
+                            }
                         }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
 }

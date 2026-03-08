@@ -24,6 +24,7 @@ import eu.kanade.tachiyomi.ui.browse.extension.details.ExtensionDetailsScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.map
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -34,89 +35,93 @@ fun extensionsTab(
     val navigator = LocalNavigator.currentOrThrow
     val context = LocalContext.current
 
-    val state by extensionsScreenModel.state.collectAsState()
-    var privateExtensionToUninstall by remember { mutableStateOf<Extension?>(null) }
+    val updates by extensionsScreenModel.state.map { it.updates }.collectAsState(0)
 
-    return TabContent(
-        titleRes = MR.strings.label_extensions,
-        badgeNumber = state.updates.takeIf { it > 0 },
-        searchEnabled = true,
-        actions = persistentListOf(
-            AppBar.Action(
-                title = "NSFW Only",
-                onClick = { extensionsScreenModel.toggleNsfwOnly() },
-                iconContent = {
-                    NsfwIcon(
-                        color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                    )
-                }
-            ),
-            AppBar.OverflowAction(
-                title = stringResource(MR.strings.action_filter),
-                onClick = {
-                    navigator.push(
-                        ExtensionFilterScreen(),
-                    )
-                },
-            ),
-            AppBar.OverflowAction(
-                title = stringResource(MR.strings.label_extension_repos),
-                onClick = { navigator.push(ExtensionReposScreen()) },
-            ),
-        ),
-        content = { contentPadding, _ ->
-            ExtensionScreen(
-                state = state,
-                contentPadding = contentPadding,
-                searchQuery = state.searchQuery,
-                onLongClickItem = { extension ->
-                    when (extension) {
-                        is Extension.Available -> extensionsScreenModel.installExtension(
-                            extension,
+    return remember(updates) {
+        TabContent(
+            titleRes = MR.strings.label_extensions,
+            badgeNumber = updates.takeIf { it > 0 },
+            searchEnabled = true,
+            actions = persistentListOf(
+                AppBar.Action(
+                    title = "NSFW Only",
+                    onClick = { extensionsScreenModel.toggleNsfwOnly() },
+                    iconContent = {
+                        val state by extensionsScreenModel.state.collectAsState()
+                        NsfwIcon(
+                            color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
-                        else -> {
-                            if (context.isPackageInstalled(extension.pkgName)) {
-                                extensionsScreenModel.uninstallExtension(extension)
-                            } else {
-                                privateExtensionToUninstall = extension
+                    }
+                ),
+                AppBar.OverflowAction(
+                    title = stringResource(MR.strings.action_filter),
+                    onClick = {
+                        navigator.push(
+                            ExtensionFilterScreen(),
+                        )
+                    },
+                ),
+                AppBar.OverflowAction(
+                    title = stringResource(MR.strings.label_extension_repos),
+                    onClick = { navigator.push(ExtensionReposScreen()) },
+                ),
+            ),
+            content = { contentPadding, _ ->
+                val state by extensionsScreenModel.state.collectAsState()
+                var privateExtensionToUninstall by remember { mutableStateOf<Extension?>(null) }
+                ExtensionScreen(
+                    state = state,
+                    contentPadding = contentPadding,
+                    searchQuery = state.searchQuery,
+                    onLongClickItem = { extension ->
+                        when (extension) {
+                            is Extension.Available -> extensionsScreenModel.installExtension(
+                                extension,
+                            )
+                            else -> {
+                                if (context.isPackageInstalled(extension.pkgName)) {
+                                    extensionsScreenModel.uninstallExtension(extension)
+                                } else {
+                                    privateExtensionToUninstall = extension
+                                }
                             }
                         }
-                    }
-                },
-                onClickItemCancel = extensionsScreenModel::cancelInstallUpdateExtension,
-                onClickUpdateAll = extensionsScreenModel::updateAllExtensions,
-                onOpenWebView = { extension ->
-                    extension.sources.getOrNull(0)?.let {
-                        navigator.push(
-                            WebViewScreen(
-                                url = it.baseUrl,
-                                initialTitle = it.name,
-                                sourceId = it.id,
-                            ),
-                        )
-                    }
-                },
-                onInstallExtension = extensionsScreenModel::installExtension,
-                onOpenExtension = { navigator.push(ExtensionDetailsScreen(it.pkgName)) },
-                onTrustExtension = { extensionsScreenModel.trustExtension(it) },
-                onUninstallExtension = { extensionsScreenModel.uninstallExtension(it) },
-                onUpdateExtension = extensionsScreenModel::updateExtension,
-                onRefresh = extensionsScreenModel::findAvailableExtensions,
-            )
-
-            privateExtensionToUninstall?.let { extension ->
-                ExtensionUninstallConfirmation(
-                    extensionName = extension.name,
-                    onClickConfirm = {
-                        extensionsScreenModel.uninstallExtension(extension)
                     },
-                    onDismissRequest = {
-                        privateExtensionToUninstall = null
+                    onClickItemCancel = extensionsScreenModel::cancelInstallUpdateExtension,
+                    onClickUpdateAll = extensionsScreenModel::updateAllExtensions,
+                    onOpenWebView = { extension ->
+                        extension.sources.getOrNull(0)?.let {
+                            navigator.push(
+                                WebViewScreen(
+                                    url = it.baseUrl,
+                                    initialTitle = it.name,
+                                    sourceId = it.id,
+                                ),
+                            )
+                        }
                     },
+                    onInstallExtension = extensionsScreenModel::installExtension,
+                    onOpenExtension = { navigator.push(ExtensionDetailsScreen(it.pkgName)) },
+                    onTrustExtension = { extensionsScreenModel.trustExtension(it) },
+                    onUninstallExtension = { extensionsScreenModel.uninstallExtension(it) },
+                    onUpdateExtension = extensionsScreenModel::updateExtension,
+                    onRefresh = extensionsScreenModel::findAvailableExtensions,
                 )
-            }
-        },
-    )
+
+                privateExtensionToUninstall?.let { extension ->
+                    ExtensionUninstallConfirmation(
+                        extensionName = extension.name,
+                        onClickConfirm = {
+                            extensionsScreenModel.uninstallExtension(extension)
+                        },
+                        onDismissRequest = {
+                            privateExtensionToUninstall = null
+                        },
+                    )
+                }
+            },
+        )
+    }
 }
 
 @Composable

@@ -23,29 +23,31 @@ fun Screen.migrateSourceTab(): TabContent {
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val screenModel = rememberScreenModel { MigrateSourceScreenModel() }
-    val state by screenModel.state.collectAsState()
 
-    return TabContent(
-        titleRes = MR.strings.label_migration,
-        actions = persistentListOf(
-            AppBar.Action(
-                title = stringResource(MR.strings.migration_help_guide),
-                icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                onClick = {
-                    uriHandler.openUri("https://aniyomi.org/help/guides/source-migration/")
-                },
+    return remember {
+        TabContent(
+            titleRes = MR.strings.label_migration,
+            actions = persistentListOf(
+                AppBar.Action(
+                    title = stringResource(MR.strings.migration_help_guide),
+                    icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                    onClick = {
+                        uriHandler.openUri("https://aniyomi.org/help/guides/source-migration/")
+                    },
+                ),
             ),
-        ),
-        content = { contentPadding, _ ->
-            MigrateSourceScreen(
-                state = state,
-                contentPadding = contentPadding,
-                onClickItem = { source ->
-                    navigator.push(MigrateAnimeScreen(source.id))
-                },
-                onToggleSortingDirection = screenModel::toggleSortingDirection,
-                onToggleSortingMode = screenModel::toggleSortingMode,
-            )
-        },
-    )
+            content = { contentPadding, _ ->
+                val state by screenModel.state.collectAsState()
+                MigrateSourceScreen(
+                    state = state,
+                    contentPadding = contentPadding,
+                    onClickItem = { source ->
+                        navigator.push(MigrateAnimeScreen(source.id))
+                    },
+                    onToggleSortingDirection = screenModel::toggleSortingDirection,
+                    onToggleSortingMode = screenModel::toggleSortingMode,
+                )
+            },
+        )
+    }
 }

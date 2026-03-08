@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemsIndexed
 import eu.kanade.presentation.library.components.AnimeListItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import tachiyomi.domain.anime.model.Anime
@@ -39,13 +40,12 @@ fun BrowseSourceList(
                 }
             }
 
-            items(
-                count = animeList.itemCount,
-                contentType = { index ->
-                    if (animeList.peek(index) != null) "anime" else "placeholder"
-                },
-            ) { index ->
-                val anime = animeList[index] ?: return@items
+            itemsIndexed(
+                items = animeList,
+                key = { _, anime -> anime.id },
+                contentType = { _, _ -> "anime" },
+            ) { index, anime ->
+                if (anime == null) return@itemsIndexed
                 onBatchIncrement(index)
                 val isFavorite = remember(anime.id, favoriteIds) { anime.id in favoriteIds }
                 BrowseSourceListItem(
