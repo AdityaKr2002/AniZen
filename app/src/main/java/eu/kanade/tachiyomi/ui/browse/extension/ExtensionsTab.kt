@@ -36,8 +36,10 @@ fun extensionsTab(
     val context = LocalContext.current
 
     val updates by extensionsScreenModel.state.map { it.updates }.collectAsState(0)
+    val actionFilter = stringResource(MR.strings.action_filter)
+    val labelExtensionRepos = stringResource(MR.strings.label_extension_repos)
 
-    return remember(updates) {
+    return remember(updates, actionFilter, labelExtensionRepos) {
         TabContent(
             titleRes = MR.strings.label_extensions,
             badgeNumber = updates.takeIf { it > 0 },
@@ -47,14 +49,14 @@ fun extensionsTab(
                     title = "NSFW Only",
                     onClick = { extensionsScreenModel.toggleNsfwOnly() },
                     iconContent = {
-                        val state by extensionsScreenModel.state.collectAsState()
+                        val nsfwOnly by extensionsScreenModel.state.map { it.nsfwOnly }.collectAsState(false)
                         NsfwIcon(
-                            color = if (state.nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            color = if (nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                     }
                 ),
                 AppBar.OverflowAction(
-                    title = stringResource(MR.strings.action_filter),
+                    title = actionFilter,
                     onClick = {
                         navigator.push(
                             ExtensionFilterScreen(),
@@ -62,7 +64,7 @@ fun extensionsTab(
                     },
                 ),
                 AppBar.OverflowAction(
-                    title = stringResource(MR.strings.label_extension_repos),
+                    title = labelExtensionRepos,
                     onClick = { navigator.push(ExtensionReposScreen()) },
                 ),
             ),

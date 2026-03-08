@@ -40,17 +40,20 @@ fun Screen.sourcesTab(): TabContent {
     val navigator = LocalNavigator.currentOrThrow
     val screenModel = rememberScreenModel { SourcesScreenModel() }
 
-    return remember {
+    val globalSearch = stringResource(MR.strings.action_global_search)
+    val actionFilter = stringResource(MR.strings.action_filter)
+
+    return remember(globalSearch, actionFilter) {
         TabContent(
             titleRes = MR.strings.label_sources,
             actions = persistentListOf(
                 AppBar.Action(
-                    title = stringResource(MR.strings.action_global_search),
+                    title = globalSearch,
                     icon = Icons.Outlined.TravelExplore,
                     onClick = { navigator.push(GlobalSearchScreen()) },
                 ),
                 AppBar.Action(
-                    title = stringResource(MR.strings.action_filter),
+                    title = actionFilter,
                     icon = Icons.Outlined.FilterList,
                     onClick = { navigator.push(SourcesFilterScreen()) },
                 ),

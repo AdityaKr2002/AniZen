@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalUriHandler
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -24,12 +25,13 @@ fun Screen.migrateSourceTab(): TabContent {
     val navigator = LocalNavigator.currentOrThrow
     val screenModel = rememberScreenModel { MigrateSourceScreenModel() }
 
-    return remember {
+    val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
+    return remember(migrationHelpGuide) {
         TabContent(
             titleRes = MR.strings.label_migration,
             actions = persistentListOf(
                 AppBar.Action(
-                    title = stringResource(MR.strings.migration_help_guide),
+                    title = migrationHelpGuide,
                     icon = Icons.AutoMirrored.Outlined.HelpOutline,
                     onClick = {
                         uriHandler.openUri("https://aniyomi.org/help/guides/source-migration/")
