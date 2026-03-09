@@ -70,3 +70,24 @@ jobs:
           name: AniZen-Preview-${{ env.TAG }}
           path: app/build/outputs/apk/preview/*.apk
           retention-days: 7
+
+      - name: Create Release in Preview Repo
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: salmanbappi/anizen-preview
+          token: ${{ secrets.GH_PAT || github.token }}
+          tag_name: ${{ env.TAG }}
+          name: AniZen Preview ${{ env.TAG }}
+          body: |
+            ### AniZen Preview Build (${{ env.TAG }})
+            
+            This is an automated preview build for testing purposes.
+            
+            **Version**: ${{ env.VERSION }}
+            **Revision**: ${{ env.COMMIT_COUNT }}
+            
+            ---
+            *Built from branch `preview`*
+          files: app/build/outputs/apk/preview/*.apk
+          prerelease: true
+          make_latest: true
