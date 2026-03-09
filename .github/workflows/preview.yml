@@ -45,8 +45,8 @@ jobs:
           echo "VERSION=$CURRENT_VN" >> $GITHUB_ENV
           echo "CURRENT_VN=$CURRENT_VN"
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
+      - name: Build Preview APK
+        run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -55,7 +55,7 @@ jobs:
       - name: Rename APK
         run: |
           VERSION="${{ env.VERSION }}"
-          cd app/build/outputs/apk/release/
+          cd app/build/outputs/apk/preview/
           find . -name "*universal*" -delete
           for f in *arm64-v8a*.apk; do
             mv "$f" "AniZen-v$VERSION-preview-$f"
@@ -65,5 +65,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-v${{ env.VERSION }}
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/preview/*.apk
           retention-days: 7

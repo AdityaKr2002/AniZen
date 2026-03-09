@@ -148,7 +148,7 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
             applicationIdSuffix = ".beta"
 
             versionNameSuffix = debug.versionNameSuffix
-            signingConfig = debug.signingConfig
+            signingConfig = release.signingConfig
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
 
