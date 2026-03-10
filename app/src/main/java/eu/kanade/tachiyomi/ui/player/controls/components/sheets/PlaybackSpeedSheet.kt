@@ -67,7 +67,6 @@ fun PlaybackSpeedSheet(
 ) {
     val preferences = remember { Injekt.get<PlayerPreferences>() }
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
-    val sheetId = remember { Any().hashCode() }
     PlayerSheet(onDismissRequest = onDismissRequest) {
         Column(
             modifier
@@ -102,7 +101,7 @@ fun PlaybackSpeedSheet(
                 ) {
                     items(
                         items = playbackSpeedPresets.map { it.toFloat() }.distinct().sorted(),
-                        key = { "speed-$sheetId-$it" },
+                        key = { "speed-$it" },
                     ) {
                         InputChip(
                             selected = speed == it,
@@ -166,7 +165,7 @@ fun PlaybackSpeedSheet(
                 ) {
                     items(
                         items = longPressSpeedPresets.map { it.toFloat() }.distinct().sorted(),
-                        key = { "lp-speed-$sheetId-$it" },
+                        key = { "lp-speed-$it" },
                     ) {
                         InputChip(
                             selected = longPressSpeed == it,

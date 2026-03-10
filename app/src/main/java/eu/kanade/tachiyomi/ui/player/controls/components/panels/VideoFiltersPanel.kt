@@ -94,7 +94,6 @@ fun VideoFiltersPanel(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val panelId = remember { Any().hashCode() }
     ConstraintLayout(
         modifier = modifier
             .fillMaxSize()

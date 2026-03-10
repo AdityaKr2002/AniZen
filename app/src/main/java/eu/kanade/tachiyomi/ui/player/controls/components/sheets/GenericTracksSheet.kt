@@ -57,18 +57,17 @@ fun <T> GenericTracksSheet(
     track: @Composable (T) -> Unit = {},
     footer: @Composable () -> Unit = {},
 ) {
-    val sheetId = remember { Any().hashCode() }
     PlayerSheet(onDismissRequest, dismissEvent = dismissEvent) {
         Column(modifier) {
             header()
             LazyColumn {
                 itemsIndexed(
                     items = tracks,
-                    key = { index, it -> "track-$sheetId-$index-${it.hashCode()}" }
+                    key = { index, _ -> "track-$index" }
                 ) { _, it ->
                     track(it)
                 }
-                item(key = "footer-$sheetId") {
+                item(key = "footer") {
                     footer()
                 }
             }
