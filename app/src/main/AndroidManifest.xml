@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" >
 
-    <uses-sdk tools:overrideLibrary="rikka.shizuku.provider, dev.chrisbanes.haze, androidx.compose.animation.graphics, androidx.compose.animation.core" />
+    <uses-sdk tools:overrideLibrary="rikka.shizuku.provider, dev.chrisbanes.haze, androidx.compose.animation.graphics, androidx.compose.animation.core, androidx.compose.animation, androidx.compose.foundation, androidx.compose.ui, androidx.compose.material3, androidx.compose.runtime, androidx.activity.compose" />
 
     <!-- Android TV -->
    <uses-feature android:name="android.software.leanback" android:required="false" />
