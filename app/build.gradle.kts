@@ -130,8 +130,6 @@ defaultConfig {
             initWith(release)
 
             applicationIdSuffix = ".rt"
-            isMinifyEnabled = false
-            isShrinkResources = false
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
@@ -144,9 +142,6 @@ defaultConfig {
         }
         create("preview") {
             initWith(release)
-
-            isMinifyEnabled = false
-            isShrinkResources = false
 
             applicationIdSuffix = ".beta"
 
