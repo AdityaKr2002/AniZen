@@ -100,8 +100,10 @@ defaultConfig {
     buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
     buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
 
-    minSdk = 26
-    targetSdk = 36        buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
+        minSdk = 21
+        targetSdk = 36
+
+        buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
