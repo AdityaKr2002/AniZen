@@ -29,7 +29,8 @@
         androidx.fragment,
         androidx.lifecycle.runtime.ktx,
         androidx.lifecycle.viewmodel.compose,
-        androidx.lifecycle.runtime.compose" />
+        androidx.lifecycle.runtime.compose,
+        androidx.navigationevent" />
 
     <!-- Android TV -->
    <uses-feature android:name="android.software.leanback" android:required="false" />
