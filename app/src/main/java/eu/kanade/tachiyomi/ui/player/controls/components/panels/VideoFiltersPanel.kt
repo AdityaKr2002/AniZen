@@ -157,7 +157,6 @@ fun VideoFiltersPanel(
 fun FilterPresetsCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     var isExpanded by remember { mutableStateOf(false) }
-    val panelId = remember { Any().hashCode() }
 
     // Collect current values for matching
     val brightness by decoderPreferences.brightnessFilter().collectAsState()
@@ -197,7 +196,7 @@ fun FilterPresetsCard() {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 VideoFilterTheme.entries.forEach { theme ->
-                    key("presets-$panelId-${theme.name}") {
+                    key("preset-${theme.name}") {
                         InputChip(
                             selected = currentPreset == theme,
                             onClick = {
@@ -228,7 +227,6 @@ fun FilterPresetsCard() {
 fun FiltersCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     var isExpanded by remember { mutableStateOf(true) }
-    val panelId = remember { Any().hashCode() }
 
     ExpandableCard(
         isExpanded = isExpanded,
@@ -283,7 +281,7 @@ fun FiltersCard() {
             }
 
             VideoFilters.entries.forEach { filter ->
-                key("filters-$panelId-${filter.name}") {
+                key("filter-${filter.name}") {
                     val value by filter.preference(decoderPreferences).collectAsState()
                     SliderItem(
                         label = stringResource(filter.titleRes),
@@ -307,7 +305,6 @@ fun DebandCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     val debandMode by decoderPreferences.videoDebanding().collectAsState()
     var isExpanded by remember { mutableStateOf(false) }
-    val panelId = remember { Any().hashCode() }
 
     ExpandableCard(
         isExpanded = isExpanded,
@@ -329,7 +326,7 @@ fun DebandCard() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
-                    key("deband-mode-$panelId-${mode.name}") {
+                    key("deband-mode-${mode.name}") {
                         val isSelected = debandMode == mode
                         IconToggleButton(
                             checked = isSelected,
@@ -361,7 +358,7 @@ fun DebandCard() {
             }
 
             DebandSettings.entries.forEach { setting ->
-                key("deband-setting-$panelId-${setting.name}") {
+                key("deband-setting-${setting.name}") {
                     val value by setting.preference(decoderPreferences).collectAsState()
                     SliderItem(
                         label = stringResource(setting.titleRes),
@@ -381,7 +378,7 @@ fun DebandCard() {
 }
 
 @Composable
-fun Anime4KCard(panelId: Int = 0) {
+fun Anime4KCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     val anime4kManager = remember { Injekt.get<Anime4KManager>() }
     val enableAnime4K by decoderPreferences.enableAnime4K().collectAsState()
@@ -435,7 +432,7 @@ fun Anime4KCard(panelId: Int = 0) {
                 ) {
                     itemsIndexed(
                         items = Anime4KManager.Mode.entries,
-                        key = { index, it -> "anime4k-$panelId-mode-$index-${it.name}" }
+                        key = { _, it -> "anime4k-mode-${it.name}" }
                     ) { _, mode ->
                         if (mode == Anime4KManager.Mode.OFF) return@itemsIndexed
                         InputChip(
@@ -458,7 +455,7 @@ fun Anime4KCard(panelId: Int = 0) {
                 ) {
                     itemsIndexed(
                         items = Anime4KManager.Quality.entries,
-                        key = { index, it -> "anime4k-$panelId-quality-$index-${it.name}" }
+                        key = { _, it -> "anime4k-quality-${it.name}" }
                     ) { _, quality ->
                         val label = when (quality) {
                             Anime4KManager.Quality.FAST -> stringResource(MR.strings.anime4k_quality_fast)
