@@ -214,12 +214,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
         MPVLib.setOptionString("cookies", "yes")
         MPVLib.setOptionString("cache-on-disk", "no")
-        MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-secs", "30")
 
         // Limit demuxer cache since the defaults are too high for mobile devices
-        // Increased for smoother seeking/skipping and faster initial buffering
-        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 256 else 128
+        // Increased for smoother seeking/skipping
+        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 128 else 64
         MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
         MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
         MPVLib.setOptionString("hr-seek", "default")

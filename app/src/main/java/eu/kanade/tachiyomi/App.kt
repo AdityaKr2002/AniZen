@@ -258,8 +258,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             allowRgb565(DeviceUtil.isLowRamDevice(this@App))
             if (networkPreferences.verboseLogging().get()) logger(DebugLogger())
 
-            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(4))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(4)) // Optimized for mid-range CPU cores
+            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(12))
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(12)) // Optimized for modern multi-core CPUs
         }
             .build()
     }
