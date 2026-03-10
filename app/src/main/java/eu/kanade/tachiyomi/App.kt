@@ -260,8 +260,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
             fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(12))
             decoderCoroutineContext(Dispatchers.IO.limitedParallelism(12)) // Optimized for modern multi-core CPUs
-            }
-            .build()
+        }.build()
     }
 
     override fun onStart(owner: LifecycleOwner) {
