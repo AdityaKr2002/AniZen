@@ -146,7 +146,7 @@ fun VideoFiltersPanel(
                 FilterPresetsCard()
                 FiltersCard()
                 DebandCard()
-                Anime4KCard(panelId)
+                Anime4KCard()
             }
         }
     }
