@@ -211,7 +211,7 @@ internal class AppUpdateNotifier(private val context: Context) {
         with(notificationBuilder) {
             setContentTitle(context.stringResource(KMR.strings.update_completed))
             setContentText(context.stringResource(MR.strings.updated_version, BuildConfig.VERSION_NAME))
-            setSmallIcon(R.drawable.ic_komikku)
+            setSmallIcon(R.mipmap.ic_launcher)
             setAutoCancel(true)
             setOngoing(false)
             setProgress(0, 0, false)
