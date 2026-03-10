@@ -16,7 +16,10 @@
         androidx.compose.ui.unit,
         androidx.compose.ui.geometry,
         androidx.compose.ui.tooling.data,
+        androidx.compose.ui.tooling.preview,
+        androidx.compose.ui.util,
         androidx.compose.material3, 
+        androidx.compose.material,
         androidx.compose.runtime, 
         androidx.activity.compose" />
 
