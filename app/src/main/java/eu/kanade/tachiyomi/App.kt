@@ -19,6 +19,8 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.allowRgb565
 import coil3.request.crossfade
@@ -257,6 +259,18 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             crossfade((300 * this@App.animatorDurationScale).toInt())
             allowRgb565(DeviceUtil.isLowRamDevice(this@App))
             if (networkPreferences.verboseLogging().get()) logger(DebugLogger())
+
+            memoryCache {
+                MemoryCache.Builder()
+                    .maxSizePercent(this@App, 0.25) // Use 25% of available RAM for images
+                    .build()
+            }
+            diskCache {
+                DiskCache.Builder()
+                    .directory(this@App.cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(100L * 1024 * 1024) // 100MB dedicated disk cache
+                    .build()
+            }
 
             fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(12))
             decoderCoroutineContext(Dispatchers.IO.limitedParallelism(12)) // Optimized for modern multi-core CPUs
