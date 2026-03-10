@@ -90,5 +90,5 @@ jobs:
             ---
             *Built from branch `preview`*
           files: app/build/outputs/apk/preview/*.apk
-          prerelease: true
+          prerelease: false
           generate_release_notes: true
