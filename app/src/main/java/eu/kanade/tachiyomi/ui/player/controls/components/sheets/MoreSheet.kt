@@ -103,7 +103,6 @@ fun MoreSheet(
     val longPressAction by gesturePreferences.longPressAction().collectAsState()
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsState()
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
-    val sheetId = remember { Any().hashCode() }
 
     PlayerSheet(
         onDismissRequest = onDismissRequest,
@@ -174,7 +173,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = Decoder.entries.minus(Decoder.Auto),
-                    key = { index, it -> "decoder-$sheetId-$index-${it.name}" }
+                    key = { _, it -> "ms-decoder-${it.name}" }
                 ) { _, decoder ->
                     FilterChip(
                         selected = decoder == selectedDecoder,
@@ -190,7 +189,7 @@ fun MoreSheet(
             ) {
                 items(
                     count = 7,
-                    key = { "stats-page-$sheetId-$it" }
+                    key = { "ms-stats-page-$it" }
                 ) { page ->
                     FilterChip(
                         label = {
@@ -284,7 +283,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = AudioChannels.entries,
-                    key = { index, it -> "audio-channels-$sheetId-$index-${it.name}" }
+                    key = { _, it -> "ms-audio-channels-${it.name}" }
                 ) { _, it ->
                     FilterChip(
                         selected = audioChannels == it,
@@ -308,7 +307,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = LongPressAction.entries,
-                    key = { index, it -> "long-press-action-$sheetId-$index-${it.name}" }
+                    key = { _, it -> "ms-lp-playing-${it.name}" }
                 ) { _, action ->
                     FilterChip(
                         selected = longPressAction == action,
@@ -324,7 +323,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = PausedLongPressAction.entries,
-                    key = { index, it -> "paused-long-press-action-$sheetId-$index-${it.name}" }
+                    key = { _, it -> "ms-lp-paused-${it.name}" }
                 ) { _, action ->
                     FilterChip(
                         selected = pausedLongPressAction == action,

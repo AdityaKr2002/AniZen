@@ -17,7 +17,8 @@ jobs:
     name: Build & Preview Artifacts
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      packages: write
 
     steps:
       - name: Clone repo
@@ -41,12 +42,16 @@ jobs:
         id: get_version
         run: |
           GRADLE_FILE="app/build.gradle.kts"
-          CURRENT_VN=$(grep "versionName =" $GRADLE_FILE | sed 's/.*"\(.*\)".*/\1/')
-          echo "VERSION=$CURRENT_VN" >> $GITHUB_ENV
-          echo "CURRENT_VN=$CURRENT_VN"
+          VERSION_NAME=$(grep "versionName =" $GRADLE_FILE | sed 's/.*"\(.*\)".*/\1/')
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          FULL_VERSION="$VERSION_NAME-$COMMIT_COUNT"
+          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
+          echo "TAG=r$COMMIT_COUNT" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
+      - name: Build Preview APK
+        run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -54,16 +59,36 @@ jobs:
 
       - name: Rename APK
         run: |
-          VERSION="${{ env.VERSION }}"
-          cd app/build/outputs/apk/release/
+          cd app/build/outputs/apk/preview/
           find . -name "*universal*" -delete
           for f in *arm64-v8a*.apk; do
-            mv "$f" "AniZen-v$VERSION-preview-$f"
+            mv "$f" "AniZen-${{ env.TAG }}.apk"
           done
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AniZen-Preview-v${{ env.VERSION }}
-          path: app/build/outputs/apk/release/*.apk
+          name: AniZen-Preview-${{ env.TAG }}
+          path: app/build/outputs/apk/preview/*.apk
           retention-days: 7
+
+      - name: Create Release in Preview Repo
+        uses: softprops/action-gh-release@v1
+        with:
+          repository: salmanbappi/anizen-preview
+          token: ${{ secrets.GH_PAT || github.token }}
+          tag_name: ${{ env.TAG }}
+          name: AniZen Preview ${{ env.TAG }}
+          body: |
+            ### AniZen Preview Build (${{ env.TAG }})
+            
+            This is an automated preview build for testing purposes.
+            
+            **Version**: ${{ env.VERSION }}
+            **Revision**: ${{ env.COMMIT_COUNT }}
+            
+            ---
+            *Built from branch `preview`*
+          files: app/build/outputs/apk/preview/*.apk
+          prerelease: false
+          generate_release_notes: true

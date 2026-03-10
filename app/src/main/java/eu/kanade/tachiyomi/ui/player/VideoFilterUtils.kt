@@ -81,7 +81,7 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
     }
 
     if (sharpen > 0) {
-        val amount = (sharpen / 100f) * 3.0f
+        val amount = (sharpen / 100f) * 2.0f
         lavfiList.add("unsharp=5:5:$amount:5:5:0")
     }
 

@@ -21,76 +21,29 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
     }
 }
 
-    shortcutHelper.setFilePath("./shortcuts.xml")
+shortcutHelper.setFilePath("./shortcuts.xml")
 
+android {
+    namespace = "eu.kanade.tachiyomi"
 
+    signingConfigs {
+        create("release") {
+            val props = Properties()
+            val propFile = file("../signing.properties")
+            if (propFile.exists()) {
+                propFile.inputStream().use { props.load(it) }
+            }
 
+            storeFile = file("anizen.jks")
+            storePassword = props.getProperty("storePassword") ?: System.getenv("SIGNING_STORE_PASSWORD") ?: ""
+            keyAlias = props.getProperty("keyAlias") ?: System.getenv("SIGNING_KEY_ALIAS") ?: ""
+            keyPassword = props.getProperty("keyPassword") ?: System.getenv("SIGNING_KEY_PASSWORD") ?: ""
+        }
+    }
 
-    android {
+    compileSdk = 36
 
-        namespace = "eu.kanade.tachiyomi"
-
-
-
-                                signingConfigs {
-
-
-
-                                    create("release") {
-
-
-
-                                        val props = Properties()
-
-
-
-                                        val propFile = file("../signing.properties")
-
-
-
-                                        if (propFile.exists()) {
-
-
-
-                                            propFile.inputStream().use { props.load(it) }
-
-
-
-                                        }
-
-
-
-                        
-
-
-
-                                        storeFile = file("anizen.jks")
-
-
-
-                                        storePassword = props.getProperty("storePassword") ?: System.getenv("SIGNING_STORE_PASSWORD") ?: ""
-
-
-
-                                        keyAlias = props.getProperty("keyAlias") ?: System.getenv("SIGNING_KEY_ALIAS") ?: ""
-
-
-
-                                        keyPassword = props.getProperty("keyPassword") ?: System.getenv("SIGNING_KEY_PASSWORD") ?: ""
-
-
-
-                                    }
-
-
-
-                                }
-
-
-
-        defaultConfig {
-
-
+    defaultConfig {
         applicationId = "app.anizen"
 
         versionCode = 580
@@ -102,6 +55,10 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
         buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
         buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
+
+        minSdk = 26
+        targetSdk = 36
+
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -130,8 +87,6 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
             initWith(release)
 
             applicationIdSuffix = ".rt"
-            isMinifyEnabled = false
-            isShrinkResources = false
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
@@ -148,7 +103,7 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
             applicationIdSuffix = ".beta"
 
             versionNameSuffix = debug.versionNameSuffix
-            signingConfig = debug.signingConfig
+            signingConfig = release.signingConfig
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
 

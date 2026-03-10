@@ -33,3 +33,6 @@ PLAN.md
 CODE_MAP.md
 *.log
 !CHANGELOG.md
+
+# Local conductor tracking
+conductor/

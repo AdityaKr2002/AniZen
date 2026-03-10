@@ -43,6 +43,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -623,10 +624,12 @@ fun PlayerControls(
             dismissSheet = dismissSheet,
         )
         val panel by viewModel.panelShown.collectAsState()
-        PlayerPanels(
-            panelShown = panel,
-            onDismissRequest = { viewModel.showPanel(Panels.None) },
-        )
+        key("player-panels") {
+            PlayerPanels(
+                panelShown = panel,
+                onDismissRequest = { viewModel.showPanel(Panels.None) },
+            )
+        }
 
         val activity = LocalContext.current as PlayerActivity
         val dialog by viewModel.dialogShown.collectAsState()
