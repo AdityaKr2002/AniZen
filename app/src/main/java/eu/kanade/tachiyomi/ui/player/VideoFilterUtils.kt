@@ -81,7 +81,7 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
     }
 
     if (sharpen > 0) {
-        val amount = (sharpen / 100f) * 3.0f
+        val amount = (sharpen / 100f) * 2.0f
         lavfiList.add("unsharp=5:5:$amount:5:5:0")
     }
 
@@ -120,7 +120,7 @@ fun checkAndSetCopyMode(prefs: DecoderPreferences) {
     if (prefs.forceMediaCodecCopy().get()) {
         MPVLib.setPropertyString("hwdec", "mediacodec-copy")
     } else {
-        val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
+        val hwdec = if (prefs.tryHWDecoding().get()) "mediacodec" else "no"
         MPVLib.setPropertyString("hwdec", hwdec)
     }
 }

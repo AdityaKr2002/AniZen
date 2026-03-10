@@ -128,7 +128,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
-        MPVLib.setOptionString("profile", "fast")
+        MPVLib.setOptionString("profile", "gpu-hq")
         
         // Use optimized hwdec string from mpvEx for better fallback
         val hwdec = if (decoderPreferences.tryHWDecoding().get()) {
