@@ -131,7 +131,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         // Switch back to standard gpu profile for mobile stability
         MPVLib.setOptionString("profile", "gpu")
         
-        if (decoderPreferences.tryHWDecoding().get()) {
+        val hwdec = if (decoderPreferences.tryHWDecoding().get()) {
             val requiresCopyMode = 
                 decoderPreferences.sharpenFilter().get() > 0 ||
                 decoderPreferences.blurFilter().get() > 0 ||
