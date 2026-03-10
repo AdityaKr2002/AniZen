@@ -100,6 +100,7 @@ import java.io.File
 import java.security.Security
 import java.text.SimpleDateFormat
 import java.util.Locale
+import okio.Path.Companion.toPath
 
 class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factory {
 
@@ -267,7 +268,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             }
             diskCache {
                 DiskCache.Builder()
-                    .directory(this@App.cacheDir.resolve("image_cache"))
+                    .directory(this@App.cacheDir.resolve("image_cache").absolutePath.toPath())
                     .maxSizeBytes(100L * 1024 * 1024) // 100MB dedicated disk cache
                     .build()
             }
