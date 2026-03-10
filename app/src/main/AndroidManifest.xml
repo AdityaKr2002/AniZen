@@ -23,7 +23,13 @@
         androidx.compose.material,
         androidx.compose.material.ripple,
         androidx.compose.runtime, 
-        androidx.activity.compose" />
+        androidx.activity.compose,
+        androidx.activity.ktx,
+        androidx.activity,
+        androidx.fragment,
+        androidx.lifecycle.runtime.ktx,
+        androidx.lifecycle.viewmodel.compose,
+        androidx.lifecycle.runtime.compose" />
 
     <!-- Android TV -->
    <uses-feature android:name="android.software.leanback" android:required="false" />
