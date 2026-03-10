@@ -623,10 +623,12 @@ fun PlayerControls(
             dismissSheet = dismissSheet,
         )
         val panel by viewModel.panelShown.collectAsState()
-        PlayerPanels(
-            panelShown = panel,
-            onDismissRequest = { viewModel.showPanel(Panels.None) },
-        )
+        key("player-panels") {
+            PlayerPanels(
+                panelShown = panel,
+                onDismissRequest = { viewModel.showPanel(Panels.None) },
+            )
+        }
 
         val activity = LocalContext.current as PlayerActivity
         val dialog by viewModel.dialogShown.collectAsState()
