@@ -85,23 +85,23 @@ if (Config.includeTelemetry && file("google-services.json").exists()) {
 
 
                                 }
+compileSdk = 36
 
+defaultConfig {
+    applicationId = "app.anizen"
 
+    versionCode = 578
+    versionName = "0.5.78"
 
-        defaultConfig {
+    manifestPlaceholders["author"] = "@salmanbappi"
 
+    buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
+    buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
+    buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
+    buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
 
-        applicationId = "app.anizen"
-
-        versionCode = 578
-        versionName = "0.5.78"
-
-        manifestPlaceholders["author"] = "@salmanbappi"
-
-        buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
-        buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
-        buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
-        buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
+    minSdk = 21
+    targetSdk = 36
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
