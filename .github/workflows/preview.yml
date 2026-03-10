@@ -73,7 +73,7 @@ jobs:
           retention-days: 7
 
       - name: Create Release in Preview Repo
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         with:
           repository: salmanbappi/anizen-preview
           token: ${{ secrets.GH_PAT || github.token }}
@@ -91,4 +91,5 @@ jobs:
             *Built from branch `preview`*
           files: app/build/outputs/apk/preview/*.apk
           prerelease: true
+          generate_release_notes: true
           make_latest: true
