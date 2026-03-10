@@ -120,7 +120,7 @@ fun checkAndSetCopyMode(prefs: DecoderPreferences) {
     if (prefs.forceMediaCodecCopy().get()) {
         MPVLib.setPropertyString("hwdec", "mediacodec-copy")
     } else {
-        val hwdec = if (prefs.tryHWDecoding().get()) "mediacodec" else "no"
+        val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
         MPVLib.setPropertyString("hwdec", hwdec)
     }
 }

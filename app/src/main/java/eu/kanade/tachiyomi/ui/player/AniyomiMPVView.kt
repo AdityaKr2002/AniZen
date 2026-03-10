@@ -131,8 +131,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         // Switch back to standard gpu profile for mobile stability
         MPVLib.setOptionString("profile", "gpu")
         
-        // Use optimized hwdec string from mpvEx for better fallback
-        val hwdec = if (decoderPreferences.tryHWDecoding().get()) {
+        if (decoderPreferences.tryHWDecoding().get()) {
             val requiresCopyMode = 
                 decoderPreferences.sharpenFilter().get() > 0 ||
                 decoderPreferences.blurFilter().get() > 0 ||
@@ -144,17 +143,13 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             if (requiresCopyMode || decoderPreferences.forceMediaCodecCopy().get()) {
                 "mediacodec-copy"
             } else {
-                "mediacodec,mediacodec-copy,no"
+                "auto"
             }
         } else {
             "no"
         }
         MPVLib.setOptionString("hwdec", hwdec)
         MPVLib.setOptionString("hwdec-codecs", "all")
-        
-        // Optimize for mobile GPU
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("opengl-pbo", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         // Use audio sync by default for better performance on Android

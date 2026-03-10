@@ -173,7 +173,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = Decoder.entries.minus(Decoder.Auto),
-                    key = { _, it -> "decoder-${it.name}" }
+                    key = { _, it -> "ms-decoder-${it.name}" }
                 ) { _, decoder ->
                     FilterChip(
                         selected = decoder == selectedDecoder,
@@ -189,7 +189,7 @@ fun MoreSheet(
             ) {
                 items(
                     count = 7,
-                    key = { "stats-page-$it" }
+                    key = { "ms-stats-page-$it" }
                 ) { page ->
                     FilterChip(
                         label = {
@@ -283,7 +283,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = AudioChannels.entries,
-                    key = { _, it -> "audio-channels-${it.name}" }
+                    key = { _, it -> "ms-audio-channels-${it.name}" }
                 ) { _, it ->
                     FilterChip(
                         selected = audioChannels == it,
@@ -307,7 +307,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = LongPressAction.entries,
-                    key = { _, it -> "long-press-action-${it.name}" }
+                    key = { _, it -> "ms-lp-playing-${it.name}" }
                 ) { _, action ->
                     FilterChip(
                         selected = longPressAction == action,
@@ -323,7 +323,7 @@ fun MoreSheet(
             ) {
                 itemsIndexed(
                     items = PausedLongPressAction.entries,
-                    key = { _, it -> "paused-long-press-action-${it.name}" }
+                    key = { _, it -> "ms-lp-paused-${it.name}" }
                 ) { _, action ->
                     FilterChip(
                         selected = pausedLongPressAction == action,

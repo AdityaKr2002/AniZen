@@ -145,6 +145,9 @@ defaultConfig {
         create("preview") {
             initWith(release)
 
+            isMinifyEnabled = false
+            isShrinkResources = false
+
             applicationIdSuffix = ".beta"
 
             versionNameSuffix = debug.versionNameSuffix
