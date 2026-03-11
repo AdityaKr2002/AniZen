@@ -50,32 +50,50 @@ jobs:
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
 
-      - name: Generate Raw Changelog
+      - name: Generate Detailed Context for AI
         run: |
-          # Only get commits that are on preview but not yet on master
           git fetch origin master
-          CHANGELOG=$(git log origin/master..HEAD --pretty=format:"* %s (%h)" || git log -n 15 --pretty=format:"* %s (%h)")
-          if [ -z "$CHANGELOG" ]; then
-            CHANGELOG="No new changes detected since last master merge."
-          fi
-          echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
+          # 1. Get commits since last master merge (subjects and bodies)
+          COMMITS=$(git log origin/master..HEAD --pretty=format:"- %s%n%b")
+          if [ -z "$COMMITS" ]; then COMMITS="No new commits since last master merge."; fi
+          
+          # 2. Get file change statistics
+          DIFF_STATS=$(git diff --stat origin/master..HEAD)
+          if [ -z "$DIFF_STATS" ]; then DIFF_STATS="No file changes detected."; fi
+          
+          echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
+          echo "COMMITS:" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "FILE CHANGES:" >> $GITHUB_ENV
+          echo "$DIFF_STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Format Changelog with AI
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Use jq to build the JSON safely
-          PROMPT="Summarize these technical commits into a beautiful, user-friendly 'Changelog' for the AniZen anime app. Categorize changes into 'New Features', 'Bug Fixes', and 'Adjustments'. Highlight the most important changes first. Use emojis and bold text for a professional look. Commits: $RAW_CHANGELOG"
+          PROMPT="You are a professional release manager for the AniZen anime app. 
+          Below is the technical context for this release, including commit messages and file changes.
+          Write a concise, professional 'Changelog' for users. 
+          Focus ONLY on the changes provided below. Do not mention anything from previous releases.
+          Group into 'Features', 'Fixes', and 'Adjustments'. Use simple bullets.
+          
+          CONTEXT:
+          $AI_CONTEXT"
+          
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
+          
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
+          
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            SUMMARY="$RAW_CHANGELOG"
+            SUMMARY="Raw Changelog:\n$(git log origin/master..HEAD --oneline)"
           fi
+          
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -87,17 +105,17 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
-      - name: Rename APK
+      - name: Rename & Filter APKs
         run: |
           cd app/build/outputs/apk/preview/
-          # Only rename and keep the v8a build
+          # Only keep the specific arm64-v8a build, delete EVERYTHING else
           found_v8a=false
           for f in *.apk; do
             if [[ "$f" == *"arm64-v8a"* ]]; then
               mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
               found_v8a=true
             else
-              rm "$f"
+              rm -f "$f"
             fi
           done
           if [ "$found_v8a" = false ]; then
