@@ -49,7 +49,13 @@ jobs:
 
       - name: Generate Raw Changelog
         run: |
-          CHANGELOG=$(git log -n 15 --pretty=format:"* %s (%h)")
+          # Only get commits that are on preview but not yet on master
+          # Falls back to last 15 commits if origin/master is not available
+          git fetch origin master
+          CHANGELOG=$(git log origin/master..HEAD --pretty=format:"* %s (%h)" || git log -n 15 --pretty=format:"* %s (%h)")
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="No new changes detected since last master merge."
+          fi
           echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$CHANGELOG" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -61,15 +67,11 @@ jobs:
           # Use jq to build the JSON safely
           PROMPT="Summarize these technical commits into a beautiful, user-friendly 'Changelog' for the AniZen anime app. Categorize changes into 'New Features', 'Bug Fixes', and 'Adjustments'. Highlight the most important changes first. Use emojis and bold text for a professional look. Commits: $RAW_CHANGELOG"
           
-          # Create JSON payload using jq to handle escaping
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
           
-          # Using gemini-3-flash-preview as requested (March 2026 latest)
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
-          
-          # Debug API response (masked key)
           
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
           
