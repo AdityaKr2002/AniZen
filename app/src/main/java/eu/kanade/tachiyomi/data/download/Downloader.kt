@@ -410,7 +410,11 @@ class Downloader(
 
         download.totalSize = size
         
-        val videoFile = tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
+        val videoFile = if (url.contains(".mp4") || contentType.contains("video/mp4")) {
+            tmpDir.findFile("$filename.mp4") ?: tmpDir.createFile("$filename.mp4")!!
+        } else {
+            tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
+        }
         var initialDownloadedBytes = 0L
         
         download.partProgress.clear()
@@ -422,11 +426,11 @@ class Downloader(
                 val existing = partFile?.length() ?: 0L
                 initialDownloadedBytes += existing
                 val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat()
+                download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
             }
         } else {
             initialDownloadedBytes = videoFile.length()
-            download.partProgress[0] = if (size > 0) (initialDownloadedBytes.toFloat() / size) else 0f
+            download.partProgress[0] = if (size > 0) (initialDownloadedBytes.toFloat() / size).coerceIn(0f, 1f) else 0f
         }
 
         val downloadedBytes = AtomicLong(initialDownloadedBytes)
@@ -437,14 +441,12 @@ class Downloader(
                 val partSize = size / threadCount
                 download.totalSegments = threadCount
                 
-                // Pre-calculate existing bytes to start global progress correctly
+                // Track completed segments without double-adding bytes to downloadedBytes
                 var completedParts = 0
                 for (i in 0 until threadCount) {
                     val partFile = tmpDir.findFile("$filename.part$i")
                     val existing = partFile?.length() ?: 0L
-                    downloadedBytes.addAndGet(existing)
                     val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                    download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
                     if (existing >= partTotalSize) completedParts++
                 }
                 download.downloadedSegments = completedParts
@@ -673,12 +675,15 @@ class Downloader(
             }.filterNotNull().awaitAll()
         }
         
-        // Merge segments
         download.status = Download.State.MERGING
         download.progress = 0
         notifier.onProgressChange(download)
 
-        val videoFile = tmpDir.createFile("$filename.mkv")!!
+        val videoFile = if (video.videoUrl.contains(".mp4")) {
+            tmpDir.createFile("$filename.mp4")!!
+        } else {
+            tmpDir.createFile("$filename.mkv")!!
+        }
         context.contentResolver.openFileDescriptor(videoFile.uri, "w")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
