@@ -410,7 +410,7 @@ class Downloader(
 
         download.totalSize = size
         
-        val videoFile = if (url.contains(".mp4") || contentType.contains("video/mp4")) {
+        val videoFile = if (video.videoUrl.contains(".mp4") || contentType.contains("video/mp4")) {
             tmpDir.findFile("$filename.mp4") ?: tmpDir.createFile("$filename.mp4")!!
         } else {
             tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
