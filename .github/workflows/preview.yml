@@ -62,14 +62,19 @@ jobs:
           # Create JSON payload using jq to handle escaping
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
           
-          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+          # Using gemini-3-flash-preview as requested (March 2026 latest)
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
+          
+          # Debug API response (masked key)
+          echo "DEBUG: API Response received"
           
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            echo "AI Failed. Response: $RESPONSE"
+            echo "DEBUG: AI Summary failed. Fallback to raw."
+            echo "DEBUG: Raw Response: $RESPONSE"
             SUMMARY="$RAW_CHANGELOG"
           fi
           
