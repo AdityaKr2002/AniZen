@@ -480,7 +480,9 @@ class Downloader(
                                 
                                 context.contentResolver.openFileDescriptor(partFile.uri, "wa")?.use { pfd ->
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                        val buffer = ByteArray(128 * 1024)
+                                        // Dynamic buffer size: smaller buffers for high thread counts to save memory
+                                        val bufferSize = if (threadCount > 16) 32 * 1024 else if (threadCount > 8) 64 * 1024 else 128 * 1024
+                                        val buffer = ByteArray(bufferSize)
                                         var bytesRead: Int
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -538,7 +540,7 @@ class Downloader(
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                val buffer = ByteArray(128 * 1024)
+                                val buffer = ByteArray(256 * 1024) // Larger buffer for single thread efficiency
                                 var bytesRead: Int
                                 var localDownloaded = existing
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
@@ -590,14 +592,24 @@ class Downloader(
                     context.contentResolver.openFileDescriptor(partFile.uri, "r")?.use { ppfd ->
                         java.io.FileInputStream(ppfd.fileDescriptor).channel.use { inChannel ->
                             val size = inChannel.size()
-                            inChannel.transferTo(0, size, outChannel)
-                            currentPos += size
-                            mergedSoFar += size
-                            outChannel.position(currentPos)
-                            
-                            download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                            notifier.onProgressChange(download)
-                            kotlinx.coroutines.yield()
+                            var remaining = size
+                            var position = 0L
+                            while (remaining > 0) {
+                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                // Transfer in 4MB chunks to allow for cancellation and progress updates
+                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
+                                if (transferred <= 0) break
+                                position += transferred
+                                remaining -= transferred
+                                currentPos += transferred
+                                mergedSoFar += transferred
+                                outChannel.position(currentPos)
+                                
+                                download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
+                                throttleNotification(download)
+                                kotlinx.coroutines.yield()
+                            }
                         }
                     }
                     partFile.delete()
@@ -695,14 +707,23 @@ class Downloader(
                     context.contentResolver.openFileDescriptor(segFile.uri, "r")?.use { spfd ->
                         java.io.FileInputStream(spfd.fileDescriptor).channel.use { inChannel ->
                             val size = inChannel.size()
-                            inChannel.transferTo(0, size, outChannel)
-                            currentPos += size
-                            mergedSoFar += size
-                            outChannel.position(currentPos)
+                            var remaining = size
+                            var position = 0L
+                            while (remaining > 0) {
+                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
+                                if (transferred <= 0) break
+                                position += transferred
+                                remaining -= transferred
+                                currentPos += transferred
+                                mergedSoFar += transferred
+                                outChannel.position(currentPos)
 
-                            download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                            notifier.onProgressChange(download)
-                            kotlinx.coroutines.yield()
+                                download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
+                                throttleNotification(download)
+                                kotlinx.coroutines.yield()
+                            }
                         }
                     }
                     segFile.delete()
