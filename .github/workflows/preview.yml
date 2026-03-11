@@ -53,11 +53,11 @@ jobs:
       - name: Generate Detailed Context for AI
         run: |
           git fetch origin master
-          # 1. Get commits since last master merge (subjects and bodies)
+          # Get commits since last master merge (subjects and bodies)
           COMMITS=$(git log origin/master..HEAD --pretty=format:"- %s%n%b")
           if [ -z "$COMMITS" ]; then COMMITS="No new commits since last master merge."; fi
           
-          # 2. Get file change statistics
+          # Get file change statistics
           DIFF_STATS=$(git diff --stat origin/master..HEAD)
           if [ -z "$DIFF_STATS" ]; then DIFF_STATS="No file changes detected."; fi
           
@@ -69,28 +69,35 @@ jobs:
           echo "$DIFF_STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Format Changelog with AI
+      - name: Format Changelog with Groq AI
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          PROMPT="You are a professional release manager for the AniZen anime app. 
-          Below is the technical context for this release, including commit messages and file changes.
-          Write a concise, professional 'Changelog' for users. 
-          Focus ONLY on the changes provided below. Do not mention anything from previous releases.
-          Group into 'Features', 'Fixes', and 'Adjustments'. Use simple bullets.
+          # Use jq to build the JSON safely
+          PROMPT="Summarize these technical commits into a beautiful, user-friendly 'Changelog' for the AniZen anime app. 
+          Categorize changes into 'New Features', 'Bug Fixes', and 'Adjustments'. 
+          Highlight the most important changes first. Use emojis and bold text for a professional look. 
+          Focus ONLY on the changes provided below. Keep the tone human and professional.
           
           CONTEXT:
           $AI_CONTEXT"
           
-          PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
+          # Create JSON payload for Groq (OpenAI compatible)
+          PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
+            model: $model,
+            messages: [{role: "user", content: $prompt}],
+            temperature: 0.2
+          }')
           
-          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$GEMINI_API_KEY" \
+          RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
           
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            echo "Groq Failed. Response: $RESPONSE"
             SUMMARY="Raw Changelog:\n$(git log origin/master..HEAD --oneline)"
           fi
           
@@ -108,7 +115,7 @@ jobs:
       - name: Rename & Filter APKs
         run: |
           cd app/build/outputs/apk/preview/
-          # Only keep the specific arm64-v8a build, delete EVERYTHING else
+          # Only keep the specific arm64-v8a build
           found_v8a=false
           for f in *.apk; do
             if [[ "$f" == *"arm64-v8a"* ]]; then
