@@ -79,6 +79,31 @@ jobs:
           echo "$CHANGELOG" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: AI Changelog Summary
+        if: success()
+        run: |
+          # Clean up the changelog for JSON
+          JSON_CHANGELOG=$(echo "$CHANGELOG" | jq -aRs .)
+          
+          # Call Gemini API
+          RESPONSE=$(curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }} \
+            -H 'Content-Type: application/json' \
+            -X POST \
+            -d "{
+              \"contents\": [{
+                \"parts\":[{
+                  \"text\": \"You are a professional release manager for AniZen, an anime discovery app. Summarize these technical commits into a beautiful, user-friendly 'What's New' section. Categorize them into 'New Features', 'Bug Fixes', and 'Improvements'. Use emojis and bold text for highlights. Commits: $JSON_CHANGELOG\"
+                }]
+              }]
+            }")
+          
+          # Extract text and handle potential API errors
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text' || echo "$CHANGELOG")
+          
+          echo "AI_SUMMARY<<EOF" >> $GITHUB_ENV
+          echo "$SUMMARY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -91,8 +116,7 @@ jobs:
           body: |
             ## 🚀 AniZen v${{ env.NEW_VN }}
             
-            ### 📝 What's Changed
-            ${{ env.CHANGELOG }}
+            ${{ env.AI_SUMMARY }}
             
             ---
             **📥 Download:** Choose the `arm64-v8a` version for your phone.
