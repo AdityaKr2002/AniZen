@@ -26,7 +26,6 @@ import eu.kanade.presentation.library.components.LibraryToolbarTitle
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.download.DownloadCache
-import eu.kanade.tachiyomi.ui.player.ExternalDownloader
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.data.download.DownloadManager
@@ -589,10 +588,6 @@ class LibraryScreenModel(
      */
     private fun downloadUnseenEpisodes(animes: List<Anime>, amount: Int?) {
         screenModelScope.launchNonCancellable {
-            if (useExternalDownloader) {
-                runExternalDownloader(animes, amount)
-                return@launchNonCancellable
-            }
             animes.forEach { anime ->
                 val episodes = getNextEpisodes.await(anime.id)
                     .fastFilterNot { episode ->
@@ -606,45 +601,7 @@ class LibraryScreenModel(
                     }
                     .let { if (amount != null) it.take(amount) else it }
 
-                downloadManager.downloadEpisodes(anime, episodes)
-            }
-        }
-    }
-
-    private suspend fun runExternalDownloader(animes: List<Anime>, amount: Int?) {
-        animes.forEach { anime ->
-            val source = sourceManager.get(anime.source) ?: return@forEach
-            val episodes = getNextEpisodes.await(anime.id)
-                .fastFilterNot { episode ->
-                    downloadManager.isEpisodeDownloaded(
-                        episode.name,
-                        episode.scanlator,
-                        anime.title,
-                        anime.source,
-                    )
-                }
-                .let { if (amount != null) it.take(amount) else it }
-
-            episodes.forEach { episode ->
-                val video = try {
-                    val hosters = EpisodeLoader.getHosters(episode, anime, source)
-                    HosterLoader.getBestVideo(source, hosters)
-                } catch (e: Exception) {
-                    null
-                } ?: return@forEach
-
-                val intent = ExternalDownloader().getDownloadIntent(
-                    preferences.context,
-                    anime,
-                    episode,
-                    source,
-                    video,
-                )
-                try {
-                    preferences.context.startActivity(intent)
-                } catch (e: Exception) {
-                    // Fallback to internal or toast
-                }
+                downloadManager.downloadEpisodes(anime, episodes, true, useExternalDownloader)
             }
         }
     }

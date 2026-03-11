@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.util.lang.toLocalDate
-import eu.kanade.tachiyomi.ui.player.ExternalDownloader
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import kotlinx.collections.immutable.PersistentList
@@ -65,8 +64,6 @@ class UpdatesScreenModel(
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
     downloadPreferences: DownloadPreferences = Injekt.get(),
 ) : StateScreenModel<UpdatesScreenModel.State>(State()) {
-
-    private val context = Injekt.get<Application>()
 
     private val _events: Channel<Event> = Channel(Int.MAX_VALUE)
     val events: Flow<Event> = _events.receiveAsFlow()
@@ -282,10 +279,6 @@ class UpdatesScreenModel(
      */
     private fun downloadEpisodes(updatesItem: List<UpdatesItem>, alt: Boolean = false) {
         screenModelScope.launchNonCancellable {
-            if (useExternalDownloader) {
-                runExternalDownloader(updatesItem)
-                return@launchNonCancellable
-            }
             val groupedUpdates = updatesItem.groupBy { it.update.animeId }.values
             for (updates in groupedUpdates) {
                 val animeId = updates.first().update.animeId
@@ -293,39 +286,7 @@ class UpdatesScreenModel(
                 // Don't download if source isn't available
                 sourceManager.get(anime.source) ?: continue
                 val episodes = updates.mapNotNull { getEpisode.await(it.update.episodeId) }
-                downloadManager.downloadEpisodes(anime, episodes, true, alt)
-            }
-        }
-    }
-
-    private suspend fun runExternalDownloader(updatesItem: List<UpdatesItem>) {
-        updatesItem.forEach { item ->
-            val anime = getAnime.await(item.update.animeId) ?: return@forEach
-            val episode = getEpisode.await(item.update.episodeId) ?: return@forEach
-            val source = sourceManager.get(anime.source) ?: return@forEach
-            val video = try {
-                val hosters = EpisodeLoader.getHosters(episode, anime, source)
-                HosterLoader.getBestVideo(source, hosters)
-            } catch (e: Exception) {
-                null
-            } ?: return@forEach
-
-            val intent = ExternalDownloader().getDownloadIntent(
-                context,
-                anime,
-                episode,
-                source,
-                video,
-            )
-            try {
-                context.startActivity(intent)
-            } catch (e: Exception) {
-                screenModelScope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = "Could not open external downloader",
-                        withDismissAction = true,
-                    )
-                }
+                downloadManager.downloadEpisodes(anime, episodes, true, useExternalDownloader || alt)
             }
         }
     }
