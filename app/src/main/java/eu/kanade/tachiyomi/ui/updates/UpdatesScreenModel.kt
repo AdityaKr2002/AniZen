@@ -17,6 +17,8 @@ import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.util.lang.toLocalDate
+import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
+import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
@@ -284,7 +286,7 @@ class UpdatesScreenModel(
                 // Don't download if source isn't available
                 sourceManager.get(anime.source) ?: continue
                 val episodes = updates.mapNotNull { getEpisode.await(it.update.episodeId) }
-                downloadManager.downloadEpisodes(anime, episodes, true, alt)
+                downloadManager.downloadEpisodes(anime, episodes, true, useExternalDownloader || alt)
             }
         }
     }

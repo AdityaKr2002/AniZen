@@ -265,7 +265,6 @@ class Downloader(
     private suspend fun downloadEpisode(download: Download) {
         val animeDir = provider.getAnimeDir(download.anime.title, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
-        val tmpDir = animeDir.createDirectory(episodeDirname + TMP_DIR_SUFFIX)!!
         download.status = Download.State.DOWNLOADING
         
         notifier.onProgressChange(download)
@@ -278,6 +277,21 @@ class Downloader(
                 } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
             }
             download.video = video
+
+            if (download.changeDownloader) {
+                val success = externalDownload(download, animeDir, episodeDirname)
+                if (success) {
+                    download.status = Download.State.DOWNLOADED
+                    _queueState.update { it - download }
+                    store.remove(download)
+                    notifier.dismissProgress(download)
+                    return
+                } else {
+                    throw Exception("Could not open external downloader")
+                }
+            }
+
+            val tmpDir = animeDir.createDirectory(episodeDirname + TMP_DIR_SUFFIX)!!
             val filename = DiskUtil.buildValidFilename(download.episode.name)
             val url = video.videoUrl
             var isHls = video.type == VideoType.HLS || url.contains(".m3u8")
@@ -812,6 +826,121 @@ class Downloader(
         }
         addAllToQueue(downloads)
         if (wasRunning) start()
+    }
+
+    private suspend fun externalDownload(download: Download, animeDir: UniFile, episodeDirname: String): Boolean {
+        val video = download.video ?: return false
+        val url = video.videoUrl
+        val packageName = preferences.externalDownloaderSelection().get()
+        val pm = context.packageManager
+        
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            val filename = DiskUtil.buildValidFilename(download.episode.name) + ".mp4"
+            
+            // Create the episode directory so external downloader can save inside it
+            val episodeDir = animeDir.createDirectory(episodeDirname)
+            val dirPath = episodeDir?.filePath ?: animeDir.filePath
+
+            withUIContext {
+                if (dirPath != null) {
+                    context.copyToClipboard("Episode download location", dirPath)
+                }
+            }
+
+            intent.setDataAndType(Uri.parse(url), "video/*")
+
+            when {
+                packageName.startsWith("idm.internet.download.manager") -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    val bundle = Bundle()
+                    headers?.let {
+                        for (i in 0 until it.size) {
+                            bundle.putString(it.name(i), it.value(i))
+                        }
+                    }
+
+                    intent.apply {
+                        putExtra("extra_filename", filename)
+                        putExtra("extra_headers", bundle)
+                        if (dirPath != null) {
+                            putExtra("extra_path", dirPath)
+                        }
+                    }
+                }
+                packageName.startsWith("com.dv.adm") -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    val bundle = Bundle()
+                    headers?.let {
+                        for (i in 0 until it.size) {
+                            bundle.putString(it.name(i), it.value(i).replace("http", "h_ttp"))
+                        }
+                    }
+
+                    intent.apply {
+                        putExtra(
+                            "com.dv.get.ACTION_LIST_ADD",
+                            "${Uri.parse(url)}<info>$filename",
+                        )
+                        if (dirPath != null) {
+                            putExtra("com.dv.get.ACTION_LIST_PATH", dirPath)
+                        }
+                        putExtra("android.media.intent.extra.HTTP_HEADERS", bundle)
+                    }
+                }
+                else -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    if (headers != null) {
+                        val headersBundle = Bundle()
+                        for (i in 0 until headers.size) {
+                            headersBundle.putString(headers.name(i), headers.value(i))
+                        }
+                        intent.putExtra("android.media.intent.extra.HTTP_HEADERS", headersBundle)
+                        
+                        val headersArray = Array(headers.size) { i -> "${headers.name(i)}: ${headers.value(i)}" }
+                        intent.putExtra("headers", headersArray)
+                    }
+
+                    intent.apply {
+                        putExtra("title", "${download.anime.title} - ${download.episode.name}")
+                        putExtra("filename", filename)
+                        putExtra("extra_filename", filename)
+                        if (dirPath != null) {
+                            putExtra("extra_path", dirPath) // fallback 1DM
+                            putExtra("com.dv.get.ext_dir", dirPath) // fallback ADM
+                        }
+                    }
+                }
+            }
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            if (packageName.isNotBlank() && packageName != "None") {
+                intent.setPackage(packageName)
+                // Attempt to find the specific downloader activity to bypass the 'Open With' dialog
+                val resolveInfo = pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                if (resolveInfo.isNotEmpty()) {
+                    // Try to find an activity with 'Download' in its name, otherwise pick the first one
+                    val bestMatch = resolveInfo.find { it.activityInfo.name.contains("Download", ignoreCase = true) } 
+                                     ?: resolveInfo.first()
+                    intent.component = ComponentName(bestMatch.activityInfo.packageName, bestMatch.activityInfo.name)
+                }
+            }
+            
+            context.startActivity(intent)
+            
+            // Explicitly remove from queue after successful handoff
+            download.status = Download.State.DOWNLOADED
+            _queueState.update { it - download }
+            store.remove(download)
+            notifier.dismissProgress(download)
+            
+            delay(1500) // Give external downloader time to register intent and prevent dropping multiple downloads
+            return true
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to launch external downloader: ${e.message}" }
+            return false
+        }
     }
 
     companion object {

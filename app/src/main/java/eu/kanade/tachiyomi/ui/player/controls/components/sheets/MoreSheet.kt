@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardAlt
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -99,10 +100,10 @@ fun MoreSheet(
     val advancedPreferences = remember { Injekt.get<AdvancedPlayerPreferences>() }
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
     val gesturePreferences = remember { Injekt.get<GesturePreferences>() }
-    val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
     val longPressAction by gesturePreferences.longPressAction().collectAsState()
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsState()
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
+    val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
 
     PlayerSheet(
         onDismissRequest = onDismissRequest,

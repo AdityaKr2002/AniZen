@@ -642,6 +642,14 @@ class PlayerViewModel @JvmOverloads constructor(
         _dismissSheet.update { _ -> true }
     }
 
+    fun runExternalDownloader() {
+        val anime = currentAnime.value ?: return
+        val episode = currentEpisode.value?.toDomainEpisode() ?: return
+        val video = currentVideo.value ?: return
+
+        downloadManager.downloadEpisodes(anime, listOf(episode), true, true, video)
+    }
+
     private fun resetDismissSheet() {
         _dismissSheet.update { _ -> false }
     }
@@ -1035,6 +1043,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 downloadManager.addDownloadsToStartOfQueue(listOf(it))
             }
         }
+        deletePendingEpisodes()
     }
 
     fun updateCastProgress(position: Float) {

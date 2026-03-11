@@ -67,8 +67,8 @@ enum class LongPressAction(val stringRes: StringResource) {
 
 enum class PausedLongPressAction(val stringRes: StringResource) {
     DoNothing(stringRes = MR.strings.single_action_none),
-    Screenshot(stringRes = MR.strings.screenshot_header),
     Play2x(stringRes = MR.strings.player_sheets_speed_slider_label),
+    Screenshot(stringRes = MR.strings.screenshot_header),
 }
 
 /**

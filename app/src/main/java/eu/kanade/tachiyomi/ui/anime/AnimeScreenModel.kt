@@ -39,6 +39,8 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.isSourceForTorrents
 import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
 import eu.kanade.tachiyomi.ui.anime.track.TrackItem
+import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
+import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.AniChartApi
@@ -867,7 +869,9 @@ class AnimeScreenModel(
             if (startNow) {
                 val episodeId = episodes.singleOrNull()?.id ?: return@launchNonCancellable
                 downloadManager.startDownloadNow(episodeId)
-            } else downloadEpisodes(episodes, false, video)
+            } else {
+                downloadEpisodes(episodes, useExternalDownloader, video)
+            }
             if (!isFavorited && !successState.hasPromptedToAddBefore) {
                 updateSuccessState { it.copy(hasPromptedToAddBefore = true) }
                 val result = snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.snack_add_to_anime_library), actionLabel = context.stringResource(MR.strings.action_add), withDismissAction = true)

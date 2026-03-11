@@ -451,6 +451,7 @@ class ExternalIntents {
                 saveEpisodeProgress(currentExtEpisode, anime, currentPosition, duration)
             }
             saveEpisodeHistory(currentExtEpisode)
+            downloadManager.deletePendingEpisodes()
         }
     }
 

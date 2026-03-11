@@ -23,7 +23,6 @@ class PlayerPreferences(
     fun allowGestures() = preferenceStore.getBoolean("pref_allow_gestures_in_panels", false)
     fun showLoadingCircle() = preferenceStore.getBoolean("pref_show_loading", true)
     fun showCurrentChapter() = preferenceStore.getBoolean("pref_show_current_chapter", true)
-    fun adjustSpeedOnDrag() = preferenceStore.getBoolean("pref_adjust_speed_on_drag_v2", true)
     fun rememberPlayerBrightness() = preferenceStore.getBoolean("pref_remember_brightness", false)
     fun playerBrightnessValue() = preferenceStore.getFloat("player_brightness_value", -1.0F)
     fun rememberPlayerVolume() = preferenceStore.getBoolean("pref_remember_volume", false)
@@ -72,6 +71,8 @@ class PlayerPreferences(
         false,
     )
     fun externalPlayerPreference() = preferenceStore.getString("external_player_preference", "")
+
+    fun useExternalDownloader() = preferenceStore.getBoolean("pref_use_external_downloader", false)
 
     // Non-preferences
 
