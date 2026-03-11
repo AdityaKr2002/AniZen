@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-release:
     name: Build & Public Release
@@ -64,41 +67,64 @@ jobs:
             mv "$f" "AniZen-v$VERSION-$f"
           done
 
-      - name: Generate Raw Changelog
+      - name: Generate Detailed Context for AI
         run: |
           # Get the previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -z "$PREV_TAG" ]; then
-            # If no tags, get all commits
-            CHANGELOG=$(git log --pretty=format:"* %s (%h)")
+            RANGE="-n 10"
           else
-            # Get commits since last tag, excluding the automated version bump
-            CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"* %s (%h)" | grep -v "chore: bump version" || echo "No changes detected.")
+            RANGE="$PREV_TAG..HEAD"
           fi
-          echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
+          
+          # 1. Get commits (subjects and bodies)
+          COMMITS=$(git log $RANGE --pretty=format:"- %s%n%b" | grep -v "chore: bump version" || echo "New version release.")
+          
+          # 2. Get file change statistics
+          DIFF_STATS=$(git diff --stat $RANGE)
+          
+          # 3. Get actual code diff
+          CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
+          
+          echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
+          echo "FILE STATISTICS:" >> $GITHUB_ENV
+          echo "$DIFF_STATS" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "CODE CHANGES:" >> $GITHUB_ENV
+          echo "$CODE_DIFF" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "COMMIT MESSAGES:" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Format Changelog with AI
-        if: success()
+      - name: Format Changelog with Groq AI
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          # Clean up the changelog for JSON
-          JSON_CHANGELOG=$(echo "$RAW_CHANGELOG" | jq -aRs .)
+          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          Looking at the code changes and commits below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
+          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
           
-          # Call Gemini API
-          RESPONSE=$(curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }} \
-            -H 'Content-Type: application/json' \
-            -X POST \
-            -d "{
-              \"contents\": [{
-                \"parts\":[{
-                  \"text\": \"Summarize these technical commits into a clear and professional 'Changelog' for an anime app. Group them into 'Features', 'Fixes', and 'Adjustments'. Keep the tone natural and human, avoid corporate jargon or excessive hype. Use simple bullet points. Commits: $JSON_CHANGELOG\"
-                }]
-              }]
-            }")
+          CONTEXT:
+          $AI_CONTEXT"
           
-          # Extract text and handle potential API errors
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text' || echo "$RAW_CHANGELOG")
+          PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
+            model: $model,
+            messages: [{role: "user", content: $prompt}],
+            temperature: 0.7
+          }')
+          
+          RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+          
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          
+          if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            SUMMARY="We've made some secret improvements under the hood to make your experience better! ✨"
+          fi
           
           echo "CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
@@ -116,7 +142,6 @@ jobs:
           body: |
             ## 🚀 AniZen v${{ env.NEW_VN }}
             
-            ### 📝 Changelog
             ${{ env.CHANGELOG }}
             
             ---
