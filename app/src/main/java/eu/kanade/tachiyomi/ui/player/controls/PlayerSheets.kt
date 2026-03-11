@@ -80,6 +80,7 @@ fun PlayerSheets(
     // More sheet
     sleepTimerTimeRemaining: Int,
     onStartSleepTimer: (Int) -> Unit,
+    onDownloadExternal: () -> Unit,
     buttons: ImmutableList<CustomButton>,
 
     // Screenshot sheet
@@ -166,6 +167,7 @@ fun PlayerSheets(
                 onStartTimer = onStartSleepTimer,
                 onDismissRequest = onDismissRequest,
                 onEnterFiltersPanel = { onOpenPanel(Panels.VideoFilters) },
+                onDownloadExternal = onDownloadExternal,
                 customButtons = buttons,
             )
         }

@@ -72,6 +72,8 @@ class PlayerPreferences(
     )
     fun externalPlayerPreference() = preferenceStore.getString("external_player_preference", "")
 
+    fun useExternalDownloader() = preferenceStore.getBoolean("pref_use_external_downloader", false)
+
     // Non-preferences
 
     fun playerSpeed() = preferenceStore.getFloat("pref_player_speed", 1f)

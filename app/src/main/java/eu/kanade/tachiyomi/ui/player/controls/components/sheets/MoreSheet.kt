@@ -93,16 +93,17 @@ fun MoreSheet(
     onStartTimer: (Int) -> Unit,
     onDismissRequest: () -> Unit,
     onEnterFiltersPanel: () -> Unit,
+    onDownloadExternal: () -> Unit,
     customButtons: ImmutableList<CustomButton>,
     modifier: Modifier = Modifier,
 ) {
     val advancedPreferences = remember { Injekt.get<AdvancedPlayerPreferences>() }
     val audioPreferences = remember { Injekt.get<AudioPreferences>() }
     val gesturePreferences = remember { Injekt.get<GesturePreferences>() }
-    val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
     val longPressAction by gesturePreferences.longPressAction().collectAsState()
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsState()
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsState()
+    val statisticsPage by advancedPreferences.playerStatisticsPage().collectAsState()
 
     PlayerSheet(
         onDismissRequest = onDismissRequest,
@@ -153,6 +154,15 @@ fun MoreSheet(
                                     onTimeSelect = onStartTimer,
                                 )
                             }
+                        }
+                    }
+                    TextButton(onClick = onDownloadExternal) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                        ) {
+                            Icon(imageVector = androidx.compose.material.icons.filled.Download, contentDescription = null)
+                            Text(text = stringResource(MR.strings.manga_download))
                         }
                     }
                     TextButton(onClick = onEnterFiltersPanel) {

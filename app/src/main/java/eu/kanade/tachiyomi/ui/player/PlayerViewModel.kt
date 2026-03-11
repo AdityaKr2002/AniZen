@@ -642,6 +642,22 @@ class PlayerViewModel @JvmOverloads constructor(
         _dismissSheet.update { _ -> true }
     }
 
+    fun runExternalDownloader() {
+        val anime = currentAnime.value ?: return
+        val episode = currentEpisode.value?.toDomainEpisode() ?: return
+        val source = currentSource.value ?: return
+        val video = currentVideo.value ?: return
+
+        val intent = ExternalDownloader().getDownloadIntent(
+            activity,
+            anime,
+            episode,
+            source,
+            video,
+        )
+        activity.startActivity(intent)
+    }
+
     private fun resetDismissSheet() {
         _dismissSheet.update { _ -> false }
     }
