@@ -121,9 +121,11 @@ fun GestureHandler(
     
     val longPressAction by gesturePreferences.longPressAction().collectAsStatePref()
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsStatePref()
-    val longPressSliding by playerPreferences.adjustSpeedOnDrag().collectAsStatePref()
+    val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsStatePref()
 
     var isLongPressing by remember { mutableStateOf(false) }
+    var wasPaused by remember { mutableStateOf(false) }
+    var isSpeedLongPress by remember { mutableStateOf(false) }
     val currentVolume by viewModel.currentVolume.collectAsState()
     val currentMPVVolume by viewModel.currentMPVVolume.collectAsState()
     val currentBrightness by viewModel.currentBrightness.collectAsState()
@@ -172,6 +174,8 @@ fun GestureHandler(
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val startPosition = down.position
                     originalSpeed = viewModel.playbackSpeed.value
+                    wasPaused = false
+                    isSpeedLongPress = false
                     
                     val press = PressInteraction.Press(
                         down.position.copy(x = if (down.position.x > size.width * 3 / 5) down.position.x - size.width * 0.6f else down.position.x),
@@ -182,6 +186,7 @@ fun GestureHandler(
                     longPressJob = scope.launch {
                         delay(viewConfiguration.longPressTimeoutMillis)
                         val isPaused = viewModel.paused.value
+                        wasPaused = isPaused
                         if (isPaused) {
                             when (pausedLongPressAction) {
                                 PausedLongPressAction.Screenshot -> {
@@ -189,6 +194,7 @@ fun GestureHandler(
                                 }
                                 PausedLongPressAction.Play2x -> {
                                     isLongPressing = true
+                                    isSpeedLongPress = true
                                     viewModel.unpause()
                                     val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                     originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
@@ -199,6 +205,7 @@ fun GestureHandler(
                         } else {
                             if (longPressAction == LongPressAction.Speed) {
                                 isLongPressing = true
+                                isSpeedLongPress = true
                                 val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                 originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
                                 rampSpeed(targetSpeed)
@@ -233,7 +240,7 @@ fun GestureHandler(
                                 }
                             }
                         } else {
-                            if (longPressSliding && !viewModel.paused.value && longPressAction == LongPressAction.Speed) {
+                            if (longPressSliding && isSpeedLongPress && !viewModel.paused.value) {
                                 // Initialize speed to current player speed (which could be custom) when drag starts
                                 if (!hasInitializedDragSpeed) {
                                     unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
@@ -261,8 +268,9 @@ fun GestureHandler(
                     longPressJob?.cancel()
 
                     if (isLongPressing) {
-                        val wasPausedOriginally = viewModel.paused.value || (pausedLongPressAction == PausedLongPressAction.Play2x)
+                        val wasPausedOriginally = wasPaused
                         isLongPressing = false
+                        isSpeedLongPress = false
                         rampSpeed(originalSpeed) {
                             if (wasPausedOriginally) {
                                 viewModel.pause()
