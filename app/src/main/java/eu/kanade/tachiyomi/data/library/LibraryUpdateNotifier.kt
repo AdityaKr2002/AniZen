@@ -176,7 +176,7 @@ class LibraryUpdateNotifier(
         ) {
             setContentTitle(context.stringResource(MR.strings.notification_update_error, failed))
             setContentText(context.stringResource(MR.strings.action_show_errors))
-            setSmallIcon(R.mipmap.ic_launcher)
+            setSmallIcon(R.drawable.ic_splash_logo)
 
             setContentIntent(NotificationReceiver.openErrorLogPendingActivity(context, uri))
         }
@@ -216,7 +216,7 @@ class LibraryUpdateNotifier(
                 }
             }
 
-            setSmallIcon(R.mipmap.ic_launcher)
+            setSmallIcon(R.drawable.ic_splash_logo)
             setLargeIcon(notificationBitmap)
 
             setGroup(Notifications.GROUP_NEW_EPISODES)
@@ -245,18 +245,20 @@ class LibraryUpdateNotifier(
 
     private suspend fun createNewEpisodesNotification(anime: Anime, episodes: Array<Episode>): Notification {
         val icon = getAnimeIcon(anime)
+        val appIcon = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
         return context.notificationBuilder(Notifications.CHANNEL_NEW_CHAPTERS_EPISODES) {
-            setContentTitle("🟢 NEW ${anime.title}")
+            setContentTitle("🆕 ${anime.title}")
 
             val description = getNewEpisodesDescription(episodes)
             setContentText(description)
             setStyle(
                 NotificationCompat.BigPictureStyle()
                     .bigPicture(icon)
+                    .bigLargeIcon(appIcon)
                     .setSummaryText(description),
             )
 
-            setSmallIcon(R.mipmap.ic_launcher)
+            setSmallIcon(R.drawable.ic_splash_logo)
 
             if (icon != null) {
                 setLargeIcon(icon)

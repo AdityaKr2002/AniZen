@@ -12,13 +12,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-preview:
     name: Build & Preview Artifacts
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
 
     steps:
       - name: Clone repo
@@ -39,16 +41,71 @@ jobs:
         run: ./gradlew detekt --no-daemon
 
       - name: Get Current Version
-        id: get_version
         run: |
-          GRADLE_FILE="app/build.gradle.kts"
-          VERSION_NAME=$(grep "versionName =" $GRADLE_FILE | sed 's/.*"\(.*\)".*/\1/')
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          FULL_VERSION="$VERSION_NAME-$COMMIT_COUNT"
-          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
-          echo "TAG=r$COMMIT_COUNT" >> $GITHUB_ENV
+          TAG="r$COMMIT_COUNT"
+          VERSION_NAME="0.5.78"
+          VERSION_CODE=$((578 + COMMIT_COUNT))
+          echo "TAG=$TAG" >> $GITHUB_ENV
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
+
+      - name: Generate Code-Centric Context for AI
+        run: |
+          # Use the exact push range
+          RANGE="${{ github.event.before }}..${{ github.sha }}"
+          if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+            RANGE="-n 1"
+          fi
+          
+          # Get file change statistics
+          FILE_CHANGES=$(git diff --stat $RANGE)
+          
+          # Get the actual code diff
+          CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
+          
+          if [ -z "$FILE_CHANGES" ]; then FILE_CHANGES="Minor internal updates."; fi
+          
+          echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
+          echo "ADDITIONS/DELETIONS:" >> $GITHUB_ENV
+          echo "$FILE_CHANGES" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "CODE CHANGES:" >> $GITHUB_ENV
+          echo "$CODE_DIFF" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Format Changelog with Groq AI
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
+          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
+          
+          CONTEXT:
+          $AI_CONTEXT"
+          
+          PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
+            model: $model,
+            messages: [{role: "user", content: $prompt}],
+            temperature: 0.7
+          }')
+          
+          RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+          
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          
+          if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            SUMMARY="We've made some secret improvements under the hood to make your experience better! ✨"
+          fi
+          
+          echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$SUMMARY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Build Preview APK
         run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
@@ -57,20 +114,28 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
-      - name: Rename APK
+      - name: Rename & Filter APKs
         run: |
           cd app/build/outputs/apk/preview/
-          find . -name "*universal*" -delete
-          for f in *arm64-v8a*.apk; do
-            mv "$f" "AniZen-${{ env.TAG }}.apk"
+          found_v8a=false
+          for f in *.apk; do
+            if [[ "$f" == *"arm64-v8a"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
+              found_v8a=true
+            else
+              rm -f "$f"
+            fi
           done
+          if [ "$found_v8a" = false ]; then
+            echo "Error: arm64-v8a APK not found!"
+            exit 1
+          fi
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-${{ env.TAG }}
-          path: app/build/outputs/apk/preview/*.apk
-          retention-days: 7
+          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
@@ -80,15 +145,14 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: AniZen Preview ${{ env.TAG }}
           body: |
-            ### AniZen Preview Build (${{ env.TAG }})
+            ### 🌟 AniZen Preview Release (${{ env.TAG }})
             
-            This is an automated preview build for testing purposes.
-            
-            **Version**: ${{ env.VERSION }}
-            **Revision**: ${{ env.COMMIT_COUNT }}
+            ${{ env.AI_CHANGELOG }}
             
             ---
-            *Built from branch `preview`*
-          files: app/build/outputs/apk/preview/*.apk
+            **Version**: ${{ env.VERSION_NAME }}
+            **Revision**: ${{ env.COMMIT_COUNT }}
+            **Branch**: `preview`
+          files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
