@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
 
     steps:
       - name: Clone repo
@@ -39,16 +38,42 @@ jobs:
         run: ./gradlew detekt --no-daemon
 
       - name: Get Current Version
-        id: get_version
         run: |
-          GRADLE_FILE="app/build.gradle.kts"
-          VERSION_NAME=$(grep "versionName =" $GRADLE_FILE | sed 's/.*"\(.*\)".*/\1/')
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          FULL_VERSION="$VERSION_NAME-$COMMIT_COUNT"
-          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
-          echo "TAG=r$COMMIT_COUNT" >> $GITHUB_ENV
+          TAG="r$COMMIT_COUNT"
+          VERSION_NAME="0.5.78"
+          VERSION_CODE=$((578 + COMMIT_COUNT))
+          echo "TAG=$TAG" >> $GITHUB_ENV
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
+
+      - name: Generate Raw Changelog
+        run: |
+          CHANGELOG=$(git log -n 10 --pretty=format:"* %s (%h)")
+          echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Format Changelog with AI
+        run: |
+          JSON_CHANGELOG=$(echo "$RAW_CHANGELOG" | jq -aRs .)
+          RESPONSE=$(curl -s https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }} \
+            -H 'Content-Type: application/json' \
+            -X POST \
+            -d "{
+              \"contents\": [{
+                \"parts\":[{
+                  \"text\": \"Summarize these technical commits into a clear and professional 'Changelog' for an anime app. Group them into 'Features', 'Fixes', and 'Adjustments'. Keep the tone natural and human, avoid corporate jargon or excessive hype. Use simple bullet points. Commits: $JSON_CHANGELOG\"
+                }]
+              }]
+            }")
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            SUMMARY="$RAW_CHANGELOG"
+          fi
+          echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$SUMMARY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Build Preview APK
         run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
@@ -60,9 +85,8 @@ jobs:
       - name: Rename APK
         run: |
           cd app/build/outputs/apk/preview/
-          find . -name "*universal*" -delete
-          for f in *arm64-v8a*.apk; do
-            mv "$f" "AniZen-${{ env.TAG }}.apk"
+          for f in *.apk; do
+            mv "$f" "AniZen-Preview-${{ env.TAG }}-$f"
           done
 
       - name: Upload APK Artifacts
@@ -70,7 +94,6 @@ jobs:
         with:
           name: AniZen-Preview-${{ env.TAG }}
           path: app/build/outputs/apk/preview/*.apk
-          retention-days: 7
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
@@ -82,13 +105,12 @@ jobs:
           body: |
             ### AniZen Preview Build (${{ env.TAG }})
             
-            This is an automated preview build for testing purposes.
-            
-            **Version**: ${{ env.VERSION }}
-            **Revision**: ${{ env.COMMIT_COUNT }}
+            ${{ env.AI_CHANGELOG }}
             
             ---
-            *Built from branch `preview`*
+            **Version**: ${{ env.VERSION_NAME }}
+            **Revision**: ${{ env.COMMIT_COUNT }}
+            **Branch**: `preview`
           files: app/build/outputs/apk/preview/*.apk
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
