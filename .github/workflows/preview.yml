@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-preview:
     name: Build & Preview Artifacts
@@ -50,7 +53,6 @@ jobs:
       - name: Generate Raw Changelog
         run: |
           # Only get commits that are on preview but not yet on master
-          # Falls back to last 15 commits if origin/master is not available
           git fetch origin master
           CHANGELOG=$(git log origin/master..HEAD --pretty=format:"* %s (%h)" || git log -n 15 --pretty=format:"* %s (%h)")
           if [ -z "$CHANGELOG" ]; then
@@ -66,20 +68,14 @@ jobs:
         run: |
           # Use jq to build the JSON safely
           PROMPT="Summarize these technical commits into a beautiful, user-friendly 'Changelog' for the AniZen anime app. Categorize changes into 'New Features', 'Bug Fixes', and 'Adjustments'. Highlight the most important changes first. Use emojis and bold text for a professional look. Commits: $RAW_CHANGELOG"
-          
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
-          
-          # Using gemini-3-flash-preview as requested
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
-          
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-          
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
             SUMMARY="$RAW_CHANGELOG"
           fi
-          
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -95,19 +91,25 @@ jobs:
         run: |
           cd app/build/outputs/apk/preview/
           # Only rename and keep the v8a build
-          for f in *arm64-v8a-preview.apk; do
-            if [ -f "$f" ]; then
-              mv "$f" "AniZen-Preview-${{ env.TAG }}-$f"
+          found_v8a=false
+          for f in *.apk; do
+            if [[ "$f" == *"arm64-v8a"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
+              found_v8a=true
+            else
+              rm "$f"
             fi
           done
-          # Remove any other apks (like universal if it exists)
-          rm -f *-universal-preview.apk *-armeabi-v7a-preview.apk *-x86-preview.apk *-x86_64-preview.apk
+          if [ "$found_v8a" = false ]; then
+            echo "Error: arm64-v8a APK not found!"
+            exit 1
+          fi
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-${{ env.TAG }}
-          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-*.apk
+          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
@@ -125,6 +127,6 @@ jobs:
             **Version**: ${{ env.VERSION_NAME }}
             **Revision**: ${{ env.COMMIT_COUNT }}
             **Branch**: `preview`
-          files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-*.apk
+          files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
           prerelease: false
           generate_release_notes: false
