@@ -317,7 +317,16 @@ class UpdatesScreenModel(
                 source,
                 video,
             )
-            context.startActivity(intent)
+            try {
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                screenModelScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "Could not open external downloader",
+                        withDismissAction = true,
+                    )
+                }
+            }
         }
     }
 

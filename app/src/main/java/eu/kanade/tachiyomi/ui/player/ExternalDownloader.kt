@@ -22,11 +22,15 @@ class ExternalDownloader {
     ): Intent {
         val uri = Uri.parse(video.videoUrl)
         val filename = "${anime.title} - ${episode.name}"
-        val targetPackage = resolveTargetPackage(context.packageManager)
+        val targetPackage = resolveTargetPackage(context.packageManager) ?: return Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "video/*")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
 
         return Intent(Intent.ACTION_VIEW).apply {
-            if (targetPackage != null) {
-                component = ComponentName(targetPackage, "idm.internet.download.manager.Downloader")
+            val componentName = ComponentName(targetPackage, "idm.internet.download.manager.Downloader")
+            if (isActivityAvailable(context, componentName)) {
+                component = componentName
             }
             setDataAndType(uri, "video/*")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -57,6 +61,15 @@ class ExternalDownloader {
                 putExtra("android.media.intent.extra.HTTP_HEADERS", headersBundle)
                 putExtra("headers", headersArray) // For some other downloaders
             }
+        }
+    }
+
+    private fun isActivityAvailable(context: Context, componentName: ComponentName): Boolean {
+        return try {
+            context.packageManager.getActivityInfo(componentName, PackageManager.GET_META_DATA)
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 

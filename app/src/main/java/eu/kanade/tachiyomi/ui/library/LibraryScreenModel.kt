@@ -640,7 +640,11 @@ class LibraryScreenModel(
                     source,
                     video,
                 )
-                preferences.context.startActivity(intent)
+                try {
+                    preferences.context.startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback to internal or toast
+                }
             }
         }
     }
