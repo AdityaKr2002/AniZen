@@ -58,19 +58,19 @@ jobs:
             RANGE="-n 1"
           fi
           
-          # Get file change statistics (additions/deletions per file)
+          # Get file change statistics
           FILE_CHANGES=$(git diff --stat $RANGE)
           
-          # Get the actual code diff (limited to first 200 lines to avoid token limits)
+          # Get the actual code diff
           CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
           
-          if [ -z "$FILE_CHANGES" ]; then FILE_CHANGES="Internal workflow or metadata updates."; fi
+          if [ -z "$FILE_CHANGES" ]; then FILE_CHANGES="Minor internal updates."; fi
           
           echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
-          echo "FILE STATISTICS (ADDITIONS/DELETIONS):" >> $GITHUB_ENV
+          echo "ADDITIONS/DELETIONS:" >> $GITHUB_ENV
           echo "$FILE_CHANGES" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
-          echo "CODE DIFF SAMPLE:" >> $GITHUB_ENV
+          echo "CODE CHANGES:" >> $GITHUB_ENV
           echo "$CODE_DIFF" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
@@ -78,19 +78,18 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          PROMPT="You are a professional release manager for AniZen. 
-          Summarize exactly what was changed based ONLY on the code additions and deletions provided below. 
-          Do NOT use commit messages. Do NOT mention previous history.
-          Focus on the 'What' and 'Why' of the code changes.
-          Group into 'Features', 'Fixes', and 'Adjustments'. Use simple bullets.
+          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
+          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
           
-          CODE CONTEXT:
+          CONTEXT:
           $AI_CONTEXT"
           
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
             model: $model,
             messages: [{role: "user", content: $prompt}],
-            temperature: 0.1
+            temperature: 0.7
           }')
           
           RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
@@ -101,7 +100,7 @@ jobs:
           SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            SUMMARY="Internal code updates and refinements."
+            SUMMARY="We've made some secret improvements under the hood to make your experience better! ✨"
           fi
           
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
@@ -146,7 +145,7 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: AniZen Preview ${{ env.TAG }}
           body: |
-            ### AniZen Preview Build (${{ env.TAG }})
+            ### 🌟 AniZen Preview Release (${{ env.TAG }})
             
             ${{ env.AI_CHANGELOG }}
             
