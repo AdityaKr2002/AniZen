@@ -70,13 +70,10 @@ jobs:
             -d "$PAYLOAD")
           
           # Debug API response (masked key)
-          echo "DEBUG: API Response received"
           
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            echo "DEBUG: AI Summary failed. Fallback to raw."
-            echo "DEBUG: Raw Response: $RESPONSE"
             SUMMARY="$RAW_CHANGELOG"
           fi
           
