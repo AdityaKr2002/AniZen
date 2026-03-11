@@ -669,13 +669,22 @@ class Downloader(
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                             client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
-                                val data = res.body?.bytes() ?: throw IOException("Empty segment")
+                                val source = res.body?.source() ?: throw IOException("Empty segment")
                                 val file = tmpDir.createFile("$index.seg")!!
+                                var segmentSize = 0L
                                 context.contentResolver.openFileDescriptor(file.uri, "w")?.use { pfd ->
-                                    FileOutputStream(pfd.fileDescriptor).use { it.write(data) }
+                                    FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
+                                        val buffer = ByteArray(64 * 1024)
+                                        var bytesRead: Int
+                                        while (source.read(buffer).also { bytesRead = it } != -1) {
+                                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                            channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
+                                            segmentSize += bytesRead
+                                        }
+                                    }
                                 }
                                 download.segmentProgress[index] = true
-                                val currentTotal = downloadedBytes.addAndGet(data.size.toLong())
+                                val currentTotal = downloadedBytes.addAndGet(segmentSize)
                                 synchronized(download) { download.downloadedSegments++ }
                                 download.update(currentTotal, -1, false)
                                 throttleNotification(download)
