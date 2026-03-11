@@ -49,28 +49,30 @@ jobs:
 
       - name: Generate Raw Changelog
         run: |
-          CHANGELOG=$(git log -n 10 --pretty=format:"* %s (%h)")
+          CHANGELOG=$(git log -n 15 --pretty=format:"* %s (%h)")
           echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$CHANGELOG" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Format Changelog with AI
         run: |
-          JSON_CHANGELOG=$(echo "$RAW_CHANGELOG" | jq -aRs .)
-          RESPONSE=$(curl -s https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }} \
-            -H 'Content-Type: application/json' \
-            -X POST \
-            -d "{
-              \"contents\": [{
-                \"parts\":[{
-                  \"text\": \"Summarize these technical commits into a clear and professional 'Changelog' for an anime app. Group them into 'Features', 'Fixes', and 'Adjustments'. Keep the tone natural and human, avoid corporate jargon or excessive hype. Use simple bullet points. Commits: $JSON_CHANGELOG\"
-                }]
-              }]
-            }")
+          # Use jq to build the JSON safely
+          PROMPT="Summarize these technical commits into a beautiful, user-friendly 'Changelog' for the AniZen anime app. Categorize changes into 'New Features', 'Bug Fixes', and 'Adjustments'. Highlight the most important changes first. Use emojis and bold text for a professional look. Commits: $RAW_CHANGELOG"
+          
+          # Create JSON payload using jq to handle escaping
+          PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
+          
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+          
           SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            echo "AI Failed. Response: $RESPONSE"
             SUMMARY="$RAW_CHANGELOG"
           fi
+          
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
