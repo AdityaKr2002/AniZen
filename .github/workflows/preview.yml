@@ -53,13 +53,18 @@ jobs:
       - name: Generate Detailed Context for AI
         run: |
           git fetch origin master
-          # Get commits since last master merge (subjects and bodies)
+          # Only get commits unique to preview branch
           COMMITS=$(git log origin/master..HEAD --pretty=format:"- %s%n%b")
-          if [ -z "$COMMITS" ]; then COMMITS="No new commits since last master merge."; fi
+          if [ -z "$COMMITS" ]; then 
+            # If no unique commits, just use the last commit for context
+            COMMITS=$(git log -n 1 --pretty=format:"- %s%n%b")
+          fi
           
-          # Get file change statistics
+          # Get file change statistics unique to preview branch
           DIFF_STATS=$(git diff --stat origin/master..HEAD)
-          if [ -z "$DIFF_STATS" ]; then DIFF_STATS="No file changes detected."; fi
+          if [ -z "$DIFF_STATS" ]; then 
+            DIFF_STATS="No unique file changes compared to master."
+          fi
           
           echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
           echo "COMMITS:" >> $GITHUB_ENV
@@ -98,7 +103,8 @@ jobs:
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
             echo "Groq Failed. Response: $RESPONSE"
-            SUMMARY="Raw Changelog:\n$(git log origin/master..HEAD --oneline)"
+            # Fallback to unique commits only
+            SUMMARY="Raw Changelog:\n$(git log origin/master..HEAD --oneline || echo "No new changes.")"
           fi
           
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
