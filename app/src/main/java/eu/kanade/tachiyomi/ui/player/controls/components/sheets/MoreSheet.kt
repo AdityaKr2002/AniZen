@@ -94,7 +94,6 @@ fun MoreSheet(
     onStartTimer: (Int) -> Unit,
     onDismissRequest: () -> Unit,
     onEnterFiltersPanel: () -> Unit,
-    onDownloadExternal: () -> Unit,
     customButtons: ImmutableList<CustomButton>,
     modifier: Modifier = Modifier,
 ) {
@@ -155,15 +154,6 @@ fun MoreSheet(
                                     onTimeSelect = onStartTimer,
                                 )
                             }
-                        }
-                    }
-                    TextButton(onClick = onDownloadExternal) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
-                        ) {
-                            Icon(imageVector = Icons.Outlined.Download, contentDescription = null)
-                            Text(text = stringResource(MR.strings.manga_download))
                         }
                     }
                     TextButton(onClick = onEnterFiltersPanel) {

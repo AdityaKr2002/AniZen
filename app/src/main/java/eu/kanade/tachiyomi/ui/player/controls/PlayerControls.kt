@@ -606,7 +606,6 @@ fun PlayerControls(
             onSpeedChange = { MPVLib.setPropertyDouble("speed", it.toFixed(2).toDouble()) },
             sleepTimerTimeRemaining = sleepTimerTimeRemaining,
             onStartSleepTimer = viewModel::startTimer,
-            onDownloadExternal = viewModel::runExternalDownloader,
             buttons = customButtons.getButtons().toImmutableList(),
 
             showSubtitles = showSubtitles,

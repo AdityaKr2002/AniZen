@@ -17,6 +17,9 @@ import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.util.lang.toLocalDate
+import eu.kanade.tachiyomi.ui.player.ExternalDownloader
+import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
+import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
@@ -277,6 +280,10 @@ class UpdatesScreenModel(
      */
     private fun downloadEpisodes(updatesItem: List<UpdatesItem>, alt: Boolean = false) {
         screenModelScope.launchNonCancellable {
+            if (useExternalDownloader) {
+                runExternalDownloader(updatesItem)
+                return@launchNonCancellable
+            }
             val groupedUpdates = updatesItem.groupBy { it.update.animeId }.values
             for (updates in groupedUpdates) {
                 val animeId = updates.first().update.animeId
@@ -286,6 +293,29 @@ class UpdatesScreenModel(
                 val episodes = updates.mapNotNull { getEpisode.await(it.update.episodeId) }
                 downloadManager.downloadEpisodes(anime, episodes, true, alt)
             }
+        }
+    }
+
+    private suspend fun runExternalDownloader(updatesItem: List<UpdatesItem>) {
+        updatesItem.forEach { item ->
+            val anime = getAnime.await(item.update.animeId) ?: return@forEach
+            val episode = getEpisode.await(item.update.episodeId) ?: return@forEach
+            val source = sourceManager.get(anime.source) ?: return@forEach
+            val video = try {
+                val hosters = EpisodeLoader.getHosters(episode, anime, source)
+                HosterLoader.getBestVideo(source, hosters)
+            } catch (e: Exception) {
+                null
+            } ?: return@forEach
+
+            val intent = ExternalDownloader().getDownloadIntent(
+                context,
+                anime,
+                episode,
+                source,
+                video,
+            )
+            context.startActivity(intent)
         }
     }
 
