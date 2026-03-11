@@ -176,7 +176,7 @@ class LibraryUpdateNotifier(
         ) {
             setContentTitle(context.stringResource(MR.strings.notification_update_error, failed))
             setContentText(context.stringResource(MR.strings.action_show_errors))
-            setSmallIcon(R.drawable.ic_animelibrary_filled_24dp)
+            setSmallIcon(R.drawable.ic_splash_logo)
 
             setContentIntent(NotificationReceiver.openErrorLogPendingActivity(context, uri))
         }
@@ -216,7 +216,7 @@ class LibraryUpdateNotifier(
                 }
             }
 
-            setSmallIcon(R.drawable.ic_animelibrary_filled_24dp)
+            setSmallIcon(R.drawable.ic_splash_logo)
             setLargeIcon(notificationBitmap)
 
             setGroup(Notifications.GROUP_NEW_EPISODES)
@@ -258,7 +258,7 @@ class LibraryUpdateNotifier(
                     .setSummaryText(description),
             )
 
-            setSmallIcon(R.drawable.ic_animelibrary_filled_24dp)
+            setSmallIcon(R.drawable.ic_splash_logo)
 
             if (icon != null) {
                 setLargeIcon(icon)
