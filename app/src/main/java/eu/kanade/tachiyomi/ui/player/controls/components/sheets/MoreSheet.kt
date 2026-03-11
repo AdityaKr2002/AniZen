@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardAlt
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -161,7 +162,7 @@ fun MoreSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                         ) {
-                            Icon(imageVector = androidx.compose.material.icons.Icons.Default.FileDownload, contentDescription = null)
+                            Icon(imageVector = Icons.Outlined.Download, contentDescription = null)
                             Text(text = stringResource(MR.strings.manga_download))
                         }
                     }
