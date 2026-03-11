@@ -69,6 +69,7 @@ jobs:
           
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" '{contents: [{parts: [{text: $prompt}]}]}')
           
+          # Using gemini-3-flash-preview as requested
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
@@ -93,15 +94,20 @@ jobs:
       - name: Rename APK
         run: |
           cd app/build/outputs/apk/preview/
-          for f in *.apk; do
-            mv "$f" "AniZen-Preview-${{ env.TAG }}-$f"
+          # Only rename and keep the v8a build
+          for f in *arm64-v8a-preview.apk; do
+            if [ -f "$f" ]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-$f"
+            fi
           done
+          # Remove any other apks (like universal if it exists)
+          rm -f *-universal-preview.apk *-armeabi-v7a-preview.apk *-x86-preview.apk *-x86_64-preview.apk
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-${{ env.TAG }}
-          path: app/build/outputs/apk/preview/*.apk
+          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-*.apk
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
@@ -119,6 +125,6 @@ jobs:
             **Version**: ${{ env.VERSION_NAME }}
             **Revision**: ${{ env.COMMIT_COUNT }}
             **Branch**: `preview`
-          files: app/build/outputs/apk/preview/*.apk
+          files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-*.apk
           prerelease: false
           generate_release_notes: false
