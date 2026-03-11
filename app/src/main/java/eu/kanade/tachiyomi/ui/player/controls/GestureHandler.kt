@@ -240,6 +240,9 @@ fun GestureHandler(
                                 }
                             }
                         } else {
+                            // During long press, always consume events to prevent bubbling to other handlers
+                            pointer.consume()
+
                             if (longPressSliding && isSpeedLongPress && !viewModel.paused.value) {
                                 // Initialize speed to current player speed (which could be custom) when drag starts
                                 if (!hasInitializedDragSpeed) {
@@ -260,7 +263,6 @@ fun GestureHandler(
                                     
                                     lastX = pointer.position.x
                                 }
-                                pointer.consume()
                             }
                         }
                     }

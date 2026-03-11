@@ -161,7 +161,7 @@ fun MoreSheet(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                         ) {
-                            Icon(imageVector = androidx.compose.material.icons.filled.Download, contentDescription = null)
+                            Icon(imageVector = androidx.compose.material.icons.Icons.Default.FileDownload, contentDescription = null)
                             Text(text = stringResource(MR.strings.manga_download))
                         }
                     }
