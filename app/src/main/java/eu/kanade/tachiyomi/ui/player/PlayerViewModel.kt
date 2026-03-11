@@ -1051,6 +1051,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 downloadManager.addDownloadsToStartOfQueue(listOf(it))
             }
         }
+        deletePendingEpisodes()
     }
 
     fun updateCastProgress(position: Float) {
