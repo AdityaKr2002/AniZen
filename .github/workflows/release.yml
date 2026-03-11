@@ -64,7 +64,7 @@ jobs:
             mv "$f" "AniZen-v$VERSION-$f"
           done
 
-      - name: Generate Changelog
+      - name: Generate Raw Changelog
         run: |
           # Get the previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -75,15 +75,15 @@ jobs:
             # Get commits since last tag, excluding the automated version bump
             CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"* %s (%h)" | grep -v "chore: bump version" || echo "No changes detected.")
           fi
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$CHANGELOG" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: AI Changelog Summary
+      - name: Format Changelog with AI
         if: success()
         run: |
           # Clean up the changelog for JSON
-          JSON_CHANGELOG=$(echo "$CHANGELOG" | jq -aRs .)
+          JSON_CHANGELOG=$(echo "$RAW_CHANGELOG" | jq -aRs .)
           
           # Call Gemini API
           RESPONSE=$(curl https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }} \
@@ -92,15 +92,15 @@ jobs:
             -d "{
               \"contents\": [{
                 \"parts\":[{
-                  \"text\": \"You are a professional release manager for AniZen, an anime discovery app. Summarize these technical commits into a beautiful, user-friendly 'What's New' section. Categorize them into 'New Features', 'Bug Fixes', and 'Improvements'. Use emojis and bold text for highlights. Commits: $JSON_CHANGELOG\"
+                  \"text\": \"Summarize these technical commits into a clear and professional 'Changelog' for an anime app. Group them into 'Features', 'Fixes', and 'Adjustments'. Keep the tone natural and human, avoid corporate jargon or excessive hype. Use simple bullet points. Commits: $JSON_CHANGELOG\"
                 }]
               }]
             }")
           
           # Extract text and handle potential API errors
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text' || echo "$CHANGELOG")
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text' || echo "$RAW_CHANGELOG")
           
-          echo "AI_SUMMARY<<EOF" >> $GITHUB_ENV
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
@@ -116,7 +116,8 @@ jobs:
           body: |
             ## 🚀 AniZen v${{ env.NEW_VN }}
             
-            ${{ env.AI_SUMMARY }}
+            ### 📝 Changelog
+            ${{ env.CHANGELOG }}
             
             ---
             **📥 Download:** Choose the `arm64-v8a` version for your phone.
