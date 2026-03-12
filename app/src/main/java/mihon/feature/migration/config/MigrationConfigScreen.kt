@@ -57,6 +57,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import eu.kanade.tachiyomi.util.system.LocaleHelper.getShortDisplayName
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.update
 import mihon.feature.migration.list.MigrationListScreen
@@ -463,7 +464,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
     data class MigrationSource(
         val source: Source,
         val isSelected: Boolean,
-        val shortLanguage: String = eu.kanade.tachiyomi.util.system.LocaleHelper.getShortDisplayName(source.lang),
+        val shortLanguage: String = getShortDisplayName(source.lang),
         val upperShortLanguage: String = shortLanguage.uppercase(),
     ) {
         val id: Long
