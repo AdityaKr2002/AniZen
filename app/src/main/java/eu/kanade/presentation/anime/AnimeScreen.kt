@@ -176,6 +176,8 @@ fun AnimeScreen(
     onMigrateClicked: (() -> Unit)?,
     changeAnimeSkipIntro: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
+    onClearAnimeClicked: () -> Unit,
+    onMergeClicked: (() -> Unit)?,
     onMultiBookmarkClicked: (List<Episode>, bookmarked: Boolean) -> Unit,
     onMultiFillermarkClicked: (List<Episode>, fillermarked: Boolean) -> Unit,
     onMultiMarkAsSeenClicked: (List<Episode>, markAsSeen: Boolean) -> Unit,
@@ -245,6 +247,7 @@ fun AnimeScreen(
             onAllEpisodeSelected = onAllEpisodeSelected,
             onInvertSelection = onInvertSelection,
             onSettingsClicked = onSettingsClicked,
+            onMergeClicked = onMergeClicked,
             onLocalScoreClicked = onLocalScoreClicked,
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
         )
@@ -292,6 +295,7 @@ fun AnimeScreen(
             onAllEpisodeSelected = onAllEpisodeSelected,
             onInvertSelection = onInvertSelection,
             onSettingsClicked = onSettingsClicked,
+            onMergeClicked = onMergeClicked,
             onLocalScoreClicked = onLocalScoreClicked,
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
         )
@@ -334,6 +338,8 @@ private fun AnimeScreenSmallImpl(
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
+    onClearAnimeClicked: () -> Unit,
+    onMergeClicked: (() -> Unit)?,
     onMultiBookmarkClicked: (List<Episode>, bookmarked: Boolean) -> Unit,
     onMultiFillermarkClicked: (List<Episode>, fillermarked: Boolean) -> Unit,
     onMultiMarkAsSeenClicked: (List<Episode>, markAsSeen: Boolean) -> Unit,
@@ -454,7 +460,9 @@ private fun AnimeScreenSmallImpl(
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
                         onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
+                        onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
                         onClickSettings = onSettingsClicked,
+                        onClickMerge = onMergeClicked,
                         changeAnimeSkipIntro = changeAnimeSkipIntro,
                         actionModeCounter = selectedEpisodeCount,
                         onSelectAll = { onAllEpisodeSelected(true) },
@@ -513,6 +521,7 @@ private fun AnimeScreenSmallImpl(
                                     isStubSource = remember { state.source is StubSource },
                                     onCoverClick = onCoverClicked,
                                     doSearch = onSearch,
+                                    mergedSources = state.mergedSources,
                                 )
                             }
                             if (showSeasonsSection) {
@@ -738,6 +747,8 @@ fun AnimeScreenLargeImpl(
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
+    onClearAnimeClicked: () -> Unit,
+    onMergeClicked: (() -> Unit)?,
     onMultiBookmarkClicked: (List<Episode>, bookmarked: Boolean) -> Unit,
     onMultiFillermarkClicked: (List<Episode>, fillermarked: Boolean) -> Unit,
     onMultiMarkAsSeenClicked: (List<Episode>, markAsSeen: Boolean) -> Unit,
@@ -857,8 +868,10 @@ fun AnimeScreenLargeImpl(
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
                         onClickSettings = onSettingsClicked,
+                        onClickMerge = onMergeClicked,
                         changeAnimeSkipIntro = changeAnimeSkipIntro,
                         onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
+                        onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
                         actionModeCounter = selectedEpisodeCount,
                         onSelectAll = { onAllEpisodeSelected(true) },
                         onInvertSelection = { onInvertSelection() },
@@ -919,6 +932,7 @@ fun AnimeScreenLargeImpl(
                                     isStubSource = remember { state.source is StubSource },
                                     onCoverClick = onCoverClicked,
                                     doSearch = onSearch,
+                                    mergedSources = state.mergedSources,
                                 )
                                 if (showSeasonsSection) {
                                     val navigator = LocalNavigator.currentOrThrow

@@ -1075,6 +1075,9 @@
     <string name="unfinished_list">Unfinished List</string>
     <string name="score">Score</string>
     <string name="score_hint">Local Score (0-10)</string>
+    <string name="note_hint">Note</string>
+    <string name="action_clear_anime">Clear anime</string>
+    <string name="clear_anime_confirmation">This will reset your watch progress, remove any custom info, and delete all downloaded episodes for this anime.</string>
     <string name="title">Title</string>
     <string name="status">Status</string>
     <string name="track_status">Status</string>

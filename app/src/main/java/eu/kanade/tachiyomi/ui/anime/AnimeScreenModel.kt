@@ -166,6 +166,7 @@ class AnimeScreenModel(
     private val addTracks: AddTracks = Injekt.get(),
     private val setAnimeCategories: SetAnimeCategories = Injekt.get(),
     private val animeRepository: AnimeRepository = Injekt.get(),
+    private val deleteEpisodes: tachiyomi.domain.episode.interactor.DeleteEpisodes = Injekt.get(),
     private val filterEpisodesForDownload: FilterEpisodesForDownload = Injekt.get(),
     internal val setAnimeViewerFlags: SetAnimeViewerFlags = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
@@ -177,6 +178,8 @@ class AnimeScreenModel(
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getSeasonsByAnimeId: tachiyomi.domain.anime.interactor.GetSeasonsByAnimeId = Injekt.get(),
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
+    private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
+    private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
 ) : StateScreenModel<AnimeScreenModel.State>(State.Loading) {
 
     private val successState: State.Success?
@@ -276,6 +279,7 @@ class AnimeScreenModel(
             observeDownloads()
             observeTrackers()
             observeSeasons()
+            observeMergedAnime()
 
             if (isActive) {
                 val needRefreshInfo = !initialAnime.initialized
@@ -538,6 +542,7 @@ class AnimeScreenModel(
         tags: List<String>?,
         status: Long?,
         score: Double?,
+        note: String?,
     ) {
         val state = successState ?: return
         var anime = state.anime
@@ -595,6 +600,7 @@ class AnimeScreenModel(
                     genre,
                     status.takeUnless { it == state.anime.ogStatus },
                     score,
+                    note?.trimOrNull(),
                 ),
             )
             anime = anime.copy(lastUpdate = anime.lastUpdate + 1)
@@ -697,6 +703,21 @@ class AnimeScreenModel(
                     }
                     localTrack?.let { insertTrack.await(it) }
                 }
+
+                syncAnimeOnAdd(anime)
+            }
+        }
+    }
+
+    private suspend fun syncAnimeOnAdd(anime: Anime) {
+        if (libraryPreferences.syncOnAdd().get()) {
+            val fetchWindow = fetchInterval.getWindow(java.time.ZonedDateTime.now())
+            try {
+                val source = sourceManager.getOrStub(anime.source)
+                val episodes = source.getEpisodeList(anime.toSAnime())
+                syncEpisodesWithSource.await(episodes, anime, source, false, fetchWindow)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e)
             }
         }
     }
@@ -1137,6 +1158,15 @@ class AnimeScreenModel(
             .launchIn(screenModelScope)
     }
 
+    private fun observeMergedAnime() {
+        getMergedAnimeById.subscribe(animeId)
+            .onEach { mergedAnime ->
+                val sources = mergedAnime.map { sourceManager.getOrStub(it.source) }
+                updateSuccessState { it.copy(mergedSources = sources.toImmutableList()) }
+            }
+            .launchIn(screenModelScope)
+    }
+
     private suspend fun updateAiringTime(anime: Anime, trackItems: List<TrackItem>, manualFetch: Boolean) {
         val airingEpisodeData = AniChartApi().loadAiringTime(anime, trackItems, manualFetch)
         setAnimeViewerFlags.awaitSetNextEpisodeAiring(anime.id, airingEpisodeData)
@@ -1152,7 +1182,9 @@ class AnimeScreenModel(
         data class ShowQualities(val episode: Episode, val anime: Anime, val source: Source) : Dialog
         data class EditAnimeInfo(val anime: Anime) : Dialog
         data class LocalScorePicker(val anime: Anime) : Dialog
+        data class EditMergedAnimeSettings(val data: MergedAnimeData) : Dialog
         data object ChangeAnimeSkipIntro : Dialog
+        data object ClearAnime : Dialog
         data object SettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
@@ -1168,10 +1200,71 @@ class AnimeScreenModel(
     fun showTrackDialog() = updateSuccessState { it.copy(dialog = Dialog.TrackSheet) }
     fun showCoverDialog() = updateSuccessState { it.copy(dialog = Dialog.FullCover) }
     fun showEditAnimeInfoDialog() = updateSuccessState { it.copy(dialog = Dialog.EditAnimeInfo(it.anime)) }
+
+    fun showEditMergedSettings() {
+        val state = successState ?: return
+        screenModelScope.launchIO {
+            val mergedAnimes = animeMergeRepository.getMergedAnimeById(animeId)
+            val references = animeMergeRepository.getReferencesById(animeId)
+            updateSuccessState {
+                it.copy(dialog = Dialog.EditMergedAnimeSettings(MergedAnimeData(mergedAnimes.associateBy { it.id }, references)))
+            }
+        }
+    }
+
+    fun updateMergedSettings(references: List<MergedAnimeReference>) {
+        screenModelScope.launchIO {
+            animeMergeRepository.updateAllSettings(references.map { it.toMergeAnimeSettingsUpdate() })
+        }
+    }
+
+    private fun MergedAnimeReference.toMergeAnimeSettingsUpdate() = tachiyomi.domain.anime.model.MergeAnimeSettingsUpdate(
+        id = id,
+        isInfoAnime = isInfoAnime,
+        getEpisodeUpdates = getEpisodeUpdates,
+        episodeSortMode = episodeSortMode,
+        episodePriority = episodePriority,
+        downloadEpisodes = downloadEpisodes,
+    )
+
+    fun deleteMergedEntry(reference: MergedAnimeReference) {
+        screenModelScope.launchIO {
+            animeMergeRepository.deleteById(reference.id)
+        }
+    }
+
     fun showLocalScoreDialog() = updateSuccessState { it.copy(dialog = Dialog.LocalScorePicker(it.anime)) }
     fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copy(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
     fun showAnimeSkipIntroDialog() = updateSuccessState { it.copy(dialog = Dialog.ChangeAnimeSkipIntro) }
+    fun showClearAnimeDialog() = updateSuccessState { it.copy(dialog = Dialog.ClearAnime) }
+
+    fun clearAnime() {
+        val state = successState ?: return
+        screenModelScope.launchIO {
+            val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
+            val episodeIds = episodes.map { it.id }
+
+            // Delete downloaded episodes
+            deleteEpisodes(episodes)
+
+            // Reset unseen status
+            setSeenStatus.await(seen = false, episodes = episodes.toTypedArray())
+
+            // Remove custom info
+            setCustomAnimeInfo.set(CustomAnimeInfo(animeId, null))
+
+            // Reset favorite
+            if (state.anime.favorite) {
+                toggleFavorite()
+            }
+
+            dismissDialog()
+        }
+    }
+
     private fun showQualitiesDialog(episode: Episode) = updateSuccessState { it.copy(dialog = Dialog.ShowQualities(episode, it.anime, it.source)) }
+
+    data class MergedAnimeData(val anime: Map<Long, Anime>, val references: List<MergedAnimeReference>)
 
     sealed interface State {
         @Immutable data object Loading : State
@@ -1191,6 +1284,7 @@ class AnimeScreenModel(
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
             val discoveryExpanded: Boolean = false,
+            val mergedSources: ImmutableList<Source> = persistentListOf(),
         ) : State {
             val totalScore: Double? by lazy {
                 val localTrackScore = trackItems.find { it.tracker.id == 999L }?.track?.score?.takeIf { it > 0 }

@@ -150,3 +150,34 @@ fun SetIntervalDialog(
         },
     )
 }
+
+@Composable
+fun ClearAnimeDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(MR.strings.action_cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                    onConfirm()
+                },
+            ) {
+                Text(text = stringResource(MR.strings.action_ok))
+            }
+        },
+        title = {
+            Text(text = stringResource(MR.strings.action_clear_anime))
+        },
+        text = {
+            Text(text = stringResource(MR.strings.clear_anime_confirmation))
+        },
+    )
+}

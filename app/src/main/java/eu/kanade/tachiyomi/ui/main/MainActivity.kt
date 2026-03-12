@@ -120,6 +120,7 @@ import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.LinkedList
 
 class MainActivity : BaseActivity() {
 
@@ -131,6 +132,33 @@ class MainActivity : BaseActivity() {
     var ready = false
 
     private var navigator: Navigator? = null
+
+    // Idle-until-urgent
+    private var firstPaint = false
+    private val iuuQueue = LinkedList<() -> Unit>()
+
+    private fun initWhenIdle(task: () -> Unit) {
+        // Avoid sync issues by enforcing main thread
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            throw IllegalStateException("Can only be called on main thread!")
+        }
+
+        if (firstPaint) {
+            task()
+        } else {
+            iuuQueue += task
+        }
+    }
+
+    @Composable
+    private fun HandleFirstPaint() {
+        LaunchedEffect(Unit) {
+            firstPaint = true
+            while (iuuQueue.isNotEmpty()) {
+                iuuQueue.removeFirst()()
+            }
+        }
+    }
 
     // AM (CONNECTIONS) -->
     private val connectionsPreferences: ConnectionsPreferences by injectLazy()
@@ -157,6 +185,7 @@ class MainActivity : BaseActivity() {
         }
 
         setComposeContent {
+            HandleFirstPaint()
             val context = LocalContext.current
 
             val incognito by preferences.incognitoMode().collectAsState()
@@ -274,6 +303,12 @@ class MainActivity : BaseActivity() {
                 }
 
                 HandleOnNewIntent(context = context, navigator = navigator)
+
+                LaunchedEffect(Unit) {
+                    initWhenIdle {
+                        runExhConfigureDialog = true
+                    }
+                }
 
                 CheckForUpdates()
                 ShowOnboarding()
@@ -522,6 +557,11 @@ class MainActivity : BaseActivity() {
 
         ready = true
         return true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        eu.kanade.tachiyomi.data.coil.AnimeCoverMetadata.savePrefs()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

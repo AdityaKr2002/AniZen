@@ -44,6 +44,10 @@ class LibraryPreferences(
         Preference.appStateKey("pref_show_updating_progress_banner_key"),
         true,
     )
+
+    fun showEmptyCategoriesSearch() = preferenceStore.getBoolean("pref_show_empty_categories_search", true)
+
+    fun syncOnAdd() = preferenceStore.getBoolean("pref_sync_manga_on_add", false)
     // KMK <--
 
     fun coverRatios() = preferenceStore.getStringSet(

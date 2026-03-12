@@ -31,6 +31,7 @@ import eu.kanade.presentation.anime.EditCoverAction
 import eu.kanade.presentation.anime.EpisodeOptionsDialogScreen
 import eu.kanade.presentation.anime.EpisodeSettingsDialog
 import eu.kanade.presentation.anime.components.AnimeCoverDialog
+import eu.kanade.presentation.anime.components.ClearAnimeDialog
 import eu.kanade.presentation.anime.components.DeleteEpisodesDialog
 import eu.kanade.presentation.anime.components.SetIntervalDialog
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
@@ -46,10 +47,12 @@ import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.isSourceForTorrents
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
+import eu.kanade.tachiyomi.ui.anime.merged.EditMergedSettingsDialog
 import eu.kanade.tachiyomi.ui.anime.track.TrackInfoDialogHomeScreen
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
+import mihon.feature.migration.config.MigrationConfigScreen
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
@@ -202,12 +205,14 @@ class AnimeScreen(
             onEditCategoryClicked = screenModel::showChangeCategoryDialog.takeIf { successState.anime.favorite },
             // SY -->
             onEditInfoClicked = screenModel::showEditAnimeInfoDialog,
+            onClearAnimeClicked = screenModel::showClearAnimeDialog,
+            onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
             // SY <--
             onEditFetchIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf {
                 successState.anime.favorite
             },
             onMigrateClicked = {
-                navigator.push(MigrateSearchScreen(successState.anime.id))
+                navigator.push(MigrationConfigScreen(successState.anime.id))
             }.takeIf { successState.anime.favorite },
             changeAnimeSkipIntro = screenModel::showAnimeSkipIntroDialog.takeIf { successState.anime.favorite },
             onMultiBookmarkClicked = screenModel::bookmarkEpisodes,
@@ -331,6 +336,24 @@ class AnimeScreen(
                     onPositiveClick = screenModel::updateAnimeInfo,
                 )
             }
+            is AnimeScreenModel.Dialog.EditMergedAnimeSettings -> {
+                EditMergedSettingsDialog(
+                    onDismissRequest = screenModel::dismissDialog,
+                    mergedAnimes = dialog.data.anime.values.toList(),
+                    mergedReferences = dialog.data.references,
+                    onDeleteClick = screenModel::deleteMergedEntry,
+                    onPositiveClick = screenModel::updateMergedSettings,
+                    onOpenEntryClick = { navigator.push(AnimeScreen(it.animeId!!)) },
+                )
+            }
+            is AnimeScreenModel.Dialog.ClearAnime -> {
+                ClearAnimeDialog(
+                    onDismissRequest = onDismissRequest,
+                    onConfirm = {
+                        screenModel.clearAnime()
+                    },
+                )
+            }
             is AnimeScreenModel.Dialog.LocalScorePicker -> {
                 LocalScoreDialog(
                     anime = dialog.anime,
@@ -344,7 +367,8 @@ class AnimeScreen(
                             description = null,
                             tags = null,
                             status = newStatus,
-                            score = newScore
+                            score = newScore,
+                            note = null,
                         )
                     }
                 )

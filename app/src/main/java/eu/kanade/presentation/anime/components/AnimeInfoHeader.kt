@@ -122,6 +122,9 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
 @Composable
 fun AnimeInfoBox(
     isTabletUi: Boolean,
@@ -133,6 +136,7 @@ fun AnimeInfoBox(
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source> = persistentListOf(),
 ) {
     Box(
         modifier = modifier
@@ -174,6 +178,7 @@ fun AnimeInfoBox(
                     isStubSource = isStubSource,
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
+                    mergedSources = mergedSources,
                 )
             } else {
                 AnimeAndSourceTitlesLarge(
@@ -184,6 +189,7 @@ fun AnimeInfoBox(
                     isStubSource = isStubSource,
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
+                    mergedSources = mergedSources,
                 )
             }
         }
@@ -371,6 +377,7 @@ private fun AnimeAndSourceTitlesLarge(
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     Row(
         modifier = Modifier
@@ -401,6 +408,7 @@ private fun AnimeAndSourceTitlesLarge(
                 isStubSource = isStubSource,
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
+                mergedSources = mergedSources,
             )
         }
     }
@@ -415,6 +423,7 @@ private fun AnimeAndSourceTitlesSmall(
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     Row(
         modifier = Modifier
@@ -445,6 +454,7 @@ private fun AnimeAndSourceTitlesSmall(
                 isStubSource = isStubSource,
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
+                mergedSources = mergedSources,
             )
         }
     }
@@ -461,6 +471,7 @@ private fun AnimeContentInfo(
     isStubSource: Boolean,
     doSearch: (query: String, global: Boolean) -> Unit,
     textAlign: TextAlign? = LocalTextStyle.current.textAlign,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     val context = LocalContext.current
     Text(
@@ -594,6 +605,21 @@ private fun AnimeContentInfo(
             text = displayText,
             iconTint = if (isStubSource) MaterialTheme.colorScheme.error else if (isRevealed) MaterialTheme.colorScheme.primary else null,
             onClick = { isRevealed = !isRevealed }
+        )
+
+        MergedSourcesInfo(mergedSources)
+    }
+}
+
+@Composable
+private fun MergedSourcesInfo(
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
+) {
+    mergedSources.forEach { source ->
+        Spacer(modifier = Modifier.width(4.dp))
+        InfoChip(
+            icon = Icons.Outlined.Language,
+            text = source.getNameForAnimeInfo(),
         )
     }
 }

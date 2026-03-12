@@ -175,13 +175,15 @@ class LibraryScreenModel(
             libraryPreferences.categoryTabs().changes(),
             libraryPreferences.categoryNumberOfItems().changes(),
             libraryPreferences.showContinueWatchingButton().changes(),
-        ) { a, b, c -> arrayOf(a, b, c) }
-            .onEach { (showCategoryTabs, showAnimeCount, showAnimeContinueButton) ->
+            libraryPreferences.showEmptyCategoriesSearch().changes(),
+        ) { a, b, c, d -> arrayOf(a, b, c, d) }
+            .onEach { (showCategoryTabs, showAnimeCount, showAnimeContinueButton, showEmptyCategoriesSearch) ->
                 mutableState.update { state ->
                     state.copy(
                         showCategoryTabs = showCategoryTabs,
                         showAnimeCount = showAnimeCount,
                         showAnimeContinueButton = showAnimeContinueButton,
+                        showEmptyCategoriesSearch = showEmptyCategoriesSearch,
                     )
                 }
             }
@@ -1065,9 +1067,11 @@ class LibraryScreenModel(
         val showAnimeCount: Boolean = false,
         val showAnimeContinueButton: Boolean = false,
         val dialog: Dialog? = null,
+        // KMK -->
+        val showEmptyCategoriesSearch: Boolean = true,
+        // KMK <--
         // SY -->
-        val groupType: Int = LibraryGroup.BY_DEFAULT,
-        // SY <--
+        val groupType: Int = LibraryGroup.BY_DEFAULT,        // SY <--
     ) {
         private val libraryCount by lazy {
             library.values
@@ -1101,7 +1105,7 @@ class LibraryScreenModel(
         }
 
         fun getAnimeCountForCategory(category: Category): Int? {
-            return if (showAnimeCount || !searchQuery.isNullOrEmpty()) library[category]?.size else null
+            return if (showAnimeCount || (!searchQuery.isNullOrEmpty() && showEmptyCategoriesSearch)) library[category]?.size else null
         }
 
         fun getToolbarTitle(

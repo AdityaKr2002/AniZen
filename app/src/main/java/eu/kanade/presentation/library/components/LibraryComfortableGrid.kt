@@ -36,6 +36,7 @@ internal fun LibraryComfortableGrid(
 
         items(
             items = items,
+            key = { "library-grid-${it.libraryAnime.anime.id}" },
             contentType = { "anime_library_comfortable_grid_item" },
         ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime

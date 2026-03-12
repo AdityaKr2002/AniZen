@@ -38,8 +38,14 @@ data class MigrateAnimeScreen(
             navigateUp = navigator::pop,
             title = state.source!!.name,
             state = state,
-            onClickItem = { navigator.push(MigrateSearchScreen(it.id)) },
+            onClickItem = { navigator.push(MigrationConfigScreen(it.id)) },
             onClickCover = { navigator.push(AnimeScreen(it.id)) },
+            onAnimeSelected = screenModel::toggleSelection,
+            onSelectAll = screenModel::toggleAllSelection,
+            onInvertSelection = screenModel::invertSelection,
+            onMultiMigrateClicked = {
+                navigator.push(MigrationConfigScreen(it.map { it.id }))
+            },
         )
 
         LaunchedEffect(Unit) {

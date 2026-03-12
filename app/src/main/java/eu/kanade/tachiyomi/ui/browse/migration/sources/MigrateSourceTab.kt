@@ -48,6 +48,7 @@ fun Screen.migrateSourceTab(): TabContent {
                     },
                     onToggleSortingDirection = screenModel::toggleSortingDirection,
                     onToggleSortingMode = screenModel::toggleSortingMode,
+                    onChangeSearchQuery = screenModel::search,
                 )
             },
         )

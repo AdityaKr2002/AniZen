@@ -51,6 +51,8 @@ fun AnimeToolbar(
     onClickSettings: (() -> Unit)?,
     // SY -->
     onClickEditInfo: (() -> Unit)?,
+    onClickClearAnime: (() -> Unit)?,
+    onClickMerge: (() -> Unit)?,
     // SY <--
     // Anime only
     changeAnimeSkipIntro: (() -> Unit)?,
@@ -167,6 +169,22 @@ fun AnimeToolbar(
                                         AppBar.OverflowAction(
                                             title = stringResource(MR.strings.settings),
                                             onClick = onClickSettings,
+                                        ),
+                                    )
+                                }
+                                if (onClickMerge != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(SYMR.strings.action_merge),
+                                            onClick = onClickMerge,
+                                        ),
+                                    )
+                                }
+                                if (onClickClearAnime != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_clear_anime),
+                                            onClick = onClickClearAnime,
                                         ),
                                     )
                                 }

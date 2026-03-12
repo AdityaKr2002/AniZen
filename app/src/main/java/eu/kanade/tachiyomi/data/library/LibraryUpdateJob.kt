@@ -124,6 +124,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
         libraryPreferences.lastUpdatedTimestamp().set(Instant.now().toEpochMilli())
 
+        val showBanner = libraryPreferences.showUpdatingProgressBanner().get()
+
         val categoryId = inputData.getLong(KEY_CATEGORY, -1L)
         // SY -->
         val group = inputData.getInt(KEY_GROUP, LibraryGroup.BY_DEFAULT)
@@ -133,7 +135,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
         return withIOContext {
             try {
-                updateEpisodeList()
+                if (showBanner) {
+                    setProgress(workDataOf("progress" to 0, "title" to context.stringResource(MR.strings.updating_library)))
+                }
+                updateEpisodeList(showBanner)
                 Result.success()
             } catch (e: Exception) {
                 if (e is CancellationException) {
@@ -321,7 +326,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
      * @return an observable delivering the progress of each update.
      */
     @Suppress("MagicNumber", "LongMethod")
-    private suspend fun updateEpisodeList() {
+    private suspend fun updateEpisodeList(showBanner: Boolean) {
         val semaphore = Semaphore(5)
         val progressCount = AtomicInteger(0)
         val currentlyUpdatingAnime = CopyOnWriteArrayList<Anime>()
@@ -348,6 +353,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                     currentlyUpdatingAnime,
                                     progressCount,
                                     anime,
+                                    showBanner,
                                 ) {
                                     try {
                                         val newEpisodes = updateAnime(anime, fetchWindow)
@@ -453,6 +459,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         updatingAnime: CopyOnWriteArrayList<Anime>,
         completed: AtomicInteger,
         anime: Anime,
+        showBanner: Boolean,
         block: suspend () -> Unit,
     ) = coroutineScope {
         ensureActive()
@@ -464,7 +471,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             animeToUpdate.size,
         )
         
-        if (animeToUpdate.isNotEmpty()) {
+        if (showBanner && animeToUpdate.isNotEmpty()) {
             setProgress(workDataOf("progress" to (completed.get() * 100 / animeToUpdate.size)))
         }
 
@@ -480,7 +487,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             animeToUpdate.size,
         )
         
-        if (animeToUpdate.isNotEmpty()) {
+        if (showBanner && animeToUpdate.isNotEmpty()) {
             setProgress(workDataOf("progress" to (completed.get() * 100 / animeToUpdate.size)))
         }
     }

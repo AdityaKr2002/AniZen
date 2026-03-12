@@ -75,6 +75,9 @@ data class Anime(
 
     val score: Double?
         get() = customAnimeInfo?.score
+
+    val note: String?
+        get() = customAnimeInfo?.note
     // SY <--
 
     val expectedNextUpdate: Instant?
