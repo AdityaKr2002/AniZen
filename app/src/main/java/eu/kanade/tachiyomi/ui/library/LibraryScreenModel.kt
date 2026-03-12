@@ -130,29 +130,16 @@ class LibraryScreenModel(
 
     init {
         screenModelScope.launchIO {
-            combine<String?, Map<Category, List<LibraryAnime>>, Map<Long, List<Track>>, Pair<Map<Long, TriState>, Any>, Pair<Int, tachiyomi.domain.library.model.LibrarySort>, Map<Category, List<LibraryAnime>>>(
+            combine<String?, Map<Category, List<LibraryAnime>>, Map<Long, List<Track>>, Map<Long, TriState>, Int, LibrarySort, Map<Category, List<LibraryAnime>>>(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
                 getTracksPerAnime.subscribe(),
-                combine(
-                    getTrackingFilterFlow(),
-                    downloadCache.changes.debounce(500L),
-                    ::Pair,
-                ),
-                // SY -->
-                combine(
-                    state.map { it.groupType }.distinctUntilChanged(),
-                    libraryPreferences.sortingMode().changes(),
-                    ::Pair,
-                ),
-                // SY <--
-            ) { searchQuery, library, tracks, trackingFilterPair, groupTypeSortPair ->
-                val (trackingFilter, _) = trackingFilterPair
-                val (groupType, sort) = groupTypeSortPair
+                getTrackingFilterFlow(),
+                state.map { it.groupType }.distinctUntilChanged(),
+                libraryPreferences.sortingMode().changes(),
+            ) { searchQuery, library, tracks, trackingFilter, groupType, sort ->
                 library
-                    // SY -->
                     .applyGrouping(groupType, tracks)
-                    // SY <--
                     .applyFilters(tracks, trackingFilter)
                     .applySort(tracks, sort.takeIf { groupType != LibraryGroup.BY_DEFAULT }, trackingFilter.keys)
                     .mapValues { (_, value) ->
@@ -163,11 +150,11 @@ class LibraryScreenModel(
                         }
                     }
             }
-                .collectLatest {
+                .collectLatest { library ->
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,
-                            library = it,
+                            library = library,
                         )
                     }
                 }
