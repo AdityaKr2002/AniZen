@@ -394,7 +394,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             notifier.showUpdateNotifications(newUpdates)
             
             // Pre-fetch covers for new updates to make them load instantly in the library
-            scope.launch {
+            coroutineScope {
                 val imageLoader = coil3.SingletonImageLoader.get(context)
                 newUpdates.forEach { (anime, _) ->
                     val request = coil3.request.ImageRequest.Builder(context)
