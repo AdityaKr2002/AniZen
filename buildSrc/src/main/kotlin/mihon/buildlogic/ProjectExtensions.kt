@@ -43,7 +43,7 @@ internal fun Project.configureAndroid(commonExtension: CommonExtension<*, *, *, 
 
         buildTypes {
             maybeCreate("debug").apply {
-                matchingFallbacks += listOf("debug")
+                matchingFallbacks += listOf("debug", "release")
             }
             maybeCreate("release").apply {
                 matchingFallbacks += listOf("release")
