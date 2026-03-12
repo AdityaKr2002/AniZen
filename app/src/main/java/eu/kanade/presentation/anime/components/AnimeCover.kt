@@ -139,13 +139,16 @@ enum class AnimeCover(val ratio: Float) {
                 model = remember(data, animatedTransitions) {
                     ImageRequest.Builder(context)
                         .data(data)
+                        .precision(coil3.size.Precision.INEXACT)
                         .crossfade(animatedTransitions)
+                        .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
+                        .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
+                        .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                         .build()
                 },
                 contentDescription = contentDescription,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
+                    .fillMaxSize(),
                 contentScale = scale,
                 onState = { state = it },
             )
