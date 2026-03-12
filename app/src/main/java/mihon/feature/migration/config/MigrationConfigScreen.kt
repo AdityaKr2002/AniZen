@@ -317,7 +317,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                     )
                     if (showLanguage) {
                         Pill(
-                            text = FlagEmoji.getEmojiLangFlag(source.lang) + " (${source.upperShortLanguage})",
+                            text = FlagEmoji.getEmojiLangFlag(source.source.lang) + " (${source.upperShortLanguage})",
                             fontSize = MaterialTheme.typography.bodySmall.fontSize,
                         )
                     }
@@ -464,7 +464,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
     data class MigrationSource(
         val source: Source,
         val isSelected: Boolean,
-        val shortLanguage: String = LocaleHelper.getShortDisplayName(source.lang),
+        val shortLanguage: String = eu.kanade.tachiyomi.util.system.LocaleHelper.getShortDisplayName(source.lang),
         val upperShortLanguage: String = shortLanguage.uppercase(),
     ) {
         val id: Long

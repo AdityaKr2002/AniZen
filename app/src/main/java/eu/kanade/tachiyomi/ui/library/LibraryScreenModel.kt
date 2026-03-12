@@ -134,10 +134,14 @@ class LibraryScreenModel(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
                 getTracksPerAnime.subscribe(),
-                getTrackingFilterFlow(),
-                state.map { it.groupType }.distinctUntilChanged(),
+                combine(
+                    getTrackingFilterFlow(),
+                    state.map { it.groupType }.distinctUntilChanged(),
+                    ::Pair,
+                ),
                 libraryPreferences.sortingMode().changes(),
-            ) { searchQuery, library, tracks, trackingFilter, groupType, sort ->
+            ) { searchQuery, library, tracks, filterGroupPair, sort ->
+                val (trackingFilter, groupType) = filterGroupPair
                 library
                     .applyGrouping(groupType, tracks)
                     .applyFilters(tracks, trackingFilter)
