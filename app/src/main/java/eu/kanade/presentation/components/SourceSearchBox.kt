@@ -45,7 +45,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.clearFocusOnSoftKeyboardHide
-import tachiyomi.presentation.core.util.isItemScrollingUp
+import tachiyomi.presentation.core.util.isScrollingUp
 import tachiyomi.presentation.core.util.runOnEnterKeyPressed
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
@@ -62,7 +62,7 @@ fun AnimatedFloatingSearchBox(
     keyboardController: SoftwareKeyboardController? = LocalSoftwareKeyboardController.current,
 ) {
     AnimatedVisibility(
-        visible = listState.isItemScrollingUp(),
+        visible = listState.isScrollingUp(),
         enter = expandVertically(),
         exit = shrinkVertically(),
         modifier = modifier,
@@ -213,5 +213,3 @@ fun SearchBoxTrailingIcon(
 }
 
 internal val SOURCE_SEARCH_BOX_HEIGHT = 65.dp
-
-const val SEARCH_DEBOUNCE_MILLIS = 250L

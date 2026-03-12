@@ -133,7 +133,7 @@ fun AnimeBottomActionMenu(
                     .padding(horizontal = 8.dp, vertical = 12.dp),
             ) {
                 if (onBookmarkClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_bookmark_episode),
                         icon = Icons.Outlined.BookmarkAdd,
                         toConfirm = confirm[0],
@@ -142,7 +142,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onRemoveBookmarkClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_remove_bookmark_episode),
                         icon = Icons.Outlined.BookmarkRemove,
                         toConfirm = confirm[1],
@@ -152,7 +152,7 @@ fun AnimeBottomActionMenu(
                 }
                 // AM (FILLERMARK) -->
                 if (onFillermarkClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(AMR.strings.action_fillermark_episode),
                         icon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_24dp),
                         toConfirm = confirm[2],
@@ -161,7 +161,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onRemoveFillermarkClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(AMR.strings.action_remove_fillermark_episode),
                         icon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_border_24dp),
                         toConfirm = confirm[3],
@@ -171,7 +171,7 @@ fun AnimeBottomActionMenu(
                 }
                 // <-- AM (FILLERMARK)
                 if (onMarkAsSeenClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_mark_as_seen),
                         icon = Icons.Outlined.DoneAll,
                         toConfirm = confirm[4],
@@ -180,7 +180,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onMarkAsUnseenClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_mark_as_unseen),
                         icon = Icons.Outlined.RemoveDone,
                         toConfirm = confirm[5],
@@ -189,7 +189,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onMarkPreviousAsSeenClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_mark_previous_as_seen),
                         icon = ImageVector.vectorResource(R.drawable.ic_done_prev_24dp),
                         toConfirm = confirm[6],
@@ -198,7 +198,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onDownloadClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_download),
                         icon = Icons.Outlined.Download,
                         toConfirm = confirm[7],
@@ -207,7 +207,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onDeleteClicked != null) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_delete),
                         icon = Icons.Outlined.Delete,
                         toConfirm = confirm[8],
@@ -216,7 +216,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onExternalClicked != null && !playerPreferences.alwaysUseExternalPlayer().get()) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_play_externally),
                         icon = Icons.AutoMirrored.Outlined.OpenInNew,
                         toConfirm = confirm[9],
@@ -225,7 +225,7 @@ fun AnimeBottomActionMenu(
                     )
                 }
                 if (onInternalClicked != null && playerPreferences.alwaysUseExternalPlayer().get()) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_play_internally),
                         icon = Icons.AutoMirrored.Outlined.Input,
                         toConfirm = confirm[10],
@@ -235,52 +235,6 @@ fun AnimeBottomActionMenu(
                 }
             }
         }
-    }
-}
-
-@Composable
-internal fun RowScope.Button(
-    title: String,
-    icon: ImageVector,
-    toConfirm: Boolean,
-    onLongClick: () -> Unit,
-    onClick: () -> Unit,
-    content: (@Composable () -> Unit)? = null,
-) {
-    val animatedWeight by animateFloatAsState(
-        targetValue = if (toConfirm) 3f else 1f,
-        label = "weight",
-    )
-    Column(
-        modifier = Modifier
-            .size(48.dp)
-            .weight(animatedWeight)
-            .combinedClickable(
-                interactionSource = null,
-                indication = ripple(bounded = false),
-                onLongClick = onLongClick,
-                onClick = onClick,
-            ),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-        )
-        AnimatedVisibility(
-            visible = toConfirm,
-            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
-        ) {
-            Text(
-                text = title,
-                overflow = TextOverflow.Visible,
-                maxLines = 1,
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
-        content?.invoke()
     }
 }
 
@@ -332,21 +286,21 @@ fun LibraryBottomActionMenu(
                     )
                     .padding(horizontal = 8.dp, vertical = 12.dp),
             ) {
-                Button(
+                BottomMenuButton(
                     title = stringResource(MR.strings.action_move_category),
                     icon = Icons.AutoMirrored.Outlined.Label,
                     toConfirm = confirm[0],
                     onLongClick = { onLongClickItem(0) },
                     onClick = onChangeCategoryClicked,
                 )
-                Button(
+                BottomMenuButton(
                     title = stringResource(MR.strings.action_mark_as_seen),
                     icon = Icons.Outlined.DoneAll,
                     toConfirm = confirm[1],
                     onLongClick = { onLongClickItem(1) },
                     onClick = onMarkAsSeenClicked,
                 )
-                Button(
+                BottomMenuButton(
                     title = stringResource(MR.strings.action_mark_as_unseen),
                     icon = Icons.Outlined.RemoveDone,
                     toConfirm = confirm[2],
@@ -355,7 +309,7 @@ fun LibraryBottomActionMenu(
                 )
                 if (onDownloadClicked != null) {
                     var downloadExpanded by remember { mutableStateOf(false) }
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(MR.strings.action_download),
                         icon = Icons.Outlined.Download,
                         toConfirm = confirm[3],
@@ -370,7 +324,7 @@ fun LibraryBottomActionMenu(
                         )
                     }
                 }
-                Button(
+                BottomMenuButton(
                     title = stringResource(MR.strings.action_delete),
                     icon = Icons.Outlined.Delete,
                     toConfirm = confirm[4],
@@ -379,7 +333,7 @@ fun LibraryBottomActionMenu(
                 )
                 // SY -->
                 if (showOverflow) {
-                    Button(
+                    BottomMenuButton(
                         title = stringResource(SYMR.strings.reset_info),
                         icon = Icons.Outlined.Delete,
                         toConfirm = confirm[5],

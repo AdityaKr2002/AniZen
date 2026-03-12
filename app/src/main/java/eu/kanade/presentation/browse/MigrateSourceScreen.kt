@@ -177,7 +177,7 @@ private fun MigrateSourceList(
                 listState = lazyListState,
                 searchQuery = state.searchQuery,
                 onChangeSearchQuery = onChangeSearchQuery,
-                placeholderText = stringResource(SYMR.strings.action_search_for_source),
+                placeholderText = stringResource(MR.strings.action_search_for_source),
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
                     .padding(

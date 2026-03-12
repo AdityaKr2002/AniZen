@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -314,6 +315,7 @@ class MainActivity : BaseActivity() {
                 ShowOnboarding()
             }
 
+            var runExhConfigureDialog by remember { mutableStateOf(false) }
             var showChangelog by remember { mutableStateOf(didMigration && !isDebugBuildType) }
             if (showChangelog) {
                 AlertDialog(

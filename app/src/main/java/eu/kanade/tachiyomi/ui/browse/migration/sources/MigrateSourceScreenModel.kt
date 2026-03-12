@@ -5,7 +5,6 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.interactor.GetSourcesWithFavoriteCount
 import eu.kanade.domain.source.interactor.SetMigrateSorting
-import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.source.model.installedExtension
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.components.SEARCH_DEBOUNCE_MILLIS
@@ -44,7 +43,7 @@ class MigrateSourceScreenModel(
             combine(
                 state.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MILLIS),
                 getSourcesWithFavoriteCount.subscribe(),
-            ) { searchQuery, sourceCounts ->
+            ) { searchQuery: String?, sourceCounts: List<Pair<Source, Long>> ->
                 val queryFilter: (String?) -> ((Pair<Source, Long>) -> Boolean) = { query ->
                     filter@{ pair ->
                         val source = pair.first

@@ -175,7 +175,7 @@ fun AnimeToolbar(
                                 if (onClickMerge != null) {
                                     add(
                                         AppBar.OverflowAction(
-                                            title = stringResource(SYMR.strings.action_merge),
+                                            title = stringResource(MR.strings.action_merge),
                                             onClick = onClickMerge,
                                         ),
                                     )

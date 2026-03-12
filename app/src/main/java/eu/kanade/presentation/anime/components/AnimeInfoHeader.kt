@@ -48,6 +48,9 @@ import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Schedule
+import eu.kanade.tachiyomi.source.getNameForAnimeInfo
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.DropdownMenuItem

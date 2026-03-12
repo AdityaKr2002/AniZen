@@ -1521,8 +1521,14 @@
     <string name="merged_chapter_updates_error">Error toggling episode updates</string>
     <string name="merged_toggle_download_chapters_error">Error toggling episode downloads</string>
     <string name="action_merge">Merge</string>
+    <string name="pref_behavior">Behavior</string>
     <string name="pref_sync_manga_on_add">Sync on add</string>
     <string name="pref_sync_manga_on_add_description">Automatically fetch episode list when adding to library</string>
     <string name="pref_show_updating_progress_banner">Show progress banner</string>
     <string name="pref_show_empty_categories_search">Show empty categories in search</string>
+    <string name="action_scroll_to_top">Scroll to top</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
+    <string name="action_search_for_source">Search for source</string>
+    <string name="notes">Notes</string>
+    <string name="extra">Extra</string>
 </resources>

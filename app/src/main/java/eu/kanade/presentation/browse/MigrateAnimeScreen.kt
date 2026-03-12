@@ -38,6 +38,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.anime.components.BaseAnimeListItem
+import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.util.animateItemFastScroll
@@ -174,7 +175,7 @@ private fun MigrateAnimeContent(
                     }
                 },
                 onClickCover = { onClickCover(item.anime) },
-                onLongClick = { onAnimeSelected(item, !item.selected, true, true) },
+                onLongClickItem = { onAnimeSelected(item, !item.selected, true, true) },
                 modifier = Modifier.animateItemFastScroll(),
             )
         }
@@ -187,7 +188,7 @@ private fun MigrateAnimeItem(
     isSelected: Boolean,
     onClickItem: () -> Unit,
     onClickCover: () -> Unit,
-    onLongClick: () -> Unit,
+    onLongClickItem: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BaseAnimeListItem(
@@ -195,7 +196,7 @@ private fun MigrateAnimeItem(
         anime = anime,
         onClickItem = onClickItem,
         onClickCover = onClickCover,
-        onLongClick = onLongClick,
+        onLongClickItem = onLongClickItem,
     )
 }
 
@@ -294,15 +295,15 @@ private fun MigrateAnimeBottomBar(
                 )
                 .padding(horizontal = 8.dp, vertical = 12.dp),
         ) {
-            Button(
-                title = stringResource(SYMR.strings.action_scroll_to_top),
+            BottomMenuButton(
+                title = stringResource(MR.strings.action_scroll_to_top),
                 icon = Icons.Outlined.VerticalAlignTop,
                 toConfirm = confirm[0],
                 onLongClick = { onLongClickItem(0) },
                 onClick = scrollToTop,
                 enabled = enableScrollToTop,
             )
-            Button(
+            BottomMenuButton(
                 title = stringResource(MR.strings.migrate),
                 icon = Icons.Outlined.FindReplace,
                 toConfirm = confirm[1],
@@ -310,8 +311,8 @@ private fun MigrateAnimeBottomBar(
                 onClick = onMultiMigrateClicked,
                 enabled = selected.isNotEmpty(),
             )
-            Button(
-                title = stringResource(SYMR.strings.action_scroll_to_bottom),
+            BottomMenuButton(
+                title = stringResource(MR.strings.action_scroll_to_bottom),
                 icon = Icons.Outlined.VerticalAlignBottom,
                 toConfirm = confirm[2],
                 onLongClick = { onLongClickItem(2) },

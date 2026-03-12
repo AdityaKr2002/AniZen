@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.util.lang.StringSimilarity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
-import tachiyomi.core.common.util.QuerySanitizer.sanitize
 import java.util.Locale
 
 typealias SearchAction<T> = suspend (String) -> List<T>
@@ -135,12 +134,17 @@ abstract class BaseSmartSearchEngine<T>(
             .distinct()
     }
 
+    private fun String.sanitize(): String {
+        return this.replace(sanitizeRegex, "")
+    }
+
     companion object {
         const val MIN_ELIGIBLE_THRESHOLD = 0.4
 
         private val titleRegex = Regex("[^a-zA-Z0-9- ]")
         private val titleCyrillicRegex = Regex("[^\\p{L}0-9- ]")
         private val consecutiveSpacesRegex = Regex(" +")
+        private val sanitizeRegex = Regex("[^\\p{L}0-9 ]")
     }
 }
 

@@ -9,7 +9,7 @@ fun MigrationFlag.getLabel(): StringResource {
         MigrationFlag.EPISODE -> MR.strings.episodes
         MigrationFlag.CATEGORY -> MR.strings.categories
         MigrationFlag.TRACK -> MR.strings.track
-        MigrationFlag.CUSTOM_COVER -> MR.strings.cover
+        MigrationFlag.CUSTOM_COVER -> MR.strings.manga_cover
         MigrationFlag.NOTES -> MR.strings.notes
         MigrationFlag.REMOVE_DOWNLOAD -> MR.strings.migrationConfigScreen_removeDownloadsTitle
         MigrationFlag.EXTRA -> MR.strings.extra

@@ -146,7 +146,7 @@ class LibraryScreenModel(
                     ::Pair,
                 ),
                 // SY <--
-            ) { searchQuery, library, tracks, (trackingFilter, _), (groupType, sort) ->
+            ) { searchQuery: String?, library: Map<Category, List<LibraryAnime>>, tracks: Map<Long, List<Track>>, (trackingFilter, _), (groupType, sort) ->
                 library
                     // SY -->
                     .applyGrouping(groupType, tracks)

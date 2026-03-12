@@ -27,7 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallExtendedFloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -57,6 +57,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import eu.kanade.tachiyomi.util.system.LocaleHelper.getShortDisplayName
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.update
 import mihon.feature.migration.list.MigrationListScreen
@@ -169,8 +170,9 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                     enter = fadeIn(),
                     exit = fadeOut(),
                     content = {
-                        SmallExtendedFloatingActionButton(
-                            text = { Text(text = stringResource(MR.strings.migrationConfigScreen_continueButtonText)) },
+                        val continueText = stringResource(MR.strings.migrationConfigScreen_continueButtonText)
+                        ExtendedFloatingActionButton(
+                            text = { Text(text = continueText) },
                             icon = { Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null) },
                             onClick = {
                                 screenModel.saveSources()

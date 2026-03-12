@@ -2,8 +2,8 @@ package mihon.feature.migration.list.search
 
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.model.SAnime
-import mihon.domain.anime.model.toDomainAnime
 import tachiyomi.domain.anime.model.Anime
+import tachiyomi.domain.anime.model.toDomainAnime
 
 class SmartSourceSearchEngine(extraSearchParams: String?) : BaseSmartSearchEngine<SAnime>(extraSearchParams) {
 

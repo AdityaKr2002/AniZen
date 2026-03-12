@@ -9,7 +9,7 @@ import eu.kanade.domain.anime.model.toSAnime
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.getNameForAnimeInfo
-import exh.util.ThrottleManager
+// import exh.util.ThrottleManager
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -59,7 +59,7 @@ class MigrationListScreenModel(
 
     private val smartSearchEngine = SmartSourceSearchEngine(extraSearchQuery)
 
-    private val throttleManager = ThrottleManager()
+    // private val throttleManager = ThrottleManager()
 
     val items
         inline get() = state.value.items
@@ -119,7 +119,7 @@ class MigrationListScreenModel(
     }
 
     private suspend fun runMigrations(animeList: List<MigratingAnime>) {
-        throttleManager.resetThrottle()
+        // throttleManager.resetThrottle()
 
         val sources = preferences.migrationSources().get()
             .mapNotNull { sourceManager.get(it.toLong()) as? CatalogueSource }
@@ -198,7 +198,7 @@ class MigrationListScreenModel(
 
             if (searchResult == null || (searchResult.url == anime.url && source.id == anime.source)) return null
 
-            val localAnime = networkToLocalAnime(searchResult)
+            val localAnime = networkToLocalAnime.await(searchResult)
             try {
                 val episodes = source.getEpisodeList(localAnime.toSAnime())
                 syncEpisodesWithSource.await(episodes, localAnime, source)

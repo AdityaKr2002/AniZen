@@ -47,6 +47,7 @@ import eu.kanade.tachiyomi.util.AniChartApi
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
 import eu.kanade.tachiyomi.util.removeCovers
 import eu.kanade.tachiyomi.util.system.toast
+import exh.source.MERGED_SOURCE_ID
 import exh.util.nullIfEmpty
 import exh.util.trimOrNull
 import java.util.Collections
@@ -91,6 +92,7 @@ import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeUpdate
 import tachiyomi.domain.anime.model.CustomAnimeInfo
+import tachiyomi.domain.anime.model.MergedAnimeReference
 import tachiyomi.domain.anime.model.Season
 import tachiyomi.domain.anime.model.applyFilter
 import tachiyomi.domain.anime.model.toAnimeUpdate
@@ -98,6 +100,7 @@ import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.SetAnimeCategories
 import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.anime.interactor.FetchInterval
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.interactor.SetAnimeDefaultEpisodeFlags
 import tachiyomi.domain.episode.interactor.UpdateEpisode
@@ -179,6 +182,7 @@ class AnimeScreenModel(
     private val getSeasonsByAnimeId: tachiyomi.domain.anime.interactor.GetSeasonsByAnimeId = Injekt.get(),
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
     private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
+    private val fetchInterval: FetchInterval = Injekt.get(),
     private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
 ) : StateScreenModel<AnimeScreenModel.State>(State.Loading) {
 
@@ -1159,12 +1163,14 @@ class AnimeScreenModel(
     }
 
     private fun observeMergedAnime() {
-        getMergedAnimeById.subscribe(animeId)
-            .onEach { mergedAnime ->
-                val sources = mergedAnime.map { sourceManager.getOrStub(it.source) }
-                updateSuccessState { it.copy(mergedSources = sources.toImmutableList()) }
-            }
-            .launchIn(screenModelScope)
+        screenModelScope.launchIO {
+            getMergedAnimeById.subscribe(animeId)
+                .onEach { mergedAnime ->
+                    val sources = mergedAnime.map { sourceManager.getOrStub(it.source) }
+                    updateSuccessState { it.copy(mergedSources = sources.toImmutableList()) }
+                }
+                .launchIn(this)
+        }
     }
 
     private suspend fun updateAiringTime(anime: Anime, trackItems: List<TrackItem>, manualFetch: Boolean) {

@@ -100,7 +100,8 @@ class ExtensionsScreenModel(
                 state.map { it.nsfwOnly }.distinctUntilChanged(),
                 currentDownloads,
                 getExtensions.subscribe(),
-            ) { query, nsfwOnly, downloads, (_updates, _installed, _available, _untrusted) ->
+            ) { query: String?, nsfwOnly: Boolean, downloads: Map<String, InstallStep>, extensions: eu.kanade.domain.extension.model.Extensions ->
+                val (_updates, _installed, _available, _untrusted) = extensions
                 val searchQuery = query ?: ""
 
                 val itemsGroups: ItemGroups = mutableMapOf()
