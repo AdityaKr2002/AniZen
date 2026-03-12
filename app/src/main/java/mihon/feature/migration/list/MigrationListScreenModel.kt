@@ -161,7 +161,7 @@ class MigrationListScreenModel(
             if (result != null && result.first.thumbnailUrl == null) {
                 try {
                     val newAnime = sourceManager.getOrStub(result.first.source).getAnimeDetails(result.first.toSAnime())
-                    updateAnime.awaitUpdateFromSource(result.first, newAnime, true)
+                    updateAnime.awaitUpdateFromSource(result.first, newAnime, manualFetch = true)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Exception) {
@@ -254,7 +254,7 @@ class MigrationListScreenModel(
 
             try {
                 val newAnime = sourceManager.getOrStub(result.source).getAnimeDetails(result.toSAnime())
-                updateAnime.awaitUpdateFromSource(result, newAnime, true)
+                updateAnime.awaitUpdateFromSource(result, newAnime, manualFetch = true)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
