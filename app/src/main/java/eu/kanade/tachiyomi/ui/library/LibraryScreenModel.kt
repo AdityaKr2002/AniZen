@@ -130,7 +130,7 @@ class LibraryScreenModel(
 
     init {
         screenModelScope.launchIO {
-            combine<String?, Map<Category, List<LibraryAnime>>, Map<Long, List<Track>>, Map<Long, TriState>, Int, LibrarySort, Map<Category, List<LibraryAnime>>>(
+            combine(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
                 getTracksPerAnime.subscribe(),
@@ -150,7 +150,7 @@ class LibraryScreenModel(
                         }
                     }
             }
-                .collectLatest { library ->
+                .collectLatest { library: Map<Category, List<LibraryItem>> ->
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,

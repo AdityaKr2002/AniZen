@@ -464,7 +464,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
     data class MigrationSource(
         val source: Source,
         val isSelected: Boolean,
-        val shortLanguage: String = getShortDisplayName(source.lang),
+        val shortLanguage: String = LocaleHelper.getShortDisplayName(source.lang),
         val upperShortLanguage: String = shortLanguage.uppercase(),
     ) {
         val id: Long

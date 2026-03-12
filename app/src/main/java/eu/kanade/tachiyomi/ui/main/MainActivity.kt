@@ -305,6 +305,8 @@ class MainActivity : BaseActivity() {
 
                 HandleOnNewIntent(context = context, navigator = navigator)
 
+                var runExhConfigureDialog by remember { mutableStateOf(false) }
+
                 LaunchedEffect(Unit) {
                     initWhenIdle {
                         runExhConfigureDialog = true
@@ -315,7 +317,6 @@ class MainActivity : BaseActivity() {
                 ShowOnboarding()
             }
 
-            var runExhConfigureDialog by remember { mutableStateOf(false) }
             var showChangelog by remember { mutableStateOf(didMigration && !isDebugBuildType) }
             if (showChangelog) {
                 AlertDialog(
