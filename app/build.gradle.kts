@@ -97,7 +97,7 @@ android {
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
-        maybeCreate("preview").apply {
+        getByName("preview").apply {
             initWith(release)
 
             applicationIdSuffix = ".beta"
@@ -109,7 +109,7 @@ android {
 
             buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
         }
-        maybeCreate("benchmark").apply {
+        getByName("benchmark").apply {
             initWith(release)
 
             isDebuggable = false
