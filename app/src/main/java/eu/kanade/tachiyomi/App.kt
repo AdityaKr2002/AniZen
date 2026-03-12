@@ -263,18 +263,19 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
             memoryCache {
                 MemoryCache.Builder()
-                    .maxSizePercent(this@App, 0.25) // Use 25% of available RAM for images
+                    .maxSizePercent(this@App, 0.25) // Balanced 25% RAM allocation for stability
                     .build()
             }
             diskCache {
                 DiskCache.Builder()
                     .directory(this@App.cacheDir.resolve("image_cache").absolutePath.toPath())
-                    .maxSizeBytes(100L * 1024 * 1024) // 100MB dedicated disk cache
+                    .maxSizeBytes(500L * 1024 * 1024) // Maintain 500MB disk cache for high retention
                     .build()
             }
 
-            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(12))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(12)) // Optimized for modern multi-core CPUs
+            val coreCount = Runtime.getRuntime().availableProcessors()
+            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12)))
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(3, 8))) // Dynamic decoding based on hardware power
         }.build()
     }
 

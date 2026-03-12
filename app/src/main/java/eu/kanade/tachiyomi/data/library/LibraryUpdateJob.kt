@@ -392,6 +392,19 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
         if (newUpdates.isNotEmpty()) {
             notifier.showUpdateNotifications(newUpdates)
+            
+            // Pre-fetch covers for new updates to make them load instantly in the library
+            coroutineScope {
+                val imageLoader = coil3.SingletonImageLoader.get(context)
+                newUpdates.forEach { (anime, _) ->
+                    val request = coil3.request.ImageRequest.Builder(context)
+                        .data(anime)
+                        .precision(coil3.size.Precision.INEXACT)
+                        .build()
+                    imageLoader.enqueue(request)
+                }
+            }
+
             if (hasDownloads.get()) {
                 downloadManager.startDownloads()
             }
