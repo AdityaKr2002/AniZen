@@ -130,7 +130,7 @@ class LibraryScreenModel(
 
     init {
         screenModelScope.launchIO {
-            combine(
+            combine<String?, Map<Category, List<LibraryAnime>>, Map<Long, List<Track>>, Pair<Map<Long, TriState>, Any>, Pair<Int, tachiyomi.domain.library.model.LibrarySort>, Map<Category, List<LibraryAnime>>>(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
                 getLibraryFlow(),
                 getTracksPerAnime.subscribe(),
@@ -146,7 +146,9 @@ class LibraryScreenModel(
                     ::Pair,
                 ),
                 // SY <--
-            ) { searchQuery: String?, library: Map<Category, List<LibraryAnime>>, tracks: Map<Long, List<Track>>, (trackingFilter, _), (groupType, sort) ->
+            ) { searchQuery, library, tracks, trackingFilterPair, groupTypeSortPair ->
+                val (trackingFilter, _) = trackingFilterPair
+                val (groupType, sort) = groupTypeSortPair
                 library
                     // SY -->
                     .applyGrouping(groupType, tracks)
