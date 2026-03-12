@@ -12,6 +12,7 @@ import eu.kanade.presentation.browse.MigrateAnimeScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
+import mihon.feature.migration.config.MigrationConfigScreen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
 import tachiyomi.i18n.MR

@@ -30,6 +30,7 @@ fun RowScope.BottomMenuButton(
     toConfirm: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
+    enabled: Boolean = true,
     content: (@Composable () -> Unit)? = null,
 ) {
     val animatedWeight by animateFloatAsState(
@@ -42,9 +43,10 @@ fun RowScope.BottomMenuButton(
             .weight(animatedWeight)
             .combinedClickable(
                 interactionSource = null,
-                indication = ripple(bounded = false),
-                onLongClick = onLongClick,
-                onClick = onClick,
+                indication = if (enabled) ripple(bounded = false) else null,
+                onLongClick = onLongClick.takeIf { enabled },
+                onClick = onClick.takeIf { enabled } ?: {},
+                enabled = enabled,
             ),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,6 +54,7 @@ fun RowScope.BottomMenuButton(
         Icon(
             imageVector = icon,
             contentDescription = title,
+            modifier = Modifier.alpha(if (enabled) 1f else 0.4f),
         )
         AnimatedVisibility(
             visible = toConfirm,

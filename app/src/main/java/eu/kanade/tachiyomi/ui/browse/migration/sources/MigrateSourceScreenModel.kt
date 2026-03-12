@@ -5,7 +5,6 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.interactor.GetSourcesWithFavoriteCount
 import eu.kanade.domain.source.interactor.SetMigrateSorting
-import eu.kanade.domain.source.model.installedExtension
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.components.SEARCH_DEBOUNCE_MILLIS
 import kotlinx.collections.immutable.ImmutableList
@@ -51,8 +50,7 @@ class MigrateSourceScreenModel(
                         query.split(",").any {
                             val input = it.trim()
                             if (input.isEmpty()) return@any false
-                            source.installedExtension?.name?.contains(input, ignoreCase = true) == true ||
-                                source.name.contains(input, ignoreCase = true) ||
+                            source.name.contains(input, ignoreCase = true) ||
                                 source.id == input.toLongOrNull()
                         }
                     }
