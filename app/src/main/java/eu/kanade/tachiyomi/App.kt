@@ -273,8 +273,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
                     .build()
             }
 
-            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(16))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(16)) // Optimized for modern multi-core CPUs
+            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(8))
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(8)) // Balanced for performance and UI smoothness
         }.build()
     }
 

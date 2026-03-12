@@ -41,10 +41,10 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val notification = applicationContext.notificationBuilder(Notifications.CHANNEL_DOWNLOADER_PROGRESS) {
             setContentTitle(applicationContext.getString(R.string.download_notifier_downloader_title))
-            setSmallIcon(android.R.drawable.stat_sys_download)
+            setSmallIcon(R.drawable.ic_splash_logo)
         }.build()
         return ForegroundInfo(
-            Notifications.ID_DOWNLOAD_JOB_FOREGROUND,
+            Notifications.ID_DOWNLOAD_EPISODE_PROGRESS,
             notification,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
