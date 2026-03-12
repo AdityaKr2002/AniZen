@@ -1,9 +1,9 @@
-package mihon.domain.migration.usecases
+package mihon.domain.migration.interactor
 
 import eu.kanade.domain.episode.interactor.SyncEpisodesWithSource
 import eu.kanade.domain.anime.interactor.UpdateAnime
 import eu.kanade.domain.anime.model.hasCustomCover
-import eu.kanade.domain.anime.model.toSAnime
+import tachiyomi.domain.anime.model.toSAnime
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.download.DownloadManager
@@ -25,6 +25,8 @@ import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.InsertTrack
 import java.time.Instant
+import java.util.Date
+import kotlin.reflect.KProperty
 
 class MigrateAnimeUseCase(
     private val sourcePreferences: SourcePreferences,
@@ -43,7 +45,7 @@ class MigrateAnimeUseCase(
     private val getHistory: GetHistory,
     private val upsertHistory: UpsertHistory,
 ) {
-    private val enhancedServices by lazy { trackerManager.trackers.filterIsInstance<EnhancedTracker>() }
+    private val enhancedServices: List<EnhancedTracker> by lazy { trackerManager.trackers.filterIsInstance<EnhancedTracker>() }
 
     suspend operator fun invoke(
         current: Anime,
@@ -93,7 +95,7 @@ class MigrateAnimeUseCase(
                                 historyUpdates += HistoryUpdate(
                                     animeEpisode.id,
                                     prevHistory.seenAt ?: return@let,
-                                    prevHistory.seenDuration,
+                                    prevHistory.watchDuration,
                                 )
                             }
                         }

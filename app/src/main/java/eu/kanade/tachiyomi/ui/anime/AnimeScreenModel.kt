@@ -1173,6 +1173,8 @@ class AnimeScreenModel(
         updateSuccessState { it.copy(nextAiringEpisode = airingEpisodeData) }
     }
 
+    data class MergedAnimeData(val anime: Map<Long, Anime>, val references: List<MergedAnimeReference>)
+
     sealed interface Dialog {
         data class ChangeCategory(val anime: Anime, val initialSelection: ImmutableList<CheckboxState<Category>>) : Dialog
         data class DeleteEpisodes(val episodes: List<Episode>) : Dialog
@@ -1263,8 +1265,6 @@ class AnimeScreenModel(
     }
 
     private fun showQualitiesDialog(episode: Episode) = updateSuccessState { it.copy(dialog = Dialog.ShowQualities(episode, it.anime, it.source)) }
-
-    data class MergedAnimeData(val anime: Map<Long, Anime>, val references: List<MergedAnimeReference>)
 
     sealed interface State {
         @Immutable data object Loading : State

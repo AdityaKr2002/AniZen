@@ -28,7 +28,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
-import mihon.domain.migration.usecases.MigrateAnimeUseCase
+import mihon.domain.migration.interactor.MigrateAnimeUseCase
 import mihon.feature.migration.list.models.MigratingAnime
 import mihon.feature.migration.list.models.MigratingAnime.SearchResult
 import mihon.feature.migration.list.search.SmartSourceSearchEngine

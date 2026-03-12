@@ -81,7 +81,7 @@ class SYDomainModule : InjektModule {
 //        addFactory { SearchEngine() }
 //        addFactory { IsTrackUnfollowed() }
         addFactory { GetSeenAnimeNotInLibraryView(get()) }
-        addFactory { mihon.domain.migration.usecases.MigrateAnimeUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+        addFactory { mihon.domain.migration.interactor.MigrateAnimeUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 
         addSingletonFactory<AnimeMergeRepository> { AnimeMergeRepositoryImpl(get()) }
         addFactory { GetMergedAnime(get()) }
