@@ -266,12 +266,14 @@ class AnimeScreen(
             }
 
             is AnimeScreenModel.Dialog.Migrate -> {
+                val oldAnime = dialog.oldAnime
+                val newAnime = dialog.newAnime
                 eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog(
-                    oldAnime = dialog.oldAnime,
-                    newAnime = dialog.newAnime,
-                    screenModel = rememberScreenModel { eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel(dialog.oldAnime.id) },
+                    oldAnime = oldAnime,
+                    newAnime = newAnime,
+                    screenModel = rememberScreenModel { eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel(oldAnime.id) },
                     onDismissRequest = onDismissRequest,
-                    onClickTitle = { navigator.push(AnimeScreen(dialog.newAnime.id)) },
+                    onClickTitle = { navigator.push(AnimeScreen(newAnime.id)) },
                     onPopScreen = {
                         navigator.popUntil { it is BrowseSourceScreen || it is HomeScreen }
                     },
