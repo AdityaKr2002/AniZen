@@ -47,6 +47,7 @@ import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.isSourceForTorrents
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
+import eu.kanade.tachiyomi.ui.anime.AnimeCoverScreenModel
 import eu.kanade.tachiyomi.ui.anime.merged.EditMergedSettingsDialog
 import eu.kanade.tachiyomi.ui.anime.notes.AnimeNotesScreen
 import exh.source.MERGED_SOURCE_ID
@@ -309,7 +310,7 @@ class AnimeScreen(
             }
 
             is AnimeScreenModel.Dialog.FullCover -> {
-                val sm = rememberScreenModel { MigrateDialogScreenModel() }
+                val sm = rememberScreenModel { AnimeCoverScreenModel(successState.anime.id) }
                 val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
                     if (it != null) {
                         sm.editCover(context, it)
@@ -318,8 +319,8 @@ class AnimeScreen(
                 AnimeCoverDialog(
                     anime = successState.anime,
                     isCustomCover = successState.anime.hasCustomCover(),
-                    snackbarHostState = screenModel.snackbarHostState,
-                    onShareClick = { shareAnime(context, successState.anime, successState.source) },
+                    snackbarHostState = sm.snackbarHostState,
+                    onShareClick = { sm.shareCover(context) },
                     onSaveClick = { sm.saveCover(context) },
                     onEditClick = {
                         when (it) {
@@ -405,15 +406,11 @@ class AnimeScreen(
                     }
                 }
                 SkipIntroLengthDialog(
-                    initialSkipIntroLength = if (
-                        successState.anime.skipIntroLength == 0L ||
-                        successState.anime.skipIntroLength == 0
-                    ) {
-                        screenModel.gesturePreferences.defaultIntroLength().get()
+                    initialSkipIntroLength = if (successState.anime.skipIntroLength == 0) {
+                        screenModel.gesturePreferences.defaultIntroLength().get().toInt()
                     } else {
                         successState.anime.skipIntroLength
-                    }.toInt(),
-                    defaultSkipIntroLength = screenModel.gesturePreferences.defaultIntroLength().get().toInt(),
+                    },
                     onDismissRequest = onDismissRequest,
                     onValueChanged = {
                         updateSkipIntroLength(it.toLong())

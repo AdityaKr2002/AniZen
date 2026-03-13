@@ -56,7 +56,7 @@ import uy.kohesive.injekt.api.get
 import java.time.Instant
 
 @Composable
-internal fun MigrateDialog(
+fun MigrateDialog(
     oldAnime: Anime,
     newAnime: Anime,
     screenModel: MigrateDialogScreenModel,
@@ -146,7 +146,7 @@ internal fun MigrateDialog(
     }
 }
 
-internal class MigrateDialogScreenModel(
+class MigrateDialogScreenModel(
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
