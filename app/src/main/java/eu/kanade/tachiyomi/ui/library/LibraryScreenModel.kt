@@ -142,7 +142,7 @@ class LibraryScreenModel(
                 ),
                 libraryPreferences.sortingMode().changes(),
                 libraryPreferences.showHiddenCategories().changes(),
-            ) { searchQuery, library, tracks, filterGroupPair, sort, showHidden ->
+            ) { searchQuery: String?, library: Map<Category, List<LibraryAnime>>, tracks: Map<Long, List<Track>>, filterGroupPair: Pair<Map<Long, TriState>, Int>, sort: LibrarySort, showHidden: Boolean ->
                 val (trackingFilter, groupType) = filterGroupPair
                 library
                     .applyGrouping(groupType, tracks)

@@ -373,7 +373,17 @@ class AnimeScreen(
                     }
                 )
             }
+            // SY -->
+            is AnimeScreenModel.Dialog.SetAnimeFetchInterval -> {
+                SetIntervalDialog(
+                    interval = dialog.anime.fetchInterval,
+                    nextUpdate = dialog.anime.expectedNextUpdate,
+                    onDismissRequest = onDismissRequest,
+                    onValueChanged = { interval: Int -> screenModel.setFetchInterval(dialog.anime, interval) },
+                )
+            }
             // SY <--
+            is AnimeScreenModel.Dialog.ChangeAnimeSkipIntro -> {
             AnimeScreenModel.Dialog.ChangeAnimeSkipIntro -> {
                 fun updateSkipIntroLength(newLength: Long) {
                     scope.launchIO {
