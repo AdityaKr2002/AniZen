@@ -266,13 +266,13 @@ class AnimeScreen(
 
             is AnimeScreenModel.Dialog.Migrate -> {
                 MigrateDialog(
+                    oldAnime = dialog.oldAnime,
+                    newAnime = dialog.newAnime,
+                    screenModel = rememberScreenModel { MigrateDialogScreenModel() },
                     onDismissRequest = onDismissRequest,
-                    onConfirm = { replace ->
-                        scope.launchIO {
-                            val migrateAnime = Injekt.get<mihon.domain.migration.interactor.MigrateAnimeUseCase>()
-                            migrateAnime.invoke(dialog.oldAnime, dialog.newAnime, replace)
-                            withUIContext { navigator.replace(AnimeScreen(dialog.newAnime.id)) }
-                        }
+                    onClickTitle = { navigator.push(AnimeScreen(dialog.newAnime.id)) },
+                    onPopScreen = {
+                        navigator.popUntil { it is BrowseSourceScreen || it is HomeScreen }
                     },
                 )
             }
@@ -309,14 +309,16 @@ class AnimeScreen(
             }
 
             is AnimeScreenModel.Dialog.FullCover -> {
-                val sm = rememberScreenModel { MigrateDialogScreenModel(successState.anime.id, sourceManager, getAnime) }
+                val sm = rememberScreenModel { MigrateDialogScreenModel() }
                 val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
                     if (it != null) {
                         sm.editCover(context, it)
                     }
                 }
                 AnimeCoverDialog(
-                    coverBase64 = successState.anime.thumbnailUrl,
+                    anime = successState.anime,
+                    isCustomCover = successState.anime.hasCustomCover(),
+                    snackbarHostState = screenModel.snackbarHostState,
                     onShareClick = { shareAnime(context, successState.anime, successState.source) },
                     onSaveClick = { sm.saveCover(context) },
                     onEditClick = {
@@ -380,9 +382,9 @@ class AnimeScreen(
                     onUnseenFilterChanged = screenModel::setUnseenFilter,
                     onBookmarkedFilterChanged = screenModel::setBookmarkedFilter,
                     onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
-                    onSortChanged = screenModel::setSorting,
+                    onSortModeChanged = screenModel::setSorting,
                     onDisplayModeChanged = screenModel::setDisplayMode,
-                    onSetAsDefault = screenModel::setEpisodeSettingsAsDefault,
+                    onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
                 )
             }
             is AnimeScreenModel.Dialog.TrackSheet -> {
@@ -403,7 +405,7 @@ class AnimeScreen(
                     }
                 }
                 SkipIntroLengthDialog(
-                    currentSkipIntroLength = if (
+                    initialSkipIntroLength = if (
                         successState.anime.skipIntroLength == 0L ||
                         successState.anime.skipIntroLength == 0
                     ) {
