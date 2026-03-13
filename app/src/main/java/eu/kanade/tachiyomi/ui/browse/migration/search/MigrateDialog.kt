@@ -147,6 +147,7 @@ fun MigrateDialog(
 }
 
 class MigrateDialogScreenModel(
+    val animeId: Long,
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
