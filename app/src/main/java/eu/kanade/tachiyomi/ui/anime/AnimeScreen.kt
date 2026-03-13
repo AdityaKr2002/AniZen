@@ -205,16 +205,14 @@ class AnimeScreen(
             }.takeIf { isHttpSource },
             onDownloadActionClicked = screenModel::runDownloadAction.takeIf { !successState.source.isLocalOrStub() },
             onEditCategoryClicked = screenModel::showChangeCategoryDialog.takeIf { successState.anime.favorite },
-            // SY -->
-            onEditInfoClicked = screenModel::showEditAnimeInfoDialog,
-            onClearAnimeClicked = screenModel::showClearAnimeDialog,
-            onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
-            // SY <--
             onEditNotesClicked = { navigator.push(AnimeNotesScreen(successState.anime)) }.takeIf { successState.anime.favorite } ?: {},
             onMigrateClicked = {
                 navigator.push(MigrationConfigScreen(successState.anime.id))
             }.takeIf { successState.anime.favorite },
             changeAnimeSkipIntro = screenModel::showAnimeSkipIntroDialog.takeIf { successState.anime.favorite },
+            onEditInfoClicked = screenModel::showEditAnimeInfoDialog,
+            onClearAnimeClicked = screenModel::showClearAnimeDialog,
+            onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
             onMultiBookmarkClicked = screenModel::bookmarkEpisodes,
             // AM (FILLERMARK) -->
             onMultiFillermarkClicked = screenModel::fillermarkEpisodes,
