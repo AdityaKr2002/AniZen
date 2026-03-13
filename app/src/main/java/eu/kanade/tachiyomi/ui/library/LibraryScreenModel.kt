@@ -133,17 +133,18 @@ class LibraryScreenModel(
         screenModelScope.launchIO {
             combine(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
-                getLibraryFlow(),
-                getTracksPerAnime.subscribe(),
+                combine(getLibraryFlow(), getTracksPerAnime.subscribe(), ::Pair),
                 combine(
                     getTrackingFilterFlow(),
                     state.map { it.groupType }.distinctUntilChanged(),
                     ::Pair,
                 ),
-                libraryPreferences.sortingMode().changes(),
-                libraryPreferences.showHiddenCategories().changes(),
-            ) { searchQuery: String?, library: Map<Category, List<LibraryAnime>>, tracks: Map<Long, List<Track>>, filterGroupPair: Pair<Map<Long, TriState>, Int>, sort: LibrarySort, showHidden: Boolean ->
-                val (trackingFilter, groupType) = filterGroupPair
+                combine(
+                    libraryPreferences.sortingMode().changes(),
+                    libraryPreferences.showHiddenCategories().changes(),
+                    ::Pair,
+                ),
+            ) { searchQuery, (library, tracks), (trackingFilter, groupType), (sort, showHidden) ->
                 library
                     .applyGrouping(groupType, tracks)
                     .applyFilters(tracks, trackingFilter, showHidden)
@@ -156,7 +157,7 @@ class LibraryScreenModel(
                         }
                     }
             }
-                .collectLatest { library: Map<Category, List<LibraryItem>> ->
+                .collectLatest { library ->
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,
