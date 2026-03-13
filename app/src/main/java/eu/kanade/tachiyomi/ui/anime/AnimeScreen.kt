@@ -256,7 +256,7 @@ class AnimeScreen(
             is AnimeScreenModel.Dialog.DuplicateAnime -> {
                 DuplicateAnimeDialog(
                     onDismissRequest = onDismissRequest,
-                    onConfirm = { screenModel.toggleFavorite(onRemoved = {}, checkDuplicate = false) },
+                    onConfirm = { screenModel.toggleFavorite(checkDuplicate = false) },
                     onOpenAnime = { navigator.push(AnimeScreen(dialog.duplicate.id)) },
                     onMigrate = {
                         screenModel.showMigrateDialog(dialog.duplicate)
@@ -266,67 +266,68 @@ class AnimeScreen(
 
             is AnimeScreenModel.Dialog.Migrate -> {
                 MigrateDialog(
-                    oldAnime = dialog.oldAnime,
-                    newAnime = dialog.newAnime,
-                    screenModel = MigrateDialogScreenModel(),
                     onDismissRequest = onDismissRequest,
-                    onClickTitle = { navigator.push(AnimeScreen(dialog.oldAnime.id)) },
-                    onPopScreen = { navigator.replace(AnimeScreen(dialog.newAnime.id)) },
+                    onConfirm = { replace ->
+                        scope.launchIO {
+                            val migrateAnime = Injekt.get<mihon.domain.migration.interactor.MigrateAnimeUseCase>()
+                            migrateAnime.invoke(dialog.oldAnime, dialog.newAnime, replace)
+                            withUIContext { navigator.replace(AnimeScreen(dialog.newAnime.id)) }
+                        }
+                    },
                 )
             }
-            AnimeScreenModel.Dialog.SettingsSheet -> EpisodeSettingsDialog(
-                onDismissRequest = onDismissRequest,
-                anime = successState.anime,
-                onDownloadFilterChanged = screenModel::setDownloadedFilter,
-                onUnseenFilterChanged = screenModel::setUnseenFilter,
-                onBookmarkedFilterChanged = screenModel::setBookmarkedFilter,
-                // AM (FILLERMARK) -->
-                onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
-                // <-- AM (FILLERMARK)
-                onSortModeChanged = screenModel::setSorting,
-                onDisplayModeChanged = screenModel::setDisplayMode,
-                onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
-            )
-            AnimeScreenModel.Dialog.TrackSheet -> {
-                NavigatorAdaptiveSheet(
-                    screen = TrackInfoDialogHomeScreen(
-                        animeId = successState.anime.id,
-                        animeTitle = successState.anime.title,
-                        sourceId = successState.source.id,
-                    ),
-                    enableSwipeDismiss = { it.lastItem is TrackInfoDialogHomeScreen },
+
+            is AnimeScreenModel.Dialog.SetAnimeFetchInterval -> {
+                SetIntervalDialog(
+                    interval = dialog.anime.fetchInterval,
+                    nextUpdate = dialog.anime.expectedNextUpdate,
                     onDismissRequest = onDismissRequest,
+                    onValueChanged = { interval: Int -> screenModel.setFetchInterval(dialog.anime, interval) },
                 )
             }
-            AnimeScreenModel.Dialog.FullCover -> {
-                val sm = rememberScreenModel { AnimeCoverScreenModel(successState.anime.id) }
-                val anime by sm.state.collectAsState()
-                if (anime != null) {
-                    val getContent = rememberLauncherForActivityResult(
-                        ActivityResultContracts.GetContent(),
-                    ) {
-                        if (it == null) return@rememberLauncherForActivityResult
-                        sm.editCover(context, it)
-                    }
-                    AnimeCoverDialog(
-                        anime = anime!!,
-                        snackbarHostState = sm.snackbarHostState,
-                        isCustomCover = remember(anime) { anime!!.hasCustomCover() },
-                        onShareClick = { sm.shareCover(context) },
-                        onSaveClick = { sm.saveCover(context) },
-                        onEditClick = {
-                            when (it) {
-                                EditCoverAction.EDIT -> getContent.launch("image/*")
-                                EditCoverAction.DELETE -> sm.deleteCustomCover(context)
-                            }
-                        },
-                        onDismissRequest = onDismissRequest,
+
+            is AnimeScreenModel.Dialog.ShowQualities -> {
+                EpisodeOptionsDialogScreen.onDismissDialog = onDismissRequest
+                val episodeTitle = if (dialog.anime.displayMode == Anime.EPISODE_DISPLAY_NUMBER) {
+                    stringResource(
+                        MR.strings.display_mode_episode,
+                        formatEpisodeNumber(dialog.episode.episodeNumber),
                     )
                 } else {
-                    LoadingScreen(Modifier.systemBarsPadding())
+                    dialog.episode.name
                 }
+                NavigatorAdaptiveSheet(
+                    screen = EpisodeOptionsDialogScreen(
+                        useExternalDownloader = screenModel.useExternalDownloader,
+                        episodeTitle = episodeTitle,
+                        episodeId = dialog.episode.id,
+                        animeId = dialog.anime.id,
+                        sourceId = dialog.source.id,
+                    ),
+                    onDismissRequest = onDismissRequest,
+                )
             }
-            // SY -->
+
+            is AnimeScreenModel.Dialog.FullCover -> {
+                val sm = rememberScreenModel { MigrateDialogScreenModel(successState.anime.id, sourceManager, getAnime) }
+                val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+                    if (it != null) {
+                        sm.editCover(context, it)
+                    }
+                }
+                AnimeCoverDialog(
+                    coverBase64 = successState.anime.thumbnailUrl,
+                    onShareClick = { shareAnime(context, successState.anime, successState.source) },
+                    onSaveClick = { sm.saveCover(context) },
+                    onEditClick = {
+                        when (it) {
+                            EditCoverAction.EDIT -> getContent.launch("image/*")
+                            EditCoverAction.DELETE -> sm.deleteCustomCover(context)
+                        }
+                    },
+                    onDismissRequest = onDismissRequest,
+                )
+            }
             is AnimeScreenModel.Dialog.EditAnimeInfo -> {
                 EditAnimeDialog(
                     anime = dialog.anime,
@@ -371,57 +372,51 @@ class AnimeScreen(
                     }
                 )
             }
-            // SY -->
-            is AnimeScreenModel.Dialog.SetAnimeFetchInterval -> {
-                SetIntervalDialog(
-                    interval = dialog.anime.fetchInterval,
-                    nextUpdate = dialog.anime.expectedNextUpdate,
+            is AnimeScreenModel.Dialog.SettingsSheet -> {
+                EpisodeSettingsDialog(
                     onDismissRequest = onDismissRequest,
-                    onValueChanged = { interval: Int -> screenModel.setFetchInterval(dialog.anime, interval) },
+                    anime = successState.anime,
+                    onDownloadFilterChanged = screenModel::setDownloadedFilter,
+                    onUnseenFilterChanged = screenModel::setUnseenFilter,
+                    onBookmarkedFilterChanged = screenModel::setBookmarkedFilter,
+                    onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
+                    onSortChanged = screenModel::setSorting,
+                    onDisplayModeChanged = screenModel::setDisplayMode,
+                    onSetAsDefault = screenModel::setEpisodeSettingsAsDefault,
+                )
+            }
+            is AnimeScreenModel.Dialog.TrackSheet -> {
+                NavigatorAdaptiveSheet(
+                    screen = TrackInfoDialogHomeScreen(
+                        animeId = successState.anime.id,
+                        animeTitle = successState.anime.title,
+                        sourceId = successState.source.id,
+                    ),
+                    onDismissRequest = onDismissRequest,
                 )
             }
             // SY <--
             is AnimeScreenModel.Dialog.ChangeAnimeSkipIntro -> {
-            AnimeScreenModel.Dialog.ChangeAnimeSkipIntro -> {
                 fun updateSkipIntroLength(newLength: Long) {
                     scope.launchIO {
                         screenModel.setAnimeViewerFlags.awaitSetSkipIntroLength(animeId, newLength)
                     }
                 }
                 SkipIntroLengthDialog(
-                    initialSkipIntroLength = if (!successState.anime.skipIntroDisable &&
+                    currentSkipIntroLength = if (
+                        successState.anime.skipIntroLength == 0L ||
                         successState.anime.skipIntroLength == 0
                     ) {
                         screenModel.gesturePreferences.defaultIntroLength().get()
                     } else {
                         successState.anime.skipIntroLength
-                    },
+                    }.toInt(),
+                    defaultSkipIntroLength = screenModel.gesturePreferences.defaultIntroLength().get().toInt(),
                     onDismissRequest = onDismissRequest,
                     onValueChanged = {
                         updateSkipIntroLength(it.toLong())
                         onDismissRequest()
                     },
-                )
-            }
-            is AnimeScreenModel.Dialog.ShowQualities -> {
-                EpisodeOptionsDialogScreen.onDismissDialog = onDismissRequest
-                val episodeTitle = if (dialog.anime.displayMode == Anime.EPISODE_DISPLAY_NUMBER) {
-                    stringResource(
-                        MR.strings.display_mode_episode,
-                        formatEpisodeNumber(dialog.episode.episodeNumber),
-                    )
-                } else {
-                    dialog.episode.name
-                }
-                NavigatorAdaptiveSheet(
-                    screen = EpisodeOptionsDialogScreen(
-                        useExternalDownloader = screenModel.useExternalDownloader,
-                        episodeTitle = episodeTitle,
-                        episodeId = dialog.episode.id,
-                        animeId = dialog.anime.id,
-                        sourceId = dialog.source.id,
-                    ),
-                    onDismissRequest = onDismissRequest,
                 )
             }
         }

@@ -157,7 +157,7 @@ class LibraryScreenModel(
                         }
                     }
             }
-                .collectLatest { library ->
+                .collectLatest { library: Map<Category, List<LibraryItem>> ->
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,
