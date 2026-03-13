@@ -96,6 +96,11 @@
     <string name="action_next_chapter">Next chapter</string>
     <string name="action_retry">Retry</string>
     <string name="action_remove">Remove</string>
+    <string name="action_update">Update</string>
+    <string name="action_filter_categories">Filter categories</string>
+    <string name="notes_placeholder">Write something here…</string>
+    <string name="downloaded_data">Downloaded data</string>
+    <string name="merge_settings">Merge settings</string>
     <string name="action_remove_everything">Remove everything</string>
     <string name="action_start">Start</string>
     <string name="action_resume">Resume</string>

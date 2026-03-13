@@ -124,6 +124,8 @@ class LibraryPreferences(
         TriState.DISABLED,
     )
 
+    fun filterCategories() = preferenceStore.getBoolean("pref_filter_library_categories", false)
+
     fun libraryReadDuplicateChapters() = preferenceStore.getBoolean("pref_library_mark_duplicate_chapters", false)
     // SY <--
 

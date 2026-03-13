@@ -141,11 +141,12 @@ class LibraryScreenModel(
                     ::Pair,
                 ),
                 libraryPreferences.sortingMode().changes(),
-            ) { searchQuery, library, tracks, filterGroupPair, sort ->
+                libraryPreferences.showHiddenCategories().changes(),
+            ) { searchQuery, library, tracks, filterGroupPair, sort, showHidden ->
                 val (trackingFilter, groupType) = filterGroupPair
                 library
                     .applyGrouping(groupType, tracks)
-                    .applyFilters(tracks, trackingFilter)
+                    .applyFilters(tracks, trackingFilter, showHidden)
                     .applySort(tracks, sort.takeIf { groupType != LibraryGroup.BY_DEFAULT }, trackingFilter.keys)
                     .mapValues { (_, value) ->
                         if (searchQuery != null) {
@@ -223,6 +224,7 @@ class LibraryScreenModel(
     private suspend fun AnimeLibraryMap.applyFilters(
         trackMap: Map<Long, List<Track>>,
         trackingFilter: Map<Long, TriState>,
+        hidden: Boolean,
     ): AnimeLibraryMap {
         val prefs = getAnimelibItemPreferencesFlow().first()
         val downloadedOnly = prefs.globalFilterDownloaded
@@ -307,7 +309,9 @@ class LibraryScreenModel(
                 filterFnTracking(it)
         }
 
-        return mapValues { (_, value) -> value.fastFilter(filterFn) }
+        return this
+            .filter { (category, _) -> hidden || !category.hidden || category.id == 0L }
+            .mapValues { (_, value) -> value.fastFilter(filterFn) }
     }
 
     private fun AnimeLibraryMap.applySort(

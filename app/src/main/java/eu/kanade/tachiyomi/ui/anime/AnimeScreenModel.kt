@@ -183,7 +183,7 @@ class AnimeScreenModel(
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
     private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
     private val fetchInterval: FetchInterval = Injekt.get(),
-    private val removeHistoryByAnimeId: tachiyomi.domain.history.interactor.RemoveHistoryByAnimeId = Injekt.get(),
+    private val removeHistory: tachiyomi.domain.history.interactor.RemoveHistory = Injekt.get(),
     private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
 ) : StateScreenModel<AnimeScreenModel.State>(State.Loading) {
 
@@ -1256,7 +1256,7 @@ class AnimeScreenModel(
             }
 
             if (deleteFromDatabase) {
-                removeHistoryByAnimeId.await(animeId)
+                removeHistory.await(animeId)
                 val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
                 setSeenStatus.await(seen = false, episodes = episodes.toTypedArray())
             }
