@@ -266,10 +266,10 @@ class AnimeScreen(
             }
 
             is AnimeScreenModel.Dialog.Migrate -> {
-                MigrateDialog(
+                eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog(
                     oldAnime = dialog.oldAnime,
                     newAnime = dialog.newAnime,
-                    screenModel = rememberScreenModel { MigrateDialogScreenModel(dialog.oldAnime.id) },
+                    screenModel = rememberScreenModel { eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel(dialog.oldAnime.id) },
                     onDismissRequest = onDismissRequest,
                     onClickTitle = { navigator.push(AnimeScreen(dialog.newAnime.id)) },
                     onPopScreen = {

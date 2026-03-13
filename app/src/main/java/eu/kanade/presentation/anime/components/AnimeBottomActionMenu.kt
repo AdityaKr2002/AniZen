@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Input
 import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.BookmarkAdd

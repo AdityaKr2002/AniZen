@@ -53,7 +53,7 @@ class MigrateSearchScreen(private val animeId: Long) : Screen() {
                 MigrateDialog(
                     oldAnime = dialogState.anime!!,
                     newAnime = dialog.anime,
-                    screenModel = rememberScreenModel { MigrateDialogScreenModel() },
+                    screenModel = rememberScreenModel { MigrateDialogScreenModel(dialogState.anime.id) },
                     onDismissRequest = { dialogScreenModel.setDialog(null) },
                     onClickTitle = {
                         navigator.push(AnimeScreen(dialog.anime.id, true))

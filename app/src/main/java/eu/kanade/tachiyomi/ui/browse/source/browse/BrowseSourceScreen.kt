@@ -489,7 +489,7 @@ data class BrowseSourceScreen(
                 MigrateDialog(
                     oldAnime = dialog.oldAnime,
                     newAnime = dialog.newAnime,
-                    screenModel = MigrateDialogScreenModel(),
+                    screenModel = MigrateDialogScreenModel(dialog.oldAnime.id),
                     onDismissRequest = onDismissRequest,
                     onClickTitle = { navigator.push(AnimeScreen(dialog.oldAnime.id)) },
                     onPopScreen = {

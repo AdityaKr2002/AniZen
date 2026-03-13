@@ -198,7 +198,7 @@ data class SourceSearchScreen(
                 MigrateDialog(
                     oldAnime = oldAnime,
                     newAnime = dialog.newAnime,
-                    screenModel = rememberScreenModel { MigrateDialogScreenModel() },
+                    screenModel = rememberScreenModel { MigrateDialogScreenModel(oldAnime.id) },
                     onDismissRequest = onDismissRequest,
                     onClickTitle = { navigator.push(AnimeScreen(dialog.newAnime.id)) },
                     onPopScreen = {
