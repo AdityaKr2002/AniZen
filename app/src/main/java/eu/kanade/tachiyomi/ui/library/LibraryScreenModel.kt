@@ -630,7 +630,7 @@ class LibraryScreenModel(
         val selection = state.value.selection.toList()
         screenModelScope.launchIO {
             selection.forEach {
-                eu.kanade.tachiyomi.data.library.LibraryUpdateJob.startNow(context, category = Category(it.category, "", 0, 0))
+                eu.kanade.tachiyomi.data.library.LibraryUpdateJob.startNow(context, category = Category(it.category, "", 0, 0, false))
             }
         }
         clearSelection()

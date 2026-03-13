@@ -27,7 +27,7 @@ import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Input
 import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.automirrored.outlined.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.BookmarkAdd
@@ -339,7 +339,7 @@ fun LibraryBottomActionMenu(
                 var overflowMenuOpen by remember { mutableStateOf(false) }
                 BottomMenuButton(
                     title = stringResource(MR.strings.label_more),
-                    icon = Icons.AutoMirrored.Outlined.MoreVert,
+                    icon = Icons.Outlined.MoreVert,
                     toConfirm = confirm[5],
                     onLongClick = { onLongClickItem(5) },
                     onClick = { overflowMenuOpen = true },
