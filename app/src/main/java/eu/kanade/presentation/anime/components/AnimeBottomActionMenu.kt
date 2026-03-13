@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Input
 import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.automirrored.outlined.MoreVert
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.BookmarkAdd
@@ -339,7 +340,7 @@ fun LibraryBottomActionMenu(
                 var overflowMenuOpen by remember { mutableStateOf(false) }
                 BottomMenuButton(
                     title = stringResource(MR.strings.label_more),
-                    icon = androidx.compose.material.icons.outlined.MoreVert,
+                    icon = Icons.AutoMirrored.Outlined.MoreVert,
                     toConfirm = confirm[5],
                     onLongClick = { onLongClickItem(5) },
                     onClick = { overflowMenuOpen = true },
@@ -349,21 +350,21 @@ fun LibraryBottomActionMenu(
                         onDismissRequest = { overflowMenuOpen = false },
                     ) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(MR.strings.action_update)) },
+                            text = { Text(text = stringResource(MR.strings.action_update)) },
                             onClick = {
                                 overflowMenuOpen = false
                                 onSelectionUpdateClicked()
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(MR.strings.migrate)) },
+                            text = { Text(text = stringResource(MR.strings.migrate)) },
                             onClick = {
                                 overflowMenuOpen = false
                                 onMigrateClicked()
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(MR.strings.action_merge)) },
+                            text = { Text(text = stringResource(MR.strings.action_merge)) },
                             onClick = {
                                 overflowMenuOpen = false
                                 onMergeClicked()
@@ -371,7 +372,7 @@ fun LibraryBottomActionMenu(
                         )
                         if (onClickCollectRecommendations != null) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(SYMR.strings.rec_search_short)) },
+                                text = { Text(text = stringResource(SYMR.strings.rec_search_short)) },
                                 onClick = {
                                     overflowMenuOpen = false
                                     onClickCollectRecommendations()
