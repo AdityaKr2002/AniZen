@@ -209,9 +209,7 @@ class AnimeScreen(
             onClearAnimeClicked = screenModel::showClearAnimeDialog,
             onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
             // SY <--
-            onEditFetchIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf {
-                successState.anime.favorite
-            },
+            onEditNotesClicked = screenModel::showEditAnimeInfoDialog,
             onMigrateClicked = {
                 navigator.push(MigrationConfigScreen(successState.anime.id))
             }.takeIf { successState.anime.favorite },
@@ -375,15 +373,6 @@ class AnimeScreen(
                 )
             }
             // SY <--
-            is AnimeScreenModel.Dialog.SetAnimeFetchInterval -> {
-                SetIntervalDialog(
-                    interval = dialog.anime.fetchInterval,
-                    nextUpdate = dialog.anime.expectedNextUpdate,
-                    onDismissRequest = onDismissRequest,
-                    onValueChanged = { interval: Int -> screenModel.setFetchInterval(dialog.anime, interval) }
-                        .takeIf { screenModel.isUpdateIntervalEnabled },
-                )
-            }
             AnimeScreenModel.Dialog.ChangeAnimeSkipIntro -> {
                 fun updateSkipIntroLength(newLength: Long) {
                     scope.launchIO {

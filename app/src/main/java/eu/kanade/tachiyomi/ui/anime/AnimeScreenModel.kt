@@ -209,9 +209,6 @@ class AnimeScreenModel(
     val alwaysUseExternalPlayer = playerPreferences.alwaysUseExternalPlayer().get()
     val useExternalDownloader = downloadPreferences.useExternalDownloader().get()
 
-    val isUpdateIntervalEnabled =
-        LibraryPreferences.ANIME_OUTSIDE_RELEASE_PERIOD in libraryPreferences.autoUpdateAnimeRestrictions().get()
-
     private val selectedPositions: Array<Int> = arrayOf(-1, -1)
     private val selectedEpisodeIds: HashSet<Long> = HashSet()
 
@@ -740,20 +737,6 @@ class AnimeScreenModel(
         }
     }
 
-    fun showSetAnimeFetchIntervalDialog() {
-        val anime = successState?.anime ?: return
-        updateSuccessState { it.copy(dialog = Dialog.SetAnimeFetchInterval(anime)) }
-    }
-
-    fun setFetchInterval(anime: Anime, interval: Int) {
-        screenModelScope.launchIO {
-            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval))) {
-                val updatedAnime = animeRepository.getAnimeById(anime.id)
-                updateSuccessState { it.copy(anime = updatedAnime) }
-            }
-        }
-    }
-
     private fun hasDownloads(): Boolean {
         val anime = successState?.anime ?: return false
         return downloadManager.getDownloadCount(anime) > 0
@@ -1186,7 +1169,6 @@ class AnimeScreenModel(
         data class DeleteEpisodes(val episodes: List<Episode>) : Dialog
         data class DuplicateAnime(val anime: Anime, val duplicate: Anime) : Dialog
         data class Migrate(val newAnime: Anime, val oldAnime: Anime) : Dialog
-        data class SetAnimeFetchInterval(val anime: Anime) : Dialog
         data class ShowQualities(val episode: Episode, val anime: Anime, val source: Source) : Dialog
         data class EditAnimeInfo(val anime: Anime) : Dialog
         data class LocalScorePicker(val anime: Anime) : Dialog

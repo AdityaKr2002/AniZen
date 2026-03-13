@@ -48,6 +48,7 @@ fun AnimeToolbar(
     onClickEditCategory: (() -> Unit)?,
     onClickRefresh: () -> Unit,
     onClickMigrate: (() -> Unit)?,
+    onClickEditNotes: () -> Unit,
     onClickSettings: (() -> Unit)?,
     // SY -->
     onClickEditInfo: (() -> Unit)?,
@@ -164,19 +165,26 @@ fun AnimeToolbar(
                                         ),
                                     )
                                 }
-                                if (onClickSettings != null) {
-                                    add(
-                                        AppBar.OverflowAction(
-                                            title = stringResource(MR.strings.settings),
-                                            onClick = onClickSettings,
-                                        ),
-                                    )
-                                }
+                                add(
+                                    AppBar.OverflowAction(
+                                        title = stringResource(MR.strings.notes),
+                                        onClick = onClickEditNotes,
+                                    ),
+                                )
+                                // SY -->
                                 if (onClickMerge != null) {
                                     add(
                                         AppBar.OverflowAction(
-                                            title = stringResource(MR.strings.action_merge),
+                                            title = stringResource(MR.strings.merge),
                                             onClick = onClickMerge,
+                                        ),
+                                    )
+                                }
+                                if (onClickEditInfo != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_edit_info),
+                                            onClick = onClickEditInfo,
                                         ),
                                     )
                                 }
@@ -188,6 +196,15 @@ fun AnimeToolbar(
                                         ),
                                     )
                                 }
+                                if (onClickSettings != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.settings),
+                                            onClick = onClickSettings,
+                                        ),
+                                    )
+                                }
+                                // SY <--
                             }
                             .build(),
                     )
