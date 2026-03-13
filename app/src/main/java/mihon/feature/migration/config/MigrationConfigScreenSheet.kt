@@ -197,7 +197,7 @@ fun MigrationConfigScreenSheet(
                         if (!fullSettings) {
                             MR.strings.action_save
                         } else {
-                            MR.strings.migrationConfigScreen_continueButtonText
+                            MR.strings.migrate
                         },
                     ),
                 )

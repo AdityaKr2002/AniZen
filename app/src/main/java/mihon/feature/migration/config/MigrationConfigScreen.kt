@@ -104,7 +104,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                 migrationSheetOpen = true
                 return
             }
-            val screen = MigrationListScreen(animeIds, extraSearchQuery, screenModel.sourcePreferences.migrationSmartSearchSingleEntry().get())
+            val screen = MigrationListScreen(animeIds, extraSearchQuery)
             navigator.replace(screen)
         }
 
@@ -135,7 +135,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = stringResource(SYMR.strings.select_sources),
+                    title = stringResource(MR.strings.migration_selection_prompt),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                     actions = {
@@ -170,9 +170,9 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                     enter = fadeIn(),
                     exit = fadeOut(),
                     content = {
-                        val continueText = stringResource(MR.strings.migrationConfigScreen_continueButtonText)
+                        val migrateText = stringResource(MR.strings.migrate)
                         ExtendedFloatingActionButton(
-                            text = { Text(text = continueText) },
+                            text = { Text(text = migrateText) },
                             icon = { Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null) },
                             onClick = {
                                 screenModel.saveSources()

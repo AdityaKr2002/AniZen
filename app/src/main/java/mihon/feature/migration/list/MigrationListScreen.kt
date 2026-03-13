@@ -29,7 +29,6 @@ import tachiyomi.presentation.core.i18n.stringResource
 class MigrationListScreen(
     private val animeIds: Collection<Long>,
     private val extraSearchQuery: String?,
-    private val isSmartSearchSingleEntry: Boolean = false,
 ) : Screen() {
 
     private var matchOverride: Pair<Long, Long>? = null
@@ -41,18 +40,9 @@ class MigrationListScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val singleEntryNoSmartSearch = animeIds.size == 1 && !isSmartSearchSingleEntry
-        val screenModel = rememberScreenModel { MigrationListScreenModel(animeIds, extraSearchQuery, singleEntryNoSmartSearch) }
+        val screenModel = rememberScreenModel { MigrationListScreenModel(animeIds, extraSearchQuery, false) }
         val state by screenModel.state.collectAsState()
         val context = LocalContext.current
-
-        var hasPushedManual by rememberSaveable(animeIds) { mutableStateOf(false) }
-        LaunchedEffect(animeIds) {
-            if (singleEntryNoSmartSearch && !hasPushedManual) {
-                hasPushedManual = true
-                navigator.push(MigrateSearchScreen(animeIds.single()))
-            }
-        }
 
         LaunchedEffect(matchOverride) {
             val (current, target) = matchOverride ?: return@LaunchedEffect
