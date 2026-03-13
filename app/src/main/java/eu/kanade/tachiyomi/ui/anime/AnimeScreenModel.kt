@@ -614,7 +614,7 @@ class AnimeScreenModel(
         updateSuccessState { it.copy(anime = anime) }
     }
 
-    fun toggleFavorite() {
+    fun toggleFavorite(checkDuplicate: Boolean = true) {
         toggleFavorite(
             onRemoved = {
                 screenModelScope.launch {
@@ -629,6 +629,7 @@ class AnimeScreenModel(
                     }
                 }
             },
+            checkDuplicate = checkDuplicate,
         )
     }
 
