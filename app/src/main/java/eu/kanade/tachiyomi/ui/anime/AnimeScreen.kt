@@ -48,6 +48,7 @@ import eu.kanade.tachiyomi.source.isSourceForTorrents
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
 import eu.kanade.tachiyomi.ui.anime.merged.EditMergedSettingsDialog
+import eu.kanade.tachiyomi.ui.anime.notes.AnimeNotesScreen
 import exh.source.MERGED_SOURCE_ID
 import eu.kanade.tachiyomi.ui.anime.track.TrackInfoDialogHomeScreen
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog
@@ -209,7 +210,7 @@ class AnimeScreen(
             onClearAnimeClicked = screenModel::showClearAnimeDialog,
             onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
             // SY <--
-            onEditNotesClicked = screenModel::showEditAnimeInfoDialog,
+            onEditNotesClicked = { navigator.push(AnimeNotesScreen(successState.anime)) }.takeIf { successState.anime.favorite } ?: {},
             onMigrateClicked = {
                 navigator.push(MigrationConfigScreen(successState.anime.id))
             }.takeIf { successState.anime.favorite },
@@ -348,8 +349,8 @@ class AnimeScreen(
             is AnimeScreenModel.Dialog.ClearAnime -> {
                 ClearAnimeDialog(
                     onDismissRequest = onDismissRequest,
-                    onConfirm = {
-                        screenModel.clearAnime()
+                    onConfirm = { deleteDownloads, deleteFromDatabase ->
+                        screenModel.clearAnime(deleteDownloads, deleteFromDatabase)
                     },
                 )
             }

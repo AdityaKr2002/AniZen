@@ -247,7 +247,13 @@ fun LibraryBottomActionMenu(
     onFavoriteClicked: (() -> Unit)?,
     onDownloadClicked: ((DownloadAction) -> Unit)?,
     onDeleteClicked: () -> Unit,
+    // KMK -->
+    onMigrateClicked: () -> Unit,
+    onMergeClicked: () -> Unit,
+    onSelectionUpdateClicked: () -> Unit,
+    // KMK <--
     // SY -->
+    onClickCollectRecommendations: (() -> Unit)?,
     onClickResetInfo: (() -> Unit)?,
     // SY <--
     modifier: Modifier = Modifier,
@@ -277,7 +283,6 @@ fun LibraryBottomActionMenu(
                     if (isActive) confirm[toConfirmIndex] = false
                 }
             }
-            val showOverflow = onClickResetInfo != null
             Row(
                 modifier = Modifier
                     .windowInsetsPadding(
@@ -293,27 +298,13 @@ fun LibraryBottomActionMenu(
                     onLongClick = { onLongClickItem(0) },
                     onClick = onChangeCategoryClicked,
                 )
-                BottomMenuButton(
-                    title = stringResource(MR.strings.action_mark_as_seen),
-                    icon = Icons.Outlined.DoneAll,
-                    toConfirm = confirm[1],
-                    onLongClick = { onLongClickItem(1) },
-                    onClick = onMarkAsSeenClicked,
-                )
-                BottomMenuButton(
-                    title = stringResource(MR.strings.action_mark_as_unseen),
-                    icon = Icons.Outlined.RemoveDone,
-                    toConfirm = confirm[2],
-                    onLongClick = { onLongClickItem(2) },
-                    onClick = onMarkAsUnseenClicked,
-                )
                 if (onDownloadClicked != null) {
                     var downloadExpanded by remember { mutableStateOf(false) }
                     BottomMenuButton(
                         title = stringResource(MR.strings.action_download),
                         icon = Icons.Outlined.Download,
-                        toConfirm = confirm[3],
-                        onLongClick = { onLongClickItem(3) },
+                        toConfirm = confirm[1],
+                        onLongClick = { onLongClickItem(1) },
                         onClick = { downloadExpanded = !downloadExpanded },
                     ) {
                         val onDismissRequest = { downloadExpanded = false }
@@ -327,21 +318,78 @@ fun LibraryBottomActionMenu(
                 BottomMenuButton(
                     title = stringResource(MR.strings.action_delete),
                     icon = Icons.Outlined.Delete,
-                    toConfirm = confirm[4],
-                    onLongClick = { onLongClickItem(4) },
+                    toConfirm = confirm[2],
+                    onLongClick = { onLongClickItem(2) },
                     onClick = onDeleteClicked,
                 )
-                // SY -->
-                if (showOverflow) {
-                    BottomMenuButton(
-                        title = stringResource(SYMR.strings.reset_info),
-                        icon = Icons.Outlined.Delete,
-                        toConfirm = confirm[5],
-                        onLongClick = { onLongClickItem(5) },
-                        onClick = onClickResetInfo!!,
-                    )
+                BottomMenuButton(
+                    title = stringResource(MR.strings.action_mark_as_seen),
+                    icon = Icons.Outlined.DoneAll,
+                    toConfirm = confirm[3],
+                    onLongClick = { onLongClickItem(3) },
+                    onClick = onMarkAsSeenClicked,
+                )
+                BottomMenuButton(
+                    title = stringResource(MR.strings.action_mark_as_unseen),
+                    icon = Icons.Outlined.RemoveDone,
+                    toConfirm = confirm[4],
+                    onLongClick = { onLongClickItem(4) },
+                    onClick = onMarkAsUnseenClicked,
+                )
+                
+                var overflowMenuOpen by remember { mutableStateOf(false) }
+                BottomMenuButton(
+                    title = stringResource(MR.strings.label_more),
+                    icon = androidx.compose.material.icons.outlined.MoreVert,
+                    toConfirm = confirm[5],
+                    onLongClick = { onLongClickItem(5) },
+                    onClick = { overflowMenuOpen = true },
+                ) {
+                    DropdownMenu(
+                        expanded = overflowMenuOpen,
+                        onDismissRequest = { overflowMenuOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(MR.strings.action_update)) },
+                            onClick = {
+                                overflowMenuOpen = false
+                                onSelectionUpdateClicked()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(MR.strings.migrate)) },
+                            onClick = {
+                                overflowMenuOpen = false
+                                onMigrateClicked()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(MR.strings.action_merge)) },
+                            onClick = {
+                                overflowMenuOpen = false
+                                onMergeClicked()
+                            },
+                        )
+                        if (onClickCollectRecommendations != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(SYMR.strings.rec_search_short)) },
+                                onClick = {
+                                    overflowMenuOpen = false
+                                    onClickCollectRecommendations()
+                                },
+                            )
+                        }
+                        if (onClickResetInfo != null) {
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(SYMR.strings.reset_info)) },
+                                onClick = {
+                                    overflowMenuOpen = false
+                                    onClickResetInfo()
+                                },
+                            )
+                        }
+                    }
                 }
-                // SY <--
             }
         }
     }

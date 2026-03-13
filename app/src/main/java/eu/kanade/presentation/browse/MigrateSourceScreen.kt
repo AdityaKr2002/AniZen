@@ -119,7 +119,7 @@ private fun MigrateSourceList(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(MR.strings.migration_selection_prompt),
+                text = stringResource(MR.strings.select_source),
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.header,
             )

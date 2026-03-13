@@ -135,7 +135,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = stringResource(MR.strings.migration_selection_prompt),
+                    title = stringResource(MR.strings.select_source),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                     actions = {
@@ -147,13 +147,13 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                                     onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Pinned) },
                                 ),
                                 AppBar.Action(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectNoneLabel),
+                                    title = stringResource(MR.strings.match_enabled_sources),
                                     icon = Icons.Outlined.Deselect,
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.None) },
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Enabled) },
                                 ),
                                 AppBar.OverflowAction(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectEnabledLabel),
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Enabled) },
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectNoneLabel),
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.None) },
                                 ),
                                 AppBar.OverflowAction(
                                     title = stringResource(MR.strings.migrationConfigScreen_selectAllLabel),
@@ -416,17 +416,15 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
         }
 
         fun toggleSelection(config: SelectionConfig) {
-            val isSelected: (Long) -> Boolean = {
-                when (config) {
-                    SelectionConfig.All -> true
-                    SelectionConfig.None -> false
-                    SelectionConfig.Pinned -> it in pinnedSources
-                    SelectionConfig.Enabled -> it !in disabledSources
-                }
-            }
             updateSources { sources ->
                 sources.map { source ->
-                    source.copy(isSelected = isSelected(source.source.id))
+                    val isSelected = when (config) {
+                        SelectionConfig.All -> true
+                        SelectionConfig.None -> false
+                        SelectionConfig.Pinned -> source.id in pinnedSources
+                        SelectionConfig.Enabled -> source.id !in disabledSources
+                    }
+                    source.copy(isSelected = isSelected)
                 }
             }
         }

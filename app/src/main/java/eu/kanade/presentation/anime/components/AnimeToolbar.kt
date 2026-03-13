@@ -167,7 +167,7 @@ fun AnimeToolbar(
                                 }
                                 add(
                                     AppBar.OverflowAction(
-                                        title = stringResource(MR.strings.notes),
+                                        title = stringResource(MR.strings.action_edit_notes),
                                         onClick = onClickEditNotes,
                                     ),
                                 )
@@ -175,7 +175,7 @@ fun AnimeToolbar(
                                 if (onClickMerge != null) {
                                     add(
                                         AppBar.OverflowAction(
-                                            title = stringResource(MR.strings.merge),
+                                            title = stringResource(MR.strings.merge_settings),
                                             onClick = onClickMerge,
                                         ),
                                     )
@@ -191,7 +191,7 @@ fun AnimeToolbar(
                                 if (onClickClearAnime != null) {
                                     add(
                                         AppBar.OverflowAction(
-                                            title = stringResource(MR.strings.action_clear_anime),
+                                            title = stringResource(MR.strings.action_remove),
                                             onClick = onClickClearAnime,
                                         ),
                                     )

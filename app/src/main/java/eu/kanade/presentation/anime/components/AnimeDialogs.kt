@@ -19,10 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import dev.icerock.moko.resources.StringResource
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.toImmutableList
+import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.domain.anime.interactor.FetchInterval
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.WheelTextPicker
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.pluralStringResource
@@ -154,8 +157,16 @@ fun SetIntervalDialog(
 @Composable
 fun ClearAnimeDialog(
     onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (Boolean, Boolean) -> Unit,
 ) {
+    var list by remember {
+        mutableStateOf(
+            buildList<CheckboxState.State<StringResource>> {
+                add(CheckboxState.State.None(MR.strings.downloaded_data))
+                add(CheckboxState.State.None(MR.strings.episodes_from_database))
+            },
+        )
+    }
     AlertDialog(
         onDismissRequest = onDismissRequest,
         dismissButton = {
@@ -165,19 +176,35 @@ fun ClearAnimeDialog(
         },
         confirmButton = {
             TextButton(
+                enabled = list.any { it.isChecked },
                 onClick = {
                     onDismissRequest()
-                    onConfirm()
+                    onConfirm(
+                        list[0].isChecked,
+                        list[1].isChecked,
+                    )
                 },
             ) {
                 Text(text = stringResource(MR.strings.action_ok))
             }
         },
         title = {
-            Text(text = stringResource(MR.strings.action_clear_anime))
+            Text(text = stringResource(MR.strings.action_remove))
         },
         text = {
-            Text(text = stringResource(MR.strings.clear_anime_confirmation))
+            Column {
+                list.forEachIndexed { index, state ->
+                    LabeledCheckbox(
+                        label = stringResource(state.value),
+                        checked = state.isChecked,
+                        onCheckedChange = {
+                            val mutableList = list.toMutableList()
+                            mutableList[index] = state.next() as CheckboxState.State<StringResource>
+                            list = mutableList.toList()
+                        },
+                    )
+                }
+            }
         },
     )
 }

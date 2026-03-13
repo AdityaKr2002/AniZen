@@ -1126,6 +1126,11 @@
     <string name="updates_last_update_info_just_now">Just now</string>
     <string name="relative_time_span_never">Never</string>
     <string name="action_view_upcoming">View Upcoming Updates</string>
+    <string name="action_edit_notes">Notes</string>
+    <string name="action_dont_migrate">Don\'t migrate</string>
+    <string name="episodes_from_database">Episodes &amp; History from Database</string>
+    <string name="match_enabled_sources">Match enabled sources</string>
+    <string name="select_source">Select source</string>
     <!-- Upcoming -->
     <string name="upcoming_guide">Upcoming Guide</string>
     <string name="upcoming_calendar_next">Next Month</string>
@@ -1138,7 +1143,7 @@
     <string name="source_filter_empty_screen">No installed source found</string>
     <string name="migration_help_guide">Source migration guide</string>
     <string name="migration_dialog_what_to_include">Select data to include</string>
-    <string name="migration_selection_prompt">Select a source to migrate from</string>
+    <string name="migration_selection_prompt">Select source</string>
     <string name="migrate">Migrate</string>
     <string name="action_edit_info">Edit info</string>
     <string name="merge">Merge</string>
@@ -1475,17 +1480,17 @@
     <string name="migrationConfigScreen_deepSearchModeSubtitle">Performs more aggressive title variations</string>
     <string name="migrationConfigScreen_prioritizeByChaptersTitle">Prioritize by episode count</string>
     <string name="migrationConfigScreen_prioritizeByChaptersSubtitle">Choose the source with the most episodes</string>
-    <string name="migrationConfigScreen_continueButtonText">Continue</string>
+    <string name="migrationConfigScreen_continueButtonText">Migrate</string>
     <string name="migrationConfigScreen_selectPinnedLabel">Select pinned</string>
     <string name="migrationConfigScreen_selectNoneLabel">Select none</string>
-    <string name="migrationConfigScreen_selectEnabledLabel">Select enabled</string>
+    <string name="migrationConfigScreen_selectEnabledLabel">Match enabled sources</string>
     <string name="migrationConfigScreen_selectAllLabel">Select all</string>
     <string name="migrationConfigScreen_selectedHeader">Selected sources</string>
     <string name="migrationConfigScreen_availableHeader">Available sources</string>
 
     <!-- Migration List -->
     <string name="migrationListScreenTitleWithProgress">Migrating (%1$d/%2$d)</string>
-    <string name="migrationListScreenTitle">Migration</string>
+    <string name="migrationListScreenTitle">Migrating</string>
     <string name="migrationListScreen_copyActionLabel">Copy all</string>
     <string name="migrationListScreen_migrateActionLabel">Migrate all</string>
     <string name="migrationListScreen_copyTitle">Copy entries?</string>
@@ -1501,7 +1506,7 @@
     <string name="migrationListScreen_unknownLatestChapter">Unknown</string>
     <string name="migrationListScreen_noMatchFoundText">No match found</string>
     <string name="migrationListScreen_searchManuallyActionLabel">Search manually</string>
-    <string name="migrationListScreen_skipActionLabel">Skip</string>
+    <string name="migrationListScreen_skipActionLabel">Don\'t migrate</string>
     <string name="migrationListScreen_migrateNowActionLabel">Migrate now</string>
     <string name="migrationListScreen_copyNowActionLabel">Copy now</string>
     <string name="migrationListScreen_matchWithoutChapterToast">Match found but has no episodes</string>

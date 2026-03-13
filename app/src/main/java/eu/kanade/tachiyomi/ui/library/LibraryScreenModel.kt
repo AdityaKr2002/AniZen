@@ -98,6 +98,7 @@ typealias AnimeLibraryMap = Map<Category, List<LibraryItem>>
 
 @Suppress("LargeClass")
 class LibraryScreenModel(
+    private val context: android.content.Context = Injekt.get(),
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracksPerAnime: GetTracksPerAnime = Injekt.get(),
@@ -615,6 +616,16 @@ class LibraryScreenModel(
             )
             screenModelScope.launchNonCancellable {
                 updateAnime.await(animeInfo)
+            }
+        }
+        clearSelection()
+    }
+
+    fun updateSelection() {
+        val selection = state.value.selection.toList()
+        screenModelScope.launchIO {
+            selection.forEach {
+                eu.kanade.tachiyomi.data.library.LibraryUpdateJob.startNow(context, category = Category(it.category, "", 0, 0))
             }
         }
         clearSelection()

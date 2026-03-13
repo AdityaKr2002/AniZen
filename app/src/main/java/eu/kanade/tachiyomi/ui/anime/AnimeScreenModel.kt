@@ -183,6 +183,7 @@ class AnimeScreenModel(
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
     private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
     private val fetchInterval: FetchInterval = Injekt.get(),
+    private val removeHistoryByAnimeId: tachiyomi.domain.history.interactor.RemoveHistoryByAnimeId = Injekt.get(),
     private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
 ) : StateScreenModel<AnimeScreenModel.State>(State.Loading) {
 
@@ -208,6 +209,9 @@ class AnimeScreenModel(
     val showNextEpisodeAirTime = trackPreferences.showNextEpisodeAiringTime().get()
     val alwaysUseExternalPlayer = playerPreferences.alwaysUseExternalPlayer().get()
     val useExternalDownloader = downloadPreferences.useExternalDownloader().get()
+
+    val isUpdateIntervalEnabled =
+        LibraryPreferences.ANIME_OUTSIDE_RELEASE_PERIOD in libraryPreferences.autoUpdateAnimeRestrictions().get()
 
     private val selectedPositions: Array<Int> = arrayOf(-1, -1)
     private val selectedEpisodeIds: HashSet<Long> = HashSet()
@@ -1169,6 +1173,7 @@ class AnimeScreenModel(
         data class DeleteEpisodes(val episodes: List<Episode>) : Dialog
         data class DuplicateAnime(val anime: Anime, val duplicate: Anime) : Dialog
         data class Migrate(val newAnime: Anime, val oldAnime: Anime) : Dialog
+        data class SetAnimeFetchInterval(val anime: Anime) : Dialog
         data class ShowQualities(val episode: Episode, val anime: Anime, val source: Source) : Dialog
         data class EditAnimeInfo(val anime: Anime) : Dialog
         data class LocalScorePicker(val anime: Anime) : Dialog
@@ -1228,17 +1233,33 @@ class AnimeScreenModel(
     fun showAnimeSkipIntroDialog() = updateSuccessState { it.copy(dialog = Dialog.ChangeAnimeSkipIntro) }
     fun showClearAnimeDialog() = updateSuccessState { it.copy(dialog = Dialog.ClearAnime) }
 
-    fun clearAnime() {
+    fun showSetAnimeFetchIntervalDialog() {
+        val anime = successState?.anime ?: return
+        updateSuccessState { it.copy(dialog = Dialog.SetAnimeFetchInterval(anime)) }
+    }
+
+    fun setFetchInterval(anime: Anime, interval: Int) {
+        screenModelScope.launchIO {
+            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval))) {
+                val updatedAnime = animeRepository.getAnimeById(anime.id)
+                updateSuccessState { it.copy(anime = updatedAnime) }
+            }
+        }
+    }
+
+    fun clearAnime(deleteDownloads: Boolean, deleteFromDatabase: Boolean) {
         val state = successState ?: return
         screenModelScope.launchIO {
-            val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
-            val episodeIds = episodes.map { it.id }
+            if (deleteDownloads) {
+                val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
+                deleteEpisodes(episodes)
+            }
 
-            // Delete downloaded episodes
-            deleteEpisodes(episodes)
-
-            // Reset unseen status
-            setSeenStatus.await(seen = false, episodes = episodes.toTypedArray())
+            if (deleteFromDatabase) {
+                removeHistoryByAnimeId.await(animeId)
+                val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
+                setSeenStatus.await(seen = false, episodes = episodes.toTypedArray())
+            }
 
             // Remove custom info
             setCustomAnimeInfo.set(CustomAnimeInfo(animeId, null))

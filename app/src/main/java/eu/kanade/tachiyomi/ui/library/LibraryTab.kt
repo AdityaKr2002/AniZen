@@ -205,7 +205,20 @@ data object LibraryTab : Tab {
                     onDownloadClicked = screenModel::runDownloadActionSelection
                         .takeIf { state.selection.fastAll { !it.anime.isLocal() } },
                     onDeleteClicked = screenModel::openDeleteAnimeDialog,
+                    onMigrateClicked = {
+                        val animeIds = state.selection.map { it.anime.id }
+                        navigator.push(MigrationConfigScreen(animeIds))
+                    },
+                    onMergeClicked = {
+                        // TODO: Implement bulk merge? For now just show for single
+                    },
+                    onSelectionUpdateClicked = {
+                        screenModel.updateSelection()
+                    },
                     onClickResetInfo = screenModel::resetInfo.takeIf { state.showResetInfo },
+                    onClickCollectRecommendations = {
+                        // TODO: Implement bulk recommendations
+                    },
                 )
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
