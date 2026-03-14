@@ -65,17 +65,18 @@ fun bulkSelectionButton(
     val title = stringResource(KMKMR.strings.action_bulk_select)
     return if (isRunning) {
         AppBar.Action(
-            title = title, onClick = {},
-        iconContent = {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(24.dp),
-                strokeWidth = 2.dp,
-            )
-        }
+            title = title, 
+            onClick = {},
+            iconContent = {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                )
+            }
+        )
     } else {
         AppBar.Action(
-            title = title, onClick = {},
+            title = title, 
             icon = Icons.Outlined.Checklist,
             onClick = toggleSelectionMode,
         )
