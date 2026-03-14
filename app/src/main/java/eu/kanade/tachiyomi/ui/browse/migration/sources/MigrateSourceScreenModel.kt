@@ -32,7 +32,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class MigrateSourceScreenModel(
-    preferences: SourcePreferences = Injekt.get(),
+    private val preferences: SourcePreferences = Injekt.get(),
     private val getSourcesWithFavoriteCount: GetSourcesWithFavoriteCount = Injekt.get(),
     private val setMigrateSorting: SetMigrateSorting = Injekt.get(),
 ) : StateScreenModel<MigrateSourceScreenModel.State>(State()) {
@@ -149,7 +149,7 @@ class MigrateSourceScreenModel(
     fun matchPinned() {
         mutableState.update { state ->
             val pinnedIds = state.items
-                .filter { (source, _) -> source.pin != Source.Pins.unpinned }
+                .filter { (source, _) -> source.pin != tachiyomi.domain.source.model.Source.Pins.unpinned }
                 .map { it.first.id }
                 .toImmutableSet()
             state.copy(selectedSources = pinnedIds)

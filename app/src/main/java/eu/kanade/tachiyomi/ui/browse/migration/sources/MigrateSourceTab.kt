@@ -2,6 +2,9 @@ package eu.kanade.tachiyomi.ui.browse.migration.sources
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,12 +22,6 @@ import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
-import androidx.compose.material.icons.outlined.Checklist
-import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material.icons.outlined.SelectAll
-
-... rest of imports ...
-
 @Composable
 fun Screen.migrateSourceTab(): TabContent {
     val uriHandler = LocalUriHandler.current
@@ -33,12 +30,14 @@ fun Screen.migrateSourceTab(): TabContent {
     val state by screenModel.state.collectAsState()
 
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
-    return remember(migrationHelpGuide, state.selectionMode) {
+    val actionMigrateNow = stringResource(MR.strings.action_migrate_now)
+
+    return remember(migrationHelpGuide, actionMigrateNow, state.selectionMode) {
         TabContent(
             titleRes = MR.strings.label_migration,
             actions = persistentListOf(
                 AppBar.Action(
-                    title = stringResource(MR.strings.action_migrate_now),
+                    title = actionMigrateNow,
                     icon = Icons.Outlined.Checklist,
                     onClick = {
                         val ids = state.selectedSources.toList()

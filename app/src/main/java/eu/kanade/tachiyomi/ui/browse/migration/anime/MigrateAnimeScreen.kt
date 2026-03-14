@@ -16,6 +16,7 @@ import mihon.feature.migration.config.MigrationConfigScreen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.LoadingScreen
 
 data class MigrateAnimeScreen(
@@ -40,7 +41,7 @@ data class MigrateAnimeScreen(
         val title = if (state.sources.size == 1) {
             state.sources.first().name
         } else {
-            stringResource(MR.strings.migration)
+            stringResource(MR.strings.label_migration)
         }
 
         MigrateAnimeScreen(
