@@ -22,18 +22,5 @@ open class BaseActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         applyAppTheme(this)
         super.onCreate(savedInstanceState)
-        
-        // Force maximum refresh rate (60Hz, 90Hz, 120Hz, 144Hz+) for smoother scrolling
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            @Suppress("DEPRECATION")
-            val display = windowManager.defaultDisplay
-            val modes = display.supportedModes
-            val highestMode = modes.maxByOrNull { it.refreshRate }
-            if (highestMode != null) {
-                window.attributes = window.attributes.apply {
-                    preferredDisplayModeId = highestMode.modeId
-                }
-            }
-        }
     }
 }
