@@ -48,20 +48,24 @@ private fun rememberDynamicColorScheme(
     isAmoled: Boolean,
     contrast: Double,
 ): ColorScheme {
-    val colorScheme = generateColorSchemeFromSeed(seed, isDark, contrast)
-    if (isDark && isAmoled) {
-        return colorScheme.copy(
-            background = Color.Black,
-            onBackground = Color.White,
-            surface = Color.Black,
-            onSurface = Color.White,
-            surfaceVariant = Color(0xFF0C0C0C),
-            surfaceContainerLowest = Color(0xFF0C0C0C),
-            surfaceContainerLow = Color(0xFF0C0C0C),
-            surfaceContainer = Color(0xFF0C0C0C),
-            surfaceContainerHigh = Color(0xFF131313),
-            surfaceContainerHighest = Color(0xFF1B1B1B),
-        )
+    val colorScheme = remember(seed, isDark, isAmoled, contrast) {
+        val scheme = generateColorSchemeFromSeed(seed, isDark, contrast)
+        if (isDark && isAmoled) {
+            scheme.copy(
+                background = Color.Black,
+                onBackground = Color.White,
+                surface = Color.Black,
+                onSurface = Color.White,
+                surfaceVariant = Color(0xFF0C0C0C),
+                surfaceContainerLowest = Color(0xFF0C0C0C),
+                surfaceContainerLow = Color(0xFF0C0C0C),
+                surfaceContainer = Color(0xFF0C0C0C),
+                surfaceContainerHigh = Color(0xFF131313),
+                surfaceContainerHighest = Color(0xFF1B1B1B),
+            )
+        } else {
+            scheme
+        }
     }
     return colorScheme
 }

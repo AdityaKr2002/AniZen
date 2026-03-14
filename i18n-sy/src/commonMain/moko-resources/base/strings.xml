@@ -733,4 +733,10 @@
 
     <!-- Humanize time -->
     <string name="humanize_fallback">moments ago</string>
+    <string name="label_library_update_errors">Library update errors (%1$d)</string>
+    <string name="info_empty_library_update_errors">No library update errors</string>
+    <string name="action_scroll_to_top">Scroll to top</string>
+    <string name="action_scroll_to_previous">Scroll to previous</string>
+    <string name="action_scroll_to_next">Scroll to next</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
 </resources>

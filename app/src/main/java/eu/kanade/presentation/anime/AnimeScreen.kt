@@ -559,6 +559,17 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
 
+                            item(key = "description-with-tag", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
+                                ExpandableAnimeDescription(
+                                    modifier = Modifier.padding(bottom = 8.dp),
+                                    defaultExpandState = autoExpandDescription,
+                                    description = state.anime.description,
+                                    tagsProvider = { state.anime.genre },
+                                    onTagSearch = onTagSearch,
+                                    onCopyTagToClipboard = onCopyTagToClipboard,
+                                )
+                            }
+
                             if (showSuggestions && state.suggestionSections.isNotEmpty()) {
                                 item(key = "discovery-section-container", contentType = "discovery") {
                                     val navigator = LocalNavigator.currentOrThrow
@@ -650,16 +661,6 @@ private fun AnimeScreenSmallImpl(
                                 }
                             }
 
-                            item(key = "description-with-tag", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
-                                ExpandableAnimeDescription(
-                                    modifier = Modifier.padding(bottom = 8.dp),
-                                    defaultExpandState = autoExpandDescription,
-                                    description = state.anime.description,
-                                    tagsProvider = { state.anime.genre },
-                                    onTagSearch = onTagSearch,
-                                    onCopyTagToClipboard = onCopyTagToClipboard,
-                                )
-                            }
                             
                             item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                 val missingEpisodeCount = remember(episodes) {
@@ -965,32 +966,88 @@ fun AnimeScreenLargeImpl(
                                     mainTrackItem = remember(state.trackItems) { state.trackItems.find { it.tracker.id == 999L } ?: state.trackItems.firstOrNull() },
                                 )
 
+                                ExpandableAnimeDescription(
+                                    defaultExpandState = autoExpandDescription,
+                                    description = state.anime.description,
+                                    tagsProvider = { state.anime.genre },
+                                    onTagSearch = onTagSearch,
+                                    onCopyTagToClipboard = onCopyTagToClipboard,
+                                )
+
                                 if (showSuggestions && state.suggestionSections.isNotEmpty()) {
                                     val navigator = LocalNavigator.currentOrThrow
-                                    Surface(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        color = MaterialTheme.colorScheme.surfaceContainer,
-                                        shape = MaterialTheme.shapes.medium,
-                                    ) {
-                                        Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                                            DiscoveryHeader(expanded = state.discoveryExpanded, onToggle = onToggleDiscoveryExpansion)
-                                            
-                                            if (!state.discoveryExpanded) {
-                                                val combinedItems = remember(state.suggestionSections) {
-                                                    state.suggestionSections.flatMap { it.items.take(3) }.distinctBy { it.id }.take(15)
-                                                }
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-large-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(anime = anime, onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) })
+                                    if (!state.discoveryExpanded) {
+                                        OutlinedButtonWithArrow(
+                                            text = stringResource(SYMR.strings.az_recommends).uppercase(),
+                                            onClick = onToggleDiscoveryExpansion,
+                                        )
+                                    } else {
+                                        ElevatedCard(
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                                .fillMaxWidth(),
+                                            colors = CardDefaults.elevatedCardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                            ),
+                                            shape = MaterialTheme.shapes.medium,
+                                        ) {
+                                            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                                                DiscoveryHeader(
+                                                    expanded = state.discoveryExpanded,
+                                                    onToggle = onToggleDiscoveryExpansion
+                                                )
+                                                state.suggestionSections.forEach { section ->
+                                                    Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                        ) {
+                                                            val icon = when (section.type) {
+                                                                SuggestionSection.Type.Franchise -> androidx.compose.material.icons.Icons.Filled.AutoAwesome
+                                                                SuggestionSection.Type.Similarity -> androidx.compose.material.icons.Icons.Outlined.Compare
+                                                                SuggestionSection.Type.Author -> androidx.compose.material.icons.Icons.Outlined.Person
+                                                                SuggestionSection.Type.Source -> androidx.compose.material.icons.Icons.Outlined.Language
+                                                                SuggestionSection.Type.Tag -> androidx.compose.material.icons.Icons.Outlined.Label
+                                                            }
+                                                            val label = when (section.type) {
+                                                                SuggestionSection.Type.Franchise -> stringResource(KMR.strings.related_mangas_website_suggestions)
+                                                                SuggestionSection.Type.Similarity -> stringResource(SYMR.strings.relation_similar)
+                                                                SuggestionSection.Type.Author -> section.title
+                                                                SuggestionSection.Type.Source -> section.title
+                                                                SuggestionSection.Type.Tag -> stringResource(SYMR.strings.az_recommends)
+                                                            }
+                                                            Icon(
+                                                                imageVector = icon,
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(14.dp),
+                                                                tint = MaterialTheme.colorScheme.secondary
+                                                            )
+                                                            Text(
+                                                                text = label,
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.secondary
+                                                            )
+                                                        }
+                                                        androidx.compose.foundation.lazy.LazyRow(
+                                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        ) {
+                                                            itemsIndexed(
+                                                                items = section.items,
+                                                                key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-${section.type}-${anime.id}-$index" },
+                                                            ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                                SuggestionItem(
+                                                                    anime = anime,
+                                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                                )
+                                                            }
+                                                        }
                                                     }
                                                 }
-                                            } else {
+                                            }
+                                        }
+                                    } else {
                                                 state.suggestionSections.forEach { section ->
                                                     Column(modifier = Modifier.padding(top = 4.dp)) {
                                                         Row(
@@ -1042,13 +1099,6 @@ fun AnimeScreenLargeImpl(
                                     }
                                 }
 
-                                ExpandableAnimeDescription(
-                                    defaultExpandState = autoExpandDescription,
-                                    description = state.anime.description,
-                                    tagsProvider = { state.anime.genre },
-                                    onTagSearch = onTagSearch,
-                                    onCopyTagToClipboard = onCopyTagToClipboard,
-                                )
                             }
                         },
                                     

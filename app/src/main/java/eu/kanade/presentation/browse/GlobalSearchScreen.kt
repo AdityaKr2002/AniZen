@@ -1,5 +1,6 @@
 package eu.kanade.presentation.browse
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import eu.kanade.presentation.browse.components.GlobalSearchErrorResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchLoadingResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchToolbar
+import eu.kanade.presentation.components.BulkSelectionToolbar
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchItemResult
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchScreenModel
@@ -36,22 +38,36 @@ fun GlobalSearchScreen(
     onClickSource: (CatalogueSource) -> Unit,
     onClickItem: (Anime) -> Unit,
     onLongClickItem: (Anime) -> Unit,
+    selection: List<Anime> = emptyList(),
+    onClearSelection: () -> Unit = {},
+    onChangeCategory: () -> Unit = {},
 ) {
+    BackHandler(enabled = selection.isNotEmpty(), onBack = onClearSelection)
+
     Scaffold(
         topBar = { scrollBehavior ->
-            GlobalSearchToolbar(
-                searchQuery = state.searchQuery,
-                progress = state.progress,
-                total = state.total,
-                navigateUp = navigateUp,
-                onChangeSearchQuery = onChangeSearchQuery,
-                onSearch = onSearch,
-                sourceFilter = state.actualSourceFilter,
-                onChangeSearchFilter = onChangeSearchFilter,
-                onlyShowHasResults = state.onlyShowHasResults,
-                onToggleResults = onToggleResults,
-                scrollBehavior = scrollBehavior,
-            )
+            if (selection.isEmpty()) {
+                GlobalSearchToolbar(
+                    searchQuery = state.searchQuery,
+                    progress = state.progress,
+                    total = state.total,
+                    navigateUp = navigateUp,
+                    onChangeSearchQuery = onChangeSearchQuery,
+                    onSearch = onSearch,
+                    sourceFilter = state.actualSourceFilter,
+                    onChangeSearchFilter = onChangeSearchFilter,
+                    onlyShowHasResults = state.onlyShowHasResults,
+                    onToggleResults = onToggleResults,
+                    scrollBehavior = scrollBehavior,
+                )
+            } else {
+                BulkSelectionToolbar(
+                    selectedCount = selection.size,
+                    isRunning = false,
+                    onClickClearSelection = onClearSelection,
+                    onChangeCategoryClick = onChangeCategory,
+                )
+            }
         },
     ) { paddingValues ->
         GlobalSearchContent(
@@ -61,6 +77,7 @@ fun GlobalSearchScreen(
             onClickSource = onClickSource,
             onClickItem = onClickItem,
             onLongClickItem = onLongClickItem,
+            selection = selection,
         )
     }
 }
@@ -74,6 +91,7 @@ internal fun GlobalSearchContent(
     onClickItem: (Anime) -> Unit,
     onLongClickItem: (Anime) -> Unit,
     fromSourceId: Long? = null,
+    selection: List<Anime> = emptyList(),
 ) {
     val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
@@ -101,6 +119,7 @@ internal fun GlobalSearchContent(
                                 getAnime = getAnime,
                                 onClick = onClickItem,
                                 onLongClick = onLongClickItem,
+                                selection = selection,
                             )
                         }
                         is SearchItemResult.Error -> {

@@ -25,11 +25,14 @@ import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
+import androidx.compose.material3.Checkbox
+...
 fun GlobalSearchCardRow(
     titles: List<Anime>,
     getAnime: @Composable (Anime) -> State<Anime>,
     onClick: (Anime) -> Unit,
     onLongClick: (Anime) -> Unit,
+    selection: List<Anime> = emptyList(),
 ) {
     if (titles.isEmpty()) {
         EmptyResultItem()
@@ -50,6 +53,7 @@ fun GlobalSearchCardRow(
                 title = title.title,
                 cover = title.asAnimeCover(),
                 isFavorite = title.favorite,
+                isSelected = selection.any { it.id == title.id },
                 onClick = { onClick(title) },
                 onLongClick = { onLongClick(title) },
             )
@@ -62,6 +66,7 @@ internal fun AnimeItem(
     title: String,
     cover: AnimeCover,
     isFavorite: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -72,6 +77,14 @@ internal fun AnimeItem(
             coverData = cover,
             coverBadgeStart = {
                 InLibraryBadge(enabled = isFavorite)
+            },
+            coverBadgeEnd = {
+                if (isSelected) {
+                    Checkbox(
+                        checked = true,
+                        onCheckedChange = { onClick() },
+                    )
+                }
             },
             coverAlpha = if (isFavorite) CommonAnimeItemDefaults.BrowseFavoriteCoverAlpha else 1f,
             onClick = onClick,

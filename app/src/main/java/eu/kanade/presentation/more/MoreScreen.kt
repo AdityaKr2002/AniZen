@@ -91,6 +91,7 @@ fun MoreScreen(
     onClickDownloadQueue: () -> Unit,
     onClickCategories: () -> Unit,
     onClickStats: () -> Unit,
+    onClickLibraryUpdateErrors: () -> Unit,
     onClickDataAndStorage: () -> Unit,
     onClickPlayerSettings: () -> Unit,
     onClickSettings: () -> Unit,
@@ -185,6 +186,11 @@ fun MoreScreen(
                         title = stringResource(MR.strings.label_stats),
                         icon = Icons.Outlined.QueryStats,
                         onClick = onClickStats
+                    )
+                    MoreItem(
+                        title = stringResource(SYMR.strings.label_library_update_errors, 0),
+                        icon = Icons.Outlined.Info,
+                        onClick = onClickLibraryUpdateErrors
                     )
                 }
             }

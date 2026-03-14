@@ -54,8 +54,10 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.browse.components.SourceIcon
+import eu.kanade.presentation.components.AnimatedFloatingSearchBox
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
+import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.system.LocaleHelper
@@ -137,31 +139,29 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = stringResource(MR.strings.select_source),
+                    title = stringResource(MR.strings.migrationConfigScreen_selectSourceTitle),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                     actions = {
                         AppBarActions(
                             persistentListOf(
                                 AppBar.Action(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectAllLabel),
-                                    icon = Icons.Outlined.SelectAll,
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.All) },
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectPinnedLabel),
+                                    icon = Icons.Outlined.PushPin,
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Pinned) },
                                 ),
                                 AppBar.Action(
                                     title = stringResource(MR.strings.migrationConfigScreen_selectNoneLabel),
                                     icon = Icons.Outlined.Deselect,
                                     onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.None) },
                                 ),
-                                AppBar.Action(
-                                    title = stringResource(MR.strings.match_enabled_sources),
-                                    icon = Icons.Outlined.Checklist,
+                                AppBar.OverflowAction(
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectEnabledLabel),
                                     onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Enabled) },
                                 ),
-                                AppBar.Action(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectPinnedLabel),
-                                    icon = Icons.Outlined.PushPin,
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Pinned) },
+                                AppBar.OverflowAction(
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectAllLabel),
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.All) },
                                 ),
                             ),
                         )
@@ -197,9 +197,13 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
             Box(
                 modifier = Modifier.padding(contentPadding),
             ) {
+                val density = LocalDensity.current
+                var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+
                 FastScrollLazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = lazyListState,
+                    contentPadding = PaddingValues(top = searchBoxHeight),
                 ) {
                     listOf(selectedSources, availableSources).fastForEachIndexed { listIndex, sources ->
                         val selectedSourceList = listIndex == 0
@@ -232,12 +236,29 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                                 showLanguage = showLanguage,
                                 dragEnabled = selectedSourceList && sources.size > 1,
                                 state = reorderableState,
-                                key = { if (selectedSourceList) it.id else "available-${it.id}" },
+                                key = { if (selectedSourceList) item.id else "available-${item.id}" },
                                 onClick = { screenModel.toggleSelection(item.id) },
                             )
                         }
                     }
                 }
+
+                AnimatedFloatingSearchBox(
+                    listState = lazyListState,
+                    searchQuery = searchQuery,
+                    onChangeSearchQuery = { searchQuery = it ?: "" },
+                    placeholderText = stringResource(MR.strings.action_search_for_source),
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(
+                            horizontal = MaterialTheme.padding.medium,
+                            vertical = MaterialTheme.padding.small,
+                        )
+                        .align(Alignment.TopCenter),
+                    onGloballyPositioned = { layoutCoordinates ->
+                        searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() + 2 * MaterialTheme.padding.small }
+                    },
+                )
             }
         }
 
