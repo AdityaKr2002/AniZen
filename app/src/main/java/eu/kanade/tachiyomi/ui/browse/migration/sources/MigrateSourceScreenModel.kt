@@ -149,7 +149,7 @@ class MigrateSourceScreenModel(
     fun matchPinned() {
         mutableState.update { state ->
             val pinnedIds = state.items
-                .filter { (source, _) -> source.pin != tachiyomi.domain.source.model.Source.Pins.unpinned }
+                .filter { (source, _) -> source.pin != tachiyomi.domain.source.model.Pins.unpinned }
                 .map { it.first.id }
                 .toImmutableSet()
             state.copy(selectedSources = pinnedIds)

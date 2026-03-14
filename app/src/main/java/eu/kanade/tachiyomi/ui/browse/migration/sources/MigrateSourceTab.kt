@@ -20,6 +20,7 @@ import eu.kanade.presentation.components.TabContent
 import eu.kanade.tachiyomi.ui.browse.migration.anime.MigrateAnimeScreen
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
@@ -30,7 +31,7 @@ fun Screen.migrateSourceTab(): TabContent {
     val state by screenModel.state.collectAsState()
 
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
-    val actionMigrateNow = stringResource(MR.strings.action_migrate_now)
+    val actionMigrateNow = stringResource(SYMR.strings.action_migrate_now)
 
     return remember(migrationHelpGuide, actionMigrateNow, state.selectionMode) {
         TabContent(
