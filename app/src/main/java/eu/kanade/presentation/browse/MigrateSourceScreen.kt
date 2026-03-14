@@ -89,6 +89,7 @@ fun MigrateSourceScreen(
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
     onMatchPinned: () -> Unit,
+    onMigrate: () -> Unit,
 ) {
     val context = LocalContext.current
     when {
@@ -117,6 +118,7 @@ fun MigrateSourceScreen(
                 onSelectNone = onSelectNone,
                 onMatchEnabled = onMatchEnabled,
                 onMatchPinned = onMatchPinned,
+                onMigrate = onMigrate,
             )
     }
 }
@@ -138,6 +140,7 @@ private fun MigrateSourceList(
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
     onMatchPinned: () -> Unit,
+    onMigrate: () -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -154,6 +157,7 @@ private fun MigrateSourceList(
                 onSelectNone = onSelectNone,
                 onMatchEnabled = onMatchEnabled,
                 onMatchPinned = onMatchPinned,
+                onMigrate = onMigrate,
             )
         },
     ) { innerPadding ->
@@ -262,6 +266,7 @@ private fun MigrateBottomActionMenu(
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
     onMatchPinned: () -> Unit,
+    onMigrate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -282,6 +287,13 @@ private fun MigrateBottomActionMenu(
                     )
                     .padding(horizontal = 8.dp, vertical = 12.dp),
             ) {
+                BottomMenuButton(
+                    title = stringResource(MR.strings.migrate),
+                    icon = Icons.Outlined.Checklist,
+                    toConfirm = false,
+                    onLongClick = {},
+                    onClick = onMigrate,
+                )
                 BottomMenuButton(
                     title = stringResource(MR.strings.action_select_all),
                     icon = Icons.Outlined.SelectAll,

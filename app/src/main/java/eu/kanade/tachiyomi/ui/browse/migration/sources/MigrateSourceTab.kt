@@ -33,21 +33,10 @@ fun Screen.migrateSourceTab(): TabContent {
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
     val actionMigrateNow = stringResource(SYMR.strings.action_migrate_now)
 
-    return remember(migrationHelpGuide, actionMigrateNow, state.selectionMode) {
+    return remember(migrationHelpGuide, state.selectionMode) {
         TabContent(
             titleRes = MR.strings.label_migration,
             actions = persistentListOf(
-                AppBar.Action(
-                    title = actionMigrateNow,
-                    icon = Icons.Outlined.Checklist,
-                    onClick = {
-                        val ids = state.selectedSources.toList()
-                        if (ids.isNotEmpty()) {
-                            navigator.push(MigrateAnimeScreen(ids))
-                        }
-                    },
-                    enabled = state.selectionMode,
-                ),
                 AppBar.Action(
                     title = migrationHelpGuide,
                     icon = Icons.AutoMirrored.Outlined.HelpOutline,
@@ -71,6 +60,12 @@ fun Screen.migrateSourceTab(): TabContent {
                     onSelectNone = screenModel::selectNone,
                     onMatchEnabled = screenModel::matchEnabled,
                     onMatchPinned = screenModel::matchPinned,
+                    onMigrate = {
+                        val ids = state.selectedSources.toList()
+                        if (ids.isNotEmpty()) {
+                            navigator.push(MigrateAnimeScreen(ids))
+                        }
+                    },
                 )
             },
         )
