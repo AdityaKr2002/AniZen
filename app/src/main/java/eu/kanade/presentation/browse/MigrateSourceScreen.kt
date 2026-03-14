@@ -13,9 +13,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.SortByAlpha
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -63,6 +67,11 @@ fun MigrateSourceScreen(
     onToggleSortingDirection: () -> Unit,
     onToggleSortingMode: () -> Unit,
     onChangeSearchQuery: (String?) -> Unit,
+    onToggleSelection: (Source) -> Unit,
+    onSelectAll: () -> Unit,
+    onSelectNone: () -> Unit,
+    onMatchEnabled: () -> Unit,
+    onMatchPinned: () -> Unit,
 ) {
     val context = LocalContext.current
     when {
@@ -86,6 +95,11 @@ fun MigrateSourceScreen(
                 onToggleSortingDirection = onToggleSortingDirection,
                 state = state,
                 onChangeSearchQuery = onChangeSearchQuery,
+                onToggleSelection = onToggleSelection,
+                onSelectAll = onSelectAll,
+                onSelectNone = onSelectNone,
+                onMatchEnabled = onMatchEnabled,
+                onMatchPinned = onMatchPinned,
             )
     }
 }
@@ -102,6 +116,11 @@ private fun MigrateSourceList(
     onToggleSortingDirection: () -> Unit,
     state: MigrateSourceScreenModel.State,
     onChangeSearchQuery: (String?) -> Unit,
+    onToggleSelection: (Source) -> Unit,
+    onSelectAll: () -> Unit,
+    onSelectNone: () -> Unit,
+    onMatchEnabled: () -> Unit,
+    onMatchPinned: () -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -119,33 +138,64 @@ private fun MigrateSourceList(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(MR.strings.select_source),
+                text = if (state.selectionMode) {
+                    stringResource(SYMR.strings.migrating)
+                } else {
+                    stringResource(MR.strings.select_source)
+                },
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.header,
             )
 
-            IconButton(onClick = onToggleSortingMode) {
-                when (sortingMode) {
-                    SetMigrateSorting.Mode.ALPHABETICAL -> Icon(
-                        Icons.Outlined.SortByAlpha,
-                        contentDescription = stringResource(MR.strings.action_sort_alpha),
-                    )
-                    SetMigrateSorting.Mode.TOTAL -> Icon(
-                        Icons.Outlined.Numbers,
-                        contentDescription = stringResource(MR.strings.action_sort_count),
+            if (state.selectionMode) {
+                IconButton(onClick = onSelectAll) {
+                    Icon(
+                        Icons.Outlined.SelectAll,
+                        contentDescription = stringResource(MR.strings.action_select_all),
                     )
                 }
-            }
-            IconButton(onClick = onToggleSortingDirection) {
-                when (sortingDirection) {
-                    SetMigrateSorting.Direction.ASCENDING -> Icon(
-                        Icons.Outlined.ArrowUpward,
-                        contentDescription = stringResource(MR.strings.action_asc),
+                IconButton(onClick = onSelectNone) {
+                    Icon(
+                        Icons.Outlined.Checklist,
+                        contentDescription = stringResource(SYMR.strings.select_none),
                     )
-                    SetMigrateSorting.Direction.DESCENDING -> Icon(
-                        Icons.Outlined.ArrowDownward,
-                        contentDescription = stringResource(MR.strings.action_desc),
+                }
+                IconButton(onClick = onMatchEnabled) {
+                    Icon(
+                        Icons.Outlined.NewReleases,
+                        contentDescription = stringResource(SYMR.strings.match_enabled_sources),
                     )
+                }
+                IconButton(onClick = onMatchPinned) {
+                    Icon(
+                        Icons.Outlined.PushPin,
+                        contentDescription = stringResource(SYMR.strings.match_pinned_sources),
+                    )
+                }
+            } else {
+                IconButton(onClick = onToggleSortingMode) {
+                    when (sortingMode) {
+                        SetMigrateSorting.Mode.ALPHABETICAL -> Icon(
+                            Icons.Outlined.SortByAlpha,
+                            contentDescription = stringResource(MR.strings.action_sort_alpha),
+                        )
+                        SetMigrateSorting.Mode.TOTAL -> Icon(
+                            Icons.Outlined.Numbers,
+                            contentDescription = stringResource(MR.strings.action_sort_count),
+                        )
+                    }
+                }
+                IconButton(onClick = onToggleSortingDirection) {
+                    when (sortingDirection) {
+                        SetMigrateSorting.Direction.ASCENDING -> Icon(
+                            Icons.Outlined.ArrowUpward,
+                            contentDescription = stringResource(MR.strings.action_asc),
+                        )
+                        SetMigrateSorting.Direction.DESCENDING -> Icon(
+                            Icons.Outlined.ArrowDownward,
+                            contentDescription = stringResource(MR.strings.action_desc),
+                        )
+                    }
                 }
             }
         }
@@ -162,13 +212,21 @@ private fun MigrateSourceList(
                     items = list,
                     key = { (source, _) -> "migrate-${source.id}" },
                 ) { (source, count) ->
+                    val isSelected = state.selectedSources.contains(source.id)
                     MigrateSourceItem(
                         modifier = Modifier.animateItemFastScroll()
                             .padding(end = MaterialTheme.padding.small),
                         source = source,
                         count = count,
-                        onClickItem = { onClickItem(source) },
-                        onLongClickItem = { onLongClickItem(source) },
+                        isSelected = isSelected,
+                        onClickItem = {
+                            if (state.selectionMode) {
+                                onToggleSelection(source)
+                            } else {
+                                onClickItem(source)
+                            }
+                        },
+                        onLongClickItem = { onToggleSelection(source) },
                     )
                 }
             }
@@ -196,6 +254,7 @@ private fun MigrateSourceList(
 private fun MigrateSourceItem(
     source: Source,
     count: Long,
+    isSelected: Boolean,
     onClickItem: () -> Unit,
     onLongClickItem: () -> Unit,
     modifier: Modifier = Modifier,
@@ -208,8 +267,16 @@ private fun MigrateSourceItem(
         onLongClickItem = onLongClickItem,
         icon = { SourceIcon(source = source) },
         action = {
-            BadgeGroup {
-                Badge(text = "$count")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BadgeGroup {
+                    Badge(text = "$count")
+                }
+                if (isSelected) {
+                    Checkbox(
+                        checked = true,
+                        onCheckedChange = { onClickItem() },
+                    )
+                }
             }
         },
         content = { _, sourceLangString ->

@@ -19,14 +19,16 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.screens.LoadingScreen
 
 data class MigrateAnimeScreen(
-    private val sourceId: Long,
+    private val sourceIds: List<Long>,
 ) : Screen() {
+
+    constructor(sourceId: Long) : this(listOf(sourceId))
 
     @Composable
     override fun Content() {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { MigrateAnimeScreenModel(sourceId) }
+        val screenModel = rememberScreenModel { MigrateAnimeScreenModel(sourceIds) }
 
         val state by screenModel.state.collectAsState()
 
@@ -35,9 +37,15 @@ data class MigrateAnimeScreen(
             return
         }
 
+        val title = if (state.sources.size == 1) {
+            state.sources.first().name
+        } else {
+            stringResource(MR.strings.migration)
+        }
+
         MigrateAnimeScreen(
             navigateUp = navigator::pop,
-            title = state.source!!.name,
+            title = title,
             state = state,
             onClickItem = { navigator.push(MigrationConfigScreen(it.id)) },
             onClickCover = { navigator.push(AnimeScreen(it.id)) },

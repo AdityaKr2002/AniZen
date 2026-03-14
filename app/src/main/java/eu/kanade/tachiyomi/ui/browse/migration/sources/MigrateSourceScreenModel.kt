@@ -8,8 +8,11 @@ import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.components.SEARCH_DEBOUNCE_MILLIS
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -108,15 +111,62 @@ class MigrateSourceScreenModel(
         }
     }
 
+    fun toggleSelection(source: Source) {
+        mutableState.update { state ->
+            val isSelected = state.selectedSources.contains(source.id)
+            val selectedSources = if (isSelected) {
+                state.selectedSources.minus(source.id)
+            } else {
+                state.selectedSources.plus(source.id)
+            }
+            state.copy(selectedSources = selectedSources.toImmutableSet())
+        }
+    }
+
+    fun selectAll() {
+        mutableState.update { state ->
+            val allIds = state.items.map { it.first.id }.toImmutableSet()
+            state.copy(selectedSources = allIds)
+        }
+    }
+
+    fun selectNone() {
+        mutableState.update { state ->
+            state.copy(selectedSources = persistentSetOf())
+        }
+    }
+
+    fun matchEnabled() {
+        mutableState.update { state ->
+            val enabledIds = state.items
+                .filter { (source, _) -> !preferences.disabledSources().get().contains(source.id.toString()) }
+                .map { it.first.id }
+                .toImmutableSet()
+            state.copy(selectedSources = enabledIds)
+        }
+    }
+
+    fun matchPinned() {
+        mutableState.update { state ->
+            val pinnedIds = state.items
+                .filter { (source, _) -> source.pin != Source.Pins.unpinned }
+                .map { it.first.id }
+                .toImmutableSet()
+            state.copy(selectedSources = pinnedIds)
+        }
+    }
+
     @Immutable
     data class State(
         val isLoading: Boolean = true,
         val items: ImmutableList<Pair<Source, Long>> = persistentListOf(),
+        val selectedSources: ImmutableSet<Long> = persistentSetOf(),
         val sortingMode: SetMigrateSorting.Mode = SetMigrateSorting.Mode.ALPHABETICAL,
         val sortingDirection: SetMigrateSorting.Direction = SetMigrateSorting.Direction.ASCENDING,
         val searchQuery: String? = null,
     ) {
         val isEmpty = items.isEmpty()
+        val selectionMode = selectedSources.isNotEmpty()
     }
 
     sealed interface Event {

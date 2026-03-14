@@ -19,17 +19,35 @@ import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.SelectAll
+
+... rest of imports ...
+
 @Composable
 fun Screen.migrateSourceTab(): TabContent {
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val screenModel = rememberScreenModel { MigrateSourceScreenModel() }
+    val state by screenModel.state.collectAsState()
 
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
-    return remember(migrationHelpGuide) {
+    return remember(migrationHelpGuide, state.selectionMode) {
         TabContent(
             titleRes = MR.strings.label_migration,
             actions = persistentListOf(
+                AppBar.Action(
+                    title = stringResource(MR.strings.action_migrate_now),
+                    icon = Icons.Outlined.Checklist,
+                    onClick = {
+                        val ids = state.selectedSources.toList()
+                        if (ids.isNotEmpty()) {
+                            navigator.push(MigrateAnimeScreen(ids))
+                        }
+                    },
+                    enabled = state.selectionMode,
+                ),
                 AppBar.Action(
                     title = migrationHelpGuide,
                     icon = Icons.AutoMirrored.Outlined.HelpOutline,
@@ -39,7 +57,6 @@ fun Screen.migrateSourceTab(): TabContent {
                 ),
             ),
             content = { contentPadding, _ ->
-                val state by screenModel.state.collectAsState()
                 MigrateSourceScreen(
                     state = state,
                     contentPadding = contentPadding,
@@ -49,6 +66,11 @@ fun Screen.migrateSourceTab(): TabContent {
                     onToggleSortingDirection = screenModel::toggleSortingDirection,
                     onToggleSortingMode = screenModel::toggleSortingMode,
                     onChangeSearchQuery = screenModel::search,
+                    onToggleSelection = screenModel::toggleSelection,
+                    onSelectAll = screenModel::selectAll,
+                    onSelectNone = screenModel::selectNone,
+                    onMatchEnabled = screenModel::matchEnabled,
+                    onMatchPinned = screenModel::matchPinned,
                 )
             },
         )

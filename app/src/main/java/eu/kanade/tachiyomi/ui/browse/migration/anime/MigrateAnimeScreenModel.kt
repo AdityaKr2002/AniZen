@@ -24,8 +24,10 @@ import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import kotlinx.coroutines.flow.combine
+
 class MigrateAnimeScreenModel(
-    private val sourceId: Long,
+    private val sourceIds: List<Long>,
     private val sourceManager: SourceManager = Injekt.get(),
     private val getFavorites: GetFavorites = Injekt.get(),
 ) : StateScreenModel<MigrateAnimeScreenModel.State>(State()) {
@@ -41,11 +43,16 @@ class MigrateAnimeScreenModel(
 
     init {
         screenModelScope.launch {
+            val sources = sourceIds.map { sourceManager.getOrStub(it) }
             mutableState.update { state ->
-                state.copy(source = sourceManager.getOrStub(sourceId))
+                state.copy(sources = sources)
             }
 
-            getFavorites.subscribe(sourceId)
+            combine(
+                sourceIds.map { getFavorites.subscribe(it) }
+            ) { favoriteLists ->
+                favoriteLists.flatMap { it }
+            }
                 .catch {
                     logcat(LogPriority.ERROR, it)
                     _events.send(MigrationAnimeEvent.FailedFetchingFavorites)
@@ -175,7 +182,7 @@ class MigrateAnimeScreenModel(
 
     @Immutable
     data class State(
-        val source: Source? = null,
+        val sources: List<Source> = emptyList(),
         private val titleList: ImmutableList<MigrateAnimeItem>? = null,
     ) {
         // KMK -->
@@ -186,7 +193,7 @@ class MigrateAnimeScreenModel(
             get() = titleList ?: persistentListOf()
 
         val isLoading: Boolean
-            get() = source == null || titleList == null
+            get() = sources.isEmpty() || titleList == null
 
         val isEmpty: Boolean
             get() = titles.isEmpty()

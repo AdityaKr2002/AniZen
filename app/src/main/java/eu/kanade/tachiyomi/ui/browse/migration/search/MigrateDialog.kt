@@ -138,7 +138,7 @@ fun MigrateDialog(
                             }
                         },
                     ) {
-                        Text(text = stringResource(MR.strings.migrate))
+                        Text(text = stringResource(SYMR.strings.migrating))
                     }
                 }
             },

@@ -18,9 +18,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Deselect
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -142,22 +144,24 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                         AppBarActions(
                             persistentListOf(
                                 AppBar.Action(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectPinnedLabel),
-                                    icon = Icons.Outlined.PushPin,
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Pinned) },
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectAllLabel),
+                                    icon = Icons.Outlined.SelectAll,
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.All) },
+                                ),
+                                AppBar.Action(
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectNoneLabel),
+                                    icon = Icons.Outlined.Deselect,
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.None) },
                                 ),
                                 AppBar.Action(
                                     title = stringResource(MR.strings.match_enabled_sources),
-                                    icon = Icons.Outlined.Deselect,
+                                    icon = Icons.Outlined.Checklist,
                                     onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Enabled) },
                                 ),
-                                AppBar.OverflowAction(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectNoneLabel),
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.None) },
-                                ),
-                                AppBar.OverflowAction(
-                                    title = stringResource(MR.strings.migrationConfigScreen_selectAllLabel),
-                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.All) },
+                                AppBar.Action(
+                                    title = stringResource(MR.strings.migrationConfigScreen_selectPinnedLabel),
+                                    icon = Icons.Outlined.PushPin,
+                                    onClick = { screenModel.toggleSelection(ScreenModel.SelectionConfig.Pinned) },
                                 ),
                             ),
                         )
