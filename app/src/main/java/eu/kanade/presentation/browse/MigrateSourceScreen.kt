@@ -1,6 +1,10 @@
 package eu.kanade.presentation.browse
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +43,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.ZeroCornerSize
 import eu.kanade.domain.source.interactor.SetMigrateSorting
+import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.presentation.components.AnimatedFloatingSearchBox
@@ -136,14 +148,13 @@ private fun MigrateSourceList(
     Scaffold(
         modifier = Modifier.padding(contentPadding),
         bottomBar = {
-            if (state.selectionMode) {
-                BulkSelectionToolbar(
-                    onSelectAll = onSelectAll,
-                    onSelectNone = onSelectNone,
-                    onMatchEnabled = onMatchEnabled,
-                    onMatchPinned = onMatchPinned,
-                )
-            }
+            MigrateBottomActionMenu(
+                visible = state.selectionMode,
+                onSelectAll = onSelectAll,
+                onSelectNone = onSelectNone,
+                onMatchEnabled = onMatchEnabled,
+                onMatchPinned = onMatchPinned,
+            )
         },
     ) { innerPadding ->
         Column(
@@ -245,45 +256,59 @@ private fun MigrateSourceList(
 }
 
 @Composable
-private fun BulkSelectionToolbar(
+private fun MigrateBottomActionMenu(
+    visible: Boolean,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
     onMatchPinned: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Surface(
-        tonalElevation = 3.dp,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier
-            .padding(MaterialTheme.padding.medium)
-            .fillMaxWidth(),
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandVertically(animationSpec = tween(delayMillis = 300)),
+        exit = shrinkVertically(animationSpec = tween()),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = MaterialTheme.padding.small, vertical = MaterialTheme.padding.extraSmall),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+        Surface(
+            modifier = modifier,
+            shape = MaterialTheme.shapes.large.copy(bottomEnd = ZeroCornerSize, bottomStart = ZeroCornerSize),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
-            IconButton(onClick = onSelectAll) {
-                Icon(
-                    Icons.Outlined.SelectAll,
-                    contentDescription = stringResource(MR.strings.action_select_all),
+            Row(
+                modifier = Modifier
+                    .windowInsetsPadding(
+                        WindowInsets.navigationBars
+                            .only(WindowInsetsSides.Bottom),
+                    )
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+            ) {
+                BottomMenuButton(
+                    title = stringResource(MR.strings.action_select_all),
+                    icon = Icons.Outlined.SelectAll,
+                    toConfirm = false,
+                    onLongClick = {},
+                    onClick = onSelectAll,
                 )
-            }
-            IconButton(onClick = onSelectNone) {
-                Icon(
-                    Icons.Outlined.Checklist,
-                    contentDescription = stringResource(SYMR.strings.select_none),
+                BottomMenuButton(
+                    title = stringResource(SYMR.strings.select_none),
+                    icon = Icons.Outlined.Checklist,
+                    toConfirm = false,
+                    onLongClick = {},
+                    onClick = onSelectNone,
                 )
-            }
-            IconButton(onClick = onMatchEnabled) {
-                Icon(
-                    Icons.Outlined.NewReleases,
-                    contentDescription = stringResource(SYMR.strings.match_enabled_sources),
+                BottomMenuButton(
+                    title = stringResource(SYMR.strings.match_enabled_sources),
+                    icon = Icons.Outlined.NewReleases,
+                    toConfirm = false,
+                    onLongClick = {},
+                    onClick = onMatchEnabled,
                 )
-            }
-            IconButton(onClick = onMatchPinned) {
-                Icon(
-                    Icons.Outlined.PushPin,
-                    contentDescription = stringResource(SYMR.strings.match_pinned_sources),
+                BottomMenuButton(
+                    title = stringResource(SYMR.strings.match_pinned_sources),
+                    icon = Icons.Outlined.PushPin,
+                    toConfirm = false,
+                    onLongClick = {},
+                    onClick = onMatchPinned,
                 )
             }
         }
