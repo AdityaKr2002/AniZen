@@ -36,6 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.unit.dp
 import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
@@ -51,6 +54,8 @@ import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.Badge
 import tachiyomi.presentation.core.components.BadgeGroup
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
+import tachiyomi.presentation.core.components.material.Scaffold
+import tachiyomi.presentation.core.components.material.Surface
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.icons.FlagEmoji
@@ -128,124 +133,159 @@ private fun MigrateSourceList(
         onChangeSearchQuery("")
     }
 
-    Column(
+    Scaffold(
         modifier = Modifier.padding(contentPadding),
-    ) {
-        Row(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(start = MaterialTheme.padding.medium),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = if (state.selectionMode) {
-                    stringResource(SYMR.strings.migrating)
-                } else {
-                    stringResource(MR.strings.select_source)
-                },
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.header,
-            )
-
+        bottomBar = {
             if (state.selectionMode) {
-                IconButton(onClick = onSelectAll) {
-                    Icon(
-                        Icons.Outlined.SelectAll,
-                        contentDescription = stringResource(MR.strings.action_select_all),
-                    )
-                }
-                IconButton(onClick = onSelectNone) {
-                    Icon(
-                        Icons.Outlined.Checklist,
-                        contentDescription = stringResource(SYMR.strings.select_none),
-                    )
-                }
-                IconButton(onClick = onMatchEnabled) {
-                    Icon(
-                        Icons.Outlined.NewReleases,
-                        contentDescription = stringResource(SYMR.strings.match_enabled_sources),
-                    )
-                }
-                IconButton(onClick = onMatchPinned) {
-                    Icon(
-                        Icons.Outlined.PushPin,
-                        contentDescription = stringResource(SYMR.strings.match_pinned_sources),
-                    )
-                }
-            } else {
-                IconButton(onClick = onToggleSortingMode) {
-                    when (sortingMode) {
-                        SetMigrateSorting.Mode.ALPHABETICAL -> Icon(
-                            Icons.Outlined.SortByAlpha,
-                            contentDescription = stringResource(MR.strings.action_sort_alpha),
-                        )
-                        SetMigrateSorting.Mode.TOTAL -> Icon(
-                            Icons.Outlined.Numbers,
-                            contentDescription = stringResource(MR.strings.action_sort_count),
-                        )
-                    }
-                }
-                IconButton(onClick = onToggleSortingDirection) {
-                    when (sortingDirection) {
-                        SetMigrateSorting.Direction.ASCENDING -> Icon(
-                            Icons.Outlined.ArrowUpward,
-                            contentDescription = stringResource(MR.strings.action_asc),
-                        )
-                        SetMigrateSorting.Direction.DESCENDING -> Icon(
-                            Icons.Outlined.ArrowDownward,
-                            contentDescription = stringResource(MR.strings.action_desc),
-                        )
-                    }
-                }
+                BulkSelectionToolbar(
+                    onSelectAll = onSelectAll,
+                    onSelectNone = onSelectNone,
+                    onMatchEnabled = onMatchEnabled,
+                    onMatchPinned = onMatchPinned,
+                )
             }
-        }
-
-        Box {
-            val density = LocalDensity.current
-            var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
-
-            FastScrollLazyColumn(
-                state = lazyListState,
-                contentPadding = PaddingValues(top = searchBoxHeight),
-            ) {
-                items(
-                    items = list,
-                    key = { (source, _) -> "migrate-${source.id}" },
-                ) { (source, count) ->
-                    val isSelected = state.selectedSources.contains(source.id)
-                    MigrateSourceItem(
-                        modifier = Modifier.animateItemFastScroll()
-                            .padding(end = MaterialTheme.padding.small),
-                        source = source,
-                        count = count,
-                        isSelected = isSelected,
-                        onClickItem = {
-                            if (state.selectionMode) {
-                                onToggleSelection(source)
-                            } else {
-                                onClickItem(source)
-                            }
-                        },
-                        onLongClickItem = { onToggleSelection(source) },
-                    )
-                }
-            }
-
-            AnimatedFloatingSearchBox(
-                listState = lazyListState,
-                searchQuery = state.searchQuery,
-                onChangeSearchQuery = onChangeSearchQuery,
-                placeholderText = stringResource(MR.strings.action_search_for_source),
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            Row(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(
-                        horizontal = MaterialTheme.padding.medium,
-                    )
-                    .align(Alignment.TopCenter),
-                onGloballyPositioned = { layoutCoordinates ->
-                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                },
-            )
+                    .padding(start = MaterialTheme.padding.medium),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (state.selectionMode) {
+                        stringResource(SYMR.strings.migrating)
+                    } else {
+                        stringResource(MR.strings.select_source)
+                    },
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.header,
+                )
+
+                if (!state.selectionMode) {
+                    IconButton(onClick = onToggleSortingMode) {
+                        when (sortingMode) {
+                            SetMigrateSorting.Mode.ALPHABETICAL -> Icon(
+                                Icons.Outlined.SortByAlpha,
+                                contentDescription = stringResource(MR.strings.action_sort_alpha),
+                            )
+                            SetMigrateSorting.Mode.TOTAL -> Icon(
+                                Icons.Outlined.Numbers,
+                                contentDescription = stringResource(MR.strings.action_sort_count),
+                            )
+                        }
+                    }
+                    IconButton(onClick = onToggleSortingDirection) {
+                        when (sortingDirection) {
+                            SetMigrateSorting.Direction.ASCENDING -> Icon(
+                                Icons.Outlined.ArrowUpward,
+                                contentDescription = stringResource(MR.strings.action_asc),
+                            )
+                            SetMigrateSorting.Direction.DESCENDING -> Icon(
+                                Icons.Outlined.ArrowDownward,
+                                contentDescription = stringResource(MR.strings.action_desc),
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box {
+                val density = LocalDensity.current
+                var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+
+                FastScrollLazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(top = searchBoxHeight),
+                ) {
+                    items(
+                        items = list,
+                        key = { (source, _) -> "migrate-${source.id}" },
+                    ) { (source, count) ->
+                        val isSelected = state.selectedSources.contains(source.id)
+                        MigrateSourceItem(
+                            modifier = Modifier.animateItemFastScroll()
+                                .padding(end = MaterialTheme.padding.small),
+                            source = source,
+                            count = count,
+                            isSelected = isSelected,
+                            onClickItem = {
+                                if (state.selectionMode) {
+                                    onToggleSelection(source)
+                                } else {
+                                    onClickItem(source)
+                                }
+                            },
+                            onLongClickItem = { onToggleSelection(source) },
+                        )
+                    }
+                }
+
+                AnimatedFloatingSearchBox(
+                    listState = lazyListState,
+                    searchQuery = state.searchQuery,
+                    onChangeSearchQuery = onChangeSearchQuery,
+                    placeholderText = stringResource(MR.strings.action_search_for_source),
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(
+                            horizontal = MaterialTheme.padding.medium,
+                        )
+                        .align(Alignment.TopCenter),
+                    onGloballyPositioned = { layoutCoordinates ->
+                        searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BulkSelectionToolbar(
+    onSelectAll: () -> Unit,
+    onSelectNone: () -> Unit,
+    onMatchEnabled: () -> Unit,
+    onMatchPinned: () -> Unit,
+) {
+    Surface(
+        tonalElevation = 3.dp,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .padding(MaterialTheme.padding.medium)
+            .fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = MaterialTheme.padding.small, vertical = MaterialTheme.padding.extraSmall),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            IconButton(onClick = onSelectAll) {
+                Icon(
+                    Icons.Outlined.SelectAll,
+                    contentDescription = stringResource(MR.strings.action_select_all),
+                )
+            }
+            IconButton(onClick = onSelectNone) {
+                Icon(
+                    Icons.Outlined.Checklist,
+                    contentDescription = stringResource(SYMR.strings.select_none),
+                )
+            }
+            IconButton(onClick = onMatchEnabled) {
+                Icon(
+                    Icons.Outlined.NewReleases,
+                    contentDescription = stringResource(SYMR.strings.match_enabled_sources),
+                )
+            }
+            IconButton(onClick = onMatchPinned) {
+                Icon(
+                    Icons.Outlined.PushPin,
+                    contentDescription = stringResource(SYMR.strings.match_pinned_sources),
+                )
+            }
         }
     }
 }
