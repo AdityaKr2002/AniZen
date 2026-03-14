@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel
 import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel.Dialog
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.kmk.KMKMR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
@@ -52,7 +52,7 @@ private fun ChangeAnimesCategoryDialog(
     ChangeCategoryDialog(
         initialSelection = dialog.initialSelection,
         onDismissRequest = onDismiss,
-        onEditCategories = { navigator?.push(CategoryScreen()) },
+        onEditCategories = { navigator?.push(CategoryScreen) },
         onConfirm = onConfirm,
     )
 }
@@ -62,7 +62,7 @@ fun bulkSelectionButton(
     isRunning: Boolean,
     toggleSelectionMode: () -> Unit,
 ): AppBar.AppBarAction {
-    val title = stringResource(KMKMR.strings.action_bulk_select)
+    val title = stringResource(KMR.strings.action_bulk_select)
     return if (isRunning) {
         AppBar.Action(
             title = title, 
