@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel
 import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel.Dialog
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMKMR
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
@@ -61,11 +62,11 @@ fun bulkSelectionButton(
     isRunning: Boolean,
     toggleSelectionMode: () -> Unit,
 ): AppBar.AppBarAction {
-    val title = stringResource(MR.strings.action_bulk_select)
+    val title = stringResource(KMKMR.strings.action_bulk_select)
     return if (isRunning) {
-        AppBar.ActionCompose(
-            title = title,
-        ) {
+        AppBar.Action(
+            title = title, onClick = {},
+        iconContent = {
             CircularProgressIndicator(
                 modifier = Modifier
                     .size(24.dp),
@@ -74,7 +75,7 @@ fun bulkSelectionButton(
         }
     } else {
         AppBar.Action(
-            title = title,
+            title = title, onClick = {},
             icon = Icons.Outlined.Checklist,
             onClick = toggleSelectionMode,
         )

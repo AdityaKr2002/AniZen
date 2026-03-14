@@ -139,7 +139,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = stringResource(MR.strings.migrationConfigScreen_selectSourceTitle),
+                    title = stringResource(MR.strings.select_source),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                     actions = {
@@ -213,9 +213,9 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                                 Text(
                                     text = stringResource(
                                         resource = if (selectedSourceList) {
-                                            MR.strings.migrationConfigScreen_selectedHeader
+                                            MR.strings.migrationConfigScreen_dataToMigrateHeader
                                         } else {
-                                            MR.strings.migrationConfigScreen_availableHeader
+                                            MR.strings.migrationConfigScreen_dataToMigrateHeader
                                         },
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,

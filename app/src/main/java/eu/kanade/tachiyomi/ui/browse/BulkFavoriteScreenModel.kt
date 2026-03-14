@@ -6,7 +6,7 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.anime.interactor.UpdateAnime
 import eu.kanade.domain.episode.interactor.SyncEpisodesWithSource
-import eu.kanade.tachiyomi.data.cache.AnimeCoverCache
+import eu.kanade.tachiyomi.data.cache.CoverCache
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
@@ -37,7 +37,7 @@ class BulkFavoriteScreenModel(
     private val getCategories: GetCategories = Injekt.get(),
     private val setAnimeCategories: SetAnimeCategories = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
-    private val coverCache: AnimeCoverCache = Injekt.get(),
+    private val coverCache: CoverCache = Injekt.get(),
     private val setAnimeDefaultEpisodeFlags: SetAnimeDefaultEpisodeFlags = Injekt.get(),
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),

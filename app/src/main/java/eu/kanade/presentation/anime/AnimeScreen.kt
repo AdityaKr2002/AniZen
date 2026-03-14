@@ -55,6 +55,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.CardDefaults
+import eu.kanade.presentation.components.OutlinedButtonWithArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -1041,55 +1044,6 @@ fun AnimeScreenLargeImpl(
                                                                     anime = anime,
                                                                     onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
                                                                 )
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                                state.suggestionSections.forEach { section ->
-                                                    Column(modifier = Modifier.padding(top = 4.dp)) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                        ) {
-                                                            val icon = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> androidx.compose.material.icons.Icons.Filled.AutoAwesome
-                                                                SuggestionSection.Type.Similarity -> androidx.compose.material.icons.Icons.Outlined.Compare
-                                                                SuggestionSection.Type.Author -> androidx.compose.material.icons.Icons.Outlined.Person
-                                                                SuggestionSection.Type.Source -> androidx.compose.material.icons.Icons.Outlined.Language
-                                                                SuggestionSection.Type.Tag -> androidx.compose.material.icons.Icons.Outlined.Label
-                                                            }
-                                                            val label = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> stringResource(KMR.strings.related_mangas_website_suggestions)
-                                                                SuggestionSection.Type.Similarity -> stringResource(SYMR.strings.relation_similar)
-                                                                SuggestionSection.Type.Author -> section.title
-                                                                SuggestionSection.Type.Source -> section.title
-                                                                SuggestionSection.Type.Tag -> stringResource(SYMR.strings.az_recommends)
-                                                            }
-                                                            Icon(
-                                                                imageVector = icon,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = MaterialTheme.colorScheme.secondary
-                                                            )
-                                                            Text(
-                                                                text = label,
-                                                                style = MaterialTheme.typography.labelSmall,
-                                                                color = MaterialTheme.colorScheme.secondary
-                                                            )
-                                                        }
-                                                        androidx.compose.foundation.lazy.LazyRow(
-                                                            contentPadding = PaddingValues(horizontal = 12.dp),
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        ) {
-                                                            itemsIndexed(
-                                                                items = section.items,
-                                                                key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${section.type}-${anime.id}-$index" },
-                                                            ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                                SuggestionItem(anime = anime, onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) })
                                                             }
                                                         }
                                                     }

@@ -1,3 +1,4 @@
+import androidx.compose.material3.Checkbox
 package eu.kanade.presentation.browse.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +26,9 @@ import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
-import androidx.compose.material3.Checkbox
+
 ...
+@Composable
 fun GlobalSearchCardRow(
     titles: List<Anime>,
     getAnime: @Composable (Anime) -> State<Anime>,

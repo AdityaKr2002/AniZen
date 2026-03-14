@@ -151,7 +151,9 @@ class LibraryUpdateErrorScreenModel(
     @OptIn(DelicateCoroutinesApi::class)
     fun deleteSelected() {
         launchIO {
-            deleteLibraryUpdateErrors.delete(selectedErrorIds.toList())
+            selectedErrorIds.forEach { errorId ->
+                deleteLibraryUpdateErrors.await(errorId)
+            }
             withUIContext {
                 selectedErrorIds.clear()
             }
@@ -161,7 +163,7 @@ class LibraryUpdateErrorScreenModel(
     @OptIn(DelicateCoroutinesApi::class)
     fun delete(errorId: Long) {
         launchIO {
-            deleteLibraryUpdateErrors.delete(listOf(errorId))
+            deleteLibraryUpdateErrors.await(errorId)
             withUIContext {
                 selectedErrorIds.remove(errorId)
             }
@@ -202,11 +204,5 @@ data class LibraryUpdateErrorItem(
     val sourceName: String,
     val selected: Boolean,
 ) {
-    val animeCover = AnimeCover(
-        animeId = error.animeId,
-        sourceId = error.animeSource,
-        isAnimeFavorite = error.favorite,
-        ogUrl = error.animeThumbnail,
-        lastModified = error.coverLastModified,
-    )
+    val animeCover = error.animeCover
 }

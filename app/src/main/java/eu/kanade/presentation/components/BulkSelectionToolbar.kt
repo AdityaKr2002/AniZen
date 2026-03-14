@@ -52,9 +52,8 @@ fun BulkSelectionToolbar(
                         }
                         if (isRunning) {
                             add(
-                                AppBar.ActionCompose(
-                                    title = stringResource(MR.strings.action_update), // Fallback string
-                                ) {
+                                AppBar.Action(
+                                    title = stringResource(MR.strings.action_update), onClick = {}, iconContent = {
                                     CircularProgressIndicator(
                                         modifier = Modifier
                                             .size(24.dp),
