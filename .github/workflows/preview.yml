@@ -76,9 +76,6 @@ jobs:
           echo "$CODE_DIFF" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      
-
-      
       - name: Restore AI Note Accumulator
         uses: actions/cache/restore@v4
         with:
@@ -94,7 +91,7 @@ jobs:
           # Read the accumulator (failed notes from previous builds)
           ACCUMULATED_NOTES=""
           if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
-            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_ACCUMULATOR)
+            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_DRAFT)
           fi
 
           PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
@@ -159,21 +156,6 @@ jobs:
           name: AniZen-Preview-${{ env.TAG }}
           path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
 
-      
-      - name: Send Log to Discord
-        env:
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-        run: |
-          MESSAGE="### 🛠️ Preview Build Update (${{ env.TAG }})\n\n${{ env.AI_CHANGELOG }}"
-          JSON_MSG=$(echo "$MESSAGE" | jq -aRs .)
-          curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-               -H "Content-Type: application/json" \
-               -d "{\"content\": $JSON_MSG}" \
-               https://discord.com/api/v10/channels/1482262233227464714/messages
-
-      
-
-      
       - name: Reset Accumulator on Success
         if: success()
         run: mkdir -p .github && echo "" > .github/AI_NOTE_ACCUMULATOR
@@ -204,3 +186,21 @@ jobs:
           files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
           prerelease: false
           generate_release_notes: false
+
+      - name: Send Log to Discord
+        if: success()
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          # Use heredoc to preserve real newlines so Discord displays them correctly
+          MESSAGE=$(cat <<EOF
+### 🛠️ Preview Build Update (${{ env.TAG }})
+
+${{ env.AI_CHANGELOG }}
+EOF
+          )
+          PAYLOAD=$(jq -n --arg msg "$MESSAGE" "{content: \$msg}")
+          curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               https://discord.com/api/v10/channels/1482262233227464714/messages
