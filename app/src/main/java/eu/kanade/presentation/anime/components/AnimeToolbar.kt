@@ -191,7 +191,7 @@ fun AnimeToolbar(
                                 if (onClickClearAnime != null) {
                                     add(
                                         AppBar.OverflowAction(
-                                            title = stringResource(MR.strings.action_remove),
+                                            title = stringResource(MR.strings.action_clear_anime),
                                             onClick = onClickClearAnime,
                                         ),
                                     )

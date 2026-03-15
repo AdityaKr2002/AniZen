@@ -53,8 +53,6 @@ fun EditAnimeDialog(
         description: String?,
         tags: List<String>?,
         status: Long?,
-        score: Double?,
-        note: String?,
     ) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -85,8 +83,6 @@ fun EditAnimeDialog(
                                 else -> null
                             }
                         }?.toLong(),
-                        binding.score.text.toString().toDoubleOrNull(),
-                        binding.note.text.toString(),
                     )
                     onDismissRequest()
                 },
@@ -193,8 +189,6 @@ private fun onViewCreated(
                 R.string.description_hint,
                 anime.ogDescription?.takeIf { it.isNotBlank() }?.replace("\n", " ")?.chop(20) ?: "",
             )
-        binding.score.setText(anime.score?.toString() ?: "")
-        binding.note.setText(anime.note.orEmpty())
     }
     binding.mangaGenresTags.clearFocus()
 
@@ -217,7 +211,6 @@ private fun resetInfo(anime: Anime, binding: EditAnimeDialogBinding, scope: Coro
     binding.mangaAuthor.setText("")
     binding.mangaArtist.setText("")
     binding.mangaDescription.setText("")
-    binding.note.setText("")
     resetTags(anime, binding, scope)
 }
 

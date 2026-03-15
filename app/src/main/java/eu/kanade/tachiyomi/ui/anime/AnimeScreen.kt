@@ -337,7 +337,11 @@ class AnimeScreen(
                 EditAnimeDialog(
                     anime = dialog.anime,
                     onDismissRequest = screenModel::dismissDialog,
-                    onPositiveClick = screenModel::updateAnimeInfo,
+                    onPositiveClick = { title, author, artist, thumbnailUrl, description, tags, status ->
+                        screenModel.updateAnimeInfo(
+                            title, author, artist, thumbnailUrl, description, tags, status, null, null,
+                        )
+                    },
                 )
             }
             is AnimeScreenModel.Dialog.EditMergedAnimeSettings -> {
