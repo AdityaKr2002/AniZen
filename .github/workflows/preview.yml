@@ -52,10 +52,12 @@ jobs:
 
       - name: Generate Code-Centric Context for AI
         run: |
-          # Use the exact push range
-          RANGE="${{ github.event.before }}..${{ github.sha }}"
-          if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
-            RANGE="-n 1"
+          # Use last tag or fallback to last 20 commits to ensure we capture changes after failures
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            RANGE="HEAD~20..HEAD"
+          else
+            RANGE="$LAST_TAG..HEAD"
           fi
           
           # Get file change statistics
@@ -74,16 +76,30 @@ jobs:
           echo "$CODE_DIFF" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      
+      - name: Restore AI Note Draft
+        uses: actions/cache/restore@v4
+        with:
+          path: .github/AI_NOTE_DRAFT
+          key: ai-note-preview-${{ github.ref_name }}
+
       - name: Format Changelog with Groq AI
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
+          PREVIOUS_DRAFT=""
+          if [ -f .github/AI_NOTE_DRAFT ]; then
+            PREVIOUS_DRAFT=$(cat .github/AI_NOTE_DRAFT)
+          fi
+
           PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
-          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
-          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
+          IMPORTANT: Below is a PREVIOUS DRAFT of the changelog from a build that might have failed or is being updated. 
+          Please merge the NEW CHANGES into this draft so we don t lose any information.
           
-          CONTEXT:
+          PREVIOUS DRAFT:
+          $PREVIOUS_DRAFT
+          
+          NEW CHANGES (CONTEXT):
           $AI_CONTEXT"
           
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
@@ -106,6 +122,7 @@ jobs:
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_DRAFT
 
       - name: Build Preview APK
         run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
@@ -136,6 +153,26 @@ jobs:
         with:
           name: AniZen-Preview-${{ env.TAG }}
           path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
+
+      
+      - name: Send Log to Discord
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          MESSAGE="### 🛠️ Preview Build Update (${{ env.TAG }})\n\n${{ env.AI_CHANGELOG }}"
+          JSON_MSG=$(echo "$MESSAGE" | jq -aRs .)
+          curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "{\"content\": $JSON_MSG}" \
+               https://discord.com/api/v10/channels/1482262233227464714/messages
+
+      
+      - name: Save AI Note Draft
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .github/AI_NOTE_DRAFT
+          key: ai-note-preview-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
