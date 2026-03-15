@@ -91,7 +91,7 @@ jobs:
           # Read the accumulator (failed notes from previous builds)
           ACCUMULATED_NOTES=""
           if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
-            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_DRAFT)
+            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_ACCUMULATOR)
           fi
 
           PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
@@ -194,12 +194,15 @@ jobs:
         run: |
           # Use heredoc to preserve real newlines so Discord displays them correctly
           MESSAGE=$(cat <<EOF
-### 🛠️ Preview Build Update (${{ env.TAG }})
+          ### 🛠️ Preview Build Update (${{ env.TAG }})
 
-${{ env.AI_CHANGELOG }}
-EOF
+          ${{ env.AI_CHANGELOG }}
+          EOF
           )
-          PAYLOAD=$(jq -n --arg msg "$MESSAGE" "{content: \$msg}")
+          
+          # Encode carefully using jq
+          PAYLOAD=$(jq -n --arg msg "$MESSAGE" '{content: $msg}')
+          
           curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                -H "Content-Type: application/json" \
                -d "$PAYLOAD" \
