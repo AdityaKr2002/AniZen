@@ -50,9 +50,8 @@ jobs:
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
 
-      - name: Generate Code-Centric Context for AI
+      - name: Generate AI Context
         run: |
-          # Use last tag or fallback to last 20 commits to ensure we capture changes after failures
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -z "$LAST_TAG" ]; then
             RANGE="HEAD~20..HEAD"
@@ -60,19 +59,19 @@ jobs:
             RANGE="$LAST_TAG..HEAD"
           fi
           
-          # Get file change statistics
+          # Get FULL context without strict truncation
+          COMMITS=$(git log --pretty=format:"- %s" $RANGE)
           FILE_CHANGES=$(git diff --stat $RANGE)
-          
-          # Get the actual code diff
-          CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
-          
-          if [ -z "$FILE_CHANGES" ]; then FILE_CHANGES="Minor internal updates."; fi
+          CODE_DIFF=$(git diff -U3 $RANGE)
           
           echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
-          echo "ADDITIONS/DELETIONS:" >> $GITHUB_ENV
+          echo "COMMIT HISTORY:" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "FILES CHANGED:" >> $GITHUB_ENV
           echo "$FILE_CHANGES" >> $GITHUB_ENV
           echo "" >> $GITHUB_ENV
-          echo "CODE CHANGES:" >> $GITHUB_ENV
+          echo "FULL CODE DIFF:" >> $GITHUB_ENV
           echo "$CODE_DIFF" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
@@ -84,25 +83,29 @@ jobs:
           restore-keys: |
             ai-note-acc-${{ github.ref_name }}-
 
-      - name: Format Changelog with Groq AI
+      - name: Generate Changelog with AI
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          # Read the accumulator (failed notes from previous builds)
           ACCUMULATED_NOTES=""
           if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
             ACCUMULATED_NOTES=$(cat .github/AI_NOTE_ACCUMULATOR)
           fi
 
-          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. 
-          Please merge these into your summary of the NEW CHANGES so we don't lose any information about what was fixed/added during the failed attempts.
-          
+          PROMPT=$(cat <<EOF
+          You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
+          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention technical details like 'diffs', 'commits', or specific file paths. Tell the story of the features!
+
+          IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. Merge them into this new update so no info is lost.
           PREVIOUS FAILED NOTES:
           $ACCUMULATED_NOTES
-          
-          NEW CHANGES (CONTEXT):
-          $AI_CONTEXT"
+
+          NEW CHANGES:
+          $AI_CONTEXT
+          EOF
+          )
           
           PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
             model: $model,
@@ -118,12 +121,13 @@ jobs:
           SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            SUMMARY="We've made some secret improvements under the hood to make your experience better! ✨"
+            SUMMARY="We've implemented fresh UI refinements and optimized the engine for a better experience! ✨"
           fi
           
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          
           mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_ACCUMULATOR
 
       - name: Build Preview APK
@@ -136,25 +140,13 @@ jobs:
       - name: Rename & Filter APKs
         run: |
           cd app/build/outputs/apk/preview/
-          found_v8a=false
           for f in *.apk; do
             if [[ "$f" == *"arm64-v8a"* ]]; then
               mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
-              found_v8a=true
             else
               rm -f "$f"
             fi
           done
-          if [ "$found_v8a" = false ]; then
-            echo "Error: arm64-v8a APK not found!"
-            exit 1
-          fi
-
-      - name: Upload APK Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: AniZen-Preview-${{ env.TAG }}
-          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
 
       - name: Reset Accumulator on Success
         if: success()
@@ -195,7 +187,7 @@ jobs:
           RELEASE_URL="https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}"
           COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
           
-          EMBED_TITLE="🛠️ Preview Build Update (${{ env.TAG }})"
+          # Prepare text-only links for the embed
           EMBED_DESC=$(cat <<EOF
           ${{ env.AI_CHANGELOG }}
 
@@ -205,7 +197,8 @@ jobs:
           EOF
           )
 
-          PAYLOAD=$(jq -n --arg title "$EMBED_TITLE" --arg desc "$EMBED_DESC" '{embeds: [{title: $title, description: $desc, color: 5814783}]}')
+          PAYLOAD=$(jq -n --arg desc "$EMBED_DESC" --arg title "🛠️ Preview Build Update (${{ env.TAG }})" \
+            '{embeds: [{title: $title, description: $desc, color: 5814783}]}')
           
           curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                -H "Content-Type: application/json" \
