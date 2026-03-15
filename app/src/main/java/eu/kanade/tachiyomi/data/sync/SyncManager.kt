@@ -102,9 +102,9 @@ class SyncManager(
             backupSources = backupCreator.backupAnimeSources(backupAnime),
             backupPreferences = backupCreator.backupAppPreferences(backupOptions),
             backupSourcePreferences = backupCreator.backupSourcePreferences(backupOptions),
-            backupAnimeExtensionRepo = backupCreator.backupExtensionRepo(backupOptions),
+            backupAnimeExtensionRepo = backupCreator.backupAnimeExtensionRepos(backupOptions),
             backupExtensions = backupCreator.backupExtensions(backupOptions),
-            backupCustomButton = backupCreator.backupCustomButton(backupOptions),
+            backupCustomButton = backupCreator.backupCustomButtons(backupOptions),
         )
         logcat(LogPriority.DEBUG) { "End create backup" }
 
