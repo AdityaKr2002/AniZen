@@ -102,6 +102,9 @@ class SyncManager(
             backupSources = backupCreator.backupAnimeSources(backupAnime),
             backupPreferences = backupCreator.backupAppPreferences(backupOptions),
             backupSourcePreferences = backupCreator.backupSourcePreferences(backupOptions),
+            backupAnimeExtensionRepo = backupCreator.backupExtensionRepo(backupOptions),
+            backupExtensions = backupCreator.backupExtensions(backupOptions),
+            backupCustomButton = backupCreator.backupCustomButton(backupOptions),
         )
         logcat(LogPriority.DEBUG) { "End create backup" }
 
@@ -172,6 +175,9 @@ class SyncManager(
             backupSources = remoteBackup.backupSources,
             backupPreferences = remoteBackup.backupPreferences,
             backupSourcePreferences = remoteBackup.backupSourcePreferences,
+            backupAnimeExtensionRepo = remoteBackup.backupAnimeExtensionRepo,
+            backupExtensions = remoteBackup.backupExtensions,
+            backupCustomButton = remoteBackup.backupCustomButton,
         )
 
         // It's local sync no need to restore data. (just update remote data)
@@ -194,6 +200,9 @@ class SyncManager(
                     appSettings = true,
                     sourceSettings = true,
                     libraryEntries = true, // Correct parameter name
+                    extensionRepoSettings = true,
+                    extensions = true,
+                    customButtons = true,
                 ),
             )
 
