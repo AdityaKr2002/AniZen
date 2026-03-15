@@ -192,14 +192,12 @@ jobs:
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          # Define links
-          RELEASE_URL="https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}"
-          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          # Define links - wrapped in <> to prevent Discord from making extra embeds
+          RELEASE_URL="<https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}>"
+          COMMIT_URL="<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}>"
           
-          # Use heredoc to preserve real newlines so Discord displays them correctly
-          MESSAGE=$(cat <<EOF
-          ### 🛠️ Preview Build Update (${{ env.TAG }})
-
+          EMBED_TITLE="🛠️ Preview Build Update (${{ env.TAG }})"
+          EMBED_DESC=$(cat <<EOF
           ${{ env.AI_CHANGELOG }}
 
           ---
@@ -207,9 +205,18 @@ jobs:
           **🔗 Commit:** $COMMIT_URL
           EOF
           )
-          
-          # Encode carefully using jq
-          PAYLOAD=$(jq -n --arg msg "$MESSAGE" '{content: $msg}')
+
+          # Encode using jq for a clean Discord Embed payload
+          PAYLOAD=$(jq -n \
+            --arg title "$EMBED_TITLE" \
+            --arg desc "$EMBED_DESC" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5814783
+              }]
+            }')
           
           curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                -H "Content-Type: application/json" \
