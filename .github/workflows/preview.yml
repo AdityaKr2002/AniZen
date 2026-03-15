@@ -96,7 +96,7 @@ jobs:
 
           PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
           IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. 
-          Please merge these into your summary of the NEW CHANGES so we don t lose any information about what was fixed/added during the failed attempts.
+          Please merge these into your summary of the NEW CHANGES so we don't lose any information about what was fixed/added during the failed attempts.
           
           PREVIOUS FAILED NOTES:
           $ACCUMULATED_NOTES
@@ -192,31 +192,20 @@ jobs:
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          # Define links - wrapped in <> to prevent Discord from making extra embeds
-          RELEASE_URL="<https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}>"
-          COMMIT_URL="<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}>"
+          RELEASE_URL="https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
           
           EMBED_TITLE="🛠️ Preview Build Update (${{ env.TAG }})"
           EMBED_DESC=$(cat <<EOF
           ${{ env.AI_CHANGELOG }}
 
           ---
-          **📥 Download:** $RELEASE_URL
-          **🔗 Commit:** $COMMIT_URL
+          **📥 [Download Preview APK]($RELEASE_URL)**
+          **🔗 [View Commit Details]($COMMIT_URL)**
           EOF
           )
 
-          # Encode using jq for a clean Discord Embed payload
-          PAYLOAD=$(jq -n \
-            --arg title "$EMBED_TITLE" \
-            --arg desc "$EMBED_DESC" \
-            '{
-              embeds: [{
-                title: $title,
-                description: $desc,
-                color: 5814783
-              }]
-            }')
+          PAYLOAD=$(jq -n --arg title "$EMBED_TITLE" --arg desc "$EMBED_DESC" '{embeds: [{title: $title, description: $desc, color: 5814783}]}')
           
           curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                -H "Content-Type: application/json" \
