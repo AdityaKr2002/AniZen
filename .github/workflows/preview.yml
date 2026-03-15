@@ -77,27 +77,32 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       
-      - name: Restore AI Note Draft
+
+      
+      - name: Restore AI Note Accumulator
         uses: actions/cache/restore@v4
         with:
-          path: .github/AI_NOTE_DRAFT
-          key: ai-note-preview-${{ github.ref_name }}
+          path: .github/AI_NOTE_ACCUMULATOR
+          key: ai-note-acc-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ai-note-acc-${{ github.ref_name }}-
 
       - name: Format Changelog with Groq AI
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          PREVIOUS_DRAFT=""
-          if [ -f .github/AI_NOTE_DRAFT ]; then
-            PREVIOUS_DRAFT=$(cat .github/AI_NOTE_DRAFT)
+          # Read the accumulator (failed notes from previous builds)
+          ACCUMULATED_NOTES=""
+          if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
+            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_ACCUMULATOR)
           fi
 
           PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          IMPORTANT: Below is a PREVIOUS DRAFT of the changelog from a build that might have failed or is being updated. 
-          Please merge the NEW CHANGES into this draft so we don t lose any information.
+          IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. 
+          Please merge these into your summary of the NEW CHANGES so we don t lose any information about what was fixed/added during the failed attempts.
           
-          PREVIOUS DRAFT:
-          $PREVIOUS_DRAFT
+          PREVIOUS FAILED NOTES:
+          $ACCUMULATED_NOTES
           
           NEW CHANGES (CONTEXT):
           $AI_CONTEXT"
@@ -122,7 +127,7 @@ jobs:
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_DRAFT
+          mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_ACCUMULATOR
 
       - name: Build Preview APK
         run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
@@ -167,12 +172,18 @@ jobs:
                https://discord.com/api/v10/channels/1482262233227464714/messages
 
       
-      - name: Save AI Note Draft
+
+      
+      - name: Reset Accumulator on Success
+        if: success()
+        run: mkdir -p .github && echo "" > .github/AI_NOTE_ACCUMULATOR
+
+      - name: Persist Accumulator
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: .github/AI_NOTE_DRAFT
-          key: ai-note-preview-${{ github.ref_name }}-${{ github.run_id }}
+          path: .github/AI_NOTE_ACCUMULATOR
+          key: ai-note-acc-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
