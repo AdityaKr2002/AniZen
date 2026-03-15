@@ -192,11 +192,19 @@ jobs:
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
+          # Define links
+          RELEASE_URL="https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          
           # Use heredoc to preserve real newlines so Discord displays them correctly
           MESSAGE=$(cat <<EOF
           ### 🛠️ Preview Build Update (${{ env.TAG }})
 
           ${{ env.AI_CHANGELOG }}
+
+          ---
+          **📥 Download:** $RELEASE_URL
+          **🔗 Commit:** $COMMIT_URL
           EOF
           )
           
