@@ -608,10 +608,12 @@ class AnimeScreenModel(
                     note?.trimOrNull(),
                 ),
             )
-            anime = anime.copy(lastUpdate = anime.lastUpdate + 1)
+            // Trigger immediate UI update by reloading anime from DB
+            screenModelScope.launchIO {
+                val updatedAnime = getAnimeAndEpisodes.awaitManga(state.anime.id)
+                updateSuccessState { it.copy(anime = updatedAnime) }
+            }
         }
-
-        updateSuccessState { it.copy(anime = anime) }
     }
 
     fun toggleFavorite(checkDuplicate: Boolean = true) {

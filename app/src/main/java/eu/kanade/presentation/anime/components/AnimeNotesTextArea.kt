@@ -22,9 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -194,25 +191,6 @@ fun AnimeNotesTextArea(
                         Color.Unspecified
                     },
                     modifier = Modifier.padding(MaterialTheme.padding.extraSmall),
-                )
-            }
-        }
-
-        if (!state.anime.description.isNullOrBlank()) {
-            HorizontalDivider(
-                modifier = Modifier.padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small)
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small)
-            ) {
-                Text(
-                    text = state.anime.description!!,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
