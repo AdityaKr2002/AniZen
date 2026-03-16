@@ -73,7 +73,7 @@ fun AnimeNotesTextArea(
 
     DisposableEffect(scope, richTextState) {
         val job = snapshotFlow { richTextState.annotatedString }
-            .debounce(0.25.seconds)
+            .debounce(0.1.seconds)
             .distinctUntilChanged()
             .map { richTextState.toMarkdown() }
             .onEach { onUpdate(it) }

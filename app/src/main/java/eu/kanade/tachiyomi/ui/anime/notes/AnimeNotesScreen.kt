@@ -53,14 +53,6 @@ class AnimeNotesScreen(
                 setCustomAnimeInfo.set(
                     CustomAnimeInfo(
                         id = anime.id,
-                        title = null,
-                        author = null,
-                        artist = null,
-                        thumbnailUrl = null,
-                        description = null,
-                        genre = null,
-                        status = null,
-                        score = null,
                         note = content.trim().ifBlank { null },
                     ),
                 )
