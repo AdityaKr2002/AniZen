@@ -53,6 +53,7 @@ class AnimeNotesScreen(
                 setCustomAnimeInfo.set(
                     CustomAnimeInfo(
                         id = anime.id,
+                        title = null,
                         note = content.trim().ifBlank { null },
                     ),
                 )
