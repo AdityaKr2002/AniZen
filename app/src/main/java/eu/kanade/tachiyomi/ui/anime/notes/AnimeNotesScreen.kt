@@ -48,7 +48,8 @@ class AnimeNotesScreen(
                 it.copy(notes = content)
             }
 
-            screenModelScope.launchNonCancellable {
+            @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+            tachiyomi.core.common.util.lang.launchIO {
                 setCustomAnimeInfo.set(
                     CustomAnimeInfo(
                         id = anime.id,
