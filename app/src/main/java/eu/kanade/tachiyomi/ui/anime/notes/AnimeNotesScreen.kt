@@ -50,13 +50,15 @@ class AnimeNotesScreen(
 
             @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
             tachiyomi.core.common.util.lang.launchIO {
-                setCustomAnimeInfo.set(
-                    CustomAnimeInfo(
-                        id = anime.id,
-                        title = null,
-                        note = content.trim().ifBlank { null },
-                    ),
-                )
+                tachiyomi.core.common.util.lang.withNonCancellableContext {
+                    setCustomAnimeInfo.set(
+                        CustomAnimeInfo(
+                            id = anime.id,
+                            title = null,
+                            note = content.trim().ifBlank { null },
+                        ),
+                    )
+                }
             }
         }
     }

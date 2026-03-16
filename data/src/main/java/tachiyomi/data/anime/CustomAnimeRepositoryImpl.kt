@@ -45,7 +45,8 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
             animeInfo.description == null &&
             animeInfo.genre == null &&
             animeInfo.status == null &&
-            animeInfo.score == null
+            animeInfo.score == null &&
+            animeInfo.note == null
         ) {
             customAnimeMap.remove(animeInfo.id)
         } else {
@@ -78,6 +79,7 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
         val genre: List<String>? = null,
         val status: Long? = null,
         val score: Double? = null,
+        val note: String? = null,
     ) {
 
         fun toAnime() = CustomAnimeInfo(
@@ -90,6 +92,7 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
             genre = this@AnimeJson.genre,
             status = this@AnimeJson.status?.takeUnless { it == 0L },
             score = this@AnimeJson.score,
+            note = this@AnimeJson.note,
         )
     }
 
@@ -104,6 +107,7 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
             genre,
             status,
             score,
+            note,
         )
     }
 }
