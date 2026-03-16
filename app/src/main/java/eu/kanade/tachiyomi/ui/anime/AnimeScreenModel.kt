@@ -610,8 +610,12 @@ class AnimeScreenModel(
             )
             // Trigger immediate UI update by reloading anime from DB
             screenModelScope.launchIO {
+                // Ensure DB write is complete
+                kotlinx.coroutines.delay(100)
                 val updatedAnime = getAnimeAndEpisodes.awaitManga(state.anime.id)
-                updateSuccessState { it.copy(anime = updatedAnime) }
+                // Force recomposition by creating a fresh object with an incremented timestamp
+                val forcedUpdate = updatedAnime.copy(lastUpdate = updatedAnime.lastUpdate + 1)
+                updateSuccessState { it.copy(anime = forcedUpdate) }
             }
         }
     }

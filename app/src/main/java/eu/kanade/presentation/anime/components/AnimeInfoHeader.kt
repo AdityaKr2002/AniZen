@@ -293,12 +293,31 @@ fun ExpandableAnimeDescription(
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
+        if (!note.isNullOrBlank()) {
+            Text(
+                text = note,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .secondaryItemAlpha()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .clickableNoIndication { onExpanded(!expanded) }
+            )
+            HorizontalDivider(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .alpha(0.3f),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         AnimeSummary(
             description = desc,
-            note = note,
             expanded = expanded,
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = if (note.isNullOrBlank()) 8.dp else 0.dp)
                 .padding(horizontal = 16.dp)
                 .clickableNoIndication { onExpanded(!expanded) },
         )
@@ -691,7 +710,6 @@ private val descriptionAnnotator = markdownAnnotator(
 @Composable
 private fun AnimeSummary(
     description: String,
-    note: String?,
     expanded: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -703,32 +721,32 @@ private fun AnimeSummary(
             .clipToBounds(),
     ) {
         SelectionContainer {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(if (!expanded) Modifier.height(80.dp) else Modifier),
             ) {
-                if (!note.isNullOrBlank()) {
-                    Text(
-                        text = note,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.secondaryItemAlpha()
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .alpha(0.3f),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
                 MarkdownRender(
                     content = description,
                     modifier = Modifier
                         .secondaryItemAlpha()
-                        .padding(bottom = if (expanded) 24.dp else 0.dp),
+                        .padding(bottom = if (expanded) 24.dp else 0.dp)
+                        .drawWithContent {
+                            drawContent()
+                            if (!expanded) {
+                                val gradientHeight = 24.dp.toPx()
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            backgroundColor,
+                                        ),
+                                        startY = size.height - gradientHeight,
+                                        endY = size.height,
+                                    ),
+                                )
+                            }
+                        },
                     annotator = descriptionAnnotator,
                 )
             }
@@ -751,23 +769,7 @@ private fun AnimeSummary(
                     } else {
                         Modifier
                     },
-                )
-                .drawWithContent {
-                    drawContent()
-                    if (!expanded) {
-                        val gradientHeight = 24.dp.toPx()
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    backgroundColor,
-                                ),
-                                startY = -gradientHeight,
-                                endY = 0f,
-                            ),
-                        )
-                    }
-                },
+                ),
             contentAlignment = Alignment.Center,
         ) {
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_caret_down)
