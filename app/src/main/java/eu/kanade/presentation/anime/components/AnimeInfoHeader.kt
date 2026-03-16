@@ -279,6 +279,7 @@ fun AnimeActionRow(
 fun ExpandableAnimeDescription(
     defaultExpandState: Boolean,
     description: String?,
+    note: String?,
     tagsProvider: () -> List<String>?,
     onTagSearch: (String) -> Unit,
     onCopyTagToClipboard: (tag: String) -> Unit,
@@ -291,11 +292,29 @@ fun ExpandableAnimeDescription(
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
+        if (!note.isNullOrBlank()) {
+            AnimeSummary(
+                description = note,
+                expanded = expanded,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .clickableNoIndication { onExpanded(!expanded) },
+            )
+            HorizontalDivider(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .alpha(0.5f),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         AnimeSummary(
             description = desc,
             expanded = expanded,
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = if (note.isNullOrBlank()) 8.dp else 0.dp)
                 .padding(horizontal = 16.dp)
                 .clickableNoIndication { onExpanded(!expanded) },
         )
