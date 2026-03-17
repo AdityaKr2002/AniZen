@@ -197,11 +197,13 @@ enum class AnimeCover(val ratio: Float) {
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
             val ratios by CoverColorObserver.ratios.collectAsState()
             
-            return remember(animeId, usePanorama, ratios) {
-                val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
-                val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
-                entry to ratio
-            }
+            return remember(animeId, usePanorama) {
+                derivedStateOf {
+                    val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+                    val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
+                    entry to ratio
+                }
+            }.value
         }
     }
 }

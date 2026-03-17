@@ -388,11 +388,19 @@ fun AnimeListItem(
     containerHeight: Int = 0,
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val density = LocalDensity.current
+    val height = remember(entries, containerHeight, density) {
+        if (entries > 0 && containerHeight > 0) {
+            with(density) { (containerHeight / entries).toDp() } - (3 / entries).dp
+        } else {
+            76.dp
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .selectedBackground(isSelected)
-            .height(56.dp)
+            .height(height)
             .combinedClickable(
                 onClick = {
                     onClick()
@@ -401,7 +409,7 @@ fun AnimeListItem(
                     onLongClick()
                 },
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
