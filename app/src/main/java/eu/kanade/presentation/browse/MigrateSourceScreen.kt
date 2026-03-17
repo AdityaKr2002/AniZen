@@ -40,8 +40,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
@@ -182,6 +184,7 @@ private fun MigrateSourceList(
                         source = source,
                         count = count,
                         isSelected = isSelected,
+                        isSelectionMode = state.selectionMode,
                         onClickItem = {
                             if (state.selectionMode) {
                                 onToggleSelection(source)
@@ -285,12 +288,20 @@ private fun MigrateSourceItem(
     source: Source,
     count: Long,
     isSelected: Boolean,
+    isSelectionMode: Boolean,
     onClickItem: () -> Unit,
     onLongClickItem: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isUnselected = isSelectionMode && !isSelected
+    val textDecoration = if (isUnselected) {
+        TextDecoration.LineThrough
+    } else {
+        null
+    }
+
     BaseSourceItem(
-        modifier = modifier,
+        modifier = modifier.alpha(if (isUnselected) 0.5f else 1f),
         source = source,
         showLanguageInContent = source.lang != "",
         onClickItem = onClickItem,
@@ -325,6 +336,7 @@ private fun MigrateSourceItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
+                    textDecoration = textDecoration,
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
@@ -337,6 +349,7 @@ private fun MigrateSourceItem(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,
+                            textDecoration = textDecoration,
                         )
                     }
                     if (source.isStub) {
@@ -347,6 +360,7 @@ private fun MigrateSourceItem(
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
+                            textDecoration = textDecoration,
                         )
                     }
                 }
