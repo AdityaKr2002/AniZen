@@ -161,104 +161,57 @@ private fun MigrateSourceList(
             )
         },
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier.padding(innerPadding),
         ) {
-            Row(
+            val density = LocalDensity.current
+            var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+
+            FastScrollLazyColumn(
+                state = lazyListState,
+                contentPadding = PaddingValues(top = searchBoxHeight),
+            ) {
+                items(
+                    items = list,
+                    key = { (source, _) -> "migrate-${source.id}" },
+                ) { (source, count) ->
+                    val isSelected = state.selectedSources.contains(source.id)
+                    MigrateSourceItem(
+                        modifier = Modifier.animateItemFastScroll()
+                            .padding(end = MaterialTheme.padding.small),
+                        source = source,
+                        count = count,
+                        isSelected = isSelected,
+                        onClickItem = {
+                            if (state.selectionMode) {
+                                onToggleSelection(source)
+                            } else {
+                                onClickItem(source)
+                            }
+                        },
+                        onLongClickItem = { onToggleSelection(source) },
+                    )
+                }
+            }
+
+            AnimatedFloatingSearchBox(
+                listState = lazyListState,
+                searchQuery = state.searchQuery,
+                onChangeSearchQuery = onChangeSearchQuery,
+                placeholderText = stringResource(MR.strings.action_search_for_source),
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(start = MaterialTheme.padding.medium),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = if (state.selectionMode) {
-                        stringResource(SYMR.strings.migrating)
-                    } else {
-                        stringResource(MR.strings.select_source)
-                    },
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.header,
-                )
-
-                if (!state.selectionMode) {
-                    IconButton(onClick = onToggleSortingMode) {
-                        when (sortingMode) {
-                            SetMigrateSorting.Mode.ALPHABETICAL -> Icon(
-                                Icons.Outlined.SortByAlpha,
-                                contentDescription = stringResource(MR.strings.action_sort_alpha),
-                            )
-                            SetMigrateSorting.Mode.TOTAL -> Icon(
-                                Icons.Outlined.Numbers,
-                                contentDescription = stringResource(MR.strings.action_sort_count),
-                            )
-                        }
-                    }
-                    IconButton(onClick = onToggleSortingDirection) {
-                        when (sortingDirection) {
-                            SetMigrateSorting.Direction.ASCENDING -> Icon(
-                                Icons.Outlined.ArrowUpward,
-                                contentDescription = stringResource(MR.strings.action_asc),
-                            )
-                            SetMigrateSorting.Direction.DESCENDING -> Icon(
-                                Icons.Outlined.ArrowDownward,
-                                contentDescription = stringResource(MR.strings.action_desc),
-                            )
-                        }
-                    }
-                }
-            }
-
-            Box {
-                val density = LocalDensity.current
-                var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
-
-                FastScrollLazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(top = searchBoxHeight),
-                ) {
-                    items(
-                        items = list,
-                        key = { (source, _) -> "migrate-${source.id}" },
-                    ) { (source, count) ->
-                        val isSelected = state.selectedSources.contains(source.id)
-                        MigrateSourceItem(
-                            modifier = Modifier.animateItemFastScroll()
-                                .padding(end = MaterialTheme.padding.small),
-                            source = source,
-                            count = count,
-                            isSelected = isSelected,
-                            onClickItem = {
-                                if (state.selectionMode) {
-                                    onToggleSelection(source)
-                                } else {
-                                    onClickItem(source)
-                                }
-                            },
-                            onLongClickItem = { onToggleSelection(source) },
-                        )
-                    }
-                }
-
-                AnimatedFloatingSearchBox(
-                    listState = lazyListState,
-                    searchQuery = state.searchQuery,
-                    onChangeSearchQuery = onChangeSearchQuery,
-                    placeholderText = stringResource(MR.strings.action_search_for_source),
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(
-                            horizontal = MaterialTheme.padding.medium,
-                        )
-                        .align(Alignment.TopCenter),
-                    onGloballyPositioned = { layoutCoordinates ->
-                        searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                    },
-                )
-            }
+                    .padding(
+                        horizontal = MaterialTheme.padding.medium,
+                    )
+                    .align(Alignment.TopCenter),
+                onGloballyPositioned = { layoutCoordinates ->
+                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+                },
+            )
         }
     }
-}
-
+    }
 @Composable
 private fun MigrateBottomActionMenu(
     visible: Boolean,
@@ -344,8 +297,13 @@ private fun MigrateSourceItem(
         onLongClickItem = onLongClickItem,
         icon = { SourceIcon(source = source) },
         action = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                BadgeGroup {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            ) {
+                BadgeGroup(
+                    modifier = Modifier.secondaryItemAlpha(),
+                ) {
                     Badge(text = "$count")
                 }
                 if (isSelected) {

@@ -46,7 +46,11 @@ class MigrateSearchScreen(private val animeId: Long) : Screen() {
                 )
             },
             onClickItem = { anime ->
-                if (bulkFavoriteState.selectionMode) {
+                val migrationListScreen = navigator.items.filterIsInstance<mihon.feature.migration.list.MigrationListScreen>().lastOrNull()
+                if (migrationListScreen != null) {
+                    migrationListScreen.addMatchOverride(animeId, anime.id)
+                    navigator.pop()
+                } else if (bulkFavoriteState.selectionMode) {
                     bulkFavoriteScreenModel.toggleSelection(anime)
                 } else {
                     dialogScreenModel.setDialog(

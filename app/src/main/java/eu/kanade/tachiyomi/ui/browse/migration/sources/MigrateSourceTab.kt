@@ -30,21 +30,84 @@ fun Screen.migrateSourceTab(): TabContent {
     val screenModel = rememberScreenModel { MigrateSourceScreenModel() }
     val state by screenModel.state.collectAsState()
 
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.SortByAlpha
+import eu.kanade.domain.source.interactor.SetMigrateSorting
+...
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
     val actionMigrateNow = stringResource(SYMR.strings.action_migrate_now)
 
-    return remember(migrationHelpGuide, state.selectionMode) {
+    return remember(migrationHelpGuide, state.selectionMode, state.sortingMode, state.sortingDirection) {
         TabContent(
             titleRes = MR.strings.label_migration,
-            actions = persistentListOf(
-                AppBar.Action(
-                    title = migrationHelpGuide,
-                    icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                    onClick = {
-                        uriHandler.openUri("https://aniyomi.org/help/guides/source-migration/")
-                    },
-                ),
-            ),
+            numberTitle = if (state.selectionMode) state.selectedSources.size else 0,
+            actions = persistentListOf<AppBar.AppBarAction>().builder()
+                .apply {
+                    if (state.selectionMode) {
+                        add(
+                            AppBar.Action(
+                                title = stringResource(MR.strings.action_select_all),
+                                icon = Icons.Outlined.SelectAll,
+                                onClick = screenModel::selectAll,
+                            ),
+                        )
+                        add(
+                            AppBar.Action(
+                                title = stringResource(SYMR.strings.select_none),
+                                icon = Icons.Outlined.Checklist,
+                                onClick = screenModel::selectNone,
+                            ),
+                        )
+                    } else {
+                        add(
+                            AppBar.Action(
+                                title = stringResource(
+                                    if (state.sortingMode == SetMigrateSorting.Mode.ALPHABETICAL) {
+                                        MR.strings.action_sort_alpha
+                                    } else {
+                                        MR.strings.action_sort_count
+                                    },
+                                ),
+                                icon = if (state.sortingMode == SetMigrateSorting.Mode.ALPHABETICAL) {
+                                    Icons.Outlined.SortByAlpha
+                                } else {
+                                    Icons.Outlined.Numbers
+                                },
+                                onClick = screenModel::toggleSortingMode,
+                            ),
+                        )
+                        add(
+                            AppBar.Action(
+                                title = stringResource(
+                                    if (state.sortingDirection == SetMigrateSorting.Direction.ASCENDING) {
+                                        MR.strings.action_asc
+                                    } else {
+                                        MR.strings.action_desc
+                                    },
+                                ),
+                                icon = if (state.sortingDirection == SetMigrateSorting.Direction.ASCENDING) {
+                                    Icons.Outlined.ArrowUpward
+                                } else {
+                                    Icons.Outlined.ArrowDownward
+                                },
+                                onClick = screenModel::toggleSortingDirection,
+                            ),
+                        )
+                        add(
+                            AppBar.Action(
+                                title = migrationHelpGuide,
+                                icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                                onClick = {
+                                    uriHandler.openUri("https://aniyomi.org/help/guides/source-migration/")
+                                },
+                            ),
+                        )
+                    }
+                }
+                .build(),
+            cancelAction = screenModel::selectNone,
             content = { contentPadding, _ ->
                 MigrateSourceScreen(
                     state = state,
