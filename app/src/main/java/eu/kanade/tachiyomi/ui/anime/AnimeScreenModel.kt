@@ -608,11 +608,6 @@ class AnimeScreenModel(
                     note?.trimOrNull(),
                 ),
             )
-            // Trigger immediate UI update by reloading anime from repository
-            screenModelScope.launchIO {
-                val updatedAnime = getAnimeAndEpisodes.awaitManga(state.anime.id)
-                updateSuccessState { it.copy(anime = updatedAnime) }
-            }
         }
     }
 
