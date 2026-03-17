@@ -36,8 +36,26 @@ fun Screen.migrateSourceTab(): TabContent {
     val state by screenModel.state.collectAsState()
 
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
+    val actionSelectAll = stringResource(MR.strings.action_select_all)
+    val actionSelectNone = stringResource(SYMR.strings.select_none)
+    
+    val actionSortAlpha = stringResource(MR.strings.action_sort_alpha)
+    val actionSortCount = stringResource(MR.strings.action_sort_count)
+    val sortModeTitle = if (state.sortingMode == SetMigrateSorting.Mode.ALPHABETICAL) {
+        actionSortAlpha
+    } else {
+        actionSortCount
+    }
+    
+    val actionAsc = stringResource(MR.strings.action_asc)
+    val actionDesc = stringResource(MR.strings.action_desc)
+    val sortDirTitle = if (state.sortingDirection == SetMigrateSorting.Direction.ASCENDING) {
+        actionAsc
+    } else {
+        actionDesc
+    }
 
-    return remember(migrationHelpGuide, state.selectionMode, state.sortingMode, state.sortingDirection) {
+    return remember(migrationHelpGuide, actionSelectAll, actionSelectNone, sortModeTitle, sortDirTitle, state.selectionMode, state.sortingMode, state.sortingDirection) {
         TabContent(
             titleRes = MR.strings.label_migration,
             numberTitle = if (state.selectionMode) state.selectedSources.size else 0,
@@ -46,14 +64,14 @@ fun Screen.migrateSourceTab(): TabContent {
                     if (state.selectionMode) {
                         add(
                             AppBar.Action(
-                                title = stringResource(MR.strings.action_select_all),
+                                title = actionSelectAll,
                                 icon = Icons.Outlined.SelectAll,
                                 onClick = screenModel::selectAll,
                             ),
                         )
                         add(
                             AppBar.Action(
-                                title = stringResource(SYMR.strings.select_none),
+                                title = actionSelectNone,
                                 icon = Icons.Outlined.Checklist,
                                 onClick = screenModel::selectNone,
                             ),
@@ -61,13 +79,7 @@ fun Screen.migrateSourceTab(): TabContent {
                     } else {
                         add(
                             AppBar.Action(
-                                title = stringResource(
-                                    if (state.sortingMode == SetMigrateSorting.Mode.ALPHABETICAL) {
-                                        MR.strings.action_sort_alpha
-                                    } else {
-                                        MR.strings.action_sort_count
-                                    },
-                                ),
+                                title = sortModeTitle,
                                 icon = if (state.sortingMode == SetMigrateSorting.Mode.ALPHABETICAL) {
                                     Icons.Outlined.SortByAlpha
                                 } else {
@@ -78,13 +90,7 @@ fun Screen.migrateSourceTab(): TabContent {
                         )
                         add(
                             AppBar.Action(
-                                title = stringResource(
-                                    if (state.sortingDirection == SetMigrateSorting.Direction.ASCENDING) {
-                                        MR.strings.action_asc
-                                    } else {
-                                        MR.strings.action_desc
-                                    },
-                                ),
+                                title = sortDirTitle,
                                 icon = if (state.sortingDirection == SetMigrateSorting.Direction.ASCENDING) {
                                     Icons.Outlined.ArrowUpward
                                 } else {
