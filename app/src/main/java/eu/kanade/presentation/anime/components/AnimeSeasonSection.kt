@@ -168,33 +168,41 @@ private fun SeasonItem(
         }
     }
 
+    val (entry, ratio) = AnimeCover.getEntry(season.anime.id)
+    val width = if (entry == AnimeCover.Panorama) 200.dp else 104.dp
+
     Column(
-        modifier = Modifier.width(104.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(width),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        AnimeComfortableGridItem(
-            title = seasonLabel,
-            coverData = remember(season.anime.id) {
-                tachiyomi.domain.anime.model.AnimeCover(
-                    animeId = season.anime.id,
-                    sourceId = season.anime.source,
-                    isAnimeFavorite = season.anime.favorite,
-                    ogUrl = season.anime.thumbnailUrl,
-                    lastModified = season.anime.coverLastModified,
-                )
-            },
-            coverBadgeStart = {
-                if (season.isPrimary) {
+        androidx.compose.foundation.layout.Box {
+            entry(
+                data = season.anime,
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                ratio = ratio,
+            )
+            
+            if (season.isPrimary) {
+                tachiyomi.presentation.core.components.BadgeGroup(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp),
+                ) {
                     Badge(
                         text = "Current",
                         color = MaterialTheme.colorScheme.secondary,
                         textColor = MaterialTheme.colorScheme.onSecondary
                     )
                 }
-            },
-            onClick = onClick,
-            onLongClick = {},
+            }
+        }
+        Text(
+            text = seasonLabel,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
