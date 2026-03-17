@@ -286,10 +286,13 @@ fun ExpandableAnimeDescription(
     onCopyTagToClipboard: (tag: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        val (expanded, onExpanded) = rememberSaveable {
-            mutableStateOf(defaultExpandState)
-        }
+    val (expanded, onExpanded) = rememberSaveable {
+        mutableStateOf(defaultExpandState)
+    }
+    Column(
+        modifier = modifier
+            .clickableNoIndication { onExpanded(!expanded) }
+    ) {
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
@@ -302,7 +305,6 @@ fun ExpandableAnimeDescription(
                     .secondaryItemAlpha()
                     .padding(top = 8.dp)
                     .padding(horizontal = 16.dp)
-                    .clickableNoIndication { onExpanded(!expanded) }
             )
             HorizontalDivider(
                 modifier = Modifier
@@ -317,9 +319,7 @@ fun ExpandableAnimeDescription(
             description = desc,
             expanded = expanded,
             modifier = Modifier
-                .padding(top = if (note.isNullOrBlank()) 8.dp else 0.dp)
-                .padding(horizontal = 16.dp)
-                .clickableNoIndication { onExpanded(!expanded) },
+                .padding(horizontal = 16.dp),
         )
         val tags = tagsProvider()
         if (!tags.isNullOrEmpty()) {
