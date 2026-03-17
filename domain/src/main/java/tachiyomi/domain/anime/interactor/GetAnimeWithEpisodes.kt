@@ -20,19 +20,7 @@ class GetAnimeWithEpisodes(
             episodeRepository.getEpisodeByAnimeIdAsFlow(id, applyScanlatorFilter),
             getCustomAnimeInfo.subscribe(id),
         ) { manga, chapters, customInfo ->
-            Pair(manga.reflectCustomInfo(customInfo), chapters)
-        }
-    }
-
-    private fun Anime.reflectCustomInfo(customInfo: CustomAnimeInfo?): Anime {
-        if (customInfo == null) return this
-        return this.copy(
-            lastUpdate = this.lastUpdate // This is just to ensure a new instance is created if needed, but copy() does that anyway.
-        ).apply {
-            // Since customAnimeInfo is a private lazy property in Anime.kt, 
-            // we can't set it directly. However, by returning a NEW Anime instance,
-            // its internal 'customAnimeInfo' lazy property will be re-evaluated
-            // using the latest data from the repository when accessed.
+            Pair(manga.copy(customAnimeInfo = customInfo), chapters)
         }
     }
 

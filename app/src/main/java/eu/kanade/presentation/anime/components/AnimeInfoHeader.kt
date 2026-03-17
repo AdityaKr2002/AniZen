@@ -300,7 +300,7 @@ fun ExpandableAnimeDescription(
             Text(
                 text = note,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .secondaryItemAlpha()
                     .padding(top = 8.dp)
