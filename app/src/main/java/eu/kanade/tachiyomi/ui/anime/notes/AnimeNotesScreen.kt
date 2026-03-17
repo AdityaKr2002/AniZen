@@ -36,10 +36,31 @@ class AnimeNotesScreen(
         )
     }
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+...
     private class Model(
         private val anime: Anime,
         private val setCustomAnimeInfo: SetCustomAnimeInfo = Injekt.get(),
     ) : StateScreenModel<State>(State(anime, anime.note.orEmpty())) {
+
+        private val _notesFlow = MutableStateFlow(anime.note.orEmpty())
+
+        init {
+            screenModelScope.launchIO {
+                _notesFlow.collectLatest { content ->
+                    tachiyomi.core.common.util.lang.withNonCancellableContext {
+                        setCustomAnimeInfo.set(
+                            CustomAnimeInfo(
+                                id = anime.id,
+                                title = null,
+                                note = content.trim().ifBlank { null },
+                            ),
+                        )
+                    }
+                }
+            }
+        }
 
         fun updateNotes(content: String) {
             if (content == state.value.notes) return
@@ -47,19 +68,7 @@ class AnimeNotesScreen(
             mutableState.update {
                 it.copy(notes = content)
             }
-
-            @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-            tachiyomi.core.common.util.lang.launchIO {
-                tachiyomi.core.common.util.lang.withNonCancellableContext {
-                    setCustomAnimeInfo.set(
-                        CustomAnimeInfo(
-                            id = anime.id,
-                            title = null,
-                            note = content.trim().ifBlank { null },
-                        ),
-                    )
-                }
-            }
+            _notesFlow.value = content
         }
     }
 

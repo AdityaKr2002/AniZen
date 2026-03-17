@@ -1,6 +1,14 @@
 package tachiyomi.data.anime
 
 import android.content.Context
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,8 +20,18 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
     private val editJson = File(context.getExternalFilesDir(null), "edits.json")
 
     private val customAnimeMap = fetchCustomData()
+    private val mutex = Mutex()
+    private val _changeEvents = MutableSharedFlow<Long>(extraBufferCapacity = 1)
+    val changeEvents = _changeEvents.asSharedFlow()
 
     override fun get(animeId: Long) = customAnimeMap[animeId]
+
+    override fun subscribe(animeId: Long): Flow<CustomAnimeInfo?> {
+        return changeEvents
+            .filter { it == animeId }
+            .onStart { emit(animeId) }
+            .map { get(it) }
+    }
 
     private fun fetchCustomData(): MutableMap<Long, CustomAnimeInfo> {
         if (!editJson.exists() || !editJson.isFile) return mutableMapOf()
@@ -37,22 +55,27 @@ class CustomAnimeRepositoryImpl(context: Context) : CustomAnimeRepository {
     }
 
     override fun set(animeInfo: CustomAnimeInfo) {
-        if (
-            animeInfo.title == null &&
-            animeInfo.author == null &&
-            animeInfo.artist == null &&
-            animeInfo.thumbnailUrl == null &&
-            animeInfo.description == null &&
-            animeInfo.genre == null &&
-            animeInfo.status == null &&
-            animeInfo.score == null &&
-            animeInfo.note == null
-        ) {
-            customAnimeMap.remove(animeInfo.id)
-        } else {
-            customAnimeMap[animeInfo.id] = animeInfo
+        tachiyomi.core.common.util.lang.launchIO {
+            mutex.withLock {
+                if (
+                    animeInfo.title == null &&
+                    animeInfo.author == null &&
+                    animeInfo.artist == null &&
+                    animeInfo.thumbnailUrl == null &&
+                    animeInfo.description == null &&
+                    animeInfo.genre == null &&
+                    animeInfo.status == null &&
+                    animeInfo.score == null &&
+                    animeInfo.note == null
+                ) {
+                    customAnimeMap.remove(animeInfo.id)
+                } else {
+                    customAnimeMap[animeInfo.id] = animeInfo
+                }
+                saveCustomInfo()
+                _changeEvents.emit(animeInfo.id)
+            }
         }
-        saveCustomInfo()
     }
 
     private fun saveCustomInfo() {
