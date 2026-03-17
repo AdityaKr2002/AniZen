@@ -1346,7 +1346,7 @@ private fun SuggestionItem(
             text = anime.title,
             style = MaterialTheme.typography.bodySmall,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
