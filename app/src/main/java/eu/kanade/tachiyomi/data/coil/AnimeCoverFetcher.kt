@@ -30,17 +30,10 @@ import okio.source
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
-import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.domain.source.service.SourceManager
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.File
 import java.io.IOException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import eu.kanade.domain.ui.UiPreferences
 
 /**
  * A [Fetcher] that fetches cover image for [Anime] object.
@@ -53,8 +46,7 @@ import eu.kanade.domain.ui.UiPreferences
  * - [USE_CUSTOM_COVER_KEY]: Use custom cover if set by user, default is true
  */
 class AnimeCoverFetcher(
-    private val animeCover: AnimeCover,
-    private val url: String? = animeCover.url,
+    private val url: String?,
     private val isLibraryAnime: Boolean,
     private val options: Options,
     private val coverFileLazy: Lazy<File?>,
@@ -64,10 +56,6 @@ class AnimeCoverFetcher(
     private val callFactoryLazy: Lazy<Call.Factory>,
     private val imageLoader: ImageLoader,
 ) : Fetcher {
-
-    private val scope by lazy { CoroutineScope(Dispatchers.IO) }
-    private val uiPreferences = Injekt.get<UiPreferences>()
-    private val preloadLibraryColor = uiPreferences.preloadLibraryColor().get()
 
     private val diskCacheKey: String
         get() = diskCacheKeyLazy.value
@@ -96,7 +84,6 @@ class AnimeCoverFetcher(
     }
 
     private fun fileLoader(file: File): FetchResult {
-        setRatioAndColorsInScope(animeCover, ogFile = file)
         return SourceFetchResult(
             source = ImageSource(
                 file = file.toOkioPath(),
@@ -109,7 +96,6 @@ class AnimeCoverFetcher(
     }
 
     private fun fileUriLoader(uri: String): FetchResult {
-        setRatioAndColorsInScope(animeCover)
         val source = UniFile.fromUri(options.context, uri.toUri())!!
             .openInputStream()
             .source()
@@ -143,7 +129,6 @@ class AnimeCoverFetcher(
                 }
 
                 // Read from snapshot
-                setRatioAndColorsInScope(animeCover, bufferedSource = snapshot.toImageSource().source())
                 return SourceFetchResult(
                     source = snapshot.toImageSource(),
                     mimeType = "image/*",
@@ -164,7 +149,6 @@ class AnimeCoverFetcher(
                 // Read from disk cache
                 snapshot = writeToDiskCache(response)
                 if (snapshot != null) {
-                    setRatioAndColorsInScope(animeCover, bufferedSource = snapshot.toImageSource().source())
                     return SourceFetchResult(
                         source = snapshot.toImageSource(),
                         mimeType = "image/*",
@@ -172,13 +156,6 @@ class AnimeCoverFetcher(
                     )
                 }
 
-                setRatioAndColorsInScope(
-                    animeCover,
-                    bufferedSource = ImageSource(
-                        source = responseBody.source(),
-                        fileSystem = FileSystem.SYSTEM,
-                    ).source(),
-                )
                 // Read from response if cache is unused or unusable
                 return SourceFetchResult(
                     source = ImageSource(source = responseBody.source(), fileSystem = FileSystem.SYSTEM),
@@ -317,24 +294,6 @@ class AnimeCoverFetcher(
         }
     }
 
-    private fun setRatioAndColorsInScope(
-        animeCover: AnimeCover,
-        bufferedSource: Source? = null,
-        ogFile: File? = null,
-        force: Boolean = false,
-    ) {
-        if (!preloadLibraryColor) return
-        scope.launch {
-            AnimeCoverMetadata.setRatioAndColors(
-                animeCover,
-                bufferedSource?.buffer(),
-                ogFile,
-                true,
-                force,
-            )
-        }
-    }
-
     private enum class Type {
         File,
         URL,
@@ -350,7 +309,7 @@ class AnimeCoverFetcher(
 
         override fun create(data: Anime, options: Options, imageLoader: ImageLoader): Fetcher {
             return AnimeCoverFetcher(
-                animeCover = data.asAnimeCover(),
+                url = data.thumbnailUrl,
                 isLibraryAnime = data.favorite,
                 options = options,
                 coverFileLazy = lazy { coverCache.getCoverFile(data.thumbnailUrl) },
@@ -372,7 +331,7 @@ class AnimeCoverFetcher(
 
         override fun create(data: AnimeCover, options: Options, imageLoader: ImageLoader): Fetcher {
             return AnimeCoverFetcher(
-                animeCover = data,
+                url = data.url,
                 isLibraryAnime = data.isAnimeFavorite,
                 options = options,
                 coverFileLazy = lazy { coverCache.getCoverFile(data.url) },
