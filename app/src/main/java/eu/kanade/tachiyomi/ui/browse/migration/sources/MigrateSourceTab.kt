@@ -55,9 +55,8 @@ fun Screen.migrateSourceTab(): TabContent {
         actionDesc
     }
 
-    return remember(migrationHelpGuide, actionSelectAll, actionSelectNone, sortModeTitle, sortDirTitle, state.selectionMode, state.sortingMode, state.sortingDirection) {
-        TabContent(
-            titleRes = if (state.selectionMode) MR.strings.label_migration else MR.strings.select_source,
+    return TabContent(
+        titleRes = if (state.selectionMode) MR.strings.label_migration else MR.strings.select_source,
             numberTitle = if (state.selectionMode) state.selectedSources.size else 0,
             actions = persistentListOf<AppBar.AppBarAction>().builder()
                 .apply {
@@ -136,5 +135,4 @@ fun Screen.migrateSourceTab(): TabContent {
                 )
             },
         )
-    }
 }
