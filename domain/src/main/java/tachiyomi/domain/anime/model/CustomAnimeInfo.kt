@@ -1,5 +1,7 @@
 package tachiyomi.domain.anime.model
 
+import java.io.Serializable
+
 data class CustomAnimeInfo(
     val id: Long,
     val title: String?,
@@ -11,4 +13,4 @@ data class CustomAnimeInfo(
     val status: Long? = null,
     val score: Double? = null,
     val note: String? = null,
-)
+) : Serializable

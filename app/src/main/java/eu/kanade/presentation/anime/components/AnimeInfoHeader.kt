@@ -289,10 +289,7 @@ fun ExpandableAnimeDescription(
     val (expanded, onExpanded) = rememberSaveable {
         mutableStateOf(defaultExpandState)
     }
-    Column(
-        modifier = modifier
-            .clickableNoIndication { onExpanded(!expanded) }
-    ) {
+    Column(modifier = modifier) {
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
@@ -317,6 +314,7 @@ fun ExpandableAnimeDescription(
         AnimeSummary(
             description = desc,
             expanded = expanded,
+            onExpand = { onExpanded(!expanded) },
             modifier = Modifier
                 .padding(horizontal = 16.dp),
         )
@@ -710,6 +708,7 @@ private val descriptionAnnotator = markdownAnnotator(
 private fun AnimeSummary(
     description: String,
     expanded: Boolean,
+    onExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -768,7 +767,8 @@ private fun AnimeSummary(
                     } else {
                         Modifier
                     },
-                ),
+                )
+                .clickableNoIndication(onClick = onExpand),
             contentAlignment = Alignment.Center,
         ) {
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_caret_down)
