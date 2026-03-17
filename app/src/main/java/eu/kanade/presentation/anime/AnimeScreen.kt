@@ -388,30 +388,16 @@ private fun AnimeScreenSmallImpl(
                 val isLight = backgroundColor.luminance() > 0.5f
                 val context = LocalContext.current
     
-                LaunchedEffect(backgroundColor) {
-                    val activity = context as? ComponentActivity ?: return@LaunchedEffect
-                    val lightStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.BLACK)
-                    val darkStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-                    activity.enableEdgeToEdge(
-                        statusBarStyle = if (isLight) lightStyle else darkStyle,
-                    )
-                }
-    
-                        Box(
-    
-                            modifier = Modifier
-    
-                                .fillMaxSize()
-    
-                                .background(MaterialTheme.colorScheme.background),
-    
-                        ) {
-    
-                            Scaffold(
-    
-                                hazeEnabled = false,
-    
-                                floatingActionButton = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                ) {
+                    val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)
+                    Scaffold(
+                        hazeEnabled = false,
+                        contentWindowInsets = scaffoldInsets,
+                        floatingActionButton = {
                     val isFABVisible = remember(episodes) {
                         episodes.fastAny { !it.episode.seen } && !isAnySelected
                     }
@@ -804,22 +790,15 @@ fun AnimeScreenLargeImpl(
         val isLight = backgroundColor.luminance() > 0.5f
         val context = LocalContext.current
 
-        LaunchedEffect(backgroundColor) {
-            val activity = context as? ComponentActivity ?: return@LaunchedEffect
-            val lightStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.BLACK)
-            val darkStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-            activity.enableEdgeToEdge(
-                statusBarStyle = if (isLight) lightStyle else darkStyle,
-            )
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
         ) {
+            val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)
             Scaffold(
                 hazeEnabled = false,
+                contentWindowInsets = scaffoldInsets,
                 floatingActionButton = {
                     val isFABVisible = remember(episodes) {
                         episodes.fastAny { !it.episode.seen } && !isAnySelected
