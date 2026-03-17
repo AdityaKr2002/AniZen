@@ -150,71 +150,72 @@ private fun MigrateSourceList(
         onChangeSearchQuery("")
     }
 
-    Scaffold(
-        modifier = Modifier.padding(contentPadding),
-        bottomBar = {
-            MigrateBottomActionMenu(
-                visible = state.selectionMode,
-                onSelectAll = onSelectAll,
-                onSelectNone = onSelectNone,
-                onMatchEnabled = onMatchEnabled,
-                onMatchPinned = onMatchPinned,
-                onMigrate = onMigrate,
-            )
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier.padding(innerPadding),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = contentPadding.calculateTopPadding()),
+    ) {
+        val density = LocalDensity.current
+        var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+
+        FastScrollLazyColumn(
+            state = lazyListState,
+            contentPadding = PaddingValues(
+                top = searchBoxHeight,
+                bottom = contentPadding.calculateBottomPadding() + if (state.selectionMode) 80.dp else 0.dp,
+            ),
         ) {
-            val density = LocalDensity.current
-            var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
-
-            FastScrollLazyColumn(
-                state = lazyListState,
-                contentPadding = PaddingValues(top = searchBoxHeight),
-            ) {
-                items(
-                    items = list,
-                    key = { (source, _) -> "migrate-${source.id}" },
-                ) { (source, count) ->
-                    val isSelected = state.selectedSources.contains(source.id)
-                    MigrateSourceItem(
-                        modifier = Modifier.animateItemFastScroll()
-                            .padding(end = MaterialTheme.padding.small),
-                        source = source,
-                        count = count,
-                        isSelected = isSelected,
-                        isSelectionMode = state.selectionMode,
-                        onClickItem = {
-                            if (state.selectionMode) {
-                                onToggleSelection(source)
-                            } else {
-                                onClickItem(source)
-                            }
-                        },
-                        onLongClickItem = { onToggleSelection(source) },
-                    )
-                }
+            items(
+                items = list,
+                key = { (source, _) -> "migrate-${source.id}" },
+            ) { (source, count) ->
+                val isSelected = state.selectedSources.contains(source.id)
+                MigrateSourceItem(
+                    modifier = Modifier.animateItemFastScroll()
+                        .padding(end = MaterialTheme.padding.small),
+                    source = source,
+                    count = count,
+                    isSelected = isSelected,
+                    isSelectionMode = state.selectionMode,
+                    onClickItem = {
+                        if (state.selectionMode) {
+                            onToggleSelection(source)
+                        } else {
+                            onClickItem(source)
+                        }
+                    },
+                    onLongClickItem = { onToggleSelection(source) },
+                )
             }
-
-            AnimatedFloatingSearchBox(
-                listState = lazyListState,
-                searchQuery = state.searchQuery,
-                onChangeSearchQuery = onChangeSearchQuery,
-                placeholderText = stringResource(MR.strings.action_search_for_source),
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(
-                        horizontal = MaterialTheme.padding.medium,
-                    )
-                    .align(Alignment.TopCenter),
-                onGloballyPositioned = { layoutCoordinates ->
-                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                },
-            )
         }
+
+        AnimatedFloatingSearchBox(
+            listState = lazyListState,
+            searchQuery = state.searchQuery,
+            onChangeSearchQuery = onChangeSearchQuery,
+            placeholderText = stringResource(MR.strings.action_search_for_source),
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(
+                    horizontal = MaterialTheme.padding.medium,
+                )
+                .align(Alignment.TopCenter),
+            onGloballyPositioned = { layoutCoordinates ->
+                searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+            },
+        )
+
+        MigrateBottomActionMenu(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            visible = state.selectionMode,
+            onSelectAll = onSelectAll,
+            onSelectNone = onSelectNone,
+            onMatchEnabled = onMatchEnabled,
+            onMatchPinned = onMatchPinned,
+            onMigrate = onMigrate,
+        )
     }
-    }
+}
 @Composable
 private fun MigrateBottomActionMenu(
     visible: Boolean,

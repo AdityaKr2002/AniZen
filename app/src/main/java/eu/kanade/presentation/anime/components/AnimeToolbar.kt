@@ -71,11 +71,11 @@ fun AnimeToolbar(
     modifier: Modifier = Modifier,
     backgroundAlphaProvider: () -> Float = titleAlphaProvider,
 ) {
-    val statusBarPadding = WindowInsets.statusBars.only(WindowInsetsSides.Top).asPaddingValues()
+    val statusBarPadding = WindowInsets.systemBars.only(WindowInsetsSides.Top).asPaddingValues()
     val topPadding = statusBarPadding.calculateTopPadding()
-    val stableTopPadding = rememberSaveable { mutableStateOf(0.dp) }
-    if (topPadding > 0.dp) {
-        stableTopPadding.value = topPadding
+    var stableTopPadding by remember { mutableStateOf(0.dp) }
+    if (topPadding > 0.dp && stableTopPadding == 0.dp) {
+        stableTopPadding = topPadding
     }
 
     Column(
@@ -84,7 +84,7 @@ fun AnimeToolbar(
                 MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
                     .copy(alpha = backgroundAlphaProvider()),
             )
-            .padding(top = stableTopPadding.value),
+            .padding(top = stableTopPadding),
     ) {
         val isActionMode = actionModeCounter > 0
         TopAppBar(
