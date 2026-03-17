@@ -297,14 +297,13 @@ fun ExpandableAnimeDescription(
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
         if (!note.isNullOrBlank()) {
-            Text(
-                text = note,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            MarkdownRender(
+                content = note,
                 modifier = Modifier
                     .secondaryItemAlpha()
                     .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp),
+                annotator = descriptionAnnotator,
             )
             HorizontalDivider(
                 modifier = Modifier
