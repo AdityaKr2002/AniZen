@@ -1304,37 +1304,50 @@ private fun SuggestionItem(
     anime: Anime,
     onClick: () -> Unit,
 ) {
-    Box(modifier = Modifier.width(112.dp)) {
-        val scoreText = remember(anime.score) {
-            if (anime.score != null && anime.score!! > 0) {
-                String.format("%.1f", anime.score)
-            } else null
-        }
-        eu.kanade.presentation.library.components.AnimeComfortableGridItem(
-            title = anime.title,
-            coverData = remember(anime.id) {
-                tachiyomi.domain.anime.model.AnimeCover(
-                    animeId = anime.id,
-                    sourceId = anime.source,
-                    isAnimeFavorite = anime.favorite,
-                    ogUrl = anime.thumbnailUrl,
-                    lastModified = anime.coverLastModified,
-                )
-            },
-            coverBadgeStart = {
+    val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id)
+    val width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp
+
+    Column(
+        modifier = Modifier.width(width),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box {
+            entry(
+                data = anime,
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                ratio = ratio,
+            )
+            
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(4.dp),
+            ) {
                 eu.kanade.presentation.browse.components.InLibraryBadge(enabled = anime.favorite)
-            },
-            coverBadgeEnd = {
-                if (scoreText != null) {
+            }
+
+            if (anime.score != null && anime.score!! > 0) {
+                val scoreText = String.format("%.1f", anime.score)
+                tachiyomi.presentation.core.components.BadgeGroup(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp),
+                ) {
                     tachiyomi.presentation.core.components.Badge(
                         text = scoreText,
                         color = MaterialTheme.colorScheme.tertiaryContainer,
                         textColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
-            },
-            onClick = onClick,
-            onLongClick = {},
+            }
+        }
+        Text(
+            text = anime.title,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
