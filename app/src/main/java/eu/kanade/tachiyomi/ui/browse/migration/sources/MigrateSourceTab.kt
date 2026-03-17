@@ -2,9 +2,13 @@ package eu.kanade.tachiyomi.ui.browse.migration.sources
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.ArrowDownward
+import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.SortByAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -14,6 +18,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.browse.MigrateSourceScreen
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.TabContent
@@ -30,14 +35,7 @@ fun Screen.migrateSourceTab(): TabContent {
     val screenModel = rememberScreenModel { MigrateSourceScreenModel() }
     val state by screenModel.state.collectAsState()
 
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.ArrowUpward
-import androidx.compose.material.icons.outlined.Numbers
-import androidx.compose.material.icons.outlined.SortByAlpha
-import eu.kanade.domain.source.interactor.SetMigrateSorting
-...
     val migrationHelpGuide = stringResource(MR.strings.migration_help_guide)
-    val actionMigrateNow = stringResource(SYMR.strings.action_migrate_now)
 
     return remember(migrationHelpGuide, state.selectionMode, state.sortingMode, state.sortingDirection) {
         TabContent(
