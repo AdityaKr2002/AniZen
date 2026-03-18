@@ -12,6 +12,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import eu.kanade.presentation.library.components.AnimeListItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
+import kotlinx.collections.immutable.ImmutableSet
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
 import tachiyomi.presentation.core.util.plus
@@ -24,7 +25,7 @@ fun BrowseSourceList(
     onAnimeClick: (Anime) -> Unit,
     onAnimeLongClick: (Anime) -> Unit,
     selection: List<Anime>,
-    favoriteIds: Set<Long> = emptySet(),
+    favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
@@ -46,10 +47,9 @@ fun BrowseSourceList(
             ) { index ->
                 val anime = animeList[index] ?: return@items
                 onBatchIncrement(index)
-                val isFavorite = remember(anime.id, favoriteIds) { anime.id in favoriteIds }
                 BrowseSourceListItem(
                     anime = anime,
-                    isFavorite = isFavorite,
+                    isFavorite = anime.id in favoriteIds,
                     isSelected = anime.id in selectionIds,
                     onClick = { onAnimeClick(anime) },
                     onLongClick = { onAnimeLongClick(anime) },
