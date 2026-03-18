@@ -43,7 +43,7 @@ class MigrateAnimeScreenModel(
 
     init {
         screenModelScope.launch {
-            val sources = sourceIds.map { sourceManager.getOrStub(it) }
+            val sources = sourceIds.map { sourceManager.getOrStub(it) }.toImmutableList()
             mutableState.update { state ->
                 state.copy(sources = sources)
             }
@@ -57,7 +57,7 @@ class MigrateAnimeScreenModel(
                     logcat(LogPriority.ERROR, it)
                     _events.send(MigrationAnimeEvent.FailedFetchingFavorites)
                     mutableState.update { state ->
-                        state.copy(titleList = persistentListOf())
+                        state.copy(titles = persistentListOf(), selection = persistentListOf(), isLoading = false)
                     }
                 }
                 // KMK -->
@@ -71,7 +71,13 @@ class MigrateAnimeScreenModel(
                         .toImmutableList()
                 }
                 .collectLatest { list ->
-                    mutableState.update { it.copy(titleList = list) }
+                    mutableState.update { state ->
+                        state.copy(
+                            titles = list,
+                            selection = list.filter { it.selected }.toImmutableList(),
+                            isLoading = false
+                        )
+                    }
                 }
         }
     }
@@ -145,8 +151,11 @@ class MigrateAnimeScreenModel(
                         }
                     }
                 }
-            }
-            state.copy(titleList = newItems.toImmutableList())
+            }.toImmutableList()
+            state.copy(
+                titles = newItems,
+                selection = newItems.filter { it.selected }.toImmutableList()
+            )
         }
     }
 
@@ -155,8 +164,11 @@ class MigrateAnimeScreenModel(
             val newItems = state.titles.map {
                 selectedAnimeIds.addOrRemove(it.anime.id, selected)
                 it.copy(selected = selected)
-            }
-            state.copy(titleList = newItems.toImmutableList())
+            }.toImmutableList()
+            state.copy(
+                titles = newItems,
+                selection = if (selected) newItems else persistentListOf()
+            )
         }
 
         selectedPositions[0] = -1
@@ -168,8 +180,11 @@ class MigrateAnimeScreenModel(
             val newItems = state.titles.map {
                 selectedAnimeIds.addOrRemove(it.anime.id, !it.selected)
                 it.copy(selected = !it.selected)
-            }
-            state.copy(titleList = newItems.toImmutableList())
+            }.toImmutableList()
+            state.copy(
+                titles = newItems,
+                selection = newItems.filter { it.selected }.toImmutableList()
+            )
         }
         selectedPositions[0] = -1
         selectedPositions[1] = -1
@@ -182,25 +197,13 @@ class MigrateAnimeScreenModel(
 
     @Immutable
     data class State(
-        val sources: List<Source> = emptyList(),
-        private val titleList: ImmutableList<MigrateAnimeItem>? = null,
+        val sources: ImmutableList<Source> = persistentListOf(),
+        val titles: ImmutableList<MigrateAnimeItem> = persistentListOf(),
+        val selection: ImmutableList<MigrateAnimeItem> = persistentListOf(),
+        val isLoading: Boolean = true,
     ) {
-        // KMK -->
-        val selection = titles.filter { it.selected }
-        // KMK <--
-
-        val titles: ImmutableList<MigrateAnimeItem>
-            get() = titleList ?: persistentListOf()
-
-        val isLoading: Boolean
-            get() = sources.isEmpty() || titleList == null
-
-        val isEmpty: Boolean
-            get() = titles.isEmpty()
-
-        // KMK -->
-        val selectionMode = selection.isNotEmpty()
-        // KMK <--
+        val isEmpty: Boolean get() = titles.isEmpty()
+        val selectionMode: Boolean get() = selection.isNotEmpty()
     }
 }
 

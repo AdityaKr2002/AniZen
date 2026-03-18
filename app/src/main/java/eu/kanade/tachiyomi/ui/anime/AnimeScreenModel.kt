@@ -5,6 +5,9 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -223,6 +226,84 @@ class AnimeScreenModel(
 
     val showFileSize = storagePreferences.showEpisodeFileSize().get()
 
+    private fun State.Success.copySuccess(
+        anime: Anime = this.anime,
+        episodes: List<EpisodeList.Item> = this.episodes,
+        trackItems: List<TrackItem> = this.trackItems,
+        suggestionSections: ImmutableList<SuggestionSection> = this.suggestionSections,
+        dialog: Dialog? = this.dialog,
+        isRefreshingData: Boolean = this.isRefreshingData,
+        discoveryExpanded: Boolean = this.discoveryExpanded,
+        mergedSources: ImmutableList<Source> = this.mergedSources,
+        trackingCount: Int = this.trackingCount,
+        hasLoggedInTrackers: Boolean = this.hasLoggedInTrackers,
+        hasPromptedToAddBefore: Boolean = this.hasPromptedToAddBefore,
+        suggestions: ImmutableList<Anime> = this.suggestions,
+        seasons: ImmutableList<Season> = this.seasons,
+        nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
+    ): State.Success {
+        val processedEpisodes = if (anime === this.anime && episodes === this.episodes) {
+            this.processedEpisodes
+        } else {
+            episodes.applyFilters(anime).toImmutableList()
+        }
+
+        val missingEpisodeCount = if (processedEpisodes === this.processedEpisodes) {
+            this.missingEpisodeCount
+        } else {
+            processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
+        }
+
+        val episodeListItems = if (processedEpisodes === this.processedEpisodes && anime === this.anime) {
+            this.episodeListItems
+        } else {
+            processedEpisodes.insertSeparators { before, after ->
+                val (lowerEpisode, higherEpisode) = if (anime.sortDescending()) {
+                    after to before
+                } else {
+                    before to after
+                }
+                if (higherEpisode == null) return@insertSeparators null
+
+                if (lowerEpisode == null) {
+                    floor(higherEpisode.episode.episodeNumber)
+                        .toInt()
+                        .minus(1)
+                        .coerceAtLeast(0)
+                } else {
+                    calculateChapterGap(higherEpisode.episode, lowerEpisode.episode)
+                }
+                    .takeIf { it > 0 }
+                    ?.let { missingCount ->
+                        EpisodeList.MissingCount(
+                            id = "${lowerEpisode?.id}-${higherEpisode.id}",
+                            count = missingCount,
+                        )
+                    }
+            }.toImmutableList()
+        }
+
+        return this.copy(
+            anime = anime,
+            episodes = episodes.toImmutableList(),
+            processedEpisodes = processedEpisodes,
+            episodeListItems = episodeListItems,
+            missingEpisodeCount = missingEpisodeCount,
+            trackItems = trackItems.toImmutableList(),
+            suggestionSections = suggestionSections,
+            dialog = dialog,
+            isRefreshingData = isRefreshingData,
+            discoveryExpanded = discoveryExpanded,
+            mergedSources = mergedSources,
+            trackingCount = trackingCount,
+            hasLoggedInTrackers = hasLoggedInTrackers,
+            hasPromptedToAddBefore = hasPromptedToAddBefore,
+            suggestions = suggestions,
+            seasons = seasons,
+            nextAiringEpisode = nextAiringEpisode,
+        )
+    }
+
     private inline fun updateSuccessState(func: (State.Success) -> State.Success) {
         mutableState.update {
             when (it) {
@@ -250,7 +331,7 @@ class AnimeScreenModel(
 
             // Set initial state from database
             mutableState.update {
-                State.Success(
+                State.Success.create(
                     anime = initialAnime,
                     source = animeSource,
                     isFromSource = isFromSource,
@@ -269,7 +350,7 @@ class AnimeScreenModel(
                 .onEach { (anime, episodes) ->
                     val oldAnime = successState?.anime
                     updateSuccessState {
-                        it.copy(
+                        it.copySuccess(
                             anime = anime,
                             episodes = episodes.toEpisodeListItems(anime),
                         )
@@ -302,20 +383,20 @@ class AnimeScreenModel(
                 }
             }
 
-            updateSuccessState { it.copy(isRefreshingData = false) }
+            updateSuccessState { it.copySuccess(isRefreshingData = false) }
             fetchSuggestions(initialAnime)
         }
     }
 
     fun fetchAllFromSource(manualFetch: Boolean = true) {
         screenModelScope.launch {
-            updateSuccessState { it.copy(isRefreshingData = true) }
+            updateSuccessState { it.copySuccess(isRefreshingData = true) }
             val fetchFromSourceTasks = listOf(
                 async { fetchAnimeFromSource(manualFetch) },
                 async { fetchEpisodesFromSource(manualFetch) },
             )
             fetchFromSourceTasks.awaitAll()
-            updateSuccessState { it.copy(isRefreshingData = false) }
+            updateSuccessState { it.copySuccess(isRefreshingData = false) }
             successState?.let { updateAiringTime(it.anime, it.trackItems, manualFetch) }
         }
     }
@@ -351,7 +432,7 @@ class AnimeScreenModel(
         val now = System.currentTimeMillis()
         val cached = suggestionsCache.get(anime.id)
         if (cached != null && (now - cached.timestamp) < CACHE_TTL) {
-            updateSuccessState { it.copy(suggestionSections = cached.sections) }
+            updateSuccessState { it.copySuccess(suggestionSections = cached.sections) }
             return
         }
 
@@ -439,7 +520,7 @@ class AnimeScreenModel(
                         .sortedBy { it.type }
                         .toImmutableList()
                     suggestionsCache.put(anime.id, CachedSuggestions(finalSections, System.currentTimeMillis()))
-                    state.copy(suggestionSections = finalSections)
+                    state.copySuccess(suggestionSections = finalSections)
                 }
             }
 
@@ -661,7 +742,7 @@ class AnimeScreenModel(
                 if (checkDuplicate) {
                     val duplicate = getDuplicateLibraryAnime.await(anime).getOrNull(0)
                     if (duplicate != null) {
-                        updateSuccessState { it.copy(dialog = Dialog.DuplicateAnime(anime, duplicate)) }
+                        updateSuccessState { it.copySuccess(dialog = Dialog.DuplicateAnime(anime, duplicate)) }
                         return@launchIO
                     }
                 }
@@ -730,7 +811,7 @@ class AnimeScreenModel(
         screenModelScope.launch {
             val categories = getCategories()
             val selection = getAnimeCategoryIds(anime)
-            updateSuccessState { it.copy(
+            updateSuccessState { it.copySuccess(
                 dialog = Dialog.ChangeCategory(
                     anime = anime,
                     initialSelection = categories.mapAsCheckboxState { it.id in selection }.toImmutableList(),
@@ -796,7 +877,7 @@ class AnimeScreenModel(
                 val item = removeAt(modifiedIndex).copy(downloadState = download.status, downloadProgress = download.progress)
                 add(modifiedIndex, item)
             }
-            successState.copy(episodes = newEpisodes)
+            successState.copySuccess(episodes = newEpisodes)
         }
     }
 
@@ -832,7 +913,7 @@ class AnimeScreenModel(
             }
             screenModelScope.launch { snackbarHostState.showSnackbar(message = message) }
             val newAnime = animeRepository.getAnimeById(animeId)
-            updateSuccessState { it.copy(anime = newAnime, isRefreshingData = false) }
+            updateSuccessState { it.copySuccess(anime = newAnime, isRefreshingData = false) }
         }
     }
 
@@ -883,7 +964,7 @@ class AnimeScreenModel(
                 downloadEpisodes(episodes, useExternalDownloader, video)
             }
             if (!isFavorited && !successState.hasPromptedToAddBefore) {
-                updateSuccessState { it.copy(hasPromptedToAddBefore = true) }
+                updateSuccessState { it.copySuccess(hasPromptedToAddBefore = true) }
                 val result = snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.snack_add_to_anime_library), actionLabel = context.stringResource(MR.strings.action_add), withDismissAction = true)
                 if (result == SnackbarResult.ActionPerformed && !isFavorited) toggleFavorite()
             }
@@ -1120,14 +1201,14 @@ class AnimeScreenModel(
                 val supportedTrackerTracks = animeTracks.filter { it.trackerId in supportedTrackerIds }
                 supportedTrackerTracks.size to supportedTrackers.isNotEmpty()
             }.flowWithLifecycle(lifecycle).distinctUntilChanged().collectLatest { (trackingCount, hasLoggedInTrackers) ->
-                updateSuccessState { it.copy(trackingCount = trackingCount, hasLoggedInTrackers = hasLoggedInTrackers) }
+                updateSuccessState { it.copySuccess(trackingCount = trackingCount, hasLoggedInTrackers = hasLoggedInTrackers) }
             }
         }
         screenModelScope.launchIO {
             combine(getTracks.subscribe(anime.id).catch { logcat(LogPriority.ERROR, it) }, trackerManager.loggedInTrackersFlow()) { animeTracks, loggedInTrackers ->
                 loggedInTrackers.map { service -> TrackItem(animeTracks.find { it.trackerId == service.id }, service) }
             }.distinctUntilChanged().collectLatest { trackItems -> 
-                updateSuccessState { it.copy(trackItems = trackItems) }
+                updateSuccessState { it.copySuccess(trackItems = trackItems) }
                 updateAiringTime(anime, trackItems, manualFetch = false) 
             }
         }
@@ -1142,7 +1223,7 @@ class AnimeScreenModel(
 
         getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
             .onEach { seasons ->
-                updateSuccessState { it.copy(seasons = seasons.toImmutableList()) }
+                updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
             }
             .launchIn(screenModelScope)
     }
@@ -1152,7 +1233,7 @@ class AnimeScreenModel(
             getMergedAnimeById.subscribe(animeId)
                 .onEach { mergedAnime ->
                     val sources = mergedAnime.map { sourceManager.getOrStub(it.source) }
-                    updateSuccessState { it.copy(mergedSources = sources.toImmutableList()) }
+                    updateSuccessState { it.copySuccess(mergedSources = sources.toImmutableList()) }
                 }
                 .launchIn(this)
         }
@@ -1161,7 +1242,7 @@ class AnimeScreenModel(
     private suspend fun updateAiringTime(anime: Anime, trackItems: List<TrackItem>, manualFetch: Boolean) {
         val airingEpisodeData = AniChartApi().loadAiringTime(anime, trackItems, manualFetch)
         setAnimeViewerFlags.awaitSetNextEpisodeAiring(anime.id, airingEpisodeData)
-        updateSuccessState { it.copy(nextAiringEpisode = airingEpisodeData) }
+        updateSuccessState { it.copySuccess(nextAiringEpisode = airingEpisodeData) }
     }
 
     data class MergedAnimeData(val anime: Map<Long, Anime>, val references: List<MergedAnimeReference>)
@@ -1184,15 +1265,15 @@ class AnimeScreenModel(
     }
 
     fun toggleDiscoveryExpansion() {
-        updateSuccessState { it.copy(discoveryExpanded = !it.discoveryExpanded) }
+        updateSuccessState { it.copySuccess(discoveryExpanded = !it.discoveryExpanded) }
     }
 
-    fun dismissDialog() = updateSuccessState { it.copy(dialog = null) }
-    fun showDeleteEpisodeDialog(episodes: List<Episode>) = updateSuccessState { it.copy(dialog = Dialog.DeleteEpisodes(episodes)) }
-    fun showSettingsDialog() = updateSuccessState { it.copy(dialog = Dialog.SettingsSheet) }
-    fun showTrackDialog() = updateSuccessState { it.copy(dialog = Dialog.TrackSheet) }
-    fun showCoverDialog() = updateSuccessState { it.copy(dialog = Dialog.FullCover) }
-    fun showEditAnimeInfoDialog() = updateSuccessState { it.copy(dialog = Dialog.EditAnimeInfo(it.anime)) }
+    fun dismissDialog() = updateSuccessState { it.copySuccess(dialog = null) }
+    fun showDeleteEpisodeDialog(episodes: List<Episode>) = updateSuccessState { it.copySuccess(dialog = Dialog.DeleteEpisodes(episodes)) }
+    fun showSettingsDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.SettingsSheet) }
+    fun showTrackDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.TrackSheet) }
+    fun showCoverDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.FullCover) }
+    fun showEditAnimeInfoDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.EditAnimeInfo(it.anime)) }
 
     fun showEditMergedSettings() {
         val state = successState ?: return
@@ -1200,7 +1281,7 @@ class AnimeScreenModel(
             val mergedAnimes = animeMergeRepository.getMergedAnimeById(animeId)
             val references = animeMergeRepository.getReferencesById(animeId)
             updateSuccessState {
-                it.copy(dialog = Dialog.EditMergedAnimeSettings(MergedAnimeData(mergedAnimes.associateBy { it.id }, references)))
+                it.copySuccess(dialog = Dialog.EditMergedAnimeSettings(MergedAnimeData(mergedAnimes.associateBy { it.id }, references)))
             }
         }
     }
@@ -1226,21 +1307,21 @@ class AnimeScreenModel(
         }
     }
 
-    fun showLocalScoreDialog() = updateSuccessState { it.copy(dialog = Dialog.LocalScorePicker(it.anime)) }
-    fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copy(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
-    fun showAnimeSkipIntroDialog() = updateSuccessState { it.copy(dialog = Dialog.ChangeAnimeSkipIntro) }
-    fun showClearAnimeDialog() = updateSuccessState { it.copy(dialog = Dialog.ClearAnime) }
+    fun showLocalScoreDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.LocalScorePicker(it.anime)) }
+    fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copySuccess(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
+    fun showAnimeSkipIntroDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ChangeAnimeSkipIntro) }
+    fun showClearAnimeDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ClearAnime) }
 
     fun showSetAnimeFetchIntervalDialog() {
         val anime = successState?.anime ?: return
-        updateSuccessState { it.copy(dialog = Dialog.SetAnimeFetchInterval(anime)) }
+        updateSuccessState { it.copySuccess(dialog = Dialog.SetAnimeFetchInterval(anime)) }
     }
 
     fun setFetchInterval(anime: Anime, interval: Int) {
         screenModelScope.launchIO {
             if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval))) {
                 val updatedAnime = animeRepository.getAnimeById(anime.id)
-                updateSuccessState { it.copy(anime = updatedAnime) }
+                updateSuccessState { it.copySuccess(anime = updatedAnime) }
             }
         }
     }
@@ -1271,7 +1352,7 @@ class AnimeScreenModel(
         }
     }
 
-    private fun showQualitiesDialog(episode: Episode) = updateSuccessState { it.copy(dialog = Dialog.ShowQualities(episode, it.anime, it.source)) }
+    private fun showQualitiesDialog(episode: Episode) = updateSuccessState { it.copySuccess(dialog = Dialog.ShowQualities(episode, it.anime, it.source)) }
 
     sealed interface State {
         @Immutable data object Loading : State
@@ -1279,13 +1360,16 @@ class AnimeScreenModel(
             val anime: Anime,
             val source: Source,
             val isFromSource: Boolean,
-            val episodes: List<EpisodeList.Item>,
+            val episodes: ImmutableList<EpisodeList.Item>,
+            val processedEpisodes: ImmutableList<EpisodeList.Item>,
+            val episodeListItems: ImmutableList<EpisodeList>,
+            val missingEpisodeCount: Int = 0,
             val trackingCount: Int = 0,
             val hasLoggedInTrackers: Boolean = false,
             val isRefreshingData: Boolean = false,
             val dialog: Dialog? = null,
             val hasPromptedToAddBefore: Boolean = false,
-            val trackItems: List<TrackItem> = emptyList(),
+            val trackItems: ImmutableList<TrackItem> = persistentListOf(),
             val nextAiringEpisode: Pair<Int, Long> = Pair(anime.nextEpisodeToAir, anime.nextEpisodeAiringAt),
             val suggestions: ImmutableList<Anime> = persistentListOf(),
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
@@ -1293,6 +1377,55 @@ class AnimeScreenModel(
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
         ) : State {
+            companion object {
+                fun create(
+                    anime: Anime,
+                    source: Source,
+                    isFromSource: Boolean,
+                    episodes: List<EpisodeList.Item>,
+                    isRefreshingData: Boolean,
+                    dialog: Dialog?,
+                ): Success {
+                    val processedEpisodes = episodes.applyFilters(anime).toImmutableList()
+                    val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
+                    val episodeListItems = processedEpisodes.insertSeparators { before, after ->
+                        val (lowerEpisode, higherEpisode) = if (anime.sortDescending()) {
+                            after to before
+                        } else {
+                            before to after
+                        }
+                        if (higherEpisode == null) return@insertSeparators null
+
+                        if (lowerEpisode == null) {
+                            floor(higherEpisode.episode.episodeNumber)
+                                .toInt()
+                                .minus(1)
+                                .coerceAtLeast(0)
+                        } else {
+                            calculateChapterGap(higherEpisode.episode, lowerEpisode.episode)
+                        }
+                            .takeIf { it > 0 }
+                            ?.let { missingCount ->
+                                EpisodeList.MissingCount(
+                                    id = "${lowerEpisode?.id}-${higherEpisode.id}",
+                                    count = missingCount,
+                                )
+                            }
+                    }.toImmutableList()
+
+                    return Success(
+                        anime = anime,
+                        source = source,
+                        isFromSource = isFromSource,
+                        episodes = episodes.toImmutableList(),
+                        processedEpisodes = processedEpisodes,
+                        episodeListItems = episodeListItems,
+                        missingEpisodeCount = missingEpisodeCount,
+                        isRefreshingData = isRefreshingData,
+                        dialog = dialog,
+                    )
+                }
+            }
             val totalScore: Double? by lazy {
                 val localTrackScore = trackItems.find { it.tracker.id == 999L }?.track?.score?.takeIf { it > 0 }
                 localTrackScore ?: anime.score ?: trackItems.mapNotNull { item ->
@@ -1300,33 +1433,6 @@ class AnimeScreenModel(
                 }.filter { it > 0 }.average().takeIf { !it.isNaN() }
             }
 
-            val processedEpisodes by lazy { episodes.applyFilters(anime).toList() }
-            val episodeListItems by lazy {
-                processedEpisodes.insertSeparators { before, after ->
-                    val (lowerEpisode, higherEpisode) = if (anime.sortDescending()) {
-                        after to before
-                    } else {
-                        before to after
-                    }
-                    if (higherEpisode == null) return@insertSeparators null
-
-                    if (lowerEpisode == null) {
-                        floor(higherEpisode.episode.episodeNumber)
-                            .toInt()
-                            .minus(1)
-                            .coerceAtLeast(0)
-                    } else {
-                        calculateChapterGap(higherEpisode.episode, lowerEpisode.episode)
-                    }
-                        .takeIf { it > 0 }
-                        ?.let { missingCount ->
-                            EpisodeList.MissingCount(
-                                id = "${lowerEpisode?.id}-${higherEpisode.id}",
-                                count = missingCount,
-                            )
-                        }
-                }
-            }
             val trackingAvailable: Boolean get() = trackItems.isNotEmpty()
             val airingEpisodeNumber: Double get() = nextAiringEpisode.first.toDouble()
             val airingTime: Long get() = nextAiringEpisode.second.times(1000L).minus(Calendar.getInstance().timeInMillis)

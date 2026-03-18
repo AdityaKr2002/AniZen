@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -359,8 +358,8 @@ private fun AnimeScreenSmallImpl(
     onToggleDiscoveryExpansion: () -> Unit,
 ) {
     val episodeListState = rememberLazyListState()
-    val episodes = remember(state) { state.processedEpisodes }
-    val listItem = remember(state) { state.episodeListItems }
+    val episodes = state.processedEpisodes
+    val listItem = state.episodeListItems
 
             val isFirstItemVisible by remember {
                 derivedStateOf { episodeListState.firstVisibleItemIndex == 0 }
@@ -567,8 +566,7 @@ private fun AnimeScreenSmallImpl(
                                     Surface(
                                         modifier = Modifier
                                             .padding(horizontal = 16.dp, vertical = 8.dp)
-                                            .fillMaxWidth()
-                                            .animateContentSize(),
+                                            .fillMaxWidth(),
                                         color = MaterialTheme.colorScheme.surfaceContainerLow,
                                         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                                         tonalElevation = 2.dp,
@@ -656,13 +654,10 @@ private fun AnimeScreenSmallImpl(
 
                             
                             item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
-                                val missingEpisodeCount = remember(episodes) {
-                                    episodes.map { it.episode.episodeNumber }.missingEpisodesCount()
-                                }
                                 EpisodeHeader(
                                     enabled = !isAnySelected,
                                     episodeCount = episodes.size,
-                                    missingEpisodeCount = missingEpisodeCount,
+                                    missingEpisodeCount = state.missingEpisodeCount,
                                     onClick = onFilterClicked,
                                 )
                             }
@@ -759,8 +754,8 @@ fun AnimeScreenLargeImpl(
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
-    val episodes = remember(state) { state.processedEpisodes }
-    val listItem = remember(state) { state.episodeListItems }
+    val episodes = state.processedEpisodes
+    val listItem = state.episodeListItems
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value
 
@@ -1053,13 +1048,10 @@ fun AnimeScreenLargeImpl(
                                     ),
                                 ) {
                                     item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
-                                        val missingEpisodeCount = remember(episodes) {
-                                            episodes.map { it.episode.episodeNumber }.missingEpisodesCount()
-                                        }
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
                                             episodeCount = episodes.size,
-                                            missingEpisodeCount = missingEpisodeCount,
+                                            missingEpisodeCount = state.missingEpisodeCount,
                                             onClick = onFilterButtonClicked,
                                         )
                                     }
