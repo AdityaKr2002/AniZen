@@ -213,9 +213,9 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                                 Text(
                                     text = stringResource(
                                         resource = if (selectedSourceList) {
-                                            MR.strings.migrationConfigScreen_dataToMigrateHeader
+                                            MR.strings.migrationConfigScreen_selectedHeader
                                         } else {
-                                            MR.strings.migrationConfigScreen_dataToMigrateHeader
+                                            MR.strings.migrationConfigScreen_availableHeader
                                         },
                                     ),
                                     style = MaterialTheme.typography.bodyMedium,
