@@ -118,7 +118,8 @@ fun AnimeSeasonSection(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = MaterialTheme.shapes.medium,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            tonalElevation = 2.dp,
         ) {
             content()
         }

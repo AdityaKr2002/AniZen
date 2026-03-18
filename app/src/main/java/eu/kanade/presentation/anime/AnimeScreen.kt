@@ -567,9 +567,11 @@ private fun AnimeScreenSmallImpl(
                                     Surface(
                                         modifier = Modifier
                                             .padding(horizontal = 16.dp, vertical = 8.dp)
+                                            .fillMaxWidth()
                                             .animateContentSize(),
-                                        color = MaterialTheme.colorScheme.surfaceContainer,
-                                        shape = MaterialTheme.shapes.medium,
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                        tonalElevation = 2.dp,
                                     ) {
                                         Column(modifier = Modifier.padding(vertical = 12.dp)) {
                                             DiscoveryHeader(
@@ -967,14 +969,13 @@ fun AnimeScreenLargeImpl(
                                             onClick = onToggleDiscoveryExpansion,
                                         )
                                     } else {
-                                        ElevatedCard(
+                                        Surface(
                                             modifier = Modifier
                                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                                                 .fillMaxWidth(),
-                                            colors = CardDefaults.elevatedCardColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                            ),
-                                            shape = MaterialTheme.shapes.medium,
+                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                            tonalElevation = 2.dp,
                                         ) {
                                             Column(modifier = Modifier.padding(vertical = 12.dp)) {
                                                 DiscoveryHeader(
