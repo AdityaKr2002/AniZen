@@ -59,9 +59,10 @@ class SourcesScreenModel(
             combine(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap,
-                ::Triple
-            ).catch {
+                SourceHealthCache.healthMap
+            ) { sources, extensions, healthMap ->
+                Triple(sources, extensions, healthMap)
+            }.catch {
                 logcat(LogPriority.ERROR, it)
                 _events.send(Event.FailedFetchingSources)
             }.collectLatest { (sources, extensions, healthMap) ->
@@ -147,9 +148,10 @@ class SourcesScreenModel(
             combine(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap,
-                ::Triple
-            ).first().let { (sources, extensions, healthMap) ->
+                SourceHealthCache.healthMap
+            ) { sources, extensions, healthMap ->
+                Triple(sources, extensions, healthMap)
+            }.first().let { (sources, extensions, healthMap) ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }
         }
@@ -161,9 +163,10 @@ class SourcesScreenModel(
             combine(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap,
-                ::Triple
-            ).first().let { (sources, extensions, healthMap) ->
+                SourceHealthCache.healthMap
+            ) { sources, extensions, healthMap ->
+                Triple(sources, extensions, healthMap)
+            }.first().let { (sources, extensions, healthMap) ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }
         }

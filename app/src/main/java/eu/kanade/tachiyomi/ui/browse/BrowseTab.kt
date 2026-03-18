@@ -80,9 +80,9 @@ data object BrowseTab : Tab {
         val extensionsScreenModel = rememberScreenModel { ExtensionsScreenModel() }
         val animeExtensionsState by extensionsScreenModel.state.collectAsStateFlow()
 
-        val sourcesTab = remember { sourcesTab() }
-        val extensionsTab = remember(extensionsScreenModel) { extensionsTab(extensionsScreenModel) }
-        val migrateSourceTab = remember { migrateSourceTab() }
+        val sourcesTab = sourcesTab()
+        val extensionsTab = extensionsTab(extensionsScreenModel)
+        val migrateSourceTab = migrateSourceTab()
 
         val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab) {
             buildList {
