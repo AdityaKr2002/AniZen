@@ -59,8 +59,8 @@ class SourcesScreenModel(
             combine(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap
-            ) { sources, extensions, healthMap ->
+                SourceHealthCache.healthMap,
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.catch {
                 logcat(LogPriority.ERROR, it)
@@ -147,7 +147,7 @@ class SourcesScreenModel(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
-            ) { sources, extensions, healthMap ->
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.first()
         }
@@ -160,7 +160,7 @@ class SourcesScreenModel(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
-            ) { sources, extensions, healthMap ->
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.first()
         }
