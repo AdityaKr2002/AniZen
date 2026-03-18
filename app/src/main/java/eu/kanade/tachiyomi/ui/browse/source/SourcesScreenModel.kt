@@ -60,7 +60,7 @@ class SourcesScreenModel(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap,
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.catch {
                 logcat(LogPriority.ERROR, it)
@@ -83,7 +83,7 @@ class SourcesScreenModel(
 
     private fun collectLatestAnimeSources(
         sources: List<Source>,
-        extensions: List<eu.kanade.tachiyomi.extension.model.Extension>,
+        extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>,
         healthMap: Map<Long, NodeStatus>
     ) {
         mutableState.update { state ->
@@ -147,7 +147,7 @@ class SourcesScreenModel(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.first()
         }
@@ -160,7 +160,7 @@ class SourcesScreenModel(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension>, healthMap: Map<Long, NodeStatus> ->
+            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
             }.first()
         }
