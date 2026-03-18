@@ -184,22 +184,26 @@ enum class AnimeCover(val ratio: Float) {
         fun getRatio(animeId: Long): Float {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsState()
             
-            return remember(animeId, usePanorama, ratios) {
-                if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
-            }
+            // Use derivedStateOf to only recompose when THIS specific anime's ratio changes
+            val ratiosState = CoverColorObserver.ratios.collectAsState()
+            return remember(animeId, usePanorama) {
+                derivedStateOf {
+                    if (usePanorama) ratiosState.value[animeId] ?: Book.ratio else Book.ratio
+                }
+            }.value
         }
 
         @Composable
         fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsState()
             
+            // Use derivedStateOf to only recompose when THIS specific anime's ratio changes
+            val ratiosState = CoverColorObserver.ratios.collectAsState()
             return remember(animeId, usePanorama) {
                 derivedStateOf {
-                    val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+                    val ratio = if (usePanorama) ratiosState.value[animeId] ?: Book.ratio else Book.ratio
                     val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
                     entry to ratio
                 }

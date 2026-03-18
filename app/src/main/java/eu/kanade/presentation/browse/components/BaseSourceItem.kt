@@ -43,12 +43,14 @@ import uy.kohesive.injekt.api.get
 fun BaseSourceItem(
     source: Source,
     modifier: Modifier = Modifier,
+    isNsfw: Boolean = source.isNsfw,
+    status: NodeStatus = NodeStatus.OPERATIONAL,
     showLanguageInContent: Boolean = true,
     onClickItem: () -> Unit = {},
     onLongClickItem: () -> Unit = {},
     icon: @Composable RowScope.(Source) -> Unit = defaultIcon,
     action: @Composable RowScope.(Source) -> Unit = {},
-    content: @Composable RowScope.(Source, String?) -> Unit = defaultContent,
+    content: @Composable RowScope.(Source, String?, Boolean, NodeStatus) -> Unit = defaultContent,
 ) {
     val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, LocalContext.current).takeIf {
         showLanguageInContent
@@ -59,7 +61,7 @@ fun BaseSourceItem(
         onLongClickItem = onLongClickItem,
         icon = { icon.invoke(this, source) },
         action = { action.invoke(this, source) },
-        content = { content.invoke(this, source, sourceLangString) },
+        content = { content.invoke(this, source, sourceLangString, isNsfw, status) },
     )
 }
 
@@ -67,22 +69,9 @@ private val defaultIcon: @Composable RowScope.(Source) -> Unit = { source ->
     SourceIcon(source = source)
 }
 
-private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { source, sourceLangString ->
-    val sourceStatus by remember(source.id) {
-        combine(
-            SourceHealthCache.healthMap,
-            flowOf(source.id)
-        ) { map, id -> map[id] ?: NodeStatus.OPERATIONAL }
-        .distinctUntilChanged()
-    }.collectAsState(initial = NodeStatus.OPERATIONAL)
-
+private val defaultContent: @Composable RowScope.(Source, String?, Boolean, NodeStatus) -> Unit = { source, sourceLangString, isNsfw, sourceStatus ->
     val extensionManager: ExtensionManager = Injekt.get()
     val extensionName = remember(source.id) { extensionManager.getExtensionNameForSource(source.id) }
-    val isNsfw = remember(source.id) {
-        extensionManager.installedExtensionsFlow.value.find { ext ->
-            ext.sources.any { s -> s.id == source.id }
-        }?.isNsfw ?: source.isNsfw
-    }
 
     Column(
         modifier = Modifier

@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.sp
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.browse.components.BaseSourceItem
+import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.ui.browse.source.SourcesScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel.Listing
 import eu.kanade.tachiyomi.util.system.LocaleHelper
@@ -138,7 +139,7 @@ fun SourcesScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                top = searchHeight + (searchOffsetHeightPx / LocalDensity.current.density).dp,
+                top = searchHeight,
                 end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
@@ -196,6 +197,8 @@ fun SourcesScreen(
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
                                     hideLatest = state.hideLatest,
+                                    isNsfw = model.isNsfw,
+                                    status = model.status,
                                     modifier = Modifier.animateItem()
                                 )
                             }
@@ -327,11 +330,15 @@ private fun SourceItem(
     onLongClickItem: (Source) -> Unit,
     onClickPin: (Source) -> Unit,
     hideLatest: Boolean,
+    isNsfw: Boolean,
+    status: NodeStatus,
     modifier: Modifier = Modifier,
 ) {
     BaseSourceItem(
         modifier = modifier,
         source = source,
+        isNsfw = isNsfw,
+        status = status,
         onClickItem = { onClickItem(source, Listing.Popular) },
         onLongClickItem = { onLongClickItem(source) },
         action = {
@@ -424,6 +431,10 @@ fun SourceOptionsDialog(
 }
 
 sealed interface SourceUiModel {
-    data class Item(val source: Source) : SourceUiModel
+    data class Item(
+        val source: Source,
+        val isNsfw: Boolean,
+        val status: NodeStatus,
+    ) : SourceUiModel
     data class Header(val language: String) : SourceUiModel
 }

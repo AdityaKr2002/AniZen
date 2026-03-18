@@ -36,6 +36,8 @@ import java.util.TreeMap
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
+import tachiyomi.domain.source.service.SourceHealthCache
+import eu.kanade.tachiyomi.network.model.NodeStatus
 
 class SourcesScreenModel(
     private val preferences: BasePreferences = Injekt.get(),
@@ -57,12 +59,13 @@ class SourcesScreenModel(
             combine(
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                ::Pair
+                SourceHealthCache.healthMap,
+                ::Triple
             ).catch {
                 logcat(LogPriority.ERROR, it)
                 _events.send(Event.FailedFetchingSources)
-            }.collectLatest { (sources, _) ->
-                collectLatestAnimeSources(sources)
+            }.collectLatest { (sources, extensions, healthMap) ->
+                collectLatestAnimeSources(sources, extensions, healthMap)
             }
         }
         
@@ -79,13 +82,16 @@ class SourcesScreenModel(
         }
     }
 
-    private fun collectLatestAnimeSources(sources: List<Source>) {
+    private fun collectLatestAnimeSources(
+        sources: List<Source>,
+        extensions: List<eu.kanade.tachiyomi.extension.model.Extension>,
+        healthMap: Map<Long, NodeStatus>
+    ) {
         mutableState.update { state ->
             val query = state.searchQuery
             val nsfwOnly = state.nsfwOnly
             
             // Map source IDs to their extension's NSFW status for reliable filtering
-            val extensions = extensionManager.installedExtensionsFlow.value
             val nsfwSourceIds = extensions.flatMap { ext -> 
                 if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
             }.toSet()
@@ -120,13 +126,15 @@ class SourcesScreenModel(
             state.copy(
                 isLoading = false,
                 items = byLang
-                    .flatMap {
-                        listOf(
-                            SourceUiModel.Header(it.key),
-                            *it.value.map { source ->
-                                SourceUiModel.Item(source)
-                            }.toTypedArray(),
-                        )
+                    .flatMap { entry ->
+                        buildList {
+                            add(SourceUiModel.Header(entry.key))
+                            entry.value.forEach { source ->
+                                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
+                                val status = healthMap[source.id] ?: NodeStatus.OPERATIONAL
+                                add(SourceUiModel.Item(source, isNsfw, status))
+                            }
+                        }
                     }
                     .toImmutableList(),
             )
@@ -136,14 +144,28 @@ class SourcesScreenModel(
     fun search(query: String?) {
         mutableState.update { it.copy(searchQuery = query) }
         screenModelScope.launchIO {
-            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
+            combine(
+                getEnabledSources.subscribe(),
+                extensionManager.installedExtensionsFlow,
+                SourceHealthCache.healthMap,
+                ::Triple
+            ).first().let { (sources, extensions, healthMap) ->
+                collectLatestAnimeSources(sources, extensions, healthMap)
+            }
         }
     }
 
     fun toggleNsfwOnly() {
         mutableState.update { it.copy(nsfwOnly = !it.nsfwOnly) }
         screenModelScope.launchIO {
-            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
+            combine(
+                getEnabledSources.subscribe(),
+                extensionManager.installedExtensionsFlow,
+                SourceHealthCache.healthMap,
+                ::Triple
+            ).first().let { (sources, extensions, healthMap) ->
+                collectLatestAnimeSources(sources, extensions, healthMap)
+            }
         }
     }
 
