@@ -61,13 +61,11 @@ class SourcesScreenModel(
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
             ) { sources, extensions, healthMap ->
-                Triple(sources, extensions, healthMap)
+                collectLatestAnimeSources(sources, extensions, healthMap)
             }.catch {
                 logcat(LogPriority.ERROR, it)
                 _events.send(Event.FailedFetchingSources)
-            }.collectLatest { (sources, extensions, healthMap) ->
-                collectLatestAnimeSources(sources, extensions, healthMap)
-            }
+            }.collectLatest {}
         }
         
         screenModelScope.launchIO {
@@ -150,10 +148,8 @@ class SourcesScreenModel(
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
             ) { sources, extensions, healthMap ->
-                Triple(sources, extensions, healthMap)
-            }.first().let { (sources, extensions, healthMap) ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
-            }
+            }.first()
         }
     }
 
@@ -165,10 +161,8 @@ class SourcesScreenModel(
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap
             ) { sources, extensions, healthMap ->
-                Triple(sources, extensions, healthMap)
-            }.first().let { (sources, extensions, healthMap) ->
                 collectLatestAnimeSources(sources, extensions, healthMap)
-            }
+            }.first()
         }
     }
 
