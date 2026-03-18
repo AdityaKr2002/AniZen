@@ -5,9 +5,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Immutable
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -111,6 +108,7 @@ import tachiyomi.domain.episode.model.Episode
 import tachiyomi.domain.episode.model.EpisodeUpdate
 import tachiyomi.domain.episode.service.calculateChapterGap
 import tachiyomi.domain.episode.service.getEpisodeSort
+import tachiyomi.domain.episode.service.missingEpisodesCount
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.float
@@ -876,7 +874,7 @@ class AnimeScreenModel(
             val newEpisodes = successState.episodes.toMutableList().apply {
                 val item = removeAt(modifiedIndex).copy(downloadState = download.status, downloadProgress = download.progress)
                 add(modifiedIndex, item)
-            }
+            }.toImmutableList()
             successState.copySuccess(episodes = newEpisodes)
         }
     }
@@ -1163,8 +1161,8 @@ class AnimeScreenModel(
                         else if (selectedIndex > selectedPositions[1]) selectedPositions[1] = selectedIndex
                     }
                 }
-            }
-            successState.copy(episodes = newEpisodes)
+            }.toImmutableList()
+            successState.copySuccess(episodes = newEpisodes)
         }
     }
 
@@ -1173,10 +1171,10 @@ class AnimeScreenModel(
             val newEpisodes = successState.episodes.map {
                 selectedEpisodeIds.addOrRemove(it.id, selected)
                 it.copy(selected = selected)
-            }
+            }.toImmutableList()
             selectedPositions[0] = -1
             selectedPositions[1] = -1
-            successState.copy(episodes = newEpisodes)
+            successState.copySuccess(episodes = newEpisodes)
         }
     }
 
@@ -1185,10 +1183,10 @@ class AnimeScreenModel(
             val newEpisodes = successState.episodes.map {
                 selectedEpisodeIds.addOrRemove(it.id, !it.selected)
                 it.copy(selected = !it.selected)
-            }
+            }.toImmutableList()
             selectedPositions[0] = -1
             selectedPositions[1] = -1
-            successState.copy(episodes = newEpisodes)
+            successState.copySuccess(episodes = newEpisodes)
         }
     }
 
