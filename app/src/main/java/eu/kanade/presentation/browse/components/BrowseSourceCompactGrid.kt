@@ -55,7 +55,7 @@ fun BrowseSourceCompactGrid(
                 onLongClick = { onAnimeLongClick(anime) },
             )
         }
-...
+
         item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
             if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
                 BrowseSourceLoadingItem()

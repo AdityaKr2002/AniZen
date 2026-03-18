@@ -147,6 +147,7 @@ data class SourceSearchScreen(
                 onAnimeClick = openMigrateDialog,
                 onAnimeLongClick = { navigator.push(AnimeScreen(it.id, true)) },
                 selection = state.selection.toImmutableList(),
+                favoriteIds = state.favoriteIds,
             )
         }
 
