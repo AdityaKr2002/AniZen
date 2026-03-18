@@ -97,7 +97,7 @@ val GITHUB_REPO: String by lazy { getGithubRepo() }
 
 fun getGithubRepo(peekIntoPreview: Boolean = false): String =
     if (isPreviewBuildType || peekIntoPreview) {
-        "salmanbappi/AniZen"
+        "salmanbappi/anizen-preview"
     } else {
         "salmanbappi/AniZen"
     }
