@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 
+import eu.kanade.domain.ui.ContainerStyle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -141,7 +142,7 @@ private fun HistoryScreenContent(
     onClickDelete: (HistoryWithRelations) -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val containerStyles by uiPreferences.containerStyles().collectAsState()
+    val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
     val useContainer = remember(containerStyles) { ContainerStyle.HISTORY in containerStyles }
 
     FastScrollLazyColumn(

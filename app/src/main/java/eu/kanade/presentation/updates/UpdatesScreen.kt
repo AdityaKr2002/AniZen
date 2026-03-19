@@ -19,11 +19,11 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
@@ -78,7 +78,7 @@ fun UpdateScreen(
     navigateUp: (() -> Unit)?,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val containerStyles by uiPreferences.containerStyles().collectAsState()
+    val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
     val useContainer = remember(containerStyles) { ContainerStyle.UPDATES in containerStyles }
 
     BackHandler(enabled = state.selectionMode, onBack = { onSelectAll(false) })
