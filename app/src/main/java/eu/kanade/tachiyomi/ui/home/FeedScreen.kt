@@ -270,7 +270,13 @@ private fun FeedCard(
     anime: Anime,
     onClick: () -> Unit,
 ) {
-    val (entry, ratio) = AnimeCover.getEntry(anime.id)
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val usePanorama by uiPreferences.feedPanorama().collectAsState()
+    val (entry, ratio) = if (usePanorama) {
+        AnimeCover.getEntry(anime.id)
+    } else {
+        AnimeCover.Book to AnimeCover.Book.ratio
+    }
     val width = if (entry == AnimeCover.Panorama) 200.dp else 100.dp
 
     Column(

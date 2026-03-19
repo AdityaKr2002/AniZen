@@ -18,6 +18,8 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Panorama
+import androidx.compose.material3.IconButton
 
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import eu.kanade.tachiyomi.ui.browse.BrowseTab
@@ -57,9 +59,18 @@ data object FeedTab : Tab {
                 eu.kanade.presentation.components.AppBar(
                     title = stringResource(SYMR.strings.feed),
                     actions = {
-                        androidx.compose.material3.IconButton(onClick = { navigator.push(FeedManageScreen()) }) {
+                        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+                        val feedPanorama by uiPreferences.feedPanorama().collectAsState()
+                        IconButton(onClick = { uiPreferences.feedPanorama().set(!feedPanorama) }) {
                             Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Outlined.Settings,
+                                imageVector = Icons.Outlined.Panorama,
+                                contentDescription = "Toggle Panorama",
+                                tint = if (feedPanorama) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        IconButton(onClick = { navigator.push(FeedManageScreen()) }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
                                 contentDescription = "Edit Feed",
                             )
                         }

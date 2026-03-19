@@ -288,6 +288,7 @@ private fun ColumnScope.SortPage(
 private val displayModes = listOf(
     MR.strings.action_display_grid to LibraryDisplayMode.CompactGrid,
     MR.strings.action_display_comfortable_grid to LibraryDisplayMode.ComfortableGrid,
+    KMR.strings.action_display_comfortable_grid_panorama to LibraryDisplayMode.ComfortableGridPanorama,
     MR.strings.action_display_cover_only_grid to LibraryDisplayMode.CoverOnlyGrid,
     MR.strings.action_display_list to LibraryDisplayMode.List,
 )

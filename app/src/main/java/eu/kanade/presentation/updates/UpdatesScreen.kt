@@ -9,6 +9,9 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Panorama
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -187,6 +190,15 @@ private fun UpdatesAppBar(
         modifier = modifier,
         title = stringResource(MR.strings.label_recent_updates),
         actions = {
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val updatesPanorama by uiPreferences.updatesPanorama().collectAsState()
+            IconButton(onClick = { uiPreferences.updatesPanorama().set(!updatesPanorama) }) {
+                Icon(
+                    imageVector = Icons.Outlined.Panorama,
+                    contentDescription = "Toggle Panorama",
+                    tint = if (updatesPanorama) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                )
+            }
             AppBarActions(
                 persistentListOf(
                     AppBar.Action(
