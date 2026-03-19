@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material3.Icon
@@ -99,10 +100,10 @@ fun AnimeSeasonSection(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(
+                itemsIndexed(
                     items = sortedSeasons,
-                    key = { "anime-season-${it.anime.id}" }
-                ) { season ->
+                    key = { index, it -> "anime-season-${it.anime.id}-$index" }
+                ) { _, season ->
                     SeasonItem(
                         season = season,
                         onClick = { onSeasonClick(season.anime.id) }

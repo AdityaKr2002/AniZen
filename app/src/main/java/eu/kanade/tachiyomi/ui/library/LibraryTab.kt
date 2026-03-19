@@ -167,9 +167,9 @@ data object LibraryTab : Tab {
                     },
                     onClickFilter = screenModel::showSettingsDialog,
                     onClickRefresh = {
-                        onClickRefresh(
-                            state.categories[screenModel.activeCategoryIndex],
-                        )
+                        state.categories.getOrNull(screenModel.activeCategoryIndex)?.let {
+                            onClickRefresh(it)
+                        } ?: false
                     },
                     onClickGlobalUpdate = { onClickRefresh(null) },
                     onClickOpenRandomEntry = {

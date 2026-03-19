@@ -158,6 +158,10 @@ class LibraryScreenModel(
                     }
             }
                 .collectLatest { library ->
+                    val categoriesCount = library.size
+                    if (activeCategoryIndex >= categoriesCount && categoriesCount > 0) {
+                        activeCategoryIndex = categoriesCount - 1
+                    }
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,
@@ -844,7 +848,7 @@ class LibraryScreenModel(
     fun invertSelection(index: Int) {
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
-                val categoryId = state.categories[index].id
+                val categoryId = state.categories.getOrNull(index)?.id ?: return@mutate
                 val items = state.getAnimelibItemsByCategoryId(categoryId)?.fastMap { it.libraryAnime }.orEmpty()
                 val selectedIds = list.fastMap { it.id }
                 val (toRemove, toAdd) = items.fastPartition { it.id in selectedIds }

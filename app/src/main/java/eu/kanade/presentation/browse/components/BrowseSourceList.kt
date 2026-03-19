@@ -42,7 +42,7 @@ fun BrowseSourceList(
 
             items(
                 count = animeList.itemCount,
-                key = { index -> animeList.peek(index)?.id ?: "placeholder-$index" },
+                key = { index -> "source-list-${animeList.peek(index)?.id ?: "placeholder"}-$index" },
                 contentType = { index -> if (animeList.peek(index) != null) "anime" else "placeholder" },
             ) { index ->
                 val anime = animeList[index] ?: return@items

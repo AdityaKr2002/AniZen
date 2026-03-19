@@ -35,11 +35,11 @@ fun LibraryCompactGrid(
     ) {
         globalSearchItem(searchQuery, onGlobalSearchClicked)
 
-        items(
+        itemsIndexed(
             items = items,
-            key = { "library-grid-${it.libraryAnime.anime.id}" },
-            contentType = { "anime_library_compact_grid_item" },
-        ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
+            key = { index, it -> "library-grid-${it.libraryAnime.anime.id}-$index" },
+            contentType = { _, _ -> "anime_library_compact_grid_item" },
+        ) { _, libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime
             AnimeCompactGridItem(
                 isSelected = libraryItem.libraryAnime.id in selectedIds,

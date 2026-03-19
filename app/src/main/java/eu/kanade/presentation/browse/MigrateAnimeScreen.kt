@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
@@ -160,10 +161,10 @@ private fun MigrateAnimeContent(
         state = lazyListState,
         contentPadding = contentPadding,
     ) {
-        items(
+        itemsIndexed(
             items = state.titles,
-            key = { it.anime.id },
-        ) { item ->
+            key = { index, it -> "migrate-${it.anime.id}-$index" },
+        ) { _, item ->
             MigrateAnimeItem(
                 anime = item.anime,
                 isSelected = item.selected,
