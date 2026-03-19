@@ -250,7 +250,7 @@ private fun UpdatesUiItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref()
+        val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref() as State<Boolean>
         val (entry, ratio) = if (updatesPanorama) {
 
             AnimeCover.getEntry(update.animeId)

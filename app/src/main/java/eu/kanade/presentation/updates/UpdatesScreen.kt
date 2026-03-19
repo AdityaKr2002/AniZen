@@ -194,7 +194,7 @@ private fun UpdatesAppBar(
         title = stringResource(MR.strings.label_recent_updates),
         actions = {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref()
+            val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref() as State<Boolean>
             IconButton(onClick = { uiPreferences.updatesPanorama().set(!updatesPanorama) }) {
                 Icon(
                     imageVector = Icons.Outlined.Panorama,

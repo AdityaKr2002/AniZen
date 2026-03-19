@@ -13,6 +13,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 
 import androidx.compose.ui.Modifier
@@ -70,7 +71,7 @@ fun HistoryScreen(
                 onChangeSearchQuery = onSearchQueryChange,
                 actions = {
                     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                    val historyPanorama by uiPreferences.historyPanorama().collectAsStatePref()
+                    val historyPanorama by uiPreferences.historyPanorama().collectAsStatePref() as State<Boolean>
                     IconButton(onClick = { uiPreferences.historyPanorama().set(!historyPanorama) }) {
                         Icon(
                             imageVector = Icons.Outlined.Panorama,

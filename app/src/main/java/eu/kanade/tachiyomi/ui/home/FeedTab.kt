@@ -62,7 +62,7 @@ data object FeedTab : Tab {
                     title = stringResource(SYMR.strings.feed),
                     actions = {
                         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                        val feedPanorama by uiPreferences.feedPanorama().collectAsStatePref()
+                        val feedPanorama by uiPreferences.feedPanorama().collectAsStatePref() as State<Boolean>
                         IconButton(onClick = { uiPreferences.feedPanorama().set(!feedPanorama) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Panorama,
