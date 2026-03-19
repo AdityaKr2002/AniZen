@@ -55,13 +55,18 @@ class SourcesScreenModel(
     val events = _events.receiveAsFlow()
 
     init {
-        screenModelScope.launchIO {
+        screenModelScope.launch {
             combine(
+                state.map { it.searchQuery }.distinctUntilChanged().debounce(250L),
+                state.map { it.nsfwOnly }.distinctUntilChanged(),
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
                 SourceHealthCache.healthMap,
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
-                collectLatestAnimeSources(sources, extensions, healthMap)
+            ) { query, nsfwOnly, sources, extensions, healthMap ->
+                // Offload CPU-bound sorting and formatting to Default dispatcher
+                withContext(Dispatchers.Default) {
+                    collectLatestAnimeSources(sources, extensions, healthMap, query, nsfwOnly)
+                }
             }.catch {
                 logcat(LogPriority.ERROR, it)
                 _events.send(Event.FailedFetchingSources)
@@ -81,89 +86,119 @@ class SourcesScreenModel(
         }
     }
 
-    private fun collectLatestAnimeSources(
+    private suspend fun collectLatestAnimeSources(
         sources: List<Source>,
         extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>,
-        healthMap: Map<Long, NodeStatus>
+        healthMap: Map<Long, NodeStatus>,
+        query: String?,
+        nsfwOnly: Boolean,
     ) {
-        mutableState.update { state ->
-            val query = state.searchQuery
-            val nsfwOnly = state.nsfwOnly
-            
-            // Map source IDs to their extension's NSFW status for reliable filtering
-            val nsfwSourceIds = extensions.flatMap { ext -> 
-                if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
-            }.toSet()
+        val context = Injekt.get<Application>()
+        
+        // Map source IDs to their extension's NSFW status for reliable filtering
+        val nsfwSourceIds = extensions.flatMap { ext -> 
+            if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
+        }.toSet()
+        
+        yield() // Ensure we can cancel before heavy filtering
 
-            val filteredSources = sources.filter { source ->
-                val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
-                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
-                val matchesNsfw = !nsfwOnly || isNsfw
-                matchesQuery && matchesNsfw
-            }
+        val filteredSources = sources.filter { source ->
+            val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
+            val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
+            val matchesNsfw = !nsfwOnly || isNsfw
+            matchesQuery && matchesNsfw
+        }
 
-            val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
-                // Sources without a lang defined will be placed at the end
-                when {
-                    d1 == LAST_USED_KEY && d2 != LAST_USED_KEY -> -1
-                    d2 == LAST_USED_KEY && d1 != LAST_USED_KEY -> 1
-                    d1 == PINNED_KEY && d2 != PINNED_KEY -> -1
-                    d2 == PINNED_KEY && d1 != PINNED_KEY -> 1
-                    d1 == "" && d2 != "" -> 1
-                    d2 == "" && d1 != "" -> -1
-                    else -> d1.compareTo(d2)
-                }
+        val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
+            when {
+                d1 == LAST_USED_KEY && d2 != LAST_USED_KEY -> -1
+                d2 == LAST_USED_KEY && d1 != LAST_USED_KEY -> 1
+                d1 == PINNED_KEY && d2 != PINNED_KEY -> -1
+                d2 == PINNED_KEY && d1 != PINNED_KEY -> 1
+                d1 == "" && d2 != "" -> 1
+                d2 == "" && d1 != "" -> -1
+                else -> d1.compareTo(d2)
             }
-            val byLang = filteredSources.groupByTo(map) {
-                when {
-                    it.isUsedLast -> LAST_USED_KEY
-                    Pin.Actual in it.pin -> PINNED_KEY
-                    else -> it.lang
-                }
+        }
+        
+        val byLang = filteredSources.groupByTo(map) {
+            when {
+                it.isUsedLast -> LAST_USED_KEY
+                Pin.Actual in it.pin -> PINNED_KEY
+                else -> it.lang
             }
+        }
+        
+        yield() // Check for cancellation before mapping to UI models
 
-            state.copy(
-                isLoading = false,
-                items = byLang
-                    .flatMap { entry ->
-                        buildList {
-                            add(SourceUiModel.Header(entry.key))
-                            entry.value.forEach { source ->
-                                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
-                                val status = healthMap[source.id] ?: NodeStatus.OPERATIONAL
-                                add(SourceUiModel.Item(source, isNsfw, status))
+        val items = byLang
+            .flatMap { (lang, langSources) ->
+                val displayName = LocaleHelper.getSourceDisplayName(lang, context)
+                buildList {
+                    add(SourceUiModel.Header(lang, displayName))
+                    langSources.forEach { source ->
+                        val extensionName = extensionManager.getExtensionNameForSource(source.id)
+                        val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
+                        
+                        // Pre-calculate technical badges
+                        val nameLower = source.name.lowercase()
+                        val isBdix = nameLower.contains("dflix") || 
+                                     nameLower.contains("dhaka") || 
+                                     nameLower.contains("bdix") || 
+                                     nameLower.contains("ftp") ||
+                                     nameLower.contains("cineplex") ||
+                                     nameLower.contains("sam") ||
+                                     nameLower.contains("bijoy") ||
+                                     nameLower.contains("bas play") ||
+                                     nameLower.contains("fanush") ||
+                                     nameLower.contains("icc") ||
+                                     nameLower.contains("nagordola") ||
+                                     nameLower.contains("roarzone") ||
+                                     nameLower.contains("infomedia")
+                        
+                        val sourceClass = source::class.java.simpleName
+                        val isApi = nameLower.contains("api") || 
+                                    nameLower.contains("json") || 
+                                    sourceClass.contains("Api") || 
+                                    sourceClass.contains("Json")
+
+                        val secondaryText = buildString {
+                            append(sourceLangString)
+                            if (extensionName != null && extensionName != source.name) {
+                                append(" • ")
+                                append(extensionName)
                             }
                         }
+
+                        add(
+                            SourceUiModel.Item(
+                                source = source,
+                                isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
+                                status = healthMap[source.id] ?: NodeStatus.OPERATIONAL,
+                                isBdix = isBdix,
+                                isApi = isApi,
+                                secondaryText = secondaryText
+                            )
+                        )
                     }
-                    .toImmutableList(),
+                }
+            }
+            .toImmutableList()
+
+        mutableState.update { state ->
+            state.copy(
+                isLoading = false,
+                items = items,
             )
         }
     }
 
     fun search(query: String?) {
         mutableState.update { it.copy(searchQuery = query) }
-        screenModelScope.launchIO {
-            combine(
-                getEnabledSources.subscribe(),
-                extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
-                collectLatestAnimeSources(sources, extensions, healthMap)
-            }.first()
-        }
     }
 
     fun toggleNsfwOnly() {
         mutableState.update { it.copy(nsfwOnly = !it.nsfwOnly) }
-        screenModelScope.launchIO {
-            combine(
-                getEnabledSources.subscribe(),
-                extensionManager.installedExtensionsFlow,
-                SourceHealthCache.healthMap
-            ) { sources: List<Source>, extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>, healthMap: Map<Long, NodeStatus> ->
-                collectLatestAnimeSources(sources, extensions, healthMap)
-            }.first()
-        }
     }
 
     fun toggleSource(source: Source) {

@@ -158,10 +158,10 @@ fun SourcesScreen(
             } else {
                 itemsIndexed(
                     items = state.items,
-                    key = { index, model ->
+                    key = { _, model ->
                         when (model) {
-                            is SourceUiModel.Header -> "header-${model.language}-$index"
-                            is SourceUiModel.Item -> "source-${model.source.id}-$index"
+                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}"
+                            is SourceUiModel.Item -> "source-${model.source.id}-${model.source.lang}"
                         }
                     },
                     contentType = { _, model ->
@@ -174,7 +174,7 @@ fun SourcesScreen(
                     when (model) {
                         is SourceUiModel.Header -> {
                             SourceHeader(
-                                language = model.language,
+                                displayName = model.displayName,
                                 modifier = Modifier.animateItem()
                             )
                         }
@@ -192,13 +192,11 @@ fun SourcesScreen(
                                 tonalElevation = elevation
                             ) {
                                 SourceItem(
-                                    source = model.source,
+                                    item = model,
                                     onClickItem = onClickItem,
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
                                     hideLatest = state.hideLatest,
-                                    isNsfw = model.isNsfw,
-                                    status = model.status,
                                     modifier = Modifier.animateItem()
                                 )
                             }
@@ -308,12 +306,11 @@ private fun GroupSeparator(enabled: Boolean) {
 
 @Composable
 private fun SourceHeader(
-    language: String,
+    displayName: String,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     Text(
-        text = LocaleHelper.getSourceDisplayName(language, context),
+        text = displayName,
         modifier = modifier
             .padding(
                 horizontal = MaterialTheme.padding.medium,
@@ -325,25 +322,21 @@ private fun SourceHeader(
 
 @Composable
 private fun SourceItem(
-    source: Source,
+    item: SourceUiModel.Item,
     onClickItem: (Source, Listing) -> Unit,
     onLongClickItem: (Source) -> Unit,
     onClickPin: (Source) -> Unit,
     hideLatest: Boolean,
-    isNsfw: Boolean,
-    status: NodeStatus,
     modifier: Modifier = Modifier,
 ) {
     BaseSourceItem(
         modifier = modifier,
-        source = source,
-        isNsfw = isNsfw,
-        status = status,
-        onClickItem = { onClickItem(source, Listing.Popular) },
-        onLongClickItem = { onLongClickItem(source) },
+        item = item,
+        onClickItem = { onClickItem(item.source, Listing.Popular) },
+        onLongClickItem = { onLongClickItem(item.source) },
         action = {
-            if (source.supportsLatest && !hideLatest) {
-                TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
+            if (item.source.supportsLatest && !hideLatest) {
+                TextButton(onClick = { onClickItem(item.source, Listing.Latest) }) {
                     Text(
                         text = stringResource(MR.strings.latest),
                         style = LocalTextStyle.current.copy(
@@ -353,8 +346,8 @@ private fun SourceItem(
                 }
             }
             SourcePinButton(
-                isPinned = Pin.Pinned in source.pin,
-                onClick = { onClickPin(source) },
+                isPinned = Pin.Pinned in item.source.pin,
+                onClick = { onClickPin(item.source) },
             )
         },
     )
@@ -435,6 +428,9 @@ sealed interface SourceUiModel {
         val source: Source,
         val isNsfw: Boolean,
         val status: NodeStatus,
+        val isBdix: Boolean,
+        val isApi: Boolean,
+        val secondaryText: String,
     ) : SourceUiModel
-    data class Header(val language: String) : SourceUiModel
+    data class Header(val language: String, val displayName: String) : SourceUiModel
 }
