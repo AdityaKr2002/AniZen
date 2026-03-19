@@ -1644,13 +1644,17 @@ class PlayerViewModel @JvmOverloads constructor(
 
         // Check if deleting option is enabled and episode exists
         if (removeAfterSeenSlots != -1 && episodeToDelete != null) {
-            enqueueDeleteSeenEpisodes(episodeToDelete)
-            deletePendingEpisodes()
+            viewModelScope.launchNonCancellable {
+                enqueueDeleteSeenEpisodes(episodeToDelete)
+                deletePendingEpisodes()
+            }
         }
 
         if (downloadPreferences.removeAfterMarkedAsSeen().get() && chosenEpisode.seen) {
-            enqueueDeleteSeenEpisodes(chosenEpisode)
-            deletePendingEpisodes()
+            viewModelScope.launchNonCancellable {
+                enqueueDeleteSeenEpisodes(chosenEpisode)
+                deletePendingEpisodes()
+            }
         }
     }
 
@@ -1857,10 +1861,10 @@ class PlayerViewModel @JvmOverloads constructor(
      * Enqueues this [episode] to be deleted when [deletePendingEpisodes] is called. The download
      * manager handles persisting it across process deaths.
      */
-    private fun enqueueDeleteSeenEpisodes(episode: Episode) {
+    private suspend fun enqueueDeleteSeenEpisodes(episode: Episode) {
         if (!episode.seen) return
         val anime = currentAnime.value ?: return
-        viewModelScope.launchNonCancellable {
+        withIOContext {
             downloadManager.enqueueEpisodesToDelete(listOf(episode.toDomainEpisode()!!), anime)
         }
     }

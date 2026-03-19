@@ -185,10 +185,10 @@ private fun ExtensionDetails(
             )
         }
 
-        items(
+        itemsIndexed(
             items = sources,
-            key = { "source-${it.source.id}" },
-        ) { source ->
+            key = { index, it -> "source-${it.source.id}-$index" },
+        ) { _, source ->
             SourceSwitchPreference(
                 modifier = Modifier.animateItem(),
                 source = source,

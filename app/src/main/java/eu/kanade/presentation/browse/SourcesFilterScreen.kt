@@ -73,11 +73,11 @@ private fun SourcesFilterContent(
                 )
             }
             if (enabled) {
-                items(
+                itemsIndexed(
                     items = items,
-                    key = { "source-filter-${it.source.id}-${it.headerKey}" },
-                    contentType = { "source-filter-item" },
-                ) { item ->
+                    key = { index, it -> "source-filter-${it.source.id}-${it.headerKey}-$index" },
+                    contentType = { _, _ -> "source-filter-item" },
+                ) { _, item ->
                     SourcesFilterItem(
                         modifier = Modifier,
                         item = item,

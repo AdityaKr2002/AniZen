@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.ui.browse.source
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.TravelExplore
@@ -100,10 +100,10 @@ fun Screen.sourcesTab(): TabContent {
                             text = {
                                 val dialogId = remember(source.id) { source.id }
                                 LazyColumn {
-                                    items(
+                                    itemsIndexed(
                                         items = state.categories,
-                                        key = { "source-category-$dialogId-${it.id}" }
-                                    ) { category ->
+                                        key = { index, it -> "source-category-$dialogId-${it.id}-$index" }
+                                    ) { _, category ->
                                         ListItem(
                                             headlineContent = { Text(category.name) },
                                             modifier = Modifier
