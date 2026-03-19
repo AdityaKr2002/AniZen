@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.ui.home
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -16,6 +17,7 @@ import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.components.material.Scaffold
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Panorama
@@ -28,7 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import eu.kanade.domain.ui.UiPreferences
-import androidx.compose.runtime.collectAsState
+import tachiyomi.presentation.core.util.collectAsState
 import androidx.compose.runtime.getValue
 
 fun feedTab(): Tab = FeedTab
