@@ -243,13 +243,20 @@ private fun UpdatesUiItem(
             .padding(horizontal = MaterialTheme.padding.medium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AnimeCover.Square(
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val usePanorama by uiPreferences.updatesPanorama().collectAsState()
+        val (entry, ratio) = if (usePanorama) {
+            AnimeCover.getEntry(update.animeId)
+        } else {
+            AnimeCover.Square to AnimeCover.Square.ratio
+        }
+        entry(
             modifier = Modifier
                 .padding(vertical = 6.dp)
                 .fillMaxHeight(),
             data = update.coverData,
             onClick = onClickCover,
-            ratio = AnimeCover.Square.ratio,
+            ratio = ratio,
         )
         Column(
             modifier = Modifier

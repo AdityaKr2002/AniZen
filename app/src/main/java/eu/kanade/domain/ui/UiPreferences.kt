@@ -63,6 +63,12 @@ class UiPreferences(
 
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
+    fun feedPanorama() = preferenceStore.getBoolean("pref_feed_panorama", true)
+
+    fun updatesPanorama() = preferenceStore.getBoolean("pref_updates_panorama", false)
+
+    fun historyPanorama() = preferenceStore.getBoolean("pref_history_panorama", false)
+
     fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
 
     fun animatedTransitions() = preferenceStore.getBoolean("animated_transitions", true)

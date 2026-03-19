@@ -22,6 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import eu.kanade.presentation.util.formatEpisodeNumber
@@ -30,6 +33,8 @@ import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 private val HistoryItemHeight = 96.dp
 
@@ -41,6 +46,13 @@ fun HistoryItem(
     onClickDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val usePanorama by uiPreferences.historyPanorama().collectAsState()
+    val (entry, ratio) = if (usePanorama) {
+        AnimeCover.getEntry(history.animeId)
+    } else {
+        AnimeCover.Book to AnimeCover.Book.ratio
+    }
     Row(
         modifier = modifier
             .clickable(onClick = onClickResume)
@@ -48,11 +60,11 @@ fun HistoryItem(
             .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AnimeCover.Book(
+        entry(
             modifier = Modifier.fillMaxHeight(),
             data = history.coverData,
             onClick = onClickCover,
-            ratio = AnimeCover.Book.ratio,
+            ratio = ratio,
         )
         Column(
             modifier = Modifier
