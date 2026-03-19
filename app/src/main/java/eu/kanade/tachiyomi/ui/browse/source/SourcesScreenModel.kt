@@ -8,10 +8,6 @@ import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.source.interactor.GetEnabledSources
 import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
-import eu.kanade.domain.source.model.Pin
-import eu.kanade.domain.source.model.Source
-import eu.kanade.domain.source.service.SourceHealthCache
-import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.model.NodeStatus
@@ -38,13 +34,18 @@ import kotlinx.coroutines.yield
 import logcat.LogPriority
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
+import tachiyomi.domain.source.interactor.InsertFeedSavedSearch
+import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
+import tachiyomi.domain.source.model.FeedSavedSearch
+import tachiyomi.domain.source.model.FeedSavedSearchCategory
+import tachiyomi.domain.source.model.Pin
+import tachiyomi.domain.source.model.Source
+import tachiyomi.domain.source.service.SourceHealthCache
+import eu.kanade.domain.source.service.SourcePreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.TreeMap
-
-import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
-import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
-import tachiyomi.domain.source.model.FeedSavedSearchCategory
 
 class SourcesScreenModel(
     private val preferences: BasePreferences = Injekt.get(),
@@ -139,7 +140,7 @@ class SourcesScreenModel(
 
         val items = byLang
             .flatMap { (lang, langSources) ->
-                buildList {
+                buildList<SourceUiModel> {
                     add(mapper.mapHeader(lang))
                     langSources.forEach { source ->
                         add(

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import logcat.LogPriority
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.source.model.Pin
 import tachiyomi.domain.source.model.Source
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -134,7 +135,7 @@ class MigrateSourceScreenModel(
 
     fun selectAll() {
         mutableState.update { state ->
-            val allIds = state.items.map { it.first.source.id }.toImmutableSet()
+            val allIds = state.items.map { it.first.source.id }.toSet().toImmutableSet()
             state.copy(selectedSources = allIds)
         }
     }
@@ -150,6 +151,7 @@ class MigrateSourceScreenModel(
             val enabledIds = state.items
                 .filter { (item, _) -> !preferences.disabledSources().get().contains(item.source.id.toString()) }
                 .map { it.first.source.id }
+                .toSet()
                 .toImmutableSet()
             state.copy(selectedSources = enabledIds)
         }
@@ -160,6 +162,7 @@ class MigrateSourceScreenModel(
             val pinnedIds = state.items
                 .filter { (item, _) -> item.source.pin != Pin.Pinned }
                 .map { it.first.source.id }
+                .toSet()
                 .toImmutableSet()
             state.copy(selectedSources = pinnedIds)
         }

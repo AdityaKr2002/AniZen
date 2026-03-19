@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.ui.browse.source
 
 import android.app.Application
-import eu.kanade.domain.source.model.Source
 import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import tachiyomi.domain.source.model.Source
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -36,7 +36,7 @@ class SourceUiModelMapper(
                      nameLower.contains("roarzone") ||
                      nameLower.contains("infomedia")
         
-        val sourceClass = source::class.java.simpleName
+        val sourceClass = source.javaClass.simpleName
         val isApi = nameLower.contains("api") || 
                     nameLower.contains("json") || 
                     sourceClass.contains("Api") || 

@@ -72,6 +72,7 @@ import eu.kanade.tachiyomi.ui.browse.source.SourcesScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel.Listing
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.source.model.Pin
+import tachiyomi.domain.source.model.Pins
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
@@ -421,16 +422,4 @@ fun SourceOptionsDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
     )
-}
-
-sealed interface SourceUiModel {
-    data class Item(
-        val source: Source,
-        val isNsfw: Boolean,
-        val status: NodeStatus,
-        val isBdix: Boolean,
-        val isApi: Boolean,
-        val secondaryText: String,
-    ) : SourceUiModel
-    data class Header(val language: String, val displayName: String) : SourceUiModel
 }

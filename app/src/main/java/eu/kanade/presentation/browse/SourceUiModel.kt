@@ -1,14 +1,14 @@
 package eu.kanade.presentation.browse
 
 import androidx.compose.runtime.Immutable
-import eu.kanade.domain.source.model.Source
 import eu.kanade.tachiyomi.network.model.NodeStatus
+import tachiyomi.domain.source.model.Source
 
 @Immutable
 sealed interface SourceUiModel {
     @Immutable
     data class Item(
-        val source: Source,
+        val source: tachiyomi.domain.source.model.Source,
         val isNsfw: Boolean,
         val status: NodeStatus,
         val isBdix: Boolean,
