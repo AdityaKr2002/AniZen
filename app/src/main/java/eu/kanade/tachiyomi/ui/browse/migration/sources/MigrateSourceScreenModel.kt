@@ -31,10 +31,14 @@ import tachiyomi.domain.source.model.Source
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import eu.kanade.presentation.browse.SourceUiModel
+import eu.kanade.tachiyomi.ui.browse.source.SourceUiModelMapper
+
 class MigrateSourceScreenModel(
     private val preferences: SourcePreferences = Injekt.get(),
     private val getSourcesWithFavoriteCount: GetSourcesWithFavoriteCount = Injekt.get(),
     private val setMigrateSorting: SetMigrateSorting = Injekt.get(),
+    private val mapper: SourceUiModelMapper = SourceUiModelMapper(),
 ) : StateScreenModel<MigrateSourceScreenModel.State>(State()) {
 
     private val _channel = Channel<Event>(Int.MAX_VALUE)
@@ -58,7 +62,12 @@ class MigrateSourceScreenModel(
                         }
                     }
                 }
-                sourceCounts.filter(queryFilter(searchQuery))
+                
+                val filtered = sourceCounts.filter(queryFilter(searchQuery))
+                
+                filtered.map { (source, count) ->
+                    mapper.map(source) to count
+                }
             }
                 .catch {
                     logcat(LogPriority.ERROR, it)
@@ -111,13 +120,13 @@ class MigrateSourceScreenModel(
         }
     }
 
-    fun toggleSelection(source: Source) {
+    fun toggleSelection(sourceId: Long) {
         mutableState.update { state ->
-            val isSelected = state.selectedSources.contains(source.id)
+            val isSelected = state.selectedSources.contains(sourceId)
             val selectedSources = if (isSelected) {
-                state.selectedSources.minus(source.id)
+                state.selectedSources.minus(sourceId)
             } else {
-                state.selectedSources.plus(source.id)
+                state.selectedSources.plus(sourceId)
             }
             state.copy(selectedSources = selectedSources.toImmutableSet())
         }
@@ -125,7 +134,7 @@ class MigrateSourceScreenModel(
 
     fun selectAll() {
         mutableState.update { state ->
-            val allIds = state.items.map { it.first.id }.toImmutableSet()
+            val allIds = state.items.map { it.first.source.id }.toImmutableSet()
             state.copy(selectedSources = allIds)
         }
     }
@@ -139,8 +148,8 @@ class MigrateSourceScreenModel(
     fun matchEnabled() {
         mutableState.update { state ->
             val enabledIds = state.items
-                .filter { (source, _) -> !preferences.disabledSources().get().contains(source.id.toString()) }
-                .map { it.first.id }
+                .filter { (item, _) -> !preferences.disabledSources().get().contains(item.source.id.toString()) }
+                .map { it.first.source.id }
                 .toImmutableSet()
             state.copy(selectedSources = enabledIds)
         }
@@ -149,8 +158,8 @@ class MigrateSourceScreenModel(
     fun matchPinned() {
         mutableState.update { state ->
             val pinnedIds = state.items
-                .filter { (source, _) -> source.pin != tachiyomi.domain.source.model.Pins.unpinned }
-                .map { it.first.id }
+                .filter { (item, _) -> item.source.pin != Pin.Pinned }
+                .map { it.first.source.id }
                 .toImmutableSet()
             state.copy(selectedSources = pinnedIds)
         }
@@ -159,7 +168,7 @@ class MigrateSourceScreenModel(
     @Immutable
     data class State(
         val isLoading: Boolean = true,
-        val items: ImmutableList<Pair<Source, Long>> = persistentListOf(),
+        val items: ImmutableList<Pair<SourceUiModel.Item, Long>> = persistentListOf(),
         val selectedSources: ImmutableSet<Long> = persistentSetOf(),
         val sortingMode: SetMigrateSorting.Mode = SetMigrateSorting.Mode.ALPHABETICAL,
         val sortingDirection: SetMigrateSorting.Direction = SetMigrateSorting.Direction.ASCENDING,

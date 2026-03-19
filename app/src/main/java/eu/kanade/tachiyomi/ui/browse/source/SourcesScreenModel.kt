@@ -56,6 +56,7 @@ class SourcesScreenModel(
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+    private val mapper: SourceUiModelMapper = SourceUiModelMapper(),
 ) : StateScreenModel<SourcesScreenModel.State>(State()) {
 
     private val _events = Channel<Event>(Int.MAX_VALUE)
@@ -100,14 +101,12 @@ class SourcesScreenModel(
         query: String?,
         nsfwOnly: Boolean,
     ) {
-        val context = Injekt.get<Application>()
-        
         // Map source IDs to their extension's NSFW status for reliable filtering
         val nsfwSourceIds = extensions.flatMap { ext -> 
             if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
         }.toSet()
         
-        yield() // Ensure we can cancel before heavy filtering
+        yield()
 
         val filteredSources = sources.filter { source ->
             val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
@@ -136,55 +135,18 @@ class SourcesScreenModel(
             }
         }
         
-        yield() // Check for cancellation before mapping to UI models
+        yield()
 
         val items = byLang
             .flatMap { (lang, langSources) ->
-                val displayName = LocaleHelper.getSourceDisplayName(lang, context)
                 buildList {
-                    add(SourceUiModel.Header(lang, displayName))
+                    add(mapper.mapHeader(lang))
                     langSources.forEach { source ->
-                        val extensionName = extensionManager.getExtensionNameForSource(source.id)
-                        val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
-                        
-                        // Pre-calculate technical badges
-                        val nameLower = source.name.lowercase()
-                        val isBdix = nameLower.contains("dflix") || 
-                                     nameLower.contains("dhaka") || 
-                                     nameLower.contains("bdix") || 
-                                     nameLower.contains("ftp") ||
-                                     nameLower.contains("cineplex") ||
-                                     nameLower.contains("sam") ||
-                                     nameLower.contains("bijoy") ||
-                                     nameLower.contains("bas play") ||
-                                     nameLower.contains("fanush") ||
-                                     nameLower.contains("icc") ||
-                                     nameLower.contains("nagordola") ||
-                                     nameLower.contains("roarzone") ||
-                                     nameLower.contains("infomedia")
-                        
-                        val sourceClass = source::class.java.simpleName
-                        val isApi = nameLower.contains("api") || 
-                                    nameLower.contains("json") || 
-                                    sourceClass.contains("Api") || 
-                                    sourceClass.contains("Json")
-
-                        val secondaryText = buildString {
-                            append(sourceLangString)
-                            if (extensionName != null && extensionName != source.name) {
-                                append(" • ")
-                                append(extensionName)
-                            }
-                        }
-
                         add(
-                            SourceUiModel.Item(
+                            mapper.map(
                                 source = source,
                                 isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
                                 status = healthMap[source.id] ?: NodeStatus.OPERATIONAL,
-                                isBdix = isBdix,
-                                isApi = isApi,
-                                secondaryText = secondaryText
                             )
                         )
                     }

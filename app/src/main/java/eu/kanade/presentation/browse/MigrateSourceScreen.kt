@@ -17,18 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowDownward
-import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.NewReleases
-import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.SelectAll
-import androidx.compose.material.icons.outlined.SortByAlpha
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,11 +49,9 @@ import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
-import eu.kanade.presentation.browse.components.rememberSourceItem
 import eu.kanade.presentation.components.AnimatedFloatingSearchBox
 import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.util.animateItemFastScroll
-import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.ui.browse.migration.sources.MigrateSourceScreenModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.collections.immutable.ImmutableList
@@ -71,13 +61,11 @@ import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.Badge
 import tachiyomi.presentation.core.components.BadgeGroup
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
-import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.icons.FlagEmoji
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.theme.header
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
@@ -88,7 +76,7 @@ fun MigrateSourceScreen(
     onToggleSortingDirection: () -> Unit,
     onToggleSortingMode: () -> Unit,
     onChangeSearchQuery: (String?) -> Unit,
-    onToggleSelection: (Source) -> Unit,
+    onToggleSelection: (Long) -> Unit,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
@@ -107,8 +95,8 @@ fun MigrateSourceScreen(
                 list = state.items,
                 contentPadding = contentPadding,
                 onClickItem = onClickItem,
-                onLongClickItem = { source ->
-                    val sourceId = source.id.toString()
+                onLongClickItem = { item ->
+                    val sourceId = item.source.id.toString()
                     context.copyToClipboard(sourceId, sourceId)
                 },
                 sortingMode = state.sortingMode,
@@ -129,17 +117,17 @@ fun MigrateSourceScreen(
 
 @Composable
 private fun MigrateSourceList(
-    list: ImmutableList<Pair<Source, Long>>,
+    list: ImmutableList<Pair<SourceUiModel.Item, Long>>,
     contentPadding: PaddingValues,
     onClickItem: (Source) -> Unit,
-    onLongClickItem: (Source) -> Unit,
+    onLongClickItem: (SourceUiModel.Item) -> Unit,
     sortingMode: SetMigrateSorting.Mode,
     onToggleSortingMode: () -> Unit,
     sortingDirection: SetMigrateSorting.Direction,
     onToggleSortingDirection: () -> Unit,
     state: MigrateSourceScreenModel.State,
     onChangeSearchQuery: (String?) -> Unit,
-    onToggleSelection: (Source) -> Unit,
+    onToggleSelection: (Long) -> Unit,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
     onMatchEnabled: () -> Unit,
@@ -169,24 +157,24 @@ private fun MigrateSourceList(
         ) {
             items(
                 items = list,
-                key = { (source, _) -> "migrate-${source.id}" },
-            ) { (source, count) ->
-                val isSelected = state.selectedSources.contains(source.id)
+                key = { (item, _) -> "migrate-${item.source.id}" },
+            ) { (item, count) ->
+                val isSelected = state.selectedSources.contains(item.source.id)
                 MigrateSourceItem(
                     modifier = Modifier.animateItemFastScroll()
                         .padding(end = MaterialTheme.padding.small),
-                    source = source,
+                    item = item,
                     count = count,
                     isSelected = isSelected,
                     isSelectionMode = state.selectionMode,
                     onClickItem = {
                         if (state.selectionMode) {
-                            onToggleSelection(source)
+                            onToggleSelection(item.source.id)
                         } else {
-                            onClickItem(source)
+                            onClickItem(item.source)
                         }
                     },
-                    onLongClickItem = { onToggleSelection(source) },
+                    onLongClickItem = { onToggleSelection(item.source.id) },
                 )
             }
         }
@@ -286,11 +274,9 @@ private fun MigrateBottomActionMenu(
     }
 }
 
-import eu.kanade.presentation.browse.components.rememberSourceItem
-
 @Composable
 private fun MigrateSourceItem(
-    source: Source,
+    item: SourceUiModel.Item,
     count: Long,
     isSelected: Boolean,
     isSelectionMode: Boolean,
@@ -305,14 +291,12 @@ private fun MigrateSourceItem(
         null
     }
 
-    val item = rememberSourceItem(source = source)
-
     BaseSourceItem(
         modifier = modifier.alpha(if (isUnselected) 0.5f else 1f),
         item = item,
         onClickItem = onClickItem,
         onLongClickItem = onLongClickItem,
-        icon = { SourceIcon(source = source) },
+        icon = { SourceIcon(source = item.source) },
         action = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -331,14 +315,14 @@ private fun MigrateSourceItem(
                 }
             }
         },
-        content = { item ->
+        content = { _ ->
             Column(
                 modifier = Modifier
                     .padding(horizontal = MaterialTheme.padding.medium)
                     .weight(1f),
             ) {
                 Text(
-                    text = source.name.ifBlank { source.id.toString() },
+                    text = item.displayName,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
@@ -351,14 +335,14 @@ private fun MigrateSourceItem(
                     if (item.secondaryText.isNotEmpty()) {
                         Text(
                             modifier = Modifier.secondaryItemAlpha(),
-                            text = FlagEmoji.getEmojiLangFlag(source.lang) + " " + item.secondaryText,
+                            text = FlagEmoji.getEmojiLangFlag(item.source.lang) + " " + item.secondaryText,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,
                             textDecoration = textDecoration,
                         )
                     }
-                    if (source.isStub) {
+                    if (item.isStub) {
                         Text(
                             modifier = Modifier.secondaryItemAlpha(),
                             text = stringResource(MR.strings.not_installed),

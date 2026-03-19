@@ -9,86 +9,23 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.network.model.NodeStatus
-import eu.kanade.tachiyomi.util.system.LocaleHelper
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOf
 import tachiyomi.domain.source.model.Source
-import tachiyomi.domain.source.service.SourceHealthCache
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.util.secondaryItemAlpha
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-
-import eu.kanade.presentation.browse.SourceUiModel
-
-@Composable
-fun rememberSourceItem(source: Source): SourceUiModel.Item {
-    val context = LocalContext.current
-    val extensionManager: ExtensionManager = remember { Injekt.get() }
-    
-    return remember(source) {
-        val extensionName = extensionManager.getExtensionNameForSource(source.id)
-        val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
-        
-        val nameLower = source.name.lowercase()
-        val isBdix = nameLower.contains("dflix") || 
-                     nameLower.contains("dhaka") || 
-                     nameLower.contains("bdix") || 
-                     nameLower.contains("ftp") ||
-                     nameLower.contains("cineplex") ||
-                     nameLower.contains("sam") ||
-                     nameLower.contains("bijoy") ||
-                     nameLower.contains("bas play") ||
-                     nameLower.contains("fanush") ||
-                     nameLower.contains("icc") ||
-                     nameLower.contains("nagordola") ||
-                     nameLower.contains("roarzone") ||
-                     nameLower.contains("infomedia")
-        
-        val sourceClass = source::class.java.simpleName
-        val isApi = nameLower.contains("api") || 
-                    nameLower.contains("json") || 
-                    sourceClass.contains("Api") || 
-                    sourceClass.contains("Json")
-
-        val secondaryText = buildString {
-            append(sourceLangString)
-            if (extensionName != null && extensionName != source.name) {
-                append(" • ")
-                append(extensionName)
-            }
-        }
-
-        SourceUiModel.Item(
-            source = source,
-            isNsfw = source.isNsfw,
-            status = NodeStatus.OPERATIONAL,
-            isBdix = isBdix,
-            isApi = isApi,
-            secondaryText = secondaryText
-        )
-    }
-}
 
 @Composable
 fun BaseSourceItem(
@@ -122,7 +59,7 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = item.source.name,
+                text = item.displayName,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
@@ -149,7 +86,7 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
                 )
             }
 
-            // Health Pulse linked to pre-calculated status
+            // Health Pulse
             Box(
                 modifier = Modifier
                     .size(6.dp)
