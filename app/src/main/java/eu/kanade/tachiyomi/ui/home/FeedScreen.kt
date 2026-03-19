@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,7 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import eu.kanade.presentation.anime.components.AnimeCover
@@ -274,7 +275,7 @@ private fun FeedCard(
     onClick: () -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val usePanorama by uiPreferences.feedPanorama().collectAsState()
+    val usePanorama by uiPreferences.feedPanorama().collectAsStatePref()
     val (entry, ratio) = if (usePanorama) {
         AnimeCover.getEntry(anime.id)
     } else {

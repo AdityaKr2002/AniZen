@@ -39,7 +39,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.AnimeCover
@@ -248,8 +248,9 @@ private fun UpdatesUiItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val usePanorama by uiPreferences.updatesPanorama().collectAsState()
-        val (entry, ratio) = if (usePanorama) {
+        val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref()
+        val (entry, ratio) = if (updatesPanorama) {
+
             AnimeCover.getEntry(update.animeId)
         } else {
             AnimeCover.Square to AnimeCover.Square.ratio
