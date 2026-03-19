@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.runtime.getValue
