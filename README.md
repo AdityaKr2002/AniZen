@@ -5,6 +5,7 @@
 # AniZen
 
 ### A high-performance anime & movie platform for Android.
+#### AniZen × Miyomi
 *Built from the ground up for fluidity, intelligence, and total control.*
 
 [![Discord](https://img.shields.io/discord/1242381704459452488?label=Discord&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF&style=flat-square)](https://discord.gg/J2wmZqEJnS)
@@ -217,5 +218,6 @@ AniZen is open-source software licensed under the [Apache-2.0 License](LICENSE).
 ---
 
 <div align="center">
+<sub>AniZen × Miyomi</sub><br>
 <sub>Designed, directed, and built solo. Every detail intentional.</sub>
 </div>
