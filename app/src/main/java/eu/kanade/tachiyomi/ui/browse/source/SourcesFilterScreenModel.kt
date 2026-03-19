@@ -40,7 +40,7 @@ class SourcesFilterScreenModel(
                 }
                 
                 languagesWithSources.forEach { (lang, sources) ->
-                    items[mapper.mapHeader(lang)] = sources.map { mapper.map(it) }
+                    items[mapper.mapHeader(lang)] = sources.map { mapper.map(it, headerKey = lang) }
                 }
                 
                 Triple(items, enabledLanguages, disabledSources)

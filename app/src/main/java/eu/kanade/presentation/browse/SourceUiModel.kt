@@ -9,6 +9,7 @@ sealed interface SourceUiModel {
     @Immutable
     data class Item(
         val source: tachiyomi.domain.source.model.Source,
+        val headerKey: String,
         val isNsfw: Boolean,
         val status: NodeStatus,
         val isBdix: Boolean,

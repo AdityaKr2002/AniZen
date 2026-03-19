@@ -114,7 +114,7 @@ class SourcesScreenModel(
             val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
             val matchesNsfw = !nsfwOnly || isNsfw
             matchesQuery && matchesNsfw
-        }
+        }.distinctBy { it.id }
 
         val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
             when {
@@ -146,6 +146,7 @@ class SourcesScreenModel(
                         add(
                             mapper.map(
                                 source = source,
+                                headerKey = lang,
                                 isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
                                 status = healthMap[source.id] ?: NodeStatus.OPERATIONAL,
                             )

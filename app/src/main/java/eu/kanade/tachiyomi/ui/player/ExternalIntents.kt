@@ -551,6 +551,10 @@ class ExternalIntents {
         if (removeAfterSeenSlots != -1 && episodeToDelete != null) {
             enqueueDeleteSeenEpisodes(episodeToDelete, anime)
         }
+
+        if (downloadPreferences.removeAfterMarkedAsSeen().get() && episode.seen) {
+            enqueueDeleteSeenEpisodes(episode, anime)
+        }
     }
 
     /**
@@ -613,6 +617,7 @@ class ExternalIntents {
                     listOf(episode),
                     anime,
                 )
+                downloadManager.deletePendingEpisodes()
             }
         }
     }

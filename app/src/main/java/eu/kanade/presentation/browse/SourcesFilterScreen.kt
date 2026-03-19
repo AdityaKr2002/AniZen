@@ -75,7 +75,7 @@ private fun SourcesFilterContent(
             if (enabled) {
                 items(
                     items = items,
-                    key = { "source-filter-${it.source.id}-${it.source.lang}" },
+                    key = { "source-filter-${it.source.id}-${it.headerKey}" },
                     contentType = { "source-filter-item" },
                 ) { item ->
                     SourcesFilterItem(

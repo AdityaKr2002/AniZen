@@ -159,10 +159,10 @@ fun SourcesScreen(
             } else {
                 itemsIndexed(
                     items = state.items,
-                    key = { _, model ->
+                    key = { index, model ->
                         when (model) {
-                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}"
-                            is SourceUiModel.Item -> "source-${model.source.id}-${model.source.lang}"
+                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}-$index"
+                            is SourceUiModel.Item -> "source-${model.headerKey}-${model.source.id}-$index"
                         }
                     },
                     contentType = { _, model ->

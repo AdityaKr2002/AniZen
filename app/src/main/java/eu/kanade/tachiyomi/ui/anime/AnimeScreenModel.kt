@@ -1008,9 +1008,37 @@ class AnimeScreenModel(
     }
 
     fun markEpisodesSeen(episodes: List<Episode>, seen: Boolean) {
+        val anime = successState?.anime ?: return
         toggleAllSelection(false)
         screenModelScope.launchIO {
             setSeenStatus.await(seen = seen, episodes = episodes.toTypedArray())
+
+            if (seen) {
+                val removeAfterSeenSlots = downloadPreferences.removeAfterReadSlots().get()
+                if (removeAfterSeenSlots != -1) {
+                    val allEpisodes = successState?.episodes?.map { it.episode }.orEmpty()
+                    val sortedEpisodes = allEpisodes.sortedWith(getEpisodeSort(anime)).let {
+                        if (anime.sortDescending()) it.reversed() else it
+                    }
+
+                    episodes.forEach { chosenEpisode ->
+                        val currentEpisodePosition = sortedEpisodes.indexOfFirst { it.id == chosenEpisode.id }
+                        if (currentEpisodePosition != -1) {
+                            val episodeToDelete = sortedEpisodes.getOrNull(currentEpisodePosition - removeAfterSeenSlots)
+                            if (episodeToDelete != null && episodeToDelete.seen) {
+                                downloadManager.enqueueEpisodesToDelete(listOf(episodeToDelete), anime)
+                            }
+                        }
+                    }
+                }
+
+                if (downloadPreferences.removeAfterMarkedAsSeen().get()) {
+                    downloadManager.enqueueEpisodesToDelete(episodes, anime)
+                }
+
+                downloadManager.deletePendingEpisodes()
+            }
+
             if (!seen || successState?.hasLoggedInTrackers == false || autoTrackState == AutoTrackState.NEVER) return@launchIO
             val tracks = getTracks.await(animeId)
             val maxEpisodeNumber = episodes.maxOf { it.episodeNumber }

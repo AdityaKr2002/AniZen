@@ -15,6 +15,7 @@ class SourceUiModelMapper(
 ) {
     fun map(
         source: Source,
+        headerKey: String = "",
         isNsfw: Boolean = source.isNsfw,
         status: NodeStatus = NodeStatus.OPERATIONAL,
     ): SourceUiModel.Item {
@@ -52,6 +53,7 @@ class SourceUiModelMapper(
 
         return SourceUiModel.Item(
             source = source,
+            headerKey = headerKey,
             isNsfw = isNsfw,
             status = status,
             isBdix = isBdix,

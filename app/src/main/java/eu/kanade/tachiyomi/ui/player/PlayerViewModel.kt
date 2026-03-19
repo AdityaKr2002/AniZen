@@ -1645,6 +1645,12 @@ class PlayerViewModel @JvmOverloads constructor(
         // Check if deleting option is enabled and episode exists
         if (removeAfterSeenSlots != -1 && episodeToDelete != null) {
             enqueueDeleteSeenEpisodes(episodeToDelete)
+            deletePendingEpisodes()
+        }
+
+        if (downloadPreferences.removeAfterMarkedAsSeen().get() && chosenEpisode.seen) {
+            enqueueDeleteSeenEpisodes(chosenEpisode)
+            deletePendingEpisodes()
         }
     }
 
