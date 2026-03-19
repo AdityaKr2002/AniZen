@@ -30,7 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.runtime.getValue
 
 fun feedTab(): Tab = FeedTab
@@ -62,7 +62,7 @@ data object FeedTab : Tab {
                     title = stringResource(SYMR.strings.feed),
                     actions = {
                         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                        val feedPanorama by uiPreferences.feedPanorama().collectAsState()
+                        val feedPanorama by uiPreferences.feedPanorama().collectAsStatePref()
                         IconButton(onClick = { uiPreferences.feedPanorama().set(!feedPanorama) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Panorama,

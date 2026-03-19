@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -67,7 +67,7 @@ fun HistoryScreen(
                 onChangeSearchQuery = onSearchQueryChange,
                 actions = {
                     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                    val historyPanorama by uiPreferences.historyPanorama().collectAsState()
+                    val historyPanorama by uiPreferences.historyPanorama().collectAsStatePref()
                     IconButton(onClick = { uiPreferences.historyPanorama().set(!historyPanorama) }) {
                         Icon(
                             imageVector = Icons.Outlined.Panorama,

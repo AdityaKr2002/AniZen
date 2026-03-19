@@ -52,7 +52,7 @@ import kotlin.time.Duration.Companion.seconds
 
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 @Composable
 fun UpdateScreen(
@@ -192,7 +192,7 @@ private fun UpdatesAppBar(
         title = stringResource(MR.strings.label_recent_updates),
         actions = {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val updatesPanorama by uiPreferences.updatesPanorama().collectAsState()
+            val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref()
             IconButton(onClick = { uiPreferences.updatesPanorama().set(!updatesPanorama) }) {
                 Icon(
                     imageVector = Icons.Outlined.Panorama,
