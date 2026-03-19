@@ -77,48 +77,64 @@ jobs:
             RANGE="$PREV_TAG..HEAD"
           fi
           
+          mkdir -p .github/ai
           # 1. Get commits (subjects and bodies)
-          COMMITS=$(git log $RANGE --pretty=format:"- %s%n%b" | grep -v "chore: bump version" || echo "New version release.")
+          git log $RANGE --pretty=format:"- %s%n%b" | grep -v "chore: bump version" > .github/ai/commits.txt || echo "New version release." > .github/ai/commits.txt
           
           # 2. Get file change statistics
-          DIFF_STATS=$(git diff --stat $RANGE)
+          git diff --stat $RANGE > .github/ai/files.txt
           
-          # 3. Get actual code diff
-          CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
-          
-          echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
-          echo "FILE STATISTICS:" >> $GITHUB_ENV
-          echo "$DIFF_STATS" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "CODE CHANGES:" >> $GITHUB_ENV
-          echo "$CODE_DIFF" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "COMMIT MESSAGES:" >> $GITHUB_ENV
-          echo "$COMMITS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # 3. Get actual code diff (capped at 1000 lines for stability)
+          git diff -U1 $RANGE | head -n 1000 > .github/ai/diff.txt
 
       - name: Format Changelog with Groq AI
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          COMMITS=$(cat .github/ai/commits.txt)
+          FILES=$(cat .github/ai/files.txt)
+          DIFF=$(cat .github/ai/diff.txt)
+          
+          cat > .github/ai/full_prompt.txt <<EOF
+          You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
           Looking at the code changes and commits below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
           Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
           CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
           
-          CONTEXT:
-          $AI_CONTEXT"
+          NEW CHANGES:
+          COMMIT MESSAGES:
+          $COMMITS
+
+          FILE STATISTICS:
+          $FILES
           
-          PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
-            model: $model,
-            messages: [{role: "user", content: $prompt}],
-            temperature: 0.7
-          }')
+          CODE CHANGES:
+          $DIFF
+          EOF
           
+          PAYLOAD=$(jq -n \
+            --rawfile prompt .github/ai/full_prompt.txt \
+            --arg model "llama-3.3-70b-versatile" \
+            '{
+              model: $model,
+              messages: [{role: "user", content: $prompt}],
+              temperature: 0.7,
+              max_tokens: 1024
+            }')
+          
+          echo "Requesting AI summary from Groq (llama-3.3-70b-versatile)..."
           RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
+          
+          # Debug: Log the response status/error (excluding full body if successful)
+          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+          if [ -n "$ERROR_MSG" ]; then
+            echo "Groq API Error: $ERROR_MSG"
+          else
+            echo "Groq API Request: Success"
+          fi
           
           SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           
