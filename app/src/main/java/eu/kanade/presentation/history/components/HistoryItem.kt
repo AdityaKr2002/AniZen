@@ -49,7 +49,7 @@ fun HistoryItem(
     modifier: Modifier = Modifier,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val usePanorama by uiPreferences.historyPanorama().collectAsStatePref()
+    val usePanorama by uiPreferences.historyPanorama().collectAsStatePref() as State<Boolean>
     val (entry, ratio) = if (usePanorama) {
         AnimeCover.getEntry(history.animeId)
     } else {

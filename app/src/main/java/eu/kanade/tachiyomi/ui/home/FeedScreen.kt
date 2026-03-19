@@ -275,7 +275,7 @@ private fun FeedCard(
     onClick: () -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val usePanorama by uiPreferences.feedPanorama().collectAsStatePref()
+    val usePanorama by uiPreferences.feedPanorama().collectAsStatePref() as State<Boolean>
     val (entry, ratio) = if (usePanorama) {
         AnimeCover.getEntry(anime.id)
     } else {
