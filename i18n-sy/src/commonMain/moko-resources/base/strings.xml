@@ -457,6 +457,7 @@
     <string name="select_sources">Select sources</string>
     <string name="select_none">Select none</string>
     <string name="migration">Migration</string>
+    <string name="migrating">Migrating</string>
     <string name="skip_pre_migration">Skip pre-migration</string>
     <string name="pre_migration_skip_toast">To show this screen again, go to Settings -> Library.</string>
     <string name="use_intelligent_search">Search title + keywords of title</string>
@@ -732,4 +733,10 @@
 
     <!-- Humanize time -->
     <string name="humanize_fallback">moments ago</string>
+    <string name="label_library_update_errors">Library update errors (%1$d)</string>
+    <string name="info_empty_library_update_errors">No library update errors</string>
+    <string name="action_scroll_to_top">Scroll to top</string>
+    <string name="action_scroll_to_previous">Scroll to previous</string>
+    <string name="action_scroll_to_next">Scroll to next</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
 </resources>

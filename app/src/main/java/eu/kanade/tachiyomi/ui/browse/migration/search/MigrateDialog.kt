@@ -47,6 +47,7 @@ import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
@@ -56,7 +57,7 @@ import uy.kohesive.injekt.api.get
 import java.time.Instant
 
 @Composable
-internal fun MigrateDialog(
+fun MigrateDialog(
     oldAnime: Anime,
     newAnime: Anime,
     screenModel: MigrateDialogScreenModel,
@@ -138,7 +139,7 @@ internal fun MigrateDialog(
                             }
                         },
                     ) {
-                        Text(text = stringResource(MR.strings.migrate))
+                        Text(text = stringResource(SYMR.strings.migrating))
                     }
                 }
             },
@@ -146,7 +147,8 @@ internal fun MigrateDialog(
     }
 }
 
-internal class MigrateDialogScreenModel(
+class MigrateDialogScreenModel(
+    val animeId: Long,
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),

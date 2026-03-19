@@ -46,14 +46,15 @@ fun TabbedScreen(
 
     Scaffold(
         topBar = {
-            if (titleRes != null) {
-                val tab = tabs.getOrNull(state.currentPage) ?: tabs.getOrNull(0)
+            val tab = tabs.getOrNull(state.currentPage) ?: tabs.getOrNull(0)
+            val currentTitleRes = tab?.titleRes ?: titleRes
+            if (currentTitleRes != null) {
                 val searchEnabled = tab?.searchEnabled ?: false
 
                 SearchToolbar(
                     titleContent = {
                         AppBarTitle(
-                            stringResource(titleRes),
+                            stringResource(currentTitleRes),
                             modifier = modifier,
                             null,
                             tab?.numberTitle ?: 0,
@@ -101,7 +102,7 @@ fun TabbedScreen(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
                 verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 2,
+                beyondViewportPageCount = 1,
             ) { page ->
                 tabs[page].content(
                     PaddingValues(bottom = contentPadding.calculateBottomPadding()),

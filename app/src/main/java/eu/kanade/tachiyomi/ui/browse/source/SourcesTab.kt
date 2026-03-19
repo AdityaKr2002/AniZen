@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.ui.browse.source
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.TravelExplore
@@ -15,10 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -32,6 +32,7 @@ import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import tachiyomi.domain.source.model.FeedSavedSearchCategory
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -59,7 +60,7 @@ fun Screen.sourcesTab(): TabContent {
                 ),
             ),
             content = { contentPadding, snackbarHostState ->
-                val state by screenModel.state.collectAsState()
+                val state by screenModel.state.collectAsStateWithLifecycle()
                 SourcesScreen(
                     state = state,
                     contentPadding = contentPadding,
@@ -99,10 +100,10 @@ fun Screen.sourcesTab(): TabContent {
                             text = {
                                 val dialogId = remember(source.id) { source.id }
                                 LazyColumn {
-                                    items(
+                                    itemsIndexed(
                                         items = state.categories,
-                                        key = { "source-category-$dialogId-${it.id}" }
-                                    ) { category ->
+                                        key = { index, it -> "source-category-$dialogId-${it.id}-$index" }
+                                    ) { _, category ->
                                         ListItem(
                                             headlineContent = { Text(category.name) },
                                             modifier = Modifier

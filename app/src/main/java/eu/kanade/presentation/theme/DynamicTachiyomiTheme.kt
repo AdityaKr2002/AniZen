@@ -6,6 +6,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.material.color.utilities.Hct
@@ -48,20 +49,24 @@ private fun rememberDynamicColorScheme(
     isAmoled: Boolean,
     contrast: Double,
 ): ColorScheme {
-    val colorScheme = generateColorSchemeFromSeed(seed, isDark, contrast)
-    if (isDark && isAmoled) {
-        return colorScheme.copy(
-            background = Color.Black,
-            onBackground = Color.White,
-            surface = Color.Black,
-            onSurface = Color.White,
-            surfaceVariant = Color(0xFF0C0C0C),
-            surfaceContainerLowest = Color(0xFF0C0C0C),
-            surfaceContainerLow = Color(0xFF0C0C0C),
-            surfaceContainer = Color(0xFF0C0C0C),
-            surfaceContainerHigh = Color(0xFF131313),
-            surfaceContainerHighest = Color(0xFF1B1B1B),
-        )
+    val colorScheme = remember(seed, isDark, isAmoled, contrast) {
+        val scheme = generateColorSchemeFromSeed(seed, isDark, contrast)
+        if (isDark && isAmoled) {
+            scheme.copy(
+                background = Color.Black,
+                onBackground = Color.White,
+                surface = Color.Black,
+                onSurface = Color.White,
+                surfaceVariant = Color(0xFF0C0C0C),
+                surfaceContainerLowest = Color(0xFF0C0C0C),
+                surfaceContainerLow = Color(0xFF0C0C0C),
+                surfaceContainer = Color(0xFF0C0C0C),
+                surfaceContainerHigh = Color(0xFF131313),
+                surfaceContainerHighest = Color(0xFF1B1B1B),
+            )
+        } else {
+            scheme
+        }
     }
     return colorScheme
 }

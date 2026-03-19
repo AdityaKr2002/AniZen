@@ -7,4 +7,6 @@ class GetCustomAnimeInfo(
 ) {
 
     fun get(mangaId: Long) = customAnimeRepository.get(mangaId)
+
+    fun subscribe(mangaId: Long) = customAnimeRepository.subscribe(mangaId)
 }

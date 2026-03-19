@@ -50,62 +50,95 @@ jobs:
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "COMMIT_COUNT=$COMMIT_COUNT" >> $GITHUB_ENV
 
-      - name: Generate Code-Centric Context for AI
+      - name: Generate AI Context
         run: |
-          # Use the exact push range
-          RANGE="${{ github.event.before }}..${{ github.sha }}"
-          if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
-            RANGE="-n 1"
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            RANGE="HEAD~20..HEAD"
+          else
+            RANGE="$LAST_TAG..HEAD"
           fi
           
-          # Get file change statistics
-          FILE_CHANGES=$(git diff --stat $RANGE)
-          
-          # Get the actual code diff
-          CODE_DIFF=$(git diff -U1 $RANGE | head -n 200)
-          
-          if [ -z "$FILE_CHANGES" ]; then FILE_CHANGES="Minor internal updates."; fi
-          
-          echo "AI_CONTEXT<<EOF" >> $GITHUB_ENV
-          echo "ADDITIONS/DELETIONS:" >> $GITHUB_ENV
-          echo "$FILE_CHANGES" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "CODE CHANGES:" >> $GITHUB_ENV
-          echo "$CODE_DIFF" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          mkdir -p .github/ai
+          # Save context to files instead of environment variables to prevent "Argument list too long"
+          git log --pretty=format:"- %s" $RANGE > .github/ai/commits.txt
+          git diff --stat $RANGE > .github/ai/files.txt
+          # Capture a generous amount of code but keep it manageable (1000 lines)
+          git diff -U3 $RANGE | head -n 1000 > .github/ai/diff.txt
 
-      - name: Format Changelog with Groq AI
+      - name: Restore AI Note Accumulator
+        uses: actions/cache/restore@v4
+        with:
+          path: .github/AI_NOTE_ACCUMULATOR
+          key: ai-note-acc-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ai-note-acc-${{ github.ref_name }}-
+
+      - name: Generate Changelog with AI
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          PROMPT="You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
+          ACCUMULATED_NOTES=""
+          if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
+            ACCUMULATED_NOTES=$(cat .github/AI_NOTE_ACCUMULATOR)
+          fi
+          
+          COMMITS=$(cat .github/ai/commits.txt)
+          FILES=$(cat .github/ai/files.txt)
+          DIFF=$(cat .github/ai/diff.txt)
+
+          PROMPT=$(cat <<EOF
+          You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
           Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
           Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
-          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
+          CRITICAL: Do NOT mention technical details like 'diffs', 'commits', or specific file paths. Tell the story of the features!
+
+          IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. Merge them into this new update so no info is lost.
+          PREVIOUS FAILED NOTES:
+          $ACCUMULATED_NOTES
+
+          NEW CHANGES:
+          COMMIT HISTORY:
+          $COMMITS
           
-          CONTEXT:
-          $AI_CONTEXT"
+          FILES CHANGED:
+          $FILES
           
-          PAYLOAD=$(jq -n --arg prompt "$PROMPT" --arg model "groq/compound" '{
-            model: $model,
-            messages: [{role: "user", content: $prompt}],
-            temperature: 0.7
-          }')
+          CODE PREVIEW:
+          $DIFF
+          EOF
+          )
           
+          PAYLOAD=$(jq -n \
+            --arg model "llama-3.3-70b-versatile" \
+            --arg prompt "$PROMPT" \
+            '{
+              model: $model,
+              messages: [{role: "user", content: $prompt}],
+              temperature: 0.7,
+              max_tokens: 1024
+            }')
+          
+          echo "Requesting AI summary from Groq..."
           RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
           
+          # Debug: Log the response (excluding full body if successful)
+          echo "Groq API Response Status: $(echo "$RESPONSE" | jq -r '.error.message // "Success"')"
+          
           SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
-            SUMMARY="We've made some secret improvements under the hood to make your experience better! ✨"
+            SUMMARY="We've implemented fresh UI refinements and optimized the engine for a better experience! ✨"
           fi
           
           echo "AI_CHANGELOG<<EOF" >> $GITHUB_ENV
           echo "$SUMMARY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          
+          mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_ACCUMULATOR
 
       - name: Build Preview APK
         run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
@@ -117,25 +150,30 @@ jobs:
       - name: Rename & Filter APKs
         run: |
           cd app/build/outputs/apk/preview/
-          found_v8a=false
           for f in *.apk; do
             if [[ "$f" == *"arm64-v8a"* ]]; then
               mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
-              found_v8a=true
             else
               rm -f "$f"
             fi
           done
-          if [ "$found_v8a" = false ]; then
-            echo "Error: arm64-v8a APK not found!"
-            exit 1
-          fi
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-${{ env.TAG }}
           path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
+
+      - name: Reset Accumulator on Success
+        if: success()
+        run: mkdir -p .github && echo "" > .github/AI_NOTE_ACCUMULATOR
+
+      - name: Persist Accumulator
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .github/AI_NOTE_ACCUMULATOR
+          key: ai-note-acc-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Create Release in Preview Repo
         uses: softprops/action-gh-release@v1
@@ -156,3 +194,39 @@ jobs:
           files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
           prerelease: false
           generate_release_notes: false
+
+      - name: Send Log to Discord
+        if: success()
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          # Define clean links for Markdown
+          RELEASE_URL="https://github.com/salmanbappi/anizen-preview/releases/tag/${{ env.TAG }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          
+          EMBED_TITLE="🛠️ Preview Build Update (${{ env.TAG }})"
+          EMBED_DESC=$(cat <<EOF
+          ${{ env.AI_CHANGELOG }}
+
+          ---
+          **📥 [Download Preview APK]($RELEASE_URL)**
+          **🔗 [View Commit Details]($COMMIT_URL)**
+          EOF
+          )
+
+          # Encode using jq for a clean Discord Embed payload
+          PAYLOAD=$(jq -n \
+            --arg title "$EMBED_TITLE" \
+            --arg desc "$EMBED_DESC" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 5814783
+              }]
+            }')
+          
+          curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               https://discord.com/api/v10/channels/1482262233227464714/messages

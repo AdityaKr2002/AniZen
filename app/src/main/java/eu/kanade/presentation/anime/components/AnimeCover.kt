@@ -39,6 +39,8 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState
 import eu.kanade.tachiyomi.R
@@ -94,7 +96,7 @@ enum class AnimeCover(val ratio: Float) {
 
         LaunchedEffect(state, data) {
             val currentState = state
-            if (currentState is AsyncImagePainter.State.Success) {
+            if (currentState is AsyncImagePainter.State.Success && onCoverLoaded != null) {
                 val cover = when (data) {
                     is Anime -> data.asAnimeCover()
                     is DomainMangaCover -> data
@@ -103,10 +105,8 @@ enum class AnimeCover(val ratio: Float) {
                 if (cover != null) {
                     eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(cover, currentState)
                 }
-                if (onCoverLoaded != null) {
-                    if (data is Anime) onCoverLoaded(data.asAnimeCover(), currentState)
-                    if (data is DomainMangaCover) onCoverLoaded(data, currentState)
-                }
+                if (data is Anime) onCoverLoaded(data.asAnimeCover(), currentState)
+                if (data is DomainMangaCover) onCoverLoaded(data, currentState)
             }
         }
 
@@ -139,6 +139,7 @@ enum class AnimeCover(val ratio: Float) {
                 model = remember(data, animatedTransitions) {
                     ImageRequest.Builder(context)
                         .data(data)
+                        // Use automatic sizing from AsyncImage but ensure precision is handled
                         .precision(coil3.size.Precision.INEXACT)
                         .crossfade(animatedTransitions)
                         .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
@@ -184,21 +185,45 @@ enum class AnimeCover(val ratio: Float) {
         fun getRatio(animeId: Long): Float {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsState()
             
-            return remember(animeId, usePanorama, ratios) {
-                if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+            val ratio by androidx.compose.runtime.produceState(
+                initialValue = if (usePanorama) CoverColorObserver.ratios.value[animeId] ?: Book.ratio else Book.ratio,
+                animeId,
+                usePanorama,
+            ) {
+                if (usePanorama) {
+                    CoverColorObserver.ratios
+                        .map { it[animeId] ?: Book.ratio }
+                        .distinctUntilChanged()
+                        .collect { value = it }
+                } else {
+                    value = Book.ratio
+                }
             }
+            return ratio
         }
 
         @Composable
         fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-            val ratios by CoverColorObserver.ratios.collectAsState()
             
-            return remember(animeId, usePanorama, ratios) {
-                val ratio = if (usePanorama) ratios[animeId] ?: Book.ratio else Book.ratio
+            val ratio by androidx.compose.runtime.produceState(
+                initialValue = if (usePanorama) CoverColorObserver.ratios.value[animeId] ?: Book.ratio else Book.ratio,
+                animeId,
+                usePanorama,
+            ) {
+                if (usePanorama) {
+                    CoverColorObserver.ratios
+                        .map { it[animeId] ?: Book.ratio }
+                        .distinctUntilChanged()
+                        .collect { value = it }
+                } else {
+                    value = Book.ratio
+                }
+            }
+
+            return remember(ratio, usePanorama) {
                 val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
                 entry to ratio
             }

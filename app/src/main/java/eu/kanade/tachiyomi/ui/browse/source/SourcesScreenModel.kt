@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.browse.source
 
+import android.app.Application
 import androidx.compose.runtime.Immutable
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -7,35 +8,44 @@ import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.source.interactor.GetEnabledSources
 import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
-import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.util.system.LAST_USED_KEY
+import eu.kanade.tachiyomi.util.system.LocaleHelper
 import eu.kanade.tachiyomi.util.system.PINNED_KEY
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import logcat.LogPriority
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.source.interactor.InsertFeedSavedSearch
+import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
 import tachiyomi.domain.source.model.FeedSavedSearch
+import tachiyomi.domain.source.model.FeedSavedSearchCategory
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.domain.source.model.Source
+import tachiyomi.domain.source.service.SourceHealthCache
+import eu.kanade.domain.source.service.SourcePreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.TreeMap
-
-import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
-import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
-import tachiyomi.domain.source.model.FeedSavedSearchCategory
 
 class SourcesScreenModel(
     private val preferences: BasePreferences = Injekt.get(),
@@ -47,23 +57,29 @@ class SourcesScreenModel(
     private val getFeedSavedSearchCategories: GetFeedSavedSearchCategories = Injekt.get(),
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+    private val mapper: SourceUiModelMapper = SourceUiModelMapper(),
 ) : StateScreenModel<SourcesScreenModel.State>(State()) {
 
     private val _events = Channel<Event>(Int.MAX_VALUE)
     val events = _events.receiveAsFlow()
 
     init {
-        screenModelScope.launchIO {
+        screenModelScope.launch {
             combine(
+                state.map { it.searchQuery }.distinctUntilChanged().debounce(250L),
+                state.map { it.nsfwOnly }.distinctUntilChanged(),
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-                ::Pair
-            ).catch {
+                SourceHealthCache.healthMap,
+            ) { query, nsfwOnly, sources, extensions, healthMap ->
+                // Offload CPU-bound sorting and formatting to Default dispatcher
+                withContext(Dispatchers.Default) {
+                    collectLatestAnimeSources(sources, extensions, healthMap, query, nsfwOnly)
+                }
+            }.catch {
                 logcat(LogPriority.ERROR, it)
                 _events.send(Event.FailedFetchingSources)
-            }.collectLatest { (sources, _) ->
-                collectLatestAnimeSources(sources)
-            }
+            }.collectLatest {}
         }
         
         screenModelScope.launchIO {
@@ -79,72 +95,81 @@ class SourcesScreenModel(
         }
     }
 
-    private fun collectLatestAnimeSources(sources: List<Source>) {
-        mutableState.update { state ->
-            val query = state.searchQuery
-            val nsfwOnly = state.nsfwOnly
-            
-            // Map source IDs to their extension's NSFW status for reliable filtering
-            val extensions = extensionManager.installedExtensionsFlow.value
-            val nsfwSourceIds = extensions.flatMap { ext -> 
-                if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
-            }.toSet()
+    private suspend fun collectLatestAnimeSources(
+        sources: List<Source>,
+        extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>,
+        healthMap: Map<Long, NodeStatus>,
+        query: String?,
+        nsfwOnly: Boolean,
+    ) {
+        // Map source IDs to their extension's NSFW status for reliable filtering
+        val nsfwSourceIds = extensions.flatMap { ext -> 
+            if (ext.isNsfw) ext.sources.map { it.id } else emptyList() 
+        }.toSet()
+        
+        yield()
 
-            val filteredSources = sources.filter { source ->
-                val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
-                val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
-                val matchesNsfw = !nsfwOnly || isNsfw
-                matchesQuery && matchesNsfw
-            }
+        val filteredSources = sources.filter { source ->
+            val matchesQuery = query.isNullOrBlank() || source.name.contains(query, ignoreCase = true)
+            val isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw
+            val matchesNsfw = !nsfwOnly || isNsfw
+            matchesQuery && matchesNsfw
+        }.distinctBy { it.id }
 
-            val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
-                // Sources without a lang defined will be placed at the end
-                when {
-                    d1 == LAST_USED_KEY && d2 != LAST_USED_KEY -> -1
-                    d2 == LAST_USED_KEY && d1 != LAST_USED_KEY -> 1
-                    d1 == PINNED_KEY && d2 != PINNED_KEY -> -1
-                    d2 == PINNED_KEY && d1 != PINNED_KEY -> 1
-                    d1 == "" && d2 != "" -> 1
-                    d2 == "" && d1 != "" -> -1
-                    else -> d1.compareTo(d2)
-                }
+        val map = TreeMap<String, MutableList<Source>> { d1, d2 ->
+            when {
+                d1 == LAST_USED_KEY && d2 != LAST_USED_KEY -> -1
+                d2 == LAST_USED_KEY && d1 != LAST_USED_KEY -> 1
+                d1 == PINNED_KEY && d2 != PINNED_KEY -> -1
+                d2 == PINNED_KEY && d1 != PINNED_KEY -> 1
+                d1 == "" && d2 != "" -> 1
+                d2 == "" && d1 != "" -> -1
+                else -> d1.compareTo(d2)
             }
-            val byLang = filteredSources.groupByTo(map) {
-                when {
-                    it.isUsedLast -> LAST_USED_KEY
-                    Pin.Actual in it.pin -> PINNED_KEY
-                    else -> it.lang
-                }
+        }
+        
+        val byLang = filteredSources.groupByTo(map) {
+            when {
+                it.isUsedLast -> LAST_USED_KEY
+                Pin.Actual in it.pin -> PINNED_KEY
+                else -> it.lang
             }
+        }
+        
+        yield()
 
-            state.copy(
-                isLoading = false,
-                items = byLang
-                    .flatMap {
-                        listOf(
-                            SourceUiModel.Header(it.key),
-                            *it.value.map { source ->
-                                SourceUiModel.Item(source)
-                            }.toTypedArray(),
+        val items = byLang
+            .flatMap { (lang, langSources) ->
+                buildList<SourceUiModel> {
+                    add(mapper.mapHeader(lang))
+                    langSources.forEach { source ->
+                        add(
+                            mapper.map(
+                                source = source,
+                                headerKey = lang,
+                                isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
+                                status = healthMap[source.id] ?: NodeStatus.OPERATIONAL,
+                            )
                         )
                     }
-                    .toImmutableList(),
+                }
+            }
+            .toImmutableList()
+
+        mutableState.update { state ->
+            state.copy(
+                isLoading = false,
+                items = items,
             )
         }
     }
 
     fun search(query: String?) {
         mutableState.update { it.copy(searchQuery = query) }
-        screenModelScope.launchIO {
-            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
-        }
     }
 
     fun toggleNsfwOnly() {
         mutableState.update { it.copy(nsfwOnly = !it.nsfwOnly) }
-        screenModelScope.launchIO {
-            getEnabledSources.subscribe().first().let(::collectLatestAnimeSources)
-        }
     }
 
     fun toggleSource(source: Source) {

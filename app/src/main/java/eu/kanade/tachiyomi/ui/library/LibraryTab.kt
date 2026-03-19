@@ -48,6 +48,7 @@ import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
+import mihon.feature.migration.config.MigrationConfigScreen
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
@@ -166,9 +167,9 @@ data object LibraryTab : Tab {
                     },
                     onClickFilter = screenModel::showSettingsDialog,
                     onClickRefresh = {
-                        onClickRefresh(
-                            state.categories[screenModel.activeCategoryIndex],
-                        )
+                        state.categories.getOrNull(screenModel.activeCategoryIndex)?.let {
+                            onClickRefresh(it)
+                        } ?: false
                     },
                     onClickGlobalUpdate = { onClickRefresh(null) },
                     onClickOpenRandomEntry = {
@@ -205,7 +206,20 @@ data object LibraryTab : Tab {
                     onDownloadClicked = screenModel::runDownloadActionSelection
                         .takeIf { state.selection.fastAll { !it.anime.isLocal() } },
                     onDeleteClicked = screenModel::openDeleteAnimeDialog,
+                    onMigrateClicked = {
+                        val animeIds = state.selection.map { it.anime.id }
+                        navigator.push(MigrationConfigScreen(animeIds))
+                    },
+                    onMergeClicked = {
+                        // TODO: Implement bulk merge? For now just show for single
+                    },
+                    onSelectionUpdateClicked = {
+                        screenModel.updateSelection()
+                    },
                     onClickResetInfo = screenModel::resetInfo.takeIf { state.showResetInfo },
+                    onClickCollectRecommendations = {
+                        // TODO: Implement bulk recommendations
+                    },
                 )
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },

@@ -43,6 +43,7 @@ import eu.kanade.tachiyomi.ui.library.LibrarySettingsScreenModel
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.core.common.preference.TriState
+import tachiyomi.core.common.preference.toggle
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibraryGroup
@@ -154,6 +155,22 @@ private fun ColumnScope.FilterPage(
         state = filterCompleted,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterCompleted) },
     )
+    // SY -->
+    val filterLewd by screenModel.libraryPreferences.filterLewd().collectAsState()
+    TriStateItem(
+        label = stringResource(SYMR.strings.lewd),
+        state = filterLewd,
+        onClick = { screenModel.toggleFilter(LibraryPreferences::filterLewd) },
+    )
+    // SY <--
+    // KMK -->
+    val filterCategories by screenModel.libraryPreferences.filterCategories().collectAsState()
+    CheckboxItem(
+        label = stringResource(MR.strings.action_filter_categories),
+        checked = filterCategories,
+        onClick = { screenModel.libraryPreferences.filterCategories().toggle() },
+    )
+    // KMK <--
     // TODO: re-enable when custom intervals are ready for stable
     if ((!isReleaseBuildType) && LibraryPreferences.ANIME_OUTSIDE_RELEASE_PERIOD in autoUpdateAnimeRestrictions) {
         val filterIntervalCustom by screenModel.libraryPreferences.filterIntervalCustom().collectAsState()

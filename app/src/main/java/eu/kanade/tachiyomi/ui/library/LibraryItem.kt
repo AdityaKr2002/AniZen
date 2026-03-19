@@ -12,8 +12,9 @@ data class LibraryItem(
     val unseenCount: Long = -1,
     val isLocal: Boolean = false,
     val sourceLanguage: String = "",
-    private val sourceManager: SourceManager = Injekt.get(),
 ) {
+    private val sourceManager: SourceManager = Injekt.get()
+
     /**
      * Checks if a query matches the anime
      *

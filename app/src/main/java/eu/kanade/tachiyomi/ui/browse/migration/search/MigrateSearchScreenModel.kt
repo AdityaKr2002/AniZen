@@ -23,12 +23,19 @@ class MigrateSearchScreenModel(
             mutableState.update {
                 it.copy(
                     fromSourceId = anime.source,
-                    searchQuery = anime.title,
+                    searchQuery = getSearchQuery(anime.title),
                 )
             }
 
             search()
         }
+    }
+
+    private fun getSearchQuery(title: String): String {
+        return title
+            .replace(SEASON_REGEX, "")
+            .replace(QUALITY_REGEX, "")
+            .trim()
     }
 
     override fun getEnabledSources(): List<CatalogueSource> {
@@ -41,5 +48,10 @@ class MigrateSearchScreenModel(
                     { "${it.name.lowercase()} (${it.lang})" },
                 ),
             )
+    }
+
+    companion object {
+        private val SEASON_REGEX = Regex("""(?i)\s*(?:S\d+|Season\s*\d+|2nd\s*Season|Part\s*\d+)""")
+        private val QUALITY_REGEX = Regex("""(?i)\s*(?:\[?\d+p\]?|\(BD\)|BD|Uncensored)""")
     }
 }

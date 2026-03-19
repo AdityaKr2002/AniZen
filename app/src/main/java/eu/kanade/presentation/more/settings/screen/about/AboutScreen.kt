@@ -243,7 +243,7 @@ object AboutScreen : Screen() {
                             subtitle = "Join our community",
                             icon = CustomIcons.Discord,
                             iconTint = Color(0xFF5865F2),
-                            onClick = { uriHandler.openUri("https://discord.gg/ZB6CZ8r7sp") }
+                            onClick = { uriHandler.openUri("https://discord.gg/J2wmZqEJnS") }
                         )
                         MoreItem(
                             title = "GitHub",

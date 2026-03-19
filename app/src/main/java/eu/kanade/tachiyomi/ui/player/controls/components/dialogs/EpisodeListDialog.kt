@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
@@ -71,17 +71,19 @@ fun EpisodeListDialog(
         VerticalFastScroller(
             listState = episodeListState,
         ) {
+            val reversedList = remember(episodeList) { episodeList.reversed() }
             LazyColumn(
                 modifier = Modifier.fillMaxHeight(),
                 state = episodeListState,
             ) {
-                items(
-                    items = episodeList.reversed(),
-                    key = { "episode-${it.id}" },
-                    contentType = { "episode" },
-                ) { episode ->
+                itemsIndexed(
+                    items = reversedList,
+                    key = { index, it -> "ep-${it.id}-$index" },
+                    contentType = { _, _ -> "episode" },
+                ) { index, episode ->
 
-                    val isCurrentEpisode = episode.id == episodeList[currentEpisodeIndex].id
+                    val current = episodeList.getOrNull(currentEpisodeIndex)
+                    val isCurrentEpisode = episode.id == current?.id
 
                     val title = if (displayMode == Anime.EPISODE_DISPLAY_NUMBER) {
                         stringResource(

@@ -31,6 +31,10 @@ import java.io.IOException
 import java.util.Date
 import kotlin.system.measureTimeMillis
 
+import tachiyomi.domain.track.interactor.GetTracks
+import tachiyomi.domain.track.model.Track
+import eu.kanade.tachiyomi.data.backup.models.BackupTracking
+
 /**
  * A manager to handle synchronization tasks in the app, such as updating
  * sync preferences and performing synchronization with a remote server.
@@ -46,6 +50,7 @@ class SyncManager(
         ignoreUnknownKeys = true
     },
     private val getCategories: GetCategories = Injekt.get(),
+    private val getTracks: GetTracks = Injekt.get(),
 ) {
     private val backupCreator: BackupCreator = BackupCreator(context, false)
     private val notifier: SyncNotifier = SyncNotifier(context)
@@ -97,6 +102,9 @@ class SyncManager(
             backupSources = backupCreator.backupAnimeSources(backupAnime),
             backupPreferences = backupCreator.backupAppPreferences(backupOptions),
             backupSourcePreferences = backupCreator.backupSourcePreferences(backupOptions),
+            backupAnimeExtensionRepo = backupCreator.backupAnimeExtensionRepos(backupOptions),
+            backupExtensions = backupCreator.backupExtensions(backupOptions),
+            backupCustomButton = backupCreator.backupCustomButtons(backupOptions),
         )
         logcat(LogPriority.DEBUG) { "End create backup" }
 
@@ -167,6 +175,9 @@ class SyncManager(
             backupSources = remoteBackup.backupSources,
             backupPreferences = remoteBackup.backupPreferences,
             backupSourcePreferences = remoteBackup.backupSourcePreferences,
+            backupAnimeExtensionRepo = remoteBackup.backupAnimeExtensionRepo,
+            backupExtensions = remoteBackup.backupExtensions,
+            backupCustomButton = remoteBackup.backupCustomButton,
         )
 
         // It's local sync no need to restore data. (just update remote data)
@@ -189,6 +200,9 @@ class SyncManager(
                     appSettings = true,
                     sourceSettings = true,
                     libraryEntries = true, // Correct parameter name
+                    extensionRepoSettings = true,
+                    extensions = true,
+                    customButtons = true,
                 ),
             )
 
@@ -228,6 +242,7 @@ class SyncManager(
     private suspend fun isAnimeDifferent(localAnime: Anime, remoteAnime: BackupAnime): Boolean {
         val localEpisodes = handler.await { episodesQueries.getEpisodesByAnimeId(localAnime.id, 0).executeAsList() }
         val localCategories = getCategories.await(localAnime.id).map { it.order }
+        val localTracks = getTracks.await(localAnime.id)
 
         if (areEpisodesDifferent(localEpisodes, remoteAnime.episodes)) {
             return true
@@ -240,9 +255,34 @@ class SyncManager(
         if (localCategories.toSet() != remoteAnime.categories.toSet()) {
             return true
         }
+        
+        if (areTracksDifferent(localTracks, remoteAnime.tracking)) {
+            return true
+        }
 
         return false
     }
+
+    private fun areTracksDifferent(localTracks: List<Track>, remoteTracks: List<BackupTracking>): Boolean {
+        val localTracksMap = localTracks.associateBy { it.trackerId }
+        val remoteTracksMap = remoteTracks.map { it.getTrackImpl() }.associateBy { it.trackerId }
+
+        if (localTracksMap.size != remoteTracksMap.size) {
+            return true
+        }
+
+        for ((trackerId, localTrack) in localTracksMap) {
+            val remoteTrack = remoteTracksMap[trackerId]
+
+            if (remoteTrack == null || localTrack.forComparison() != remoteTrack.forComparison()) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private fun Track.forComparison() = this.copy(id = 0L, animeId = 0L)
 
     @Suppress("ReturnCount")
     private fun areEpisodesDifferent(localEpisodes: List<Episodes>, remoteEpisodes: List<BackupEpisode>): Boolean {

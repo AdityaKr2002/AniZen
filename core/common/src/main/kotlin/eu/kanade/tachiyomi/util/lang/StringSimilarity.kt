@@ -90,7 +90,7 @@ object StringSimilarity {
      * Optimized Levenshtein Distance (Two-Row Algorithm).
      * Space: O(min(N, M)) instead of O(N * M).
      */
-    private fun levenshteinSimilarity(s1: String, s2: String): Double {
+    fun levenshteinSimilarity(s1: String, s2: String): Double {
         if (s1 == s2) return 1.0
         val len1 = s1.length
         val len2 = s2.length

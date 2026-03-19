@@ -37,6 +37,22 @@ class SourcePreferences(
         SetMigrateSorting.Direction.ASCENDING,
     )
 
+    // KMK -->
+    fun migrationSources() = preferenceStore.getStringSet("pref_migration_sources", emptySet())
+
+    fun migrationFlags() = preferenceStore.getInt("migration_flags", Int.MAX_VALUE)
+
+    fun migrationDeepSearchMode() = preferenceStore.getBoolean("migration_deep_search", false)
+
+    fun migrationPrioritizeByChapters() = preferenceStore.getBoolean("migration_prioritize_by_chapters", true)
+
+    fun migrationHideUnmatched() = preferenceStore.getBoolean("migration_hide_unmatched", false)
+
+    fun migrationHideWithoutUpdates() = preferenceStore.getBoolean("migration_hide_without_updates", false)
+
+    fun migrationSmartSearchSingleEntry() = preferenceStore.getBoolean("migration_smart_search_single_entry", false)
+    // KMK <--
+
     fun trustedExtensions() = preferenceStore.getStringSet(
         Preference.appStateKey("trusted_extensions"),
         emptySet(),

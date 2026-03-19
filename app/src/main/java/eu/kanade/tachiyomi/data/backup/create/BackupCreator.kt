@@ -151,13 +151,13 @@ class BackupCreator(
         return preferenceBackupCreator.createApp(includePrivatePreferences = options.privateSettings)
     }
 
-    private suspend fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
+    suspend fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
         if (!options.extensionRepoSettings) return emptyList()
 
         return extensionRepoBackupCreator()
     }
 
-    private suspend fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
+    suspend fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
         if (!options.customButton) return emptyList()
 
         return customButtonBackupCreator()
@@ -169,7 +169,7 @@ class BackupCreator(
         return preferenceBackupCreator.createSource(includePrivatePreferences = options.privateSettings)
     }
 
-    private fun backupExtensions(options: BackupOptions): List<BackupExtension> {
+    fun backupExtensions(options: BackupOptions): List<BackupExtension> {
         if (!options.extensions) return emptyList()
 
         return extensionsBackupCreator()

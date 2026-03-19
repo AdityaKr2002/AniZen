@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ fun GlobalSearchCardRow(
     getAnime: @Composable (Anime) -> State<Anime>,
     onClick: (Anime) -> Unit,
     onLongClick: (Anime) -> Unit,
+    selection: List<Anime> = emptyList(),
 ) {
     if (titles.isEmpty()) {
         EmptyResultItem()
@@ -40,16 +42,17 @@ fun GlobalSearchCardRow(
         contentPadding = PaddingValues(MaterialTheme.padding.small),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
     ) {
-        items(
+        itemsIndexed(
             items = titles,
-            key = { it.id },
-        ) { it: tachiyomi.domain.anime.model.Anime ->
+            key = { index, it -> "gs-${it.id}-$index" },
+        ) { _, it: tachiyomi.domain.anime.model.Anime ->
             val animeState = getAnime(it)
             val title by animeState
             AnimeItem(
                 title = title.title,
                 cover = title.asAnimeCover(),
                 isFavorite = title.favorite,
+                isSelected = selection.any { it.id == title.id },
                 onClick = { onClick(title) },
                 onLongClick = { onLongClick(title) },
             )
@@ -62,6 +65,7 @@ internal fun AnimeItem(
     title: String,
     cover: AnimeCover,
     isFavorite: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -72,6 +76,14 @@ internal fun AnimeItem(
             coverData = cover,
             coverBadgeStart = {
                 InLibraryBadge(enabled = isFavorite)
+            },
+            coverBadgeEnd = {
+                if (isSelected) {
+                    Checkbox(
+                        checked = true,
+                        onCheckedChange = { onClick() },
+                    )
+                }
             },
             coverAlpha = if (isFavorite) CommonAnimeItemDefaults.BrowseFavoriteCoverAlpha else 1f,
             onClick = onClick,

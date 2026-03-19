@@ -59,6 +59,7 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.base.delegate.SecureActivityDelegate
 import eu.kanade.tachiyomi.util.system.DeviceUtil
+import eu.kanade.tachiyomi.util.system.GLUtil
 import eu.kanade.tachiyomi.util.system.WebViewUtil
 import eu.kanade.tachiyomi.util.system.animatorDurationScale
 import eu.kanade.tachiyomi.util.system.cancelNotification
@@ -274,8 +275,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             }
 
             val coreCount = Runtime.getRuntime().availableProcessors()
-            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12)))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(3, 8))) // Dynamic decoding based on hardware power
+            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(6, 16)))
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12))) // Aggressive decoding based on hardware power
         }.build()
     }
 

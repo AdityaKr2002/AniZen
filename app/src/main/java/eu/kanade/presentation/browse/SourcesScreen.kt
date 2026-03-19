@@ -67,10 +67,12 @@ import androidx.compose.ui.unit.sp
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.browse.components.BaseSourceItem
+import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.ui.browse.source.SourcesScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel.Listing
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.source.model.Pin
+import tachiyomi.domain.source.model.Pins
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
@@ -138,7 +140,7 @@ fun SourcesScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
-                top = searchHeight + (searchOffsetHeightPx / LocalDensity.current.density).dp,
+                top = searchHeight,
                 end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
@@ -159,8 +161,8 @@ fun SourcesScreen(
                     items = state.items,
                     key = { index, model ->
                         when (model) {
-                            is SourceUiModel.Header -> "header-${model.language}-$index"
-                            is SourceUiModel.Item -> "source-${model.source.id}-$index"
+                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}-$index"
+                            is SourceUiModel.Item -> "source-${model.headerKey}-${model.source.id}-$index"
                         }
                     },
                     contentType = { _, model ->
@@ -173,7 +175,7 @@ fun SourcesScreen(
                     when (model) {
                         is SourceUiModel.Header -> {
                             SourceHeader(
-                                language = model.language,
+                                displayName = model.displayName,
                                 modifier = Modifier.animateItem()
                             )
                         }
@@ -191,7 +193,7 @@ fun SourcesScreen(
                                 tonalElevation = elevation
                             ) {
                                 SourceItem(
-                                    source = model.source,
+                                    item = model,
                                     onClickItem = onClickItem,
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
@@ -305,12 +307,11 @@ private fun GroupSeparator(enabled: Boolean) {
 
 @Composable
 private fun SourceHeader(
-    language: String,
+    displayName: String,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     Text(
-        text = LocaleHelper.getSourceDisplayName(language, context),
+        text = displayName,
         modifier = modifier
             .padding(
                 horizontal = MaterialTheme.padding.medium,
@@ -322,7 +323,7 @@ private fun SourceHeader(
 
 @Composable
 private fun SourceItem(
-    source: Source,
+    item: SourceUiModel.Item,
     onClickItem: (Source, Listing) -> Unit,
     onLongClickItem: (Source) -> Unit,
     onClickPin: (Source) -> Unit,
@@ -331,12 +332,12 @@ private fun SourceItem(
 ) {
     BaseSourceItem(
         modifier = modifier,
-        source = source,
-        onClickItem = { onClickItem(source, Listing.Popular) },
-        onLongClickItem = { onLongClickItem(source) },
+        item = item,
+        onClickItem = { onClickItem(item.source, Listing.Popular) },
+        onLongClickItem = { onLongClickItem(item.source) },
         action = {
-            if (source.supportsLatest && !hideLatest) {
-                TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
+            if (item.source.supportsLatest && !hideLatest) {
+                TextButton(onClick = { onClickItem(item.source, Listing.Latest) }) {
                     Text(
                         text = stringResource(MR.strings.latest),
                         style = LocalTextStyle.current.copy(
@@ -346,8 +347,8 @@ private fun SourceItem(
                 }
             }
             SourcePinButton(
-                isPinned = Pin.Pinned in source.pin,
-                onClick = { onClickPin(source) },
+                isPinned = Pin.Pinned in item.source.pin,
+                onClick = { onClickPin(item.source) },
             )
         },
     )
@@ -421,9 +422,4 @@ fun SourceOptionsDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
     )
-}
-
-sealed interface SourceUiModel {
-    data class Item(val source: Source) : SourceUiModel
-    data class Header(val language: String) : SourceUiModel
 }

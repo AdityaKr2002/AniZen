@@ -477,8 +477,8 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectChapter(index: Int) {
-        val time = chapters.value[index].start
-        seekTo(time.toInt())
+        val chapter = chapters.value.getOrNull(index) ?: return
+        seekTo(chapter.start.toInt())
     }
 
     fun updateChapter(index: Long) {
@@ -1506,16 +1506,20 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun onHosterClicked(index: Int) {
-        when (hosterState.value[index]) {
+        val state = hosterState.value.getOrNull(index) ?: return
+        when (state) {
             is HosterState.Ready -> {
-                _hosterExpandedList.updateAt(index, !_hosterExpandedList.value[index])
+                if (index in _hosterExpandedList.value.indices) {
+                    _hosterExpandedList.updateAt(index, !_hosterExpandedList.value[index])
+                }
             }
             is HosterState.Idle -> {
-                val hosterName = hosterList.value[index].hosterName
+                val hoster = hosterList.value.getOrNull(index) ?: return
+                val hosterName = hoster.hosterName
                 _hosterState.updateAt(index, HosterState.Loading(hosterName))
 
                 viewModelScope.launchIO {
-                    val hosterState = EpisodeLoader.loadHosterVideos(currentSource.value!!, hosterList.value[index])
+                    val hosterState = EpisodeLoader.loadHosterVideos(currentSource.value!!, hoster)
                     _hosterState.updateAt(index, hosterState)
                 }
             }
@@ -1525,6 +1529,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
     private fun <T> MutableStateFlow<List<T>>.updateAt(index: Int, newValue: T) {
         this.update { values ->
+            if (index !in values.indices) return@update values
             values.toMutableList().apply {
                 this[index] = newValue
             }
@@ -1644,7 +1649,17 @@ class PlayerViewModel @JvmOverloads constructor(
 
         // Check if deleting option is enabled and episode exists
         if (removeAfterSeenSlots != -1 && episodeToDelete != null) {
-            enqueueDeleteSeenEpisodes(episodeToDelete)
+            viewModelScope.launchNonCancellable {
+                enqueueDeleteSeenEpisodes(episodeToDelete)
+                deletePendingEpisodes()
+            }
+        }
+
+        if (downloadPreferences.removeAfterMarkedAsSeen().get() && chosenEpisode.seen) {
+            viewModelScope.launchNonCancellable {
+                enqueueDeleteSeenEpisodes(chosenEpisode)
+                deletePendingEpisodes()
+            }
         }
     }
 
@@ -1851,10 +1866,10 @@ class PlayerViewModel @JvmOverloads constructor(
      * Enqueues this [episode] to be deleted when [deletePendingEpisodes] is called. The download
      * manager handles persisting it across process deaths.
      */
-    private fun enqueueDeleteSeenEpisodes(episode: Episode) {
+    private suspend fun enqueueDeleteSeenEpisodes(episode: Episode) {
         if (!episode.seen) return
         val anime = currentAnime.value ?: return
-        viewModelScope.launchNonCancellable {
+        withIOContext {
             downloadManager.enqueueEpisodesToDelete(listOf(episode.toDomainEpisode()!!), anime)
         }
     }

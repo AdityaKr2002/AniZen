@@ -48,9 +48,13 @@ import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Schedule
+import eu.kanade.tachiyomi.source.getNameForAnimeInfo
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -122,6 +126,9 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
 @Composable
 fun AnimeInfoBox(
     isTabletUi: Boolean,
@@ -133,6 +140,7 @@ fun AnimeInfoBox(
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source> = persistentListOf(),
 ) {
     Box(
         modifier = modifier
@@ -174,6 +182,7 @@ fun AnimeInfoBox(
                     isStubSource = isStubSource,
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
+                    mergedSources = mergedSources,
                 )
             } else {
                 AnimeAndSourceTitlesLarge(
@@ -184,6 +193,7 @@ fun AnimeInfoBox(
                     isStubSource = isStubSource,
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
+                    mergedSources = mergedSources,
                 )
             }
         }
@@ -195,12 +205,11 @@ fun AnimeActionRow(
     favorite: Boolean,
     trackingCount: Int,
     nextUpdate: Instant?,
-    isUserIntervalMode: Boolean,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
-    onEditIntervalClicked: (() -> Unit)?,
+    onEditNotesClicked: () -> Unit,
     onEditCategory: (() -> Unit)?,
     onContinueWatching: () -> Unit,
     isWatching: Boolean,
@@ -271,25 +280,43 @@ fun AnimeActionRow(
 fun ExpandableAnimeDescription(
     defaultExpandState: Boolean,
     description: String?,
+    note: String?,
     tagsProvider: () -> List<String>?,
     onTagSearch: (String) -> Unit,
     onCopyTagToClipboard: (tag: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val (expanded, onExpanded) = rememberSaveable {
+        mutableStateOf(defaultExpandState)
+    }
     Column(modifier = modifier) {
-        val (expanded, onExpanded) = rememberSaveable {
-            mutableStateOf(defaultExpandState)
-        }
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
+
+        if (!note.isNullOrBlank()) {
+            MarkdownRender(
+                content = note,
+                modifier = Modifier
+                    .secondaryItemAlpha()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp),
+                annotator = descriptionAnnotator,
+            )
+            HorizontalDivider(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .alpha(0.3f),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         AnimeSummary(
             description = desc,
             expanded = expanded,
+            onExpand = { onExpanded(!expanded) },
             modifier = Modifier
-                .padding(top = 8.dp)
-                .padding(horizontal = 16.dp)
-                .clickableNoIndication { onExpanded(!expanded) },
+                .padding(horizontal = 16.dp),
         )
         val tags = tagsProvider()
         if (!tags.isNullOrEmpty()) {
@@ -371,6 +398,7 @@ private fun AnimeAndSourceTitlesLarge(
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     Row(
         modifier = Modifier
@@ -401,6 +429,7 @@ private fun AnimeAndSourceTitlesLarge(
                 isStubSource = isStubSource,
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
+                mergedSources = mergedSources,
             )
         }
     }
@@ -415,6 +444,7 @@ private fun AnimeAndSourceTitlesSmall(
     isStubSource: Boolean,
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     Row(
         modifier = Modifier
@@ -445,6 +475,7 @@ private fun AnimeAndSourceTitlesSmall(
                 isStubSource = isStubSource,
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
+                mergedSources = mergedSources,
             )
         }
     }
@@ -461,6 +492,7 @@ private fun AnimeContentInfo(
     isStubSource: Boolean,
     doSearch: (query: String, global: Boolean) -> Unit,
     textAlign: TextAlign? = LocalTextStyle.current.textAlign,
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
 ) {
     val context = LocalContext.current
     Text(
@@ -595,6 +627,21 @@ private fun AnimeContentInfo(
             iconTint = if (isStubSource) MaterialTheme.colorScheme.error else if (isRevealed) MaterialTheme.colorScheme.primary else null,
             onClick = { isRevealed = !isRevealed }
         )
+
+        MergedSourcesInfo(mergedSources)
+    }
+}
+
+@Composable
+private fun MergedSourcesInfo(
+    mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
+) {
+    mergedSources.forEach { source ->
+        Spacer(modifier = Modifier.width(4.dp))
+        InfoChip(
+            icon = Icons.Outlined.Language,
+            text = source.getNameForAnimeInfo(),
+        )
     }
 }
 
@@ -661,6 +708,7 @@ private val descriptionAnnotator = markdownAnnotator(
 private fun AnimeSummary(
     description: String,
     expanded: Boolean,
+    onExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -719,7 +767,8 @@ private fun AnimeSummary(
                     } else {
                         Modifier
                     },
-                ),
+                )
+                .clickableNoIndication(onClick = onExpand),
             contentAlignment = Alignment.Center,
         ) {
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_caret_down)

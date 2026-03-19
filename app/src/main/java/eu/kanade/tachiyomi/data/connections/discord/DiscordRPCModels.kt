@@ -22,7 +22,7 @@ const val RICH_PRESENCE_APPLICATION_ID = "1471263338934566972"
 const val DOWNLOAD_BUTTON_LABEL = "Download"
 const val DOWNLOAD_BUTTON_URL = "https://github.com/salmanbappi/AniZen/releases/latest"
 const val DISCORD_BUTTON_LABEL = "Discord"
-const val DISCORD_BUTTON_URL = "https://discord.gg/ZB6CZ8r7sp"
+const val DISCORD_BUTTON_URL = "https://discord.gg/J2wmZqEJnS"
 
 @Serializable
 data class Activity(

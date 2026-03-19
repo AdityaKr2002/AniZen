@@ -2,6 +2,12 @@ package eu.kanade.presentation.anime.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Download
@@ -19,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,9 +55,12 @@ fun AnimeToolbar(
     onClickEditCategory: (() -> Unit)?,
     onClickRefresh: () -> Unit,
     onClickMigrate: (() -> Unit)?,
+    onClickEditNotes: () -> Unit,
     onClickSettings: (() -> Unit)?,
     // SY -->
     onClickEditInfo: (() -> Unit)?,
+    onClickClearAnime: (() -> Unit)?,
+    onClickMerge: (() -> Unit)?,
     // SY <--
     // Anime only
     changeAnimeSkipIntro: (() -> Unit)?,
@@ -61,11 +71,20 @@ fun AnimeToolbar(
     modifier: Modifier = Modifier,
     backgroundAlphaProvider: () -> Float = titleAlphaProvider,
 ) {
+    val statusBarPadding = WindowInsets.systemBars.only(WindowInsetsSides.Top).asPaddingValues()
+    val topPadding = statusBarPadding.calculateTopPadding()
+    var stableTopPadding by remember { mutableStateOf(0.dp) }
+    if (topPadding > 0.dp && stableTopPadding == 0.dp) {
+        stableTopPadding = topPadding
+    }
+
     Column(
-        modifier = modifier.background(
-            MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                .copy(alpha = backgroundAlphaProvider()),
-        ),
+        modifier = modifier
+            .background(
+                MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                    .copy(alpha = backgroundAlphaProvider()),
+            )
+            .padding(top = stableTopPadding),
     ) {
         val isActionMode = actionModeCounter > 0
         TopAppBar(
@@ -162,6 +181,37 @@ fun AnimeToolbar(
                                         ),
                                     )
                                 }
+                                add(
+                                    AppBar.OverflowAction(
+                                        title = stringResource(MR.strings.action_edit_notes),
+                                        onClick = onClickEditNotes,
+                                    ),
+                                )
+                                // SY -->
+                                if (onClickMerge != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.merge_settings),
+                                            onClick = onClickMerge,
+                                        ),
+                                    )
+                                }
+                                if (onClickEditInfo != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_edit_info),
+                                            onClick = onClickEditInfo,
+                                        ),
+                                    )
+                                }
+                                if (onClickClearAnime != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_clear_anime),
+                                            onClick = onClickClearAnime,
+                                        ),
+                                    )
+                                }
                                 if (onClickSettings != null) {
                                     add(
                                         AppBar.OverflowAction(
@@ -170,11 +220,13 @@ fun AnimeToolbar(
                                         ),
                                     )
                                 }
+                                // SY <--
                             }
                             .build(),
                     )
                 }
             },
+            windowInsets = WindowInsets(0, 0, 0, 0),
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent,
                 scrolledContainerColor = Color.Transparent,

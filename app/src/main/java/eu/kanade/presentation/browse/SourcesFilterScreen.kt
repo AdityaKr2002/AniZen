@@ -3,15 +3,14 @@ package eu.kanade.presentation.browse
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.tachiyomi.ui.browse.source.SourcesFilterScreenModel
-import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
@@ -61,29 +60,29 @@ private fun SourcesFilterContent(
     FastScrollLazyColumn(
         contentPadding = contentPadding,
     ) {
-        state.items.forEach { (language, sources) ->
-            val enabled = language in state.enabledLanguages
+        state.items.forEach { (header, items) ->
+            val enabled = header.language in state.enabledLanguages
             item(
-                key = language,
+                key = header.language,
                 contentType = "source-filter-header",
             ) {
                 SourcesFilterHeader(
                     modifier = Modifier,
-                    language = language,
+                    header = header,
                     enabled = enabled,
                     onClickItem = onClickLanguage,
                 )
             }
             if (enabled) {
-                items(
-                    items = sources,
-                    key = { "source-filter-${it.key()}" },
-                    contentType = { "source-filter-item" },
-                ) { source ->
+                itemsIndexed(
+                    items = items,
+                    key = { index, it -> "source-filter-${it.source.id}-${it.headerKey}-$index" },
+                    contentType = { _, _ -> "source-filter-item" },
+                ) { _, item ->
                     SourcesFilterItem(
                         modifier = Modifier,
-                        source = source,
-                        isEnabled = "${source.id}" !in state.disabledSources,
+                        item = item,
+                        isEnabled = "${item.source.id}" !in state.disabledSources,
                         onClickItem = onClickSource,
                     )
                 }
@@ -94,31 +93,30 @@ private fun SourcesFilterContent(
 
 @Composable
 private fun SourcesFilterHeader(
-    language: String,
+    header: SourceUiModel.Header,
     enabled: Boolean,
     onClickItem: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SwitchPreferenceWidget(
         modifier = modifier,
-        title = LocaleHelper.getSourceDisplayName(language, LocalContext.current),
+        title = header.displayName,
         checked = enabled,
-        onCheckedChanged = { onClickItem(language) },
+        onCheckedChanged = { onClickItem(header.language) },
     )
 }
 
 @Composable
 private fun SourcesFilterItem(
-    source: Source,
+    item: SourceUiModel.Item,
     isEnabled: Boolean,
     onClickItem: (Source) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BaseSourceItem(
         modifier = modifier,
-        source = source,
-        showLanguageInContent = false,
-        onClickItem = { onClickItem(source) },
+        item = item,
+        onClickItem = { onClickItem(item.source) },
         action = {
             Checkbox(checked = isEnabled, onCheckedChange = null)
         },

@@ -98,6 +98,7 @@ typealias AnimeLibraryMap = Map<Category, List<LibraryItem>>
 
 @Suppress("LargeClass")
 class LibraryScreenModel(
+    private val context: android.content.Context = Injekt.get(),
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracksPerAnime: GetTracksPerAnime = Injekt.get(),
@@ -132,26 +133,21 @@ class LibraryScreenModel(
         screenModelScope.launchIO {
             combine(
                 state.map { it.searchQuery }.debounce(SEARCH_DEBOUNCE_MILLIS),
-                getLibraryFlow(),
-                getTracksPerAnime.subscribe(),
+                combine(getLibraryFlow(), getTracksPerAnime.subscribe(), ::Pair),
                 combine(
                     getTrackingFilterFlow(),
-                    downloadCache.changes.debounce(500L),
-                    ::Pair,
-                ),
-                // SY -->
-                combine(
                     state.map { it.groupType }.distinctUntilChanged(),
-                    libraryPreferences.sortingMode().changes(),
                     ::Pair,
                 ),
-                // SY <--
-            ) { searchQuery, library, tracks, (trackingFilter, _), (groupType, sort) ->
+                combine(
+                    libraryPreferences.sortingMode().changes(),
+                    libraryPreferences.showHiddenCategories().changes(),
+                    ::Pair,
+                ),
+            ) { searchQuery, (library, tracks), (trackingFilter, groupType), (sort, showHidden) ->
                 library
-                    // SY -->
                     .applyGrouping(groupType, tracks)
-                    // SY <--
-                    .applyFilters(tracks, trackingFilter)
+                    .applyFilters(tracks, trackingFilter, showHidden)
                     .applySort(tracks, sort.takeIf { groupType != LibraryGroup.BY_DEFAULT }, trackingFilter.keys)
                     .mapValues { (_, value) ->
                         if (searchQuery != null) {
@@ -161,11 +157,15 @@ class LibraryScreenModel(
                         }
                     }
             }
-                .collectLatest {
+                .collectLatest { library ->
+                    val categoriesCount = library.size
+                    if (activeCategoryIndex >= categoriesCount && categoriesCount > 0) {
+                        activeCategoryIndex = categoriesCount - 1
+                    }
                     mutableState.update { state ->
                         state.copy(
                             isLoading = false,
-                            library = it,
+                            library = library,
                         )
                     }
                 }
@@ -175,13 +175,15 @@ class LibraryScreenModel(
             libraryPreferences.categoryTabs().changes(),
             libraryPreferences.categoryNumberOfItems().changes(),
             libraryPreferences.showContinueWatchingButton().changes(),
-        ) { a, b, c -> arrayOf(a, b, c) }
-            .onEach { (showCategoryTabs, showAnimeCount, showAnimeContinueButton) ->
+            libraryPreferences.showEmptyCategoriesSearch().changes(),
+        ) { a, b, c, d -> arrayOf(a, b, c, d) }
+            .onEach { (showCategoryTabs, showAnimeCount, showAnimeContinueButton, showEmptyCategoriesSearch) ->
                 mutableState.update { state ->
                     state.copy(
                         showCategoryTabs = showCategoryTabs,
                         showAnimeCount = showAnimeCount,
                         showAnimeContinueButton = showAnimeContinueButton,
+                        showEmptyCategoriesSearch = showEmptyCategoriesSearch,
                     )
                 }
             }
@@ -227,6 +229,7 @@ class LibraryScreenModel(
     private suspend fun AnimeLibraryMap.applyFilters(
         trackMap: Map<Long, List<Track>>,
         trackingFilter: Map<Long, TriState>,
+        hidden: Boolean,
     ): AnimeLibraryMap {
         val prefs = getAnimelibItemPreferencesFlow().first()
         val downloadedOnly = prefs.globalFilterDownloaded
@@ -311,7 +314,9 @@ class LibraryScreenModel(
                 filterFnTracking(it)
         }
 
-        return mapValues { (_, value) -> value.fastFilter(filterFn) }
+        return this
+            .filter { (category, _) -> hidden || !category.hidden || category.id == 0L }
+            .mapValues { (_, value) -> value.fastFilter(filterFn) }
     }
 
     private fun AnimeLibraryMap.applySort(
@@ -625,6 +630,16 @@ class LibraryScreenModel(
         clearSelection()
     }
 
+    fun updateSelection() {
+        val selection = state.value.selection.toList()
+        screenModelScope.launchIO {
+            selection.forEach {
+                eu.kanade.tachiyomi.data.library.LibraryUpdateJob.startNow(context, category = Category(it.category, "", 0L, 0L, false))
+            }
+        }
+        clearSelection()
+    }
+
     /**
      * Marks animes' episodes seen status.
      */
@@ -833,7 +848,7 @@ class LibraryScreenModel(
     fun invertSelection(index: Int) {
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
-                val categoryId = state.categories[index].id
+                val categoryId = state.categories.getOrNull(index)?.id ?: return@mutate
                 val items = state.getAnimelibItemsByCategoryId(categoryId)?.fastMap { it.libraryAnime }.orEmpty()
                 val selectedIds = list.fastMap { it.id }
                 val (toRemove, toAdd) = items.fastPartition { it.id in selectedIds }
@@ -1065,9 +1080,11 @@ class LibraryScreenModel(
         val showAnimeCount: Boolean = false,
         val showAnimeContinueButton: Boolean = false,
         val dialog: Dialog? = null,
+        // KMK -->
+        val showEmptyCategoriesSearch: Boolean = true,
+        // KMK <--
         // SY -->
-        val groupType: Int = LibraryGroup.BY_DEFAULT,
-        // SY <--
+        val groupType: Int = LibraryGroup.BY_DEFAULT,        // SY <--
     ) {
         private val libraryCount by lazy {
             library.values
@@ -1101,7 +1118,7 @@ class LibraryScreenModel(
         }
 
         fun getAnimeCountForCategory(category: Category): Int? {
-            return if (showAnimeCount || !searchQuery.isNullOrEmpty()) library[category]?.size else null
+            return if (showAnimeCount || (!searchQuery.isNullOrEmpty() && showEmptyCategoriesSearch)) library[category]?.size else null
         }
 
         fun getToolbarTitle(

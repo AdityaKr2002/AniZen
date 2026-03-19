@@ -41,17 +41,10 @@ data class Anime(
     val parentId: Long? = null,
     val seasonNumber: Double? = null,
     val seasonOrder: Long? = null,
+    val customAnimeInfo: CustomAnimeInfo? = null,
 ) : Serializable {
 
     // SY -->
-    private val customAnimeInfo by lazy {
-        if (favorite) {
-            getCustomAnimeInfo.get(id)
-        } else {
-            null
-        }
-    }
-
     val title: String
         get() = customAnimeInfo?.title ?: ogTitle
 
@@ -75,6 +68,9 @@ data class Anime(
 
     val score: Double?
         get() = customAnimeInfo?.score
+
+    val note: String?
+        get() = customAnimeInfo?.note
     // SY <--
 
     val expectedNextUpdate: Instant?

@@ -184,11 +184,11 @@ fun FeedScreen(
                     contentPadding = listPadding,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(
+                    itemsIndexed(
                         items = items,
-                        key = { "feed-${it.feed.id}" },
-                        contentType = { "feed_island" }
-                    ) { item ->
+                        key = { index, it -> "feed-${it.feed.id}-$index" },
+                        contentType = { _, _ -> "feed_island" }
+                    ) { _, item ->
                         FeedIsland(
                             item = item,
                             onAnimeClick = { onAnimeClick(it, item.feed.id) },
@@ -249,11 +249,11 @@ private fun FeedIsland(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(
+                    itemsIndexed(
                         items = item.animeList,
-                        key = { anime -> "anime-${item.feed.id}-${anime.id}" },
-                        contentType = { "anime_card" }
-                    ) { anime ->
+                        key = { index, anime -> "anime-${item.feed.id}-${anime.id}-$index" },
+                        contentType = { _, _ -> "anime_card" }
+                    ) { _, anime ->
                         FeedCard(
                             anime = anime,
                             onClick = { onAnimeClick(anime) }

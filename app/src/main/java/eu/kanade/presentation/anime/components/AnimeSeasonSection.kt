@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material3.Icon
@@ -99,10 +100,10 @@ fun AnimeSeasonSection(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(
+                itemsIndexed(
                     items = sortedSeasons,
-                    key = { "anime-season-${it.anime.id}" }
-                ) { season ->
+                    key = { index, it -> "anime-season-${it.anime.id}-$index" }
+                ) { _, season ->
                     SeasonItem(
                         season = season,
                         onClick = { onSeasonClick(season.anime.id) }
@@ -118,7 +119,8 @@ fun AnimeSeasonSection(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = MaterialTheme.shapes.medium,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            tonalElevation = 2.dp,
         ) {
             content()
         }
@@ -168,33 +170,41 @@ private fun SeasonItem(
         }
     }
 
+    val (entry, ratio) = AnimeCover.getEntry(season.anime.id)
+    val width = if (entry == AnimeCover.Panorama) 200.dp else 104.dp
+
     Column(
-        modifier = Modifier.width(104.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(width),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        AnimeComfortableGridItem(
-            title = seasonLabel,
-            coverData = remember(season.anime.id) {
-                tachiyomi.domain.anime.model.AnimeCover(
-                    animeId = season.anime.id,
-                    sourceId = season.anime.source,
-                    isAnimeFavorite = season.anime.favorite,
-                    ogUrl = season.anime.thumbnailUrl,
-                    lastModified = season.anime.coverLastModified,
-                )
-            },
-            coverBadgeStart = {
-                if (season.isPrimary) {
+        androidx.compose.foundation.layout.Box {
+            entry(
+                data = season.anime,
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                ratio = ratio,
+            )
+            
+            if (season.isPrimary) {
+                tachiyomi.presentation.core.components.BadgeGroup(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp),
+                ) {
                     Badge(
                         text = "Current",
                         color = MaterialTheme.colorScheme.secondary,
                         textColor = MaterialTheme.colorScheme.onSecondary
                     )
                 }
-            },
-            onClick = onClick,
-            onLongClick = {},
+            }
+        }
+        Text(
+            text = seasonLabel,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

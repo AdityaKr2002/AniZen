@@ -6,12 +6,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.ExtensionScreen
@@ -35,7 +35,7 @@ fun extensionsTab(
     val navigator = LocalNavigator.currentOrThrow
     val context = LocalContext.current
 
-    val updates by extensionsScreenModel.state.map { it.updates }.collectAsState(0)
+    val updates by extensionsScreenModel.state.map { it.updates }.collectAsStateWithLifecycle(0)
     val actionFilter = stringResource(MR.strings.action_filter)
     val labelExtensionRepos = stringResource(MR.strings.label_extension_repos)
 
@@ -49,7 +49,7 @@ fun extensionsTab(
                     title = "NSFW Only",
                     onClick = { extensionsScreenModel.toggleNsfwOnly() },
                     iconContent = {
-                        val nsfwOnly by extensionsScreenModel.state.map { it.nsfwOnly }.collectAsState(false)
+                        val nsfwOnly by extensionsScreenModel.state.map { it.nsfwOnly }.collectAsStateWithLifecycle(false)
                         NsfwIcon(
                             color = if (nsfwOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
@@ -69,7 +69,7 @@ fun extensionsTab(
                 ),
             ),
             content = { contentPadding, _ ->
-                val state by extensionsScreenModel.state.collectAsState()
+                val state by extensionsScreenModel.state.collectAsStateWithLifecycle()
                 var privateExtensionToUninstall by remember { mutableStateOf<Extension?>(null) }
                 ExtensionScreen(
                     state = state,

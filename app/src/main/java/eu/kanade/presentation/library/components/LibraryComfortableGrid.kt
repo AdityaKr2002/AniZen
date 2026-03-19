@@ -34,10 +34,11 @@ internal fun LibraryComfortableGrid(
     ) {
         globalSearchItem(searchQuery, onGlobalSearchClicked)
 
-        items(
+        itemsIndexed(
             items = items,
-            contentType = { "anime_library_comfortable_grid_item" },
-        ) { libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
+            key = { index, it -> "library-grid-${it.libraryAnime.anime.id}-$index" },
+            contentType = { _, _ -> "anime_library_comfortable_grid_item" },
+        ) { _, libraryItem: eu.kanade.tachiyomi.ui.library.LibraryItem ->
             val anime = libraryItem.libraryAnime.anime
             AnimeComfortableGridItem(
                 isSelected = libraryItem.libraryAnime.id in selectedIds,

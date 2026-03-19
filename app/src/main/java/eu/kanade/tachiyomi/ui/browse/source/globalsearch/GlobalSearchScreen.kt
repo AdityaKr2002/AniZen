@@ -12,8 +12,11 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.core.util.ifSourcesLoaded
 import eu.kanade.presentation.browse.GlobalSearchScreen
+import eu.kanade.presentation.browse.components.BulkFavoriteDialogs
+import eu.kanade.presentation.browse.components.bulkSelectionButton
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
+import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 
@@ -38,6 +41,10 @@ class GlobalSearchScreen(
             )
         }
         val state by screenModel.state.collectAsState()
+
+        val bulkFavoriteScreenModel = rememberScreenModel { BulkFavoriteScreenModel() }
+        val bulkFavoriteState by bulkFavoriteScreenModel.state.collectAsState()
+
         var showSingleLoadingScreen by remember {
             mutableStateOf(
                 searchQuery.isNotEmpty() && !extensionFilter.isNullOrEmpty() && state.total == 1,
@@ -74,8 +81,27 @@ class GlobalSearchScreen(
                 onClickSource = {
                     navigator.push(BrowseSourceScreen(it.id, state.searchQuery))
                 },
-                onClickItem = { navigator.push(AnimeScreen(it.id, true)) },
-                onLongClickItem = { navigator.push(AnimeScreen(it.id, true)) },
+                onClickItem = { anime ->
+                    if (bulkFavoriteState.selectionMode) {
+                        bulkFavoriteScreenModel.toggleSelection(anime)
+                    } else {
+                        navigator.push(AnimeScreen(anime.id, true))
+                    }
+                },
+                onLongClickItem = { anime ->
+                    if (!bulkFavoriteState.selectionMode) {
+                        bulkFavoriteScreenModel.toggleSelectionMode(true)
+                    }
+                    bulkFavoriteScreenModel.toggleSelection(anime)
+                },
+                selection = bulkFavoriteState.selection,
+                onClearSelection = { bulkFavoriteScreenModel.toggleSelectionMode(false) },
+                onChangeCategory = bulkFavoriteScreenModel::addFavorite,
+            )
+
+            BulkFavoriteDialogs(
+                bulkFavoriteScreenModel = bulkFavoriteScreenModel,
+                dialog = bulkFavoriteState.dialog,
             )
         }
     }

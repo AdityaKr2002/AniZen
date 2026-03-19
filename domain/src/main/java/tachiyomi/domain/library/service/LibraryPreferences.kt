@@ -44,6 +44,10 @@ class LibraryPreferences(
         Preference.appStateKey("pref_show_updating_progress_banner_key"),
         true,
     )
+
+    fun showEmptyCategoriesSearch() = preferenceStore.getBoolean("pref_show_empty_categories_search", true)
+
+    fun syncOnAdd() = preferenceStore.getBoolean("pref_sync_manga_on_add", false)
     // KMK <--
 
     fun coverRatios() = preferenceStore.getStringSet(
@@ -119,6 +123,8 @@ class LibraryPreferences(
         "pref_filter_library_lewd_v2",
         TriState.DISABLED,
     )
+
+    fun filterCategories() = preferenceStore.getBoolean("pref_filter_library_categories", false)
 
     fun libraryReadDuplicateChapters() = preferenceStore.getBoolean("pref_library_mark_duplicate_chapters", false)
     // SY <--

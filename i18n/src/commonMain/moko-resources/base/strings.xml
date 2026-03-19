@@ -96,6 +96,11 @@
     <string name="action_next_chapter">Next chapter</string>
     <string name="action_retry">Retry</string>
     <string name="action_remove">Remove</string>
+    <string name="action_update">Update</string>
+    <string name="action_filter_categories">Filter categories</string>
+    <string name="notes_placeholder">Write something here…</string>
+    <string name="downloaded_data">Downloaded data</string>
+    <string name="merge_settings">Merge settings</string>
     <string name="action_remove_everything">Remove everything</string>
     <string name="action_start">Start</string>
     <string name="action_resume">Resume</string>
@@ -1075,6 +1080,9 @@
     <string name="unfinished_list">Unfinished List</string>
     <string name="score">Score</string>
     <string name="score_hint">Local Score (0-10)</string>
+    <string name="note_hint">Note</string>
+    <string name="action_clear_anime">Clear anime</string>
+    <string name="clear_anime_confirmation">This will reset your watch progress, remove any custom info, and delete all downloaded episodes for this anime.</string>
     <string name="title">Title</string>
     <string name="status">Status</string>
     <string name="track_status">Status</string>
@@ -1123,6 +1131,11 @@
     <string name="updates_last_update_info_just_now">Just now</string>
     <string name="relative_time_span_never">Never</string>
     <string name="action_view_upcoming">View Upcoming Updates</string>
+    <string name="action_edit_notes">Notes</string>
+    <string name="action_dont_migrate">Don\'t migrate</string>
+    <string name="episodes_from_database">Episodes &amp; History from Database</string>
+    <string name="match_enabled_sources">Match enabled sources</string>
+    <string name="select_source">Select source</string>
     <!-- Upcoming -->
     <string name="upcoming_guide">Upcoming Guide</string>
     <string name="upcoming_calendar_next">Next Month</string>
@@ -1135,8 +1148,10 @@
     <string name="source_filter_empty_screen">No installed source found</string>
     <string name="migration_help_guide">Source migration guide</string>
     <string name="migration_dialog_what_to_include">Select data to include</string>
-    <string name="migration_selection_prompt">Select a source to migrate from</string>
+    <string name="migration_selection_prompt">Select source</string>
     <string name="migrate">Migrate</string>
+    <string name="action_edit_info">Edit info</string>
+    <string name="merge">Merge</string>
     <string name="copy">Copy</string>
     <string name="empty_screen">Well, this is awkward</string>
     <string name="not_installed">Not installed</string>
@@ -1454,4 +1469,78 @@
     <string name="download_speed_limit_hint">Set to 0 to disable the speed limit.</string>
     <string name="action_use_hls_download">Use HLS Engine (Native/FFmpeg)</string>
     <string name="action_use_normal_download">Use Normal Engine (Multi-threaded)</string>
+
+    <!-- Migration Config -->
+    <string name="migrationConfigScreen_removeDownloadsTitle">Remove downloads</string>
+    <string name="migrationConfigScreen_dataToMigrateHeader">Data to migrate</string>
+    <string name="migrationConfigScreen_additionalSearchQueryLabel">Additional search query</string>
+    <string name="migrationConfigScreen_additionalSearchQuerySupportingText">Useful for finding matches on other sources</string>
+    <string name="migrationConfigScreen_hideUnmatchedTitle">Hide unmatched entries</string>
+    <string name="migrationConfigScreen_hideWithoutUpdatesTitle">Hide entries without updates</string>
+    <string name="migrationConfigScreen_hideWithoutUpdatesSubtitle">Entries with less or equal number of episodes than current</string>
+    <string name="migrationConfigScreen_smartSearchSingleEntryTitle">Smart search for single entry</string>
+    <string name="migrationConfigScreen_smartSearchSingleEntrySubtitle">Search for the best match instead of manual search</string>
+    <string name="migrationConfigScreen_enhancedOptionsWarning">These options may significantly slow down the migration process.</string>
+    <string name="migrationConfigScreen_deepSearchModeTitle">Deep search mode</string>
+    <string name="migrationConfigScreen_deepSearchModeSubtitle">Performs more aggressive title variations</string>
+    <string name="migrationConfigScreen_prioritizeByChaptersTitle">Prioritize by episode count</string>
+    <string name="migrationConfigScreen_prioritizeByChaptersSubtitle">Choose the source with the most episodes</string>
+    <string name="migrationConfigScreen_continueButtonText">Migrate</string>
+    <string name="migrationConfigScreen_selectPinnedLabel">Select pinned</string>
+    <string name="migrationConfigScreen_selectNoneLabel">Select none</string>
+    <string name="migrationConfigScreen_selectEnabledLabel">Match enabled sources</string>
+    <string name="migrationConfigScreen_selectAllLabel">Select all</string>
+    <string name="migrationConfigScreen_selectedHeader">Selected sources</string>
+    <string name="migrationConfigScreen_availableHeader">Available sources</string>
+
+    <!-- Migration List -->
+    <string name="migrationListScreenTitleWithProgress">Migrating (%1$d/%2$d)</string>
+    <string name="migrationListScreenTitle">Migrating</string>
+    <string name="migrationListScreen_copyActionLabel">Copy all</string>
+    <string name="migrationListScreen_migrateActionLabel">Migrate all</string>
+    <string name="migrationListScreen_copyTitle">Copy entries?</string>
+    <string name="migrationListScreen_migrateTitle">Migrate entries?</string>
+    <string name="migrationListScreen_copyText">Copy %1$d entries to the new sources?</string>
+    <string name="migrationListScreen_migrateText">Migrate %1$d entries to the new sources?</string>
+    <string name="migrationListScreen_copyTextWithSkipped">Copy %1$d entries? (%2$d entries will be skipped)</string>
+    <string name="migrationListScreen_migrateTextWithSkipped">Migrate %1$d entries? (%2$d entries will be skipped)</string>
+    <string name="migrationListScreen_migratingTitle">Migrating…</string>
+    <string name="migrationListScreen_exitTitle">Exit migration?</string>
+    <string name="migrationListScreen_exitText">Any ongoing migration will be cancelled.</string>
+    <string name="migrationListScreen_latestChapterLabel">Latest: %1$s</string>
+    <string name="migrationListScreen_unknownLatestChapter">Unknown</string>
+    <string name="migrationListScreen_noMatchFoundText">No match found</string>
+    <string name="migrationListScreen_searchManuallyActionLabel">Search manually</string>
+    <string name="migrationListScreen_skipActionLabel">Don\'t migrate</string>
+    <string name="migrationListScreen_migrateNowActionLabel">Migrate now</string>
+    <string name="migrationListScreen_copyNowActionLabel">Copy now</string>
+    <string name="migrationListScreen_matchWithoutChapterToast">Match found but has no episodes</string>
+
+    <!-- Merge Settings -->
+    <string name="allow_deduplication">Allow deduplication</string>
+    <string name="deduplication_mode">Deduplication mode</string>
+    <string name="deduplication_entry_info">Consolidated entry info</string>
+    <string name="dedupe_priority">Priority</string>
+    <string name="dedupe_most_chapters">Most episodes</string>
+    <string name="dedupe_highest_chapter">Highest episode number</string>
+    <string name="merged_references_invalid">Invalid merged references</string>
+    <string name="delete_merged_entry">Delete merged entry?</string>
+    <string name="delete_merged_entry_desc">Are you sure you want to delete this merged entry?</string>
+    <string name="chapter_updates_merged_entry">Episode updates</string>
+    <string name="chapter_updates_merged_entry_desc">Enable/disable episode updates for this source</string>
+    <string name="download_merged_entry">Download merged entry?</string>
+    <string name="download_merged_entry_desc">Enable/disable automatic downloads for this source</string>
+    <string name="merged_chapter_updates_error">Error toggling episode updates</string>
+    <string name="merged_toggle_download_chapters_error">Error toggling episode downloads</string>
+    <string name="action_merge">Merge</string>
+    <string name="pref_behavior">Behavior</string>
+    <string name="pref_sync_manga_on_add">Sync on add</string>
+    <string name="pref_sync_manga_on_add_description">Automatically fetch episode list when adding to library</string>
+    <string name="pref_show_updating_progress_banner">Show progress banner</string>
+    <string name="pref_show_empty_categories_search">Show empty categories in search</string>
+    <string name="action_scroll_to_top">Scroll to top</string>
+    <string name="action_scroll_to_bottom">Scroll to bottom</string>
+    <string name="action_search_for_source">Search for source</string>
+    <string name="notes">Notes</string>
+    <string name="extra">Extra</string>
 </resources>

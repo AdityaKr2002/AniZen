@@ -66,6 +66,8 @@ class UiPreferences(
     fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
 
     fun animatedTransitions() = preferenceStore.getBoolean("animated_transitions", true)
+
+    fun preloadLibraryColor() = preferenceStore.getBoolean("preload_library_color", true)
     // SY <--
 
     companion object {

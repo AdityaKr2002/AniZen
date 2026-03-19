@@ -17,11 +17,15 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.SortedMap
 
+import eu.kanade.presentation.browse.SourceUiModel
+import java.util.TreeMap
+
 class SourcesFilterScreenModel(
     private val preferences: SourcePreferences = Injekt.get(),
     private val getLanguagesWithSources: GetLanguagesWithSources = Injekt.get(),
     private val toggleSource: ToggleSource = Injekt.get(),
     private val toggleLanguage: ToggleLanguage = Injekt.get(),
+    private val mapper: SourceUiModelMapper = SourceUiModelMapper(),
 ) : StateScreenModel<SourcesFilterScreenModel.State>(State.Loading) {
 
     init {
@@ -30,7 +34,17 @@ class SourcesFilterScreenModel(
                 getLanguagesWithSources.subscribe(),
                 preferences.enabledLanguages().changes(),
                 preferences.disabledSources().changes(),
-            ) { a, b, c -> Triple(a, b, c) }
+            ) { languagesWithSources, enabledLanguages, disabledSources ->
+                val items = TreeMap<SourceUiModel.Header, List<SourceUiModel.Item>> { h1, h2 ->
+                    h1.language.compareTo(h2.language)
+                }
+                
+                languagesWithSources.forEach { (lang, sources) ->
+                    items[mapper.mapHeader(lang)] = sources.map { mapper.map(it, headerKey = lang) }
+                }
+                
+                Triple(items, enabledLanguages, disabledSources)
+            }
                 .catch { throwable ->
                     mutableState.update {
                         State.Error(
@@ -38,10 +52,10 @@ class SourcesFilterScreenModel(
                         )
                     }
                 }
-                .collectLatest { (languagesWithSources, enabledLanguages, disabledSources) ->
+                .collectLatest { (items, enabledLanguages, disabledSources) ->
                     mutableState.update {
                         State.Success(
-                            items = languagesWithSources,
+                            items = items,
                             enabledLanguages = enabledLanguages,
                             disabledSources = disabledSources,
                         )
@@ -70,7 +84,7 @@ class SourcesFilterScreenModel(
 
         @Immutable
         data class Success(
-            val items: SortedMap<String, List<Source>>,
+            val items: SortedMap<SourceUiModel.Header, List<SourceUiModel.Item>>,
             val enabledLanguages: Set<String>,
             val disabledSources: Set<String>,
         ) : State {

@@ -40,6 +40,21 @@ internal fun Project.configureAndroid(commonExtension: CommonExtension<*, *, *, 
             targetCompatibility = AndroidConfig.JavaVersion
             isCoreLibraryDesugaringEnabled = true
         }
+
+        buildTypes {
+            maybeCreate("debug").apply {
+                matchingFallbacks += listOf("debug", "release")
+            }
+            maybeCreate("release").apply {
+                matchingFallbacks += listOf("release")
+            }
+            maybeCreate("preview").apply {
+                matchingFallbacks += listOf("release")
+            }
+            maybeCreate("benchmark").apply {
+                matchingFallbacks += listOf("release")
+            }
+        }
     }
 
     tasks.withType<KotlinCompile>().configureEach {

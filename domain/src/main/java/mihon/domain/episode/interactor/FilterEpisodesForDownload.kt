@@ -1,19 +1,19 @@
 package mihon.domain.episode.interactor
 
 import exh.source.MERGED_SOURCE_ID
-import tachiyomi.domain.anime.model.Manga
+import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.interactor.GetEpisodesByAnimeId
 import tachiyomi.domain.episode.interactor.GetMergedEpisodesByAnimeId
-import tachiyomi.domain.episode.model.Chapter
+import tachiyomi.domain.episode.model.Episode
 
 /**
- * Interactor responsible for determining which chapters of a manga should be downloaded.
+ * Interactor responsible for determining which episodes of a anime should be downloaded.
  *
- * @property getEpisodesByAnimeId Interactor for retrieving chapters by manga ID.
- * @property downloadPreferences User preferences related to chapter downloads.
- * @property getCategories Interactor for retrieving categories associated with a manga.
+ * @property getEpisodesByAnimeId Interactor for retrieving episodes by anime ID.
+ * @property downloadPreferences User preferences related to episode downloads.
+ * @property getCategories Interactor for retrieving categories associated with a anime.
  */
 class FilterEpisodesForDownload(
     private val getEpisodesByAnimeId: GetEpisodesByAnimeId,
@@ -23,47 +23,47 @@ class FilterEpisodesForDownload(
 ) {
 
     /**
-     * Determines which chapters of a manga should be downloaded based on user preferences.
-     * This should check if user preferences & manga's categories allowed to download
+     * Determines which episodes of a anime should be downloaded based on user preferences.
+     * This should check if user preferences & anime's categories allowed to download
      *
-     * @param manga The manga for which chapters may be downloaded.
-     * @param newChapters The list of new chapters available for the manga.
-     * @return A list of chapters that should be downloaded
+     * @param anime The anime for which episodes may be downloaded.
+     * @param newEpisodes The list of new episodes available for the anime.
+     * @return A list of episodes that should be downloaded
      */
-    suspend fun await(manga: Manga, newChapters: List<Chapter>): List<Chapter> {
+    suspend fun await(anime: Anime, newEpisodes: List<Episode>): List<Episode> {
         if (
-            newChapters.isEmpty() ||
+            newEpisodes.isEmpty() ||
             !downloadPreferences.downloadNewChapters().get() ||
-            !manga.shouldDownloadNewChapters()
+            !anime.shouldDownloadNewEpisodes()
         ) {
             return emptyList()
         }
 
-        if (!downloadPreferences.downloadNewUnreadChaptersOnly().get()) return newChapters
+        if (!downloadPreferences.downloadNewUnreadChaptersOnly().get()) return newEpisodes
 
         // SY -->
-        val existingChapters = if (manga.source == MERGED_SOURCE_ID) {
-            getMergedEpisodesByAnimeId.await(manga.id)
+        val existingEpisodes = if (anime.source == MERGED_SOURCE_ID) {
+            getMergedEpisodesByAnimeId.await(anime.id)
         } else {
-            getEpisodesByAnimeId.await(manga.id)
+            getEpisodesByAnimeId.await(anime.id)
         }
 
-        val readChapterNumbers = existingChapters
+        val seenEpisodeNumbers = existingEpisodes
             // SY <--
             .asSequence()
             .filter { it.seen && it.isRecognizedNumber }
             .map { it.episodeNumber }
             .toSet()
-        return newChapters.filterNot { it.episodeNumber in readChapterNumbers }
+        return newEpisodes.filterNot { it.episodeNumber in seenEpisodeNumbers }
     }
 
     /**
-     * Determines whether new chapters should be downloaded for the manga based on user preferences and the
-     * categories to which the manga belongs.
+     * Determines whether new episodes should be downloaded for the anime based on user preferences and the
+     * categories to which the anime belongs.
      *
-     * @return `true` if chapters of the manga should be downloaded
+     * @return `true` if episodes of the anime should be downloaded
      */
-    private suspend fun Manga.shouldDownloadNewChapters(): Boolean {
+    private suspend fun Anime.shouldDownloadNewEpisodes(): Boolean {
         if (!favorite) return false
 
         val categories = getCategories.await(id).map { it.id }.ifEmpty { listOf(DEFAULT_CATEGORY_ID) }

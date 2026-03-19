@@ -53,7 +53,6 @@ fun EditAnimeDialog(
         description: String?,
         tags: List<String>?,
         status: Long?,
-        score: Double?,
     ) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -84,7 +83,6 @@ fun EditAnimeDialog(
                                 else -> null
                             }
                         }?.toLong(),
-                        binding.score.text.toString().toDoubleOrNull(),
                     )
                     onDismissRequest()
                 },
@@ -191,7 +189,6 @@ private fun onViewCreated(
                 R.string.description_hint,
                 anime.ogDescription?.takeIf { it.isNotBlank() }?.replace("\n", " ")?.chop(20) ?: "",
             )
-        binding.score.setText(anime.score?.toString() ?: "")
     }
     binding.mangaGenresTags.clearFocus()
 

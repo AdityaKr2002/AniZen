@@ -172,13 +172,13 @@ class FeedManageScreen : Screen() {
                                 modifier = Modifier.fillMaxSize(),
                                 state = lazyListState,
                             ) {
-                                items(
-                                    currentItems,
-                                    key = { item -> "feed-${item.feed.id}" },
-                                ) { item ->
+                                itemsIndexed(
+                                    items = currentItems,
+                                    key = { index, item -> "feed-${item.feed.id}-$index" },
+                                ) { index, item ->
                                     ReorderableItem(
                                         state = reorderableState,
-                                        key = "feed-${item.feed.id}",
+                                        key = "feed-${item.feed.id}-$index",
                                     ) { isDragging ->
                                         FeedManageItem(
                                             title = item.title,

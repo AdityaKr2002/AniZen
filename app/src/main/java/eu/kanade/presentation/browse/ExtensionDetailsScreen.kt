@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Launch
 import androidx.compose.material.icons.outlined.Settings
@@ -185,10 +186,10 @@ private fun ExtensionDetails(
             )
         }
 
-        items(
+        itemsIndexed(
             items = sources,
-            key = { "source-${it.source.id}" },
-        ) { source ->
+            key = { index, it -> "source-${it.source.id}-$index" },
+        ) { _, source ->
             SourceSwitchPreference(
                 modifier = Modifier.animateItem(),
                 source = source,

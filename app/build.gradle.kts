@@ -83,21 +83,21 @@ android {
 
         val commonMatchingFallbacks = listOf(release.name)
 
-        create("releaseTest") {
+        maybeCreate("releaseTest").apply {
             initWith(release)
 
             applicationIdSuffix = ".rt"
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
-        create("foss") {
+        maybeCreate("foss").apply {
             initWith(release)
 
             applicationIdSuffix = ".foss"
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
-        create("preview") {
+        getByName("preview").apply {
             initWith(release)
 
             applicationIdSuffix = ".beta"
@@ -109,7 +109,7 @@ android {
 
             buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = false)}\"")
         }
-        create("benchmark") {
+        getByName("benchmark").apply {
             initWith(release)
 
             isDebuggable = false

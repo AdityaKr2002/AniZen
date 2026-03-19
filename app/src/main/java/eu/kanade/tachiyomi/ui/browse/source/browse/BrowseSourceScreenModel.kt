@@ -28,10 +28,13 @@ import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.util.removeCovers
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -128,7 +131,7 @@ class BrowseSourceScreenModel(
 
         getFavorites.subscribe(sourceId)
             .onEach { favorites ->
-                mutableState.update { it.copy(favoriteIds = favorites.map { fav -> fav.id }.toSet()) }
+                mutableState.update { it.copy(favoriteIds = favorites.map { fav -> fav.id }.toImmutableSet()) }
             }
             .launchIn(screenModelScope)
     }
@@ -145,10 +148,10 @@ class BrowseSourceScreenModel(
                 getRemoteAnime.subscribe(sourceId, listing.query ?: "", listing.filters)
             }.flow.map { pagingData ->
                 pagingData.map {
-                    networkToLocalAnime.await(it.toDomainAnime(sourceId))
+                    networkToLocalAnime.getLocal(it.toDomainAnime(sourceId))
                 }
                     .filter { !hideInLibraryItems || !it.favorite }
-            }
+            }.cachedIn(ioCoroutineScope)
                 .cachedIn(screenModelScope)
         }
         .stateIn(screenModelScope, SharingStarted.Lazily, emptyFlow())
@@ -561,7 +564,7 @@ class BrowseSourceScreenModel(
         val dialog: Dialog? = null,
         val selection: PersistentList<Anime> = persistentListOf(),
         val isSelectAllMode: Boolean = false,
-        val favoriteIds: Set<Long> = emptySet(),
+        val favoriteIds: ImmutableSet<Long> = persistentSetOf(),
         val targetCount: Int = 0,
     ) {
         val isUserQuery get() = listing is Listing.Search && !listing.query.isNullOrEmpty()

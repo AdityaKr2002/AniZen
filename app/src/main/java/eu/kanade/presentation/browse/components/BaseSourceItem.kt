@@ -9,57 +9,41 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.network.model.NodeStatus
-import eu.kanade.tachiyomi.util.system.LocaleHelper
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOf
 import tachiyomi.domain.source.model.Source
-import tachiyomi.domain.source.service.SourceHealthCache
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.util.secondaryItemAlpha
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 @Composable
 fun BaseSourceItem(
-    source: Source,
+    item: SourceUiModel.Item,
     modifier: Modifier = Modifier,
-    showLanguageInContent: Boolean = true,
     onClickItem: () -> Unit = {},
     onLongClickItem: () -> Unit = {},
     icon: @Composable RowScope.(Source) -> Unit = defaultIcon,
     action: @Composable RowScope.(Source) -> Unit = {},
-    content: @Composable RowScope.(Source, String?) -> Unit = defaultContent,
+    content: @Composable RowScope.(SourceUiModel.Item) -> Unit = defaultContent,
 ) {
-    val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, LocalContext.current).takeIf {
-        showLanguageInContent
-    }
     BaseBrowseItem(
         modifier = modifier,
         onClickItem = onClickItem,
         onLongClickItem = onLongClickItem,
-        icon = { icon.invoke(this, source) },
-        action = { action.invoke(this, source) },
-        content = { content.invoke(this, source, sourceLangString) },
+        icon = { icon.invoke(this, item.source) },
+        action = { action.invoke(this, item.source) },
+        content = { content.invoke(this, item) },
     )
 }
 
@@ -67,23 +51,7 @@ private val defaultIcon: @Composable RowScope.(Source) -> Unit = { source ->
     SourceIcon(source = source)
 }
 
-private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { source, sourceLangString ->
-    val sourceStatus by remember(source.id) {
-        combine(
-            SourceHealthCache.healthMap,
-            flowOf(source.id)
-        ) { map, id -> map[id] ?: NodeStatus.OPERATIONAL }
-        .distinctUntilChanged()
-    }.collectAsState(initial = NodeStatus.OPERATIONAL)
-
-    val extensionManager: ExtensionManager = Injekt.get()
-    val extensionName = remember(source.id) { extensionManager.getExtensionNameForSource(source.id) }
-    val isNsfw = remember(source.id) {
-        extensionManager.installedExtensionsFlow.value.find { ext ->
-            ext.sources.any { s -> s.id == source.id }
-        }?.isNsfw ?: source.isNsfw
-    }
-
+private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = { item ->
     Column(
         modifier = Modifier
             .padding(horizontal = MaterialTheme.padding.medium)
@@ -91,68 +59,40 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = source.name,
+                text = item.displayName,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f, fill = false)
             )
 
-            // Technical Badges
-            val name = source.name.lowercase()
-            val isBdix = name.contains("dflix") || 
-                         name.contains("dhaka") || 
-                         name.contains("bdix") || 
-                         name.contains("ftp") ||
-                         name.contains("cineplex") ||
-                         name.contains("sam") ||
-                         name.contains("bijoy") ||
-                         name.contains("bas play") ||
-                         name.contains("fanush") ||
-                         name.contains("icc") ||
-                         name.contains("nagordola") ||
-                         name.contains("roarzone") ||
-                         name.contains("infomedia")
-
-            if (isBdix) {
+            if (item.isBdix) {
                 StatusBadge("BDIX", Color(0xFF1E88E5))
             }
             
-            // Smarter API detection for badges
-            val sourceClass = source::class.java.simpleName
-            if (name.contains("api") || name.contains("json") || sourceClass.contains("Api") || sourceClass.contains("Json")) {
+            if (item.isApi) {
                 StatusBadge("API", Color(0xFF43A047))
             }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            val secondaryText = buildString {
-                if (sourceLangString != null) {
-                    append(sourceLangString)
-                }
-                if (extensionName != null && extensionName != source.name) {
-                    if (isNotEmpty()) append(" • ")
-                    append(extensionName)
-                }
-            }
-
-            if (secondaryText.isNotEmpty()) {
+            if (item.secondaryText.isNotEmpty()) {
                 Text(
                     modifier = Modifier.secondaryItemAlpha(),
-                    text = secondaryText,
+                    text = item.secondaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
 
-            // Health Pulse linked to cache
+            // Health Pulse
             Box(
                 modifier = Modifier
                     .size(6.dp)
                     .clip(CircleShape)
                     .background(
-                        when (sourceStatus) {
+                        when (item.status) {
                             NodeStatus.OPERATIONAL -> Color(0xFF4CAF50)
                             NodeStatus.DEGRADED -> Color(0xFFFFC107)
                             else -> Color(0xFFF44336)
@@ -160,7 +100,7 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
                     )
             )
 
-            if (isNsfw) {
+            if (item.isNsfw) {
                 StatusBadge("18+", MaterialTheme.colorScheme.error)
             }
         }

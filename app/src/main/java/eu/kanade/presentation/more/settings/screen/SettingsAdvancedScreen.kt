@@ -49,6 +49,8 @@ import eu.kanade.tachiyomi.network.PREF_DOH_QUAD9
 import eu.kanade.tachiyomi.network.PREF_DOH_SHECAN
 import eu.kanade.tachiyomi.ui.more.OnboardingScreen
 import eu.kanade.tachiyomi.util.CrashLogUtil
+import eu.kanade.tachiyomi.util.system.copyToClipboard
+import eu.kanade.tachiyomi.util.system.findActivity
 import eu.kanade.tachiyomi.util.system.isShizukuInstalled
 import eu.kanade.tachiyomi.util.system.powerManager
 import eu.kanade.tachiyomi.util.system.setDefaultSettings
@@ -124,9 +126,61 @@ object SettingsAdvancedScreen : SearchableSettings {
             getNetworkGroup(networkPreferences = networkPreferences),
             getLibraryGroup(),
             getExtensionsGroup(basePreferences = basePreferences),
+            getPerformanceGroup(),
             // SY -->
             getDataSaverGroup(),
             // SY <--
+        )
+    }
+
+    @Composable
+    private fun getPerformanceGroup(): Preference.PreferenceGroup {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        var report by remember { mutableStateOf<String?>(null) }
+        var isBenchmarking by remember { mutableStateOf(false) }
+
+        if (report != null) {
+            AlertDialog(
+                onDismissRequest = { report = null },
+                title = { Text(text = "Performance Report") },
+                text = { Text(text = report!!) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            context.copyToClipboard("Performance Report", report!!)
+                            report = null
+                        },
+                    ) {
+                        Text(text = stringResource(MR.strings.action_copy_to_clipboard))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { report = null }) {
+                        Text(text = stringResource(MR.strings.action_ok))
+                    }
+                },
+            )
+        }
+
+        return Preference.PreferenceGroup(
+            title = "Performance",
+            preferenceItems = persistentListOf(
+                Preference.PreferenceItem.TextPreference(
+                    title = "Start Performance Benchmark (30s)",
+                    subtitle = if (isBenchmarking) "Benchmarking in progress... interact with the app now!" else "Collects frame data and memory usage for 30 seconds to help optimize Anizen.",
+                    enabled = !isBenchmarking,
+                    onClick = {
+                        val activity = context.findActivity() ?: return@TextPreference
+                        isBenchmarking = true
+                        context.toast("Benchmark started! Interact with the app for 30 seconds.")
+                        eu.kanade.tachiyomi.util.system.PerformanceBenchmarkHelper.startBenchmark(activity, scope) {
+                            report = it
+                            isBenchmarking = false
+                        }
+                    },
+                ),
+            ),
         )
     }
 

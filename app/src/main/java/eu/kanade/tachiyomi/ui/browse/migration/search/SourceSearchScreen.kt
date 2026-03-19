@@ -147,6 +147,7 @@ data class SourceSearchScreen(
                 onAnimeClick = openMigrateDialog,
                 onAnimeLongClick = { navigator.push(AnimeScreen(it.id, true)) },
                 selection = state.selection.toImmutableList(),
+                favoriteIds = state.favoriteIds,
             )
         }
 
@@ -198,7 +199,7 @@ data class SourceSearchScreen(
                 MigrateDialog(
                     oldAnime = oldAnime,
                     newAnime = dialog.newAnime,
-                    screenModel = rememberScreenModel { MigrateDialogScreenModel() },
+                    screenModel = rememberScreenModel { MigrateDialogScreenModel(oldAnime.id) },
                     onDismissRequest = onDismissRequest,
                     onClickTitle = { navigator.push(AnimeScreen(dialog.newAnime.id)) },
                     onPopScreen = {

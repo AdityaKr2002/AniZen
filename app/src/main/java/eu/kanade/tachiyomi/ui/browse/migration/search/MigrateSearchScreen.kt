@@ -7,8 +7,10 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.browse.MigrateSearchScreen
+import eu.kanade.presentation.browse.components.BulkFavoriteDialogs
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
+import eu.kanade.tachiyomi.ui.browse.BulkFavoriteScreenModel
 
 class MigrateSearchScreen(private val animeId: Long) : Screen() {
 
@@ -18,6 +20,9 @@ class MigrateSearchScreen(private val animeId: Long) : Screen() {
 
         val screenModel = rememberScreenModel { MigrateSearchScreenModel(animeId = animeId) }
         val state by screenModel.state.collectAsState()
+
+        val bulkFavoriteScreenModel = rememberScreenModel { BulkFavoriteScreenModel() }
+        val bulkFavoriteState by bulkFavoriteScreenModel.state.collectAsState()
 
         val dialogScreenModel = rememberScreenModel {
             MigrateSearchScreenDialogScreenModel(
@@ -40,20 +45,44 @@ class MigrateSearchScreen(private val animeId: Long) : Screen() {
                     SourceSearchScreen(dialogState.anime!!, it.id, state.searchQuery),
                 )
             },
-            onClickItem = {
-                dialogScreenModel.setDialog(
-                    (MigrateSearchScreenDialogScreenModel.Dialog.Migrate(it)),
-                )
+            onClickItem = { anime ->
+                val migrationListScreen = navigator.items.filterIsInstance<mihon.feature.migration.list.MigrationListScreen>().lastOrNull()
+                if (migrationListScreen != null) {
+                    migrationListScreen.addMatchOverride(animeId, anime.id)
+                    navigator.pop()
+                } else if (bulkFavoriteState.selectionMode) {
+                    bulkFavoriteScreenModel.toggleSelection(anime)
+                } else {
+                    dialogScreenModel.setDialog(
+                        (MigrateSearchScreenDialogScreenModel.Dialog.Migrate(anime)),
+                    )
+                }
             },
-            onLongClickItem = { navigator.push(AnimeScreen(it.id, true)) },
+            onLongClickItem = { anime ->
+                if (bulkFavoriteState.selectionMode) {
+                    bulkFavoriteScreenModel.toggleSelection(anime)
+                } else {
+                    bulkFavoriteScreenModel.toggleSelectionMode(true)
+                    bulkFavoriteScreenModel.toggleSelection(anime)
+                }
+            },
+            selection = bulkFavoriteState.selection,
+            onClearSelection = { bulkFavoriteScreenModel.toggleSelectionMode(false) },
+            onChangeCategory = bulkFavoriteScreenModel::addFavorite,
+        )
+
+        BulkFavoriteDialogs(
+            bulkFavoriteScreenModel = bulkFavoriteScreenModel,
+            dialog = bulkFavoriteState.dialog,
         )
 
         when (val dialog = dialogState.dialog) {
             is MigrateSearchScreenDialogScreenModel.Dialog.Migrate -> {
+                val anime = dialogState.anime!!
                 MigrateDialog(
-                    oldAnime = dialogState.anime!!,
+                    oldAnime = anime,
                     newAnime = dialog.anime,
-                    screenModel = rememberScreenModel { MigrateDialogScreenModel() },
+                    screenModel = rememberScreenModel { MigrateDialogScreenModel(anime.id) },
                     onDismissRequest = { dialogScreenModel.setDialog(null) },
                     onClickTitle = {
                         navigator.push(AnimeScreen(dialog.anime.id, true))
