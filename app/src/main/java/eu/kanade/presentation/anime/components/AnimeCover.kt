@@ -39,6 +39,8 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState
 import eu.kanade.tachiyomi.R
@@ -191,8 +193,8 @@ enum class AnimeCover(val ratio: Float) {
             ) {
                 if (usePanorama) {
                     CoverColorObserver.ratios
-                        .kotlinx.coroutines.flow.map { it[animeId] ?: Book.ratio }
-                        .kotlinx.coroutines.flow.distinctUntilChanged()
+                        .map { it[animeId] ?: Book.ratio }
+                        .distinctUntilChanged()
                         .collect { value = it }
                 } else {
                     value = Book.ratio
@@ -213,8 +215,8 @@ enum class AnimeCover(val ratio: Float) {
             ) {
                 if (usePanorama) {
                     CoverColorObserver.ratios
-                        .kotlinx.coroutines.flow.map { it[animeId] ?: Book.ratio }
-                        .kotlinx.coroutines.flow.distinctUntilChanged()
+                        .map { it[animeId] ?: Book.ratio }
+                        .distinctUntilChanged()
                         .collect { value = it }
                 } else {
                     value = Book.ratio

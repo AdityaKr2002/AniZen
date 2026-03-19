@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.browse.source
 
+import android.app.Application
 import androidx.compose.runtime.Immutable
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -7,28 +8,36 @@ import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.source.interactor.GetEnabledSources
 import eu.kanade.domain.source.interactor.ToggleSource
 import eu.kanade.domain.source.interactor.ToggleSourcePin
+import eu.kanade.domain.source.model.Pin
+import eu.kanade.domain.source.model.Source
+import eu.kanade.domain.source.service.SourceHealthCache
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.browse.SourceUiModel
 import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.tachiyomi.network.model.NodeStatus
 import eu.kanade.tachiyomi.util.system.LAST_USED_KEY
+import eu.kanade.tachiyomi.util.system.LocaleHelper
 import eu.kanade.tachiyomi.util.system.PINNED_KEY
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import logcat.LogPriority
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.source.interactor.InsertFeedSavedSearch
-import tachiyomi.domain.source.model.FeedSavedSearch
-import tachiyomi.domain.source.model.Pin
-import tachiyomi.domain.source.model.Source
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.TreeMap
@@ -36,8 +45,6 @@ import java.util.TreeMap
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.source.interactor.InsertFeedSavedSearchCategory
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
-import tachiyomi.domain.source.service.SourceHealthCache
-import eu.kanade.tachiyomi.network.model.NodeStatus
 
 class SourcesScreenModel(
     private val preferences: BasePreferences = Injekt.get(),

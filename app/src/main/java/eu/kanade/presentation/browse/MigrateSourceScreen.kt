@@ -57,6 +57,7 @@ import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
+import eu.kanade.presentation.browse.components.rememberSourceItem
 import eu.kanade.presentation.components.AnimatedFloatingSearchBox
 import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.util.animateItemFastScroll
@@ -285,6 +286,8 @@ private fun MigrateBottomActionMenu(
     }
 }
 
+import eu.kanade.presentation.browse.components.rememberSourceItem
+
 @Composable
 private fun MigrateSourceItem(
     source: Source,
@@ -302,10 +305,11 @@ private fun MigrateSourceItem(
         null
     }
 
+    val item = rememberSourceItem(source = source)
+
     BaseSourceItem(
         modifier = modifier.alpha(if (isUnselected) 0.5f else 1f),
-        source = source,
-        showLanguageInContent = source.lang != "",
+        item = item,
         onClickItem = onClickItem,
         onLongClickItem = onLongClickItem,
         icon = { SourceIcon(source = source) },
@@ -327,7 +331,7 @@ private fun MigrateSourceItem(
                 }
             }
         },
-        content = { _, sourceLangString, _, _ ->
+        content = { item ->
             Column(
                 modifier = Modifier
                     .padding(horizontal = MaterialTheme.padding.medium)
@@ -344,10 +348,10 @@ private fun MigrateSourceItem(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (sourceLangString != null) {
+                    if (item.secondaryText.isNotEmpty()) {
                         Text(
                             modifier = Modifier.secondaryItemAlpha(),
-                            text = FlagEmoji.getEmojiLangFlag(source.lang) + " " + sourceLangString,
+                            text = FlagEmoji.getEmojiLangFlag(source.lang) + " " + item.secondaryText,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,

@@ -42,6 +42,55 @@ import uy.kohesive.injekt.api.get
 import eu.kanade.presentation.browse.SourceUiModel
 
 @Composable
+fun rememberSourceItem(source: Source): SourceUiModel.Item {
+    val context = LocalContext.current
+    val extensionManager: ExtensionManager = remember { Injekt.get() }
+    
+    return remember(source) {
+        val extensionName = extensionManager.getExtensionNameForSource(source.id)
+        val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
+        
+        val nameLower = source.name.lowercase()
+        val isBdix = nameLower.contains("dflix") || 
+                     nameLower.contains("dhaka") || 
+                     nameLower.contains("bdix") || 
+                     nameLower.contains("ftp") ||
+                     nameLower.contains("cineplex") ||
+                     nameLower.contains("sam") ||
+                     nameLower.contains("bijoy") ||
+                     nameLower.contains("bas play") ||
+                     nameLower.contains("fanush") ||
+                     nameLower.contains("icc") ||
+                     nameLower.contains("nagordola") ||
+                     nameLower.contains("roarzone") ||
+                     nameLower.contains("infomedia")
+        
+        val sourceClass = source::class.java.simpleName
+        val isApi = nameLower.contains("api") || 
+                    nameLower.contains("json") || 
+                    sourceClass.contains("Api") || 
+                    sourceClass.contains("Json")
+
+        val secondaryText = buildString {
+            append(sourceLangString)
+            if (extensionName != null && extensionName != source.name) {
+                append(" • ")
+                append(extensionName)
+            }
+        }
+
+        SourceUiModel.Item(
+            source = source,
+            isNsfw = source.isNsfw,
+            status = NodeStatus.OPERATIONAL,
+            isBdix = isBdix,
+            isApi = isApi,
+            secondaryText = secondaryText
+        )
+    }
+}
+
+@Composable
 fun BaseSourceItem(
     item: SourceUiModel.Item,
     modifier: Modifier = Modifier,

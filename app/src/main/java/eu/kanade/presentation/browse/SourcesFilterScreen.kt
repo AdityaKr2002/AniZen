@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import eu.kanade.presentation.browse.components.BaseSourceItem
+import eu.kanade.presentation.browse.components.rememberSourceItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.tachiyomi.ui.browse.source.SourcesFilterScreenModel
@@ -107,6 +108,8 @@ private fun SourcesFilterHeader(
     )
 }
 
+import eu.kanade.presentation.browse.components.rememberSourceItem
+
 @Composable
 private fun SourcesFilterItem(
     source: Source,
@@ -114,10 +117,10 @@ private fun SourcesFilterItem(
     onClickItem: (Source) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val item = rememberSourceItem(source = source)
     BaseSourceItem(
         modifier = modifier,
-        source = source,
-        showLanguageInContent = false,
+        item = item,
         onClickItem = { onClickItem(source) },
         action = {
             Checkbox(checked = isEnabled, onCheckedChange = null)
