@@ -12,9 +12,11 @@ class AndroidStorageFolderProvider(
 ) : FolderProvider {
 
     override fun directory(): File {
+        val appName = context.stringResource(MR.strings.app_name)
+        val normalizedAppName = appName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
         return File(
             Environment.getExternalStorageDirectory().absolutePath + File.separator +
-                context.stringResource(MR.strings.app_name),
+                normalizedAppName,
         )
     }
 

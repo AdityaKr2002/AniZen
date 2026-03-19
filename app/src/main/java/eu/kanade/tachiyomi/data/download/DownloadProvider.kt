@@ -18,6 +18,9 @@ import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 /**
  * This class is used to provide the directories where the downloads should be saved.
  * It uses the following path scheme: /<root downloads dir>/<source name>/<anime>/<episode>
@@ -35,17 +38,21 @@ class DownloadProvider(
     private val downloadsDir: UniFile?
         get() = storageManager.getDownloadsDirectory()
 
+    private val dirMutex = Mutex()
+
     /**
      * Returns the download directory for an anime. For internal use only.
      *
      * @param animeTitle the title of the anime to query.
      * @param source the source of the anime.
      */
-    internal fun getAnimeDir(animeTitle: String, source: Source): UniFile {
+    suspend fun getAnimeDir(animeTitle: String, source: Source): UniFile {
         try {
-            return downloadsDir!!
-                .createDirectory(getSourceDirName(source))!!
-                .createDirectory(getAnimeDirName(animeTitle))!!
+            return dirMutex.withLock {
+                downloadsDir!!
+                    .createDirectory(getSourceDirName(source))!!
+                    .createDirectory(getAnimeDirName(animeTitle))!!
+            }
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e) { "Invalid download directory" }
             throw Exception(
