@@ -25,7 +25,7 @@ internal fun LibraryTabs(
         modifier = Modifier.zIndex(1f),
     ) {
         PrimaryScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
+            selectedTabIndex = pagerState.currentPage.coerceAtMost(categories.lastIndex.coerceAtLeast(0)),
             edgePadding = 0.dp,
             // TODO: use default when width is fixed upstream
             // https://issuetracker.google.com/issues/242879624

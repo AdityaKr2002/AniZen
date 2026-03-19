@@ -766,11 +766,13 @@ class LibraryScreenModel(
     }
 
     suspend fun getRandomAnimelibItemForCurrentCategory(): LibraryItem? {
-        if (state.value.categories.isEmpty()) return null
+        val categories = state.value.categories
+        if (categories.isEmpty()) return null
 
         return withIOContext {
+            val categoryId = categories.getOrNull(activeCategoryIndex)?.id ?: categories.last().id
             state.value
-                .getAnimelibItemsByCategoryId(state.value.categories[activeCategoryIndex].id)
+                .getAnimelibItemsByCategoryId(categoryId)
                 ?.randomOrNull()
         }
     }
