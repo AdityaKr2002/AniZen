@@ -101,8 +101,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.launchIO
