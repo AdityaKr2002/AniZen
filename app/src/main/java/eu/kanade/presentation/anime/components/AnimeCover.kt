@@ -96,7 +96,7 @@ enum class AnimeCover(val ratio: Float) {
 
         LaunchedEffect(state, data) {
             val currentState = state
-            if (currentState is AsyncImagePainter.State.Success && onCoverLoaded != null) {
+            if (currentState is AsyncImagePainter.State.Success) {
                 val cover = when (data) {
                     is Anime -> data.asAnimeCover()
                     is DomainMangaCover -> data
@@ -105,8 +105,8 @@ enum class AnimeCover(val ratio: Float) {
                 if (cover != null) {
                     eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(cover, currentState)
                 }
-                if (data is Anime) onCoverLoaded(data.asAnimeCover(), currentState)
-                if (data is DomainMangaCover) onCoverLoaded(data, currentState)
+                if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), currentState)
+                if (data is DomainMangaCover) onCoverLoaded?.invoke(data, currentState)
             }
         }
 

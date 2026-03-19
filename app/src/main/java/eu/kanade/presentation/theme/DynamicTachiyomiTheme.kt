@@ -13,6 +13,8 @@ import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.MaterialDynamicColors
 import com.google.android.material.color.utilities.SchemeContent
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.presentation.theme.TachiyomiShapes
+import eu.kanade.presentation.theme.TachiyomiTypography
 import eu.kanade.presentation.theme.colorscheme.MonetColorScheme
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
@@ -34,6 +36,8 @@ fun DynamicTachiyomiTheme(
         val colorScheme = rememberDynamicColorScheme(colorSeed, isDark, isAmoled, contrast)
         MaterialTheme(
             colorScheme = colorScheme,
+            shapes = TachiyomiShapes,
+            typography = TachiyomiTypography,
             content = content,
         )
     } else {
