@@ -52,19 +52,23 @@ jobs:
 
       - name: Generate AI Context
         run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LAST_TAG" ]; then
-            RANGE="HEAD~20..HEAD"
+          BEFORE="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            RANGE="origin/${{ github.event.pull_request.base.ref }}..HEAD"
+          elif [ "${{ github.event_name }}" == "push" ] && [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            RANGE="$BEFORE..${{ github.sha }}"
           else
-            RANGE="$LAST_TAG..HEAD"
+            RANGE="HEAD~1..HEAD"
           fi
+          
+          echo "Context Range: $RANGE"
           
           mkdir -p .github/ai
           # Save context to files instead of environment variables to prevent "Argument list too long"
-          git log --pretty=format:"- %s" $RANGE > .github/ai/commits.txt
-          git diff --stat $RANGE > .github/ai/files.txt
+          git log --pretty=format:"- %s" $RANGE > .github/ai/commits.txt || echo "New preview build" > .github/ai/commits.txt
+          git diff --stat $RANGE > .github/ai/files.txt || echo "" > .github/ai/files.txt
           # Capture a very small amount of code to stay under Groq TPM limits (12k tokens)
-          git diff -U1 $RANGE | head -n 200 > .github/ai/diff.txt
+          git diff -U1 $RANGE | head -n 200 > .github/ai/diff.txt || echo "" > .github/ai/diff.txt
 
       - name: Restore AI Note Accumulator
         uses: actions/cache/restore@v4
@@ -89,15 +93,18 @@ jobs:
 
           cat > .github/ai/full_prompt.txt <<EOF
           You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          Summarize WHAT IS NEW and WHAT CHANGED based on the commits and diff below.
+          Summarize WHAT IS NEW and WHAT CHANGED.
           Use emojis like 🚀, ✨, and 🛠️. Group into 'What's New', 'Fixed', and 'Polished'.
           CRITICAL: Do NOT mention technical details like 'diffs', 'commits', or file paths. Focus on user-facing features!
-          If the diff is truncated, rely on the commit history to tell the story.
+          
+          Your primary job is to summarize the NEW CHANGES.
+          However, if there are PREVIOUS FAILED BUILD NOTES below, you MUST ALSO include that information, as those changes are also part of this release but were never announced. 
+          Merge them seamlessly into one unified changelog.
 
-          PREVIOUS NOTES (KEEP THESE):
+          PREVIOUS FAILED BUILD NOTES (Include these):
           $ACCUMULATED_NOTES
 
-          NEW CHANGES:
+          NEW CHANGES (Primary focus):
           COMMITS:
           $COMMITS
           
