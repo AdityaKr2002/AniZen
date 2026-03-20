@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,11 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -34,19 +29,14 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.anime.components.DotSeparatorText
 import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeDownloadIndicator
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.util.relativeTimeSpanString
-import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
-import tachiyomi.core.common.util.lang.withIOContext
-import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.domain.updates.model.UpdatesWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ListGroupHeader
@@ -55,6 +45,9 @@ import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.selectedBackground
 import uy.kohesive.injekt.injectLazy
+import tachiyomi.domain.storage.service.StoragePreferences
+import eu.kanade.tachiyomi.data.download.DownloadProvider
+import eu.kanade.tachiyomi.source.SourceManager
 
 internal fun LazyListScope.updatesLastUpdatedItem(
     lastUpdated: Long,
@@ -97,7 +90,7 @@ internal fun LazyListScope.updatesUiItems(
             }
             is UpdatesUiModel.Item -> {
                 val updatesItem = model.item
-                item(key = "animeUpdate-${updatesItem.update.id}") {
+                item(key = "animeUpdate-${updatesItem.update.episodeId}") {
                     if (useContainer) {
                         val shape = when (model.position) {
                             UpdatesUiModel.ItemPosition.SINGLE -> MaterialTheme.shapes.large
