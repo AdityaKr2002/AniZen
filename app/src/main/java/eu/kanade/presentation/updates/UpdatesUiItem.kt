@@ -1,30 +1,35 @@
 package eu.kanade.presentation.updates
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.ZeroCornerSize
+
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,28 +43,40 @@ import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.util.relativeTimeSpanString
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
-import eu.kanade.tachiyomi.source.SourceManager
-import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
-import eu.kanade.tachiyomi.ui.updates.UpdatesScreenModel
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import tachiyomi.core.common.util.lang.withIOContext
+import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.storage.service.StoragePreferences
+import tachiyomi.domain.updates.model.UpdatesWithRelations
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.ListGroupHeader
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import tachiyomi.presentation.core.util.selectedBackground
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.util.concurrent.TimeUnit
-import tachiyomi.domain.source.service.SourceManager as DomainSourceManager
-import tachiyomi.domain.storage.service.StoragePreferences
-import tachiyomi.domain.updates.model.UpdatesWithRelations
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+
+internal fun LazyListScope.updatesLastUpdatedItem(
+    lastUpdated: Long,
+) {
+    item(key = "animeUpdates-lastUpdated") {
+        Box(
+            modifier = Modifier
+                .padding(
+                    horizontal = MaterialTheme.padding.medium,
+                    vertical = MaterialTheme.padding.small,
+                ),
+        ) {
+            Text(
+                text = stringResource(MR.strings.updates_last_update_info, relativeTimeSpanString(lastUpdated)),
+                fontStyle = FontStyle.Italic,
+            )
+        }
+    }
+}
 
 internal fun LazyListScope.updatesUiItems(
     uiModels: List<UpdatesUiModel>,
@@ -74,20 +91,11 @@ internal fun LazyListScope.updatesUiItems(
     uiModels.forEach { model ->
         when (model) {
             is UpdatesUiModel.Header -> {
-                if (useContainer) {
-                    item(key = "animeUpdatesHeader-${model.date}") {
-                        ListGroupHeader(
-                            modifier = Modifier,
-                            text = relativeDateText(model.date),
-                        )
-                    }
-                } else {
-                    item(key = "animeUpdatesHeader-${model.date}") {
-                        ListGroupHeader(
-                            modifier = Modifier,
-                            text = relativeDateText(model.date),
-                        )
-                    }
+                item(key = "animeUpdatesHeader-${model.date}") {
+                    ListGroupHeader(
+                        modifier = Modifier,
+                        text = relativeDateText(model.date),
+                    )
                 }
             }
             is UpdatesUiModel.Item -> {
@@ -122,7 +130,13 @@ internal fun LazyListScope.updatesUiItems(
                                 update = updatesItem.update,
                                 selected = updatesItem.selected,
                                 onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
-                                onClick = { onClickUpdate(updatesItem, false) },
+                                onClick = {
+                                    if (selectionMode) {
+                                        onUpdateSelected(updatesItem, !updatesItem.selected, true, false)
+                                    } else {
+                                        onClickUpdate(updatesItem, false)
+                                    }
+                                },
                                 onClickCover = { onClickCover(updatesItem) },
                                 onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
                                 downloadStateProvider = updatesItem.downloadStateProvider,
@@ -137,7 +151,13 @@ internal fun LazyListScope.updatesUiItems(
                             update = updatesItem.update,
                             selected = updatesItem.selected,
                             onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
-                            onClick = { onClickUpdate(updatesItem, false) },
+                            onClick = {
+                                if (selectionMode) {
+                                    onUpdateSelected(updatesItem, !updatesItem.selected, true, false)
+                                } else {
+                                    onClickUpdate(updatesItem, false)
+                                }
+                            },
                             onClickCover = { onClickCover(updatesItem) },
                             onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
                             downloadStateProvider = updatesItem.downloadStateProvider,
@@ -163,12 +183,10 @@ private fun UpdatesUiItem(
     downloadStateProvider: () -> Download.State,
     downloadProgressProvider: () -> Int,
     updatesItem: UpdatesItem,
-    // <-- AM (FILE_SIZE)
     modifier: Modifier = Modifier,
     usePanorama: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
     val textAlpha = if (update.seen) DISABLED_ALPHA else 1f
 
     Row(
@@ -178,6 +196,7 @@ private fun UpdatesUiItem(
                 onClick = onClick,
                 onLongClick = {
                     onLongClick()
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
             )
             .height(56.dp)
@@ -197,7 +216,7 @@ private fun UpdatesUiItem(
             modifier = Modifier
                 .padding(horizontal = MaterialTheme.padding.medium)
                 .weight(1f),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = update.animeTitle,
@@ -207,7 +226,6 @@ private fun UpdatesUiItem(
                 modifier = Modifier.graphicsLayer { alpha = textAlpha },
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                var modified by remember { androidx.compose.runtime.mutableStateOf(false) }
                 if (update.bookmark) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
@@ -229,18 +247,16 @@ private fun UpdatesUiItem(
                         .weight(1f, fill = false),
                 )
 
-                // AM (FILE_SIZE) -->
                 val fileSize = updatesItem.fileSize
                 if (fileSize != null) {
                     DotSeparatorText()
                     Text(
-                        text = java.text.Formatter().format("%.2f MB", fileSize.toDouble() / (1024 * 1024)).toString(),
+                        text = java.util.Formatter().format("%.2f MB", fileSize.toDouble() / (1024 * 1024)).toString(),
                         maxLines = 1,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.graphicsLayer { alpha = textAlpha },
                     )
                 }
-                // <-- AM (FILE_SIZE)
             }
         }
 
@@ -254,8 +270,6 @@ private fun UpdatesUiItem(
     }
 }
 
-// AM (FILE_SIZE) -->
 private val storagePreferences: StoragePreferences by injectLazy()
 private val downloadProvider: DownloadProvider by injectLazy()
 private val sourceManager: SourceManager by injectLazy()
-// <-- AM (FILE_SIZE)
