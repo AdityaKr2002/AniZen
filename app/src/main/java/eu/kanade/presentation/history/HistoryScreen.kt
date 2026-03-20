@@ -145,7 +145,7 @@ private fun HistoryScreenContent(
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
-    val useContainer = remember(containerStyles) { ContainerStyle.HISTORY in containerStyles }
+    val useContainer = remember(containerStyles) { eu.kanade.domain.ui.ContainerStyle.HISTORY in containerStyles }
 
     FastScrollLazyColumn(
         contentPadding = contentPadding,
@@ -172,16 +172,14 @@ private fun HistoryScreenContent(
                                 tonalElevation = 2.dp,
                             ) {
                                 androidx.compose.foundation.layout.Column {
-                                    model.item.forEach { historyItem ->
-                                        HistoryItem(
-                                            modifier = Modifier,
-                                            history = historyItem,
-                                            onClickCover = { onClickCover(historyItem) },
-                                            onClickResume = { onClickResume(historyItem) },
-                                            onClickDelete = { onClickDelete(historyItem) },
-                                            usePanorama = usePanorama,
-                                        )
-                                    }
+                                    HistoryItem(
+                                        modifier = Modifier,
+                                        history = model.item,
+                                        onClickCover = { onClickCover(model.item) },
+                                        onClickResume = { onClickResume(model.item) },
+                                        onClickDelete = { onClickDelete(model.item) },
+                                        usePanorama = usePanorama,
+                                    )
                                 }
                             }
                         }
@@ -202,16 +200,14 @@ private fun HistoryScreenContent(
                         )
                     }
                     is HistoryUiModel.Item -> {
-                        model.item.forEach { historyItem ->
-                            HistoryItem(
-                                modifier = Modifier,
-                                history = historyItem,
-                                onClickCover = { onClickCover(historyItem) },
-                                onClickResume = { onClickResume(historyItem) },
-                                onClickDelete = { onClickDelete(historyItem) },
-                                usePanorama = usePanorama,
-                            )
-                        }
+                        HistoryItem(
+                            modifier = Modifier,
+                            history = model.item,
+                            onClickCover = { onClickCover(model.item) },
+                            onClickResume = { onClickResume(model.item) },
+                            onClickDelete = { onClickDelete(model.item) },
+                            usePanorama = usePanorama,
+                        )
                     }
                 }
             }
