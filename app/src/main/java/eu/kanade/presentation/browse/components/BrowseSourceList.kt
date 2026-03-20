@@ -27,6 +27,7 @@ fun BrowseSourceList(
     selection: List<Anime>,
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
+    usePanorama: Boolean = false,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     val content: @Composable (Int) -> Unit = { containerHeight ->
@@ -55,6 +56,7 @@ fun BrowseSourceList(
                     onLongClick = { onAnimeLongClick(anime) },
                     entries = entries,
                     containerHeight = containerHeight,
+                    usePanorama = usePanorama,
                 )
             }
 
@@ -84,6 +86,7 @@ internal fun BrowseSourceListItem(
     onLongClick: () -> Unit = onClick,
     entries: Int,
     containerHeight: Int,
+    usePanorama: Boolean = false,
 ) {
     AnimeListItem(
         title = anime.title,
@@ -105,5 +108,6 @@ internal fun BrowseSourceListItem(
         onClick = onClick,
         entries = entries,
         containerHeight = containerHeight,
+        usePanorama = usePanorama,
     )
 }

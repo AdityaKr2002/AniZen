@@ -443,15 +443,4 @@ data class GroupMode(
     val nameRes: Int,
     val drawableRes: Int,
 )
-
-private fun groupTypeDrawableRes(type: Int): Int {
-    return when (type) {
-        LibraryGroup.BY_STATUS -> R.drawable.ic_progress_clock_24dp
-        LibraryGroup.BY_TRACK_STATUS -> R.drawable.ic_sync_24dp
-        LibraryGroup.BY_SOURCE -> R.drawable.ic_browse_filled_24dp
-        LibraryGroup.BY_TAG -> R.drawable.ic_tag_24dp
-        LibraryGroup.UNGROUPED -> R.drawable.ic_ungroup_24dp
-        else -> R.drawable.ic_label_24dp
-    }
-}
 // SY <--
