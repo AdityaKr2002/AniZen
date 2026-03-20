@@ -151,7 +151,7 @@ private fun HistoryScreenContent(
         contentPadding = contentPadding,
     ) {
         if (useContainer) {
-            history.forEach { model ->
+            for (model in history) {
                 when (model) {
                     is HistoryUiModel.Header -> {
                         item(key = "historyHeader-${model.hashCode()}") {
