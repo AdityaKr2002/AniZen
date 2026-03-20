@@ -256,6 +256,7 @@ private fun UpdatesUiItem(
             downloadStateProvider = downloadStateProvider,
             downloadProgressProvider = downloadProgressProvider,
             onClick = onDownloadEpisode,
+            fileSize = updatesItem.fileSize,
         )
     }
 }
