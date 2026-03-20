@@ -204,9 +204,10 @@ enum class AnimeCover(val ratio: Float) {
         }
 
         @Composable
-        fun getEntry(animeId: Long): Pair<AnimeCover, Float> {
+        fun getEntry(animeId: Long, usePanoramaOverride: Boolean? = null): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val globalUsePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+            val usePanorama = usePanoramaOverride ?: globalUsePanorama
             
             val ratio by androidx.compose.runtime.produceState(
                 initialValue = if (usePanorama) CoverColorObserver.ratios.value[animeId] ?: Book.ratio else Book.ratio,

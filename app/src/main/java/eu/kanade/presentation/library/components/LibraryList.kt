@@ -29,6 +29,7 @@ internal fun LibraryList(
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
+    usePanorama: Boolean? = null,
 ) {
     val selectedIds = remember(selection) { selection.map { it.id }.toSet() }
 
@@ -79,6 +80,7 @@ internal fun LibraryList(
                 },
                 entries = entries,
                 containerHeight = containerHeight,
+                usePanorama = usePanorama,
             )
         }
     }

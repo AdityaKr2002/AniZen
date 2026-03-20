@@ -99,7 +99,7 @@ fun LibraryPager(
                 LibraryDisplayMode.ComfortableGrid, LibraryDisplayMode.ComfortableGridPanorama -> {
                     LibraryComfortableGrid(
                         items = library,
-                        columns = if (displayMode is LibraryDisplayMode.ComfortableGridPanorama) (columns / 2).coerceAtLeast(1) else columns,
+                        columns = if (displayMode == LibraryDisplayMode.ComfortableGridPanorama && columns > 1) columns - 1 else columns,
                         contentPadding = contentPadding,
                         selection = selectedAnime,
                         onClick = onClickAnime,
@@ -107,6 +107,7 @@ fun LibraryPager(
                         onClickContinueWatching = onClickContinueWatching,
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
+                        usePanorama = if (displayMode == LibraryDisplayMode.ComfortableGridPanorama) true else null,
                     )
                 }
                 else -> {}

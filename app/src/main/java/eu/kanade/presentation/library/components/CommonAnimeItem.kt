@@ -91,13 +91,14 @@ fun AnimeCompactGridItem(
     coverAlpha: Float = 1f,
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
+    usePanorama: Boolean? = null,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         AnimeGridCover(
             cover = {
                 entry(
@@ -200,13 +201,14 @@ fun AnimeComfortableGridItem(
     coverBadgeStart: (@Composable RowScope.() -> Unit)? = null,
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueWatching: (() -> Unit)? = null,
+    usePanorama: Boolean? = null,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         Column {
             AnimeGridCover(
                 cover = {
@@ -386,6 +388,7 @@ fun AnimeListItem(
     onClickContinueWatching: (() -> Unit)? = null,
     entries: Int = 0,
     containerHeight: Int = 0,
+    usePanorama: Boolean? = null,
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val density = LocalDensity.current
@@ -412,7 +415,7 @@ fun AnimeListItem(
             .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId)
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         entry(
             modifier = Modifier
                 .fillMaxHeight()

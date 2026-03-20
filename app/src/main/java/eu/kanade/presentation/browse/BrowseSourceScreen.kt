@@ -143,7 +143,7 @@ fun BrowseSourceContent(
             }
             "Content" -> {
                 when (displayMode) {
-                    LibraryDisplayMode.ComfortableGrid -> {
+                    LibraryDisplayMode.ComfortableGrid, LibraryDisplayMode.ComfortableGridPanorama -> {
                         BrowseSourceComfortableGrid(
                             animeList = animeList,
                             columns = columns,
@@ -153,6 +153,7 @@ fun BrowseSourceContent(
                             selection = selection,
                             favoriteIds = favoriteIds,
                             onBatchIncrement = onBatchIncrement,
+                            usePanorama = if (displayMode is LibraryDisplayMode.ComfortableGridPanorama) true else null,
                         )
                     }
                     LibraryDisplayMode.List -> {
