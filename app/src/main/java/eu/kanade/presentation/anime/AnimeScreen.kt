@@ -398,7 +398,7 @@ private fun AnimeScreenSmallImpl(
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
                 ) {
-                    val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)
+                    val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
                     Scaffold(
                         hazeEnabled = false,
                         contentWindowInsets = scaffoldInsets,
@@ -798,7 +798,7 @@ fun AnimeScreenLargeImpl(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
         ) {
-            val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)
+            val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
             Scaffold(
                 hazeEnabled = false,
                 contentWindowInsets = scaffoldInsets,
