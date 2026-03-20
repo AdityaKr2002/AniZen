@@ -60,7 +60,12 @@ import androidx.compose.material3.CardDefaults
 import eu.kanade.presentation.components.OutlinedButtonWithArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import eu.kanade.domain.ui.UiPreferences
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -1297,7 +1302,9 @@ private fun SuggestionItem(
     anime: Anime,
     onClick: () -> Unit,
 ) {
-    val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id)
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+    val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id, usePanoramaOverride = globalPanorama)
     val width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp
 
     Column(

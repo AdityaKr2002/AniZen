@@ -53,6 +53,7 @@ sealed class Preference {
             override val icon: ImageVector? = null,
             override val enabled: Boolean = true,
             override val onValueChanged: suspend (newValue: Boolean) -> Boolean = { true },
+            val customValue: Boolean? = null,
         ) : PreferenceItem<Boolean>()
 
         /**

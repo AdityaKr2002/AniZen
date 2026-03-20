@@ -17,10 +17,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.library.components.AnimeComfortableGridItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
@@ -47,9 +51,11 @@ fun GlobalSearchCardRow(
             items = titles,
             key = { index, it -> "gs-${it.id}-$index" },
         ) { _, it: tachiyomi.domain.anime.model.Anime ->
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
             val animeState = getAnime(it)
             val title by animeState
-            val (entry, _) = AnimeCover.getEntry(title.id)
+            val (entry, _) = AnimeCover.getEntry(title.id, usePanoramaOverride = globalPanorama)
             AnimeItem(
                 title = title.title,
                 cover = title.asAnimeCover(),
