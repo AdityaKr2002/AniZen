@@ -134,8 +134,11 @@ fun BrowseSourceContent(
             }
             "Content" -> {
                 val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
-                val browseMode by uiPreferences.browsePanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
+                val globalPanoramaState = uiPreferences.panoramaCover().collectAsStatePref()
+                val browseModeState = uiPreferences.browsePanoramaMode().collectAsStatePref()
+                
+                val globalPanorama = globalPanoramaState.value
+                val browseMode = browseModeState.value
                 val effectivePanorama = remember(globalPanorama, browseMode) { browseMode.resolve(globalPanorama) }
 
                 when (displayMode) {
