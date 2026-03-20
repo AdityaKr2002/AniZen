@@ -47,7 +47,7 @@ import tachiyomi.presentation.core.util.selectedBackground
 import uy.kohesive.injekt.injectLazy
 import tachiyomi.domain.storage.service.StoragePreferences
 import eu.kanade.tachiyomi.data.download.DownloadProvider
-import eu.kanade.tachiyomi.source.SourceManager
+import tachiyomi.domain.source.service.SourceManager
 
 internal fun LazyListScope.updatesLastUpdatedItem(
     lastUpdated: Long,
