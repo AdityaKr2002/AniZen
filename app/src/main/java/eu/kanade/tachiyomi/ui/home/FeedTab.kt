@@ -70,13 +70,9 @@ data object FeedTab : Tab {
                     title = stringResource(SYMR.strings.feed),
                     actions = {
                         PanoramaModeToggle(
-                            mode = feedMode,
-                            onCycle = {
-                                val next = when (feedMode) {
-                                    PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
-                                    PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
-                                    PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
-                                }
+                            panoramaMode = feedMode,
+                            globalPanorama = globalPanorama,
+                            onPanoramaModeChange = { next ->
                                 uiPreferences.feedPanoramaMode().set(next)
                             },
                         )

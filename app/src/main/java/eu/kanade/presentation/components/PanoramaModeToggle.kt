@@ -10,42 +10,46 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import eu.kanade.domain.ui.model.PanoramaMode
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
-import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
 fun PanoramaModeToggle(
-    mode: PanoramaMode,
-    onCycle: () -> Unit,
+    panoramaMode: PanoramaMode,
+    globalPanorama: Boolean,
+    onPanoramaModeChange: (PanoramaMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isEffectivePanorama = panoramaMode.resolve(globalPanorama)
+
     IconButton(
-        onClick = onCycle,
+        onClick = {
+            val nextMode = if (isEffectivePanorama) {
+                if (!globalPanorama) PanoramaMode.FOLLOW_GLOBAL else PanoramaMode.FORCE_OFF
+            } else {
+                if (globalPanorama) PanoramaMode.FOLLOW_GLOBAL else PanoramaMode.FORCE_ON
+            }
+            onPanoramaModeChange(nextMode)
+        },
         modifier = modifier,
     ) {
-        val (icon, tint, alpha) = when (mode) {
-            PanoramaMode.FOLLOW_GLOBAL -> Triple(
-                Icons.Outlined.Panorama,
-                LocalContentColor.current,
-                DISABLED_ALPHA,
-            )
-            PanoramaMode.FORCE_ON -> Triple(
+        val (icon, tint, alpha) = if (isEffectivePanorama) {
+            Triple(
                 Icons.Outlined.Panorama,
                 MaterialTheme.colorScheme.primary,
                 1f,
             )
-            PanoramaMode.FORCE_OFF -> Triple(
+        } else {
+            Triple(
                 Icons.Outlined.HideImage,
-                MaterialTheme.colorScheme.error,
+                LocalContentColor.current,
                 DISABLED_ALPHA,
             )
         }
 
         Icon(
             imageVector = icon,
-            contentDescription = stringResource(mode.getLabelRes()),
+            contentDescription = if (isEffectivePanorama) "Panorama Enabled" else "Panorama Disabled",
             tint = tint,
             modifier = Modifier.alpha(alpha),
         )
