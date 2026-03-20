@@ -2,33 +2,21 @@ package eu.kanade.presentation.updates
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Circle
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -41,8 +29,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
-import eu.kanade.core.preference.asState
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.anime.components.DotSeparatorText
@@ -52,12 +38,15 @@ import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.util.relativeTimeSpanString
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
+import eu.kanade.tachiyomi.source.SourceManager
+import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
-import tachiyomi.core.common.util.lang.withIOContext
-import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.domain.storage.service.StoragePreferences
-import tachiyomi.domain.updates.model.UpdatesWithRelations
+import eu.kanade.tachiyomi.ui.updates.UpdatesScreenModel
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.ListGroupHeader
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
@@ -67,26 +56,10 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.TimeUnit
-
-internal fun LazyListScope.updatesLastUpdatedItem(
-    lastUpdated: Long,
-) {
-    item(key = "animeUpdates-lastUpdated") {
-        Box(
-            modifier = Modifier
-                .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                .padding(
-                    horizontal = MaterialTheme.padding.medium,
-                    vertical = MaterialTheme.padding.small,
-                ),
-        ) {
-            Text(
-                text = stringResource(MR.strings.updates_last_update_info, relativeTimeSpanString(lastUpdated)),
-                fontStyle = FontStyle.Italic,
-            )
-        }
-    }
-}
+import tachiyomi.domain.source.service.SourceManager as DomainSourceManager
+import tachiyomi.domain.storage.service.StoragePreferences
+import tachiyomi.domain.updates.model.UpdatesWithRelations
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 internal fun LazyListScope.updatesUiItems(
     uiModels: List<UpdatesUiModel>,
@@ -108,11 +81,18 @@ internal fun LazyListScope.updatesUiItems(
                             text = relativeDateText(model.date),
                         )
                     }
+                } else {
+                    item(key = "animeUpdatesHeader-${model.date}") {
+                        ListGroupHeader(
+                            modifier = Modifier,
+                            text = relativeDateText(model.date),
+                        )
+                    }
                 }
             }
             is UpdatesUiModel.Item -> {
                 val updatesItem = model.item
-                item(key = "animeUpdates-${updatesItem.update.animeId}-${updatesItem.update.episodeId}") {
+                item(key = "animeUpdate-${updatesItem.update.id}") {
                     if (useContainer) {
                         val shape = when (model.position) {
                             UpdatesUiModel.ItemPosition.SINGLE -> MaterialTheme.shapes.large
@@ -120,20 +100,20 @@ internal fun LazyListScope.updatesUiItems(
                                 bottomEnd = ZeroCornerSize,
                                 bottomStart = ZeroCornerSize,
                             )
+                            UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
                             UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
                                 topEnd = ZeroCornerSize,
                                 topStart = ZeroCornerSize,
                             )
-                            UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
                         }
                         val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP) 4.dp else 0.dp
                         val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM) 4.dp else 0.dp
 
                         Surface(
                             modifier = Modifier
-                                .fillMaxWidth()
                                 .padding(horizontal = 12.dp)
-                                .padding(top = topPadding, bottom = bottomPadding),
+                                .padding(top = topPadding, bottom = bottomPadding)
+                                .fillMaxWidth(),
                             shape = shape,
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             tonalElevation = 2.dp,
@@ -141,33 +121,10 @@ internal fun LazyListScope.updatesUiItems(
                             UpdatesUiItem(
                                 update = updatesItem.update,
                                 selected = updatesItem.selected,
-                                watchProgress = updatesItem.update.lastSecondSeen
-                                    .takeIf { !updatesItem.update.seen && it > 0L }
-                                    ?.let {
-                                        stringResource(
-                                            MR.strings.episode_progress,
-                                            formatProgress(it),
-                                            formatProgress(updatesItem.update.totalSeconds),
-                                        )
-                                    },
-                                onLongClick = {
-                                    onUpdateSelected(updatesItem, !updatesItem.selected, true, true)
-                                },
-                                onClick = {
-                                    when {
-                                        selectionMode -> onUpdateSelected(
-                                            updatesItem,
-                                            !updatesItem.selected,
-                                            true,
-                                            false,
-                                        )
-                                        else -> onClickUpdate(updatesItem, false)
-                                    }
-                                },
-                                onClickCover = { onClickCover(updatesItem) }.takeIf { !selectionMode },
-                                onDownloadEpisode = { action: EpisodeDownloadAction ->
-                                    onDownloadEpisode(listOf(updatesItem), action)
-                                }.takeIf { !selectionMode },
+                                onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
+                                onClick = { onClickUpdate(updatesItem, false) },
+                                onClickCover = { onClickCover(updatesItem) },
+                                onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
                                 downloadStateProvider = updatesItem.downloadStateProvider,
                                 downloadProgressProvider = updatesItem.downloadProgressProvider,
                                 updatesItem = updatesItem,
@@ -179,33 +136,10 @@ internal fun LazyListScope.updatesUiItems(
                             modifier = Modifier,
                             update = updatesItem.update,
                             selected = updatesItem.selected,
-                            watchProgress = updatesItem.update.lastSecondSeen
-                                .takeIf { !updatesItem.update.seen && it > 0L }
-                                ?.let {
-                                    stringResource(
-                                        MR.strings.episode_progress,
-                                        formatProgress(it),
-                                        formatProgress(updatesItem.update.totalSeconds),
-                                    )
-                                },
-                            onLongClick = {
-                                onUpdateSelected(updatesItem, !updatesItem.selected, true, true)
-                            },
-                            onClick = {
-                                when {
-                                    selectionMode -> onUpdateSelected(
-                                        updatesItem,
-                                        !updatesItem.selected,
-                                        true,
-                                        false,
-                                    )
-                                    else -> onClickUpdate(updatesItem, false)
-                                }
-                            },
-                            onClickCover = { onClickCover(updatesItem) }.takeIf { !selectionMode },
-                            onDownloadEpisode = { action: EpisodeDownloadAction ->
-                                onDownloadEpisode(listOf(updatesItem), action)
-                            }.takeIf { !selectionMode },
+                            onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
+                            onClick = { onClickUpdate(updatesItem, false) },
+                            onClickCover = { onClickCover(updatesItem) },
+                            onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
                             downloadStateProvider = updatesItem.downloadStateProvider,
                             downloadProgressProvider = updatesItem.downloadProgressProvider,
                             updatesItem = updatesItem,
@@ -222,15 +156,12 @@ internal fun LazyListScope.updatesUiItems(
 private fun UpdatesUiItem(
     update: UpdatesWithRelations,
     selected: Boolean,
-    watchProgress: String?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onClickCover: (() -> Unit)?,
-    onDownloadEpisode: ((EpisodeDownloadAction) -> Unit)?,
-    // Download Indicator
+    onClickCover: () -> Unit,
+    onDownloadEpisode: (EpisodeDownloadAction) -> Unit,
     downloadStateProvider: () -> Download.State,
     downloadProgressProvider: () -> Int,
-    // AM (FILE_SIZE) -->
     updatesItem: UpdatesItem,
     // <-- AM (FILE_SIZE)
     modifier: Modifier = Modifier,
@@ -266,112 +197,59 @@ private fun UpdatesUiItem(
             modifier = Modifier
                 .padding(horizontal = MaterialTheme.padding.medium)
                 .weight(1f),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
         ) {
             Text(
                 text = update.animeTitle,
                 maxLines = 1,
                 style = MaterialTheme.typography.bodyMedium,
-                color = LocalContentColor.current.copy(alpha = textAlpha),
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.graphicsLayer { alpha = textAlpha },
             )
-
             Row(verticalAlignment = Alignment.CenterVertically) {
-                var textHeight by remember { mutableIntStateOf(0) }
-                if (!update.seen) {
-                    Icon(
-                        imageVector = Icons.Filled.Circle,
-                        contentDescription = stringResource(MR.strings.unread),
-                        modifier = Modifier
-                            .height(8.dp)
-                            .padding(end = 4.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                var modified by remember { androidx.compose.runtime.mutableStateOf(false) }
                 if (update.bookmark) {
                     Icon(
-                        imageVector = Icons.Filled.Bookmark,
+                        imageVector = Icons.Filled.CheckCircle,
                         contentDescription = stringResource(MR.strings.action_filter_bookmarked),
                         modifier = Modifier
-                            .sizeIn(
-                                maxHeight = with(LocalDensity.current) { textHeight.toDp() - 2.dp },
-                            ),
+                            .size(MaterialTheme.typography.bodySmall.fontSize.value.dp)
+                            .graphicsLayer { alpha = textAlpha },
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(modifier = Modifier.width(2.dp))
+                    DotSeparatorText()
                 }
                 Text(
                     text = update.episodeName,
                     maxLines = 1,
                     style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = textAlpha),
                     overflow = TextOverflow.Ellipsis,
-                    onTextLayout = { textHeight = it.size.height },
                     modifier = Modifier
-                        .weight(weight = 1f, fill = false),
+                        .graphicsLayer { alpha = textAlpha }
+                        .weight(1f, fill = false),
                 )
-                if (watchProgress != null) {
+
+                // AM (FILE_SIZE) -->
+                val fileSize = updatesItem.fileSize
+                if (fileSize != null) {
                     DotSeparatorText()
                     Text(
-                        text = watchProgress,
+                        text = java.text.Formatter().format("%.2f MB", fileSize.toDouble() / (1024 * 1024)).toString(),
                         maxLines = 1,
-                        color = LocalContentColor.current.copy(alpha = DISABLED_ALPHA),
-                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.graphicsLayer { alpha = textAlpha },
                     )
                 }
+                // <-- AM (FILE_SIZE)
             }
         }
-// AM (FILE_SIZE) -->
-        val showFileSize by remember { storagePreferences.showEpisodeFileSize().asState(scope) }
-        var fileSizeAsync: Long? by remember { mutableStateOf(updatesItem.fileSize) }
-        if (downloadStateProvider() == Download.State.DOWNLOADED &&
-            showFileSize &&
-            fileSizeAsync == null
-        ) {
-            LaunchedEffect(update, Unit) {
-                fileSizeAsync = withIOContext {
-                    downloadProvider.getEpisodeFileSize(
-                        update.episodeName,
-                        null,
-                        update.scanlator,
-                        // AM (CUSTOM_INFORMATION) -->
-                        update.ogAnimeTitle,
-                        // <-- AM (CUSTOM_INFORMATION)
-                        sourceManager.getOrStub(update.sourceId),
-                    )
-                }
-                updatesItem.fileSize = fileSizeAsync
-            }
-        }
-        // <-- AM (FILE_SIZE)
+
         EpisodeDownloadIndicator(
-            enabled = onDownloadEpisode != null,
+            enabled = true,
             modifier = Modifier.padding(start = 4.dp),
             downloadStateProvider = downloadStateProvider,
             downloadProgressProvider = downloadProgressProvider,
-            onClick = { onDownloadEpisode?.invoke(it) },
-            // AM (FILE_SIZE) -->
-            fileSize = fileSizeAsync,
-            // <-- AM (FILE_SIZE)
-        )
-    }
-}
-
-private fun formatProgress(milliseconds: Long): String {
-    return if (milliseconds > 3600000L) {
-        String.format(
-            "%d:%02d:%02d",
-            TimeUnit.MILLISECONDS.toHours(milliseconds),
-            TimeUnit.MILLISECONDS.toMinutes(milliseconds) -
-                TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(milliseconds)),
-            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)),
-        )
-    } else {
-        String.format(
-            "%d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(milliseconds),
-            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)),
+            onClick = onDownloadEpisode,
         )
     }
 }

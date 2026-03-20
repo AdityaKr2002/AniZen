@@ -27,6 +27,8 @@ fun BrowseSourceCompactGrid(
     selection: List<Anime>,
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
+    showTitle: Boolean = true,
+    usePanorama: Boolean? = null,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     LazyVerticalGrid(
@@ -54,6 +56,8 @@ fun BrowseSourceCompactGrid(
                 isSelected = anime.id in selectionIds,
                 onClick = { onAnimeClick(anime) },
                 onLongClick = { onAnimeLongClick(anime) },
+                showTitle = showTitle,
+                usePanorama = usePanorama,
             )
         }
 
@@ -72,9 +76,11 @@ internal fun BrowseSourceCompactGridItem(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = onClick,
+    showTitle: Boolean = true,
+    usePanorama: Boolean? = null,
 ) {
     AnimeCompactGridItem(
-        title = anime.title,
+        title = anime.title.takeIf { showTitle },
         coverData = remember(anime.id, isFavorite) {
             anime.asAnimeCover().copy(isAnimeFavorite = isFavorite)
         },
@@ -85,5 +91,6 @@ internal fun BrowseSourceCompactGridItem(
         onLongClick = onLongClick,
         onClick = onClick,
         isSelected = isSelected,
+        usePanorama = usePanorama,
     )
 }
