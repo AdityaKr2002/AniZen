@@ -34,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -122,7 +123,7 @@ internal fun LazyListScope.updatesUiItems(
                                 topEnd = ZeroCornerSize,
                                 topStart = ZeroCornerSize,
                             )
-                            UpdatesUiModel.ItemPosition.MIDDLE -> androidx.compose.ui.graphics.RectangleShape
+                            UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
                         }
                         val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP) 4.dp else 0.dp
                         val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM) 4.dp else 0.dp

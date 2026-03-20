@@ -38,7 +38,11 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 import java.time.LocalDate
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.unit.dp
 import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
@@ -166,7 +170,7 @@ private fun HistoryScreenContent(
                             tonalElevation = 2.dp
                         ) {
                             Column {
-                                groupItems.forEach { historyItem ->
+                                for (historyItem in groupItems) {
                                     HistoryItem(
                                         modifier = Modifier,
                                         history = historyItem,
