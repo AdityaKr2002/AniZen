@@ -63,8 +63,8 @@ jobs:
           # Save context to files instead of environment variables to prevent "Argument list too long"
           git log --pretty=format:"- %s" $RANGE > .github/ai/commits.txt
           git diff --stat $RANGE > .github/ai/files.txt
-          # Capture a generous amount of code but keep it manageable (1000 lines)
-          git diff -U3 $RANGE | head -n 1000 > .github/ai/diff.txt
+          # Capture a very small amount of code to stay under Groq TPM limits (12k tokens)
+          git diff -U1 $RANGE | head -n 200 > .github/ai/diff.txt
 
       - name: Restore AI Note Accumulator
         uses: actions/cache/restore@v4
@@ -89,22 +89,22 @@ jobs:
 
           cat > .github/ai/full_prompt.txt <<EOF
           You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          Looking at the code changes below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
-          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
-          CRITICAL: Do NOT mention technical details like 'diffs', 'commits', or specific file paths. Tell the story of the features!
+          Summarize WHAT IS NEW and WHAT CHANGED based on the commits and diff below.
+          Use emojis like 🚀, ✨, and 🛠️. Group into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention technical details like 'diffs', 'commits', or file paths. Focus on user-facing features!
+          If the diff is truncated, rely on the commit history to tell the story.
 
-          IMPORTANT: Below are NOTES FROM PREVIOUS FAILED BUILDS. Merge them into this new update so no info is lost.
-          PREVIOUS FAILED NOTES:
+          PREVIOUS NOTES (KEEP THESE):
           $ACCUMULATED_NOTES
 
           NEW CHANGES:
-          COMMIT HISTORY:
+          COMMITS:
           $COMMITS
           
-          FILES CHANGED:
+          FILE STATS:
           $FILES
           
-          CODE PREVIEW:
+          DIFF SNIPPET:
           $DIFF
           EOF
           
