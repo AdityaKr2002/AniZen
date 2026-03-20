@@ -16,7 +16,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 
-import eu.kanade.domain.ui.ContainerStyle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -40,14 +39,6 @@ import tachiyomi.presentation.core.screens.LoadingScreen
 import java.time.LocalDate
 
 import androidx.compose.material3.Surface
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.unit.dp
-
-import androidx.compose.runtime.getValue
-import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
@@ -143,7 +134,7 @@ private fun HistoryScreenContent(
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
-    val useContainer = remember(containerStyles) { ContainerStyle.HISTORY in containerStyles }
+    val useContainer = remember(containerStyles) { eu.kanade.domain.ui.ContainerStyle.HISTORY in containerStyles }
 
     FastScrollLazyColumn(
         contentPadding = contentPadding,

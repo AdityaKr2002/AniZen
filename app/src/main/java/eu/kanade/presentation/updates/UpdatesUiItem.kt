@@ -122,7 +122,7 @@ internal fun LazyListScope.updatesUiItems(
                                 topEnd = ZeroCornerSize,
                                 topStart = ZeroCornerSize,
                             )
-                            UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                            UpdatesUiModel.ItemPosition.MIDDLE -> androidx.compose.ui.graphics.RectangleShape
                         }
                         val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP) 4.dp else 0.dp
                         val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM) 4.dp else 0.dp
