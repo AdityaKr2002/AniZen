@@ -47,14 +47,9 @@ fun HistoryItem(
     onClickResume: () -> Unit,
     onClickDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    usePanorama: Boolean = false,
 ) {
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val usePanorama by uiPreferences.historyPanorama().collectAsStatePref() as State<Boolean>
-    val (entry, ratio) = if (usePanorama) {
-        AnimeCover.getEntry(history.animeId)
-    } else {
-        AnimeCover.Book to AnimeCover.Book.ratio
-    }
+    val (entry, ratio) = AnimeCover.getEntry(history.animeId, usePanoramaOverride = usePanorama)
     Row(
         modifier = modifier
             .clickable(onClick = onClickResume)

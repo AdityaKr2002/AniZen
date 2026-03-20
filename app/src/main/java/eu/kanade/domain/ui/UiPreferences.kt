@@ -2,6 +2,7 @@ package eu.kanade.domain.ui
 
 import eu.kanade.domain.ui.model.AppTheme
 import eu.kanade.domain.ui.model.NavStyle
+import eu.kanade.domain.ui.model.PanoramaMode
 import eu.kanade.domain.ui.model.StartScreen
 import eu.kanade.domain.ui.model.TabletUiMode
 import eu.kanade.domain.ui.model.ThemeMode
@@ -63,10 +64,37 @@ class UiPreferences(
 
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
+    fun libraryPanoramaMode() = getPanoramaMode("pref_library_panorama_mode", "pref_library_panorama")
+
+    fun browsePanoramaMode() = getPanoramaMode("pref_browse_panorama_mode", "pref_browse_panorama")
+
+    fun feedPanoramaMode() = getPanoramaMode("pref_feed_panorama_mode", "pref_feed_panorama")
+
+    fun updatesPanoramaMode() = getPanoramaMode("pref_updates_panorama_mode", "pref_updates_panorama")
+
+    fun historyPanoramaMode() = getPanoramaMode("pref_history_panorama_mode", "pref_history_panorama")
+
+    private fun getPanoramaMode(key: String, oldKey: String): tachiyomi.core.common.preference.Preference<PanoramaMode> {
+        val pref = preferenceStore.getEnum(key, PanoramaMode.FOLLOW_GLOBAL)
+        if (!pref.isSet()) {
+            val oldPref = preferenceStore.getBoolean(oldKey)
+            if (oldPref.isSet()) {
+                val newValue = if (oldPref.get()) PanoramaMode.FORCE_ON else PanoramaMode.FORCE_OFF
+                pref.set(newValue)
+                oldPref.delete()
+            }
+        }
+        return pref
+    }
+
+    // Deprecated boolean toggles - use enum modes instead
+    @Deprecated("Use feedPanoramaMode")
     fun feedPanorama() = preferenceStore.getBoolean("pref_feed_panorama", true)
 
+    @Deprecated("Use updatesPanoramaMode")
     fun updatesPanorama() = preferenceStore.getBoolean("pref_updates_panorama", false)
 
+    @Deprecated("Use historyPanoramaMode")
     fun historyPanorama() = preferenceStore.getBoolean("pref_history_panorama", false)
 
     fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())

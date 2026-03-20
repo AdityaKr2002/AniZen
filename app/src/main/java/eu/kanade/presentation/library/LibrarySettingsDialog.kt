@@ -47,6 +47,7 @@ import tachiyomi.core.common.preference.TriState
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
+import eu.kanade.domain.ui.model.PanoramaMode
 import tachiyomi.domain.library.model.LibraryGroup
 import tachiyomi.domain.library.model.LibrarySort
 import tachiyomi.domain.library.model.sort
@@ -299,13 +300,26 @@ private val displayModes = listOf(
 private fun ColumnScope.DisplayPage(
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val displayMode by screenModel.libraryPreferences.displayMode().collectAsState() as State<LibraryDisplayMode>
+    val displayMode by screenModel.libraryPreferences.displayMode().collectAsState() as androidx.compose.runtime.State<LibraryDisplayMode>
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val panoramaMode by uiPreferences.libraryPanoramaMode().collectAsState()
+    
     SettingsChipRow(MR.strings.action_display_mode) {
         displayModes.map { (titleRes, mode) ->
             FilterChip(
                 selected = displayMode == mode,
                 onClick = { screenModel.setDisplayMode(mode) },
                 label = { Text(stringResource(titleRes)) },
+            )
+        }
+    }
+    
+    SettingsChipRow(KMR.strings.pref_panorama_cover) {
+        PanoramaMode.entries.map { mode ->
+            FilterChip(
+                selected = panoramaMode == mode,
+                onClick = { uiPreferences.libraryPanoramaMode().set(mode) },
+                label = { Text(stringResource(mode.getLabelRes())) },
             )
         }
     }

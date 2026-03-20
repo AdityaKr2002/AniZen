@@ -54,6 +54,8 @@ import kotlin.time.Duration.Companion.seconds
 
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
+import eu.kanade.presentation.components.PanoramaModeToggle
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 @Composable
@@ -78,6 +80,10 @@ fun UpdateScreen(
     navigateUp: (() -> Unit)?,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+    val updatesMode by uiPreferences.updatesPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+    val effectivePanorama = remember(globalPanorama, updatesMode) { updatesMode.resolve(globalPanorama) }
+
     val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
     val useContainer = remember(containerStyles) { ContainerStyle.UPDATES in containerStyles }
 
@@ -94,6 +100,15 @@ fun UpdateScreen(
                 onCancelActionMode = { onSelectAll(false) },
                 navigateUp = navigateUp,
                 scrollBehavior = scrollBehavior,
+                panoramaMode = updatesMode,
+                onCyclePanoramaMode = {
+                    val next = when (updatesMode) {
+                        PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
+                        PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
+                        PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
+                    }
+                    uiPreferences.updatesPanoramaMode().set(next)
+                },
             )
         },
         bottomBar = {
@@ -167,6 +182,7 @@ fun UpdateScreen(
                                 onClickUpdate = onOpenEpisode,
                                 onDownloadEpisode = onDownloadEpisode,
                                 useContainer = useContainer,
+                                usePanorama = effectivePanorama,
                             )
                         }
                     }
@@ -186,6 +202,8 @@ private fun UpdatesAppBar(
     onInvertSelection: () -> Unit,
     onCancelActionMode: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
+    panoramaMode: PanoramaMode,
+    onCyclePanoramaMode: () -> Unit,
     navigateUp: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -193,15 +211,10 @@ private fun UpdatesAppBar(
         modifier = modifier,
         title = stringResource(MR.strings.label_recent_updates),
         actions = {
-            val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref() as State<Boolean>
-            IconButton(onClick = { uiPreferences.updatesPanorama().set(!updatesPanorama) }) {
-                Icon(
-                    imageVector = Icons.Outlined.Panorama,
-                    contentDescription = "Toggle Panorama",
-                    tint = if (updatesPanorama) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            PanoramaModeToggle(
+                mode = panoramaMode,
+                onCycle = onCyclePanoramaMode,
+            )
             AppBarActions(
                 persistentListOf(
                     AppBar.Action(

@@ -68,11 +68,13 @@ import tachiyomi.presentation.core.util.secondaryItemAlpha
 @Composable
 fun FeedScreen(
     screenModel: FeedScreenModel,
-    onAnimeClick: (Anime, Long?) -> Unit,
+    onAnimeClick: (Anime, Long) -> Unit,
     onAddSourceClick: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues,
+    usePanorama: Boolean,
 ) {
     val state by screenModel.state.collectAsState()
+
     val scope = rememberCoroutineScope()
 
     if (state.categories.isEmpty()) {
@@ -261,8 +263,10 @@ private fun FeedIsland(
                     ) { _, anime ->
                         FeedCard(
                             anime = anime,
-                            onClick = { onAnimeClick(anime) }
+                            onClick = { onAnimeClick(anime, category.feedId) },
+                            usePanorama = usePanorama,
                         )
+
                     }
                 }
             }
@@ -274,14 +278,9 @@ private fun FeedIsland(
 private fun FeedCard(
     anime: Anime,
     onClick: () -> Unit,
+    usePanorama: Boolean,
 ) {
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val usePanorama by uiPreferences.feedPanorama().collectAsStatePref() as State<Boolean>
-    val (entry, ratio) = if (usePanorama) {
-        AnimeCover.getEntry(anime.id)
-    } else {
-        AnimeCover.Book to AnimeCover.Book.ratio
-    }
+    val (entry, ratio) = AnimeCover.getEntry(anime.id, usePanoramaOverride = usePanorama)
     val width = if (entry == AnimeCover.Panorama) 200.dp else 100.dp
 
     Column(
