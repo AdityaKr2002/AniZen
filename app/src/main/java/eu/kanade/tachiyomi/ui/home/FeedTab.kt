@@ -57,20 +57,27 @@ data object FeedTab : Tab {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+        val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
+
         Scaffold(
             topBar = {
                 eu.kanade.presentation.components.AppBar(
                     title = stringResource(SYMR.strings.feed),
                     actions = {
-                        val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                        val feedPanorama by uiPreferences.feedPanorama().collectAsStatePref() as State<Boolean>
-                        IconButton(onClick = { uiPreferences.feedPanorama().set(!feedPanorama) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Panorama,
-                                contentDescription = "Toggle Panorama",
-                                tint = if (feedPanorama) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
+                        PanoramaModeToggle(
+                            mode = feedMode,
+                            onCycle = {
+                                val next = when (feedMode) {
+                                    PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
+                                    PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
+                                    PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
+                                }
+                                uiPreferences.feedPanoramaMode().set(next)
+                            },
+                        )
                         IconButton(onClick = { navigator.push(FeedManageScreen()) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
@@ -81,12 +88,12 @@ data object FeedTab : Tab {
                 )
             }
         ) { contentPadding ->
-            Content(contentPadding)
+            Content(contentPadding, effectivePanorama)
         }
     }
 
     @Composable
-    fun Content(contentPadding: PaddingValues) {
+    fun Content(contentPadding: PaddingValues, usePanorama: Boolean) {
         val navigator = LocalNavigator.currentOrThrow
         val tabNavigator = LocalTabNavigator.current
         val scope = rememberCoroutineScope()
@@ -105,6 +112,7 @@ data object FeedTab : Tab {
                 }
             },
             contentPadding = contentPadding,
+            usePanorama = usePanorama,
         )
     }
 }

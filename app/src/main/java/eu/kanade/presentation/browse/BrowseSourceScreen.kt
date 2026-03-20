@@ -142,8 +142,13 @@ fun BrowseSourceContent(
                 )
             }
             "Content" -> {
+                val uiPreferences = remember { Injekt.get<UiPreferences>() }
+                val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+                val browseMode by uiPreferences.browsePanoramaMode().collectAsStatePref() as State<PanoramaMode>
+                val effectivePanorama = remember(globalPanorama, browseMode) { browseMode.resolve(globalPanorama) }
+
                 when (displayMode) {
-                    LibraryDisplayMode.ComfortableGrid, LibraryDisplayMode.ComfortableGridPanorama -> {
+                    LibraryDisplayMode.ComfortableGrid -> {
                         BrowseSourceComfortableGrid(
                             animeList = animeList,
                             columns = columns,
@@ -153,7 +158,7 @@ fun BrowseSourceContent(
                             selection = selection,
                             favoriteIds = favoriteIds,
                             onBatchIncrement = onBatchIncrement,
-                            usePanorama = if (displayMode is LibraryDisplayMode.ComfortableGridPanorama) true else null,
+                            usePanorama = effectivePanorama,
                         )
                     }
                     LibraryDisplayMode.List -> {

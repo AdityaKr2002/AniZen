@@ -96,6 +96,7 @@ internal fun LazyListScope.updatesUiItems(
     onClickUpdate: (UpdatesItem, altPlayer: Boolean) -> Unit,
     onDownloadEpisode: (List<UpdatesItem>, EpisodeDownloadAction) -> Unit,
     useContainer: Boolean,
+    usePanorama: Boolean = false,
 ) {
     uiModels.forEach { model ->
         when (model) {
@@ -170,6 +171,7 @@ internal fun LazyListScope.updatesUiItems(
                                 downloadStateProvider = updatesItem.downloadStateProvider,
                                 downloadProgressProvider = updatesItem.downloadProgressProvider,
                                 updatesItem = updatesItem,
+                                usePanorama = usePanorama,
                             )
                         }
                     } else {
@@ -207,6 +209,7 @@ internal fun LazyListScope.updatesUiItems(
                             downloadStateProvider = updatesItem.downloadStateProvider,
                             downloadProgressProvider = updatesItem.downloadProgressProvider,
                             updatesItem = updatesItem,
+                            usePanorama = usePanorama,
                         )
                     }
                 }
@@ -231,6 +234,7 @@ private fun UpdatesUiItem(
     updatesItem: UpdatesItem,
     // <-- AM (FILE_SIZE)
     modifier: Modifier = Modifier,
+    usePanorama: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -249,14 +253,7 @@ private fun UpdatesUiItem(
             .padding(horizontal = MaterialTheme.padding.medium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val updatesPanorama by uiPreferences.updatesPanorama().collectAsStatePref() as State<Boolean>
-        val (entry, ratio) = if (updatesPanorama) {
-
-            AnimeCover.getEntry(update.animeId)
-        } else {
-            AnimeCover.Square to AnimeCover.Square.ratio
-        }
+        val (entry, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
         entry(
             modifier = Modifier
                 .padding(vertical = 6.dp)

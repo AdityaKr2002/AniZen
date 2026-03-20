@@ -44,6 +44,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
+import eu.kanade.presentation.components.PanoramaModeToggle
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -59,6 +61,11 @@ fun HistoryScreen(
     navigateUp: (() -> Unit)?,
     searchQuery: String? = null,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+    val historyMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+    val effectivePanorama = remember(globalPanorama, historyMode) { historyMode.resolve(globalPanorama) }
+
     Scaffold(
         topBar = { scrollBehavior ->
             SearchToolbar(
@@ -66,15 +73,18 @@ fun HistoryScreen(
                 searchQuery = state.searchQuery,
                 onChangeSearchQuery = onSearchQueryChange,
                 actions = {
-                    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                    val historyPanorama by uiPreferences.historyPanorama().collectAsStatePref() as State<Boolean>
-                    IconButton(onClick = { uiPreferences.historyPanorama().set(!historyPanorama) }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Panorama,
-                            contentDescription = "Toggle Panorama",
-                            tint = if (historyPanorama) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+                    val panoramaMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+                    PanoramaModeToggle(
+                        mode = panoramaMode,
+                        onCycle = {
+                            val next = when (panoramaMode) {
+                                PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
+                                PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
+                                PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
+                            }
+                            uiPreferences.historyPanoramaMode().set(next)
+                        },
+                    )
                     AppBarActions(
                         // KMK -->
                         persistentListOf<AppBar.AppBarAction>().builder()
@@ -122,6 +132,7 @@ fun HistoryScreen(
                     onClickCover = { history -> onClickCover(history.animeId) },
                     onClickResume = { history -> onClickResume(history.animeId, history.episodeId) },
                     onClickDelete = { item -> onDialogChange(HistoryScreenModel.Dialog.Delete(item)) },
+                    usePanorama = effectivePanorama,
                 )
             }
         }
@@ -135,6 +146,7 @@ private fun HistoryScreenContent(
     onClickCover: (HistoryWithRelations) -> Unit,
     onClickResume: (HistoryWithRelations) -> Unit,
     onClickDelete: (HistoryWithRelations) -> Unit,
+    usePanorama: Boolean,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
@@ -177,6 +189,7 @@ private fun HistoryScreenContent(
                                         onClickCover = { onClickCover(historyItem) },
                                         onClickResume = { onClickResume(historyItem) },
                                         onClickDelete = { onClickDelete(historyItem) },
+                                        usePanorama = usePanorama,
                                     )
                                 }
                             }

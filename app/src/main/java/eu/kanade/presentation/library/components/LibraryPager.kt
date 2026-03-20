@@ -14,6 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import eu.kanade.domain.ui.UiPreferences
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -45,6 +49,11 @@ fun LibraryPager(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns by remember(isLandscape) { getColumnsForOrientation(isLandscape) }
+
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref()
+    val libraryMode by uiPreferences.libraryPanoramaMode().collectAsStatePref()
+    val effectivePanorama = remember(globalPanorama, libraryMode) { libraryMode.resolve(globalPanorama) }
 
     val content: @Composable (Int) -> Unit = { containerHeight ->
         HorizontalPager(
@@ -80,6 +89,7 @@ fun LibraryPager(
                         onLongClick = onLongClickAnime,
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
+                        usePanorama = effectivePanorama,
                     )
                 }
                 LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
@@ -94,12 +104,13 @@ fun LibraryPager(
                         onLongClick = onLongClickAnime,
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
+                        usePanorama = effectivePanorama,
                     )
                 }
-                LibraryDisplayMode.ComfortableGrid, LibraryDisplayMode.ComfortableGridPanorama -> {
+                LibraryDisplayMode.ComfortableGrid -> {
                     LibraryComfortableGrid(
                         items = library,
-                        columns = if (displayMode == LibraryDisplayMode.ComfortableGridPanorama && columns > 1) columns - 1 else columns,
+                        columns = columns,
                         contentPadding = contentPadding,
                         selection = selectedAnime,
                         onClick = onClickAnime,
@@ -107,7 +118,7 @@ fun LibraryPager(
                         onClickContinueWatching = onClickContinueWatching,
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
-                        usePanorama = if (displayMode == LibraryDisplayMode.ComfortableGridPanorama) true else null,
+                        usePanorama = effectivePanorama,
                     )
                 }
                 else -> {}
