@@ -69,7 +69,7 @@ fun HistoryScreen(
         topBar = { scrollBehavior ->
             SearchToolbar(
                 titleContent = { AppBarTitle(stringResource(MR.strings.history)) },
-                searchQuery = state.searchQuery,
+                searchQuery = searchQuery,
                 onChangeSearchQuery = onSearchQueryChange,
                 actions = {
                     val panoramaMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
