@@ -101,12 +101,8 @@ fun UpdateScreen(
                 navigateUp = navigateUp,
                 scrollBehavior = scrollBehavior,
                 panoramaMode = updatesMode,
-                onCyclePanoramaMode = {
-                    val next = when (updatesMode) {
-                        PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
-                        PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
-                        PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
-                    }
+                globalPanorama = globalPanorama,
+                onPanoramaModeChange = { next ->
                     uiPreferences.updatesPanoramaMode().set(next)
                 },
             )
@@ -204,7 +200,8 @@ private fun UpdatesAppBar(
     onCancelActionMode: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
     panoramaMode: PanoramaMode,
-    onCyclePanoramaMode: () -> Unit,
+    globalPanorama: Boolean,
+    onPanoramaModeChange: (PanoramaMode) -> Unit,
     navigateUp: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -213,8 +210,9 @@ private fun UpdatesAppBar(
         title = stringResource(MR.strings.label_recent_updates),
         actions = {
             PanoramaModeToggle(
-                mode = panoramaMode,
-                onCycle = onCyclePanoramaMode,
+                panoramaMode = panoramaMode,
+                globalPanorama = globalPanorama,
+                onPanoramaModeChange = onPanoramaModeChange,
             )
             AppBarActions(
                 persistentListOf(

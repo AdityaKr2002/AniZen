@@ -74,13 +74,9 @@ fun HistoryScreen(
                 actions = {
                     val panoramaMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
                     PanoramaModeToggle(
-                        mode = panoramaMode,
-                        onCycle = {
-                            val next = when (panoramaMode) {
-                                PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
-                                PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
-                                PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
-                            }
+                        panoramaMode = panoramaMode,
+                        globalPanorama = globalPanorama,
+                        onPanoramaModeChange = { next ->
                             uiPreferences.historyPanoramaMode().set(next)
                         },
                     )
