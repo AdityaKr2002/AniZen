@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Panorama
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -75,8 +76,8 @@ data object BrowseTab : Tab {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val enableFeed by uiPreferences.enableFeed().collectAsState()
-        val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsState()
+        val enableFeed by uiPreferences.enableFeed().collectAsStatePref()
+        val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
 
         // Hoisted for extensions tab's search bar
         val extensionsScreenModel = rememberScreenModel { ExtensionsScreenModel() }
@@ -86,8 +87,8 @@ data object BrowseTab : Tab {
         val extensionsTab = extensionsTab(extensionsScreenModel)
         val migrateSourceTab = migrateSourceTab()
 
-        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
-        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
+        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as State<PanoramaMode>
         val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
 
         val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
@@ -101,7 +102,7 @@ data object BrowseTab : Tab {
                             actions = persistentListOf(
                                 AppBar.Action(
                                     title = "Toggle Panorama",
-                                    icon = Icons.Outlined.Panorama, // Placeholder, ideally use PanoramaModeToggle
+                                    icon = Icons.Outlined.Panorama,
                                     onClick = {
                                         val next = when (feedMode) {
                                             PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON

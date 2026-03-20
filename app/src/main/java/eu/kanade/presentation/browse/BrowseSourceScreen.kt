@@ -1,5 +1,7 @@
 package eu.kanade.presentation.browse
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -12,19 +14,15 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.State
-import eu.kanade.domain.ui.UiPreferences
-import eu.kanade.domain.ui.model.PanoramaMode
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
 import eu.kanade.presentation.browse.components.BrowseSourceComfortableGrid
 import eu.kanade.presentation.browse.components.BrowseSourceCompactGrid
 import eu.kanade.presentation.browse.components.BrowseSourceList
@@ -43,10 +41,12 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
-import androidx.compose.ui.unit.dp
-import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import tachiyomi.presentation.core.util.plus
 import tachiyomi.source.local.LocalSource
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun BrowseSourceContent(
@@ -98,49 +98,31 @@ fun BrowseSourceContent(
     AnimatedContent(
         targetState = screenState,
         transitionSpec = {
-            soup.compose.material.motion.animation.materialFadeThroughIn(
-                initialScale = 1f,
-                durationMillis = 250,
-            ) togetherWith
-                soup.compose.material.motion.animation.materialFadeThroughOut(
-                    durationMillis = 250,
-                )
+            togetherWith(fadeIn(), fadeOut())
         },
-        label = "browseSourceContent",
+        label = "browse_source_content",
     ) { state ->
         when (state) {
             "Error" -> {
-                val currentError = errorState as? LoadState.Error
                 EmptyScreen(
-                    modifier = Modifier.padding(contentPadding),
-                    message = if (currentError != null) getErrorMessage(currentError) else "Unknown Error",
-                    actions = if (source is LocalSource) {
-                        persistentListOf(
-                            EmptyScreenAction(
-                                stringRes = MR.strings.local_source_help_guide,
-                                icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                                onClick = onLocalSourceHelpClick,
-                            ),
-                        )
-                    } else {
-                        persistentListOf(
-                            EmptyScreenAction(
-                                stringRes = MR.strings.action_retry,
-                                icon = Icons.Outlined.Refresh,
-                                onClick = animeList::refresh,
-                            ),
-                            EmptyScreenAction(
-                                stringRes = MR.strings.action_open_in_web_view,
-                                icon = Icons.Outlined.Public,
-                                onClick = onWebViewClick,
-                            ),
-                            EmptyScreenAction(
-                                stringRes = MR.strings.label_help,
-                                icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                                onClick = onHelpClick,
-                            ),
-                        )
-                    },
+                    message = getErrorMessage(errorState as LoadState.Error),
+                    actions = persistentListOf(
+                        EmptyScreenAction(
+                            stringRes = MR.strings.action_retry,
+                            icon = Icons.Outlined.Refresh,
+                            onClick = animeList::refresh,
+                        ),
+                        EmptyScreenAction(
+                            stringRes = MR.strings.action_open_in_web_view,
+                            icon = Icons.Outlined.Public,
+                            onClick = onWebViewClick,
+                        ),
+                        EmptyScreenAction(
+                            stringRes = MR.strings.label_help,
+                            icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                            onClick = onHelpClick,
+                        ),
+                    ),
                 )
             }
             "Loading" -> {
@@ -168,31 +150,30 @@ fun BrowseSourceContent(
                             usePanorama = effectivePanorama,
                         )
                     }
-                    LibraryDisplayMode.List -> {
-                        BrowseSourceList(
-                            animeList = animeList,
-                            entries = entries,
-                            contentPadding = contentPadding,
-                            onAnimeClick = onAnimeClick,
-                            onAnimeLongClick = onAnimeLongClick,
-                            selection = selection,
-                            favoriteIds = favoriteIds,
-                            onBatchIncrement = onBatchIncrement,
-                        )
-                    }
                     LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
                         BrowseSourceCompactGrid(
                             animeList = animeList,
                             columns = columns,
+                            showTitle = displayMode is LibraryDisplayMode.CompactGrid,
                             contentPadding = contentPadding,
                             onAnimeClick = onAnimeClick,
                             onAnimeLongClick = onAnimeLongClick,
                             selection = selection,
                             favoriteIds = favoriteIds,
                             onBatchIncrement = onBatchIncrement,
+                            usePanorama = effectivePanorama,
                         )
                     }
-                    else -> {}
+                    LibraryDisplayMode.List -> {
+                        BrowseSourceList(
+                            animeList = animeList,
+                            contentPadding = contentPadding,
+                            onAnimeClick = onAnimeClick,
+                            onAnimeLongClick = onAnimeLongClick,
+                            selection = selection,
+                            favoriteIds = favoriteIds,
+                        )
+                    }
                 }
             }
         }
@@ -200,22 +181,62 @@ fun BrowseSourceContent(
 }
 
 @Composable
-internal fun MissingSourceScreen(
-    source: StubSource,
-    navigateUp: () -> Unit,
+fun BrowseSourceScreen(
+    source: Source?,
+    animeList: LazyPagingItems<Anime>,
+    columns: GridCells,
+    displayMode: LibraryDisplayMode,
+    snackbarHostState: SnackbarHostState,
+    contentPadding: PaddingValues,
+    onWebViewClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    onLocalSourceHelpClick: () -> Unit,
+    onAnimeClick: (Anime) -> Unit,
+    onAnimeLongClick: (Anime) -> Unit,
+    onBatchIncrement: (Int) -> Unit,
+    selection: ImmutableList<Anime>,
+    favoriteIds: ImmutableSet<Long>,
 ) {
-    Scaffold(
-        topBar = { scrollBehavior ->
-            AppBar(
-                title = source.name,
-                navigateUp = navigateUp,
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) { paddingValues ->
+    if (source == null) {
         EmptyScreen(
-            message = stringResource(MR.strings.source_not_installed, source.toString()),
-            modifier = Modifier.padding(paddingValues),
+            message = stringResource(MR.strings.source_not_installed, "Unknown"),
+            modifier = Modifier.padding(contentPadding),
         )
+        return
     }
+
+    if (source is StubSource) {
+        Scaffold(
+            topBar = { scrollBehavior ->
+                AppBar(
+                    title = source.name,
+                    navigateUp = {},
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+        ) { paddingValues ->
+            EmptyScreen(
+                message = stringResource(MR.strings.source_not_installed, source.toString()),
+                modifier = Modifier.padding(paddingValues),
+            )
+        }
+        return
+    }
+
+    BrowseSourceContent(
+        source = source,
+        animeList = animeList,
+        columns = columns,
+        displayMode = displayMode,
+        snackbarHostState = snackbarHostState,
+        contentPadding = contentPadding,
+        onWebViewClick = onWebViewClick,
+        onHelpClick = onHelpClick,
+        onLocalSourceHelpClick = onLocalSourceHelpClick,
+        onAnimeClick = onAnimeClick,
+        onAnimeLongClick = onAnimeLongClick,
+        selection = selection,
+        favoriteIds = favoriteIds,
+        onBatchIncrement = onBatchIncrement,
+    )
 }

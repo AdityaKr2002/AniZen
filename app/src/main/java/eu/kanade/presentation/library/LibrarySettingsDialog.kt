@@ -122,9 +122,9 @@ fun LibrarySettingsDialog(
 private fun ColumnScope.FilterPage(
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val filterDownloaded by screenModel.libraryPreferences.filterDownloaded().collectAsState()
-    val downloadedOnly by screenModel.preferences.downloadedOnly().collectAsState()
-    val autoUpdateAnimeRestrictions by screenModel.libraryPreferences.autoUpdateAnimeRestrictions().collectAsState()
+    val filterDownloaded by screenModel.libraryPreferences.filterDownloaded().collectAsStatePref()
+    val downloadedOnly by screenModel.preferences.downloadedOnly().collectAsStatePref()
+    val autoUpdateAnimeRestrictions by screenModel.libraryPreferences.autoUpdateAnimeRestrictions().collectAsStatePref()
 
     TriStateItem(
         label = stringResource(MR.strings.label_downloaded),
@@ -136,32 +136,32 @@ private fun ColumnScope.FilterPage(
         enabled = !downloadedOnly,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterDownloaded) },
     )
-    val filterUnseen by screenModel.libraryPreferences.filterUnseen().collectAsState()
+    val filterUnseen by screenModel.libraryPreferences.filterUnseen().collectAsStatePref()
     TriStateItem(
         label = stringResource(MR.strings.action_filter_unseen),
         state = filterUnseen,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterUnseen) },
     )
-    val filterStarted by screenModel.libraryPreferences.filterStarted().collectAsState()
+    val filterStarted by screenModel.libraryPreferences.filterStarted().collectAsStatePref()
     TriStateItem(
         label = stringResource(MR.strings.label_started),
         state = filterStarted,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterStarted) },
     )
-    val filterBookmarked by screenModel.libraryPreferences.filterBookmarked().collectAsState()
+    val filterBookmarked by screenModel.libraryPreferences.filterBookmarked().collectAsStatePref()
     TriStateItem(
         label = stringResource(MR.strings.action_filter_bookmarked),
         state = filterBookmarked,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterBookmarked) },
     )
-    val filterCompleted by screenModel.libraryPreferences.filterCompleted().collectAsState()
+    val filterCompleted by screenModel.libraryPreferences.filterCompleted().collectAsStatePref()
     TriStateItem(
         label = stringResource(MR.strings.completed),
         state = filterCompleted,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterCompleted) },
     )
     // SY -->
-    val filterLewd by screenModel.libraryPreferences.filterLewd().collectAsState()
+    val filterLewd by screenModel.libraryPreferences.filterLewd().collectAsStatePref()
     TriStateItem(
         label = stringResource(SYMR.strings.lewd),
         state = filterLewd,
@@ -169,7 +169,7 @@ private fun ColumnScope.FilterPage(
     )
     // SY <--
     // KMK -->
-    val filterCategories by screenModel.libraryPreferences.filterCategories().collectAsState()
+    val filterCategories by screenModel.libraryPreferences.filterCategories().collectAsStatePref()
     CheckboxItem(
         label = stringResource(MR.strings.action_filter_categories),
         checked = filterCategories,
@@ -178,7 +178,7 @@ private fun ColumnScope.FilterPage(
     // KMK <--
     // TODO: re-enable when custom intervals are ready for stable
     if ((!isReleaseBuildType) && LibraryPreferences.ANIME_OUTSIDE_RELEASE_PERIOD in autoUpdateAnimeRestrictions) {
-        val filterIntervalCustom by screenModel.libraryPreferences.filterIntervalCustom().collectAsState()
+        val filterIntervalCustom by screenModel.libraryPreferences.filterIntervalCustom().collectAsStatePref()
         TriStateItem(
             label = stringResource(MR.strings.action_filter_interval_custom),
             state = filterIntervalCustom,
@@ -193,7 +193,7 @@ private fun ColumnScope.FilterPage(
         }
         1 -> {
             val service = trackers[0]
-            val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsState()
+            val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsStatePref()
             TriStateItem(
                 label = stringResource(MR.strings.action_filter_tracked),
                 state = filterTracker,
@@ -203,7 +203,7 @@ private fun ColumnScope.FilterPage(
         else -> {
             HeadingItem(MR.strings.action_filter_tracked)
             trackers.map { service ->
-                val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsState()
+                val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsStatePref()
                 TriStateItem(
                     label = service.name,
                     state = filterTracker,
@@ -221,17 +221,18 @@ private fun ColumnScope.SortPage(
 ) {
     val trackers by screenModel.trackersFlow.collectAsState()
     // SY -->
-    val globalSortMode by screenModel.libraryPreferences.sortingMode().collectAsState()
-    val sortingMode = if (screenModel.grouping == LibraryGroup.BY_DEFAULT) {
+    val globalSortMode by screenModel.libraryPreferences.sortingMode().collectAsStatePref()
+    val sortingMode = if (screenModel.grouping == LibraryGroup.BY_DEFAULT && category != null) {
         category.sort.type
     } else {
         globalSortMode.type
     }
-    val sortDescending = if (screenModel.grouping == LibraryGroup.BY_DEFAULT) {
+    val isAscending = if (screenModel.grouping == LibraryGroup.BY_DEFAULT && category != null) {
         category.sort.isAscending
     } else {
         globalSortMode.isAscending
-    }.not()
+    }
+    val sortDescending = !isAscending
     // SY <--
 
     val options = remember(trackers.isEmpty()) {
@@ -301,7 +302,7 @@ private val displayModes = listOf(
 private fun ColumnScope.DisplayPage(
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val displayMode by screenModel.libraryPreferences.displayMode().collectAsStatePref() as androidx.compose.runtime.State<LibraryDisplayMode>
+    val displayMode by screenModel.libraryPreferences.displayMode().collectAsStatePref() as State<LibraryDisplayMode>
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val panoramaMode by uiPreferences.libraryPanoramaMode().collectAsStatePref()
     
@@ -334,7 +335,7 @@ private fun ColumnScope.DisplayPage(
         }
     }
 
-    val columns by columnPreference.collectAsState()
+    val columns by columnPreference.collectAsStatePref()
     val isList = displayMode == LibraryDisplayMode.List
     HeadingItem(if (isList) MR.strings.pref_library_rows else MR.strings.pref_library_columns)
     
@@ -387,12 +388,6 @@ private fun ColumnScope.DisplayPage(
     )
 }
 
-data class GroupMode(
-    val int: Int,
-    val nameRes: Int,
-    val drawableRes: Int,
-)
-
 private fun groupTypeDrawableRes(type: Int): Int {
     return when (type) {
         LibraryGroup.BY_STATUS -> R.drawable.ic_progress_clock_24dp
@@ -440,6 +435,23 @@ private fun ColumnScope.GroupPage(
                 screenModel.setGrouping(it.int)
             },
         )
+    }
+}
+
+data class GroupMode(
+    val int: Int,
+    val nameRes: Int,
+    val drawableRes: Int,
+)
+
+private fun groupTypeDrawableRes(type: Int): Int {
+    return when (type) {
+        LibraryGroup.BY_STATUS -> R.drawable.ic_progress_clock_24dp
+        LibraryGroup.BY_TRACK_STATUS -> R.drawable.ic_sync_24dp
+        LibraryGroup.BY_SOURCE -> R.drawable.ic_browse_filled_24dp
+        LibraryGroup.BY_TAG -> R.drawable.ic_tag_24dp
+        LibraryGroup.UNGROUPED -> R.drawable.ic_ungroup_24dp
+        else -> R.drawable.ic_label_24dp
     }
 }
 // SY <--
