@@ -109,11 +109,12 @@ class FeedManageScreen : Screen() {
                         }
                         
                         val currentCategoryId = state.categories.getOrNull(pagerState.currentPage)?.id
+                        val currentCategoryName = state.categories.getOrNull(pagerState.currentPage)?.name
                         if (currentCategoryId != null) {
-                            IconButton(onClick = { showRenameCategoryDialog = currentCategoryId }) {
-                                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "Rename Category")
-                            }
-                            if (currentCategoryId != 1L) {
+                            if (currentCategoryId != 1L && currentCategoryName != "Global") {
+                                IconButton(onClick = { showRenameCategoryDialog = currentCategoryId }) {
+                                    Icon(imageVector = Icons.Outlined.Edit, contentDescription = "Rename Category")
+                                }
                                 IconButton(onClick = { categoryToDelete = currentCategoryId }) {
                                     Icon(imageVector = Icons.Outlined.Delete, contentDescription = "Delete Category")
                                 }
