@@ -141,10 +141,11 @@ fun UpdateScreen(
                 soup.compose.material.motion.animation.materialFadeThroughIn(
                     initialScale = 1f,
                     durationMillis = 250,
-                ) togetherWith
+                ).togetherWith(
                     soup.compose.material.motion.animation.materialFadeThroughOut(
                         durationMillis = 250,
                     )
+                )
             },
             label = "updatesContent",
             modifier = Modifier.padding(contentPadding),
