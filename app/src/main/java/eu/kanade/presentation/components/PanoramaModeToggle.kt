@@ -2,7 +2,6 @@ package eu.kanade.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Panorama
-import androidx.compose.material.icons.outlined.CropPortrait
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import eu.kanade.domain.ui.model.PanoramaMode
+import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 
 @Composable
 fun PanoramaModeToggle(
@@ -40,9 +40,9 @@ fun PanoramaModeToggle(
             )
         } else {
             Triple(
-                Icons.Outlined.CropPortrait,
+                Icons.Outlined.Panorama,
                 LocalContentColor.current,
-                1f,
+                DISABLED_ALPHA,
             )
         }
 
