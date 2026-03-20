@@ -147,7 +147,7 @@ data class BrowseSourceScreen(
                 columns = screenModel.getColumnsPreference(LocalConfiguration.current.orientation),
                 displayMode = screenModel.displayMode,
                 snackbarHostState = snackbarHostState,
-                contentPadding = PaddingValues(0.dp), // Not used for stub
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp), // Not used for stub
                 onWebViewClick = onWebViewClick,
                 onHelpClick = onHelpClick,
                 onLocalSourceHelpClick = onHelpClick,
