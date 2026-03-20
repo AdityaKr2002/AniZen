@@ -199,6 +199,7 @@ fun FeedScreen(
                         FeedIsland(
                             item = item,
                             onAnimeClick = { onAnimeClick(it, item.feed.id) },
+                            usePanorama = usePanorama,
                         )
                     }
                 }
@@ -211,6 +212,7 @@ fun FeedScreen(
 private fun FeedIsland(
     item: FeedScreenModel.FeedItem,
     onAnimeClick: (Anime) -> Unit,
+    usePanorama: Boolean,
 ) {
     // Memoize the title to avoid re-generating strings on every scroll frame
     val title = remember(item.feed.id, item.feed.type, item.savedSearch?.id) {
@@ -263,7 +265,7 @@ private fun FeedIsland(
                     ) { _, anime ->
                         FeedCard(
                             anime = anime,
-                            onClick = { onAnimeClick(anime, category.feedId) },
+                            onClick = { onAnimeClick(anime) },
                             usePanorama = usePanorama,
                         )
 

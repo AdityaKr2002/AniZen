@@ -12,6 +12,13 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.State
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
@@ -143,8 +150,8 @@ fun BrowseSourceContent(
             }
             "Content" -> {
                 val uiPreferences = remember { Injekt.get<UiPreferences>() }
-                val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
-                val browseMode by uiPreferences.browsePanoramaMode().collectAsStatePref() as State<PanoramaMode>
+                val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
+                val browseMode by uiPreferences.browsePanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
                 val effectivePanorama = remember(globalPanorama, browseMode) { browseMode.resolve(globalPanorama) }
 
                 when (displayMode) {

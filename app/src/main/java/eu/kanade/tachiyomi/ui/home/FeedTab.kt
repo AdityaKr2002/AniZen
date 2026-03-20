@@ -31,6 +31,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
+import eu.kanade.presentation.components.PanoramaModeToggle
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.runtime.getValue
 
@@ -58,8 +60,8 @@ data object FeedTab : Tab {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
-        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
+        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
         val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
 
         Scaffold(
