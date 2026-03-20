@@ -57,7 +57,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.core.util.ifSourcesLoaded
 import eu.kanade.presentation.anime.DuplicateAnimeDialog
 import eu.kanade.presentation.browse.BrowseSourceContent
-import eu.kanade.presentation.browse.MissingSourceScreen
 import eu.kanade.presentation.browse.components.BrowseSourceToolbar
 import eu.kanade.presentation.browse.components.RemoveAnimeDialog
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
@@ -120,37 +119,29 @@ data class BrowseSourceScreen(
 
         BackHandler(enabled = state.selectionMode, onBack = navigateUp)
 
+        val pagingFlow by screenModel.animePagerFlowFlow.collectAsState()
+        val animeList = pagingFlow.collectAsLazyPagingItems()
+
         if (screenModel.source is StubSource) {
-            MissingSourceScreen(
+            eu.kanade.presentation.browse.BrowseSourceScreen(
                 source = screenModel.source,
-                navigateUp = navigateUp,
+                animeList = animeList,
+                columns = screenModel.getColumnsPreference(LocalConfiguration.current.orientation),
+                displayMode = screenModel.displayMode,
+                snackbarHostState = snackbarHostState,
+                contentPadding = PaddingValues(0.dp), // Not used for stub
+                onWebViewClick = onWebViewClick,
+                onHelpClick = onHelpClick,
+                onLocalSourceHelpClick = onHelpClick,
+                onAnimeClick = {},
+                onAnimeLongClick = {},
+                onBatchIncrement = {},
+                selection = persistentListOf(),
+                favoriteIds = persistentSetOf(),
+                entries = screenModel.getColumnsPreferenceForCurrentOrientation(LocalConfiguration.current.orientation),
             )
             return
         }
-
-        val scope = rememberCoroutineScope()
-        val haptic = LocalHapticFeedback.current
-        val uriHandler = LocalUriHandler.current
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        val onHelpClick = { uriHandler.openUri(LocalSource.HELP_URL) }
-        val onWebViewClick = f@{
-            val source = screenModel.source as? HttpSource ?: return@f
-            navigator.push(
-                WebViewScreen(
-                    url = source.baseUrl,
-                    initialTitle = source.name,
-                    sourceId = source.id,
-                ),
-            )
-        }
-
-        LaunchedEffect(screenModel.source) {
-            assistUrl = (screenModel.source as? HttpSource)?.baseUrl
-        }
-
-        val pagingFlow by screenModel.animePagerFlowFlow.collectAsState()
-        val animeList = pagingFlow.collectAsLazyPagingItems()
 
         val entries = screenModel.getColumnsPreferenceForCurrentOrientation(LocalConfiguration.current.orientation)
 

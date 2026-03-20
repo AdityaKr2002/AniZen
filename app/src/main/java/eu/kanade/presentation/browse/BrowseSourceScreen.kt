@@ -1,6 +1,8 @@
 package eu.kanade.presentation.browse
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -14,7 +16,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -172,6 +173,8 @@ fun BrowseSourceContent(
                             onAnimeLongClick = onAnimeLongClick,
                             selection = selection,
                             favoriteIds = favoriteIds,
+                            usePanorama = effectivePanorama,
+                            entries = entries,
                         )
                     }
                 }
@@ -196,6 +199,7 @@ fun BrowseSourceScreen(
     onBatchIncrement: (Int) -> Unit,
     selection: ImmutableList<Anime>,
     favoriteIds: ImmutableSet<Long>,
+    entries: Int = 0,
 ) {
     if (source == null) {
         EmptyScreen(
@@ -238,5 +242,6 @@ fun BrowseSourceScreen(
         selection = selection,
         favoriteIds = favoriteIds,
         onBatchIncrement = onBatchIncrement,
+        entries = entries,
     )
 }
