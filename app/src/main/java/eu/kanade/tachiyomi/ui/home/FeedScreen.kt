@@ -82,7 +82,12 @@ fun FeedScreen(
         return
     }
 
-    val visibleCategories = state.categories
+    val visibleCategories = remember(state.categories, state.items) {
+        state.categories.filterNot { category ->
+            category.name == "Global" && state.items[category.id].isNullOrEmpty()
+        }
+    }
+    
     val pagerState = rememberPagerState { visibleCategories.size }
 
     // Use derivedStateOf for smooth tab tracking at high refresh rates
