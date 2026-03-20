@@ -6,6 +6,7 @@ import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Panorama
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.PanoramaMode
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.TabbedScreen
 import eu.kanade.presentation.util.Tab
@@ -39,7 +41,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import androidx.compose.runtime.collectAsState as collectAsStateFlow
@@ -84,7 +86,11 @@ data object BrowseTab : Tab {
         val extensionsTab = extensionsTab(extensionsScreenModel)
         val migrateSourceTab = migrateSourceTab()
 
-        val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab) {
+        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
+        val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
+        val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
+
+        val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
             buildList {
                 add(sourcesTab)
                 if (enableFeed && showFeedInBrowse) {
@@ -94,6 +100,18 @@ data object BrowseTab : Tab {
                             searchEnabled = false,
                             actions = persistentListOf(
                                 AppBar.Action(
+                                    title = "Toggle Panorama",
+                                    icon = Icons.Outlined.Panorama, // Placeholder, ideally use PanoramaModeToggle
+                                    onClick = {
+                                        val next = when (feedMode) {
+                                            PanoramaMode.FOLLOW_GLOBAL -> PanoramaMode.FORCE_ON
+                                            PanoramaMode.FORCE_ON -> PanoramaMode.FORCE_OFF
+                                            PanoramaMode.FORCE_OFF -> PanoramaMode.FOLLOW_GLOBAL
+                                        }
+                                        uiPreferences.feedPanoramaMode().set(next)
+                                    },
+                                ),
+                                AppBar.Action(
                                     title = "Edit Feed",
                                     icon = Icons.Outlined.Settings,
                                     onClick = { 
@@ -102,7 +120,7 @@ data object BrowseTab : Tab {
                                 ),
                             ),
                             content = { contentPadding, _ -> 
-                                FeedTab.Content(contentPadding)
+                                FeedTab.Content(contentPadding, effectivePanorama)
                             }
                         )
                     )

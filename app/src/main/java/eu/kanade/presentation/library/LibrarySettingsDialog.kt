@@ -66,7 +66,9 @@ import tachiyomi.presentation.core.components.SortItem
 import tachiyomi.presentation.core.components.TriStateItem
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import tachiyomi.presentation.core.components.material.padding
 
 @Composable
@@ -291,7 +293,6 @@ private fun ColumnScope.SortPage(
 private val displayModes = listOf(
     MR.strings.action_display_grid to LibraryDisplayMode.CompactGrid,
     MR.strings.action_display_comfortable_grid to LibraryDisplayMode.ComfortableGrid,
-    KMR.strings.action_display_comfortable_grid_panorama to LibraryDisplayMode.ComfortableGridPanorama,
     MR.strings.action_display_cover_only_grid to LibraryDisplayMode.CoverOnlyGrid,
     MR.strings.action_display_list to LibraryDisplayMode.List,
 )
@@ -300,9 +301,9 @@ private val displayModes = listOf(
 private fun ColumnScope.DisplayPage(
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val displayMode by screenModel.libraryPreferences.displayMode().collectAsState() as androidx.compose.runtime.State<LibraryDisplayMode>
+    val displayMode by screenModel.libraryPreferences.displayMode().collectAsStatePref() as androidx.compose.runtime.State<LibraryDisplayMode>
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val panoramaMode by uiPreferences.libraryPanoramaMode().collectAsState()
+    val panoramaMode by uiPreferences.libraryPanoramaMode().collectAsStatePref()
     
     SettingsChipRow(MR.strings.action_display_mode) {
         displayModes.map { (titleRes, mode) ->

@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ fun GlobalSearchCardRow(
             val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
             val animeState = getAnime(it)
             val title by animeState
-            val (entry, _) = AnimeCover.getEntry(title.id, usePanoramaOverride = globalPanorama)
+            val (entry, _) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(title.id, usePanoramaOverride = globalPanorama)
             AnimeItem(
                 title = title.title,
                 cover = title.asAnimeCover(),
@@ -63,7 +64,7 @@ fun GlobalSearchCardRow(
                 isSelected = selection.any { it.id == title.id },
                 onClick = { onClick(title) },
                 onLongClick = { onLongClick(title) },
-                width = if (entry == AnimeCover.Panorama) 160.dp else 96.dp,
+                width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 160.dp else 96.dp,
             )
         }
     }
