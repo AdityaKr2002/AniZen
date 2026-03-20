@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
@@ -20,7 +21,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +53,7 @@ import tachiyomi.presentation.core.components.ListGroupHeader
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import tachiyomi.presentation.core.util.selectedBackground
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
 internal fun LazyListScope.updatesLastUpdatedItem(

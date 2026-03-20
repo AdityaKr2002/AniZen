@@ -3,7 +3,6 @@ package eu.kanade.presentation.history
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import eu.kanade.tachiyomi.ui.history.HistoryScreenModel
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.domain.history.model.HistoryWithRelations
 import java.time.LocalDate
 import java.util.Date
@@ -20,8 +19,9 @@ class HistoryScreenModelStateProvider : PreviewParameterProvider<HistoryScreenMo
                         animeId = 1L,
                         episodeId = 1L,
                         seenAt = Date(),
-                        animeTitle = "Anime Title",
-                        episodeName = "Episode 1",
+                        ogTitle = "Anime Title",
+                        episodeNumber = 1.0,
+                        watchDuration = 0L,
                         sourceId = 1L,
                         coverData = tachiyomi.domain.anime.model.AnimeCover(
                             animeId = 1L,
