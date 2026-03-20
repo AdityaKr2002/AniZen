@@ -25,6 +25,7 @@ fun LibraryCompactGrid(
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
+    usePanorama: Boolean? = null,
 ) {
     val selectedIds = remember(selection) { selection.map { it.id }.toSet() }
 
@@ -68,6 +69,7 @@ fun LibraryCompactGrid(
                 } else {
                     null
                 },
+                usePanorama = usePanorama,
             )
         }
     }

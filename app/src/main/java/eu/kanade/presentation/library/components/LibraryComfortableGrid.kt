@@ -24,6 +24,7 @@ internal fun LibraryComfortableGrid(
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
+    usePanorama: Boolean? = null,
 ) {
     val selectedIds = remember(selection) { selection.map { it.id }.toSet() }
 
@@ -67,6 +68,7 @@ internal fun LibraryComfortableGrid(
                 } else {
                     null
                 },
+                usePanorama = usePanorama,
             )
         }
     }

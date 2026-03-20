@@ -27,6 +27,7 @@ fun BrowseSourceComfortableGrid(
     selection: List<Anime>,
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
+    usePanorama: Boolean? = null,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     LazyVerticalGrid(
@@ -54,6 +55,7 @@ fun BrowseSourceComfortableGrid(
                 isSelected = anime.id in selectionIds,
                 onClick = { onAnimeClick(anime) },
                 onLongClick = { onAnimeLongClick(anime) },
+                usePanorama = usePanorama,
             )
         }
 
@@ -72,6 +74,7 @@ internal fun BrowseSourceComfortableGridItem(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = onClick,
+    usePanorama: Boolean? = null,
 ) {
     AnimeComfortableGridItem(
         title = anime.title,
@@ -85,5 +88,6 @@ internal fun BrowseSourceComfortableGridItem(
         onLongClick = onLongClick,
         onClick = onClick,
         isSelected = isSelected,
+        usePanorama = usePanorama,
     )
 }

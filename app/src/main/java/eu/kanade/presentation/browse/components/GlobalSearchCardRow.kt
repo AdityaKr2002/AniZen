@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.library.components.AnimeComfortableGridItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
@@ -48,6 +49,7 @@ fun GlobalSearchCardRow(
         ) { _, it: tachiyomi.domain.anime.model.Anime ->
             val animeState = getAnime(it)
             val title by animeState
+            val (entry, _) = AnimeCover.getEntry(title.id)
             AnimeItem(
                 title = title.title,
                 cover = title.asAnimeCover(),
@@ -55,6 +57,7 @@ fun GlobalSearchCardRow(
                 isSelected = selection.any { it.id == title.id },
                 onClick = { onClick(title) },
                 onLongClick = { onLongClick(title) },
+                width = if (entry == AnimeCover.Panorama) 160.dp else 96.dp,
             )
         }
     }
@@ -68,8 +71,9 @@ internal fun AnimeItem(
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    width: Dp = 96.dp,
 ) {
-    Box(modifier = Modifier.width(96.dp)) {
+    Box(modifier = Modifier.width(width)) {
         AnimeComfortableGridItem(
             title = title,
             titleMaxLines = 3,
