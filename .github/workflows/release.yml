@@ -84,8 +84,8 @@ jobs:
           # 2. Get file change statistics
           git diff --stat $RANGE > .github/ai/files.txt
           
-          # 3. Get actual code diff (capped at 1000 lines for stability)
-          git diff -U1 $RANGE | head -n 1000 > .github/ai/diff.txt
+          # 3. Get actual code diff (capped at 200 lines for stability)
+          git diff -U1 $RANGE | head -n 200 > .github/ai/diff.txt
 
       - name: Format Changelog with Groq AI
         env:
@@ -97,18 +97,19 @@ jobs:
           
           cat > .github/ai/full_prompt.txt <<EOF
           You are an excited team member of AniZen! Write a friendly and hyped 'Changelog' for our fans. 
-          Looking at the code changes and commits below, explain WHAT IS NEW and WHAT CHANGED in a way that anyone can understand. 
-          Use emojis like 🚀, ✨, and 🛠️. Group them into 'What's New', 'Fixed', and 'Polished'.
-          CRITICAL: Do NOT mention 'code', 'commits', 'lines', or technical files. Just tell the story of the improvements!
+          Summarize WHAT IS NEW and WHAT CHANGED based on the commits and diff below.
+          Use emojis like 🚀, ✨, and 🛠️. Group into 'What's New', 'Fixed', and 'Polished'.
+          CRITICAL: Do NOT mention technical terms like 'code', 'commits', or 'diff'. Focus on improvements!
+          If the diff is truncated, rely on the commit history to tell the story.
           
           NEW CHANGES:
-          COMMIT MESSAGES:
+          COMMITS:
           $COMMITS
 
-          FILE STATISTICS:
+          FILE STATS:
           $FILES
           
-          CODE CHANGES:
+          DIFF SNIPPET:
           $DIFF
           EOF
           
