@@ -40,8 +40,11 @@
     <string name="pref_theme_cover_based_style_monochrome">Monochrome</string>
     <string name="pref_theme_cover_based_style_fidelity">Fidelity</string>
     <string name="pref_theme_cover_based_style_content">Content</string>
-    <string name="pref_panorama_cover">Panorama Cover</string>
-    <string name="pref_panorama_cover_summary">Show cover in landscape mode if it\'s a wide image</string>
+    <string name="pref_panorama_cover">Universal Panorama Default</string>
+    <string name="pref_panorama_cover_summary">Base setting for all screens. Individual screens (Feed, Updates, History) can override this using their local toggles.</string>
+    <string name="panorama_mode_follow_global">Following Universal</string>
+    <string name="panorama_mode_forced_on">Always Panorama</string>
+    <string name="panorama_mode_forced_off">Never Panorama</string>
     <string name="pref_panorama_cover_flow">Panorama Cover Flow</string>
     <string name="pref_panorama_cover_flow_summary">Show panorama cover in Global Search &amp; Suggestions</string>
     <string name="pref_top_align_cover">Align Cover to Top</string>

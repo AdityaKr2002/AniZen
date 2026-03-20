@@ -72,7 +72,7 @@ internal fun PreferenceItem(
                     title = item.title,
                     subtitle = item.subtitle,
                     icon = item.icon,
-                    checked = value,
+                    checked = item.customValue ?: value,
                     onCheckedChanged = { newValue ->
                         scope.launch {
                             if (item.onValueChanged(newValue)) {
