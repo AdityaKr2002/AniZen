@@ -11,8 +11,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 
@@ -62,8 +60,8 @@ fun HistoryScreen(
     searchQuery: String? = null,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
-    val historyMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
+    val historyMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
     val effectivePanorama = remember(globalPanorama, historyMode) { historyMode.resolve(globalPanorama) }
 
     Scaffold(
@@ -73,7 +71,7 @@ fun HistoryScreen(
                 searchQuery = state.searchQuery,
                 onChangeSearchQuery = onSearchQueryChange,
                 actions = {
-                    val panoramaMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as State<PanoramaMode>
+                    val panoramaMode by uiPreferences.historyPanoramaMode().collectAsStatePref() as androidx.compose.runtime.State<PanoramaMode>
                     PanoramaModeToggle(
                         mode = panoramaMode,
                         onCycle = {
@@ -149,113 +147,78 @@ private fun HistoryScreenContent(
     usePanorama: Boolean,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as State<Set<String>>
+    val containerStyles by uiPreferences.containerStyles().collectAsStatePref() as androidx.compose.runtime.State<Set<String>>
     val useContainer = remember(containerStyles) { eu.kanade.domain.ui.ContainerStyle.HISTORY in containerStyles }
 
     FastScrollLazyColumn(
         contentPadding = contentPadding,
     ) {
         if (useContainer) {
-            var i = 0
-            while (i < history.size) {
-                val model = history[i]
-                if (model is HistoryUiModel.Header) {
-                    item(key = "historyHeader-${model.hashCode()}") {
+            history.forEach { model ->
+                when (model) {
+                    is HistoryUiModel.Header -> {
+                        item(key = "historyHeader-${model.hashCode()}") {
+                            ListGroupHeader(
+                                modifier = Modifier,
+                                text = relativeDateText(model.date),
+                            )
+                        }
+                    }
+                    is HistoryUiModel.Item -> {
+                        val groupItems = model.item
+                        item(key = "historyGroup-${model.hashCode()}") {
+                            Surface(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                tonalElevation = 2.dp,
+                            ) {
+                                Column {
+                                    for (historyItem in groupItems) {
+                                        HistoryItem(
+                                            modifier = Modifier,
+                                            history = historyItem,
+                                            onClickCover = { onClickCover(historyItem) },
+                                            onClickResume = { onClickResume(historyItem) },
+                                            onClickDelete = { onClickDelete(historyItem) },
+                                            usePanorama = usePanorama,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            items(
+                items = history,
+                key = { "history-${it.hashCode()}" },
+                contentType = { "history" },
+            ) { model ->
+                when (model) {
+                    is HistoryUiModel.Header -> {
                         ListGroupHeader(
                             modifier = Modifier,
                             text = relativeDateText(model.date),
                         )
                     }
-                    i++
-                    val groupItems = mutableListOf<HistoryWithRelations>()
-                    while (i < history.size && history[i] is HistoryUiModel.Item) {
-                        groupItems.add((history[i] as HistoryUiModel.Item).item)
-                        i++
-                    }
-                    item(key = "historyIsland-${model.hashCode()}") {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            tonalElevation = 2.dp
-                        ) {
-                            Column {
-                                for (historyItem in groupItems) {
-                                    HistoryItem(
-                                        modifier = Modifier,
-                                        history = historyItem,
-                                        onClickCover = { onClickCover(historyItem) },
-                                        onClickResume = { onClickResume(historyItem) },
-                                        onClickDelete = { onClickDelete(historyItem) },
-                                        usePanorama = usePanorama,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                } else if (model is HistoryUiModel.Item) {
-                    val value = model.item
-                    item(key = "history-${value.hashCode()}") {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            tonalElevation = 2.dp
-                        ) {
+                    is HistoryUiModel.Item -> {
+                        model.item.forEach { historyItem ->
                             HistoryItem(
                                 modifier = Modifier,
-                                history = value,
-                                onClickCover = { onClickCover(value) },
-                                onClickResume = { onClickResume(value) },
-                                onClickDelete = { onClickDelete(value) },
+                                history = historyItem,
+                                onClickCover = { onClickCover(historyItem) },
+                                onClickResume = { onClickResume(historyItem) },
+                                onClickDelete = { onClickDelete(historyItem) },
+                                usePanorama = usePanorama,
                             )
                         }
                     }
-                    i++
                 }
             }
-        } else {
-            items(
-                items = history.filterIsInstance<HistoryUiModel.Item>(),
-                key = { "history-${it.item.id}" },
-            ) { model ->
-                HistoryItem(
-                    modifier = Modifier,
-                    history = model.item,
-                    onClickCover = { onClickCover(model.item) },
-                    onClickResume = { onClickResume(model.item) },
-                    onClickDelete = { onClickDelete(model.item) },
-                )
-            }
         }
-    }
-}
-
-sealed interface HistoryUiModel {
-    data class Header(val date: LocalDate) : HistoryUiModel
-    data class Item(val item: HistoryWithRelations) : HistoryUiModel
-}
-
-@PreviewLightDark
-@Composable
-internal fun HistoryScreenPreviews(
-    @PreviewParameter(HistoryScreenModelStateProvider::class)
-    historyState: HistoryScreenModel.State,
-) {
-    TachiyomiPreviewTheme {
-        HistoryScreen(
-            state = historyState,
-            snackbarHostState = SnackbarHostState(),
-            searchQuery = null,
-            onSearchQueryChange = {},
-            onClickCover = {},
-            onClickResume = { _, _ -> run {} },
-            onDialogChange = {},
-            navigateUp = {},
-        )
     }
 }

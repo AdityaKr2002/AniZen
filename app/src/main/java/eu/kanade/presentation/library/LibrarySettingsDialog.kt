@@ -302,8 +302,8 @@ private val displayModes = listOf(
 private fun ColumnScope.DisplayPage(
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val displayMode by screenModel.libraryPreferences.displayMode().collectAsStatePref() as State<LibraryDisplayMode>
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val displayMode by screenModel.libraryPreferences.displayMode().collectAsStatePref() as androidx.compose.runtime.State<LibraryDisplayMode>
+    val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val panoramaMode by uiPreferences.libraryPanoramaMode().collectAsStatePref()
     
     SettingsChipRow(MR.strings.action_display_mode) {

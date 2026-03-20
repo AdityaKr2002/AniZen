@@ -72,6 +72,7 @@ import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreenModel.Listi
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -118,6 +119,23 @@ data class BrowseSourceScreen(
         }
 
         BackHandler(enabled = state.selectionMode, onBack = navigateUp)
+
+        val scope = rememberCoroutineScope()
+        val haptic = LocalHapticFeedback.current
+        val uriHandler = LocalUriHandler.current
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        val onHelpClick = { uriHandler.openUri(LocalSource.HELP_URL) }
+        val onWebViewClick = f@{
+            val source = screenModel.source as? HttpSource ?: return@f
+            navigator.push(
+                WebViewScreen(
+                    url = source.baseUrl,
+                    initialTitle = source.name,
+                    sourceId = source.id,
+                ),
+            )
+        }
 
         val pagingFlow by screenModel.animePagerFlowFlow.collectAsState()
         val animeList = pagingFlow.collectAsLazyPagingItems()
