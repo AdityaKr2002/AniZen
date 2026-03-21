@@ -45,6 +45,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.ui.platform.LocalLayoutDirection
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState

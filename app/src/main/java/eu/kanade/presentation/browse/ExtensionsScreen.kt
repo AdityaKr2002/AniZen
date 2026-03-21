@@ -1,12 +1,5 @@
 package eu.kanade.presentation.browse
 
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -17,9 +10,16 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.GetApp
@@ -35,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,19 +46,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.icerock.moko.resources.StringResource
+import eu.kanade.domain.ui.ContainerStyle
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.DotSeparatorNoSpaceText
 import eu.kanade.presentation.browse.components.BaseBrowseItem
 import eu.kanade.presentation.browse.components.ExtensionIcon
+import eu.kanade.presentation.components.AnimatedFloatingSearchBox
+import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.components.WarningBanner
 import eu.kanade.presentation.more.settings.screen.browse.ExtensionReposScreen
 import eu.kanade.presentation.util.rememberRequestPackageInstallsPermissionState
@@ -78,23 +86,11 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.theme.header
+import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.util.secondaryItemAlpha
-
-import eu.kanade.domain.ui.ContainerStyle
-import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-
-import eu.kanade.presentation.components.AnimatedFloatingSearchBox
-import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 
 @Composable
 fun ExtensionScreen(

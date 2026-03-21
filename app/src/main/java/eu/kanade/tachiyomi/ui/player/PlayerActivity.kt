@@ -134,7 +134,7 @@ class PlayerActivity : BaseActivity() {
     private var lastThermalStatus: Int = -1
     private val thermalListener = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         PowerManager.OnThermalStatusChangedListener { status ->
-            if (status >= PowerManager.THERMAL_STATUS_THROTTLING && status != lastThermalStatus) {
+            if (status >= android.os.PowerManager.THERMAL_STATUS_THROTTLING && status != lastThermalStatus) {
                 lastThermalStatus = status
                 player.checkAdaptiveScaling(Long.MAX_VALUE) // Force check on thermal event
             }
