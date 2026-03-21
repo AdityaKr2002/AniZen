@@ -47,6 +47,7 @@ fun Screen.sourcesTab(): TabContent {
     return remember(globalSearch, actionFilter) {
         TabContent(
             titleRes = MR.strings.label_sources,
+            searchEnabled = false,
             actions = persistentListOf(
                 AppBar.Action(
                     title = globalSearch,

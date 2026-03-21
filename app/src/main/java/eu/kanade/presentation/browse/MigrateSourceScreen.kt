@@ -25,6 +25,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
@@ -44,12 +47,23 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalLayoutDirection
+import eu.kanade.domain.ui.ContainerStyle
+import eu.kanade.domain.ui.UiPreferences
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
-import eu.kanade.presentation.components.AnimatedFloatingSearchBox
+import eu.kanade.presentation.components.SourcesSearchBox
 import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.ui.browse.migration.sources.MigrateSourceScreenModel
@@ -66,6 +80,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.icons.FlagEmoji
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.isScrollingUp
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
@@ -134,6 +149,10 @@ private fun MigrateSourceList(
     onMatchPinned: () -> Unit,
     onMigrate: () -> Unit,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val containerStyles by uiPreferences.containerStyles().collectAsState()
+    val useContainer = remember(containerStyles) { ContainerStyle.BROWSE in containerStyles }
+    
     val lazyListState = rememberLazyListState()
 
     BackHandler(enabled = !state.searchQuery.isNullOrBlank()) {
@@ -142,8 +161,7 @@ private fun MigrateSourceList(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(top = contentPadding.calculateTopPadding()),
+            .fillMaxSize(),
     ) {
         val density = LocalDensity.current
         var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
@@ -151,7 +169,9 @@ private fun MigrateSourceList(
         FastScrollLazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
                 top = searchBoxHeight,
+                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
                 bottom = contentPadding.calculateBottomPadding() + if (state.selectionMode) 80.dp else 0.dp,
             ),
         ) {
@@ -160,40 +180,67 @@ private fun MigrateSourceList(
                 key = { (item, _) -> "migrate-${item.source.id}" },
             ) { (item, count) ->
                 val isSelected = state.selectedSources.contains(item.source.id)
-                MigrateSourceItem(
-                    modifier = Modifier.animateItemFastScroll()
-                        .padding(end = MaterialTheme.padding.small),
-                    item = item,
-                    count = count,
-                    isSelected = isSelected,
-                    isSelectionMode = state.selectionMode,
-                    onClickItem = {
-                        if (state.selectionMode) {
-                            onToggleSelection(item.source.id)
-                        } else {
-                            onClickItem(item.source)
-                        }
-                    },
-                    onLongClickItem = { onToggleSelection(item.source.id) },
-                )
+                val shape = if (useContainer) MaterialTheme.shapes.large else RoundedCornerShape(0.dp)
+                val containerColor = if (useContainer) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                val elevation = if (useContainer) 2.dp else 0.dp
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 2.dp),
+                    shape = shape,
+                    color = containerColor,
+                    tonalElevation = elevation
+                ) {
+                    MigrateSourceItem(
+                        modifier = Modifier.animateItemFastScroll(),
+                        item = item,
+                        count = count,
+                        isSelected = isSelected,
+                        isSelectionMode = state.selectionMode,
+                        onClickItem = {
+                            if (state.selectionMode) {
+                                onToggleSelection(item.source.id)
+                            } else {
+                                onClickItem(item.source)
+                            }
+                        },
+                        onLongClickItem = { onToggleSelection(item.source.id) },
+                    )
+                }
             }
         }
 
-        AnimatedFloatingSearchBox(
-            listState = lazyListState,
-            searchQuery = state.searchQuery,
-            onChangeSearchQuery = onChangeSearchQuery,
-            placeholderText = stringResource(MR.strings.action_search_for_source),
+        androidx.compose.animation.AnimatedVisibility(
+            visible = lazyListState.isScrollingUp(),
+            enter = androidx.compose.animation.expandVertically(),
+            exit = androidx.compose.animation.shrinkVertically(),
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(
-                    horizontal = MaterialTheme.padding.medium,
-                )
-                .align(Alignment.TopCenter),
-            onGloballyPositioned = { layoutCoordinates ->
-                searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-            },
-        )
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .onGloballyPositioned { layoutCoordinates ->
+                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+                }
+        ) {
+            SourcesSearchBox(
+                searchQuery = state.searchQuery,
+                onChangeSearchQuery = onChangeSearchQuery,
+                placeholderText = stringResource(MR.strings.action_search_for_source),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(
+                        horizontal = MaterialTheme.padding.medium,
+                        vertical = MaterialTheme.padding.small,
+                    ),
+            )
+        }
+
+        val isScrollingUp = lazyListState.isScrollingUp()
+        LaunchedEffect(isScrollingUp) {
+            if (!isScrollingUp) {
+                searchBoxHeight = 0.dp
+            }
+        }
 
         MigrateBottomActionMenu(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -223,9 +270,10 @@ private fun MigrateBottomActionMenu(
     ) {
         Surface(
             modifier = modifier,
-            shape = MaterialTheme.shapes.large.copy(bottomEnd = ZeroCornerSize, bottomStart = ZeroCornerSize),
+            shape = MaterialTheme.shapes.large.copy(bottomEnd = CornerSize(0.dp), bottomStart = CornerSize(0.dp)),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
+        )
+ {
             Row(
                 modifier = Modifier
                     .windowInsetsPadding(

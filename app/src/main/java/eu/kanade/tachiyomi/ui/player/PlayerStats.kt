@@ -28,6 +28,7 @@ object PlayerStats {
     val tscale = MutableStateFlow("")
     val isInterpolating = MutableStateFlow(false)
     val voPasses = MutableStateFlow(0L)
+    val isAdaptiveDowngraded = MutableStateFlow(false)
     
     val delayedFrames = MutableStateFlow(0L)
     val mistime = MutableStateFlow(0.0)
@@ -54,6 +55,7 @@ object PlayerStats {
         tscale.value = ""
         isInterpolating.value = false
         voPasses.value = 0L
+        isAdaptiveDowngraded.value = false
         delayedFrames.value = 0L
         mistime.value = 0.0
     }

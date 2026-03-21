@@ -40,6 +40,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.PowerManager
 import android.util.Rational
 import android.view.KeyEvent
 import android.view.View
@@ -90,6 +91,7 @@ import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.utils.ChapterUtils
 import eu.kanade.tachiyomi.ui.player.utils.ChapterUtils.Companion.getStringRes
+import eu.kanade.tachiyomi.util.system.powerManager
 import eu.kanade.tachiyomi.util.system.toShareIntent
 import eu.kanade.tachiyomi.util.system.toast
 import `is`.xyz.mpv.MPVLib
@@ -129,6 +131,17 @@ class PlayerActivity : BaseActivity() {
     val player by lazy { binding.player }
     val windowInsetsController by lazy { WindowCompat.getInsetsController(window, window.decorView) }
     val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    private var lastThermalStatus: Int = -1
+    private val thermalListener = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        PowerManager.OnThermalStatusChangedListener { status ->
+            if (status >= 3 && status != lastThermalStatus) { // 3 = PowerManager.THERMAL_STATUS_THROTTLING
+                lastThermalStatus = status
+                player.checkAdaptiveScaling(Long.MAX_VALUE) // Force check on thermal event
+            }
+        }
+    } else {
+        null
+    }
 
     private var mediaSession: MediaSession? = null
     private val gesturePreferences: GesturePreferences by lazy { viewModel.gesturePreferences }
@@ -379,6 +392,9 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onStop() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && thermalListener != null) {
+            powerManager.removeThermalStatusListener(thermalListener)
+        }
         window.attributes.screenBrightness.let {
             if (playerPreferences.rememberPlayerBrightness().get() && it != -1f) {
                 playerPreferences.playerBrightnessValue().set(it)
@@ -416,6 +432,9 @@ class PlayerActivity : BaseActivity() {
 
     override fun onStart() {
         super.onStart()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && thermalListener != null) {
+            powerManager.addThermalStatusListener(thermalListener)
+        }
         setPictureInPictureParams(createPipParams())
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.setFlags(
@@ -737,7 +756,10 @@ class PlayerActivity : BaseActivity() {
             "dwidth" -> PlayerStats.dwidth.value = value
             "dheight" -> PlayerStats.dheight.value = value
             "video-bitrate" -> PlayerStats.videoBitrate.value = value
-            "vo-delayed-frame-count" -> PlayerStats.delayedFrames.value = value
+            "vo-delayed-frame-count" -> {
+                PlayerStats.delayedFrames.value = value
+                player.checkAdaptiveScaling(value)
+            }
             "vo-passes" -> PlayerStats.voPasses.value = value
             "time-pos" -> {
                 viewModel.updatePlayBackPos(value.toFloat())
@@ -847,6 +869,7 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         when (eventId) {
             MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
+                PlayerStats.isAdaptiveDowngraded.value = false
                 viewModel.viewModelScope.launchIO { fileLoaded() }
             }
             MPVLib.mpvEventId.MPV_EVENT_SEEK -> viewModel.isLoading.update { true }

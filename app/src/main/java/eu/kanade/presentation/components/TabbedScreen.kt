@@ -2,6 +2,7 @@ package eu.kanade.presentation.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,7 +48,7 @@ fun TabbedScreen(
     Scaffold(
         topBar = {
             val tab = tabs.getOrNull(state.currentPage) ?: tabs.getOrNull(0)
-            val currentTitleRes = tab?.titleRes ?: titleRes
+            val currentTitleRes = titleRes ?: tab?.titleRes
             if (currentTitleRes != null) {
                 val searchEnabled = tab?.searchEnabled ?: false
 
@@ -69,13 +70,12 @@ fun TabbedScreen(
             }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets(0),
     ) { contentPadding ->
         Column(
-            modifier = Modifier.padding(
-                top = contentPadding.calculateTopPadding(),
-                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
         ) {
             FlexibleTabRow(
                 scrollable = scrollable,
@@ -102,7 +102,7 @@ fun TabbedScreen(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
                 verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 1,
+                beyondViewportPageCount = 0,
             ) { page ->
                 tabs[page].content(
                     PaddingValues(bottom = contentPadding.calculateBottomPadding()),
