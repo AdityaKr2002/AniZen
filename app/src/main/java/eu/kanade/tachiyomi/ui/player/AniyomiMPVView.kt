@@ -156,11 +156,19 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("video-sync", "audio")
 
         // Force detect refresh rate
-        val refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
         } else {
             60f
         }
+
+        val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
+        val refreshRate = if (smoothMotionEnabled && interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
+            interpolationFPSLimit.toFloat()
+        } else {
+            displayRefreshRate
+        }
+
         MPVLib.setOptionString("display-fps", refreshRate.toString())
         MPVLib.setOptionString("override-display-fps", refreshRate.toString())
 

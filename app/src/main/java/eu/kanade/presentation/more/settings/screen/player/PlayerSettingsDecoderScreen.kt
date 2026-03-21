@@ -33,6 +33,8 @@ object PlayerSettingsDecoderScreen : SearchableSettings {
         val smoothMotion = decoderPreferences.smoothMotion()
         val smoothMotionValue by smoothMotion.collectAsState()
         val interpolationMode = decoderPreferences.interpolationMode()
+        val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit()
+        val interpolationFPSLimitValue by interpolationFPSLimit.collectAsState()
 
         return listOf(
             Preference.PreferenceItem.SwitchPreference(
@@ -69,6 +71,18 @@ object PlayerSettingsDecoderScreen : SearchableSettings {
                     it.title
                 }.toImmutableMap(),
                 enabled = smoothMotionValue,
+            ),
+            Preference.PreferenceItem.SliderPreference(
+                value = interpolationFPSLimitValue,
+                min = 0,
+                max = 144,
+                title = "Smooth Motion FPS Limit",
+                subtitle = if (interpolationFPSLimitValue == 0) "Auto (Matches Display)" else "$interpolationFPSLimitValue FPS",
+                enabled = smoothMotionValue,
+                onValueChanged = {
+                    interpolationFPSLimit.set(it)
+                    true
+                },
             ),
             Preference.PreferenceItem.SwitchPreference(
                 pref = yuv420p,
