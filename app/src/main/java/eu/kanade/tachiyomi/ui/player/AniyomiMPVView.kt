@@ -54,6 +54,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     var isExiting = false
     var initialized = false
+    private var lastAdaptiveCheckTime = 0L
 
     private fun getPropertyInt(property: String): Int? {
         if (!initialized) return null
@@ -410,5 +411,29 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("sub-shadow-offset", subtitlePreferences.shadowOffsetSubtitles().get().toString())
         MPVLib.setOptionString("sub-pos", subtitlePreferences.subtitlePos().get().toString())
         MPVLib.setOptionString("sub-scale", subtitlePreferences.subtitleFontScale().get().toString())
+    }
+
+    fun checkAdaptiveScaling(delayedFrames: Long) {
+        if (!decoderPreferences.adaptiveShaderScaling().get() || 
+            !decoderPreferences.enableAnime4K().get() || 
+            PlayerStats.isAdaptiveDowngraded.value) return
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastAdaptiveCheckTime < 5000) return // Check every 5s
+        lastAdaptiveCheckTime = currentTime
+
+        // If we have more than 10 delayed frames in a short window and using High quality
+        if (delayedFrames > 10 && decoderPreferences.anime4kQuality().get() == "HIGH") {
+            logcat("Performance", LogPriority.WARN) { "High frame drops ($delayedFrames) detected. Downgrading Anime4K quality." }
+            
+            // Downgrade to Balanced
+            decoderPreferences.anime4kQuality().set("BALANCED")
+            applyAnime4K(decoderPreferences, anime4kManager)
+            PlayerStats.isAdaptiveDowngraded.value = true
+            
+            (context as? PlayerActivity)?.runOnUiThread {
+                (context as? PlayerActivity)?.showToast("Performance: Anime4K downgraded to Balanced")
+            }
+        }
     }
 }

@@ -35,6 +35,7 @@ object PlayerSettingsDecoderScreen : SearchableSettings {
         val interpolationMode = decoderPreferences.interpolationMode()
         val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit()
         val interpolationFPSLimitValue by interpolationFPSLimit.collectAsState()
+        val adaptiveScaling = decoderPreferences.adaptiveShaderScaling()
 
         return listOf(
             Preference.PreferenceItem.SwitchPreference(
@@ -83,6 +84,11 @@ object PlayerSettingsDecoderScreen : SearchableSettings {
                     interpolationFPSLimit.set(it)
                     true
                 },
+            ),
+            Preference.PreferenceItem.SwitchPreference(
+                pref = adaptiveScaling,
+                title = stringResource(MR.strings.pref_ai_performance_intelligence),
+                subtitle = stringResource(MR.strings.pref_ai_performance_intelligence_summary),
             ),
             Preference.PreferenceItem.SwitchPreference(
                 pref = yuv420p,

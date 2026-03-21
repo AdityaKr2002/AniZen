@@ -15,6 +15,7 @@ class DecoderPreferences(
     fun smoothMotion() = preferenceStore.getBoolean("pref_smooth_motion", false)
     fun interpolationMode() = preferenceStore.getEnum("pref_interpolation_mode", InterpolationMode.Oversample)
     fun interpolationFPSLimit() = preferenceStore.getInt("pref_interpolation_fps_limit_int", 0)
+    fun adaptiveShaderScaling() = preferenceStore.getBoolean("pref_adaptive_shader_scaling", false)
 
     fun enableAnime4K() = preferenceStore.getBoolean("pref_enable_anime4k", false)
     fun anime4kMode() = preferenceStore.getString("pref_anime4k_mode", "OFF")
