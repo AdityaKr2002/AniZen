@@ -133,15 +133,14 @@ fun SourcesScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = contentPadding.calculateTopPadding())
             .nestedScroll(nestedScrollConnection),
     ) {
         ScrollbarLazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
+                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
                 top = searchHeight,
-                end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
+                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
         ) {

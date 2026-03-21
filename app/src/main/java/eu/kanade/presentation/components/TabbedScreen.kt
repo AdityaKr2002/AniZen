@@ -69,13 +69,12 @@ fun TabbedScreen(
             }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets(0),
     ) { contentPadding ->
         Column(
-            modifier = Modifier.padding(
-                top = contentPadding.calculateTopPadding(),
-                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
         ) {
             FlexibleTabRow(
                 scrollable = scrollable,
@@ -102,7 +101,7 @@ fun TabbedScreen(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
                 verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 1,
+                beyondViewportPageCount = 0,
             ) { page ->
                 tabs[page].content(
                     PaddingValues(bottom = contentPadding.calculateBottomPadding()),
