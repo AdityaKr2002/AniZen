@@ -9,35 +9,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Gesture
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.domain.ui.model.NavBehavior
+import eu.kanade.domain.ui.model.NavConfig
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.ListPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableMap
-import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
-import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.plus
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -47,9 +43,9 @@ class AssignActionsScreen : Screen() {
     override fun Content() {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val backPress = LocalBackPress.current
-        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsState()
-        val bottomNavHiddenTabs by uiPreferences.bottomNavHiddenTabs().collectAsState()
-        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
+        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
+        val bottomNavHiddenTabs by uiPreferences.bottomNavHiddenTabs().collectAsStatePref()
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
         
         // Sliced state for gesture mapping
         val visibleItems = remember(bottomNavTabs) {
@@ -60,7 +56,7 @@ class AssignActionsScreen : Screen() {
             topBar = { scrollBehavior ->
                 AppBar(
                     title = "Assign Actions",
-                    navigateUp = backPress::invoke,
+                    navigateUp = { backPress?.invoke() },
                     scrollBehavior = scrollBehavior,
                 )
             },
@@ -97,9 +93,9 @@ class AssignActionsScreen : Screen() {
         item: NavItem,
         behavior: NavBehavior,
         uiPreferences: UiPreferences,
-        visibleTabs: kotlinx.collections.immutable.ImmutableList<String>,
-        hiddenTabs: kotlinx.collections.immutable.ImmutableList<String>,
-        behaviorMap: kotlinx.collections.immutable.ImmutableMap<String, NavBehavior>
+        visibleTabs: ImmutableList<String>,
+        hiddenTabs: ImmutableList<String>,
+        behaviorMap: ImmutableMap<String, NavBehavior>
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             PreferenceGroupHeader(title = stringResource(item.titleRes))

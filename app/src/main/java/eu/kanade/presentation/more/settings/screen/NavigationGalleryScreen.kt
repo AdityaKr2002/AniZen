@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -30,10 +28,8 @@ import eu.kanade.domain.ui.model.NavLayoutPack
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
-import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
-import tachiyomi.presentation.core.components.material.padding
-import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.plus
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -48,7 +44,7 @@ class NavigationGalleryScreen : Screen() {
             topBar = { scrollBehavior ->
                 AppBar(
                     title = "Layout Gallery",
-                    navigateUp = backPress::invoke,
+                    navigateUp = { backPress?.invoke() },
                     scrollBehavior = scrollBehavior,
                 )
             },
@@ -122,12 +118,13 @@ class NavigationGalleryScreen : Screen() {
                 ) {
                     Row(
                         modifier = Modifier.padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         pack.config.visibleTabs.forEach { id ->
                             val item = NavItem.fromId(id)
                             if (item != null) {
-                                Column(horizontalAlignment = Alignment.CenterVertically) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(
                                         painter = item.tab.options.icon!!,
                                         contentDescription = null,

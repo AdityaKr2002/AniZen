@@ -6,7 +6,6 @@ import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavItem
@@ -37,11 +36,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import tachiyomi.domain.history.model.HistoryWithRelations
+import tachiyomi.core.common.i18n.stringResource as stringResourceContext
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import androidx.compose.runtime.collectAsState
 
 data object HistoryTab : Tab {
 
@@ -142,7 +142,7 @@ data object HistoryTab : Tab {
                 if (episode != null) {
                     openEpisode(context, episode.animeId, episode.id)
                 } else {
-                    snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
+                    snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.no_next_episode))
                 }
             }
         }
@@ -151,14 +151,14 @@ data object HistoryTab : Tab {
             screenModel.events.collectLatest { event ->
                 when (event) {
                     HistoryScreenModel.Event.InternalError -> {
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
+                        snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.internal_error))
                     }
                     is HistoryScreenModel.Event.OpenEpisode -> {
                         val episode = event.episode
                         if (episode != null) {
                             openEpisode(context, episode.animeId, episode.id)
                         } else {
-                            snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
+                            snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.no_next_episode))
                         }
                     }
                 }

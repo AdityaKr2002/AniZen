@@ -5,7 +5,6 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavItem
@@ -37,6 +36,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import androidx.compose.runtime.collectAsState
 
 data object UpdatesTab : Tab {
 
@@ -90,7 +90,7 @@ data object UpdatesTab : Tab {
             onClickCover = { navigator.push(AnimeScreen(it.update.animeId)) },
             onSelectAll = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
-            onCalendarClicked = {}, // Not implemented in model yet
+            onCalendarClicked = {},
             onUpdateLibrary = screenModel::updateLibrary,
             onDownloadEpisode = screenModel::downloadEpisodes,
             onMultiBookmarkClicked = screenModel::bookmarkUpdates,

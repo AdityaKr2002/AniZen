@@ -136,18 +136,17 @@ object NavConfigSerializer {
                     }
                 }
             }
+            
             val config = NavConfig(version, visible.toImmutableList(), hidden.toImmutableList(), behaviorMap.toImmutableMap())
             NavMigrator.migrate(config)
-            } catch (e: Exception) {
+        } catch (e: Exception) {
             null
-            }
-            }
+        }
+    }
 
-            fun parseAction(name: String): NavAction {
-            return when (name) {
+    fun parseAction(name: String): NavAction {
+        return when (name) {
             "OpenExtensions" -> NavAction.OpenExtensions
-            ...
-
             "OpenSettings" -> NavAction.OpenSettings
             "ClearHistory" -> NavAction.ClearHistory
             "RefreshUpdates" -> NavAction.RefreshUpdates

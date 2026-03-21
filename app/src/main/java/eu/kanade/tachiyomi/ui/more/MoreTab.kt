@@ -7,7 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavItem
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.ui.platform.LocalContext
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -69,7 +73,7 @@ data object MoreTab : Tab {
         val screenModel = rememberScreenModel { MoreScreenModel() }
         val downloadQueueState by screenModel.downloadQueueState.collectAsState()
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val hiddenTabsId by uiPreferences.bottomNavHiddenTabs().collectAsState()
+        val hiddenTabsId by uiPreferences.bottomNavHiddenTabs().collectAsStatePref()
         val hiddenTabs = remember(hiddenTabsId) {
             hiddenTabsId.mapNotNull { NavItem.fromId(it) }
         }

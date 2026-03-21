@@ -44,6 +44,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavConfig
@@ -59,6 +61,7 @@ import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
+import eu.kanade.tachiyomi.ui.home.ActionTrace
 import eu.kanade.tachiyomi.ui.home.NavActionExecutor
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import eu.kanade.tachiyomi.util.system.toast
@@ -70,6 +73,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.plus
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -79,12 +83,13 @@ class NavigationSettingsScreen : Screen() {
     override fun Content() {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val backPress = LocalBackPress.current
+        val navigator = LocalNavigator.currentOrThrow
 
-        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsState()
-        val bottomNavHiddenTabs by uiPreferences.bottomNavHiddenTabs().collectAsState()
-        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
-        val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsState()
-        val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsState()
+        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
+        val bottomNavHiddenTabs by uiPreferences.bottomNavHiddenTabs().collectAsStatePref()
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
+        val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsStatePref()
+        val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsStatePref()
 
         val haptic = LocalHapticFeedback.current
         val context = LocalContext.current
@@ -264,20 +269,20 @@ class NavigationSettingsScreen : Screen() {
                     SwitchPreferenceWidget(
                         title = "Enable Adaptive Engine",
                         subtitle = "Allow the app to suggest layout changes based on context.",
-                        checked = uiPreferences.adaptiveNavEnabled().collectAsState().value,
+                        checked = uiPreferences.adaptiveNavEnabled().get(),
                         onCheckedChanged = { uiPreferences.adaptiveNavEnabled().set(it) }
                     )
-                    if (uiPreferences.adaptiveNavEnabled().collectAsState().value) {
+                    if (uiPreferences.adaptiveNavEnabled().get()) {
                         SwitchPreferenceWidget(
                             title = "Connectivity Rules",
                             subtitle = "Suggest offline layouts when WiFi is lost.",
-                            checked = uiPreferences.adaptiveConnectivityRule().collectAsState().value,
+                            checked = uiPreferences.adaptiveConnectivityRule().get(),
                             onCheckedChanged = { uiPreferences.adaptiveConnectivityRule().set(it) }
                         )
                         SwitchPreferenceWidget(
                             title = "Late Night Rules",
                             subtitle = "Simplify navigation during late hours.",
-                            checked = uiPreferences.adaptiveTimeRule().collectAsState().value,
+                            checked = uiPreferences.adaptiveTimeRule().get(),
                             onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) }
                         )
                     }
@@ -289,7 +294,7 @@ class NavigationSettingsScreen : Screen() {
                     SwitchPreferenceWidget(
                         title = "On-Device Telemetry",
                         subtitle = "Logs gesture interactions locally for engine optimization. Data never leaves your device.",
-                        checked = uiPreferences.adaptiveTelemetryEnabled().collectAsState().value,
+                        checked = uiPreferences.adaptiveTelemetryEnabled().get(),
                         onCheckedChanged = { uiPreferences.adaptiveTelemetryEnabled().set(it) }
                     )
                 }
@@ -379,8 +384,8 @@ class NavigationSettingsScreen : Screen() {
                 
                 items(
                     items = NavActionExecutor.getHistory(),
-                    key = { t: eu.kanade.tachiyomi.ui.home.ActionTrace -> t.timestamp }
-                ) { trace: eu.kanade.tachiyomi.ui.home.ActionTrace ->
+                    key = { t: ActionTrace -> t.timestamp }
+                ) { trace: ActionTrace ->
                     Text(
                         text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
                         style = MaterialTheme.typography.labelSmall,
