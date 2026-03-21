@@ -9,7 +9,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,12 +49,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
@@ -146,13 +147,13 @@ object HomeScreen : Screen() {
 
         val nestedScrollConnection = remember(hideOnScroll) {
             object : NestedScrollConnection {
-                override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                     if (hideOnScroll && available.y < -10f && bottomNavVisible) {
                         bottomNavVisible = false
                     } else if (hideOnScroll && available.y > 10f && !bottomNavVisible) {
                         bottomNavVisible = true
                     }
-                    return androidx.compose.ui.geometry.Offset.Zero
+                    return Offset.Zero
                 }
             }
         }
@@ -340,31 +341,33 @@ object HomeScreen : Screen() {
         NavigationBarItem(
             selected = selected,
             onClick = {
-                // Handled via pointerInput for conflict resolution
+                if (!selected) {
+                    tabNavigator.current = tab
+                } else {
+                    scope.launch { tab.onReselect(navigator) }
+                }
             },
-            modifier = Modifier.pointerInput(tab, behavior) {
-                detectTapGestures(
-                    onTap = {
-                        if (!selected) {
-                            tabNavigator.current = tab
-                        } else {
-                            scope.launch { tab.onReselect(navigator) }
-                        }
-                    },
-                    onLongPress = {
-                        if (behavior.onLongClick != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onLongClick)
-                        }
-                    },
-                    onDoubleTap = {
-                        if (behavior.onDoubleTap != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onDoubleTap)
-                        }
+            modifier = Modifier.combinedClickable(
+                onLongClick = {
+                    if (behavior.onLongClick != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onLongClick)
                     }
-                )
-            },
+                },
+                onDoubleClick = {
+                    if (behavior.onDoubleTap != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onDoubleTap)
+                    }
+                },
+                onClick = {
+                    if (!selected) {
+                        tabNavigator.current = tab
+                    } else {
+                        scope.launch { tab.onReselect(navigator) }
+                    }
+                }
+            ),
             icon = { NavigationIconItem(tab, adaptiveDecision) },
             label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
@@ -410,31 +413,33 @@ object HomeScreen : Screen() {
         NavigationRailItem(
             selected = selected,
             onClick = {
-                // Handled via pointerInput
+                if (!selected) {
+                    tabNavigator.current = tab
+                } else {
+                    scope.launch { tab.onReselect(navigator) }
+                }
             },
-            modifier = Modifier.pointerInput(tab, behavior) {
-                detectTapGestures(
-                    onTap = {
-                        if (!selected) {
-                            tabNavigator.current = tab
-                        } else {
-                            scope.launch { tab.onReselect(navigator) }
-                        }
-                    },
-                    onLongPress = {
-                        if (behavior.onLongClick != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onLongClick)
-                        }
-                    },
-                    onDoubleTap = {
-                        if (behavior.onDoubleTap != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onDoubleTap)
-                        }
+            modifier = Modifier.combinedClickable(
+                onLongClick = {
+                    if (behavior.onLongClick != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onLongClick)
                     }
-                )
-            },
+                },
+                onDoubleClick = {
+                    if (behavior.onDoubleTap != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onDoubleTap)
+                    }
+                },
+                onClick = {
+                    if (!selected) {
+                        tabNavigator.current = tab
+                    } else {
+                        scope.launch { tab.onReselect(navigator) }
+                    }
+                }
+            ),
             icon = { NavigationIconItem(tab, adaptiveDecision) },
             label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {

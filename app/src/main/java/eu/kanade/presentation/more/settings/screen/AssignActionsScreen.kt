@@ -23,7 +23,6 @@ import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.ListPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
-import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import kotlinx.collections.immutable.ImmutableList
@@ -63,7 +62,7 @@ class AssignActionsScreen : Screen() {
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = paddingValues + PaddingValues(0.dp, 16.dp),
+                contentPadding = paddingValues + PaddingValues(horizontal = 0.dp, vertical = 16.dp),
             ) {
                 item {
                     Text(
