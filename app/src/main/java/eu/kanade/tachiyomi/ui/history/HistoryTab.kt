@@ -161,6 +161,9 @@ data object HistoryTab : Tab {
                             snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.no_next_episode))
                         }
                     }
+                    HistoryScreenModel.Event.HistoryCleared -> {
+                        snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.clear_history_completed))
+                    }
                 }
             }
         }

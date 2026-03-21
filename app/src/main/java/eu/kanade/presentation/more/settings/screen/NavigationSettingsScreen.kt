@@ -147,7 +147,7 @@ class NavigationSettingsScreen : Screen() {
             topBar = { scrollBehavior ->
                 AppBar(
                     title = stringResource(MR.strings.pref_bottom_nav_settings),
-                    navigateUp = backPress::invoke,
+                    navigateUp = { backPress?.invoke() },
                     actions = {
                         AppBarActions(
                             actions = persistentListOf<AppBar.AppBarAction>(
@@ -251,6 +251,7 @@ class NavigationSettingsScreen : Screen() {
                         value = navLabelVisibility,
                         title = stringResource(MR.strings.pref_bottom_nav_style),
                         subtitle = stringResource(navLabelVisibility.titleRes),
+                        icon = null,
                         entries = NavLabelVisibility.entries
                             .associateWith { stringResource(it.titleRes) }
                             .toImmutableMap(),
