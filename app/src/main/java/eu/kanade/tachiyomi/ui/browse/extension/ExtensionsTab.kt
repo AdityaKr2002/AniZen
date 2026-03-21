@@ -43,7 +43,7 @@ fun extensionsTab(
         TabContent(
             titleRes = MR.strings.label_extensions,
             badgeNumber = updates.takeIf { it > 0 },
-            searchEnabled = true,
+            searchEnabled = false,
             actions = persistentListOf(
                 AppBar.Action(
                     title = "NSFW Only",
@@ -75,6 +75,7 @@ fun extensionsTab(
                     state = state,
                     contentPadding = contentPadding,
                     searchQuery = state.searchQuery,
+                    onChangeSearchQuery = extensionsScreenModel::search,
                     onLongClickItem = { extension ->
                         when (extension) {
                             is Extension.Available -> extensionsScreenModel.installExtension(

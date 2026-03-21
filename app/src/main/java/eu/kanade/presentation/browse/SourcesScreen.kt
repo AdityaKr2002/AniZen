@@ -75,7 +75,7 @@ import tachiyomi.domain.source.model.Pin
 import tachiyomi.domain.source.model.Pins
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.ScrollbarLazyColumn
+import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.material.SECONDARY_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
@@ -91,7 +91,10 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.util.fastForEach
+import eu.kanade.presentation.components.AnimatedFloatingSearchBox
+import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 
 @Composable
 fun SourcesScreen(
@@ -107,22 +110,10 @@ fun SourcesScreen(
     val containerStyles by uiPreferences.containerStyles().collectAsState()
     val useContainer = remember(containerStyles) { ContainerStyle.BROWSE in containerStyles }
     val focusManager = LocalFocusManager.current
-    var isSearchFocused by remember { mutableStateOf(false) }
 
-    val searchHeight = 64.dp
-    val searchHeightPx = with(LocalDensity.current) { searchHeight.roundToPx().toFloat() }
-    var searchOffsetHeightPx by remember { mutableFloatStateOf(0f) }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val newOffset = searchOffsetHeightPx + delta
-                searchOffsetHeightPx = newOffset.coerceIn(-searchHeightPx, 0f)
-                return Offset.Zero
-            }
-        }
-    }
+    val lazyListState = rememberLazyListState()
+    val density = LocalDensity.current
+    var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
 
     // Handle system back button: 1 click to clear text and focus if text exists.
     BackHandler(enabled = !state.searchQuery.isNullOrEmpty()) {
@@ -131,15 +122,13 @@ fun SourcesScreen(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(nestedScrollConnection),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        ScrollbarLazyColumn(
-            modifier = Modifier.fillMaxSize(),
+        FastScrollLazyColumn(
+            state = lazyListState,
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                top = searchHeight,
+                top = searchBoxHeight,
                 end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
@@ -206,62 +195,32 @@ fun SourcesScreen(
             }
         }
 
-        // Search bar floating on top
-        Box(
+        // Animated floating search bar on top
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(searchHeight)
-                .offset { IntOffset(x = 0, y = searchOffsetHeightPx.roundToInt()) }
+                .align(Alignment.TopCenter)
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-            ) {
-                OutlinedTextField(
-                    value = state.searchQuery ?: "",
-                    onValueChange = onChangeSearchQuery,
-                    modifier = Modifier
-                        .weight(1f)
-                        .onFocusChanged { 
-                            isSearchFocused = it.isFocused 
-                            // If we lose focus and it's empty, clear text completely to revert icon
-                            if (!it.isFocused && state.searchQuery.isNullOrEmpty()) {
-                                onChangeSearchQuery(null)
-                            }
-                        },
-                    placeholder = { Text(stringResource(MR.strings.action_search_hint)) },
-                    leadingIcon = {
-                        if (isSearchFocused || !state.searchQuery.isNullOrEmpty()) {
-                            IconButton(onClick = {
-                                onChangeSearchQuery("")
-                                focusManager.clearFocus()
-                            }) {
-                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
-                            }
-                        } else {
-                            Icon(Icons.Outlined.Search, contentDescription = null)
-                        }
-                    },
-                    trailingIcon = {
-                        if (!state.searchQuery.isNullOrEmpty()) {
-                            IconButton(onClick = { onChangeSearchQuery("") }) {
-                                Icon(Icons.Outlined.Close, contentDescription = null)
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(24.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        disabledContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                )
+            AnimatedFloatingSearchBox(
+                modifier = Modifier.weight(1f),
+                listState = lazyListState,
+                searchQuery = state.searchQuery,
+                onChangeSearchQuery = onChangeSearchQuery,
+                placeholderText = stringResource(MR.strings.action_search_hint),
+                onGloballyPositioned = { layoutCoordinates ->
+                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+                },
+            )
 
+            androidx.compose.animation.AnimatedVisibility(
+                visible = lazyListState.isScrollingUp(),
+                enter = androidx.compose.animation.expandVertically(),
+                exit = androidx.compose.animation.shrinkVertically(),
+            ) {
                 FilterChip(
                     selected = state.nsfwOnly,
                     onClick = onToggleNsfwOnly,

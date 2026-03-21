@@ -47,7 +47,7 @@ fun TabbedScreen(
     Scaffold(
         topBar = {
             val tab = tabs.getOrNull(state.currentPage) ?: tabs.getOrNull(0)
-            val currentTitleRes = tab?.titleRes ?: titleRes
+            val currentTitleRes = titleRes ?: tab?.titleRes
             if (currentTitleRes != null) {
                 val searchEnabled = tab?.searchEnabled ?: false
 
