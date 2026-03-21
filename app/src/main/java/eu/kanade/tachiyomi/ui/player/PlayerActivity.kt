@@ -920,7 +920,9 @@ class PlayerActivity : BaseActivity() {
                 pipReceiver = null
             }
         } else {
-            setPictureInPictureParams(createPipParams())
+            if (!isFinishing && !isDestroyed) {
+                setPictureInPictureParams(createPipParams())
+            }
             viewModel.hideControls()
             viewModel.hideSeekBar()
             viewModel.isBrightnessSliderShown.update { false }
@@ -936,7 +938,9 @@ class PlayerActivity : BaseActivity() {
                         PIP_PREVIOUS -> viewModel.changeEpisode(true)
                         PIP_SKIP -> viewModel.seekBy(10)
                     }
-                    setPictureInPictureParams(createPipParams())
+                    if (!isFinishing && !isDestroyed) {
+                        setPictureInPictureParams(createPipParams())
+                    }
                 }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
