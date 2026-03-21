@@ -223,16 +223,16 @@ class NavigationSettingsScreen : Screen() {
 
             val onMoveToHidden = { item: NavItem ->
                 Log.d("AniZenNav", "Hiding tab: ${item.id}")
-                val newVisible = visibleItems.filter { it != item }.map { it.id }.toImmutableList()
-                val newHidden = (hiddenItems.map { it.id } + item.id).distinct().toImmutableList()
+                val newVisible = visibleItems.filter { it != item }.map { n -> n.id }.toImmutableList()
+                val newHidden = (hiddenItems.map { n -> n.id } + item.id).distinct().toImmutableList()
                 uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden, behaviorMap = behaviorMap))
             }
 
             val onMoveToVisible = { item: NavItem ->
                 if (visibleItems.size < NavConfigValidator.MAX_BOTTOM_TABS) {
                     Log.d("AniZenNav", "Showing tab: ${item.id}")
-                    val newHidden = hiddenItems.filter { it != item }.map { it.id }.toImmutableList()
-                    val newVisible = (visibleItems.map { it.id } + item.id).distinct().toImmutableList()
+                    val newHidden = hiddenItems.filter { it != item }.map { n -> n.id }.toImmutableList()
+                    val newVisible = (visibleItems.map { n -> n.id } + item.id).distinct().toImmutableList()
                     uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden, behaviorMap = behaviorMap))
                 } else {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -243,7 +243,7 @@ class NavigationSettingsScreen : Screen() {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = paddingValues + PaddingValues(vertical = MaterialTheme.padding.medium),
+                contentPadding = paddingValues + PaddingValues(0.dp, 16.dp),
             ) {
                 item {
                     PreferenceGroupHeader(title = stringResource(MR.strings.pref_behavior))
@@ -261,6 +261,7 @@ class NavigationSettingsScreen : Screen() {
                         title = stringResource(MR.strings.pref_bottom_nav_hide_on_scroll),
                         checked = hideOnScroll,
                         onCheckedChanged = { uiPreferences.hideBottomBarOnScroll().set(it) },
+                        icon = null
                     )
                 }
 
@@ -271,20 +272,23 @@ class NavigationSettingsScreen : Screen() {
                         title = "Enable Adaptive Engine",
                         subtitle = "Allow the app to suggest layout changes based on context.",
                         checked = uiPreferences.adaptiveNavEnabled().get(),
-                        onCheckedChanged = { uiPreferences.adaptiveNavEnabled().set(it) }
+                        onCheckedChanged = { uiPreferences.adaptiveNavEnabled().set(it) },
+                        icon = null
                     )
                     if (uiPreferences.adaptiveNavEnabled().get()) {
                         SwitchPreferenceWidget(
                             title = "Connectivity Rules",
                             subtitle = "Suggest offline layouts when WiFi is lost.",
                             checked = uiPreferences.adaptiveConnectivityRule().get(),
-                            onCheckedChanged = { uiPreferences.adaptiveConnectivityRule().set(it) }
+                            onCheckedChanged = { uiPreferences.adaptiveConnectivityRule().set(it) },
+                            icon = null
                         )
                         SwitchPreferenceWidget(
                             title = "Late Night Rules",
                             subtitle = "Simplify navigation during late hours.",
                             checked = uiPreferences.adaptiveTimeRule().get(),
-                            onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) }
+                            onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) },
+                            icon = null
                         )
                     }
                 }
@@ -296,7 +300,8 @@ class NavigationSettingsScreen : Screen() {
                         title = "On-Device Telemetry",
                         subtitle = "Logs gesture interactions locally for engine optimization. Data never leaves your device.",
                         checked = uiPreferences.adaptiveTelemetryEnabled().get(),
-                        onCheckedChanged = { uiPreferences.adaptiveTelemetryEnabled().set(it) }
+                        onCheckedChanged = { uiPreferences.adaptiveTelemetryEnabled().set(it) },
+                        icon = null
                     )
                 }
 

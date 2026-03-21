@@ -146,7 +146,7 @@ object HomeScreen : Screen() {
 
         val nestedScrollConnection = remember(hideOnScroll) {
             object : NestedScrollConnection {
-                override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset {
                     if (hideOnScroll && available.y < -10f && bottomNavVisible) {
                         bottomNavVisible = false
                     } else if (hideOnScroll && available.y > 10f && !bottomNavVisible) {
