@@ -63,7 +63,7 @@ class AssignActionsScreen : Screen() {
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = paddingValues + PaddingValues(0.dp, 16.dp),
+                contentPadding = paddingValues + PaddingValues(horizontal = 0.dp, vertical = 16.dp),
             ) {
                 item {
                     Text(
