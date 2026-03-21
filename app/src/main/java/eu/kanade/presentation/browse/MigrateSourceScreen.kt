@@ -44,8 +44,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.ui.platform.LocalLayoutDirection
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
@@ -252,9 +252,10 @@ private fun MigrateBottomActionMenu(
     ) {
         Surface(
             modifier = modifier,
-            shape = MaterialTheme.shapes.large.copy(bottomEnd = ZeroCornerSize, bottomStart = ZeroCornerSize),
+            shape = MaterialTheme.shapes.large.copy(bottomEnd = CornerSize(0.dp), bottomStart = CornerSize(0.dp)),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
+        )
+ {
             Row(
                 modifier = Modifier
                     .windowInsetsPadding(
