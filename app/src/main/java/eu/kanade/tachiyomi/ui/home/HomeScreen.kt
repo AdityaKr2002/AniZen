@@ -177,7 +177,7 @@ object HomeScreen : Screen() {
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
                                 visibleTabs.fastForEach {
-                                    NavigationRailItem(it, navLabelVisibility, adaptiveDecision)
+                                    HomeNavigationRailItem(it, navLabelVisibility, adaptiveDecision)
                                 }
                             }
                         }
@@ -200,7 +200,7 @@ object HomeScreen : Screen() {
                                     ) {
                                         visibleTabs.fastForEach {
                                             key(it.key) {
-                                                NavigationBarItem(it, navLabelVisibility, adaptiveDecision)
+                                                HomeNavigationBarItem(it, navLabelVisibility, adaptiveDecision)
                                             }
                                         }
                                     }
@@ -313,7 +313,7 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun RowScope.NavigationBarItem(
+    private fun RowScope.HomeNavigationBarItem(
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
@@ -384,7 +384,7 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    fun NavigationRailItem(
+    fun HomeNavigationRailItem(
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
