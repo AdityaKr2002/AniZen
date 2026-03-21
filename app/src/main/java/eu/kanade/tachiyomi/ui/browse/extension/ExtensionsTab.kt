@@ -75,7 +75,6 @@ fun extensionsTab(
                     state = state,
                     contentPadding = contentPadding,
                     searchQuery = state.searchQuery,
-                    onChangeSearchQuery = extensionsScreenModel::search,
                     onLongClickItem = { extension ->
                         when (extension) {
                             is Extension.Available -> extensionsScreenModel.installExtension(

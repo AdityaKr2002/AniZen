@@ -37,7 +37,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.source.local.isLocal
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -233,11 +233,11 @@ fun SourcesScreen(
             }
         }
 
-        DisposableEffect(lazyListState.isScrollingUp()) {
-            if (!lazyListState.isScrollingUp()) {
+        val isScrollingUp = lazyListState.isScrollingUp()
+        LaunchedEffect(isScrollingUp) {
+            if (!isScrollingUp) {
                 searchBoxHeight = 0.dp
             }
-            onDispose { }
         }
     }
 }

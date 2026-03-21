@@ -25,6 +25,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
@@ -78,6 +80,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.icons.FlagEmoji
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.isScrollingUp
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
@@ -232,11 +235,11 @@ private fun MigrateSourceList(
             )
         }
 
-        DisposableEffect(lazyListState.isScrollingUp()) {
-            if (!lazyListState.isScrollingUp()) {
+        val isScrollingUp = lazyListState.isScrollingUp()
+        LaunchedEffect(isScrollingUp) {
+            if (!isScrollingUp) {
                 searchBoxHeight = 0.dp
             }
-            onDispose { }
         }
 
         MigrateBottomActionMenu(
