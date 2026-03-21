@@ -33,8 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.filled.PushPin as FilledPushPin
-import androidx.compose.material.icons.outlined.PushPin as OutlinedPushPin
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.source.local.isLocal
 import androidx.compose.runtime.Composable
@@ -77,14 +77,6 @@ import tachiyomi.presentation.core.util.isScrollingUp
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.math.roundToInt
-
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.ui.util.fastForEach
-import eu.kanade.presentation.components.AnimatedFloatingSearchBox
-import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 
 @Composable
 fun SourcesScreen(
@@ -307,7 +299,7 @@ private fun SourcePinButton(
     isPinned: Boolean,
     onClick: () -> Unit,
 ) {
-    val icon = if (isPinned) FilledPushPin else OutlinedPushPin
+    val icon = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin
     val tint = if (isPinned) {
         MaterialTheme.colorScheme.primary
     } else {
