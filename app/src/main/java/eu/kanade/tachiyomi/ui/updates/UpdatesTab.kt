@@ -87,25 +87,29 @@ data object UpdatesTab : Tab {
             state = state,
             snackbarHostState = screenModel.snackbarHostState,
             lastUpdated = screenModel.lastUpdated,
-            onClickCover = { navigator.push(AnimeScreen(it)) },
+            onClickCover = { navigator.push(AnimeScreen(it.update.animeId)) },
+            onSelectAll = screenModel::toggleAllSelection,
+            onInvertSelection = screenModel::invertSelection,
+            onCalendarClicked = {}, // Not implemented in model yet
             onUpdateLibrary = screenModel::updateLibrary,
             onDownloadEpisode = screenModel::downloadEpisodes,
-            onMultiDownloadEpisode = screenModel::downloadEpisodes,
-            onOpenEpisode = { update ->
+            onMultiBookmarkClicked = screenModel::bookmarkUpdates,
+            onMultiFillermarkClicked = screenModel::fillermarkUpdates,
+            onMultiMarkAsSeenClicked = screenModel::markUpdatesAsSeen,
+            onMultiDeleteClicked = screenModel::showConfirmDelete,
+            onUpdateSelected = screenModel::toggleSelection,
+            onOpenEpisode = { item, altPlayer ->
                 val playerPreferences: PlayerPreferences by injectLazy()
                 val extPlayer = playerPreferences.alwaysUseExternalPlayer().get()
                 scope.launch {
                     openEpisode(
                         context,
-                        update.animeId,
-                        update.episodeId,
+                        item.update.animeId,
+                        item.update.episodeId,
                         extPlayer,
                     )
                 }
             },
-            onMultiMarkAsRead = screenModel::markUpdatesAsRead,
-            onMultiMarkAsUnread = screenModel::markUpdatesAsUnread,
-            onMultiDelete = screenModel::deleteUpdates,
             navigateUp = navigateUp,
         )
 
@@ -128,10 +132,8 @@ data object UpdatesTab : Tab {
         }
 
         LaunchedEffect(Unit) {
-            // AM (DISCORD) -->
             DiscordRPCService.setAnimeScreen(context, DiscordScreen.UPDATES)
             DiscordRPCService.setMangaScreen(context, DiscordScreen.UPDATES)
-            // <-- AM (DISCORD)
         }
 
         DisposableEffect(Unit) {

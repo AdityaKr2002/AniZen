@@ -37,8 +37,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.domain.episode.model.Episode
+import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
@@ -74,13 +73,11 @@ data object HistoryTab : Tab {
     override fun Content() {
         val context = LocalContext.current
         val fromMore = isTabFromMore(NavItem.HISTORY.id)
-        // Hoisted for history tab's search bar
-        val snackbarHostState = SnackbarHostState()
+        val snackbarHostState = remember { SnackbarHostState() }
 
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { HistoryScreenModel() }
         val state by screenModel.state.collectAsState()
-        val searchQuery by screenModel.query.collectAsState()
 
         val scope = rememberCoroutineScope()
         val navigateUp: (() -> Unit)? = if (fromMore) {
@@ -95,59 +92,55 @@ data object HistoryTab : Tab {
             null
         }
 
-        suspend fun openEpisode(context: Context, episode: Episode?) {
+        suspend fun openEpisode(context: Context, animeId: Long, episodeId: Long) {
             val playerPreferences: PlayerPreferences by injectLazy()
             val extPlayer = playerPreferences.alwaysUseExternalPlayer().get()
-            if (episode != null) {
-                MainActivity.startPlayerActivity(
-                    context,
-                    episode.animeId,
-                    episode.id,
-                    extPlayer,
-                )
-            }
+            MainActivity.startPlayerActivity(
+                context,
+                animeId,
+                episodeId,
+                extPlayer,
+            )
         }
 
         HistoryScreen(
             state = state,
-            searchQuery = searchQuery,
-            onClickCover = { navigator.push(AnimeScreen(it)) },
-            onClickResume = { scope.launch { openEpisode(context, it) } },
-            onEditSearch = screenModel::search,
-            onDelete = { screenModel.deleteHistory(it) },
-            onDeleteAll = { screenModel.deleteAllHistory() },
-            onNextEpisode = { screenModel.getNextEpisode() },
-            navigateUp = navigateUp,
             snackbarHostState = snackbarHostState,
+            onSearchQueryChange = screenModel::search,
+            onClickCover = { navigator.push(AnimeScreen(it)) },
+            onClickResume = { animeId, episodeId -> scope.launch { openEpisode(context, animeId, episodeId) } },
+            onDialogChange = screenModel::setDialog,
+            navigateUp = navigateUp,
         )
 
-        val historyDeleteDialog by screenModel.historyDeleteDialog.collectAsState()
-        historyDeleteDialog?.let {
-            HistoryDeleteDialog(
-                onDismissRequest = { screenModel.historyDeleteDialog.value = null },
-                onDelete = {
-                    screenModel.deleteHistory(it, true)
-                    screenModel.historyDeleteDialog.value = null
-                },
-            )
-        }
-
-        val historyDeleteAllDialog by screenModel.historyDeleteAllDialog.collectAsState()
-        if (historyDeleteAllDialog) {
-            HistoryDeleteAllDialog(
-                onDismissRequest = { screenModel.historyDeleteAllDialog.value = false },
-                onDelete = {
-                    screenModel.deleteAllHistory()
-                    screenModel.historyDeleteAllDialog.value = false
-                },
-            )
+        state.dialog?.let { dialog ->
+            when (dialog) {
+                is HistoryScreenModel.Dialog.Delete -> {
+                    HistoryDeleteDialog(
+                        onDismissRequest = { screenModel.setDialog(null) },
+                        onDelete = {
+                            screenModel.removeFromHistory(dialog.history)
+                            screenModel.setDialog(null)
+                        },
+                    )
+                }
+                is HistoryScreenModel.Dialog.DeleteAll -> {
+                    HistoryDeleteAllDialog(
+                        onDismissRequest = { screenModel.setDialog(null) },
+                        onDelete = {
+                            screenModel.removeAllHistory()
+                            screenModel.setDialog(null)
+                        },
+                    )
+                }
+            }
         }
 
         LaunchedEffect(Unit) {
             resumeLastEpisodeSeenEvent.receiveAsFlow().collectLatest {
                 val episode = screenModel.getNextEpisode()
                 if (episode != null) {
-                    openEpisode(context, episode)
+                    openEpisode(context, episode.animeId, episode.id)
                 } else {
                     snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
                 }
@@ -160,18 +153,21 @@ data object HistoryTab : Tab {
                     HistoryScreenModel.Event.InternalError -> {
                         snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
                     }
-                    HistoryScreenModel.Event.HistoryCleared -> {
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
+                    is HistoryScreenModel.Event.OpenEpisode -> {
+                        val episode = event.episode
+                        if (episode != null) {
+                            openEpisode(context, episode.animeId, episode.id)
+                        } else {
+                            snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
+                        }
                     }
                 }
             }
         }
 
         LaunchedEffect(Unit) {
-            // AM (DISCORD) -->
             DiscordRPCService.setAnimeScreen(context, DiscordScreen.HISTORY)
             DiscordRPCService.setMangaScreen(context, DiscordScreen.HISTORY)
-            // <-- AM (DISCORD)
         }
     }
 }
