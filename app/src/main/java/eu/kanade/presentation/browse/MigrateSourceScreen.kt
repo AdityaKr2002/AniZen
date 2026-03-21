@@ -19,7 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.NewReleases
-import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.PushPin as OutlinedPushPin
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -294,7 +294,7 @@ private fun MigrateBottomActionMenu(
                 )
                 BottomMenuButton(
                     title = stringResource(SYMR.strings.match_pinned_sources),
-                    icon = Icons.Outlined.PushPin,
+                    icon = OutlinedPushPin,
                     toConfirm = false,
                     onLongClick = {},
                     onClick = onMatchPinned,

@@ -33,7 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.filled.PushPin as FilledPushPin
+import androidx.compose.material.icons.outlined.PushPin as OutlinedPushPin
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.source.local.isLocal
 import androidx.compose.runtime.Composable
@@ -306,7 +307,7 @@ private fun SourcePinButton(
     isPinned: Boolean,
     onClick: () -> Unit,
 ) {
-    val icon = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin
+    val icon = if (isPinned) FilledPushPin else OutlinedPushPin
     val tint = if (isPinned) {
         MaterialTheme.colorScheme.primary
     } else {
