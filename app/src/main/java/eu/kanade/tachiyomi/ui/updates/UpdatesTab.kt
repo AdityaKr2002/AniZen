@@ -37,6 +37,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.runtime.collectAsState
+import tachiyomi.core.common.i18n.stringResource as stringResourceContext
 
 data object UpdatesTab : Tab {
 
@@ -117,7 +118,7 @@ data object UpdatesTab : Tab {
             screenModel.events.collectLatest { event ->
                 when (event) {
                     UpdatesScreenModel.Event.InternalError -> {
-                        screenModel.snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
+                        screenModel.snackbarHostState.showSnackbar(context.stringResourceContext(MR.strings.internal_error))
                     }
                     is UpdatesScreenModel.Event.LibraryUpdateTriggered -> {
                         val message = if (event.started) {
@@ -125,7 +126,7 @@ data object UpdatesTab : Tab {
                         } else {
                             MR.strings.update_already_running
                         }
-                        screenModel.snackbarHostState.showSnackbar(context.stringResource(message))
+                        screenModel.snackbarHostState.showSnackbar(context.stringResourceContext(message))
                     }
                 }
             }

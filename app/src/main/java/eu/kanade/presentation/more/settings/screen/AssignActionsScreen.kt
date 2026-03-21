@@ -1,9 +1,7 @@
 package eu.kanade.presentation.more.settings.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -105,6 +103,7 @@ class AssignActionsScreen : Screen() {
                 value = behavior.onLongClick,
                 title = "Long Press",
                 subtitle = if (behavior.onLongClick.isDangerous) "⚠️ Dangerous Action" else "Choose action for long press",
+                icon = null,
                 entries = NavAction.ALL.associateWith { 
                     val name = it.javaClass.simpleName
                     if (it.isDangerous) "$name ⚠️" else name
@@ -125,6 +124,7 @@ class AssignActionsScreen : Screen() {
                 value = behavior.onDoubleTap,
                 title = "Double Tap",
                 subtitle = if (behavior.onDoubleTap.cooldownMs > 1000) "Cooldown: ${behavior.onDoubleTap.cooldownMs/1000}s" else "Choose action for double tap",
+                icon = null,
                 entries = NavAction.ALL.associateWith { it.javaClass.simpleName }.toImmutableMap(),
                 onValueChange = { newAction ->
                     val newBehaviorMap = behaviorMap.toMutableMap()
