@@ -585,8 +585,8 @@
     <string name="pref_ai_subtitle_enhancer_summary">Improve grammar and explain cultural context/honorifics</string>
     <string name="pref_ai_local_recommendations">Smart Recommendations</string>
     <string name="pref_ai_local_recommendations_summary">Context-aware suggestions powered by Gemini AI</string>
-    <string name="pref_ai_performance_intelligence">Performance Intelligence</string>
-    <string name="pref_ai_performance_intelligence_summary">Auto-tune quality and interpolation based on battery and heat</string>
+    <string name="pref_ai_performance_intelligence">Adaptive Performance Scaling</string>
+    <string name="pref_ai_performance_intelligence_summary">Automatically adjust shader quality and interpolation based on device heat and frame drops</string>
     <string name="pref_ai_personal_assistant">Personal Anime Assistant</string>
     <string name="pref_ai_personal_assistant_summary">Ask questions about watch order, censorship, and more</string>
     <string name="pref_ai_groq_api_key">Groq API Key</string>
