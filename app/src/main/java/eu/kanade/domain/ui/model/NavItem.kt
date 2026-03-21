@@ -238,7 +238,12 @@ enum class NavItem(
     HISTORY("history", MR.strings.history, HistoryTab),
     BROWSE("browse", MR.strings.browse, BrowseTab),
     MORE("more", MR.strings.label_more, MoreTab),
-    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab); // Placeholder title/tab
+    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab);
+
+    // Metadata for the ADAPTIVE tab
+    var dynamicTitle: StringResource? = null
+    var dynamicTab: Tab? = null
+    var dynamicIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
 
     companion object {
         fun fromId(id: String): NavItem? = entries.find { it.id == id }

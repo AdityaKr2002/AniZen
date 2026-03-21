@@ -52,6 +52,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEach
+import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
@@ -113,16 +114,9 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
 
-        val adaptiveEngine = remember { NavAdaptiveEngine(context, scope) }
+        val screenModel = rememberScreenModel { HomeScreenModel(context) }
+        val adaptiveEngine = screenModel.adaptiveEngine
         val adaptiveDecision by adaptiveEngine.currentDecision.collectAsState()
-
-        LaunchedEffect(Unit) {
-            while(true) {
-                adaptiveEngine.evaluateRules()
-                kotlinx.coroutines.delay(60000)
-            }
-        }
-
         val activity = context as? ComponentActivity
         val preferences = Injekt.get<PreferenceStore>()
 
@@ -165,8 +159,9 @@ object HomeScreen : Screen() {
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
                                 visibleTabs.fastForEach {
-                                    NavigationRailItem(it, navLabelVisibility)
+                                    NavigationRailItem(it, navLabelVisibility, adaptiveDecision)
                                 }
+
                             }
                         }
                     },
@@ -188,9 +183,10 @@ object HomeScreen : Screen() {
                                     ) {
                                         visibleTabs.fastForEach {
                                             key(it.key) {
-                                                NavigationBarItem(it, navLabelVisibility)
+                                                NavigationBarItem(it, navLabelVisibility, adaptiveDecision)
                                             }
                                         }
+
                                     }
                                 }
                             }
@@ -304,6 +300,7 @@ object HomeScreen : Screen() {
     private fun RowScope.NavigationBarItem(
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: eu.kanade.domain.ui.model.NavLabelVisibility,
+        adaptiveDecision: AdaptiveDecision?,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
@@ -313,6 +310,15 @@ object HomeScreen : Screen() {
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
+        val title = remember(tab, adaptiveDecision) {
+            val navItem = NavItem.entries.find { it.tab == tab }
+            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
+                adaptiveDecision.reason
+            } else {
+                tab.options.title
+            }
+        }
+
         // TODO: Map from preferences in next pass
         val behavior = remember(tab) { NavBehavior() }
 
@@ -344,11 +350,11 @@ object HomeScreen : Screen() {
                     } else null
                 )
             },
-            icon = { NavigationIconItem(tab) },
+            icon = { NavigationIconItem(tab, adaptiveDecision) },
             label = if (navLabelVisibility != eu.kanade.domain.ui.model.NavLabelVisibility.NEVER) {
                 {
                     Text(
-                        text = tab.options.title,
+                        text = title,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -363,6 +369,7 @@ object HomeScreen : Screen() {
     fun NavigationRailItem(
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: eu.kanade.domain.ui.model.NavLabelVisibility,
+        adaptiveDecision: AdaptiveDecision?,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
@@ -376,6 +383,15 @@ object HomeScreen : Screen() {
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
+
+        val title = remember(tab, adaptiveDecision) {
+            val navItem = NavItem.entries.find { it.tab == tab }
+            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
+                adaptiveDecision.reason
+            } else {
+                tab.options.title
+            }
+        }
 
         NavigationRailItem(
             selected = selected,
@@ -405,11 +421,11 @@ object HomeScreen : Screen() {
                     } else null
                 )
             },
-            icon = { NavigationIconItem(tab) },
+            icon = { NavigationIconItem(tab, adaptiveDecision) },
             label = if (navLabelVisibility != eu.kanade.domain.ui.model.NavLabelVisibility.NEVER) {
                 {
                     Text(
-                        text = tab.options.title,
+                        text = title,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -421,7 +437,10 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun NavigationIconItem(tab: eu.kanade.presentation.util.Tab) {
+    private fun NavigationIconItem(
+        tab: eu.kanade.presentation.util.Tab,
+        adaptiveDecision: AdaptiveDecision?,
+    ) {
         val tabNavigator = LocalTabNavigator.current
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
         val selected = tabNavigator.current.key == tab.key
@@ -483,12 +502,21 @@ object HomeScreen : Screen() {
                 }
             },
         ) {
-            Icon(
-                painter = tab.options.icon!!,
-                contentDescription = tab.options.title,
-                // TODO: https://issuetracker.google.com/u/0/issues/316327367
-                tint = LocalContentColor.current,
-            )
+            val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
+                Icon(
+                    imageVector = Icons.Outlined.AutoAwesome,
+                    contentDescription = tab.options.title,
+                    tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                )
+            } else {
+                Icon(
+                    painter = tab.options.icon!!,
+                    contentDescription = tab.options.title,
+                    // TODO: https://issuetracker.google.com/u/0/issues/316327367
+                    tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                )
+            }
         }
     }
 

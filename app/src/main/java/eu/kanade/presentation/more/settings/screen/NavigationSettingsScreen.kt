@@ -138,33 +138,35 @@ class NavigationSettingsScreen : Screen() {
                 }
             )
         }
-Scaffold(
-    topBar = { scrollBehavior ->
-        AppBar(
-            title = stringResource(MR.strings.pref_bottom_nav_settings),
-            navigateUp = backPress::invoke,
-            actions = {
-                AppBarActions(
-                    persistentListOf(
-                        AppBar.Action(
-                            title = "Browse Gallery",
-                            icon = Icons.Outlined.AutoAwesome,
-                            onClick = { navigator.push(NavigationGalleryScreen()) },
-                        ),
-                        AppBar.OverflowAction(
-                            title = "Copy Layout Link (Deep Link)",
-                            onClick = {
-                                val config = NavConfig(visibleTabs = bottomNavTabs.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList())
-                                val serialized = NavConfigSerializer.serialize(config)
-                                val deepLink = "anizen://nav/import?data=$serialized"
-                                context.copyToClipboard("AniZen Layout", deepLink)
-                                context.toast("Deep link copied to clipboard")
-                            }
-                        ),
-                        AppBar.OverflowAction(
-                            title = "Default Preset",
-...
-
+        Scaffold(
+            topBar = { scrollBehavior ->
+                AppBar(
+                    title = stringResource(MR.strings.pref_bottom_nav_settings),
+                    navigateUp = backPress::invoke,
+                    actions = {
+                        AppBarActions(
+                            persistentListOf(
+                                AppBar.Action(
+                                    title = "Browse Gallery",
+                                    icon = Icons.Outlined.AutoAwesome,
+                                    onClick = { navigator.push(NavigationGalleryScreen()) },
+                                ),
+                                AppBar.OverflowAction(
+                                    title = "Copy Layout Link (Deep Link)",
+                                    onClick = {
+                                        val config = NavConfig(
+                                            visibleTabs = bottomNavTabs.toImmutableList(),
+                                            hiddenTabs = bottomNavHiddenTabs.toImmutableList(),
+                                            behaviorMap = behaviorMap
+                                        )
+                                        val serialized = NavConfigSerializer.serialize(config)
+                                        val deepLink = "anizen://nav/import?data=$serialized"
+                                        context.copyToClipboard("AniZen Layout", deepLink)
+                                        context.toast("Deep link copied to clipboard")
+                                    }
+                                ),
+                                AppBar.OverflowAction(
+                                    title = "Default Preset",
                                     onClick = { 
                                         Log.d("AniZenNav", "Preset applied: Default")
                                         uiPreferences.updateNavConfig(NavPresets.DEFAULT) 
@@ -185,15 +187,6 @@ Scaffold(
                                     },
                                 ),
                                 AppBar.OverflowAction(
-                                    title = "Copy Layout String",
-                                    onClick = {
-                                        val config = NavConfig(visibleTabs = bottomNavTabs.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList())
-                                        val serialized = NavConfigSerializer.serialize(config)
-                                        context.copyToClipboard("AniZen Navigation", serialized)
-                                        context.toast("Layout copied to clipboard")
-                                    }
-                                ),
-                                AppBar.OverflowAction(
                                     title = "Import Layout String",
                                     onClick = { showImportDialog = true }
                                 ),
@@ -204,6 +197,7 @@ Scaffold(
                                         Log.d("AniZenNav", "Layout Reset triggered")
                                         uiPreferences.bottomNavTabs().delete()
                                         uiPreferences.bottomNavHiddenTabs().delete()
+                                        uiPreferences.bottomNavBehaviors().delete()
                                     },
                                 ),
                             ),
@@ -226,7 +220,7 @@ Scaffold(
                 Log.d("AniZenNav", "Hiding tab: ${item.id}")
                 val newVisible = visibleItems.filter { it != item }.map { it.id }.toImmutableList()
                 val newHidden = (hiddenItems.map { it.id } + item.id).distinct().toImmutableList()
-                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden))
+                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden, behaviorMap = behaviorMap))
             }
 
             val onMoveToVisible = { item: NavItem ->
@@ -234,7 +228,7 @@ Scaffold(
                     Log.d("AniZenNav", "Showing tab: ${item.id}")
                     val newHidden = hiddenItems.filter { it != item }.map { it.id }.toImmutableList()
                     val newVisible = (visibleItems.map { it.id } + item.id).distinct().toImmutableList()
-                    uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden))
+                    uiPreferences.updateNavConfig(NavConfig(visibleTabs = newVisible, hiddenTabs = newHidden, behaviorMap = behaviorMap))
                 } else {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     context.toast(MR.strings.pref_bottom_nav_max_tabs_reached)
