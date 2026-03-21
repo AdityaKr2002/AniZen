@@ -43,7 +43,7 @@ fun extensionsTab(
         TabContent(
             titleRes = MR.strings.label_extensions,
             badgeNumber = updates.takeIf { it > 0 },
-            searchEnabled = false,
+            searchEnabled = true,
             actions = persistentListOf(
                 AppBar.Action(
                     title = "NSFW Only",

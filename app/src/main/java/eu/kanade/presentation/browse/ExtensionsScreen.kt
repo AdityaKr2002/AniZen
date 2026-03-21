@@ -98,7 +98,6 @@ fun ExtensionScreen(
     state: ExtensionsScreenModel.State,
     contentPadding: PaddingValues,
     searchQuery: String?,
-    onChangeSearchQuery: (String?) -> Unit,
     onLongClickItem: (Extension) -> Unit,
     onClickItemCancel: (Extension) -> Unit,
     onOpenWebView: (Extension.Available) -> Unit,
@@ -115,69 +114,47 @@ fun ExtensionScreen(
     val containerStyles by uiPreferences.containerStyles().collectAsState()
     val useContainer = remember(containerStyles) { ContainerStyle.BROWSE in containerStyles }
 
-    val lazyListState = rememberLazyListState()
-    val density = LocalDensity.current
-    var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
-
     PullRefresh(
         refreshing = state.isRefreshing,
         onRefresh = onRefresh,
         enabled = !state.isLoading,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
-                state.isEmpty -> {
-                    val msg = if (!searchQuery.isNullOrEmpty()) {
-                        MR.strings.no_results_found
-                    } else {
-                        MR.strings.empty_screen
-                    }
-                    EmptyScreen(
-                        stringRes = msg,
-                        modifier = Modifier.padding(contentPadding),
-                        actions = persistentListOf(
-                            EmptyScreenAction(
-                                stringRes = MR.strings.label_extension_repos,
-                                icon = Icons.Outlined.Settings,
-                                onClick = { navigator.push(ExtensionReposScreen()) },
-                            ),
+        when {
+            state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
+            state.isEmpty -> {
+                val msg = if (!searchQuery.isNullOrEmpty()) {
+                    MR.strings.no_results_found
+                } else {
+                    MR.strings.empty_screen
+                }
+                EmptyScreen(
+                    stringRes = msg,
+                    modifier = Modifier.padding(contentPadding),
+                    actions = persistentListOf(
+                        EmptyScreenAction(
+                            stringRes = MR.strings.label_extension_repos,
+                            icon = Icons.Outlined.Settings,
+                            onClick = { navigator.push(ExtensionReposScreen()) },
                         ),
-                    )
-                }
-                else -> {
-                    ExtensionContent(
-                        state = state,
-                        contentPadding = contentPadding,
-                        onLongClickItem = onLongClickItem,
-                        onClickItemCancel = onClickItemCancel,
-                        onOpenWebView = onOpenWebView,
-                        onInstallExtension = onInstallExtension,
-                        onUninstallExtension = onUninstallExtension,
-                        onUpdateExtension = onUpdateExtension,
-                        onTrustExtension = onTrustExtension,
-                        onOpenExtension = onOpenExtension,
-                        onClickUpdateAll = onClickUpdateAll,
-                        useContainer = useContainer,
-                        lazyListState = lazyListState,
-                        searchBoxHeight = searchBoxHeight,
-                    )
-                }
+                    ),
+                )
             }
-
-            AnimatedFloatingSearchBox(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small)
-                    .align(Alignment.TopCenter),
-                listState = lazyListState,
-                searchQuery = searchQuery,
-                onChangeSearchQuery = onChangeSearchQuery,
-                placeholderText = stringResource(MR.strings.action_search_hint),
-                onGloballyPositioned = { layoutCoordinates ->
-                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                },
-            )
+            else -> {
+                ExtensionContent(
+                    state = state,
+                    contentPadding = contentPadding,
+                    onLongClickItem = onLongClickItem,
+                    onClickItemCancel = onClickItemCancel,
+                    onOpenWebView = onOpenWebView,
+                    onInstallExtension = onInstallExtension,
+                    onUninstallExtension = onUninstallExtension,
+                    onUpdateExtension = onUpdateExtension,
+                    onTrustExtension = onTrustExtension,
+                    onOpenExtension = onOpenExtension,
+                    onClickUpdateAll = onClickUpdateAll,
+                    useContainer = useContainer,
+                )
+            }
         }
     }
 }
@@ -196,19 +173,16 @@ private fun ExtensionContent(
     onOpenExtension: (Extension.Installed) -> Unit,
     onClickUpdateAll: () -> Unit,
     useContainer: Boolean,
-    lazyListState: LazyListState,
-    searchBoxHeight: Dp,
 ) {
     val context = LocalContext.current
     var trustState by remember { mutableStateOf<Extension.Untrusted?>(null) }
     val installGranted = rememberRequestPackageInstallsPermissionState(initialValue = true)
 
     FastScrollLazyColumn(
-        state = lazyListState,
         contentPadding = PaddingValues(
             start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
             end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-            top = searchBoxHeight,
+            top = contentPadding.calculateTopPadding() + 8.dp,
             bottom = contentPadding.calculateBottomPadding() + 8.dp
         ),
     ) {

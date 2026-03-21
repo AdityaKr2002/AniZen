@@ -25,6 +25,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,7 +61,7 @@ import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.anime.components.BottomMenuButton
 import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
-import eu.kanade.presentation.components.AnimatedFloatingSearchBox
+import eu.kanade.presentation.components.SourcesSearchBox
 import eu.kanade.presentation.components.SOURCE_SEARCH_BOX_HEIGHT
 import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.ui.browse.migration.sources.MigrateSourceScreenModel
@@ -207,22 +208,36 @@ private fun MigrateSourceList(
             }
         }
 
-        AnimatedFloatingSearchBox(
-            listState = lazyListState,
-            searchQuery = state.searchQuery,
-            onChangeSearchQuery = onChangeSearchQuery,
-            placeholderText = stringResource(MR.strings.action_search_for_source),
+        androidx.compose.animation.AnimatedVisibility(
+            visible = lazyListState.isScrollingUp(),
+            enter = androidx.compose.animation.expandVertically(),
+            exit = androidx.compose.animation.shrinkVertically(),
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(
-                    horizontal = MaterialTheme.padding.medium,
-                    vertical = MaterialTheme.padding.small,
-                )
-                .align(Alignment.TopCenter),
-            onGloballyPositioned = { layoutCoordinates ->
-                searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-            },
-        )
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .onGloballyPositioned { layoutCoordinates ->
+                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
+                }
+        ) {
+            SourcesSearchBox(
+                searchQuery = state.searchQuery,
+                onChangeSearchQuery = onChangeSearchQuery,
+                placeholderText = stringResource(MR.strings.action_search_for_source),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(
+                        horizontal = MaterialTheme.padding.medium,
+                        vertical = MaterialTheme.padding.small,
+                    ),
+            )
+        }
+
+        DisposableEffect(lazyListState.isScrollingUp()) {
+            if (!lazyListState.isScrollingUp()) {
+                searchBoxHeight = 0.dp
+            }
+            onDispose { }
+        }
 
         MigrateBottomActionMenu(
             modifier = Modifier.align(Alignment.BottomCenter),

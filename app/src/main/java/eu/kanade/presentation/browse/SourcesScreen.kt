@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.source.local.isLocal
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -178,31 +179,31 @@ fun SourcesScreen(
         }
 
         // Animated floating search bar on top
-        Row(
+        androidx.compose.animation.AnimatedVisibility(
+            visible = lazyListState.isScrollingUp(),
+            enter = androidx.compose.animation.expandVertically(),
+            exit = androidx.compose.animation.shrinkVertically(),
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-        ) {
-            AnimatedFloatingSearchBox(
-                modifier = Modifier.weight(1f),
-                listState = lazyListState,
-                searchQuery = state.searchQuery,
-                onChangeSearchQuery = onChangeSearchQuery,
-                placeholderText = stringResource(MR.strings.action_search_hint),
-                onGloballyPositioned = { layoutCoordinates ->
+                .onGloballyPositioned { layoutCoordinates ->
                     searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                },
-            )
-
-            androidx.compose.animation.AnimatedVisibility(
-                visible = lazyListState.isScrollingUp(),
-                enter = androidx.compose.animation.expandVertically(),
-                exit = androidx.compose.animation.shrinkVertically(),
+                }
+        ) {
+            Row(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             ) {
+                eu.kanade.presentation.components.SourcesSearchBox(
+                    modifier = Modifier.weight(1f),
+                    searchQuery = state.searchQuery,
+                    onChangeSearchQuery = onChangeSearchQuery,
+                    placeholderText = stringResource(MR.strings.action_search_hint),
+                )
+
                 FilterChip(
                     selected = state.nsfwOnly,
                     onClick = onToggleNsfwOnly,
@@ -230,6 +231,13 @@ fun SourcesScreen(
                     modifier = Modifier.height(48.dp)
                 )
             }
+        }
+
+        DisposableEffect(lazyListState.isScrollingUp()) {
+            if (!lazyListState.isScrollingUp()) {
+                searchBoxHeight = 0.dp
+            }
+            onDispose { }
         }
     }
 }
