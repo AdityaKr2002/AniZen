@@ -32,7 +32,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -64,7 +63,9 @@ class AssignActionsScreen : Screen() {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
+                    start = 0.dp,
                     top = paddingValues.calculateTopPadding() + 16.dp,
+                    end = 0.dp,
                     bottom = paddingValues.calculateBottomPadding() + 16.dp
                 ),
             ) {

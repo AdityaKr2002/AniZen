@@ -61,11 +61,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.ui.UiPreferences
@@ -198,7 +193,7 @@ object HomeScreen : Screen() {
                                     ) {
                                         for (tabItem in visibleTabs) {
                                             key(tabItem.key) {
-                                                HomeNavigationBarItem(tabItem, navLabelVisibility, adaptiveDecision)
+                                                HomeNavigationBarItem(this, tabItem, navLabelVisibility, adaptiveDecision)
                                             }
                                         }
                                     }
@@ -311,7 +306,8 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun RowScope.HomeNavigationBarItem(
+    private fun HomeNavigationBarItem(
+        rowScope: RowScope,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
@@ -321,7 +317,7 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -336,32 +332,55 @@ object HomeScreen : Screen() {
             }
         }
 
-        NavigationBarItem(
-            selected = selected,
-            onClick = {
-                if (!selected) {
-                    tabNavigator.current = tab
-                } else {
-                    scope.launch { tab.onReselect(navigator) }
-                }
-            },
-            icon = { NavigationIconItem(tab, adaptiveDecision) },
-            label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
-                {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            } else null,
-            alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
-        )
+        with(rowScope) {
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (!selected) {
+                        tabNavigator.current = tab
+                    } else {
+                        scope.launch { tab.onReselect(navigator) }
+                    }
+                },
+                modifier = Modifier.combinedClickable(
+                    onLongClick = {
+                        if (behavior.onLongClick != NavAction.Default) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            executor.execute(behavior.onLongClick)
+                        }
+                    },
+                    onDoubleClick = {
+                        if (behavior.onDoubleTap != NavAction.Default) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            executor.execute(behavior.onDoubleTap)
+                        }
+                    },
+                    onClick = {
+                        if (!selected) {
+                            tabNavigator.current = tab
+                        } else {
+                            scope.launch { tab.onReselect(navigator) }
+                        }
+                    }
+                ),
+                icon = { NavigationIconItem(tab, adaptiveDecision) },
+                label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
+                    {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                } else null,
+                alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
+            )
+        }
     }
 
     @Composable
-    fun HomeNavigationRailItem(
+    private fun HomeNavigationRailItem(
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
@@ -372,7 +391,7 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -396,6 +415,27 @@ object HomeScreen : Screen() {
                     scope.launch { tab.onReselect(navigator) }
                 }
             },
+            modifier = Modifier.combinedClickable(
+                onLongClick = {
+                    if (behavior.onLongClick != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onLongClick)
+                    }
+                },
+                onDoubleClick = {
+                    if (behavior.onDoubleTap != NavAction.Default) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        executor.execute(behavior.onDoubleTap)
+                    }
+                },
+                onClick = {
+                    if (!selected) {
+                        tabNavigator.current = tab
+                    } else {
+                        scope.launch { tab.onReselect(navigator) }
+                    }
+                }
+            ),
             icon = { NavigationIconItem(tab, adaptiveDecision) },
             label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
