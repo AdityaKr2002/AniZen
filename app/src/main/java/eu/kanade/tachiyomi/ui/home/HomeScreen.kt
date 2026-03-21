@@ -342,7 +342,7 @@ object HomeScreen : Screen() {
             onClick = {
                 // Handled via pointerInput for conflict resolution
             },
-            modifier = Modifier.pointerInput(tab) {
+            modifier = Modifier.pointerInput(tab, behavior) {
                 detectTapGestures(
                     onTap = {
                         if (!selected) {
@@ -357,12 +357,12 @@ object HomeScreen : Screen() {
                             executor.execute(behavior.onLongClick)
                         }
                     },
-                    onDoubleTap = if (behavior.onDoubleTap != NavAction.Default) {
-                        {
+                    onDoubleTap = {
+                        if (behavior.onDoubleTap != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             executor.execute(behavior.onDoubleTap)
                         }
-                    } else null
+                    }
                 )
             },
             icon = { NavigationIconItem(tab, adaptiveDecision) },
@@ -412,7 +412,7 @@ object HomeScreen : Screen() {
             onClick = {
                 // Handled via pointerInput
             },
-            modifier = Modifier.pointerInput(tab) {
+            modifier = Modifier.pointerInput(tab, behavior) {
                 detectTapGestures(
                     onTap = {
                         if (!selected) {
@@ -427,12 +427,12 @@ object HomeScreen : Screen() {
                             executor.execute(behavior.onLongClick)
                         }
                     },
-                    onDoubleTap = if (behavior.onDoubleTap != NavAction.Default) {
-                        {
+                    onDoubleTap = {
+                        if (behavior.onDoubleTap != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             executor.execute(behavior.onDoubleTap)
                         }
-                    } else null
+                    }
                 )
             },
             icon = { NavigationIconItem(tab, adaptiveDecision) },

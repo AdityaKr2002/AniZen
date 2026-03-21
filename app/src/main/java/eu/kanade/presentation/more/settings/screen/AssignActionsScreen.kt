@@ -23,10 +23,12 @@ import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.more.settings.widget.ListPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
+import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
@@ -46,7 +48,7 @@ class AssignActionsScreen : Screen() {
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
         
         // Sliced state for gesture mapping
-        val visibleItems = remember(bottomNavTabs) {
+        val visibleItems: List<NavItem> = remember(bottomNavTabs) {
             bottomNavTabs.mapNotNull { NavItem.fromId(it) }
         }
 
@@ -61,7 +63,7 @@ class AssignActionsScreen : Screen() {
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = paddingValues + PaddingValues(vertical = 16.dp),
+                contentPadding = paddingValues + PaddingValues(top = 16.dp, bottom = 16.dp),
             ) {
                 item {
                     Text(
@@ -76,8 +78,8 @@ class AssignActionsScreen : Screen() {
                         item = item,
                         behavior = behaviorMap[item.id] ?: NavBehavior(),
                         uiPreferences = uiPreferences,
-                        visibleTabs = bottomNavTabs,
-                        hiddenTabs = bottomNavHiddenTabs,
+                        visibleTabs = bottomNavTabs.toImmutableList(),
+                        hiddenTabs = bottomNavHiddenTabs.toImmutableList(),
                         behaviorMap = behaviorMap
                     )
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
