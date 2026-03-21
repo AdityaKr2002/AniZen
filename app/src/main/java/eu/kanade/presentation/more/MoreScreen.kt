@@ -58,7 +58,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import eu.kanade.domain.ai.AiPreferences
-import eu.kanade.domain.ui.model.NavStyle
+import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.more.settings.screen.ai.AiAssistantScreen
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
@@ -76,6 +76,7 @@ import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.presentation.more.components.MoreItem
 import eu.kanade.presentation.more.components.MoreSection
 
@@ -87,8 +88,7 @@ fun MoreScreen(
     incognitoMode: Boolean,
     onIncognitoModeChange: (Boolean) -> Unit,
     isFDroid: Boolean,
-    navStyle: NavStyle,
-    onClickAlt: () -> Unit,
+    hiddenTabs: List<NavItem>,
     onClickDownloadQueue: () -> Unit,
     onClickCategories: () -> Unit,
     onClickStats: () -> Unit,
@@ -220,11 +220,24 @@ fun MoreScreen(
 
             item {
                 MoreSection(title = "General") {
-                    if (navStyle != NavStyle.SHOW_ALL) {
-                         MoreItem(
-                            title = navStyle.moreTab.options.title,
-                            icon = navStyle.moreIcon,
-                            onClick = onClickAlt
+                    hiddenTabs.forEach { navItem ->
+                        val scope = rememberCoroutineScope()
+                        MoreItem(
+                            title = stringResource(navItem.titleRes),
+                            icon = navItem.tab.options.icon!!,
+                            onClick = {
+                                scope.launch {
+                                    val homeTab = when (navItem) {
+                                        NavItem.LIBRARY -> HomeScreen.Tab.AnimeLib()
+                                        NavItem.FEED -> HomeScreen.Tab.Feed
+                                        NavItem.UPDATES -> HomeScreen.Tab.Updates
+                                        NavItem.HISTORY -> HomeScreen.Tab.History
+                                        NavItem.BROWSE -> HomeScreen.Tab.Browse()
+                                        NavItem.MORE -> HomeScreen.Tab.More(false)
+                                    }
+                                    HomeScreen.openTab(homeTab)
+                                }
+                            }
                         )
                     }
                     MoreItem(

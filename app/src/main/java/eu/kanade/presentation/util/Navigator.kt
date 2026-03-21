@@ -38,7 +38,7 @@ import uy.kohesive.injekt.api.get
  */
 val LocalBackPress: ProvidableCompositionLocal<(() -> Unit)?> = staticCompositionLocalOf { null }
 
-private val uiPreferences: UiPreferences = Injekt.get()
+internal val uiPreferences: UiPreferences = Injekt.get()
 
 interface Tab : cafe.adriel.voyager.navigator.tab.Tab {
     suspend fun onReselect(navigator: Navigator) {}
@@ -49,6 +49,12 @@ interface Tab : cafe.adriel.voyager.navigator.tab.Tab {
 
     @Composable
     fun currentNavigationStyle(): NavStyle = uiPreferences.navStyle().collectAsState().value
+
+    @Composable
+    fun isTabFromMore(id: String): Boolean {
+        val visibleTabs by uiPreferences.bottomNavTabs().collectAsState()
+        return !visibleTabs.contains(id)
+    }
 }
 
 abstract class Screen : Screen {

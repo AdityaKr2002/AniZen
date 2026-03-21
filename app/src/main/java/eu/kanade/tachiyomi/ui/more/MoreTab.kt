@@ -68,7 +68,12 @@ data object MoreTab : Tab {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { MoreScreenModel() }
         val downloadQueueState by screenModel.downloadQueueState.collectAsState()
-        val navStyle = currentNavigationStyle()
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val hiddenTabsId by uiPreferences.bottomNavHiddenTabs().collectAsState()
+        val hiddenTabs = remember(hiddenTabsId) {
+            hiddenTabsId.mapNotNull { NavItem.fromId(it) }
+        }
+
         MoreScreen(
             downloadQueueStateProvider = { downloadQueueState },
             downloadedOnly = screenModel.downloadedOnly,
@@ -76,8 +81,7 @@ data object MoreTab : Tab {
             incognitoMode = screenModel.incognitoMode,
             onIncognitoModeChange = { screenModel.incognitoMode = it },
             isFDroid = context.isInstalledFromFDroid(),
-            navStyle = navStyle,
-            onClickAlt = { navigator.push(navStyle.moreTab) },
+            hiddenTabs = hiddenTabs,
             onClickDownloadQueue = { navigator.push(DownloadQueueScreen) },
             onClickCategories = { navigator.push(CategoryScreen) },
             onClickStats = { navigator.push(StatsScreen) },

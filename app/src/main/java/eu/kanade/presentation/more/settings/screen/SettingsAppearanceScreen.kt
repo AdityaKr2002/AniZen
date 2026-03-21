@@ -171,13 +171,9 @@ object SettingsAppearanceScreen : SearchableSettings {
                         true
                     },
                 ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.navStyle(),
-                    title = "Navigation Style",
-                    entries = NavStyle.entries
-                        .associateWith { stringResource(it.titleRes) }
-                        .toImmutableMap(),
-                    onValueChanged = { true },
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(MR.strings.pref_bottom_nav_settings),
+                    onClick = { navigator.push(NavigationSettingsScreen()) },
                 ),
                 Preference.PreferenceItem.ListPreference(
                     pref = uiPreferences.dateFormat(),

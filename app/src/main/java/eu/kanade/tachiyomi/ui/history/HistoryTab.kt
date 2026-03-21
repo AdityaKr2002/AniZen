@@ -46,13 +46,13 @@ data object HistoryTab : Tab {
     override val options: TabOptions
         @Composable
         get() {
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val isSelected = LocalTabNavigator.current.current.key == key
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_history_enter)
-            val index: UShort = when (currentNavigationStyle()) {
-                NavStyle.MOVE_HISTORY_TO_MORE -> 5u
-                NavStyle.MOVE_BROWSE_TO_MORE -> 3u
-                NavStyle.SHOW_ALL -> 2u
-                else -> 2u
+            val visibleTabs by uiPreferences.bottomNavTabs().collectAsState()
+            val index = remember(visibleTabs) { 
+                val i = visibleTabs.indexOf(NavItem.HISTORY.id)
+                if (i != -1) i.toUShort() else 5u
             }
             return TabOptions(
                 index = index,
@@ -68,7 +68,7 @@ data object HistoryTab : Tab {
     @Composable
     override fun Content() {
         val context = LocalContext.current
-        val fromMore = currentNavigationStyle() == NavStyle.MOVE_HISTORY_TO_MORE
+        val fromMore = isTabFromMore(NavItem.HISTORY.id)
         // Hoisted for history tab's search bar
         val snackbarHostState = SnackbarHostState()
 

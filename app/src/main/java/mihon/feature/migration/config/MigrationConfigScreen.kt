@@ -197,8 +197,7 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
             Box(
                 modifier = Modifier.padding(contentPadding),
             ) {
-                val density = LocalDensity.current
-                var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+                val searchBoxHeight = SOURCE_SEARCH_BOX_HEIGHT
 
                 FastScrollLazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -255,9 +254,6 @@ class MigrationConfigScreen(private val animeIds: Collection<Long>) : Screen() {
                             vertical = MaterialTheme.padding.small,
                         )
                         .align(Alignment.TopCenter),
-                    onGloballyPositioned = { layoutCoordinates ->
-                        searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() + 2 * MaterialTheme.padding.small }
-                    },
                 )
             }
         }

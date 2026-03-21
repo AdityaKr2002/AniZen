@@ -44,13 +44,13 @@ data object UpdatesTab : Tab {
     override val options: TabOptions
         @Composable
         get() {
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val isSelected = LocalTabNavigator.current.current.key == key
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter)
-            val index: UShort = when (currentNavigationStyle()) {
-                NavStyle.MOVE_UPDATES_TO_MORE -> 4u
-                NavStyle.MOVE_HISTORY_TO_MORE -> 2u
-                NavStyle.MOVE_BROWSE_TO_MORE -> 1u
-                NavStyle.SHOW_ALL -> 1u
+            val visibleTabs by uiPreferences.bottomNavTabs().collectAsState()
+            val index = remember(visibleTabs) { 
+                val i = visibleTabs.indexOf(NavItem.UPDATES.id)
+                if (i != -1) i.toUShort() else 4u
             }
             return TabOptions(
                 index = index,
@@ -68,7 +68,7 @@ data object UpdatesTab : Tab {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { UpdatesScreenModel() }
         val state by screenModel.state.collectAsState()
-        val fromMore = currentNavigationStyle() == NavStyle.MOVE_UPDATES_TO_MORE
+        val fromMore = isTabFromMore(NavItem.UPDATES.id)
 
         val scope = rememberCoroutineScope()
         val navigateUp: (() -> Unit)? = if (fromMore) {

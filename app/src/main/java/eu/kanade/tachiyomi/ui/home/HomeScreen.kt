@@ -35,7 +35,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import eu.kanade.tachiyomi.ui.home.NavActionExecutor
 import androidx.compose.ui.draw.scale
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.key
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -90,73 +100,103 @@ object HomeScreen : Screen() {
     private val defaultTab = uiPreferences.startScreen().get().tab.let { 
         if (it.isEnabled()) it else LibraryTab
     }
-    private val moreTab = uiPreferences.navStyle().get().moreTab
 
     @Composable
     override fun Content() {
-        val navStyle by uiPreferences.navStyle().collectAsState()
+        val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsState()
+        val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsState()
+        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsState()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
         val tabFadeDuration = remember(animatedTransitions) { if (animatedTransitions) 200 else 0 }
 
         val navigator = LocalNavigator.currentOrThrow
-        // SY -->
         val scope = rememberCoroutineScope()
-        val alwaysShowLabel by remember {
-            Injekt.get<UiPreferences>().bottomBarLabels().asState(scope)
-        }
-        // SY <--
         val context = LocalContext.current
+
+        val adaptiveEngine = remember { NavAdaptiveEngine(context, scope) }
+        val adaptiveDecision by adaptiveEngine.currentDecision.collectAsState()
+
+        LaunchedEffect(Unit) {
+            while(true) {
+                adaptiveEngine.evaluateRules()
+                kotlinx.coroutines.delay(60000)
+            }
+        }
+
         val activity = context as? ComponentActivity
         val preferences = Injekt.get<PreferenceStore>()
+
+        var bottomNavVisible by rememberSaveable { mutableStateOf(true) }
+        val bottomNavTranslationY by animateFloatAsState(
+            targetValue = if (bottomNavVisible) 0f else 1f,
+            animationSpec = androidx.compose.animation.core.tween(if (animatedTransitions) 200 else 0),
+            label = "bottomNavTranslation"
+        )
+
+        val nestedScrollConnection = remember(hideOnScroll) {
+            object : NestedScrollConnection {
+                override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                    if (hideOnScroll && available.y < -10f && bottomNavVisible) {
+                        bottomNavVisible = false
+                    } else if (hideOnScroll && available.y > 10f && !bottomNavVisible) {
+                        bottomNavVisible = true
+                    }
+                    return androidx.compose.ui.geometry.Offset.Zero
+                }
+            }
+        }
 
         TabNavigator(
             tab = defaultTab,
             key = TAB_NAVIGATOR_KEY,
         ) { tabNavigator ->
+            val visibleTabs = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
+                bottomNavTabs.mapNotNull { id -> NavItem.fromId(id)?.tab }.fastFilter { it.isEnabled() }
+            }
+            val isCurrentTabVisible = visibleTabs.any { it.key == tabNavigator.current.key }
+
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
                 Scaffold(
+                    modifier = Modifier.nestedScroll(nestedScrollConnection),
                     startBar = {
                         if (isTabletUi()) {
                             NavigationRail(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
-                                val tabs = remember(navStyle, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
-                                    navStyle.tabs().fastFilter { it.isEnabled() }
-                                }
-                                tabs.fastForEach {
-                                    NavigationRailItem(it, alwaysShowLabel)
+                                visibleTabs.fastForEach {
+                                    NavigationRailItem(it, navLabelVisibility)
                                 }
                             }
                         }
                     },
                     bottomBar = {
                         if (!isTabletUi()) {
-                            Column {
-                                var bottomNavVisible by rememberSaveable { mutableStateOf(true) }
+                            Column(
+                                modifier = Modifier.graphicsLayer {
+                                    translationY = bottomNavTranslationY * size.height
+                                    alpha = 1f - (bottomNavTranslationY * 0.5f)
+                                }
+                            ) {
                                 LaunchedEffect(Unit) {
                                     showBottomNavEvent.receiveAsFlow().collectLatest { bottomNavVisible = it }
                                 }
 
-                                AnimatedVisibility(
-                                    visible = bottomNavVisible && (navStyle == NavStyle.SHOW_ALL || tabNavigator.current != navStyle.moreTab),
-                                    enter = expandVertically(animationSpec = androidx.compose.animation.core.tween(if (animatedTransitions) 100 else 0)),
-                                    exit = shrinkVertically(animationSpec = androidx.compose.animation.core.tween(if (animatedTransitions) 100 else 0)),
-                                ) {
+                                if (isCurrentTabVisible) {
                                     NavigationBar(
                                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                     ) {
-                                        val tabs = remember(navStyle, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
-                                            navStyle.tabs().fastFilter { it.isEnabled() }
-                                        }
-                                        tabs.fastForEach {
-                                            NavigationBarItem(it, alwaysShowLabel)
+                                        visibleTabs.fastForEach {
+                                            key(it.key) {
+                                                NavigationBarItem(it, navLabelVisibility)
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     },
+
                     contentWindowInsets = WindowInsets(0),
                 ) { contentPadding ->
                     Box(
@@ -180,23 +220,48 @@ object HomeScreen : Screen() {
                                 it.Content()
                             }
                         }
+
+                        // Explainability Layer (Smart Suggestions)
+                        adaptiveDecision?.let { decision ->
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                tonalElevation = 4.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(Icons.Outlined.AutoAwesome, contentDescription = null)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = "Smart Suggestion", style = MaterialTheme.typography.labelSmall)
+                                        Text(text = decision.reason, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                    TextButton(onClick = { adaptiveEngine.dismissDecision() }) {
+                                        Text("Dismiss")
+                                    }
+                                    Button(onClick = { adaptiveEngine.applyDecision(decision) }) {
+                                        Text("Apply")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             val goToStartScreen = {
-                if (defaultTab != moreTab) {
-                    tabNavigator.current = defaultTab
-                } else {
-                    tabNavigator.current = LibraryTab
-                }
+                tabNavigator.current = defaultTab
             }
             BackHandler(
-                enabled = (tabNavigator.current == moreTab || tabNavigator.current != defaultTab) &&
-                    (tabNavigator.current != LibraryTab || defaultTab != moreTab),
+                enabled = tabNavigator.current != defaultTab,
                 onBack = goToStartScreen,
             )
-
             LaunchedEffect(Unit) {
                 launch {
                     librarySearchEvent.receiveAsFlow().collectLatest {
@@ -238,66 +303,120 @@ object HomeScreen : Screen() {
     @Composable
     private fun RowScope.NavigationBarItem(
         tab: eu.kanade.presentation.util.Tab,
-        // SY -->
-        alwaysShowLabel: Boolean,
-        // SY <--
+        navLabelVisibility: eu.kanade.domain.ui.model.NavLabelVisibility,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
         val selected = tabNavigator.current.key == tab.key
+        val haptic = LocalHapticFeedback.current
+        val executor = remember { NavActionExecutor(context, scope, navigator) }
+        
+        // TODO: Map from preferences in next pass
+        val behavior = remember(tab) { NavBehavior() }
+
         NavigationBarItem(
             selected = selected,
             onClick = {
-                if (!selected) {
-                    tabNavigator.current = tab
-                } else {
-                    scope.launch { tab.onReselect(navigator) }
-                }
+                // Handled via pointerInput for conflict resolution
             },
-            icon = { NavigationIconItem(tab) },
-            label = {
-                Text(
-                    text = tab.options.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.pointerInput(tab) {
+                detectTapGestures(
+                    onTap = {
+                        if (!selected) {
+                            tabNavigator.current = tab
+                        } else {
+                            scope.launch { tab.onReselect(navigator) }
+                        }
+                    },
+                    onLongPress = {
+                        if (behavior.onLongClick != NavAction.Default) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            executor.execute(behavior.onLongClick)
+                        }
+                    },
+                    onDoubleTap = if (behavior.onDoubleTap != NavAction.Default) {
+                        {
+                            haptic.performHapticFeedback(HapticFeedbackType.DoubleTap)
+                            executor.execute(behavior.onDoubleTap)
+                        }
+                    } else null
                 )
             },
-            alwaysShowLabel = alwaysShowLabel,
+            icon = { NavigationIconItem(tab) },
+            label = if (navLabelVisibility != eu.kanade.domain.ui.model.NavLabelVisibility.NEVER) {
+                {
+                    Text(
+                        text = tab.options.title,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else null,
+            alwaysShowLabel = navLabelVisibility == eu.kanade.domain.ui.model.NavLabelVisibility.ALWAYS,
         )
     }
 
     @Composable
     fun NavigationRailItem(
         tab: eu.kanade.presentation.util.Tab,
-        // SY -->
-        alwaysShowLabel: Boolean,
-        // SY <--
+        navLabelVisibility: eu.kanade.domain.ui.model.NavLabelVisibility,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+        
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
+
         val selected = tabNavigator.current.key == tab.key
+        val haptic = LocalHapticFeedback.current
+        val executor = remember { NavActionExecutor(context, scope, navigator) }
+
         NavigationRailItem(
             selected = selected,
             onClick = {
-                if (!selected) {
-                    tabNavigator.current = tab
-                } else {
-                    scope.launch { tab.onReselect(navigator) }
-                }
+                // Handled via pointerInput
             },
-            icon = { NavigationIconItem(tab) },
-            label = {
-                Text(
-                    text = tab.options.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.pointerInput(tab) {
+                detectTapGestures(
+                    onTap = {
+                        if (!selected) {
+                            tabNavigator.current = tab
+                        } else {
+                            scope.launch { tab.onReselect(navigator) }
+                        }
+                    },
+                    onLongPress = {
+                        if (behavior.onLongClick != NavAction.Default) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            executor.execute(behavior.onLongClick)
+                        }
+                    },
+                    onDoubleTap = if (behavior.onDoubleTap != NavAction.Default) {
+                        {
+                            haptic.performHapticFeedback(HapticFeedbackType.DoubleTap)
+                            executor.execute(behavior.onDoubleTap)
+                        }
+                    } else null
                 )
             },
-            alwaysShowLabel = alwaysShowLabel,
+            icon = { NavigationIconItem(tab) },
+            label = if (navLabelVisibility != eu.kanade.domain.ui.model.NavLabelVisibility.NEVER) {
+                {
+                    Text(
+                        text = tab.options.title,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else null,
+            alwaysShowLabel = navLabelVisibility == eu.kanade.domain.ui.model.NavLabelVisibility.ALWAYS,
         )
     }
 

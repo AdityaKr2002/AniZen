@@ -95,8 +95,7 @@ fun SourcesScreen(
     val focusManager = LocalFocusManager.current
 
     val lazyListState = rememberLazyListState()
-    val density = LocalDensity.current
-    var searchBoxHeight by remember { mutableStateOf(SOURCE_SEARCH_BOX_HEIGHT) }
+    val searchBoxHeight = SOURCE_SEARCH_BOX_HEIGHT
 
     // Handle system back button: 1 click to clear text and focus if text exists.
     BackHandler(enabled = !state.searchQuery.isNullOrEmpty()) {
@@ -186,9 +185,6 @@ fun SourcesScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .onGloballyPositioned { layoutCoordinates ->
-                    searchBoxHeight = with(density) { layoutCoordinates.size.height.toDp() }
-                }
         ) {
             Row(
                 modifier = Modifier
@@ -230,13 +226,6 @@ fun SourcesScreen(
                     ),
                     modifier = Modifier.height(48.dp)
                 )
-            }
-        }
-
-        val isScrollingUp = lazyListState.isScrollingUp()
-        LaunchedEffect(isScrollingUp) {
-            if (!isScrollingUp) {
-                searchBoxHeight = 0.dp
             }
         }
     }
