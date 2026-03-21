@@ -57,6 +57,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
@@ -161,7 +162,7 @@ object HomeScreen : Screen() {
             tab = defaultTab,
             key = TAB_NAVIGATOR_KEY,
         ) { tabNavigator ->
-            val visibleTabs = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
+            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
                 bottomNavTabs.mapNotNull { id -> NavItem.fromId(id)?.tab }.fastFilter { it.isEnabled() }
             }
             val isCurrentTabVisible = visibleTabs.any { it.key == tabNavigator.current.key }
@@ -286,23 +287,23 @@ object HomeScreen : Screen() {
                 launch {
                     openTabEvent.receiveAsFlow().collectLatest {
                         tabNavigator.current = when (it) {
-                            is Tab.AnimeLib -> LibraryTab
-                            is Tab.Feed -> FeedTab
-                            is Tab.Updates -> UpdatesTab
-                            is Tab.History -> HistoryTab
-                            is Tab.Browse -> {
+                            is HomeTab.AnimeLib -> LibraryTab
+                            is HomeTab.Feed -> FeedTab
+                            is HomeTab.Updates -> UpdatesTab
+                            is HomeTab.History -> HistoryTab
+                            is HomeTab.Browse -> {
                                 if (it.toExtensions) {
                                     BrowseTab.showExtension()
                                 }
                                 BrowseTab
                             }
-                            is Tab.More -> MoreTab
+                            is HomeTab.More -> MoreTab
                         }
 
-                        if (it is Tab.AnimeLib && it.animeIdToOpen != null) {
+                        if (it is HomeTab.AnimeLib && it.animeIdToOpen != null) {
                             navigator.push(AnimeScreen(it.animeIdToOpen))
                         }
-                        if (it is Tab.More && it.toDownloads) {
+                        if (it is HomeTab.More && it.toDownloads) {
                             navigator.push(DownloadQueueScreen)
                         }
                     }
@@ -554,4 +555,3 @@ object HomeScreen : Screen() {
         data class More(val toDownloads: Boolean) : HomeTab
     }
 }
-

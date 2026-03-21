@@ -455,23 +455,23 @@ class MainActivity : BaseActivity() {
         }
 
         val tabToOpen = when (intent.action) {
-            Constants.SHORTCUT_ANIMELIB -> HomeScreen.Tab.AnimeLib()
+            Constants.SHORTCUT_ANIMELIB -> HomeScreen.HomeTab.AnimeLib()
             Constants.SHORTCUT_ANIME -> {
                 val idToOpen = intent.extras?.getLong(Constants.ANIME_EXTRA)
                 if (idToOpen != null) {
                     navigator.popUntilRoot()
-                    HomeScreen.Tab.AnimeLib(idToOpen)
+                    HomeScreen.HomeTab.AnimeLib(idToOpen)
                 } else {
                     null
                 }
             }
-            Constants.SHORTCUT_UPDATES -> HomeScreen.Tab.Updates
-            Constants.SHORTCUT_HISTORY -> HomeScreen.Tab.History
-            Constants.SHORTCUT_SOURCES -> HomeScreen.Tab.Browse(false)
-            Constants.SHORTCUT_ANIMEEXTENSIONS -> HomeScreen.Tab.Browse(true, true)
+            Constants.SHORTCUT_UPDATES -> HomeScreen.HomeTab.Updates
+            Constants.SHORTCUT_HISTORY -> HomeScreen.HomeTab.History
+            Constants.SHORTCUT_SOURCES -> HomeScreen.HomeTab.Browse(false)
+            Constants.SHORTCUT_ANIMEEXTENSIONS -> HomeScreen.HomeTab.Browse(true, true)
             Constants.SHORTCUT_ANIME_DOWNLOADS -> {
                 navigator.popUntilRoot()
-                HomeScreen.Tab.More(toDownloads = true)
+                HomeScreen.HomeTab.More(toDownloads = true)
             }
             Intent.ACTION_SEARCH, Intent.ACTION_SEND, "com.google.android.gms.actions.SEARCH_ACTION" -> {
                 // If the intent match the "standard" Android search intent

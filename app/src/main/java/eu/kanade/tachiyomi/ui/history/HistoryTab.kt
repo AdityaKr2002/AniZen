@@ -13,7 +13,6 @@ import eu.kanade.domain.ui.model.NavItem
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -23,7 +22,6 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import eu.kanade.domain.ui.model.NavStyle
 import eu.kanade.presentation.history.HistoryScreen
 import eu.kanade.presentation.history.components.HistoryDeleteAllDialog
 import eu.kanade.presentation.history.components.HistoryDeleteDialog
@@ -44,6 +42,7 @@ import tachiyomi.domain.episode.model.Episode
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 data object HistoryTab : Tab {
 
@@ -55,7 +54,7 @@ data object HistoryTab : Tab {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val isSelected = LocalTabNavigator.current.current.key == key
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_history_enter)
-            val visibleTabs by uiPreferences.bottomNavTabs().collectAsState()
+            val visibleTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
             val index = remember(visibleTabs) { 
                 val i = visibleTabs.indexOf(NavItem.HISTORY.id)
                 if (i != -1) i.toUShort() else 5u
@@ -87,7 +86,7 @@ data object HistoryTab : Tab {
         val navigateUp: (() -> Unit)? = if (fromMore) {
             {
                 if (navigator.lastItem == HomeScreen) {
-                    scope.launch { HomeScreen.openTab(HomeScreen.Tab.AnimeLib()) }
+                    scope.launch { HomeScreen.openTab(HomeScreen.HomeTab.AnimeLib()) }
                 } else {
                     navigator.pop()
                 }
@@ -106,74 +105,73 @@ data object HistoryTab : Tab {
                     episode.id,
                     extPlayer,
                 )
-            } else {
-                snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
             }
         }
 
         HistoryScreen(
             state = state,
             searchQuery = searchQuery,
-            snackbarHostState = snackbarHostState,
-            onSearchQueryChange = screenModel::search,
             onClickCover = { navigator.push(AnimeScreen(it)) },
-            onClickResume = screenModel::getNextEpisodeForAnime,
-            onDialogChange = screenModel::setDialog,
+            onClickResume = { scope.launch { openEpisode(context, it) } },
+            onEditSearch = screenModel::search,
+            onDelete = { screenModel.deleteHistory(it) },
+            onDeleteAll = { screenModel.deleteAllHistory() },
+            onNextEpisode = { screenModel.getNextEpisode() },
             navigateUp = navigateUp,
+            snackbarHostState = snackbarHostState,
         )
 
-        val onDismissRequest = { screenModel.setDialog(null) }
-        when (val dialog = state.dialog) {
-            is HistoryScreenModel.Dialog.Delete -> {
-                HistoryDeleteDialog(
-                    onDismissRequest = onDismissRequest,
-                    onDelete = { all ->
-                        if (all) {
-                            screenModel.removeAllFromHistory(dialog.history.animeId)
-                        } else {
-                            screenModel.removeFromHistory(dialog.history)
-                        }
-                    },
-                )
-            }
-            is HistoryScreenModel.Dialog.DeleteAll -> {
-                HistoryDeleteAllDialog(
-                    onDismissRequest = onDismissRequest,
-                    onDelete = screenModel::removeAllHistory,
-                )
-            }
-            null -> {}
+        val historyDeleteDialog by screenModel.historyDeleteDialog.collectAsState()
+        historyDeleteDialog?.let {
+            HistoryDeleteDialog(
+                onDismissRequest = { screenModel.historyDeleteDialog.value = null },
+                onDelete = {
+                    screenModel.deleteHistory(it, true)
+                    screenModel.historyDeleteDialog.value = null
+                },
+            )
         }
 
-        LaunchedEffect(state.list) {
-            if (state.list != null) {
-                (context as? MainActivity)?.ready = true
+        val historyDeleteAllDialog by screenModel.historyDeleteAllDialog.collectAsState()
+        if (historyDeleteAllDialog) {
+            HistoryDeleteAllDialog(
+                onDismissRequest = { screenModel.historyDeleteAllDialog.value = false },
+                onDelete = {
+                    screenModel.deleteAllHistory()
+                    screenModel.historyDeleteAllDialog.value = false
+                },
+            )
+        }
+
+        LaunchedEffect(Unit) {
+            resumeLastEpisodeSeenEvent.receiveAsFlow().collectLatest {
+                val episode = screenModel.getNextEpisode()
+                if (episode != null) {
+                    openEpisode(context, episode)
+                } else {
+                    snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_episode))
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            screenModel.events.collectLatest { event ->
+                when (event) {
+                    HistoryScreenModel.Event.InternalError -> {
+                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
+                    }
+                    HistoryScreenModel.Event.HistoryCleared -> {
+                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
+                    }
+                }
             }
         }
 
         LaunchedEffect(Unit) {
             // AM (DISCORD) -->
             DiscordRPCService.setAnimeScreen(context, DiscordScreen.HISTORY)
+            DiscordRPCService.setMangaScreen(context, DiscordScreen.HISTORY)
             // <-- AM (DISCORD)
-            screenModel.events.collectLatest { e ->
-                when (e) {
-                    HistoryScreenModel.Event.InternalError ->
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
-                    HistoryScreenModel.Event.HistoryCleared ->
-                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.clear_history_completed))
-                    is HistoryScreenModel.Event.OpenEpisode -> openEpisode(context, e.episode)
-                }
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            resumeLastEpisodeSeenEvent.receiveAsFlow().collectLatest {
-                openEpisode(context, screenModel.getNextEpisode())
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            (context as? MainActivity)?.ready = true
         }
     }
 }

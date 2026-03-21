@@ -65,7 +65,6 @@ import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
-import sh.calvin.reorderable.rememberReorderableLazyListState
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
@@ -210,10 +209,10 @@ class NavigationSettingsScreen : Screen() {
         ) { paddingValues ->
             val lazyListState = rememberLazyListState()
             
-            val visibleItems = remember(bottomNavTabs) {
+            val visibleItems: List<NavItem> = remember(bottomNavTabs) {
                 bottomNavTabs.mapNotNull { NavItem.fromId(it) }
             }
-            val hiddenItems = remember(bottomNavHiddenTabs) {
+            val hiddenItems: List<NavItem> = remember(bottomNavHiddenTabs) {
                 bottomNavHiddenTabs.mapNotNull { NavItem.fromId(it) }
             }
 
@@ -309,9 +308,10 @@ class NavigationSettingsScreen : Screen() {
 
                 items(
                     items = visibleItems,
-                    key = { "visible-${it.id}" }
+                    key = { i -> "visible-${i.id}" }
                 ) { item ->
                     val isRequired = NavConfigValidator.REQUIRED_TABS.contains(item.id)
+                    val index = visibleItems.indexOf(item)
                     key(item.id) {
                         NavigationSettingsItem(
                             item = item,
@@ -321,23 +321,21 @@ class NavigationSettingsScreen : Screen() {
                                 val newList = visibleItems.toMutableList().apply {
                                     add(to, removeAt(from))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
                             },
-                            canMoveUp = visibleItems.indexOf(item) > 0,
-                            canMoveDown = visibleItems.indexOf(item) < visibleItems.size - 1,
+                            canMoveUp = index > 0,
+                            canMoveDown = index < visibleItems.size - 1,
                             onMoveUp = {
-                                val index = visibleItems.indexOf(item)
                                 val newList = visibleItems.toMutableList().apply {
                                     add(index - 1, removeAt(index))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
                             },
                             onMoveDown = {
-                                val index = visibleItems.indexOf(item)
                                 val newList = visibleItems.toMutableList().apply {
                                     add(index + 1, removeAt(index))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
                             },
                             toggleEnabled = !isRequired
                         )
@@ -358,7 +356,7 @@ class NavigationSettingsScreen : Screen() {
 
                 items(
                     items = hiddenItems,
-                    key = { "hidden-${it.id}" }
+                    key = { i -> "hidden-${i.id}" }
                 ) { item ->
                     key(item.id) {
                         NavigationSettingsItem(
@@ -379,7 +377,10 @@ class NavigationSettingsScreen : Screen() {
                     PreferenceGroupHeader(title = "Telemetry Debug (Dev Only)")
                 }
                 
-                items(NavActionExecutor.getHistory()) { trace ->
+                items(
+                    items = NavActionExecutor.getHistory(),
+                    key = { t: eu.kanade.tachiyomi.ui.home.ActionTrace -> t.timestamp }
+                ) { trace: eu.kanade.tachiyomi.ui.home.ActionTrace ->
                     Text(
                         text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
                         style = MaterialTheme.typography.labelSmall,

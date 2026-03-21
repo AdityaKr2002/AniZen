@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.updates
 
+import android.content.Context
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
@@ -12,7 +13,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -22,28 +22,21 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import eu.kanade.domain.ui.model.NavStyle
-import eu.kanade.presentation.anime.EpisodeOptionsDialogScreen
-import eu.kanade.presentation.components.NavigatorAdaptiveSheet
 import eu.kanade.presentation.updates.UpdateScreen
-import eu.kanade.presentation.updates.UpdatesDeleteConfirmationDialog
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
 import eu.kanade.tachiyomi.data.connections.discord.DiscordScreen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
-import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import mihon.feature.upcoming.UpcomingScreen
-import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 
 data object UpdatesTab : Tab {
 
@@ -53,7 +46,7 @@ data object UpdatesTab : Tab {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val isSelected = LocalTabNavigator.current.current.key == key
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter)
-            val visibleTabs by uiPreferences.bottomNavTabs().collectAsState()
+            val visibleTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
             val index = remember(visibleTabs) { 
                 val i = visibleTabs.indexOf(NavItem.UPDATES.id)
                 if (i != -1) i.toUShort() else 4u
@@ -64,9 +57,6 @@ data object UpdatesTab : Tab {
                 icon = rememberAnimatedVectorPainter(image, isSelected),
             )
         }
-    override suspend fun onReselect(navigator: Navigator) {
-        navigator.push(DownloadQueueScreen)
-    }
 
     @Composable
     override fun Content() {
@@ -80,7 +70,7 @@ data object UpdatesTab : Tab {
         val navigateUp: (() -> Unit)? = if (fromMore) {
             {
                 if (navigator.lastItem == HomeScreen) {
-                    scope.launch { HomeScreen.openTab(HomeScreen.Tab.AnimeLib()) }
+                    scope.launch { HomeScreen.openTab(HomeScreen.HomeTab.AnimeLib()) }
                 } else {
                     navigator.pop()
                 }
@@ -89,115 +79,64 @@ data object UpdatesTab : Tab {
             null
         }
 
-        suspend fun openEpisode(updateItem: UpdatesItem, altPlayer: Boolean = false) {
-            val playerPreferences: PlayerPreferences by injectLazy()
-            val update = updateItem.update
-            val extPlayer = playerPreferences.alwaysUseExternalPlayer().get() != altPlayer
-            MainActivity.startPlayerActivity(
-                context,
-                update.animeId,
-                update.episodeId,
-                extPlayer,
-            )
+        suspend fun openEpisode(context: Context, animeId: Long, episodeId: Long, extPlayer: Boolean) {
+            MainActivity.startPlayerActivity(context, animeId, episodeId, extPlayer)
         }
 
         UpdateScreen(
             state = state,
             snackbarHostState = screenModel.snackbarHostState,
             lastUpdated = screenModel.lastUpdated,
-            onClickCover = { item -> navigator.push(AnimeScreen(item.update.animeId)) },
-            onSelectAll = screenModel::toggleAllSelection,
-            onInvertSelection = screenModel::invertSelection,
-
+            onClickCover = { navigator.push(AnimeScreen(it)) },
             onUpdateLibrary = screenModel::updateLibrary,
             onDownloadEpisode = screenModel::downloadEpisodes,
-            onMultiBookmarkClicked = screenModel::bookmarkUpdates,
-            // AM (FILLERMARK) -->
-            onMultiFillermarkClicked = screenModel::fillermarkUpdates,
-            // <-- AM (FILLERMARK)
-            onMultiMarkAsSeenClicked = screenModel::markUpdatesSeen,
-            onMultiDeleteClicked = screenModel::showConfirmDeleteEpisodes,
-            onUpdateSelected = screenModel::toggleSelection,
-            onOpenEpisode = { updateItem: UpdatesItem, altPlayer: Boolean ->
-                scope.launchIO {
-                    openEpisode(updateItem, altPlayer)
+            onMultiDownloadEpisode = screenModel::downloadEpisodes,
+            onOpenEpisode = { update ->
+                val playerPreferences: PlayerPreferences by injectLazy()
+                val extPlayer = playerPreferences.alwaysUseExternalPlayer().get()
+                scope.launch {
+                    openEpisode(
+                        context,
+                        update.animeId,
+                        update.episodeId,
+                        extPlayer,
+                    )
                 }
-                Unit
             },
-            onCalendarClicked = { navigator.push(UpcomingScreen()) },
+            onMultiMarkAsRead = screenModel::markUpdatesAsRead,
+            onMultiMarkAsUnread = screenModel::markUpdatesAsUnread,
+            onMultiDelete = screenModel::deleteUpdates,
             navigateUp = navigateUp,
         )
 
-        val onDismissDialog = { screenModel.setDialog(null) }
-        when (val dialog = state.dialog) {
-            is UpdatesScreenModel.Dialog.DeleteConfirmation -> {
-                UpdatesDeleteConfirmationDialog(
-                    onDismissRequest = onDismissDialog,
-                    onConfirm = { screenModel.deleteEpisodes(dialog.toDelete) },
-                    isManga = false,
-                )
-            }
-
-            is UpdatesScreenModel.Dialog.ShowQualities -> {
-                EpisodeOptionsDialogScreen.onDismissDialog = onDismissDialog
-                NavigatorAdaptiveSheet(
-                    screen = EpisodeOptionsDialogScreen(
-                        useExternalDownloader = screenModel.useExternalDownloader,
-                        episodeTitle = dialog.episodeTitle,
-                        episodeId = dialog.episodeId,
-                        animeId = dialog.animeId,
-                        sourceId = dialog.sourceId,
-                    ),
-                    onDismissRequest = onDismissDialog,
-                )
-            }
-
-            null -> {}
-        }
-
         LaunchedEffect(Unit) {
-            // AM (DISCORD) -->
-            DiscordRPCService.setAnimeScreen(context, DiscordScreen.UPDATES)
-            // <-- AM (DISCORD)
             screenModel.events.collectLatest { event ->
                 when (event) {
-                    UpdatesScreenModel.Event.InternalError -> screenModel.snackbarHostState.showSnackbar(
-                        context.stringResource(
-                            MR.strings.internal_error,
-                        ),
-                    )
-
+                    UpdatesScreenModel.Event.InternalError -> {
+                        screenModel.snackbarHostState.showSnackbar(context.stringResource(MR.strings.internal_error))
+                    }
                     is UpdatesScreenModel.Event.LibraryUpdateTriggered -> {
-                        val msg = if (event.started) {
+                        val message = if (event.started) {
                             MR.strings.updating_library
                         } else {
                             MR.strings.update_already_running
                         }
-                        screenModel.snackbarHostState.showSnackbar(context.stringResource(msg))
+                        screenModel.snackbarHostState.showSnackbar(context.stringResource(message))
                     }
                 }
             }
         }
 
-        LaunchedEffect(state.selectionMode) {
-            HomeScreen.showBottomNav(!state.selectionMode)
+        LaunchedEffect(Unit) {
+            // AM (DISCORD) -->
+            DiscordRPCService.setAnimeScreen(context, DiscordScreen.UPDATES)
+            DiscordRPCService.setMangaScreen(context, DiscordScreen.UPDATES)
+            // <-- AM (DISCORD)
         }
 
-        LaunchedEffect(state.isLoading) {
-            if (!state.isLoading) {
-                (context as? MainActivity)?.ready = true
-            }
-        }
         DisposableEffect(Unit) {
             screenModel.resetNewUpdatesCount()
-
-            onDispose {
-                screenModel.resetNewUpdatesCount()
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            (context as? MainActivity)?.ready = true
+            onDispose {}
         }
     }
 }
