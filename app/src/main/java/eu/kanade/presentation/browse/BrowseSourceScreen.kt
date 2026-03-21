@@ -107,7 +107,7 @@ fun BrowseSourceContent(
         when (state) {
             "Error" -> {
                 EmptyScreen(
-                    message = getErrorMessage(errorState as LoadState.Error),
+                    message = errorState?.let { getErrorMessage(it as LoadState.Error) },
                     actions = persistentListOf(
                         EmptyScreenAction(
                             stringRes = MR.strings.action_retry,

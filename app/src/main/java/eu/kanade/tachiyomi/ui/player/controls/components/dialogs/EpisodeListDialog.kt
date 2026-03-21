@@ -78,7 +78,7 @@ fun EpisodeListDialog(
             ) {
                 itemsIndexed(
                     items = reversedList,
-                    key = { index, it -> "ep-${it.id}-$index" },
+                    key = { _, it -> "ep-${it.id}" },
                     contentType = { _, _ -> "episode" },
                 ) { index, episode ->
 
