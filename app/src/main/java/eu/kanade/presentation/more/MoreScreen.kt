@@ -228,12 +228,12 @@ fun MoreScreen(
                             onClick = {
                                 scope.launch {
                                     val homeTab = when (navItem) {
-                                        NavItem.LIBRARY -> HomeScreen.Tab.AnimeLib()
-                                        NavItem.FEED -> HomeScreen.Tab.Feed
-                                        NavItem.UPDATES -> HomeScreen.Tab.Updates
-                                        NavItem.HISTORY -> HomeScreen.Tab.History
-                                        NavItem.BROWSE -> HomeScreen.Tab.Browse()
-                                        NavItem.MORE -> HomeScreen.Tab.More(false)
+                                        NavItem.LIBRARY -> HomeScreen.HomeTab.AnimeLib()
+                                        NavItem.FEED -> HomeScreen.HomeTab.Feed
+                                        NavItem.UPDATES -> HomeScreen.HomeTab.Updates
+                                        NavItem.HISTORY -> HomeScreen.HomeTab.History
+                                        NavItem.BROWSE -> HomeScreen.HomeTab.Browse()
+                                        NavItem.MORE -> HomeScreen.HomeTab.More(false)
                                     }
                                     HomeScreen.openTab(homeTab)
                                 }

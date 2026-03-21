@@ -4,6 +4,12 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavItem
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState

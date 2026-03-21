@@ -1,6 +1,7 @@
 package eu.kanade.domain.ui
 
 import eu.kanade.domain.ui.model.AppTheme
+import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavConfig
 import eu.kanade.domain.ui.model.NavConfigSerializer
 import eu.kanade.domain.ui.model.NavConfigValidator
@@ -11,12 +12,16 @@ import eu.kanade.domain.ui.model.PanoramaMode
 import eu.kanade.domain.ui.model.StartScreen
 import eu.kanade.domain.ui.model.TabletUiMode
 import eu.kanade.domain.ui.model.ThemeMode
-import eu.kanade.domain.ui.model.NavBehavior
+import eu.kanade.tachiyomi.util.system.DeviceUtil
+import eu.kanade.tachiyomi.util.system.isDynamicColorAvailable
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.getEnum
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 class UiPreferences(
     private val preferenceStore: PreferenceStore,
@@ -24,7 +29,22 @@ class UiPreferences(
 
     fun themeMode() = preferenceStore.getEnum("pref_theme_mode_key", ThemeMode.SYSTEM)
 
-    fun appTheme() = preferenceStore.getEnum("pref_app_theme_key", AppTheme.DEFAULT)
+    fun appTheme() = preferenceStore.getEnum(
+        "pref_app_theme",
+        if (DeviceUtil.isDynamicColorAvailable) {
+            AppTheme.MONET
+        } else {
+            AppTheme.DEFAULT
+        },
+    )
+
+    fun colorTheme() = preferenceStore.getInt("pref_color_theme", 0)
+
+    fun themeDarkAmoled() = preferenceStore.getBoolean("pref_theme_dark_amoled_key", false)
+
+    fun relativeTime() = preferenceStore.getBoolean("relative_time_v2", true)
+
+    fun dateFormat() = preferenceStore.getString("app_date_format", "")
 
     fun tabletUiMode() = preferenceStore.getEnum("tablet_ui_mode", TabletUiMode.AUTOMATIC)
 
@@ -59,8 +79,8 @@ class UiPreferences(
             str.split(";").filter { it.isNotBlank() }.forEach { entry ->
                 val parts = entry.split(":")
                 if (parts.size == 2) {
-                    val tabId = entry.split(":")[0]
-                    val actions = entry.split(":")[1].split(",")
+                    val tabId = parts[0]
+                    val actions = parts[1].split(",")
                     if (actions.size == 2) {
                         map[tabId] = NavBehavior(
                             onLongClick = NavConfigSerializer.parseAction(actions[0]),
@@ -146,35 +166,56 @@ class UiPreferences(
 
     fun showFeedInBrowse() = preferenceStore.getBoolean("show_feed_in_browse", false)
 
+    // SY -->
     fun bottomBarLabels() = preferenceStore.getBoolean("pref_show_bottom_bar_labels", true)
 
-    fun animatedTransitions() = preferenceStore.getBoolean("pref_animated_transitions_key", true)
+    fun dynamicAnimeTheme() = preferenceStore.getBoolean("pref_dynamic_manga_theme", true)
+
+    fun dynamicPlayerTheme() = preferenceStore.getBoolean("pref_dynamic_player_theme", true)
+
+    fun autoExpandAnimeDescription() = preferenceStore.getBoolean("pref_auto_expand_anime_description", false)
+
+    fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", true)
+
+    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 24)
 
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
+    fun libraryPanoramaMode() = getPanoramaMode("pref_library_panorama_mode", "pref_library_panorama")
+
     fun browsePanoramaMode() = getPanoramaMode("pref_browse_panorama_mode", "pref_browse_panorama")
 
-    private fun getPanoramaMode(key: String, legacyKey: String) = preferenceStore.getEnum(
-        key = key,
-        defaultValue = PanoramaMode.valueOf(preferenceStore.getString(legacyKey, PanoramaMode.ALWAYS.name).get()),
-    )
+    fun feedPanoramaMode() = getPanoramaMode("pref_feed_panorama_mode", "pref_feed_panorama")
 
-    fun dateFormat() = preferenceStore.getString("pref_date_format_key", "")
+    fun updatesPanoramaMode() = getPanoramaMode("pref_updates_panorama_mode", "pref_updates_panorama")
 
-    fun relativeTime() = preferenceStore.getInt("relative_time", 7)
+    fun historyPanoramaMode() = getPanoramaMode("pref_history_panorama_mode", "pref_history_panorama")
 
-    fun sendCrashReports() = preferenceStore.getBoolean("pref_send_crash_reports_key", true)
+    private fun getPanoramaMode(key: String, oldKey: String): tachiyomi.core.common.preference.Preference<PanoramaMode> {
+        val pref = preferenceStore.getEnum(key, PanoramaMode.FOLLOW_GLOBAL)
+        if (!pref.isSet()) {
+            val oldPref = preferenceStore.getBoolean(oldKey)
+            if (oldPref.isSet()) {
+                val newValue = if (oldPref.get()) PanoramaMode.FORCE_ON else PanoramaMode.FORCE_OFF
+                pref.set(newValue)
+                oldPref.delete()
+            }
+        }
+        return pref
+    }
 
-    fun backClickExit() = preferenceStore.getBoolean("pref_back_click_exit_key", true)
+    fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
 
-    fun sideNavIconAlignment() = preferenceStore.getInt("pref_side_nav_icon_alignment", 0)
+    fun animatedTransitions() = preferenceStore.getBoolean("pref_animated_transitions_key", true)
 
-    fun useExternalDownloader() = preferenceStore.getBoolean("pref_use_external_downloader_key", false)
-
-    fun externalDownloaderSelection() = preferenceStore.getString("pref_external_downloader_selection_key", "")
+    fun preloadLibraryColor() = preferenceStore.getBoolean("preload_library_color", true)
+    // SY <--
 
     companion object {
-        const val DEVICE_ONLY_ONBOARDING = "device_only_onboarding"
+        fun dateFormat(format: String): DateTimeFormatter = when (format) {
+            "" -> DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
+            else -> DateTimeFormatter.ofPattern(format, Locale.getDefault())
+        }
     }
 }
 

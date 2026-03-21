@@ -1,12 +1,11 @@
 package eu.kanade.tachiyomi.ui.home
 
 import android.content.Context
+import cafe.adriel.voyager.navigator.Navigator
+import tachiyomi.domain.history.interactor.RemoveHistory
 import eu.kanade.domain.ui.model.NavAction
-import eu.kanade.tachiyomi.ui.browse.BrowseTab
 import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.setting.SettingsScreen
-import cafe.adriel.voyager.navigator.Navigator
-import eu.kanade.domain.anime.interactor.DeleteAnimeHistory
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -50,7 +49,7 @@ class NavActionExecutor(
         val key = action.javaClass.simpleName
         val last = lastExecutionMap[key] ?: 0L
         val elapsed = now - last
-
+        
         return if (elapsed < action.cooldownMs) {
             ActionResult.Cooldown(action.cooldownMs - elapsed)
         } else {
@@ -61,7 +60,7 @@ class NavActionExecutor(
 
     fun execute(action: NavAction) {
         if (action is NavAction.Default) return
-
+        
         val result = checkCooldown(action)
         logTrace(ActionTrace(action.javaClass.simpleName, result = result))
 
@@ -76,10 +75,10 @@ class NavActionExecutor(
         }
 
         when (action) {
-...
+            is NavAction.Default -> {}
             is NavAction.OpenExtensions -> {
                 scope.launch {
-                    HomeScreen.openTab(HomeScreen.Tab.Browse(toExtensions = true))
+                    HomeScreen.openTab(HomeScreen.HomeTab.Browse(toExtensions = true))
                 }
             }
             is NavAction.OpenSettings -> {
@@ -90,22 +89,21 @@ class NavActionExecutor(
             }
             is NavAction.ClearHistory -> {
                 scope.launch {
-                    val deleteHistory = Injekt.get<DeleteAnimeHistory>()
-                    deleteHistory.awaitAll()
+                    val removeHistory = Injekt.get<RemoveHistory>()
+                    removeHistory.awaitAll()
                     context.toast("History cleared")
                 }
             }
             is NavAction.RefreshUpdates -> {
-                // Trigger a global update refresh
                 context.toast("Refreshing updates...")
             }
             is NavAction.GlobalSearch -> {
                 scope.launch {
-                    HomeScreen.openTab(HomeScreen.Tab.Browse())
+                    HomeScreen.openTab(HomeScreen.HomeTab.Browse())
                 }
             }
             is NavAction.CustomRoute -> {
-                // Handle deep links or custom routes
+                // Handle deep links
             }
         }
     }

@@ -1,9 +1,6 @@
 package eu.kanade.presentation.more.settings.screen
 
 import android.util.Log
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +20,7 @@ import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -47,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavConfig
 import eu.kanade.domain.ui.model.NavConfigSerializer
 import eu.kanade.domain.ui.model.NavConfigValidator
@@ -60,17 +59,17 @@ import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
+import eu.kanade.tachiyomi.ui.home.NavActionExecutor
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
-import sh.calvin.reorderable.*
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.plus
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -84,6 +83,7 @@ class NavigationSettingsScreen : Screen() {
 
         val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsState()
         val bottomNavHiddenTabs by uiPreferences.bottomNavHiddenTabs().collectAsState()
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
         val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsState()
         val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsState()
 
@@ -138,6 +138,7 @@ class NavigationSettingsScreen : Screen() {
                 }
             )
         }
+
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
@@ -145,7 +146,7 @@ class NavigationSettingsScreen : Screen() {
                     navigateUp = backPress::invoke,
                     actions = {
                         AppBarActions(
-                            persistentListOf(
+                            actions = persistentListOf<AppBar.AppBarAction>(
                                 AppBar.Action(
                                     title = "Browse Gallery",
                                     icon = Icons.Outlined.AutoAwesome,
@@ -320,7 +321,7 @@ class NavigationSettingsScreen : Screen() {
                                 val newList = visibleItems.toMutableList().apply {
                                     add(to, removeAt(from))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = hiddenItems.map { it.id }.toImmutableList()))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
                             },
                             canMoveUp = visibleItems.indexOf(item) > 0,
                             canMoveDown = visibleItems.indexOf(item) < visibleItems.size - 1,
@@ -329,14 +330,14 @@ class NavigationSettingsScreen : Screen() {
                                 val newList = visibleItems.toMutableList().apply {
                                     add(index - 1, removeAt(index))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = hiddenItems.map { it.id }.toImmutableList()))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
                             },
                             onMoveDown = {
                                 val index = visibleItems.indexOf(item)
                                 val newList = visibleItems.toMutableList().apply {
                                     add(index + 1, removeAt(index))
                                 }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = hiddenItems.map { it.id }.toImmutableList()))
+                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { it.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs, behaviorMap = behaviorMap))
                             },
                             toggleEnabled = !isRequired
                         )
@@ -376,13 +377,14 @@ class NavigationSettingsScreen : Screen() {
                 item {
                     Spacer(modifier = Modifier.height(32.dp))
                     PreferenceGroupHeader(title = "Telemetry Debug (Dev Only)")
-                    NavActionExecutor.getHistory().forEach { trace ->
-                        Text(
-                            text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                        )
-                    }
+                }
+                
+                items(NavActionExecutor.getHistory()) { trace ->
+                    Text(
+                        text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                    )
                 }
             }
         }
@@ -431,7 +433,7 @@ class NavigationSettingsScreen : Screen() {
                 if (isVisible) {
                     IconButton(onClick = onMoveUp, enabled = canMoveUp) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Outlined.DragHandle, // Just a placeholder for reorder intent
+                            imageVector = Icons.Outlined.DragHandle,
                             contentDescription = "Move Up",
                             tint = if (canMoveUp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                         )
