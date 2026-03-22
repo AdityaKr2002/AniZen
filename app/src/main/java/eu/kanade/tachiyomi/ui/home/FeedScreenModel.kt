@@ -109,23 +109,21 @@ class FeedScreenModel(
                     combine(
                         getFeedSavedSearchGlobal.subscribe(category.id),
                         sourceManager.isInitialized,
-                        ::Pair
-                    ).collectLatest { (feedSavedSearches, isInitialized) ->
-                        if (!isInitialized) return@collectLatest
-
-                        // Fetch saved searches for the current category
-                        val savedSearches = getSavedSearchGlobalFeed.await(category.id)
-                        
+                    ) { feedSavedSearches, isInitialized ->
+                        feedSavedSearches to isInitialized
+                    }.collectLatest { (feedSavedSearches, isInitialized) ->
                         // 1. Establish structural placeholders immediately and CLEAN UP removed feeds
+                        // This ensures that even if sources aren't loaded, we show the containers
+                        val savedSearches = getSavedSearchGlobalFeed.await(category.id)
                         val initialItems = feedSavedSearches.mapNotNull { feed ->
-                            val source = sourceManager.get(feed.source) as? AnimeCatalogueSource ?: return@mapNotNull null
+                            val source = sourceManager.get(feed.source) as? AnimeCatalogueSource
                             
                             // Preserve existing anime list if it exists to avoid flickering
                             val existingAnime = mutableState.value.items[category.id]?.find { it.feed.id == feed.id }?.animeList ?: persistentListOf<Anime>()
                             
                             FeedItem(
                                 feed = feed,
-                                source = source,
+                                source = source ?: return@mapNotNull null,
                                 savedSearch = savedSearches.find { it.id == feed.savedSearch },
                                 animeList = existingAnime,
                             )
@@ -136,6 +134,8 @@ class FeedScreenModel(
                             newItemsMap[category.id] = initialItems
                             state.copy(items = newItemsMap.toImmutableMap())
                         }
+
+                        if (!isInitialized) return@collectLatest
 
                         // 2. Load content in parallel with TIMEOUT and NO RETRIES to prevent hangs
                         coroutineScope {
