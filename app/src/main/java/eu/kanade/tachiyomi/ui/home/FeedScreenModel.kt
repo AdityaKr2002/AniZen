@@ -58,25 +58,33 @@ class FeedScreenModel(
             // Subscribe FIRST to ensure we don't miss any category updates (e.g. from Global creation)
             getFeedSavedSearchCategories.subscribe()
                 .onEach { updatedCategories ->
-                    if (updatedCategories.isEmpty()) {
-                        insertFeedSavedSearchCategory.await("Global")
-                        return@onEach // Let the next emission handle it
+                    val categoriesToUse = if (updatedCategories.isEmpty()) {
+                        // Create Global if it doesn't exist, but don't block state update
+                        screenModelScope.launchIO {
+                            insertFeedSavedSearchCategory.await("Global")
+                        }
+                        // Use a temporary Global category to avoid blank screen
+                        persistentListOf(FeedSavedSearchCategory(id = 1, name = "Global", order = 0))
+                    } else {
+                        updatedCategories.toImmutableList()
                     }
 
                     mutableState.update { state ->
                         val newItems = state.items.toMutableMap()
-                        updatedCategories.forEach { category ->
+                        categoriesToUse.forEach { category ->
                             if (!newItems.containsKey(category.id)) {
                                 newItems[category.id] = persistentListOf()
                             }
                         }
                         state.copy(
-                            categories = updatedCategories.toImmutableList(),
+                            categories = categoriesToUse,
                             items = newItems.toImmutableMap()
                         )
                     }
                     
-                    setupFeedSubscriptions(updatedCategories)
+                    if (updatedCategories.isNotEmpty()) {
+                        setupFeedSubscriptions(updatedCategories)
+                    }
                 }
                 .launchIn(screenModelScope)
         }
