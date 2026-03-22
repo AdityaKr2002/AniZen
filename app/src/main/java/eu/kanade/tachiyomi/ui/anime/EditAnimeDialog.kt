@@ -161,9 +161,18 @@ private fun onViewCreated(
             binding.title.setText(anime.title)
         }
 
+        binding.titleOutline.hint = context.getString(R.string.title)
         binding.title.hint = context.getString(R.string.title_hint, anime.url)
+
+        binding.mangaAuthorOutline.hint = context.getString(R.string.author)
         binding.mangaAuthor.setText(anime.author.orEmpty())
+
+        binding.mangaArtistOutline.hint = context.getString(R.string.artist)
         binding.mangaArtist.setText(anime.artist.orEmpty())
+
+        binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+
+        binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
         binding.mangaDescription.setText(anime.description.orEmpty())
         binding.mangaGenresTags.setChips(anime.genre.orEmpty().dropBlank(), scope)
     } else {
@@ -181,9 +190,18 @@ private fun onViewCreated(
         }
         binding.mangaGenresTags.setChips(anime.genre.orEmpty().dropBlank(), scope)
 
+        binding.titleOutline.hint = context.getString(R.string.title)
         binding.title.hint = context.getString(R.string.title_hint, anime.ogTitle)
+
+        binding.mangaAuthorOutline.hint = context.getString(R.string.author)
         binding.mangaAuthor.hint = context.getString(R.string.author_hint, anime.ogAuthor ?: "")
+
+        binding.mangaArtistOutline.hint = context.getString(R.string.artist)
         binding.mangaArtist.hint = context.getString(R.string.artist_hint, anime.ogArtist ?: "")
+
+        binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+
+        binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
         binding.mangaDescription.hint =
             context.getString(
                 R.string.description_hint,
