@@ -451,13 +451,7 @@ class NavigationSettingsScreen : Screen() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Safely get icon without potentially triggering TabNavigator crash
-                val tabIcon = remember(item) {
-                    runCatching { item.tab.options.icon }.getOrNull()
-                }
-                val iconPainter = tabIcon ?: rememberAnimatedVectorPainter(
-                    AnimatedImageVector.animatedVectorResource(item.iconRes),
-                    false,
-                )
+                val iconPainter = rememberTabIcon(item)
                 Icon(
                     painter = iconPainter,
                     contentDescription = null,
@@ -500,6 +494,22 @@ class NavigationSettingsScreen : Screen() {
                     )
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun rememberTabIcon(item: NavItem): androidx.compose.ui.graphics.painter.Painter {
+        // We cannot use runCatching directly around Composable property access that might crash due to CompositionLocal.
+        // Instead, we try to access it and provide a fallback.
+        // For LibraryTab and others, the crash happens because of LocalTabNavigator.current inside their options.
+        
+        return try {
+            item.tab.options.icon ?: rememberAnimatedVectorPainter(
+                AnimatedImageVector.animatedVectorResource(item.iconRes),
+                false,
+            )
+        } catch (e: Exception) {
+            painterResource(item.iconRes)
         }
     }
 }
