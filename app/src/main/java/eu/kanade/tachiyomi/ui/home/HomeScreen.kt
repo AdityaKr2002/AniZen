@@ -80,7 +80,7 @@ import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
-import eu.kanade.domain.ui.model.AdaptiveDecision
+import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.R
@@ -282,7 +282,10 @@ object HomeScreen : Screen() {
             )
             LaunchedEffect(Unit) {
                 launch {
-                    librarySearchEvent.receiveAsFlow().collect(screenModel::search)
+                    librarySearchEvent.receiveAsFlow().collectLatest {
+                        goToStartScreen()
+                        LibraryTab.search(it)
+                    }
                 }
                 launch {
                     openTabEvent.receiveAsFlow().collectLatest {
@@ -324,19 +327,17 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
-        val title = remember(tab, adaptiveDecision) {
-            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-                adaptiveDecision.reason
-            } else {
-                tab.options.title
-            }
+        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
+            adaptiveDecision.reason
+        } else {
+            tab.options.title
         }
 
         with(rowScope) {
@@ -398,19 +399,17 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
 
-        val title = remember(tab, adaptiveDecision) {
-            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-                adaptiveDecision.reason
-            } else {
-                tab.options.title
-            }
+        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
+            adaptiveDecision.reason
+        } else {
+            tab.options.title
         }
 
         NavigationRailItem(
@@ -542,7 +541,7 @@ object HomeScreen : Screen() {
                 }
                 UpdatesTab::class.isInstance(tab) -> {
                     rememberAnimatedVectorPainter(
-                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter),
+                        AnimatedImageVector.animatedVectorResource(R.drawable.ic_updates_outline_24dp),
                         selected
                     )
                 }

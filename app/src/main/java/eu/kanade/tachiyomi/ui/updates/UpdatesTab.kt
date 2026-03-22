@@ -51,7 +51,7 @@ data object UpdatesTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.label_recent_updates),
-                icon = painterResource(R.drawable.ic_updates_24dp),
+                icon = painterResource(R.drawable.ic_updates_outline_24dp),
             )
         }
 

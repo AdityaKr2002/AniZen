@@ -2,6 +2,7 @@ package eu.kanade.domain.ui.model
 
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.presentation.util.Tab
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.browse.BrowseTab
 import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.home.FeedTab
@@ -32,7 +33,7 @@ sealed interface NavAction {
     }
     
     data object RefreshUpdates : NavAction {
-        override val cooldownMs = 10000L // 10s cooldown for network ops
+        override val cooldownMs = 10000L
     }
     
     data object OpenDownloads : NavAction
@@ -229,20 +230,16 @@ enum class NavItem(
     val id: String,
     val titleRes: StringResource,
     val tab: Tab,
+    val iconRes: Int,
     val behavior: NavBehavior = NavBehavior()
 ) {
-    LIBRARY("library", MR.strings.label_library, LibraryTab),
-    FEED("feed", SYMR.strings.feed, FeedTab),
-    UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab),
-    HISTORY("history", MR.strings.history, HistoryTab),
-    BROWSE("browse", MR.strings.browse, BrowseTab),
-    MORE("more", MR.strings.label_more, MoreTab),
-    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab);
-
-    // Metadata for the ADAPTIVE tab
-    var dynamicTitle: StringResource? = null
-    var dynamicTab: Tab? = null
-    var dynamicIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
+    LIBRARY("library", MR.strings.label_library, LibraryTab, R.drawable.ic_animelibrary_outline_24dp),
+    FEED("feed", SYMR.strings.feed, FeedTab, R.drawable.ic_browse_filled_24dp),
+    UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab, R.drawable.ic_updates_outline_24dp),
+    HISTORY("history", MR.strings.history, HistoryTab, R.drawable.anim_history_enter),
+    BROWSE("browse", MR.strings.browse, BrowseTab, R.drawable.anim_browse_enter),
+    MORE("more", MR.strings.label_more, MoreTab, R.drawable.anim_more_enter),
+    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab, R.drawable.anim_more_enter);
 
     companion object {
         fun fromId(id: String): NavItem? = entries.find { it.id == id }

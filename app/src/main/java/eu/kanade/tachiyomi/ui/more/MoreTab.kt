@@ -17,7 +17,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.base.BasePreferences
@@ -54,7 +53,7 @@ data object MoreTab : Tab {
             return TabOptions(
                 index = 4u,
                 title = stringResource(MR.strings.label_more),
-                icon = painterResource(R.drawable.ic_more_horiz_24dp),
+                icon = painterResource(R.drawable.anim_more_enter),
             )
         }
 

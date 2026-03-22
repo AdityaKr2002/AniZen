@@ -58,7 +58,7 @@ data object HistoryTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.history),
-                icon = painterResource(R.drawable.ic_history_24dp),
+                icon = painterResource(R.drawable.anim_history_enter),
             )
         }
 
