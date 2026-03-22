@@ -104,6 +104,14 @@ data object FeedTab : Tab {
                     // BrowseTab is already at index 0 (sourcesTab)
                 }
             },
+            onSeeAllClick = { item ->
+                val query = when (tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type)) {
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Latest -> tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_LATEST
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Popular -> tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_POPULAR
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.SavedSearch -> item.savedSearch?.query
+                }
+                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(item.source.id, query))
+            },
             contentPadding = contentPadding,
             usePanorama = usePanorama,
         )
