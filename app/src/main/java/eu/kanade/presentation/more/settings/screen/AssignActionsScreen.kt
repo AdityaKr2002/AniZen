@@ -32,6 +32,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -73,7 +74,7 @@ class AssignActionsScreen : Screen() {
                     Text(
                         text = "Customize Long Press and Double Tap actions for your bottom bar tabs.",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                     )
                 }
 
