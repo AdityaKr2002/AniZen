@@ -204,7 +204,7 @@ class AiAssistantScreen : Screen() {
                 topBar = {
                     AppBar(
                         title = "AniZen Intelligence OS",
-                        navigateUp = { /* Pop handled by Voyager */ },
+                        navigateUp = onBackClicked,
                         actions = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Default.Menu, "Session History")
