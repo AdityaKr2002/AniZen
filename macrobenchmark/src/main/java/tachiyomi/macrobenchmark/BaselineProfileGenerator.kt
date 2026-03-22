@@ -40,16 +40,33 @@ class BaselineProfileGenerator {
             device.pressEnter()
             device.waitForIdle()
 
-            // 3. Optimize More Screen & Advanced Statistics
+            // 3. Optimize More Screen & Settings
             device.findObject(By.text("More")).click()
             device.waitForIdle()
             
-            // Navigate to Statistics (where we have the Radar Chart)
+            // Navigate to Statistics
             device.findObject(By.text("Statistics"))?.click()
             device.wait(Until.hasObject(By.res("radar_chart")), 5_000)
             device.pressBack()
+            
+            // Navigate to Settings to pre-compile AI and Download screens
+            device.findObject(By.text("Settings"))?.click()
+            device.waitForIdle()
+            device.findObject(By.text("AI"))?.click()
+            device.waitForIdle()
+            device.pressBack()
+            device.findObject(By.text("Downloads"))?.click()
+            device.waitForIdle()
+            device.pressBack()
+            device.pressBack()
 
-            // 4. Optimize Player Interactions
+            // 4. Optimize Migration UI
+            device.findObject(By.text("Browse")).click()
+            device.waitForIdle()
+            device.findObject(By.text("Migrate"))?.click()
+            device.waitForIdle()
+
+            // 5. Optimize Player Interactions & DASH playback
             device.findObject(By.text("Library")).click()
             // Click the first anime item to open details and player
             device.findObject(By.res("library_grid"))?.children?.firstOrNull()?.click()
