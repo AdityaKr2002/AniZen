@@ -9,6 +9,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +61,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,16 +70,17 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.ui.UiPreferences
-import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
+import eu.kanade.domain.ui.model.AdaptiveDecision
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.R
@@ -276,13 +282,7 @@ object HomeScreen : Screen() {
             )
             LaunchedEffect(Unit) {
                 launch {
-                    librarySearchEvent.receiveAsFlow().collectLatest {
-                        goToStartScreen()
-                        when (defaultTab) {
-                            LibraryTab -> LibraryTab.search(it)
-                            else -> {}
-                        }
-                    }
+                    librarySearchEvent.receiveAsFlow().collect(screenModel::search)
                 }
                 launch {
                     openTabEvent.receiveAsFlow().collectLatest {
@@ -313,9 +313,9 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun HomeNavigationBarItem(
+    private fun RowScope.HomeNavigationBarItem(
         rowScope: RowScope,
-        tabNavigator: cafe.adriel.voyager.navigator.tab.TabNavigator,
+        tabNavigator: TabNavigator,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
@@ -324,20 +324,18 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
-        // options is @Composable, extract outside remember
-        val options = tab.options
-        val title = remember(tab, adaptiveDecision, options) {
+        val title = remember(tab, adaptiveDecision) {
             if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
                 adaptiveDecision.reason
             } else {
-                options.title
+                tab.options.title
             }
         }
 
@@ -390,7 +388,7 @@ object HomeScreen : Screen() {
 
     @Composable
     private fun HomeNavigationRailItem(
-        tabNavigator: cafe.adriel.voyager.navigator.tab.TabNavigator,
+        tabNavigator: TabNavigator,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
@@ -400,20 +398,18 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
 
-        // options is @Composable, extract outside remember
-        val options = tab.options
-        val title = remember(tab, adaptiveDecision, options) {
+        val title = remember(tab, adaptiveDecision) {
             if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
                 adaptiveDecision.reason
             } else {
-                options.title
+                tab.options.title
             }
         }
 
@@ -462,6 +458,7 @@ object HomeScreen : Screen() {
         )
     }
 
+    @OptIn(ExperimentalAnimationGraphicsApi::class)
     @Composable
     private fun NavigationIconItem(
         tab: eu.kanade.presentation.util.Tab,
@@ -478,9 +475,6 @@ object HomeScreen : Screen() {
             ),
             label = "iconScale",
         )
-
-        // options is @Composable
-        val options = tab.options
 
         BadgedBox(
             modifier = Modifier.scale(scale),
@@ -532,19 +526,55 @@ object HomeScreen : Screen() {
             },
         ) {
             val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
-            if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-                Icon(
-                    imageVector = Icons.Outlined.AutoAwesome,
-                    contentDescription = options.title,
-                    tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                )
-            } else {
-                Icon(
-                    painter = options.icon!!,
-                    contentDescription = options.title,
-                    tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                )
+            
+            val iconPainter = when {
+                navItem == NavItem.ADAPTIVE && adaptiveDecision != null -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter), // Placeholder
+                        selected
+                    )
+                }
+                LibraryTab::class.isInstance(tab) -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_animelibrary_leave),
+                        selected
+                    )
+                }
+                UpdatesTab::class.isInstance(tab) -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter),
+                        selected
+                    )
+                }
+                HistoryTab::class.isInstance(tab) -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_history_enter),
+                        selected
+                    )
+                }
+                BrowseTab::class.isInstance(tab) -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_browse_enter),
+                        selected
+                    )
+                }
+                MoreTab::class.isInstance(tab) -> {
+                    rememberAnimatedVectorPainter(
+                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter),
+                        selected
+                    )
+                }
+                FeedTab::class.isInstance(tab) -> {
+                    painterResource(R.drawable.ic_browse_filled_24dp)
+                }
+                else -> painterResource(R.drawable.ic_browse_filled_24dp)
             }
+
+            Icon(
+                painter = iconPainter,
+                contentDescription = tab.options.title,
+                tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+            )
         }
     }
 

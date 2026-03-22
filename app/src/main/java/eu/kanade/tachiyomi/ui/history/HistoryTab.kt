@@ -1,9 +1,6 @@
 package eu.kanade.tachiyomi.ui.history
 
 import android.content.Context
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
@@ -37,6 +35,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.i18n.stringResource as stringResourceContext
+import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import uy.kohesive.injekt.injectLazy
@@ -51,8 +50,6 @@ data object HistoryTab : Tab {
         @Composable
         get() {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val isSelected = LocalTabNavigator.current.current.key == key
-            val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_history_enter)
             val visibleTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
             val index = remember(visibleTabs) { 
                 val i = visibleTabs.indexOf(NavItem.HISTORY.id)
@@ -61,7 +58,7 @@ data object HistoryTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.history),
-                icon = rememberAnimatedVectorPainter(image, isSelected),
+                icon = painterResource(R.drawable.ic_history_24dp),
             )
         }
 

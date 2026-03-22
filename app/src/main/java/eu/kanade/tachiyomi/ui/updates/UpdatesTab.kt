@@ -1,9 +1,6 @@
 package eu.kanade.tachiyomi.ui.updates
 
 import android.content.Context
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import eu.kanade.domain.ui.UiPreferences
@@ -15,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
@@ -45,8 +43,6 @@ data object UpdatesTab : Tab {
         @Composable
         get() {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val isSelected = LocalTabNavigator.current.current.key == key
-            val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter)
             val visibleTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
             val index = remember(visibleTabs) { 
                 val i = visibleTabs.indexOf(NavItem.UPDATES.id)
@@ -55,7 +51,7 @@ data object UpdatesTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.label_recent_updates),
-                icon = rememberAnimatedVectorPainter(image, isSelected),
+                icon = painterResource(R.drawable.ic_updates_24dp),
             )
         }
 
