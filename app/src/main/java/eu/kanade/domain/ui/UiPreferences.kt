@@ -110,6 +110,8 @@ class UiPreferences(
     fun adaptiveTimeRuleEnd() = preferenceStore.getInt("adaptive_rule_time_end", 5) // 5 AM
     fun adaptiveTelemetryEnabled() = preferenceStore.getBoolean("adaptive_telemetry_enabled", true)
 
+    fun lastOnlineNavConfig() = preferenceStore.getString("last_online_nav_config", "")
+
     fun updateNavConfig(config: NavConfig) {
         val lastVisible = bottomNavTabs().get()
         val lastHidden = bottomNavHiddenTabs().get()

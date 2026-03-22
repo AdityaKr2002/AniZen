@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import eu.kanade.domain.ui.model.NavConfig
+import eu.kanade.domain.ui.model.NavConfigSerializer
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import java.util.Calendar
 
 data class AdaptiveDecision(
@@ -29,27 +33,66 @@ class NavAdaptiveEngine(
     private val _currentDecision = MutableStateFlow<AdaptiveDecision?>(null)
     val currentDecision = _currentDecision.asStateFlow()
 
+    private var lastOnlineStatus: Boolean? = null
+
     companion object {
         private var lastShiftTimestamp = 0L
         private const val SHIFT_COOLDOWN = 3600000L // 1 hour stability lock
     }
 
-    fun evaluateRules() {
+    fun evaluateRules(force: Boolean = false) {
         if (!uiPreferences.adaptiveNavEnabled().get()) return
 
+        val isOnline = context.isOnline()
+        val isDownloadedOnly = basePreferences.downloadedOnly().get()
+        val connectivityChanged = lastOnlineStatus != null && lastOnlineStatus != isOnline
+        lastOnlineStatus = isOnline
+
         val now = System.currentTimeMillis()
-        if (now - lastShiftTimestamp < SHIFT_COOLDOWN) return
+        // Connectivity rules bypass global cooldown if state actually changed
+        val skipCooldown = force || connectivityChanged
+
+        if (!skipCooldown && now - lastShiftTimestamp < SHIFT_COOLDOWN) return
 
         // Rule 1: Connectivity (High Priority)
-        if (uiPreferences.adaptiveConnectivityRule().get() && !context.isOnline() && !basePreferences.downloadedOnly().get()) {
-            _currentDecision.value = AdaptiveDecision(
-                reason = "Offline mode detected. Switch to Downloaded Only?",
-                priority = 10,
-                suggestedConfig = NavPresets.MINIMAL,
-                onApply = { basePreferences.downloadedOnly().set(true) }
-            )
-            return
+        if (uiPreferences.adaptiveConnectivityRule().get()) {
+            if (!isOnline && !isDownloadedOnly) {
+                _currentDecision.value = AdaptiveDecision(
+                    reason = "Offline mode detected. Switch to Downloaded Only?",
+                    priority = 10,
+                    suggestedConfig = NavPresets.MINIMAL,
+                    onApply = {
+                        // Store current config before switching
+                        val currentConfig = NavConfig(
+                            visibleTabs = uiPreferences.bottomNavTabs().get().toImmutableList(),
+                            hiddenTabs = uiPreferences.bottomNavHiddenTabs().get().toImmutableList(),
+                            behaviorMap = uiPreferences.bottomNavBehaviors().get().toImmutableMap()
+                        )
+                        uiPreferences.lastOnlineNavConfig().set(NavConfigSerializer.serialize(currentConfig))
+                        basePreferences.downloadedOnly().set(true)
+                    }
+                )
+                return
+            } else if (isOnline && isDownloadedOnly) {
+                // Rule 1b: Connectivity Restore (Suggestion Style)
+                val lastConfigStr = uiPreferences.lastOnlineNavConfig().get()
+                if (lastConfigStr.isNotBlank()) {
+                    val savedConfig = NavConfigSerializer.deserialize(lastConfigStr) ?: NavPresets.DEFAULT
+                    _currentDecision.value = AdaptiveDecision(
+                        reason = "Back online! Restore full navigation?",
+                        priority = 9,
+                        suggestedConfig = savedConfig,
+                        onApply = { 
+                            basePreferences.downloadedOnly().set(false)
+                            uiPreferences.lastOnlineNavConfig().delete()
+                        }
+                    )
+                    return
+                }
+            }
         }
+
+        if (now - lastShiftTimestamp < SHIFT_COOLDOWN) return
 
         // Rule 2: Choice Fatigue (Lower Priority)
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
