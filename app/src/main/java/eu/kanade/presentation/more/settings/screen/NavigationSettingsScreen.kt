@@ -451,11 +451,13 @@ class NavigationSettingsScreen : Screen() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Safely get icon without potentially triggering TabNavigator crash
-                val iconPainter = try {
-                    item.tab.options.icon ?: rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(item.iconRes), false)
-                } catch (e: Exception) {
-                    painterResource(item.iconRes)
+                val tabIcon = remember(item) {
+                    runCatching { item.tab.options.icon }.getOrNull()
                 }
+                val iconPainter = tabIcon ?: rememberAnimatedVectorPainter(
+                    AnimatedImageVector.animatedVectorResource(item.iconRes),
+                    false,
+                )
                 Icon(
                     painter = iconPainter,
                     contentDescription = null,
