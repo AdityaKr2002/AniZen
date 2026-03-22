@@ -70,6 +70,7 @@ fun FeedScreen(
     screenModel: FeedScreenModel,
     onAnimeClick: (Anime, Long) -> Unit,
     onAddSourceClick: () -> Unit,
+    onSeeAllClick: (FeedScreenModel.FeedItem) -> Unit,
     contentPadding: PaddingValues,
     usePanorama: Boolean,
 ) {
@@ -204,6 +205,7 @@ fun FeedScreen(
                         FeedIsland(
                             item = item,
                             onAnimeClick = { onAnimeClick(it, item.feed.id) },
+                            onSeeAllClick = { onSeeAllClick(item) },
                             usePanorama = usePanorama,
                         )
                     }
@@ -217,6 +219,7 @@ fun FeedScreen(
 private fun FeedIsland(
     item: FeedScreenModel.FeedItem,
     onAnimeClick: (Anime) -> Unit,
+    onSeeAllClick: () -> Unit,
     usePanorama: Boolean,
 ) {
     // Memoize the title to avoid re-generating strings on every scroll frame
@@ -237,14 +240,32 @@ private fun FeedIsland(
         Column(
             modifier = Modifier.padding(vertical = 12.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                androidx.compose.material3.TextButton(
+                    onClick = onSeeAllClick,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                ) {
+                    Text(
+                        text = "See all",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
             
             if (item.animeList.isEmpty()) {
                 // PULSING PLACEHOLDERS INSIDE THE SECTION WHILE FETCHING

@@ -58,6 +58,9 @@ class DownloadPreferences(
 
     fun alwaysUseInternalDownloader() = preferenceStore.getBoolean("always_use_internal_downloader", false)
 
+    fun preferredDownloadAudioLanguages() = preferenceStore.getString("pref_download_audio_languages", "en, jp")
+    fun preferredDownloadSubtitleLanguages() = preferenceStore.getString("pref_download_subtitle_languages", "en")
+
     fun downloadNewUnreadChaptersOnly() = preferenceStore.getBoolean("download_new_unread_episodes_only", false)
 
     // KMK -->

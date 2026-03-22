@@ -7,12 +7,12 @@ object SeasonRecognition {
     /**
      * All cases with s.xx, s xx, season xx, or sxx
      */
-    private val basic = Regex("""(?<=\bs\.|\bs|season) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
+    private val basic = Regex("""(?<=\bs\.|\bs|season|chapter|arc|vol|volume) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
 
     /**
      * Ordinal support: 2nd season, 3rd season, etc.
      */
-    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part)""", RegexOption.IGNORE_CASE)
+    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part|cour|volume|arc|chapter)""", RegexOption.IGNORE_CASE)
 
     /**
      * Part support: Part 1, Part 2
@@ -30,9 +30,15 @@ object SeasonRecognition {
     private val number = Regex(NUMBER_PATTERN)
 
     /**
-     * Roman numeral support (Upgraded)
+     * Roman numeral support (Upgraded to XX)
      */
-    private val romanNumerals = Regex("""\b(I|II|III|IV|V|VI|VII|VIII|IX|X)\b(?:\s+|$)""", RegexOption.IGNORE_CASE)
+    private val romanNumerals = Regex("""\b(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\b(?:\s+|$)""", RegexOption.IGNORE_CASE)
+
+    private val textOrdinalMap = mapOf(
+        "first" to 1.0, "second" to 2.0, "third" to 3.0, "fourth" to 4.0, "fifth" to 5.0,
+        "sixth" to 6.0, "seventh" to 7.0, "eighth" to 8.0, "ninth" to 9.0, "tenth" to 10.0
+    )
+    private val textOrdinals = Regex("""\b(${textOrdinalMap.keys.joinToString("|")})\b\s+(?:season|part|cour|volume|arc|chapter)""", RegexOption.IGNORE_CASE)
 
     /**
      * Regex to remove tags
@@ -42,13 +48,15 @@ object SeasonRecognition {
     /**
      * Regex used to remove unwanted qualities and year
      */
-    private val unwanted = Regex("""\b\d+p\b|\d+x\d+|Hi10|\(\d+\)|BD|RE|Remux|Dual.Audio""", RegexOption.IGNORE_CASE)
+    private val unwanted = Regex("""\b\d+p\b|\d+x\d+|Hi10|\(\d+\)|BD|RE|Remux|Dual.Audio|Multi-Audio|Multi-Sub|x264|x265|HEVC|10bit""", RegexOption.IGNORE_CASE)
 
     private val unwantedWhiteSpace = Regex("""\s(?=extra|special|omake)""", RegexOption.IGNORE_CASE)
 
     private val romanMap = mapOf(
         "I" to 1.0, "II" to 2.0, "III" to 3.0, "IV" to 4.0, "V" to 5.0,
-        "VI" to 6.0, "VII" to 7.0, "VIII" to 8.0, "IX" to 9.0, "X" to 10.0
+        "VI" to 6.0, "VII" to 7.0, "VIII" to 8.0, "IX" to 9.0, "X" to 10.0,
+        "XI" to 11.0, "XII" to 12.0, "XIII" to 13.0, "XIV" to 14.0, "XV" to 15.0,
+        "XVI" to 16.0, "XVII" to 17.0, "XVIII" to 18.0, "XIX" to 19.0, "XX" to 20.0
     )
 
     fun diceCoefficient(s1: String, s2: String): Double {
@@ -133,7 +141,11 @@ object SeasonRecognition {
     fun getRootTitle(title: String): String {
         return title
             // Remove everything starting from explicit season/part keywords
-            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season\s+\d+|S\d+|Part\s+\d+|II|III|IV|V|VI|VII|VIII|IX|X|\d+(?:st|nd|rd|th)\s+(?:season|part|cour)).*"""), "")
+            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
+            .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
+            .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
+            // Special handling for "Final" to avoid titles like "Final Fantasy"
+            .replace(Regex("""(?i)\s+(?:Final\s+Season|Final\s+Part|The\s+Final\s+Season|The\s+Final\s+Part|Conclusion|Ending)$"""), "")
             // Remove common tags
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
@@ -148,7 +160,7 @@ object SeasonRecognition {
 
         val rootTitle = getRootTitle(animeTitle)
         
-        // 1. Clean name for matching - remove resolution and tags first
+        // 1. Clean name for matching
         var cleanSeasonName = seasonName.lowercase()
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
@@ -170,6 +182,10 @@ object SeasonRecognition {
         // 2. Try Explicit Detection
         ordinals.find(matchingContext)?.let { return it.groups[1]?.value?.toDoubleOrNull() ?: 1.0 }
         parts.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
+        textOrdinals.find(matchingContext)?.let { 
+            val word = it.groups[1]?.value?.lowercase()
+            return textOrdinalMap[word] ?: 1.0
+        }
         romanNumerals.find(matchingContext)?.let {
             val roman = it.groups[1]?.value?.uppercase()
             return romanMap[roman] ?: -1.0
@@ -181,6 +197,12 @@ object SeasonRecognition {
         if (cleanSeasonName.contains("ova", ignoreCase = true) || cleanSeasonName.contains("oav", ignoreCase = true)) return -3.0
         if (cleanSeasonName.contains("ona", ignoreCase = true)) return -4.0
         if (cleanSeasonName.contains("special", ignoreCase = true)) return -5.0
+        
+        // Final check anchored to "Season" or "Part"
+        if (cleanSeasonName.contains(Regex("""(?i)final\s+(?:season|part|chapter)""")) || 
+            cleanSeasonName.endsWith("conclusion", ignoreCase = true)) {
+            return 99.0
+        }
 
         // 4. Strict Identity Logic
         val fullOriginal = animeTitle.lowercase().replace(Regex("""[^a-z0-9]"""), "")
@@ -190,14 +212,13 @@ object SeasonRecognition {
             return 1.0
         }
 
-        // If it's a variation of the name but has extra words (subtitles), it's a sequel
+        // Sequel check
         if (matchingContext.length > 1) {
-            // Check if there are any digits in the remaining name
             val numberInSubtitle = number.find(matchingContext)
             return if (numberInSubtitle != null) {
                 getSeasonNumberFromMatch(numberInSubtitle)
             } else {
-                2.0 // Named sequel without number
+                2.0 
             }
         }
 

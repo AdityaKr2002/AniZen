@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.download.model
 
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.ProgressListener
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -23,6 +24,8 @@ data class Download(
     val episode: Episode,
     val changeDownloader: Boolean = false,
     var video: Video? = null,
+    var selectedAudioTracks: List<Track> = emptyList(),
+    var selectedSubtitleTracks: List<Track> = emptyList(),
 ) : ProgressListener {
 
     @Transient

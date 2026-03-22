@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.system.Os
 import android.util.Log
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
@@ -278,6 +279,22 @@ class Downloader(
             }
             download.video = video
 
+            // Auto-select DASH multi-tracks based on preferences if none were explicitly selected
+            if (download.selectedAudioTracks.isEmpty() && video.audioTracks.isNotEmpty()) {
+                val prefAudio = preferences.preferredDownloadAudioLanguages().get().split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
+                download.selectedAudioTracks = video.audioTracks.filter { track ->
+                    prefAudio.any { track.lang.lowercase().contains(it) }
+                }
+                if (download.selectedAudioTracks.isEmpty()) download.selectedAudioTracks = listOf(video.audioTracks.first())
+            }
+
+            if (download.selectedSubtitleTracks.isEmpty() && video.subtitleTracks.isNotEmpty()) {
+                val prefSub = preferences.preferredDownloadSubtitleLanguages().get().split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
+                download.selectedSubtitleTracks = video.subtitleTracks.filter { track ->
+                    prefSub.any { track.lang.lowercase().contains(it) }
+                }
+            }
+
             if (download.changeDownloader) {
                 val success = externalDownload(download, animeDir, episodeDirname)
                 if (success) {
@@ -300,10 +317,16 @@ class Downloader(
                 isHls = false; isDash = false
             }
             if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
+            
+            val isMultiTrackDash = isDash && (download.selectedAudioTracks.isNotEmpty() || download.selectedSubtitleTracks.isNotEmpty() || video.audioTracks.isNotEmpty() || video.subtitleTracks.isNotEmpty())
+            
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             if (isTor(video)) {
                 download.engineType = "Torrent"
                 torrentDownload(download, tmpDir, filename)
+            } else if (isMultiTrackDash) {
+                download.engineType = "DASH-Mux"
+                nativeDashMuxDownload(download, tmpDir, filename)
             } else if (isHls || isDash) {
                 download.engineType = "HLS"
                 nativeHlsDownload(download, tmpDir, filename)
@@ -410,6 +433,13 @@ class Downloader(
 
         download.totalSize = size
         
+        if (size > 0) {
+            val availableSpace = DiskUtil.getAvailableStorageSpace(tmpDir)
+            if (availableSpace != -1L && availableSpace < size + MIN_DISK_SPACE) {
+                throw Exception("Disk full. Required: ${size / (1024*1024)} MB, Available: ${availableSpace / (1024*1024)} MB")
+            }
+        }
+
         val videoFile = if (video.videoUrl.contains(".mp4") || contentType.contains("video/mp4")) {
             tmpDir.findFile("$filename.mp4") ?: tmpDir.createFile("$filename.mp4")!!
         } else {
@@ -422,10 +452,22 @@ class Downloader(
         if (size > 0 && threadCount > 1) {
             val partSize = size / threadCount
             for (i in 0 until threadCount) {
-                val partFile = tmpDir.findFile("$filename.part$i")
-                val existing = partFile?.length() ?: 0L
-                initialDownloadedBytes += existing
+                val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
                 val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
+                
+                // Pre-allocation to prevent fragmentation
+                if (partFile.length() == 0L && partTotalSize > 0) {
+                    try {
+                        context.contentResolver.openFileDescriptor(partFile.uri, "w")?.use { pfd ->
+                            Os.ftruncate(pfd.fileDescriptor, partTotalSize)
+                        }
+                    } catch (e: Exception) {
+                        logcat(LogPriority.WARN, e) { "Failed to pre-allocate part $i" }
+                    }
+                }
+                
+                val existing = partFile.length().coerceAtMost(partTotalSize)
+                initialDownloadedBytes += existing
                 download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
             }
         } else {
@@ -539,6 +581,13 @@ class Downloader(
                         val source = res.body?.source() ?: return@use
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
+                            if (size > 0 && videoFile.length() == 0L) {
+                                try {
+                                    Os.ftruncate(pfd.fileDescriptor, size)
+                                } catch (e: Exception) {
+                                    logcat(LogPriority.WARN, e) { "Failed to pre-allocate" }
+                                }
+                            }
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                 val buffer = ByteArray(256 * 1024) // Larger buffer for single thread efficiency
                                 var bytesRead: Int
@@ -582,9 +631,16 @@ class Downloader(
         notifier.onProgressChange(download)
         
         context.contentResolver.openFileDescriptor(outputFile.uri, "w")?.use { pfd ->
+            val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
+            if (totalToMerge > 0) {
+                try {
+                    Os.ftruncate(pfd.fileDescriptor, totalToMerge)
+                } catch (e: Exception) {
+                    logcat(LogPriority.WARN, e) { "Failed to pre-allocate merge file" }
+                }
+            }
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
-                val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
                 var mergedSoFar = 0L
                 
                 for (i in 0 until count) {
@@ -739,6 +795,88 @@ class Downloader(
                 }
             }
         }
+        return videoFile
+    }
+
+    private suspend fun nativeDashMuxDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
+        val video = download.video!!
+        download.status = Download.State.MERGING
+        download.progress = 0
+        notifier.onProgressChange(download)
+
+        val videoFile = tmpDir.createFile("$filename.mkv")!!
+        val videoFilePath = videoFile.toFFmpegString(context)
+
+        val headersStr = video.headers?.joinToString("") { "${it.first}: ${it.second}\r\n" } ?: ""
+        val headersArg = if (headersStr.isNotEmpty()) "-headers \'$headersStr\' " else ""
+
+        var cmd = ""
+        var inputIndex = 0
+
+        // Main video input
+        cmd += "$headersArg-i \"${video.videoUrl}\" "
+        inputIndex++
+
+        // Start mapping logic
+        var mapCmd = ""
+        
+        val hasExternalAudio = download.selectedAudioTracks.any { it.url != video.videoUrl }
+        val hasExternalSubtitles = download.selectedSubtitleTracks.any { it.url != video.videoUrl }
+
+        if (!hasExternalAudio && !hasExternalSubtitles && download.selectedAudioTracks.isEmpty() && download.selectedSubtitleTracks.isEmpty()) {
+            // Default: copy everything from the main file
+            mapCmd = "-map 0 "
+        } else {
+            // Map the primary video stream
+            mapCmd = "-map 0:v:0? "
+            
+            // Map audio tracks
+            if (download.selectedAudioTracks.isNotEmpty()) {
+                val internalAudio = download.selectedAudioTracks.filter { it.url == video.videoUrl }
+                if (internalAudio.isNotEmpty()) {
+                    // For internal tracks, we might not know the exact index, map all audio from 0
+                    mapCmd += "-map 0:a? "
+                }
+                
+                download.selectedAudioTracks.filter { it.url != video.videoUrl }.forEach { track ->
+                    cmd += "-i \"${track.url}\" "
+                    mapCmd += "-map $inputIndex:a:0? "
+                    
+                    // Assign language metadata if possible
+                    cmd += "-metadata:s:a:${inputIndex - 1} language=${track.lang} "
+                    inputIndex++
+                }
+            } else if (!hasExternalAudio) {
+                mapCmd += "-map 0:a? "
+            }
+
+            // Map subtitle tracks
+            if (download.selectedSubtitleTracks.isNotEmpty()) {
+                val internalSubs = download.selectedSubtitleTracks.filter { it.url == video.videoUrl }
+                if (internalSubs.isNotEmpty()) {
+                    mapCmd += "-map 0:s? "
+                }
+                
+                download.selectedSubtitleTracks.filter { it.url != video.videoUrl }.forEach { track ->
+                    cmd += "-i \"${track.url}\" "
+                    mapCmd += "-map $inputIndex:s:0? "
+                    cmd += "-metadata:s:s:${inputIndex - 1} language=${track.lang} "
+                    inputIndex++
+                }
+            } else if (!hasExternalSubtitles) {
+                mapCmd += "-map 0:s? "
+            }
+        }
+
+        cmd += "$mapCmd-c copy -y \"$videoFilePath\""
+
+        val session = com.arthenica.ffmpegkit.FFmpegKit.execute(cmd)
+        if (!session.returnCode.isValueSuccess) {
+            videoFile.delete()
+            throw Exception("FFmpeg DASH muxing failed")
+        }
+
+        download.progress = 100
         return videoFile
     }
 
