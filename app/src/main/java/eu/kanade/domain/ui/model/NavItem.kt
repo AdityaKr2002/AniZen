@@ -241,7 +241,7 @@ enum class NavItem(
     val behavior: NavBehavior = NavBehavior()
 ) {
     LIBRARY("library", MR.strings.label_library, LibraryTab, R.drawable.anim_library_enter),
-    FEED("feed", MR.strings.feed, FeedTab, R.drawable.ic_browse_filled_24dp),
+    FEED("feed", MR.strings.feed, FeedTab, R.drawable.ic_dynamic_feed_24dp),
     UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab, R.drawable.anim_updates_enter),
     HISTORY("history", MR.strings.history, HistoryTab, R.drawable.anim_history_enter),
     BROWSE("browse", MR.strings.browse, BrowseTab, R.drawable.anim_browse_enter),

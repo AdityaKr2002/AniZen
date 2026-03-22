@@ -71,9 +71,14 @@ data object MoreTab : Tab {
         val screenModel = rememberScreenModel { MoreScreenModel() }
         val downloadQueueState by screenModel.downloadQueueState.collectAsState()
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val hideTabsCompletely by uiPreferences.hideTabsCompletely().collectAsStatePref()
         val hiddenTabsId by uiPreferences.bottomNavHiddenTabs().collectAsStatePref()
-        val hiddenTabs = remember(hiddenTabsId) {
-            hiddenTabsId.mapNotNull { NavItem.fromId(it) }
+        val hiddenTabs = remember(hiddenTabsId, hideTabsCompletely) {
+            if (hideTabsCompletely) {
+                emptyList()
+            } else {
+                hiddenTabsId.mapNotNull { NavItem.fromId(it) }
+            }
         }
 
         MoreScreen(

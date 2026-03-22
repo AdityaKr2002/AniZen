@@ -206,8 +206,7 @@ class NavigationSettingsScreen : Screen() {
                                     icon = Icons.Outlined.RestartAlt,
                                     onClick = {
                                         Log.d("AniZenNav", "Layout Reset triggered")
-                                        uiPreferences.bottomNavTabs().delete()
-                                        uiPreferences.bottomNavHiddenTabs().delete()
+                                        uiPreferences.updateNavConfig(NavPresets.DEFAULT)
                                         uiPreferences.bottomNavBehaviors().delete()
                                     },
                                 ),
@@ -281,6 +280,14 @@ class NavigationSettingsScreen : Screen() {
                         subtitle = "Disable hiding the navigation bar when scrolling down",
                         checked = !hideOnScroll,
                         onCheckedChanged = { uiPreferences.hideBottomBarOnScroll().set(!it) },
+                        icon = null
+                    )
+                    val hideTabsCompletely by uiPreferences.hideTabsCompletely().collectAsStatePref()
+                    SwitchPreferenceWidget(
+                        title = "Hide hidden tabs from More",
+                        subtitle = "When enabled, tabs dragged to 'Hidden Tabs' will completely disappear from the app instead of moving into the More menu.",
+                        checked = hideTabsCompletely,
+                        onCheckedChanged = { uiPreferences.hideTabsCompletely().set(it) },
                         icon = null
                     )
                 }

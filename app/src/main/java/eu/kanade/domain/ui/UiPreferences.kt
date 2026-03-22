@@ -61,7 +61,7 @@ class UiPreferences(
 
     fun bottomNavHiddenTabs() = preferenceStore.getObject(
         "bottom_nav_hidden_tabs",
-        emptyList<String>(),
+        NavPresets.DEFAULT.hiddenTabs,
         { it.joinToString(",") },
         { it.split(",").filter { id -> id.isNotBlank() } },
     )
@@ -98,6 +98,8 @@ class UiPreferences(
     fun navLabelVisibility() = preferenceStore.getEnum("bottom_nav_label_visibility", NavLabelVisibility.ALWAYS)
 
     fun hideBottomBarOnScroll() = preferenceStore.getBoolean("bottom_nav_hide_on_scroll", false)
+
+    fun hideTabsCompletely() = preferenceStore.getBoolean("hide_tabs_completely", false)
 
     // Adaptive Navigation Toggles
     fun adaptiveNavEnabled() = preferenceStore.getBoolean("adaptive_nav_enabled", false)
