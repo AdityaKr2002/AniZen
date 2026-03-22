@@ -534,10 +534,7 @@ object HomeScreen : Screen() {
                     )
                 }
                 LibraryTab::class.isInstance(tab) -> {
-                    rememberAnimatedVectorPainter(
-                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_animelibrary_leave),
-                        selected
-                    )
+                    painterResource(R.drawable.ic_animelibrary_outline_24dp)
                 }
                 UpdatesTab::class.isInstance(tab) -> {
                     rememberAnimatedVectorPainter(
