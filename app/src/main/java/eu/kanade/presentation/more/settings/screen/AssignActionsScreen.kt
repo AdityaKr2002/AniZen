@@ -73,7 +73,7 @@ class AssignActionsScreen : Screen() {
                     Text(
                         text = "Customize Long Press and Double Tap actions for your bottom bar tabs.",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, bottom = 16.dp)
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                     )
                 }
 

@@ -62,7 +62,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
-import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -102,7 +101,7 @@ import tachiyomi.presentation.core.components.material.NavigationBar
 import tachiyomi.presentation.core.components.material.NavigationRail
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.pluralStringResource
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -122,10 +121,10 @@ object HomeScreen : Screen() {
 
     @Composable
     override fun Content() {
-        val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsState()
-        val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsState()
-        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsState()
-        val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+        val navLabelVisibility by uiPreferences.navLabelVisibility().collectAsStatePref()
+        val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsStatePref()
+        val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         val tabFadeDuration = remember(animatedTransitions) { if (animatedTransitions) 200 else 0 }
 
         val navigator = LocalNavigator.currentOrThrow
@@ -163,7 +162,7 @@ object HomeScreen : Screen() {
             tab = defaultTab,
             key = TAB_NAVIGATOR_KEY,
         ) { tabNavigator ->
-            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsState().value, uiPreferences.showFeedInNavigationBar().collectAsState().value) {
+            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsStatePref().value, uiPreferences.showFeedInNavigationBar().collectAsStatePref().value) {
                 bottomNavTabs.mapNotNull { id -> NavItem.fromId(id)?.tab }.filter { it.isEnabled() }
             }
             val isCurrentTabVisible = visibleTabs.any { it::class == tabNavigator.current::class }
@@ -314,7 +313,7 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun HomeNavigationBarItem(
+    private fun RowScope.HomeNavigationBarItem(
         rowScope: RowScope,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
@@ -324,8 +323,8 @@ object HomeScreen : Screen() {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
-        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -398,8 +397,8 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         
-        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsState()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -465,7 +464,7 @@ object HomeScreen : Screen() {
         adaptiveDecision: AdaptiveDecision?,
     ) {
         val tabNavigator = LocalTabNavigator.current
-        val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         val selected = tabNavigator.current.key == tab.key
         val scale by animateFloatAsState(
             targetValue = if (selected && animatedTransitions) 1.2f else 1f,
