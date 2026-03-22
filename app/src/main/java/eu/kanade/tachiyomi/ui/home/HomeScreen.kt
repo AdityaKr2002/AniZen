@@ -11,6 +11,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -195,8 +197,8 @@ object HomeScreen : Screen() {
 
                             AnimatedVisibility(
                                 visible = bottomNavVisible && isCurrentTabVisible,
-                                enter = slideInVertically { it },
-                                exit = slideOutVertically { it },
+                                enter = slideInVertically { it } + expandVertically(),
+                                exit = slideOutVertically { it } + shrinkVertically(),
                             ) {
                                 NavigationBar(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
