@@ -61,9 +61,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFilter
+import cafe.adriel.voyager.core.model.rememberScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
+import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
@@ -97,11 +105,6 @@ import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import cafe.adriel.voyager.navigator.tab.TabNavigator
 
 object HomeScreen : Screen() {
 
@@ -174,7 +177,7 @@ object HomeScreen : Screen() {
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
                                 for (tabItem in visibleTabs) {
-                                    HomeNavigationRailItem(tabItem, navLabelVisibility, adaptiveDecision)
+                                    HomeNavigationRailItem(tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
                                 }
                             }
                         }
@@ -197,7 +200,7 @@ object HomeScreen : Screen() {
                                     ) {
                                         for (tabItem in visibleTabs) {
                                             key(tabItem.key) {
-                                                HomeNavigationBarItem(this, tabItem, navLabelVisibility, adaptiveDecision)
+                                                HomeNavigationBarItem(this, tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
                                             }
                                         }
                                     }
@@ -312,16 +315,16 @@ object HomeScreen : Screen() {
     @Composable
     private fun HomeNavigationBarItem(
         rowScope: RowScope,
+        tabNavigator: cafe.adriel.voyager.navigator.tab.TabNavigator,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
     ) {
-        val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -385,17 +388,17 @@ object HomeScreen : Screen() {
 
     @Composable
     private fun HomeNavigationRailItem(
+        tabNavigator: cafe.adriel.voyager.navigator.tab.TabNavigator,
         tab: eu.kanade.presentation.util.Tab,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
     ) {
-        val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
