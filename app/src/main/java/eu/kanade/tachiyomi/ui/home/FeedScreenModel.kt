@@ -55,32 +55,27 @@ class FeedScreenModel(
 
     init {
         screenModelScope.launchIO {
-            var categories = getFeedSavedSearchCategories.await()
-            if (categories.isEmpty()) {
-                insertFeedSavedSearchCategory.await("Global")
-                categories = getFeedSavedSearchCategories.await()
-            }
-            
-            // 1. Establish categories and empty items immediately
-            mutableState.update { state ->
-                val newItems = state.items.toMutableMap()
-                categories.forEach { category ->
-                    if (!newItems.containsKey(category.id)) {
-                        newItems[category.id] = persistentListOf()
-                    }
-                }
-                state.copy(
-                    categories = categories.toImmutableList(),
-                    items = newItems.toImmutableMap()
-                )
-            }
-
-            // 2. Start fetching content
-            setupFeedSubscriptions(categories)
-
+            // Subscribe FIRST to ensure we don't miss any category updates (e.g. from Global creation)
             getFeedSavedSearchCategories.subscribe()
                 .onEach { updatedCategories ->
-                    mutableState.update { it.copy(categories = updatedCategories.toImmutableList()) }
+                    if (updatedCategories.isEmpty()) {
+                        insertFeedSavedSearchCategory.await("Global")
+                        return@onEach // Let the next emission handle it
+                    }
+
+                    mutableState.update { state ->
+                        val newItems = state.items.toMutableMap()
+                        updatedCategories.forEach { category ->
+                            if (!newItems.containsKey(category.id)) {
+                                newItems[category.id] = persistentListOf()
+                            }
+                        }
+                        state.copy(
+                            categories = updatedCategories.toImmutableList(),
+                            items = newItems.toImmutableMap()
+                        )
+                    }
+                    
                     setupFeedSubscriptions(updatedCategories)
                 }
                 .launchIn(screenModelScope)

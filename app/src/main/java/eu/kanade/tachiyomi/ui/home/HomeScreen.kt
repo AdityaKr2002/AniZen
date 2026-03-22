@@ -258,10 +258,19 @@ object HomeScreen : Screen() {
                                         Text(text = "Smart Suggestion", style = MaterialTheme.typography.labelSmall)
                                         Text(text = decision.reason, style = MaterialTheme.typography.bodyMedium)
                                     }
-                                    TextButton(onClick = { adaptiveEngine.dismissDecision() }) {
+                                    TextButton(
+                                        onClick = { adaptiveEngine.dismissDecision() },
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    ) {
                                         Text("Dismiss")
                                     }
-                                    Button(onClick = { adaptiveEngine.applyDecision(decision) }) {
+                                    Button(
+                                        onClick = { adaptiveEngine.applyDecision(decision) },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    ) {
                                         Text("Apply")
                                     }
                                 }
