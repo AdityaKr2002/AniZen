@@ -6,6 +6,7 @@ import eu.kanade.domain.ui.model.NavConfig
 import eu.kanade.domain.ui.model.NavConfigSerializer
 import eu.kanade.domain.ui.model.NavConfigValidator
 import eu.kanade.domain.ui.model.NavItem
+import eu.kanade.domain.ui.model.NavPresets
 import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavStyle
 import eu.kanade.domain.ui.model.PanoramaMode

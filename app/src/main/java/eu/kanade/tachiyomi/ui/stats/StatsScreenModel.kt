@@ -165,8 +165,8 @@ class StatsScreenModel(
             )
 
             // Cleanup old logs (older than 30 days) to prevent database bloat
-            val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
-            getActivityLog.awaitRemoveOldActivity(thirtyDaysAgo)
+            val thirtyDaysAgoDate = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+            getActivityLog.awaitRemoveOldActivity(thirtyDaysAgoDate)
 
             // Status Breakdown
             val statusBreakdown = run {
@@ -229,11 +229,11 @@ class StatsScreenModel(
             }
 
             // Reactive Feed Statistics
-            val thirtyDaysAgo = Calendar.getInstance().apply {
+            val thirtyDaysAgoFeedDate = Calendar.getInstance().apply {
                 add(Calendar.DAY_OF_YEAR, -30)
             }.time
             
-            getActivityLog.subscribeByPeriod(thirtyDaysAgo)
+            getActivityLog.subscribeByPeriod(thirtyDaysAgoFeedDate)
                 .combine(Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().subscribe()) { logs, feeds ->
                     calculateFeedActivity(logs, feeds)
                 }
