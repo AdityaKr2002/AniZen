@@ -167,7 +167,7 @@ object HomeScreen : Screen() {
             tab = defaultTab,
             key = TAB_NAVIGATOR_KEY,
         ) { tabNavigator ->
-            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsStatePref().value, uiPreferences.showFeedInNavigationBar().collectAsStatePref().value) {
+            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs, uiPreferences.enableFeed().collectAsStatePref().value) {
                 bottomNavTabs.mapNotNull { id -> NavItem.fromId(id)?.tab }.filter { it.isEnabled() }
             }
             val isCurrentTabVisible = visibleTabs.any { it::class == tabNavigator.current::class }

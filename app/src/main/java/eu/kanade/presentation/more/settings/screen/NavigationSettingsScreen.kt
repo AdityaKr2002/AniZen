@@ -297,14 +297,6 @@ class NavigationSettingsScreen : Screen() {
                         icon = null
                     )
                     if (enableFeed) {
-                        val showFeedInNav by uiPreferences.showFeedInNavigationBar().collectAsStatePref()
-                        SwitchPreferenceWidget(
-                            title = stringResource(MR.strings.pref_show_feed_in_nav),
-                            subtitle = stringResource(MR.strings.pref_show_feed_in_nav_summary),
-                            checked = showFeedInNav,
-                            onCheckedChanged = { uiPreferences.showFeedInNavigationBar().set(it) },
-                            icon = null
-                        )
                         val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
                         SwitchPreferenceWidget(
                             title = stringResource(MR.strings.pref_show_feed_in_browse),

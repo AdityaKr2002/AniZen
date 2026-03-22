@@ -170,6 +170,7 @@ object NavMigrator {
 object NavConfigValidator {
     const val MAX_BOTTOM_TABS = 5
     val REQUIRED_TABS = setOf(NavItem.LIBRARY.id, NavItem.MORE.id)
+    private val ALL_STANDARD_TABS = setOf(NavItem.LIBRARY.id, NavItem.FEED.id, NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.BROWSE.id, NavItem.MORE.id)
 
     fun validate(config: NavConfig): NavConfig {
         var visible = config.visibleTabs.distinct().filter { NavItem.fromId(it) != null }.toMutableList()
@@ -180,6 +181,13 @@ object NavConfigValidator {
         REQUIRED_TABS.forEach { id ->
             if (!visible.contains(id) && !hidden.contains(id)) {
                 if (visible.size < MAX_BOTTOM_TABS) visible.add(id) else hidden.add(id)
+            }
+        }
+        
+        // Prevent missing tabs from completely vanishing from the UI
+        ALL_STANDARD_TABS.forEach { id ->
+            if (!visible.contains(id) && !hidden.contains(id)) {
+                hidden.add(id)
             }
         }
 
@@ -211,12 +219,12 @@ object NavConfigValidator {
 object NavPresets {
     val DEFAULT = NavConfig(
         visibleTabs = persistentListOf(NavItem.LIBRARY.id, NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.BROWSE.id, NavItem.MORE.id),
-        hiddenTabs = persistentListOf()
+        hiddenTabs = persistentListOf(NavItem.FEED.id)
     )
 
     val MINIMAL = NavConfig(
         visibleTabs = persistentListOf(NavItem.LIBRARY.id, NavItem.MORE.id),
-        hiddenTabs = persistentListOf(NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.BROWSE.id)
+        hiddenTabs = persistentListOf(NavItem.FEED.id, NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.BROWSE.id)
     )
 
     val POWER = NavConfig(
