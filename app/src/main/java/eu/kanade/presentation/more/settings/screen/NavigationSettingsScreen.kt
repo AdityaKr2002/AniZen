@@ -296,16 +296,6 @@ class NavigationSettingsScreen : Screen() {
                         onCheckedChanged = { uiPreferences.enableFeed().set(it) },
                         icon = null
                     )
-                    if (enableFeed) {
-                        val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
-                        SwitchPreferenceWidget(
-                            title = stringResource(MR.strings.pref_show_feed_in_browse),
-                            subtitle = stringResource(MR.strings.pref_show_feed_in_browse_summary),
-                            checked = showFeedInBrowse,
-                            onCheckedChanged = { uiPreferences.showFeedInBrowse().set(it) },
-                            icon = null
-                        )
-                    }
                 }
 
                 item {
