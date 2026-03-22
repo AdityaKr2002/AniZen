@@ -39,6 +39,7 @@ class DownloadProvider(
         get() = storageManager.getDownloadsDirectory()
 
     private val dirMutex = Mutex()
+    private val animeDirCache = android.util.LruCache<String, UniFile>(100)
 
     /**
      * Returns the download directory for an anime. For internal use only.
@@ -47,11 +48,18 @@ class DownloadProvider(
      * @param source the source of the anime.
      */
     suspend fun getAnimeDir(animeTitle: String, source: Source): UniFile {
+        val cacheKey = "${source.id}_$animeTitle"
+        animeDirCache.get(cacheKey)?.let { 
+            if (it.exists()) return it else animeDirCache.remove(cacheKey) 
+        }
+        
         try {
             return dirMutex.withLock {
-                downloadsDir!!
+                val dir = downloadsDir!!
                     .createDirectory(getSourceDirName(source))!!
                     .createDirectory(getAnimeDirName(animeTitle))!!
+                animeDirCache.put(cacheKey, dir)
+                dir
             }
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e) { "Invalid download directory" }
@@ -80,8 +88,17 @@ class DownloadProvider(
      * @param source the source of the anime.
      */
     fun findAnimeDir(animeTitle: String, source: Source): UniFile? {
+        val cacheKey = "${source.id}_$animeTitle"
+        animeDirCache.get(cacheKey)?.let { 
+            if (it.exists()) return it else animeDirCache.remove(cacheKey) 
+        }
+        
         val sourceDir = findSourceDir(source)
-        return sourceDir?.findFile(getAnimeDirName(animeTitle))
+        val dir = sourceDir?.findFile(getAnimeDirName(animeTitle))
+        if (dir != null) {
+            animeDirCache.put(cacheKey, dir)
+        }
+        return dir
     }
 
     /**

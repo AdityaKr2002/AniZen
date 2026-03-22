@@ -23,6 +23,8 @@ data class Download(
     val episode: Episode,
     val changeDownloader: Boolean = false,
     var video: Video? = null,
+    var selectedAudioTracks: List<Track> = emptyList(),
+    var selectedSubtitleTracks: List<Track> = emptyList(),
 ) : ProgressListener {
 
     @Transient
