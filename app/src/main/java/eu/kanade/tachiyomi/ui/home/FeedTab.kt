@@ -37,7 +37,7 @@ fun feedTab(): Tab = FeedTab
 data object FeedTab : Tab {
 
     override fun isEnabled(): Boolean {
-        return Injekt.get<UiPreferences>().enableFeed().get()
+        return true
     }
 
     override val options: TabOptions

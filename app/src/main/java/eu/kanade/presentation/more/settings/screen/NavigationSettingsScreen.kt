@@ -288,12 +288,12 @@ class NavigationSettingsScreen : Screen() {
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     PreferenceGroupHeader(title = "Feed Settings")
-                    val enableFeed by uiPreferences.enableFeed().collectAsStatePref()
+                    val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
                     SwitchPreferenceWidget(
-                        title = stringResource(MR.strings.pref_enable_feed),
-                        subtitle = stringResource(MR.strings.pref_enable_feed_summary),
-                        checked = enableFeed,
-                        onCheckedChanged = { uiPreferences.enableFeed().set(it) },
+                        title = stringResource(MR.strings.pref_show_feed_in_browse),
+                        subtitle = stringResource(MR.strings.pref_show_feed_in_browse_summary),
+                        checked = showFeedInBrowse,
+                        onCheckedChanged = { uiPreferences.showFeedInBrowse().set(it) },
                         icon = null
                     )
                 }

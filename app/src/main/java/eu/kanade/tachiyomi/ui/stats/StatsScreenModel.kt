@@ -229,18 +229,13 @@ class StatsScreenModel(
             }
 
             // Reactive Feed Statistics
-            uiPreferences.enableFeed().changes()
-                .flatMapLatest { enabled ->
-                    if (!enabled) return@flatMapLatest flowOf(null)
-                    
-                    val thirtyDaysAgo = Calendar.getInstance().apply {
-                        add(Calendar.DAY_OF_YEAR, -30)
-                    }.time
-                    
-                    getActivityLog.subscribeByPeriod(thirtyDaysAgo)
-                        .combine(Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().subscribe()) { logs, feeds ->
-                            calculateFeedActivity(logs, feeds)
-                        }
+            val thirtyDaysAgo = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -30)
+            }.time
+            
+            getActivityLog.subscribeByPeriod(thirtyDaysAgo)
+                .combine(Injekt.get<tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal>().subscribe()) { logs, feeds ->
+                    calculateFeedActivity(logs, feeds)
                 }
                 .onEach { feedActivity ->
                     mutableState.update { state ->

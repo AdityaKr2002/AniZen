@@ -69,7 +69,6 @@ data object BrowseTab : Tab {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val enableFeed by uiPreferences.enableFeed().collectAsStatePref()
         val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
 
         // Hoisted for extensions tab's search bar
@@ -84,10 +83,10 @@ data object BrowseTab : Tab {
         val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as State<PanoramaMode>
         val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
 
-        val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
+        val tabs = remember(showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
             buildList {
                 add(sourcesTab)
-                if (enableFeed && showFeedInBrowse) {
+                if (showFeedInBrowse) {
                     add(
                         eu.kanade.presentation.components.TabContent(
                             titleRes = SYMR.strings.feed,
@@ -134,10 +133,10 @@ data object BrowseTab : Tab {
             onChangeSearchQuery = extensionsScreenModel::search,
             scrollable = false,
         )
-        LaunchedEffect(state, enableFeed, showFeedInBrowse) {
+        LaunchedEffect(state, showFeedInBrowse) {
             switchToExtensionTabChannel.receiveAsFlow()
                 .collectLatest { 
-                    val targetPage = if (enableFeed && showFeedInBrowse) 2 else 1
+                    val targetPage = if (showFeedInBrowse) 2 else 1
                     state.scrollToPage(targetPage) 
                 }
         }

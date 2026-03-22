@@ -134,10 +134,6 @@ class UiPreferences(
             val visible = mutableListOf(NavItem.LIBRARY.id)
             val hidden = mutableListOf<String>()
 
-            if (enableFeed().get() && showFeedInNavigationBar().get()) {
-                visible.add(NavItem.FEED.id)
-            }
-
             when (style) {
                 NavStyle.MOVE_UPDATES_TO_MORE -> {
                     hidden.add(NavItem.UPDATES.id)
@@ -161,10 +157,6 @@ class UiPreferences(
             navStylePref.delete()
         }
     }
-
-    fun enableFeed() = preferenceStore.getBoolean("enable_feed", false)
-
-    fun showFeedInNavigationBar() = preferenceStore.getBoolean("show_feed_in_navigation_bar", false)
 
     fun showFeedInBrowse() = preferenceStore.getBoolean("show_feed_in_browse", false)
 
