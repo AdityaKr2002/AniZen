@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.ui.updates
 
 import android.content.Context
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import eu.kanade.domain.ui.UiPreferences
@@ -51,7 +54,7 @@ data object UpdatesTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.label_recent_updates),
-                icon = painterResource(R.drawable.ic_updates_outline_24dp),
+                icon = rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter), false),
             )
         }
 

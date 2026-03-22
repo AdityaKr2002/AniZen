@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.ui.library
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -79,7 +82,7 @@ data object LibraryTab : Tab {
             return TabOptions(
                 index = 0u,
                 title = stringResource(title),
-                icon = painterResource(R.drawable.ic_animelibrary_outline_24dp),
+                icon = rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(R.drawable.anim_library_enter), false),
             )
         }
 

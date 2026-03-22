@@ -1,5 +1,8 @@
 package eu.kanade.tachiyomi.ui.more
 
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,7 +56,7 @@ data object MoreTab : Tab {
             return TabOptions(
                 index = 4u,
                 title = stringResource(MR.strings.label_more),
-                icon = painterResource(R.drawable.anim_more_enter),
+                icon = rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter), false),
             )
         }
 

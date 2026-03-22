@@ -1,6 +1,9 @@
 package eu.kanade.tachiyomi.ui.history
 
 import android.content.Context
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -58,7 +61,7 @@ data object HistoryTab : Tab {
             return TabOptions(
                 index = index,
                 title = stringResource(MR.strings.history),
-                icon = painterResource(R.drawable.anim_history_enter),
+                icon = rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(R.drawable.anim_history_enter), false),
             )
         }
 
