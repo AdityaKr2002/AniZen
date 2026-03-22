@@ -1,6 +1,9 @@
 package eu.kanade.presentation.more.settings.screen
 
 import android.util.Log
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -428,7 +431,7 @@ class NavigationSettingsScreen : Screen() {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val iconPainter = item.tab.options.icon ?: painterResource(item.iconRes)
+                val iconPainter = item.tab.options.icon ?: rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(item.iconRes), false)
                 Icon(
                     painter = iconPainter,
                     contentDescription = null,
