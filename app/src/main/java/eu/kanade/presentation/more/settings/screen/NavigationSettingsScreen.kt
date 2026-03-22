@@ -344,6 +344,36 @@ class NavigationSettingsScreen : Screen() {
                             onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) },
                             icon = null
                         )
+                        if (timeRule) {
+                            val formatHour = { h: Int -> 
+                                when (h) {
+                                    0 -> "12 AM"
+                                    12 -> "12 PM"
+                                    in 1..11 -> "$h AM"
+                                    else -> "${h - 12} PM"
+                                }
+                            }
+                            val hoursMap = (0..23).associateWith { formatHour(it) }.toImmutableMap()
+                            
+                            val startHour by uiPreferences.adaptiveTimeRuleStart().collectAsStatePref()
+                            ListPreferenceWidget(
+                                value = startHour,
+                                title = "Start time",
+                                subtitle = formatHour(startHour),
+                                icon = null,
+                                entries = hoursMap,
+                                onValueChange = { uiPreferences.adaptiveTimeRuleStart().set(it) }
+                            )
+                            val endHour by uiPreferences.adaptiveTimeRuleEnd().collectAsStatePref()
+                            ListPreferenceWidget(
+                                value = endHour,
+                                title = "End time",
+                                subtitle = formatHour(endHour),
+                                icon = null,
+                                entries = hoursMap,
+                                onValueChange = { uiPreferences.adaptiveTimeRuleEnd().set(it) }
+                            )
+                        }
                     }
                 }
 

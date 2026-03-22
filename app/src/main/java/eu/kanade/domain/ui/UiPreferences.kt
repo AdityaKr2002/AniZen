@@ -103,6 +103,8 @@ class UiPreferences(
     fun adaptiveNavEnabled() = preferenceStore.getBoolean("adaptive_nav_enabled", false)
     fun adaptiveConnectivityRule() = preferenceStore.getBoolean("adaptive_rule_connectivity", true)
     fun adaptiveTimeRule() = preferenceStore.getBoolean("adaptive_rule_time", true)
+    fun adaptiveTimeRuleStart() = preferenceStore.getInt("adaptive_rule_time_start", 1) // 1 AM
+    fun adaptiveTimeRuleEnd() = preferenceStore.getInt("adaptive_rule_time_end", 5) // 5 AM
     fun adaptiveTelemetryEnabled() = preferenceStore.getBoolean("adaptive_telemetry_enabled", true)
 
     fun updateNavConfig(config: NavConfig) {
