@@ -105,13 +105,40 @@ class NavAdaptiveEngine(
             hour >= startHour || hour <= endHour
         }
 
-        if (uiPreferences.adaptiveTimeRule().get() && isLateNight) {
-            _currentDecision.value = AdaptiveDecision(
-                reason = "Late night: suggesting minimal layout",
-                priority = 5,
-                suggestedConfig = NavPresets.MINIMAL
-            )
-            return
+        if (uiPreferences.adaptiveTimeRule().get()) {
+            if (isLateNight) {
+                // Rule 2: Choice Fatigue (Suggest Minimal)
+                _currentDecision.value = AdaptiveDecision(
+                    reason = "Late night: suggesting minimal layout",
+                    priority = 5,
+                    suggestedConfig = NavPresets.MINIMAL,
+                    onApply = {
+                        // Store current config before switching
+                        val currentConfig = NavConfig(
+                            visibleTabs = uiPreferences.bottomNavTabs().get().toImmutableList(),
+                            hiddenTabs = uiPreferences.bottomNavHiddenTabs().get().toImmutableList(),
+                            behaviorMap = uiPreferences.bottomNavBehaviors().get().toImmutableMap()
+                        )
+                        uiPreferences.lastOnlineNavConfig().set(NavConfigSerializer.serialize(currentConfig))
+                    }
+                )
+                return
+            } else if (!isLateNight) {
+                // Rule 2b: Morning Restore
+                val lastConfigStr = uiPreferences.lastOnlineNavConfig().get()
+                if (lastConfigStr.isNotBlank()) {
+                    val savedConfig = NavConfigSerializer.deserialize(lastConfigStr) ?: NavPresets.DEFAULT
+                    _currentDecision.value = AdaptiveDecision(
+                        reason = "Good morning! Restore your layout?",
+                        priority = 4,
+                        suggestedConfig = savedConfig,
+                        onApply = { 
+                            uiPreferences.lastOnlineNavConfig().delete()
+                        }
+                    )
+                    return
+                }
+            }
         }
 
         _currentDecision.value = null
