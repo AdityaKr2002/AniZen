@@ -476,11 +476,13 @@ class NavigationSettingsScreen : Screen() {
                 if (isVisible && reorderableScope != null) {
                     IconButton(
                         onClick = {},
-                        modifier = Modifier.draggableHandle(
-                            onDragStarted = {
-                                Log.d("AniZenNav", "Drag started: ${item.id}")
-                            },
-                        )
+                        modifier = with(reorderableScope) {
+                            Modifier.draggableHandle(
+                                onDragStarted = {
+                                    Log.d("AniZenNav", "Drag started: ${item.id}")
+                                },
+                            )
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.DragHandle,
