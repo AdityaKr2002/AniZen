@@ -499,17 +499,14 @@ class NavigationSettingsScreen : Screen() {
 
     @Composable
     private fun rememberTabIcon(item: NavItem): androidx.compose.ui.graphics.painter.Painter {
-        // We cannot use runCatching directly around Composable property access that might crash due to CompositionLocal.
-        // Instead, we try to access it and provide a fallback.
-        // For LibraryTab and others, the crash happens because of LocalTabNavigator.current inside their options.
-        
-        return try {
-            item.tab.options.icon ?: rememberAnimatedVectorPainter(
-                AnimatedImageVector.animatedVectorResource(item.iconRes),
-                false,
-            )
-        } catch (e: Exception) {
-            painterResource(item.iconRes)
+        return when (item) {
+            NavItem.BROWSE, NavItem.FEED -> painterResource(item.iconRes)
+            else -> {
+                rememberAnimatedVectorPainter(
+                    AnimatedImageVector.animatedVectorResource(item.iconRes),
+                    false,
+                )
+            }
         }
     }
 }
