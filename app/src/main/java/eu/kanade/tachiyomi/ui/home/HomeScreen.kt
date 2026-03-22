@@ -96,7 +96,7 @@ import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.more.MoreTab
 import eu.kanade.tachiyomi.ui.updates.UpdatesTab
-import eu.kanade.tachiyomi.util.system.stringResource
+import tachiyomi.presentation.core.i18n.stringResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -333,11 +333,7 @@ object HomeScreen : Screen() {
         val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
             adaptiveDecision.reason
         } else {
-            remember(tab, navItem) {
-                runCatching { tab.options.title }.getOrElse { 
-                    navItem?.let { context.stringResource(it.titleRes) } ?: ""
-                }
-            }
+            navItem?.let { stringResource(it.titleRes) } ?: tab.options.title
         }
 
         with(rowScope) {
@@ -409,11 +405,7 @@ object HomeScreen : Screen() {
         val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
             adaptiveDecision.reason
         } else {
-            remember(tab, navItem) {
-                runCatching { tab.options.title }.getOrElse { 
-                    navItem?.let { context.stringResource(it.titleRes) } ?: ""
-                }
-            }
+            navItem?.let { stringResource(it.titleRes) } ?: tab.options.title
         }
 
         NavigationRailItem(
@@ -575,9 +567,7 @@ object HomeScreen : Screen() {
 
             Icon(
                 painter = iconPainter,
-                contentDescription = remember(tab) {
-                    runCatching { tab.options.title }.getOrNull()
-                },
+                contentDescription = tab.options.title,
                 tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
             )
         }
