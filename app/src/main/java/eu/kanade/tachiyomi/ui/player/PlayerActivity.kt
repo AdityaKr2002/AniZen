@@ -1408,8 +1408,6 @@ class PlayerActivity : BaseActivity() {
         subtitleTracks?.forEach { sub ->
             executeMPVCommand(arrayOf("sub-add", sub.url, "auto", sub.lang))
         }
-
-        viewModel.isLoadingTracks.update { _ -> false }
     }
 
     private fun setupChapters() {
