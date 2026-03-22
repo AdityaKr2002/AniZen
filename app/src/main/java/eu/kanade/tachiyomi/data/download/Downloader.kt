@@ -459,8 +459,7 @@ class Downloader(
                     try {
                         context.contentResolver.openFileDescriptor(partFile.uri, "w")?.use { pfd ->
                             val os = java.io.FileOutputStream(pfd.fileDescriptor)
-                            os.channel.position(partTotalSize - 1)
-                            os.write(0)
+                            os.channel.setLength(partTotalSize)
                         }
                     } catch (e: Exception) {
                         logcat(LogPriority.WARN, e) { "Failed to pre-allocate part $i" }
@@ -583,6 +582,9 @@ class Downloader(
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
+                                if (size > 0 && channel.size() == 0L) {
+                                    channel.setLength(size)
+                                }
                                 val buffer = ByteArray(256 * 1024) // Larger buffer for single thread efficiency
                                 var bytesRead: Int
                                 var localDownloaded = existing
@@ -626,8 +628,11 @@ class Downloader(
         
         context.contentResolver.openFileDescriptor(outputFile.uri, "w")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
-                var currentPos = 0L
                 val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
+                if (totalToMerge > 0) {
+                    outChannel.setLength(totalToMerge)
+                }
+                var currentPos = 0L
                 var mergedSoFar = 0L
                 
                 for (i in 0 until count) {
