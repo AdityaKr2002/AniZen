@@ -168,7 +168,7 @@ object NavMigrator {
 }
 
 object NavConfigValidator {
-    const val MAX_BOTTOM_TABS = 5
+    const val MAX_BOTTOM_TABS = 6
     val REQUIRED_TABS = setOf(NavItem.LIBRARY.id, NavItem.MORE.id)
     private val ALL_STANDARD_TABS = setOf(NavItem.LIBRARY.id, NavItem.FEED.id, NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.BROWSE.id, NavItem.MORE.id)
 
