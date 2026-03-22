@@ -28,8 +28,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toPersistentList
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.kmk.KMR
-import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
@@ -49,9 +47,6 @@ object SettingsAppearanceScreen : SearchableSettings {
         return listOf(
             getThemeGroup(uiPreferences = uiPreferences),
             getDisplayGroup(uiPreferences = uiPreferences),
-            // SY -->
-            getNavbarGroup(uiPreferences = uiPreferences),
-            // SY <--
         )
     }
 
@@ -75,8 +70,8 @@ object SettingsAppearanceScreen : SearchableSettings {
         val customPreferenceItem = if (appTheme == AppTheme.CUSTOM) {
             listOf(
                 Preference.PreferenceItem.TextPreference(
-                    title = stringResource(KMR.strings.pref_custom_color),
-                    subtitle = stringResource(KMR.strings.custom_color_description),
+                    title = stringResource(MR.strings.pref_custom_color),
+                    subtitle = stringResource(MR.strings.custom_color_description),
                     onClick = { navigator.push(AppCustomThemeColorPickerScreen()) },
                 ),
             )
@@ -160,24 +155,18 @@ object SettingsAppearanceScreen : SearchableSettings {
                 Preference.PreferenceItem.ListPreference(
                     pref = uiPreferences.startScreen(),
                     title = stringResource(MR.strings.pref_start_screen),
-                    entries = remember(uiPreferences.enableFeed().collectAsState().value) {
-                        StartScreen.entries
-                            .filter { it != StartScreen.FEED || uiPreferences.enableFeed().get() }
-                            .associateWith { it.titleRes }
-                    }.mapValues { stringResource(it.value) }
+                    entries = StartScreen.entries
+                        .associateWith { it.titleRes }
+                        .mapValues { stringResource(it.value) }
                         .toImmutableMap(),
                     onValueChanged = {
                         context.toast(MR.strings.requires_app_restart)
                         true
                     },
                 ),
-                Preference.PreferenceItem.ListPreference(
-                    pref = uiPreferences.navStyle(),
-                    title = "Navigation Style",
-                    entries = NavStyle.entries
-                        .associateWith { stringResource(it.titleRes) }
-                        .toImmutableMap(),
-                    onValueChanged = { true },
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(MR.strings.pref_bottom_nav_settings),
+                    onClick = { navigator.push(NavigationSettingsScreen()) },
                 ),
                 Preference.PreferenceItem.ListPreference(
                     pref = uiPreferences.dateFormat(),
@@ -211,8 +200,8 @@ object SettingsAppearanceScreen : SearchableSettings {
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.panoramaCover(),
-                    title = stringResource(KMR.strings.pref_panorama_cover),
-                    subtitle = stringResource(KMR.strings.pref_panorama_cover_summary),
+                    title = stringResource(MR.strings.pref_panorama_cover),
+                    subtitle = stringResource(MR.strings.pref_panorama_cover_summary),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.autoExpandAnimeDescription(),
@@ -249,43 +238,13 @@ object SettingsAppearanceScreen : SearchableSettings {
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.animatedTransitions(),
-                    title = stringResource(KMR.strings.pref_animated_transitions),
-                    subtitle = stringResource(KMR.strings.pref_animated_transitions_summary),
+                    title = stringResource(MR.strings.pref_animated_transitions),
+                    subtitle = stringResource(MR.strings.pref_animated_transitions_summary),
                 ),
             ),
         )
     }
 
-    @Composable
-    fun getNavbarGroup(uiPreferences: UiPreferences): Preference.PreferenceGroup {
-        return Preference.PreferenceGroup(
-            stringResource(SYMR.strings.pref_category_navbar),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.bottomBarLabels(),
-                    title = stringResource(SYMR.strings.pref_show_bottom_bar_labels),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.enableFeed(),
-                    title = stringResource(MR.strings.pref_enable_feed),
-                    subtitle = stringResource(MR.strings.pref_enable_feed_summary),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showFeedInNavigationBar(),
-                    title = stringResource(MR.strings.pref_show_feed_in_nav),
-                    subtitle = stringResource(MR.strings.pref_show_feed_in_nav_summary),
-                    enabled = uiPreferences.enableFeed().collectAsState().value,
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showFeedInBrowse(),
-                    title = stringResource(MR.strings.pref_show_feed_in_browse),
-                    subtitle = stringResource(MR.strings.pref_show_feed_in_browse_summary),
-                    enabled = uiPreferences.enableFeed().collectAsState().value,
-                ),
-            ),
-        )
-    }
-// SY <--
 }
 
 private val DateFormats = listOf(

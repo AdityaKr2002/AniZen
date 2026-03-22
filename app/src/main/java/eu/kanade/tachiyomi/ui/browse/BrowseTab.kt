@@ -1,8 +1,5 @@
 package eu.kanade.tachiyomi.ui.browse
 
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
@@ -17,14 +14,12 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.PanoramaMode
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.TabbedScreen
 import eu.kanade.presentation.util.Tab
-import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
 import eu.kanade.tachiyomi.data.connections.discord.DiscordScreen
 import eu.kanade.tachiyomi.ui.browse.extension.ExtensionsScreenModel
@@ -52,12 +47,10 @@ data object BrowseTab : Tab {
     override val options: TabOptions
         @Composable
         get() {
-            val isSelected = LocalTabNavigator.current.current is BrowseTab
-            val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_browse_enter)
             return TabOptions(
                 index = 3u,
                 title = stringResource(MR.strings.browse),
-                icon = rememberAnimatedVectorPainter(image, isSelected),
+                icon = null, // Handled in HomeScreen
             )
         }
 
@@ -76,7 +69,6 @@ data object BrowseTab : Tab {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val enableFeed by uiPreferences.enableFeed().collectAsStatePref()
         val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
 
         // Hoisted for extensions tab's search bar
@@ -91,10 +83,10 @@ data object BrowseTab : Tab {
         val feedMode by uiPreferences.feedPanoramaMode().collectAsStatePref() as State<PanoramaMode>
         val effectivePanorama = remember(globalPanorama, feedMode) { feedMode.resolve(globalPanorama) }
 
-        val tabs = remember(enableFeed, showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
+        val tabs = remember(showFeedInBrowse, sourcesTab, extensionsTab, migrateSourceTab, feedMode, effectivePanorama) {
             buildList {
                 add(sourcesTab)
-                if (enableFeed && showFeedInBrowse) {
+                if (showFeedInBrowse) {
                     add(
                         eu.kanade.presentation.components.TabContent(
                             titleRes = SYMR.strings.feed,
@@ -141,10 +133,10 @@ data object BrowseTab : Tab {
             onChangeSearchQuery = extensionsScreenModel::search,
             scrollable = false,
         )
-        LaunchedEffect(state, enableFeed, showFeedInBrowse) {
+        LaunchedEffect(state, showFeedInBrowse) {
             switchToExtensionTabChannel.receiveAsFlow()
                 .collectLatest { 
-                    val targetPage = if (enableFeed && showFeedInBrowse) 2 else 1
+                    val targetPage = if (showFeedInBrowse) 2 else 1
                     state.scrollToPage(targetPage) 
                 }
         }

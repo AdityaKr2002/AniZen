@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +17,9 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Terminal
@@ -40,13 +36,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
@@ -58,13 +56,15 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import eu.kanade.domain.ai.AiPreferences
-import eu.kanade.domain.ui.model.NavStyle
+import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.more.settings.screen.ai.AiAssistantScreen
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.more.DownloadQueueState
 import eu.kanade.tachiyomi.ui.stats.InfrastructureScreen
+import kotlinx.coroutines.launch
 import tachiyomi.core.common.Constants
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.sy.SYMR
@@ -87,8 +87,7 @@ fun MoreScreen(
     incognitoMode: Boolean,
     onIncognitoModeChange: (Boolean) -> Unit,
     isFDroid: Boolean,
-    navStyle: NavStyle,
-    onClickAlt: () -> Unit,
+    hiddenTabs: List<NavItem>,
     onClickDownloadQueue: () -> Unit,
     onClickCategories: () -> Unit,
     onClickStats: () -> Unit,
@@ -100,6 +99,7 @@ fun MoreScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -220,11 +220,24 @@ fun MoreScreen(
 
             item {
                 MoreSection(title = "General") {
-                    if (navStyle != NavStyle.SHOW_ALL) {
-                         MoreItem(
-                            title = navStyle.moreTab.options.title,
-                            icon = navStyle.moreIcon,
-                            onClick = onClickAlt
+                    hiddenTabs.forEach { navItem ->
+                        MoreItem(
+                            title = stringResource(navItem.titleRes),
+                            iconPainter = navItem.tab.options.icon,
+                            onClick = {
+                                scope.launch {
+                                    val homeTab = when (navItem) {
+                                        NavItem.LIBRARY -> HomeScreen.HomeTab.AnimeLib()
+                                        NavItem.FEED -> HomeScreen.HomeTab.Feed
+                                        NavItem.UPDATES -> HomeScreen.HomeTab.Updates
+                                        NavItem.HISTORY -> HomeScreen.HomeTab.History
+                                        NavItem.BROWSE -> HomeScreen.HomeTab.Browse()
+                                        NavItem.MORE -> HomeScreen.HomeTab.More(false)
+                                        NavItem.ADAPTIVE -> HomeScreen.HomeTab.More(false)
+                                    }
+                                    HomeScreen.openTab(homeTab)
+                                }
+                            }
                         )
                     }
                     MoreItem(

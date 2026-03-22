@@ -2,7 +2,6 @@ package eu.kanade.domain.ui.model
 
 import dev.icerock.moko.resources.StringResource
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.kmk.KMR
 
 enum class PanoramaMode {
     FOLLOW_GLOBAL,
@@ -16,8 +15,8 @@ enum class PanoramaMode {
     }
 
     fun getLabelRes(): StringResource = when (this) {
-        FOLLOW_GLOBAL -> KMR.strings.panorama_mode_follow_global
-        FORCE_ON -> KMR.strings.panorama_mode_forced_on
-        FORCE_OFF -> KMR.strings.panorama_mode_forced_off
+        FOLLOW_GLOBAL -> MR.strings.panorama_mode_follow_global
+        FORCE_ON -> MR.strings.panorama_mode_forced_on
+        FORCE_OFF -> MR.strings.panorama_mode_forced_off
     }
 }

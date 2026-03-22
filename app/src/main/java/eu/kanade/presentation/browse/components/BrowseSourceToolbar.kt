@@ -24,7 +24,6 @@ import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import eu.kanade.domain.ui.model.PanoramaMode
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.kmk.KMR
 import tachiyomi.presentation.core.i18n.stringResource
 import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
@@ -162,15 +161,15 @@ fun BrowseSourceToolbar(
 
                 androidx.compose.material3.HorizontalDivider()
 
-                tachiyomi.presentation.core.components.HeadingItem(KMR.strings.pref_panorama_cover)
+                tachiyomi.presentation.core.components.HeadingItem(MR.strings.pref_panorama_cover)
 
-                PanoramaMode.entries.forEach { mode ->
+                PanoramaMode.entries.forEach { panoMode ->
                     RadioMenuItem(
-                        text = { Text(text = stringResource(mode.getLabelRes())) },
-                        isChecked = panoramaMode == mode,
+                        text = { Text(text = stringResource(panoMode.getLabelRes())) },
+                        isChecked = panoramaMode == panoMode,
                     ) {
                         selectingDisplayMode = false
-                        uiPreferences.browsePanoramaMode().set(mode)
+                        uiPreferences.browsePanoramaMode().set(panoMode)
                     }
                 }
             }
