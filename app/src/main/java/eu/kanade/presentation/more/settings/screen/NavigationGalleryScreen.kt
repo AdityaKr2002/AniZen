@@ -126,7 +126,14 @@ class NavigationGalleryScreen : Screen() {
                             val item = NavItem.fromId(id)
                             if (item != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    val icon = item.tab.options.icon ?: painterResource(item.iconRes)
+                                    val icon = if (item == NavItem.FEED) {
+                                        painterResource(item.iconRes)
+                                    } else {
+                                        androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter(
+                                            androidx.compose.animation.graphics.vector.AnimatedImageVector.animatedVectorResource(item.iconRes),
+                                            false
+                                        )
+                                    }
                                     Icon(
                                         painter = icon,
                                         contentDescription = null,
