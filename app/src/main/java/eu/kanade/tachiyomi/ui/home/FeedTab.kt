@@ -47,7 +47,7 @@ data object FeedTab : Tab {
             return TabOptions(
                 index = 1u,
                 title = stringResource(title),
-                icon = painterResource(R.drawable.ic_browse_filled_24dp),
+                icon = painterResource(R.drawable.ic_dynamic_feed_24dp),
             )
         }
 

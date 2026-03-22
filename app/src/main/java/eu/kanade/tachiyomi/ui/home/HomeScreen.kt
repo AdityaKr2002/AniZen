@@ -562,7 +562,7 @@ object HomeScreen : Screen() {
                 FeedTab::class.isInstance(tab) -> {
                     painterResource(R.drawable.ic_dynamic_feed_24dp)
                 }
-                else -> painterResource(R.drawable.ic_dynamic_feed_24dp)
+                else -> painterResource(R.drawable.ic_browse_filled_24dp)
             }
 
             Icon(
