@@ -223,13 +223,24 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
         MPVLib.setOptionString("cookies", "yes")
+        MPVLib.setOptionString("cache", "yes")
         MPVLib.setOptionString("cache-on-disk", "no")
+        MPVLib.setOptionString("demuxer-readahead-secs", "30")
+        MPVLib.setOptionString("demuxer-thread", "yes")
 
         // Limit demuxer cache since the defaults are too high for mobile devices
-        // Increased for smoother seeking/skipping
-        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 128 else 64
+        // Increased for smoother seeking/skipping and high-bitrate content
+        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 256 else 128
         MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
         MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+        
+        // Stability and compatibility safeguards
+        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto threads
+        MPVLib.setOptionString("hwdec-extra-frames", "16") // Fixes black screen on many devices
+        MPVLib.setOptionString("opengl-es", "yes") // Force GLES for stability
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
+        
         MPVLib.setOptionString("hr-seek", "default")
         MPVLib.setOptionString("hr-seek-framedrop", "yes")
         //
