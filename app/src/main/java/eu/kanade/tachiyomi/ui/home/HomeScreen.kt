@@ -570,7 +570,7 @@ object HomeScreen : Screen() {
             Icon(
                 painter = iconPainter,
                 contentDescription = tab.options.title,
-                tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
             )
         }
     }
