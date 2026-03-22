@@ -62,9 +62,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
@@ -324,18 +324,20 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
-        val title = remember(tab, adaptiveDecision) {
+        // options is @Composable, extract outside remember
+        val options = tab.options
+        val title = remember(tab, adaptiveDecision, options) {
             if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
                 adaptiveDecision.reason
             } else {
-                tab.options.title
+                options.title
             }
         }
 
@@ -398,18 +400,20 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
+        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
 
-        val title = remember(tab, adaptiveDecision) {
+        // options is @Composable, extract outside remember
+        val options = tab.options
+        val title = remember(tab, adaptiveDecision, options) {
             if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
                 adaptiveDecision.reason
             } else {
-                tab.options.title
+                options.title
             }
         }
 
@@ -475,6 +479,9 @@ object HomeScreen : Screen() {
             label = "iconScale",
         )
 
+        // options is @Composable
+        val options = tab.options
+
         BadgedBox(
             modifier = Modifier.scale(scale),
             badge = {
@@ -528,13 +535,13 @@ object HomeScreen : Screen() {
             if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
                 Icon(
                     imageVector = Icons.Outlined.AutoAwesome,
-                    contentDescription = tab.options.title,
+                    contentDescription = options.title,
                     tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                 )
             } else {
                 Icon(
-                    painter = tab.options.icon!!,
-                    contentDescription = tab.options.title,
+                    painter = options.icon!!,
+                    contentDescription = options.title,
                     tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                 )
             }
