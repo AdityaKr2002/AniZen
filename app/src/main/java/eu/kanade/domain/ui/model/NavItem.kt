@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.ui.more.MoreTab
 import eu.kanade.tachiyomi.ui.updates.UpdatesTab
 import kotlinx.collections.immutable.*
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.sy.SYMR
 
 sealed interface NavAction {
     val requiresConfirmation: Boolean get() = false
@@ -233,9 +232,9 @@ enum class NavItem(
     val iconRes: Int,
     val behavior: NavBehavior = NavBehavior()
 ) {
-    LIBRARY("library", MR.strings.label_library, LibraryTab, R.drawable.ic_animelibrary_outline_24dp),
-    FEED("feed", SYMR.strings.feed, FeedTab, R.drawable.ic_browse_filled_24dp),
-    UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab, R.drawable.ic_updates_outline_24dp),
+    LIBRARY("library", MR.strings.label_library, LibraryTab, R.drawable.anim_library_enter),
+    FEED("feed", MR.strings.feed, FeedTab, R.drawable.ic_browse_filled_24dp),
+    UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab, R.drawable.anim_updates_enter),
     HISTORY("history", MR.strings.history, HistoryTab, R.drawable.anim_history_enter),
     BROWSE("browse", MR.strings.browse, BrowseTab, R.drawable.anim_browse_enter),
     MORE("more", MR.strings.label_more, MoreTab, R.drawable.anim_more_enter),

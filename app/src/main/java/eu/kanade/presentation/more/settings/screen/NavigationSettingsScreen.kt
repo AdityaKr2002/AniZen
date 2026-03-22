@@ -427,8 +427,9 @@ class NavigationSettingsScreen : Screen() {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val iconPainter = item.tab.options.icon ?: painterResource(item.iconRes)
                 Icon(
-                    painter = item.tab.options.icon!!,
+                    painter = iconPainter,
                     contentDescription = null,
                     modifier = Modifier.padding(start = 8.dp),
                     tint = MaterialTheme.colorScheme.primary
