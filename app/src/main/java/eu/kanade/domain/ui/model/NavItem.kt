@@ -220,8 +220,8 @@ object NavPresets {
     )
 
     val POWER = NavConfig(
-        visibleTabs = persistentListOf(NavItem.LIBRARY.id, NavItem.FEED.id, NavItem.UPDATES.id, NavItem.HISTORY.id, NavItem.MORE.id),
-        hiddenTabs = persistentListOf(NavItem.BROWSE.id)
+        visibleTabs = persistentListOf(NavItem.LIBRARY.id, NavItem.FEED.id, NavItem.UPDATES.id, NavItem.BROWSE.id, NavItem.MORE.id),
+        hiddenTabs = persistentListOf(NavItem.HISTORY.id)
     )
 }
 

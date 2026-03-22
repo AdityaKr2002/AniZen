@@ -47,9 +47,6 @@ object SettingsAppearanceScreen : SearchableSettings {
         return listOf(
             getThemeGroup(uiPreferences = uiPreferences),
             getDisplayGroup(uiPreferences = uiPreferences),
-            // SY -->
-            getNavbarGroup(uiPreferences = uiPreferences),
-            // SY <--
         )
     }
 
@@ -250,36 +247,6 @@ object SettingsAppearanceScreen : SearchableSettings {
         )
     }
 
-    @Composable
-    fun getNavbarGroup(uiPreferences: UiPreferences): Preference.PreferenceGroup {
-        return Preference.PreferenceGroup(
-            stringResource(MR.strings.pref_category_navbar),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.bottomBarLabels(),
-                    title = stringResource(MR.strings.pref_show_bottom_bar_labels),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.enableFeed(),
-                    title = stringResource(MR.strings.pref_enable_feed),
-                    subtitle = stringResource(MR.strings.pref_enable_feed_summary),
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showFeedInNavigationBar(),
-                    title = stringResource(MR.strings.pref_show_feed_in_nav),
-                    subtitle = stringResource(MR.strings.pref_show_feed_in_nav_summary),
-                    enabled = uiPreferences.enableFeed().collectAsState().value,
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showFeedInBrowse(),
-                    title = stringResource(MR.strings.pref_show_feed_in_browse),
-                    subtitle = stringResource(MR.strings.pref_show_feed_in_browse_summary),
-                    enabled = uiPreferences.enableFeed().collectAsState().value,
-                ),
-            ),
-        )
-    }
-// SY <--
 }
 
 private val DateFormats = listOf(

@@ -277,11 +277,43 @@ class NavigationSettingsScreen : Screen() {
                         onValueChange = { uiPreferences.navLabelVisibility().set(it) },
                     )
                     SwitchPreferenceWidget(
-                        title = stringResource(MR.strings.pref_bottom_nav_hide_on_scroll),
-                        checked = hideOnScroll,
-                        onCheckedChanged = { uiPreferences.hideBottomBarOnScroll().set(it) },
+                        title = "Always show nav bar",
+                        subtitle = "Disable hiding the navigation bar when scrolling down",
+                        checked = !hideOnScroll,
+                        onCheckedChanged = { uiPreferences.hideBottomBarOnScroll().set(!it) },
                         icon = null
                     )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PreferenceGroupHeader(title = "Feed Settings")
+                    val enableFeed by uiPreferences.enableFeed().collectAsStatePref()
+                    SwitchPreferenceWidget(
+                        title = stringResource(MR.strings.pref_enable_feed),
+                        subtitle = stringResource(MR.strings.pref_enable_feed_summary),
+                        checked = enableFeed,
+                        onCheckedChanged = { uiPreferences.enableFeed().set(it) },
+                        icon = null
+                    )
+                    if (enableFeed) {
+                        val showFeedInNav by uiPreferences.showFeedInNavigationBar().collectAsStatePref()
+                        SwitchPreferenceWidget(
+                            title = stringResource(MR.strings.pref_show_feed_in_nav),
+                            subtitle = stringResource(MR.strings.pref_show_feed_in_nav_summary),
+                            checked = showFeedInNav,
+                            onCheckedChanged = { uiPreferences.showFeedInNavigationBar().set(it) },
+                            icon = null
+                        )
+                        val showFeedInBrowse by uiPreferences.showFeedInBrowse().collectAsStatePref()
+                        SwitchPreferenceWidget(
+                            title = stringResource(MR.strings.pref_show_feed_in_browse),
+                            subtitle = stringResource(MR.strings.pref_show_feed_in_browse_summary),
+                            checked = showFeedInBrowse,
+                            onCheckedChanged = { uiPreferences.showFeedInBrowse().set(it) },
+                            icon = null
+                        )
+                    }
                 }
 
                 item {
