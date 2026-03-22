@@ -145,10 +145,10 @@ class NavAdaptiveEngine(
     }
 
     fun applyDecision(decision: AdaptiveDecision) {
+        decision.onApply?.invoke()
         decision.suggestedConfig?.let {
             uiPreferences.updateNavConfig(it)
         }
-        decision.onApply?.invoke()
         lastShiftTimestamp = System.currentTimeMillis()
         _currentDecision.value = null
     }
