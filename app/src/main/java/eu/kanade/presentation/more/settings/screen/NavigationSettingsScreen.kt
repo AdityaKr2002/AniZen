@@ -499,14 +499,6 @@ class NavigationSettingsScreen : Screen() {
 
     @Composable
     private fun rememberTabIcon(item: NavItem): androidx.compose.ui.graphics.painter.Painter {
-        return when (item) {
-            NavItem.BROWSE, NavItem.FEED -> painterResource(item.iconRes)
-            else -> {
-                rememberAnimatedVectorPainter(
-                    AnimatedImageVector.animatedVectorResource(item.iconRes),
-                    false,
-                )
-            }
-        }
+        return painterResource(item.iconRes)
     }
 }

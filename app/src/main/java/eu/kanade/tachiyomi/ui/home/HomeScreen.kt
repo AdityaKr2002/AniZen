@@ -96,6 +96,7 @@ import eu.kanade.tachiyomi.ui.history.HistoryTab
 import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.more.MoreTab
 import eu.kanade.tachiyomi.ui.updates.UpdatesTab
+import eu.kanade.tachiyomi.util.system.stringResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -322,7 +323,7 @@ object HomeScreen : Screen() {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
+        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
         val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
@@ -332,7 +333,11 @@ object HomeScreen : Screen() {
         val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
             adaptiveDecision.reason
         } else {
-            tab.options.title
+            remember(tab, navItem) {
+                runCatching { tab.options.title }.getOrElse { 
+                    navItem?.let { context.stringResource(it.titleRes) } ?: ""
+                }
+            }
         }
 
         with(rowScope) {
@@ -404,7 +409,11 @@ object HomeScreen : Screen() {
         val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
             adaptiveDecision.reason
         } else {
-            tab.options.title
+            remember(tab, navItem) {
+                runCatching { tab.options.title }.getOrElse { 
+                    navItem?.let { context.stringResource(it.titleRes) } ?: ""
+                }
+            }
         }
 
         NavigationRailItem(
@@ -566,7 +575,9 @@ object HomeScreen : Screen() {
 
             Icon(
                 painter = iconPainter,
-                contentDescription = tab.options.title,
+                contentDescription = remember(tab) {
+                    runCatching { tab.options.title }.getOrNull()
+                },
                 tint = if (selected) MaterialTheme.colorScheme.primary else LocalContentColor.current,
             )
         }
