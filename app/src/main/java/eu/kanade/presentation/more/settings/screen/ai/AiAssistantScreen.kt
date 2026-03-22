@@ -82,6 +82,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.presentation.anime.components.MarkdownRender
 import eu.kanade.presentation.components.AppBar
@@ -105,6 +107,7 @@ class AiAssistantScreen : Screen() {
 
     @Composable
     override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { AiAssistantScreenModel() }
         val state by screenModel.state.collectAsState()
         val sessions by screenModel.sessions.collectAsState()
@@ -204,7 +207,7 @@ class AiAssistantScreen : Screen() {
                 topBar = {
                     AppBar(
                         title = "AniZen Intelligence OS",
-                        navigateUp = onBackClicked,
+                        navigateUp = { navigator.pop() },
                         actions = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Default.Menu, "Session History")
