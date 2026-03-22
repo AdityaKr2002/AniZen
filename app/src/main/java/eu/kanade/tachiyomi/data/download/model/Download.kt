@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.download.model
 
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.ProgressListener
 import eu.kanade.tachiyomi.source.online.HttpSource

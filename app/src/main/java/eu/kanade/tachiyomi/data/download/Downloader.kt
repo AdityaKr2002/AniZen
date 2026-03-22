@@ -463,7 +463,7 @@ class Downloader(
                             os.write(0)
                         }
                     } catch (e: Exception) {
-                        logcat(LogPriority.WARNING, e) { "Failed to pre-allocate part $i" }
+                        logcat(LogPriority.WARN, e) { "Failed to pre-allocate part $i" }
                     }
                 }
                 
