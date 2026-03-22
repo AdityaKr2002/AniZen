@@ -1,5 +1,8 @@
 package eu.kanade.presentation.more.settings.screen
 
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -129,8 +132,8 @@ class NavigationGalleryScreen : Screen() {
                                     val icon = if (item == NavItem.FEED) {
                                         painterResource(item.iconRes)
                                     } else {
-                                        androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter(
-                                            androidx.compose.animation.graphics.vector.AnimatedImageVector.animatedVectorResource(item.iconRes),
+                                        rememberAnimatedVectorPainter(
+                                            AnimatedImageVector.animatedVectorResource(item.iconRes),
                                             false
                                         )
                                     }
