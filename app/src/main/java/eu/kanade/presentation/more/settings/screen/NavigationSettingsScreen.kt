@@ -1,6 +1,7 @@
 package eu.kanade.presentation.more.settings.screen
 
 import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import sh.calvin.reorderable.*
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavConfig
@@ -244,6 +246,19 @@ class NavigationSettingsScreen : Screen() {
                 }
             }
 
+            val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
+                val visibleIndexFrom = visibleItems.indexOfFirst { "visible-${it.id}" == from.key }
+                val visibleIndexTo = visibleItems.indexOfFirst { "visible-${it.id}" == to.key }
+                
+                if (visibleIndexFrom != -1 && visibleIndexTo != -1) {
+                    val newList = visibleItems.toMutableList().apply {
+                        add(visibleIndexTo, removeAt(visibleIndexFrom))
+                    }
+                    uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
@@ -272,25 +287,28 @@ class NavigationSettingsScreen : Screen() {
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     PreferenceGroupHeader(title = "Adaptive Navigation (Beta)")
+                    val adaptiveNavEnabled by uiPreferences.adaptiveNavEnabled().collectAsStatePref()
                     SwitchPreferenceWidget(
                         title = "Enable Adaptive Engine",
                         subtitle = "Allow the app to suggest layout changes based on context.",
-                        checked = uiPreferences.adaptiveNavEnabled().get(),
+                        checked = adaptiveNavEnabled,
                         onCheckedChanged = { uiPreferences.adaptiveNavEnabled().set(it) },
                         icon = null
                     )
-                    if (uiPreferences.adaptiveNavEnabled().get()) {
+                    if (adaptiveNavEnabled) {
+                        val connectivityRule by uiPreferences.adaptiveConnectivityRule().collectAsStatePref()
                         SwitchPreferenceWidget(
                             title = "Connectivity Rules",
                             subtitle = "Suggest offline layouts when WiFi is lost.",
-                            checked = uiPreferences.adaptiveConnectivityRule().get(),
+                            checked = connectivityRule,
                             onCheckedChanged = { uiPreferences.adaptiveConnectivityRule().set(it) },
                             icon = null
                         )
+                        val timeRule by uiPreferences.adaptiveTimeRule().collectAsStatePref()
                         SwitchPreferenceWidget(
                             title = "Late Night Rules",
                             subtitle = "Simplify navigation during late hours.",
-                            checked = uiPreferences.adaptiveTimeRule().get(),
+                            checked = timeRule,
                             onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) },
                             icon = null
                         )
@@ -300,10 +318,11 @@ class NavigationSettingsScreen : Screen() {
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     PreferenceGroupHeader(title = "Privacy & Telemetry")
+                    val telemetryEnabled by uiPreferences.adaptiveTelemetryEnabled().collectAsStatePref()
                     SwitchPreferenceWidget(
                         title = "On-Device Telemetry",
                         subtitle = "Logs gesture interactions locally for engine optimization. Data never leaves your device.",
-                        checked = uiPreferences.adaptiveTelemetryEnabled().get(),
+                        checked = telemetryEnabled,
                         onCheckedChanged = { uiPreferences.adaptiveTelemetryEnabled().set(it) },
                         icon = null
                     )
@@ -327,33 +346,34 @@ class NavigationSettingsScreen : Screen() {
                 ) { item ->
                     val isRequired = NavConfigValidator.REQUIRED_TABS.contains(item.id)
                     val index = visibleItems.indexOf(item)
-                    key(item.id) {
-                        NavigationSettingsItem(
-                            item = item,
-                            isVisible = true,
-                            onToggle = { if (!isRequired) onMoveToHidden(item) },
-                            onReorder = { from, to ->
-                                val newList = visibleItems.toMutableList().apply {
-                                    add(to, removeAt(from))
-                                }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
-                            },
-                            canMoveUp = index > 0,
-                            canMoveDown = index < visibleItems.size - 1,
-                            onMoveUp = {
-                                val newList = visibleItems.toMutableList().apply {
-                                    add(index - 1, removeAt(index))
-                                }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
-                            },
-                            onMoveDown = {
-                                val newList = visibleItems.toMutableList().apply {
-                                    add(index + 1, removeAt(index))
-                                }
-                                uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
-                            },
-                            toggleEnabled = !isRequired
-                        )
+                    ReorderableItem(state = reorderableState, key = "visible-${item.id}") { isDragging ->
+                        val elevation = animateDpAsState(if (isDragging) 8.dp else 0.dp)
+                        Surface(
+                            shadowElevation = elevation.value,
+                        ) {
+                            NavigationSettingsItem(
+                                item = item,
+                                isVisible = true,
+                                onToggle = { if (!isRequired) onMoveToHidden(item) },
+                                onReorder = null,
+                                canMoveUp = index > 0,
+                                canMoveDown = index < visibleItems.size - 1,
+                                onMoveUp = {
+                                    val newList = visibleItems.toMutableList().apply {
+                                        add(index - 1, removeAt(index))
+                                    }
+                                    uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
+                                },
+                                onMoveDown = {
+                                    val newList = visibleItems.toMutableList().apply {
+                                        add(index + 1, removeAt(index))
+                                    }
+                                    uiPreferences.updateNavConfig(NavConfig(visibleTabs = newList.map { n -> n.id }.toImmutableList(), hiddenTabs = bottomNavHiddenTabs.toImmutableList(), behaviorMap = behaviorMap))
+                                },
+                                toggleEnabled = !isRequired,
+                                reorderableScope = this
+                            )
+                        }
                     }
                 }
 
@@ -373,18 +393,16 @@ class NavigationSettingsScreen : Screen() {
                     items = hiddenItems,
                     key = { i -> "hidden-${i.id}" }
                 ) { item ->
-                    key(item.id) {
-                        NavigationSettingsItem(
-                            item = item,
-                            isVisible = false,
-                            onToggle = { onMoveToVisible(item) },
-                            onReorder = null,
-                            canMoveUp = false,
-                            canMoveDown = false,
-                            onMoveUp = {},
-                            onMoveDown = {}
-                        )
-                    }
+                    NavigationSettingsItem(
+                        item = item,
+                        isVisible = false,
+                        onToggle = { onMoveToVisible(item) },
+                        onReorder = null,
+                        canMoveUp = false,
+                        canMoveDown = false,
+                        onMoveUp = {},
+                        onMoveDown = {}
+                    )
                 }
 
                 item {
@@ -417,6 +435,7 @@ class NavigationSettingsScreen : Screen() {
         onMoveUp: () -> Unit,
         onMoveDown: () -> Unit,
         toggleEnabled: Boolean = true,
+        reorderableScope: ReorderableCollectionItemScope? = null,
     ) {
         Surface(
             modifier = Modifier
@@ -431,7 +450,12 @@ class NavigationSettingsScreen : Screen() {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val iconPainter = item.tab.options.icon ?: rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(item.iconRes), false)
+                // Safely get icon without potentially triggering TabNavigator crash
+                val iconPainter = try {
+                    item.tab.options.icon ?: rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(item.iconRes), false)
+                } catch (e: Exception) {
+                    painterResource(item.iconRes)
+                }
                 Icon(
                     painter = iconPainter,
                     contentDescription = null,
@@ -447,12 +471,19 @@ class NavigationSettingsScreen : Screen() {
                     fontWeight = FontWeight.Medium
                 )
                 
-                if (isVisible) {
-                    IconButton(onClick = onMoveUp, enabled = canMoveUp) {
+                if (isVisible && reorderableScope != null) {
+                    IconButton(
+                        onClick = {},
+                        modifier = Modifier.draggableHandle(
+                            onDragStarted = {
+                                Log.d("AniZenNav", "Drag started: ${item.id}")
+                            },
+                        )
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.DragHandle,
-                            contentDescription = "Move Up",
-                            tint = if (canMoveUp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            contentDescription = "Reorder",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

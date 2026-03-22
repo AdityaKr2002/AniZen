@@ -125,8 +125,9 @@ class NavigationGalleryScreen : Screen() {
                             val item = NavItem.fromId(id)
                             if (item != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    val icon = item.tab.options.icon ?: painterResource(item.iconRes)
                                     Icon(
-                                        painter = item.tab.options.icon!!,
+                                        painter = icon,
                                         contentDescription = null,
                                         modifier = Modifier.padding(4.dp),
                                         tint = MaterialTheme.colorScheme.primary

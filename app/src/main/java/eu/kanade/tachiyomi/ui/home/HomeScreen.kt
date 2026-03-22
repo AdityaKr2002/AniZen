@@ -3,11 +3,14 @@ package eu.kanade.tachiyomi.ui.home
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -145,11 +148,6 @@ object HomeScreen : Screen() {
         val preferences = Injekt.get<PreferenceStore>()
 
         var bottomNavVisible by rememberSaveable { mutableStateOf(true) }
-        val bottomNavTranslationY by animateFloatAsState(
-            targetValue = if (bottomNavVisible) 0f else 1f,
-            animationSpec = tween(if (animatedTransitions) 200 else 0),
-            label = "bottomNavTranslation"
-        )
 
         val nestedScrollConnection = remember(hideOnScroll) {
             object : NestedScrollConnection {
@@ -190,24 +188,21 @@ object HomeScreen : Screen() {
                     },
                     bottomBar = {
                         if (!isTabletUi()) {
-                            Column(
-                                modifier = Modifier.graphicsLayer {
-                                    translationY = bottomNavTranslationY * size.height
-                                    alpha = 1f - (bottomNavTranslationY * 0.5f)
-                                }
-                            ) {
-                                LaunchedEffect(Unit) {
-                                    showBottomNavEvent.receiveAsFlow().collectLatest { bottomNavVisible = it }
-                                }
+                            LaunchedEffect(Unit) {
+                                showBottomNavEvent.receiveAsFlow().collectLatest { bottomNavVisible = it }
+                            }
 
-                                if (isCurrentTabVisible) {
-                                    NavigationBar(
-                                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    ) {
-                                        for (tabItem in visibleTabs) {
-                                            key(tabItem.key) {
-                                                HomeNavigationBarItem(this, tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
-                                            }
+                            AnimatedVisibility(
+                                visible = bottomNavVisible && isCurrentTabVisible,
+                                enter = slideInVertically { it },
+                                exit = slideOutVertically { it },
+                            ) {
+                                NavigationBar(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                ) {
+                                    for (tabItem in visibleTabs) {
+                                        key(tabItem.key) {
+                                            HomeNavigationBarItem(this, tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
                                         }
                                     }
                                 }
