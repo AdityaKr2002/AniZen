@@ -109,6 +109,9 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     ): Preference.PreferenceGroup {
         val performanceProfile = decoderPreferences.performanceProfile()
         val preloadMode = playerPreferences.preloadMode()
+        val networkAwareThrottling = playerPreferences.networkAwareThrottling()
+        val selfHealingLinks = playerPreferences.selfHealingLinks()
+        val intelligentBufferHandoff = playerPreferences.intelligentBufferHandoff()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_player_performance),
@@ -128,6 +131,21 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     entries = eu.kanade.tachiyomi.ui.player.PreloadMode.entries.associateWith {
                         stringResource(it.titleRes)
                     }.toPersistentMap(),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = networkAwareThrottling,
+                    title = stringResource(MR.strings.pref_network_aware_throttling),
+                    subtitle = stringResource(MR.strings.pref_network_aware_throttling_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = selfHealingLinks,
+                    title = stringResource(MR.strings.pref_self_healing_links),
+                    subtitle = stringResource(MR.strings.pref_self_healing_links_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = intelligentBufferHandoff,
+                    title = stringResource(MR.strings.pref_intelligent_buffer_handoff),
+                    subtitle = stringResource(MR.strings.pref_intelligent_buffer_handoff_summary),
                 ),
             ),
         )

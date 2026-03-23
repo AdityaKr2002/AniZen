@@ -838,6 +838,12 @@
     <string name="pref_preload_off">Off</string>
     <string name="pref_preload_wifi">Wi-Fi only</string>
     <string name="pref_preload_always">Always</string>
+    <string name="pref_network_aware_throttling">Network-aware preloading</string>
+    <string name="pref_network_aware_throttling_summary">Delays preloading if your current episode starts buffering.</string>
+    <string name="pref_self_healing_links">Self-healing links</string>
+    <string name="pref_self_healing_links_summary">Pre-resolves links to prevent them from expiring, reducing transition errors.</string>
+    <string name="pref_intelligent_buffer_handoff">Intelligent buffer handoff</string>
+    <string name="pref_intelligent_buffer_handoff_summary">Keeps the connection warm for the next episode, allowing for a near-instant transition.</string>
     <string name="rotation_portrait">Portrait</string>
     <string name="rotation_reverse_portrait">Reverse portrait</string>
     <string name="rotation_landscape">Landscape</string>

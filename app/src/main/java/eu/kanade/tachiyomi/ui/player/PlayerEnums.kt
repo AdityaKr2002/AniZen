@@ -58,6 +58,8 @@ enum class PreloadState {
     None,
     MetadataLoading,
     MetadataReady,
+    PreloadingBuffer,
+    BufferReady,
     Failed,
     Unavailable,
 }

@@ -1563,10 +1563,16 @@ class PlayerViewModel @JvmOverloads constructor(
                         ?: throw ExceptionWithStringResource("No episode loaded", MR.strings.no_episode_loaded)
                 
                 val meta = preloadedMeta
-                if (nextEpisodeState.value == PreloadState.MetadataReady && meta != null && isMetaValid(meta) && episodeId == meta.episodeId) {
+                val isMetaStateValid = nextEpisodeState.value == PreloadState.MetadataReady || nextEpisodeState.value == PreloadState.BufferReady
+                
+                if (isMetaStateValid && meta != null && isMetaValid(meta) && episodeId == meta.episodeId) {
                     logcat { "Using preloaded hoster list for episode: ${currentEpisode.name}" }
                     currentHosterList = meta.hosterList
+                    // We'll let HosterLoader pick up the initialized video from the list
                 } else {
+                    if (meta != null && !isMetaValid(meta)) {
+                        logcat { "Preloaded meta expired (TTL). Fetching fresh hoster list." }
+                    }
                     currentHosterList = EpisodeLoader.getHosters(
                         currentEpisode.toDomainEpisode()!!,
                         anime,
@@ -1642,7 +1648,11 @@ class PlayerViewModel @JvmOverloads constructor(
             else -> false
         }
 
-        if (currentProgress > 0.80 && !isLoading.value && activity.player.paused != true && 
+        // Network-Aware Throttling: If the current video is struggling (buffering), delay preloading
+        val networkThrottlingEnabled = playerPreferences.networkAwareThrottling().get()
+        val isStruggling = isLoading.value && networkThrottlingEnabled
+
+        if (currentProgress > 0.80 && !isStruggling && activity.player.paused != true && 
             nextEpisodeState.value == PreloadState.None && shouldPreload) {
             preloadNextEpisodeMetadata()
         }
@@ -1651,6 +1661,7 @@ class PlayerViewModel @JvmOverloads constructor(
     data class PreloadedMeta(
         val episodeId: Long,
         val hosterList: List<Hoster>,
+        val video: Video? = null,
         val createdAtMs: Long = System.currentTimeMillis()
     )
 
@@ -1683,7 +1694,7 @@ class PlayerViewModel @JvmOverloads constructor(
         }
         
         if (_nextEpisodeState.value == PreloadState.Failed && !canRetryPreload()) return
-        if (_nextEpisodeState.value == PreloadState.MetadataLoading || _nextEpisodeState.value == PreloadState.MetadataReady) return
+        if (_nextEpisodeState.value == PreloadState.MetadataLoading || _nextEpisodeState.value == PreloadState.MetadataReady || _nextEpisodeState.value == PreloadState.PreloadingBuffer || _nextEpisodeState.value == PreloadState.BufferReady) return
 
         val nextEpisode = list[currentIndex + 1]
         val nextEpisodeId = nextEpisode.id ?: return
@@ -1701,9 +1712,45 @@ class PlayerViewModel @JvmOverloads constructor(
                     anime,
                     source,
                 )
-                preloadedMeta = PreloadedMeta(nextEpisodeId, hosterList)
-                _nextEpisodeState.value = PreloadState.MetadataReady
-                logcat { "Preload: Ready for episode=$nextEpisodeId" }
+                
+                var resolvedVideo: Video? = null
+                
+                // If intelligent buffer handoff or self-healing links are enabled, pre-resolve the best video
+                val enableBuffering = playerPreferences.intelligentBufferHandoff().get()
+                val enableSelfHealing = playerPreferences.selfHealingLinks().get()
+                
+                if (enableBuffering || enableSelfHealing) {
+                    _nextEpisodeState.value = PreloadState.PreloadingBuffer
+                    logcat { "Preload: Resolving best video for episode=$nextEpisodeId" }
+                    try {
+                        resolvedVideo = HosterLoader.getBestVideo(source, hosterList)
+                        if (resolvedVideo != null) {
+                            logcat { "Preload: Successfully resolved video: ${resolvedVideo.videoUrl.take(50)}..." }
+                            if (enableBuffering && resolvedVideo.videoUrl.isNotBlank()) {
+                                // Initiate a HEAD request or minimal GET to keep the socket warm
+                                try {
+                                    val client = networkHelper.client
+                                    val request = okhttp3.Request.Builder()
+                                        .url(resolvedVideo.videoUrl)
+                                        .head()
+                                        .build()
+                                    client.newCall(request).execute().close()
+                                    logcat { "Preload: Successfully warmed socket for video." }
+                                } catch (e: Exception) {
+                                    logcat(LogPriority.WARN, e) { "Preload: Socket warming failed (this is non-fatal)" }
+                                }
+                            }
+                        } else {
+                            logcat { "Preload: Failed to resolve a valid video." }
+                        }
+                    } catch (e: Exception) {
+                         logcat(LogPriority.WARN, e) { "Preload: Video resolution failed" }
+                    }
+                }
+                
+                preloadedMeta = PreloadedMeta(nextEpisodeId, hosterList, resolvedVideo)
+                _nextEpisodeState.value = if (resolvedVideo != null) PreloadState.BufferReady else PreloadState.MetadataReady
+                logcat { "Preload: Ready for episode=$nextEpisodeId (State: ${_nextEpisodeState.value})" }
             } catch (e: Exception) {
                 logcat(LogPriority.WARN, e) { "Preload: Failed for episode=$nextEpisodeId" }
                 lastPreloadFailAt = System.currentTimeMillis()
