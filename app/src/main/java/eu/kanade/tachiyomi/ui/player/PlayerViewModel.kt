@@ -1639,6 +1639,7 @@ class PlayerViewModel @JvmOverloads constructor(
             PreloadMode.Off -> false
             PreloadMode.Always -> true // User explicitly wants it Always
             PreloadMode.WifiOnly -> activity.isConnectedToWifi() && canPreloadPerformance
+            else -> false
         }
 
         if (currentProgress > 0.80 && !isLoading.value && activity.player.paused != true && 

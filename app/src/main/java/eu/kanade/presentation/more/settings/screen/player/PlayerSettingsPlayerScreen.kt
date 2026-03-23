@@ -84,9 +84,12 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     stringResource(it.titleRes)
                 }.toPersistentMap(),
             ),
-            getPerformanceGroup(decoderPreferences = decoderPreferences),
             getControlsGroup(playerPreferences = playerPreferences),
             getHosterGroup(playerPreferences = playerPreferences),
+            getPerformanceGroup(
+                playerPreferences = playerPreferences,
+                decoderPreferences = decoderPreferences,
+            ),
             getDisplayGroup(playerPreferences = playerPreferences),
             getIntroSkipGroup(playerPreferences = playerPreferences),
             if (deviceSupportsPip) getPipGroup(playerPreferences = playerPreferences) else null,
@@ -100,7 +103,10 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     }
 
     @Composable
-    private fun getPerformanceGroup(decoderPreferences: DecoderPreferences): Preference.PreferenceGroup {
+    private fun getPerformanceGroup(
+        playerPreferences: PlayerPreferences,
+        decoderPreferences: DecoderPreferences,
+    ): Preference.PreferenceGroup {
         val performanceProfile = decoderPreferences.performanceProfile()
         val preloadMode = playerPreferences.preloadMode()
 
