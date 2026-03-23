@@ -1624,7 +1624,7 @@ class PlayerViewModel @JvmOverloads constructor(
         }
 
         // Preload next episode URL (Phase 1)
-        if (currentProgress > 0.80 && !isLoading.value && !isBuffering.value && 
+        if (currentProgress > 0.80 && !isLoading.value && activity.player.paused != true && 
             nextEpisodeState.value == PreloadState.None && activity.isConnectedToWifi()) {
             val tier = DeviceTierManager.getTier(activity)
             if (tier != DeviceTierManager.Tier.LOW) {
