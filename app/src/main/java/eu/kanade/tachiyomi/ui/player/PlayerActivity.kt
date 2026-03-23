@@ -369,6 +369,10 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onPause() {
+        if (player.initialized) {
+            player.shrinkCache()
+        }
+        viewModel.cancelPreload()
         viewModel.saveCurrentEpisodeWatchingProgress()
 
         // Mantener sesión Cast activa
@@ -708,6 +712,9 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onResume() {
+        if (player.initialized && player.paused == false) {
+            player.restoreCache()
+        }
         // Reconectar Cast si estaba activo
         castManager.apply {
             reconnect()
@@ -915,6 +922,7 @@ class PlayerActivity : BaseActivity() {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         if (!isInPictureInPictureMode) {
+            player.restoreCache()
             pipReceiver?.let {
                 unregisterReceiver(pipReceiver)
                 pipReceiver = null
@@ -1408,8 +1416,6 @@ class PlayerActivity : BaseActivity() {
         subtitleTracks?.forEach { sub ->
             executeMPVCommand(arrayOf("sub-add", sub.url, "auto", sub.lang))
         }
-
-        viewModel.isLoadingTracks.update { _ -> false }
     }
 
     private fun setupChapters() {

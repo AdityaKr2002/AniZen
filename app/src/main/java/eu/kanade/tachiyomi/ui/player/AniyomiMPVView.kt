@@ -34,6 +34,7 @@ import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.buildVFChain
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
+import eu.kanade.tachiyomi.util.system.DeviceTierManager
 import `is`.xyz.mpv.BaseMPVView
 import `is`.xyz.mpv.KeyMapping
 import `is`.xyz.mpv.MPVLib
@@ -122,6 +123,43 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     var sid: Int by TrackDelegate("sid")
     var secondarySid: Int by TrackDelegate("secondary-sid")
     var aid: Int by TrackDelegate("aid")
+
+    private var currentMaxBytes = 192 * 1024 * 1024L
+    private var currentMaxBackBytes = 64 * 1024 * 1024L
+
+    fun applyPlaybackStrategy() {
+        val performanceProfile = decoderPreferences.performanceProfile().get()
+        val tier = when (performanceProfile) {
+            PerformanceProfile.HighPerformance -> DeviceTierManager.Tier.HIGH
+            PerformanceProfile.LowPower -> DeviceTierManager.Tier.LOW
+            else -> DeviceTierManager.getTier(context)
+        }
+
+        val (maxMb, maxBackMb, readahead) = when (tier) {
+            DeviceTierManager.Tier.LOW -> Triple(128, 32, 15)
+            DeviceTierManager.Tier.MID -> Triple(192, 64, 25)
+            DeviceTierManager.Tier.HIGH -> Triple(256, 128, 35)
+        }
+
+        currentMaxBytes = maxMb * 1024 * 1024L
+        currentMaxBackBytes = maxBackMb * 1024 * 1024L
+
+        MPVLib.setOptionString("demuxer-readahead-secs", "$readahead")
+        MPVLib.setOptionString("demuxer-max-bytes", "$currentMaxBytes")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "$currentMaxBackBytes")
+    }
+
+    fun restoreCache() {
+        MPVLib.setPropertyString("demuxer-max-bytes", "$currentMaxBytes")
+        MPVLib.setPropertyString("demuxer-max-back-bytes", "$currentMaxBackBytes")
+    }
+
+    fun shrinkCache() {
+        // Shrink to 64MB to release memory when backgrounded
+        val shrinkBytes = 64 * 1024 * 1024L
+        MPVLib.setPropertyString("demuxer-max-bytes", "$shrinkBytes")
+        MPVLib.setPropertyString("demuxer-max-back-bytes", "$shrinkBytes")
+    }
 
     override fun initOptions(vo: String) {
         initialized = true
@@ -223,13 +261,21 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
         MPVLib.setOptionString("cookies", "yes")
+        MPVLib.setOptionString("cache", "yes")
+        MPVLib.setOptionString("cache-pause", "no") // Prevent infinite hangs on network stalls
         MPVLib.setOptionString("cache-on-disk", "no")
+        MPVLib.setOptionString("demuxer-thread", "yes")
 
-        // Limit demuxer cache since the defaults are too high for mobile devices
-        // Increased for smoother seeking/skipping
-        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 128 else 64
-        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+        applyPlaybackStrategy()
+
+        // Stability and compatibility safeguards
+        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto threads
+        MPVLib.setOptionString("vd-lavc-dr", "yes") // Direct rendering for performance
+        MPVLib.setOptionString("hwdec-extra-frames", "24") // Further stability for 10-bit/4K
+        MPVLib.setOptionString("opengl-es", "yes") // Force GLES for stability
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
+        
         MPVLib.setOptionString("hr-seek", "default")
         MPVLib.setOptionString("hr-seek-framedrop", "yes")
         //

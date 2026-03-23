@@ -716,7 +716,8 @@ private fun AnimeSummary(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize()
-            .clipToBounds(),
+            .clipToBounds()
+            .clickableNoIndication(onClick = onExpand),
     ) {
         SelectionContainer {
             Box(
@@ -767,8 +768,7 @@ private fun AnimeSummary(
                     } else {
                         Modifier
                     },
-                )
-                .clickableNoIndication(onClick = onExpand),
+                ),
             contentAlignment = Alignment.Center,
         ) {
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_caret_down)

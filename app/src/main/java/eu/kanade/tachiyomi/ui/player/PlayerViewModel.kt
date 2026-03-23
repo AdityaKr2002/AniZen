@@ -63,6 +63,7 @@ import eu.kanade.tachiyomi.data.saver.Location
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.anilist.Anilist
 import eu.kanade.tachiyomi.data.track.myanimelist.MyAnimeList
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.player.controls.components.IndexedSegment
@@ -70,6 +71,7 @@ import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.getChangedAt
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
+import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.utils.AniSkipApi
@@ -82,6 +84,8 @@ import eu.kanade.tachiyomi.util.lang.byteSize
 import eu.kanade.tachiyomi.util.lang.takeBytes
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.cacheImageDir
+import eu.kanade.tachiyomi.util.system.DeviceTierManager
+import eu.kanade.tachiyomi.util.system.isConnectedToWifi
 import eu.kanade.tachiyomi.util.system.toast
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.Utils
@@ -147,6 +151,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val savedState: SavedStateHandle,
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
+    private val networkHelper: NetworkHelper = Injekt.get(),
     private val imageSaver: ImageSaver = Injekt.get(),
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
     private val trackPreferences: TrackPreferences = Injekt.get(),
@@ -162,6 +167,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val setAnimeViewerFlags: SetAnimeViewerFlags = Injekt.get(),
     internal val playerPreferences: PlayerPreferences = Injekt.get(),
     internal val gesturePreferences: GesturePreferences = Injekt.get(),
+    private val decoderPreferences: DecoderPreferences = Injekt.get(),
     private val basePreferences: BasePreferences = Injekt.get(),
     private val getCustomButtons: GetCustomButtons = Injekt.get(),
     private val trackSelect: TrackSelect = Injekt.get(),
@@ -1550,21 +1556,39 @@ class PlayerViewModel @JvmOverloads constructor(
 
         _currentEpisode.update { _ -> chosenEpisode }
         updateEpisode(chosenEpisode)
+        cancelPreload()
 
         return withIOContext {
             try {
                 val currentEpisode =
                     currentEpisode.value
                         ?: throw ExceptionWithStringResource("No episode loaded", MR.strings.no_episode_loaded)
-                currentHosterList = EpisodeLoader.getHosters(
-                    currentEpisode.toDomainEpisode()!!,
-                    anime,
-                    source,
-                )
+                
+                val meta = preloadedMeta
+                val isMetaStateValid = nextEpisodeState.value == PreloadState.MetadataReady || nextEpisodeState.value == PreloadState.BufferReady
+                
+                if (isMetaStateValid && meta != null && isMetaValid(meta) && episodeId == meta.episodeId) {
+                    logcat { "Using preloaded hoster list for episode: ${currentEpisode.name}" }
+                    currentHosterList = meta.hosterList
+                    // We'll let HosterLoader pick up the initialized video from the list
+                } else {
+                    if (meta != null && !isMetaValid(meta)) {
+                        logcat { "Preloaded meta expired (TTL). Fetching fresh hoster list." }
+                    }
+                    currentHosterList = EpisodeLoader.getHosters(
+                        currentEpisode.toDomainEpisode()!!,
+                        anime,
+                        source,
+                    )
+                }
 
                 this@PlayerViewModel.episodeId = currentEpisode.id!!
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { e.message ?: "Error getting links" }
+            } finally {
+                // Always reset preload state after any attempt to load an episode
+                _nextEpisodeState.value = PreloadState.None
+                preloadedMeta = null
             }
 
             EpisodeLoadResult(
@@ -1603,9 +1627,137 @@ class PlayerViewModel @JvmOverloads constructor(
 
         saveWatchingProgress(currentEp)
 
-        val inDownloadRange = seconds.toDouble() / totalSeconds > 0.35
+        val currentProgress = seconds.toDouble() / totalSeconds
+        val inDownloadRange = currentProgress > 0.35
         if (inDownloadRange) {
             downloadNextEpisodes()
+        }
+
+        // Preload next episode URL (Phase 1)
+        val preloadMode = playerPreferences.preloadMode().get()
+        val performanceProfile = decoderPreferences.performanceProfile().get()
+        val canPreloadPerformance = when (performanceProfile) {
+            PerformanceProfile.HighPerformance -> true
+            PerformanceProfile.LowPower -> false
+            PerformanceProfile.Automatic -> DeviceTierManager.getTier(activity) != DeviceTierManager.Tier.LOW
+        }
+
+        // Hierarchy: PreloadMode (Explicit Intent) > PerformanceProfile (Global) > Tier (Default)
+        val shouldPreload = when (preloadMode) {
+            PreloadMode.Off -> false
+            PreloadMode.Always -> true // User explicitly wants it Always
+            PreloadMode.WifiOnly -> activity.isConnectedToWifi() && canPreloadPerformance
+            else -> false
+        }
+
+        // Network-Aware Throttling: If the current video is struggling (buffering), delay preloading
+        val networkThrottlingEnabled = playerPreferences.networkAwareThrottling().get()
+        val isStruggling = isLoading.value && networkThrottlingEnabled
+
+        if (currentProgress > 0.80 && !isStruggling && activity.player.paused != true && 
+            nextEpisodeState.value == PreloadState.None && shouldPreload) {
+            preloadNextEpisodeMetadata()
+        }
+    }
+
+    data class PreloadedMeta(
+        val episodeId: Long,
+        val hosterList: List<Hoster>,
+        val video: Video? = null,
+        val createdAtMs: Long = System.currentTimeMillis()
+    )
+
+    private val _nextEpisodeState = MutableStateFlow(PreloadState.None)
+    val nextEpisodeState = _nextEpisodeState.asStateFlow()
+    private var preloadedMeta: PreloadedMeta? = null
+    private var preloadJob: Job? = null
+    private var lastPreloadFailAt = 0L
+
+    private fun isMetaValid(meta: PreloadedMeta) =
+        System.currentTimeMillis() - meta.createdAtMs < 5 * 60_000 // 5 minutes TTL
+
+    private fun canRetryPreload(): Boolean =
+        System.currentTimeMillis() - lastPreloadFailAt > 60_000 // 1 minute backoff
+
+    fun cancelPreload() {
+        preloadJob?.cancel()
+        preloadJob = null
+    }
+
+    private fun preloadNextEpisodeMetadata() {
+        val list = currentPlaylist.value
+        if (list.isEmpty()) return
+        val currentIndex = getCurrentEpisodeIndex()
+        val hasNext = currentIndex in 0 until list.lastIndex
+        
+        if (!hasNext) {
+            _nextEpisodeState.value = PreloadState.Unavailable
+            return
+        }
+        
+        if (_nextEpisodeState.value == PreloadState.Failed && !canRetryPreload()) return
+        if (_nextEpisodeState.value == PreloadState.MetadataLoading || _nextEpisodeState.value == PreloadState.MetadataReady || _nextEpisodeState.value == PreloadState.PreloadingBuffer || _nextEpisodeState.value == PreloadState.BufferReady) return
+
+        val nextEpisode = list[currentIndex + 1]
+        val nextEpisodeId = nextEpisode.id ?: return
+
+        _nextEpisodeState.value = PreloadState.MetadataLoading
+        logcat { "Preload: Starting for episode=$nextEpisodeId" }
+        preloadJob = viewModelScope.launchIO {
+            try {
+                val anime = currentAnime.value ?: return@launchIO
+                val source = sourceManager.getOrStub(anime.source)
+                
+                logcat { "Preload: Fetching hosters for ${nextEpisode.name}" }
+                val hosterList = EpisodeLoader.getHosters(
+                    nextEpisode.toDomainEpisode()!!,
+                    anime,
+                    source,
+                )
+                
+                var resolvedVideo: Video? = null
+                
+                // If intelligent buffer handoff or self-healing links are enabled, pre-resolve the best video
+                val enableBuffering = playerPreferences.intelligentBufferHandoff().get()
+                val enableSelfHealing = playerPreferences.selfHealingLinks().get()
+                
+                if (enableBuffering || enableSelfHealing) {
+                    _nextEpisodeState.value = PreloadState.PreloadingBuffer
+                    logcat { "Preload: Resolving best video for episode=$nextEpisodeId" }
+                    try {
+                        resolvedVideo = HosterLoader.getBestVideo(source, hosterList)
+                        if (resolvedVideo != null) {
+                            logcat { "Preload: Successfully resolved video: ${resolvedVideo.videoUrl.take(50)}..." }
+                            if (enableBuffering && resolvedVideo.videoUrl.isNotBlank()) {
+                                // Initiate a HEAD request or minimal GET to keep the socket warm
+                                try {
+                                    val client = networkHelper.client
+                                    val request = okhttp3.Request.Builder()
+                                        .url(resolvedVideo.videoUrl)
+                                        .head()
+                                        .build()
+                                    client.newCall(request).execute().use { }
+                                    logcat { "Preload: Successfully warmed socket for video." }
+                                } catch (e: Exception) {
+                                    logcat(LogPriority.WARN, e) { "Preload: Socket warming failed (this is non-fatal)" }
+                                }
+                            }
+                        } else {
+                            logcat { "Preload: Failed to resolve a valid video." }
+                        }
+                    } catch (e: Exception) {
+                         logcat(LogPriority.WARN, e) { "Preload: Video resolution failed" }
+                    }
+                }
+                
+                preloadedMeta = PreloadedMeta(nextEpisodeId, hosterList, resolvedVideo)
+                _nextEpisodeState.value = if (resolvedVideo != null) PreloadState.BufferReady else PreloadState.MetadataReady
+                logcat { "Preload: Ready for episode=$nextEpisodeId (State: ${_nextEpisodeState.value})" }
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN, e) { "Preload: Failed for episode=$nextEpisodeId" }
+                lastPreloadFailAt = System.currentTimeMillis()
+                _nextEpisodeState.value = PreloadState.Failed
+            }
         }
     }
 

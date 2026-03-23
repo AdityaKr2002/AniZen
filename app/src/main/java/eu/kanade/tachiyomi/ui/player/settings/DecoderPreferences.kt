@@ -1,12 +1,14 @@
 package eu.kanade.tachiyomi.ui.player.settings
 
 import eu.kanade.tachiyomi.ui.player.Debanding
+import eu.kanade.tachiyomi.ui.player.PerformanceProfile
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.getEnum
 
 class DecoderPreferences(
     private val preferenceStore: PreferenceStore,
 ) {
+    fun performanceProfile() = preferenceStore.getEnum("pref_performance_profile", PerformanceProfile.Automatic)
     fun tryHWDecoding() = preferenceStore.getBoolean("pref_try_hwdec", true)
     fun gpuNext() = preferenceStore.getBoolean("pref_gpu_next", false)
     fun videoDebanding() = preferenceStore.getEnum("pref_video_debanding", Debanding.None)

@@ -161,9 +161,17 @@ private fun onViewCreated(
             binding.title.setText(anime.title)
         }
 
-        binding.title.hint = context.getString(R.string.title_hint, anime.url)
+        binding.titleOutline.hint = context.getString(R.string.title)
+
+        binding.mangaAuthorOutline.hint = context.getString(R.string.author)
         binding.mangaAuthor.setText(anime.author.orEmpty())
+
+        binding.mangaArtistOutline.hint = context.getString(R.string.artist)
         binding.mangaArtist.setText(anime.artist.orEmpty())
+
+        binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+
+        binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
         binding.mangaDescription.setText(anime.description.orEmpty())
         binding.mangaGenresTags.setChips(anime.genre.orEmpty().dropBlank(), scope)
     } else {
@@ -181,14 +189,15 @@ private fun onViewCreated(
         }
         binding.mangaGenresTags.setChips(anime.genre.orEmpty().dropBlank(), scope)
 
-        binding.title.hint = context.getString(R.string.title_hint, anime.ogTitle)
-        binding.mangaAuthor.hint = context.getString(R.string.author_hint, anime.ogAuthor ?: "")
-        binding.mangaArtist.hint = context.getString(R.string.artist_hint, anime.ogArtist ?: "")
-        binding.mangaDescription.hint =
-            context.getString(
-                R.string.description_hint,
-                anime.ogDescription?.takeIf { it.isNotBlank() }?.replace("\n", " ")?.chop(20) ?: "",
-            )
+        binding.titleOutline.hint = context.getString(R.string.title)
+
+        binding.mangaAuthorOutline.hint = context.getString(R.string.author)
+
+        binding.mangaArtistOutline.hint = context.getString(R.string.artist)
+
+        binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+
+        binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
     }
     binding.mangaGenresTags.clearFocus()
 

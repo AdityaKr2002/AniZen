@@ -27,6 +27,7 @@ import eu.kanade.tachiyomi.ui.player.PlayerOrientation
 import eu.kanade.tachiyomi.ui.player.VLC_PLAYER
 import eu.kanade.tachiyomi.ui.player.WEB_VIDEO_CASTER
 import eu.kanade.tachiyomi.ui.player.X_PLAYER
+import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.LocalHttpServerHolder
 import eu.kanade.tachiyomi.util.LocalHttpServerService
@@ -51,6 +52,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val playerPreferences = remember { Injekt.get<PlayerPreferences>() }
+        val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
         val basePreferences = remember { Injekt.get<BasePreferences>() }
         val torrentServerPreferences = remember { Injekt.get<TorrentServerPreferences>() }
         val deviceSupportsPip = basePreferences.deviceHasPip()
@@ -84,6 +86,10 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
             ),
             getControlsGroup(playerPreferences = playerPreferences),
             getHosterGroup(playerPreferences = playerPreferences),
+            getPerformanceGroup(
+                playerPreferences = playerPreferences,
+                decoderPreferences = decoderPreferences,
+            ),
             getDisplayGroup(playerPreferences = playerPreferences),
             getIntroSkipGroup(playerPreferences = playerPreferences),
             if (deviceSupportsPip) getPipGroup(playerPreferences = playerPreferences) else null,
@@ -93,6 +99,55 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
             ),
             getTorrentServerGroup(torrentServerPreferences),
             geCastServerGroup(localHttpServerHolder),
+        )
+    }
+
+    @Composable
+    private fun getPerformanceGroup(
+        playerPreferences: PlayerPreferences,
+        decoderPreferences: DecoderPreferences,
+    ): Preference.PreferenceGroup {
+        val performanceProfile = decoderPreferences.performanceProfile()
+        val preloadMode = playerPreferences.preloadMode()
+        val networkAwareThrottling = playerPreferences.networkAwareThrottling()
+        val selfHealingLinks = playerPreferences.selfHealingLinks()
+        val intelligentBufferHandoff = playerPreferences.intelligentBufferHandoff()
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_category_player_performance),
+            preferenceItems = persistentListOf(
+                Preference.PreferenceItem.ListPreference(
+                    pref = performanceProfile,
+                    title = stringResource(MR.strings.pref_performance_profile),
+                    subtitle = stringResource(MR.strings.pref_performance_profile_summary),
+                    entries = eu.kanade.tachiyomi.ui.player.PerformanceProfile.entries.associateWith {
+                        stringResource(it.titleRes)
+                    }.toPersistentMap(),
+                ),
+                Preference.PreferenceItem.ListPreference(
+                    pref = preloadMode,
+                    title = stringResource(MR.strings.pref_preload_mode),
+                    subtitle = stringResource(MR.strings.pref_preload_mode_summary),
+                    entries = eu.kanade.tachiyomi.ui.player.PreloadMode.entries.associateWith {
+                        stringResource(it.titleRes)
+                    }.toPersistentMap(),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = networkAwareThrottling,
+                    title = stringResource(MR.strings.pref_network_aware_throttling),
+                    subtitle = stringResource(MR.strings.pref_network_aware_throttling_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = selfHealingLinks,
+                    title = stringResource(MR.strings.pref_self_healing_links),
+                    subtitle = stringResource(MR.strings.pref_self_healing_links_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = intelligentBufferHandoff,
+                    title = stringResource(MR.strings.pref_intelligent_buffer_handoff),
+                    subtitle = stringResource(MR.strings.pref_intelligent_buffer_handoff_summary),
+                ),
+            ),
         )
     }
 

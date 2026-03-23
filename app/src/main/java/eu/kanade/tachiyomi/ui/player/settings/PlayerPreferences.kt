@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.player.settings
 
+import eu.kanade.tachiyomi.ui.player.PreloadMode
 import eu.kanade.tachiyomi.ui.player.PlayerOrientation
 import eu.kanade.tachiyomi.ui.player.VideoAspect
 import tachiyomi.core.common.preference.PreferenceStore
@@ -92,4 +93,9 @@ class PlayerPreferences(
     // Old
 
     fun autoplayEnabled() = preferenceStore.getBoolean("pref_auto_play_enabled", false)
+
+    fun preloadMode() = preferenceStore.getEnum("pref_preload_mode_key", PreloadMode.WifiOnly)
+    fun selfHealingLinks() = preferenceStore.getBoolean("pref_self_healing_links", true)
+    fun intelligentBufferHandoff() = preferenceStore.getBoolean("pref_intelligent_buffer_handoff", false)
+    fun networkAwareThrottling() = preferenceStore.getBoolean("pref_network_aware_throttling", true)
 }

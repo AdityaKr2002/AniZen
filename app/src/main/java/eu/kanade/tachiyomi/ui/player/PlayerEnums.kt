@@ -48,6 +48,28 @@ enum class VideoAspect(val titleRes: StringResource) {
     Stretch(MR.strings.video_stretch_screen),
 }
 
+enum class PerformanceProfile(val titleRes: StringResource) {
+    Automatic(MR.strings.pref_performance_profile_automatic),
+    HighPerformance(MR.strings.pref_performance_profile_high),
+    LowPower(MR.strings.pref_performance_profile_low_power),
+}
+
+enum class PreloadState {
+    None,
+    MetadataLoading,
+    MetadataReady,
+    PreloadingBuffer,
+    BufferReady,
+    Failed,
+    Unavailable,
+}
+
+enum class PreloadMode(val titleRes: StringResource) {
+    Off(MR.strings.pref_preload_off),
+    WifiOnly(MR.strings.pref_preload_wifi),
+    Always(MR.strings.pref_preload_always),
+}
+
 /**
  * Action performed by a button, like double tap or media controls
  */
