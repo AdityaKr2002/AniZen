@@ -63,6 +63,7 @@ import eu.kanade.tachiyomi.data.saver.Location
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.anilist.Anilist
 import eu.kanade.tachiyomi.data.track.myanimelist.MyAnimeList
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.player.controls.components.IndexedSegment
@@ -150,6 +151,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val savedState: SavedStateHandle,
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
+    private val networkHelper: NetworkHelper = Injekt.get(),
     private val imageSaver: ImageSaver = Injekt.get(),
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
     private val trackPreferences: TrackPreferences = Injekt.get(),
@@ -1734,7 +1736,7 @@ class PlayerViewModel @JvmOverloads constructor(
                                         .url(resolvedVideo.videoUrl)
                                         .head()
                                         .build()
-                                    client.newCall(request).execute().close()
+                                    client.newCall(request).execute().use { }
                                     logcat { "Preload: Successfully warmed socket for video." }
                                 } catch (e: Exception) {
                                     logcat(LogPriority.WARN, e) { "Preload: Socket warming failed (this is non-fatal)" }
