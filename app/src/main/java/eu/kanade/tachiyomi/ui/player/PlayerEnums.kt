@@ -54,6 +54,14 @@ enum class PerformanceProfile(val titleRes: StringResource) {
     LowPower(MR.strings.pref_performance_profile_low_power),
 }
 
+enum class PreloadState {
+    None,
+    MetadataLoading,
+    MetadataReady,
+    Failed,
+    Unavailable,
+}
+
 /**
  * Action performed by a button, like double tap or media controls
  */

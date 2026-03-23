@@ -369,7 +369,10 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onPause() {
-        player.shrinkCache()
+        if (player.initialized) {
+            player.shrinkCache()
+        }
+        viewModel.cancelPreload()
         viewModel.saveCurrentEpisodeWatchingProgress()
 
         // Mantener sesión Cast activa
@@ -709,7 +712,9 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onResume() {
-        player.restoreCache()
+        if (player.initialized && player.paused == false) {
+            player.restoreCache()
+        }
         // Reconectar Cast si estaba activo
         castManager.apply {
             reconnect()

@@ -1552,17 +1552,29 @@ class PlayerViewModel @JvmOverloads constructor(
 
         _currentEpisode.update { _ -> chosenEpisode }
         updateEpisode(chosenEpisode)
+        cancelPreload()
 
         return withIOContext {
             try {
                 val currentEpisode =
                     currentEpisode.value
                         ?: throw ExceptionWithStringResource("No episode loaded", MR.strings.no_episode_loaded)
-                currentHosterList = EpisodeLoader.getHosters(
-                    currentEpisode.toDomainEpisode()!!,
-                    anime,
-                    source,
-                )
+                
+                val meta = preloadedMeta
+                if (nextEpisodeState.value == PreloadState.MetadataReady && meta != null && isMetaValid(meta) && episodeId == currentEpisode.id) {
+                    logcat { "Using preloaded hoster list for episode: ${currentEpisode.name}" }
+                    currentHosterList = meta.hosterList
+                } else {
+                    currentHosterList = EpisodeLoader.getHosters(
+                        currentEpisode.toDomainEpisode()!!,
+                        anime,
+                        source,
+                    )
+                }
+
+                // Reset preload state after consumption or if it was for a different episode
+                _nextEpisodeState.value = PreloadState.None
+                preloadedMeta = null
 
                 this@PlayerViewModel.episodeId = currentEpisode.id!!
             } catch (e: Exception) {
@@ -1612,29 +1624,73 @@ class PlayerViewModel @JvmOverloads constructor(
         }
 
         // Preload next episode URL (Phase 1)
-        if (currentProgress > 0.80 && !isLoading.value && !isPreloadingNext && activity.isConnectedToWifi()) {
+        if (currentProgress > 0.80 && !isLoading.value && !isBuffering.value && 
+            nextEpisodeState.value == PreloadState.None && activity.isConnectedToWifi()) {
             val tier = DeviceTierManager.getTier(activity)
             if (tier != DeviceTierManager.Tier.LOW) {
-                preloadNextEpisode()
+                preloadNextEpisodeMetadata()
             }
         }
     }
 
-    private var isPreloadingNext = false
-    private fun preloadNextEpisode() {
-        if (isPreloadingNext || getCurrentEpisodeIndex() == currentPlaylist.value.lastIndex) return
-        val nextEpisodeId = getAdjacentEpisodeId(previous = false)
-        if (nextEpisodeId == -1L) return
+    data class PreloadedMeta(
+        val hosterList: List<Hoster>,
+        val createdAtMs: Long = System.currentTimeMillis()
+    )
 
-        isPreloadingNext = true
-        viewModelScope.launchIO {
+    private val _nextEpisodeState = MutableStateFlow(PreloadState.None)
+    val nextEpisodeState = _nextEpisodeState.asStateFlow()
+    private var preloadedMeta: PreloadedMeta? = null
+    private var preloadJob: Job? = null
+    private var lastPreloadFailAt = 0L
+
+    private fun isMetaValid(meta: PreloadedMeta) =
+        System.currentTimeMillis() - meta.createdAtMs < 5 * 60_000 // 5 minutes TTL
+
+    private fun canRetryPreload(): Boolean =
+        System.currentTimeMillis() - lastPreloadFailAt > 60_000 // 1 minute backoff
+
+    fun cancelPreload() {
+        preloadJob?.cancel()
+        preloadJob = null
+    }
+
+    private fun preloadNextEpisodeMetadata() {
+        val list = currentPlaylist.value
+        if (list.isEmpty()) return
+        val currentIndex = getCurrentEpisodeIndex()
+        val hasNext = currentIndex in 0 until list.lastIndex
+        
+        if (!hasNext) {
+            _nextEpisodeState.value = PreloadState.Unavailable
+            return
+        }
+        
+        if (_nextEpisodeState.value == PreloadState.Failed && !canRetryPreload()) return
+        if (_nextEpisodeState.value == PreloadState.MetadataLoading || _nextEpisodeState.value == PreloadState.MetadataReady) return
+
+        val nextEpisode = list[currentIndex + 1]
+        val nextEpisodeId = nextEpisode.id ?: return
+
+        _nextEpisodeState.value = PreloadState.MetadataLoading
+        preloadJob = viewModelScope.launchIO {
             try {
-                logcat { "Preloading next episode: $nextEpisodeId" }
-                loadEpisode(nextEpisodeId)
+                val anime = currentAnime.value ?: return@launchIO
+                val source = sourceManager.getOrStub(anime.source)
+                
+                logcat { "Preloading metadata for next episode: ${nextEpisode.name}" }
+                val hosterList = EpisodeLoader.getHosters(
+                    nextEpisode.toDomainEpisode()!!,
+                    anime,
+                    source,
+                )
+                preloadedMeta = PreloadedMeta(hosterList)
+                _nextEpisodeState.value = PreloadState.MetadataReady
+                logcat { "Preload state=${_nextEpisodeState.value}" }
             } catch (e: Exception) {
-                logcat(LogPriority.WARN, e) { "Failed to preload next episode" }
-            } finally {
-                // Keep it true for the duration of the current episode to avoid multiple triggers
+                logcat(LogPriority.WARN, e) { "Failed to preload next episode metadata" }
+                lastPreloadFailAt = System.currentTimeMillis()
+                _nextEpisodeState.value = PreloadState.Failed
             }
         }
     }

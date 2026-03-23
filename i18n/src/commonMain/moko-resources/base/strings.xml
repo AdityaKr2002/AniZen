@@ -829,7 +829,7 @@
     <string name="rotation_free">Free</string>
     <string name="pref_category_player_performance">Performance</string>
     <string name="pref_performance_profile">Performance profile</string>
-    <string name="pref_performance_profile_automatic">Smart (Recommended)</string>
+    <string name="pref_performance_profile_automatic">Automatic (Recommended)</string>
     <string name="pref_performance_profile_high">High Performance</string>
     <string name="pref_performance_profile_low_power">Low Power / Battery Saver</string>
     <string name="pref_performance_profile_summary">Adjusts playback cache and resources based on your device hardware.</string>
