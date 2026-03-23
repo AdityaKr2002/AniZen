@@ -1605,14 +1605,14 @@ class PlayerViewModel @JvmOverloads constructor(
 
         saveWatchingProgress(currentEp)
 
-        val progress = seconds.toDouble() / totalSeconds
-        val inDownloadRange = progress > 0.35
+        val currentProgress = seconds.toDouble() / totalSeconds
+        val inDownloadRange = currentProgress > 0.35
         if (inDownloadRange) {
             downloadNextEpisodes()
         }
 
         // Preload next episode URL (Phase 1)
-        if (progress > 0.80 && !isLoading.value && !isPreloadingNext && activity.isConnectedToWifi()) {
+        if (currentProgress > 0.80 && !isLoading.value && !isPreloadingNext && activity.isConnectedToWifi()) {
             val tier = DeviceTierManager.getTier(activity)
             if (tier != DeviceTierManager.Tier.LOW) {
                 preloadNextEpisode()
