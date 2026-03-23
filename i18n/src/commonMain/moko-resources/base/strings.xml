@@ -833,6 +833,11 @@
     <string name="pref_performance_profile_high">High Performance</string>
     <string name="pref_performance_profile_low_power">Low Power / Battery Saver</string>
     <string name="pref_performance_profile_summary">Adjusts playback cache and resources based on your device hardware.</string>
+    <string name="pref_preload_mode">Preload next episode</string>
+    <string name="pref_preload_mode_summary">Pre-fetches stream metadata for the next episode before current one finishes.</string>
+    <string name="pref_preload_off">Off</string>
+    <string name="pref_preload_wifi">Wi-Fi only</string>
+    <string name="pref_preload_always">Always</string>
     <string name="rotation_portrait">Portrait</string>
     <string name="rotation_reverse_portrait">Reverse portrait</string>
     <string name="rotation_landscape">Landscape</string>

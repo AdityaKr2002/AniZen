@@ -353,77 +353,61 @@ class Downloader(
         
         // Recover thread count on resume to prevent progress bar desync
         var threadCount = download.activeThreads
-        if (threadCount <= 0 || tmpDir.findFile("$filename.part0") != null) {
-            var count = 0
-            for (i in 0 until 64) {
-                if (tmpDir.findFile("$filename.part$i") != null) count++ else break
-            }
-            threadCount = if (count > 0) count else calculateDynamicConcurrency()
+        if (threadCount <= 0) {
+            val partFiles = tmpDir.listFiles()?.filter { it.name?.contains(".part") == true }.orEmpty()
+            threadCount = if (partFiles.isNotEmpty()) partFiles.size else calculateDynamicConcurrency()
             download.activeThreads = threadCount
         }
 
         var size = -1L
         var contentType = ""
+        var supportsRange = false
 
+        // Combined Size and Range Detection (Optimized Startup)
         try {
-            val headRes = retry { 
-                client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
+            val res = retry {
+                client.newCall(
+                    Request.Builder()
+                        .url(video.videoUrl)
+                        .headers(video.headers ?: Headers.headersOf())
+                        .header("Range", "bytes=0-0")
+                        .build()
+                ).await()
             }
-            if (headRes.isSuccessful) {
-                size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
-                contentType = headRes.header("Content-Type") ?: ""
+            if (res.isSuccessful || res.code == 416 || res.code == 206) {
+                contentType = res.header("Content-Type") ?: ""
+                supportsRange = res.code == 206 || res.header("Accept-Ranges") == "bytes"
+                val contentRange = res.header("Content-Range")
+                if (contentRange != null) {
+                    size = contentRange.substringAfterLast("/").toLongOrNull() ?: size
+                } else {
+                    size = res.header("Content-Length")?.toLongOrNull() ?: size
+                }
             }
-            headRes.close()
+            res.close()
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "HEAD request failed for size detection" }
+            logcat(LogPriority.ERROR, e) { "Size detection failed via Range" }
         }
 
-        // If size is less than 1MB or invalid, fallback to GET Range to get the true size
-        if (size <= 1024 * 1024) { 
+        // Fallback to HEAD if Range detection failed
+        if (size <= 0) {
             try {
-                val getRes = retry {
-                    client.newCall(
-                        Request.Builder()
-                            .url(video.videoUrl)
-                            .headers(video.headers ?: Headers.headersOf())
-                            .header("Range", "bytes=0-0")
-                            .build()
-                    ).await()
+                val headRes = retry {
+                    client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
                 }
-                if (getRes.isSuccessful || getRes.code == 416 || getRes.code == 206) {
-                    contentType = getRes.header("Content-Type") ?: contentType
-                    val contentRange = getRes.header("Content-Range")
-                    if (contentRange != null) {
-                        size = contentRange.substringAfterLast("/").toLongOrNull() ?: size
-                    } else if (getRes.code == 200) {
-                        size = getRes.header("Content-Length")?.toLongOrNull() ?: size
-                    }
+                if (headRes.isSuccessful) {
+                    size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
+                    contentType = headRes.header("Content-Type") ?: contentType
+                    supportsRange = supportsRange || headRes.header("Accept-Ranges") == "bytes"
                 }
-                getRes.close()
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "GET Range request failed for size detection" }
-            }
+                headRes.close()
+            } catch (e: Exception) {}
         }
-        
-        // If still invalid, try a normal GET just to read headers (GET Abort Strategy)
-        if (size <= 1024 * 1024) {
-            try {
-                val getRes = retry {
-                    client.newCall(
-                        Request.Builder()
-                            .url(video.videoUrl)
-                            .headers(video.headers ?: Headers.headersOf())
-                            .build()
-                    ).await()
-                }
-                if (getRes.isSuccessful) {
-                    contentType = getRes.header("Content-Type") ?: contentType
-                    size = getRes.header("Content-Length")?.toLongOrNull() ?: size
-                }
-                getRes.close()
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "GET request failed for size detection" }
-            }
+
+        // Force single thread if range is not supported to avoid broken merges
+        if (!supportsRange && size > 0) {
+            threadCount = 1
+            download.activeThreads = 1
         }
 
         // 1DM Content-Type Validation: If it's a small file and it's HTML, it's a redirect/error page, not a video.
@@ -620,6 +604,11 @@ class Downloader(
         // Merge parts after coroutineScope finishes all threads
         if (size > 0 && threadCount > 1) {
             mergeParts(download, tmpDir, filename, threadCount, videoFile)
+        }
+        
+        // Final sanity check: Ensure the file actually has content
+        if (videoFile.length() <= 0) {
+            throw Exception("Download failed: Resulting file is empty")
         }
 
         return videoFile
@@ -901,8 +890,13 @@ class Downloader(
         // Wait a bit for file system to settle
         delay(500)
         kotlinx.coroutines.currentCoroutineContext().ensureActive()
-        val downloadedVideo = tmpDir.listFiles().orEmpty().filterNot { it.getName()?.endsWith(".tmp") == true }
-        if (downloadedVideo.isNotEmpty()) {
+        
+        // Find the final video file (not parts) and ensure it's not empty
+        val downloadedVideo = tmpDir.listFiles().orEmpty()
+            .filterNot { it.getName()?.contains(".part") == true || it.getName()?.endsWith(".tmp") == true }
+            .firstOrNull { it.length() > 0 }
+
+        if (downloadedVideo != null) {
             tmpDir.renameTo(dirname)
             cache.addEpisode(dirname, animeDir, download.anime)
             download.status = Download.State.DOWNLOADED
@@ -914,12 +908,15 @@ class Downloader(
             // Check if it was already renamed (race condition)
             val alreadyRenamed = animeDir.findFile(dirname)
             if (alreadyRenamed != null && alreadyRenamed.isDirectory) {
-                download.status = Download.State.DOWNLOADED
-                _queueState.update { it - download }
-                store.remove(download)
-            } else {
-                throw Exception("Unable to finalize download: No video file found in ${tmpDir.uri}")
+                val renamedFile = alreadyRenamed.listFiles().orEmpty().firstOrNull { it.length() > 0 }
+                if (renamedFile != null) {
+                    download.status = Download.State.DOWNLOADED
+                    _queueState.update { it - download }
+                    store.remove(download)
+                    return
+                }
             }
+            throw Exception("Unable to finalize download: No valid video file found in ${tmpDir.uri}")
         }
     }
 

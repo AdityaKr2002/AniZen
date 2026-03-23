@@ -62,6 +62,12 @@ enum class PreloadState {
     Unavailable,
 }
 
+enum class PreloadMode(val titleRes: StringResource) {
+    Off(MR.strings.pref_preload_off),
+    WifiOnly(MR.strings.pref_preload_wifi),
+    Always(MR.strings.pref_preload_always),
+}
+
 /**
  * Action performed by a button, like double tap or media controls
  */

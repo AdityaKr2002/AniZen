@@ -92,4 +92,6 @@ class PlayerPreferences(
     // Old
 
     fun autoplayEnabled() = preferenceStore.getBoolean("pref_auto_play_enabled", false)
+
+    fun preloadMode() = preferenceStore.getEnum("pref_preload_mode_key", PreloadMode.WifiOnly)
 }

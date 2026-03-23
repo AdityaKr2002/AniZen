@@ -102,6 +102,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     @Composable
     private fun getPerformanceGroup(decoderPreferences: DecoderPreferences): Preference.PreferenceGroup {
         val performanceProfile = decoderPreferences.performanceProfile()
+        val preloadMode = playerPreferences.preloadMode()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_player_performance),
@@ -111,6 +112,14 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     title = stringResource(MR.strings.pref_performance_profile),
                     subtitle = stringResource(MR.strings.pref_performance_profile_summary),
                     entries = eu.kanade.tachiyomi.ui.player.PerformanceProfile.entries.associateWith {
+                        stringResource(it.titleRes)
+                    }.toPersistentMap(),
+                ),
+                Preference.PreferenceItem.ListPreference(
+                    pref = preloadMode,
+                    title = stringResource(MR.strings.pref_preload_mode),
+                    subtitle = stringResource(MR.strings.pref_preload_mode_summary),
+                    entries = eu.kanade.tachiyomi.ui.player.PreloadMode.entries.associateWith {
                         stringResource(it.titleRes)
                     }.toPersistentMap(),
                 ),
