@@ -51,6 +51,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val playerPreferences = remember { Injekt.get<PlayerPreferences>() }
+        val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
         val basePreferences = remember { Injekt.get<BasePreferences>() }
         val torrentServerPreferences = remember { Injekt.get<TorrentServerPreferences>() }
         val deviceSupportsPip = basePreferences.deviceHasPip()
@@ -82,6 +83,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     stringResource(it.titleRes)
                 }.toPersistentMap(),
             ),
+            getPerformanceGroup(decoderPreferences = decoderPreferences),
             getControlsGroup(playerPreferences = playerPreferences),
             getHosterGroup(playerPreferences = playerPreferences),
             getDisplayGroup(playerPreferences = playerPreferences),
@@ -93,6 +95,25 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
             ),
             getTorrentServerGroup(torrentServerPreferences),
             geCastServerGroup(localHttpServerHolder),
+        )
+    }
+
+    @Composable
+    private fun getPerformanceGroup(decoderPreferences: DecoderPreferences): Preference.PreferenceGroup {
+        val performanceProfile = decoderPreferences.performanceProfile()
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_category_player_performance),
+            preferenceItems = persistentListOf(
+                Preference.PreferenceItem.ListPreference(
+                    pref = performanceProfile,
+                    title = stringResource(MR.strings.pref_performance_profile),
+                    subtitle = stringResource(MR.strings.pref_performance_profile_summary),
+                    entries = eu.kanade.tachiyomi.ui.player.PerformanceProfile.entries.associateWith {
+                        stringResource(it.titleRes)
+                    }.toPersistentMap(),
+                ),
+            ),
         )
     }
 

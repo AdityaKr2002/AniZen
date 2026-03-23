@@ -827,6 +827,12 @@
     <string name="pref_rotation_type">Default rotation</string>
     <string name="rotation_type">Rotation</string>
     <string name="rotation_free">Free</string>
+    <string name="pref_category_player_performance">Performance</string>
+    <string name="pref_performance_profile">Performance profile</string>
+    <string name="pref_performance_profile_automatic">Smart (Recommended)</string>
+    <string name="pref_performance_profile_high">High Performance</string>
+    <string name="pref_performance_profile_low_power">Low Power / Battery Saver</string>
+    <string name="pref_performance_profile_summary">Adjusts playback cache and resources based on your device hardware.</string>
     <string name="rotation_portrait">Portrait</string>
     <string name="rotation_reverse_portrait">Reverse portrait</string>
     <string name="rotation_landscape">Landscape</string>

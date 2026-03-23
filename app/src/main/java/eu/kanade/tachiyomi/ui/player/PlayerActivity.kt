@@ -369,6 +369,7 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onPause() {
+        player.shrinkCache()
         viewModel.saveCurrentEpisodeWatchingProgress()
 
         // Mantener sesión Cast activa
@@ -708,6 +709,7 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onResume() {
+        player.restoreCache()
         // Reconectar Cast si estaba activo
         castManager.apply {
             reconnect()
@@ -915,6 +917,7 @@ class PlayerActivity : BaseActivity() {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         if (!isInPictureInPictureMode) {
+            player.restoreCache()
             pipReceiver?.let {
                 unregisterReceiver(pipReceiver)
                 pipReceiver = null

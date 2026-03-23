@@ -48,6 +48,12 @@ enum class VideoAspect(val titleRes: StringResource) {
     Stretch(MR.strings.video_stretch_screen),
 }
 
+enum class PerformanceProfile(val titleRes: StringResource) {
+    Automatic(MR.strings.pref_performance_profile_automatic),
+    HighPerformance(MR.strings.pref_performance_profile_high),
+    LowPower(MR.strings.pref_performance_profile_low_power),
+}
+
 /**
  * Action performed by a button, like double tap or media controls
  */

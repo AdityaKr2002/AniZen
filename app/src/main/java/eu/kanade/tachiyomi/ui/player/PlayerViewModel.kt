@@ -82,6 +82,8 @@ import eu.kanade.tachiyomi.util.lang.byteSize
 import eu.kanade.tachiyomi.util.lang.takeBytes
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.cacheImageDir
+import eu.kanade.tachiyomi.util.system.DeviceTierManager
+import eu.kanade.tachiyomi.util.system.isConnectedToWifi
 import eu.kanade.tachiyomi.util.system.toast
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.Utils
@@ -1603,9 +1605,37 @@ class PlayerViewModel @JvmOverloads constructor(
 
         saveWatchingProgress(currentEp)
 
-        val inDownloadRange = seconds.toDouble() / totalSeconds > 0.35
+        val progress = seconds.toDouble() / totalSeconds
+        val inDownloadRange = progress > 0.35
         if (inDownloadRange) {
             downloadNextEpisodes()
+        }
+
+        // Preload next episode URL (Phase 1)
+        if (progress > 0.80 && !isLoading.value && !isPreloadingNext && activity.isConnectedToWifi()) {
+            val tier = DeviceTierManager.getTier(activity)
+            if (tier != DeviceTierManager.Tier.LOW) {
+                preloadNextEpisode()
+            }
+        }
+    }
+
+    private var isPreloadingNext = false
+    private fun preloadNextEpisode() {
+        if (isPreloadingNext || getCurrentEpisodeIndex() == currentPlaylist.value.lastIndex) return
+        val nextEpisodeId = getAdjacentEpisodeId(previous = false)
+        if (nextEpisodeId == -1L) return
+
+        isPreloadingNext = true
+        viewModelScope.launchIO {
+            try {
+                logcat { "Preloading next episode: $nextEpisodeId" }
+                loadEpisode(nextEpisodeId)
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN, e) { "Failed to preload next episode" }
+            } finally {
+                // Keep it true for the duration of the current episode to avoid multiple triggers
+            }
         }
     }
 
