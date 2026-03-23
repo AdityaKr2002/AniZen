@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.system.Os
 import android.util.Log
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
@@ -439,17 +438,6 @@ class Downloader(
                 val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
                 val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
                 
-                // Pre-allocation to prevent fragmentation
-                if (partFile.length() == 0L && partTotalSize > 0) {
-                    try {
-                        context.contentResolver.openFileDescriptor(partFile.uri, "w")?.use { pfd ->
-                            Os.ftruncate(pfd.fileDescriptor, partTotalSize)
-                        }
-                    } catch (e: Exception) {
-                        logcat(LogPriority.WARN, e) { "Failed to pre-allocate part $i" }
-                    }
-                }
-                
                 val existing = partFile.length().coerceAtMost(partTotalSize)
                 initialDownloadedBytes += existing
                 download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
@@ -565,13 +553,6 @@ class Downloader(
                         val source = res.body?.source() ?: return@use
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
-                            if (size > 0 && videoFile.length() == 0L) {
-                                try {
-                                    Os.ftruncate(pfd.fileDescriptor, size)
-                                } catch (e: Exception) {
-                                    logcat(LogPriority.WARN, e) { "Failed to pre-allocate" }
-                                }
-                            }
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                 val buffer = ByteArray(256 * 1024) // Larger buffer for single thread efficiency
                                 var bytesRead: Int
@@ -620,18 +601,10 @@ class Downloader(
         notifier.onProgressChange(download)
         
         context.contentResolver.openFileDescriptor(outputFile.uri, "w")?.use { pfd ->
-            val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
-            if (totalToMerge > 0) {
-                try {
-                    Os.ftruncate(pfd.fileDescriptor, totalToMerge)
-                } catch (e: Exception) {
-                    logcat(LogPriority.WARN, e) { "Failed to pre-allocate merge file" }
-                }
-            }
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
                 var mergedSoFar = 0L
-                
+                val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
                 for (i in 0 until count) {
                     val partFile = dir.findFile("$filename.part$i") ?: continue
                     context.contentResolver.openFileDescriptor(partFile.uri, "r")?.use { ppfd ->

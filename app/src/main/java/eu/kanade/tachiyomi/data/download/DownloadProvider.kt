@@ -40,7 +40,6 @@ class DownloadProvider(
 
     private val dirMutex = Mutex()
     private val animeDirCache = android.util.LruCache<String, UniFile>(100)
-    private val sourceDirCache = android.util.LruCache<Long, UniFile>(50)
 
     /**
      * Returns the download directory for an anime. For internal use only.
@@ -56,8 +55,9 @@ class DownloadProvider(
         
         try {
             return dirMutex.withLock {
-                val sourceDir = findSourceDir(source) ?: downloadsDir!!.createDirectory(getSourceDirName(source))!!
-                val dir = sourceDir.createDirectory(getAnimeDirName(animeTitle))!!
+                val dir = downloadsDir!!
+                    .createDirectory(getSourceDirName(source))!!
+                    .createDirectory(getAnimeDirName(animeTitle))!!
                 animeDirCache.put(cacheKey, dir)
                 dir
             }
@@ -78,15 +78,7 @@ class DownloadProvider(
      * @param source the source to query.
      */
     fun findSourceDir(source: Source): UniFile? {
-        sourceDirCache.get(source.id)?.let {
-            if (it.exists()) return it else sourceDirCache.remove(source.id)
-        }
-
-        val dir = downloadsDir?.findFile(getSourceDirName(source))
-        if (dir != null) {
-            sourceDirCache.put(source.id, dir)
-        }
-        return dir
+        return downloadsDir?.findFile(getSourceDirName(source))
     }
 
     /**
