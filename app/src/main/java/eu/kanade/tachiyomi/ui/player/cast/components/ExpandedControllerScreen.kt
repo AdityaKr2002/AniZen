@@ -966,10 +966,10 @@ private fun TracksSelectionDialog(
                         )
                     }
 
-                    items(
+                    itemsIndexed(
                         items = subtitleTracks,
-                        key = { "sub-${it.id}" }
-                    ) { track ->
+                        key = { index, it -> "sub-${it.id}-$index" }
+                    ) { _, track ->
                         TrackItem(
                             track = track,
                             name = track.name ?: "Unknown",
@@ -999,10 +999,10 @@ private fun TracksSelectionDialog(
                         )
                     }
 
-                    items(
+                    itemsIndexed(
                         items = audioTracks,
-                        key = { "audio-${it.id}" }
-                    ) { track ->
+                        key = { index, it -> "audio-${it.id}-$index" }
+                    ) { _, track ->
                         TrackItem(
                             track = track,
                             name = track.name ?: "Unknown",
