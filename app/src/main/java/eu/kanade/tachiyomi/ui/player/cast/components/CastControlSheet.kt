@@ -75,10 +75,10 @@ fun CastControlSheet(
                 modifier = Modifier.padding(vertical = 8.dp),
             )
             LazyColumn {
-                items(
+                itemsIndexed(
                     items = queueItems,
-                    key = { "cast-control-${it.itemId}" }
-                ) { item ->
+                    key = { index, it -> "cast-control-${it.itemId}-$index" }
+                ) { _, item ->
                     QueueItemRow(
                         item = item,
                         castManager = castManager,

@@ -929,7 +929,10 @@ class PlayerActivity : BaseActivity() {
             }
         } else {
             if (!isFinishing && !isDestroyed) {
-                setPictureInPictureParams(createPipParams())
+                try {
+                    setPictureInPictureParams(createPipParams())
+                } catch (_: Exception) {
+                }
             }
             viewModel.hideControls()
             viewModel.hideSeekBar()
@@ -947,7 +950,10 @@ class PlayerActivity : BaseActivity() {
                         PIP_SKIP -> viewModel.seekBy(10)
                     }
                     if (!isFinishing && !isDestroyed) {
-                        setPictureInPictureParams(createPipParams())
+                        try {
+                            setPictureInPictureParams(createPipParams())
+                        } catch (_: Exception) {
+                        }
                     }
                 }
             }

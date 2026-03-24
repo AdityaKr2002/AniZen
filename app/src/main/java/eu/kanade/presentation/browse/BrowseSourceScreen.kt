@@ -70,15 +70,16 @@ fun BrowseSourceContent(
 ) {
     val context = LocalContext.current
 
-    val errorState = animeList.loadState.refresh.takeIf { it is LoadState.Error }
-        ?: animeList.loadState.append.takeIf { it is LoadState.Error }
+    val errorState = (animeList.loadState.refresh as? LoadState.Error)
+        ?: (animeList.loadState.append as? LoadState.Error)
+        ?: (animeList.loadState.prepend as? LoadState.Error)
 
     val getErrorMessage: (LoadState.Error) -> String = { state ->
         with(context) { state.error.formattedMessage }
     }
 
     LaunchedEffect(errorState) {
-        if (animeList.itemCount > 0 && errorState != null && errorState is LoadState.Error) {
+        if (animeList.itemCount > 0 && errorState != null) {
             val result = snackbarHostState.showSnackbar(
                 message = getErrorMessage(errorState),
                 actionLabel = context.stringResource(MR.strings.action_retry),
@@ -92,7 +93,7 @@ fun BrowseSourceContent(
     }
 
     val screenState = when {
-        animeList.itemCount <= 0 && errorState != null && errorState is LoadState.Error -> "Error"
+        animeList.itemCount <= 0 && errorState != null -> "Error"
         animeList.itemCount == 0 && animeList.loadState.refresh is LoadState.Loading -> "Loading"
         else -> "Content"
     }
@@ -107,7 +108,7 @@ fun BrowseSourceContent(
         when (state) {
             "Error" -> {
                 EmptyScreen(
-                    message = errorState?.let { getErrorMessage(it as LoadState.Error) }.orEmpty(),
+                    message = errorState?.let { getErrorMessage(it) }.orEmpty(),
                     actions = persistentListOf(
                         EmptyScreenAction(
                             stringRes = MR.strings.action_retry,
