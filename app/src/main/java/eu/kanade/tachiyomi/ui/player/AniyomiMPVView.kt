@@ -136,9 +136,9 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         val (maxMb, maxBackMb, readahead) = when (tier) {
-            DeviceTierManager.Tier.LOW -> Triple(128, 32, 15)
-            DeviceTierManager.Tier.MID -> Triple(192, 64, 25)
-            DeviceTierManager.Tier.HIGH -> Triple(256, 128, 35)
+            DeviceTierManager.Tier.LOW -> Triple(128, 32, 1800)
+            DeviceTierManager.Tier.MID -> Triple(192, 64, 3600)
+            DeviceTierManager.Tier.HIGH -> Triple(256, 128, 7200)
         }
 
         currentMaxBytes = maxMb * 1024 * 1024L
@@ -262,7 +262,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
         MPVLib.setOptionString("cookies", "yes")
         MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-pause", "no") // Prevent infinite hangs on network stalls
+        MPVLib.setOptionString("cache-pause", "yes") // Enable classic buffering when underrunning
         MPVLib.setOptionString("cache-on-disk", "no")
         MPVLib.setOptionString("demuxer-thread", "yes")
 
