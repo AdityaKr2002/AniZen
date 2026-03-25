@@ -207,6 +207,11 @@ class LibraryPreferences(
         Anime.EPISODE_DISPLAY_NAME,
     )
 
+    fun groupEpisodeBySeason() = preferenceStore.getBoolean(
+        "default_chapter_group_by_season",
+        false,
+    )
+
     fun sortEpisodeByAscendingOrDescending() = preferenceStore.getLong(
         "default_chapter_sort_by_ascending_or_descending",
         Anime.EPISODE_SORT_DESC,
@@ -221,6 +226,7 @@ class LibraryPreferences(
         // <-- AM (FILLERMARK)
         sortEpisodeBySourceOrNumber().set(anime.sorting)
         displayEpisodeByNameOrNumber().set(anime.displayMode)
+        groupEpisodeBySeason().set(anime.groupEpisodesBySeason)
         sortEpisodeByAscendingOrDescending().set(
             if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
         )

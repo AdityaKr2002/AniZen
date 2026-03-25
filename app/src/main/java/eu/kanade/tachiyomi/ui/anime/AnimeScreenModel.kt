@@ -44,6 +44,7 @@ import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.AniChartApi
+import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
 import eu.kanade.tachiyomi.util.removeCovers
 import eu.kanade.tachiyomi.util.system.toast
@@ -239,6 +240,7 @@ class AnimeScreenModel(
         suggestions: ImmutableList<Anime> = this.suggestions,
         seasons: ImmutableList<Season> = this.seasons,
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
+        selectedSeason: String? = this.selectedSeason,
     ): State.Success {
         val processedEpisodes = if (anime === this.anime && episodes === this.episodes) {
             this.processedEpisodes
@@ -252,40 +254,85 @@ class AnimeScreenModel(
             processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
         }
 
-        val episodeListItems = if (processedEpisodes === this.processedEpisodes && anime === this.anime) {
-            this.episodeListItems
-        } else {
-            processedEpisodes.insertSeparators { before, after ->
-                val (lowerEpisode, higherEpisode) = if (anime.sortDescending()) {
-                    after to before
-                } else {
-                    before to after
-                }
-                if (higherEpisode == null) return@insertSeparators null
-
-                if (lowerEpisode == null) {
-                    floor(higherEpisode.episode.episodeNumber)
-                        .toInt()
-                        .minus(1)
-                        .coerceAtLeast(0)
-                } else {
-                    calculateChapterGap(higherEpisode.episode, lowerEpisode.episode)
-                }
-                    .takeIf { it > 0 }
-                    ?.let { missingCount ->
-                        EpisodeList.MissingCount(
-                            id = "${lowerEpisode?.id}-${higherEpisode.id}",
-                            count = missingCount,
-                        )
+        val episodeListItems = mutableListOf<EpisodeList>()
+        val availableSeasonsList = mutableListOf<String>()
+        var lastSeasonName: String? = null
+        
+        for (i in -1..processedEpisodes.lastIndex) {
+            val before = processedEpisodes.getOrNull(i)
+            before?.let(episodeListItems::add)
+            val after = processedEpisodes.getOrNull(i + 1)
+            
+            // Handle Seasons
+            if (anime.groupEpisodesBySeason) {
+                val higher = if (anime.sortDescending()) before else after
+                val lower = if (anime.sortDescending()) after else before
+                
+                val currentSeasonName = higher?.episode?.let { EpisodeSeasonUtils.getSeasonName(it) }
+                
+                if (currentSeasonName != null && currentSeasonName != lastSeasonName) {
+                    episodeListItems.add(EpisodeList.Season(currentSeasonName))
+                    availableSeasonsList.add(currentSeasonName)
+                    lastSeasonName = currentSeasonName
+                } else if (currentSeasonName == null && before != null && after != null) {
+                    // Implicit season restart check (if no season in name)
+                    val isRestart = if (anime.sortDescending()) {
+                        before.episode.episodeNumber < after.episode.episodeNumber
+                    } else {
+                        before.episode.episodeNumber > after.episode.episodeNumber
                     }
-            }.toImmutableList()
+                    if (isRestart) {
+                        val newSeasonName = "New Season"
+                        episodeListItems.add(EpisodeList.Season(newSeasonName))
+                        availableSeasonsList.add(newSeasonName)
+                    }
+                } else if (currentSeasonName == null && before == null && after != null) {
+                    // First item might still have a season name that we want to show
+                    val firstSeason = EpisodeSeasonUtils.getSeasonName(after.episode)
+                    if (firstSeason != null) {
+                        episodeListItems.add(EpisodeList.Season(firstSeason))
+                        availableSeasonsList.add(firstSeason)
+                        lastSeasonName = firstSeason
+                    }
+                }
+            }
+
+            // Handle Missing Count
+            if (higher != null && lower != null) {
+                val gap = calculateChapterGap(higher.episode, lower.episode)
+                if (gap > 0) {
+                    episodeListItems.add(
+                        EpisodeList.MissingCount(
+                            id = "${lower.id}-${higher.id}",
+                            count = gap,
+                        )
+                    )
+                }
+            } else if (before == null && after != null) {
+                val gap = floor(after.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
+                if (gap > 0 && !anime.sortDescending()) {
+                    episodeListItems.add(
+                        EpisodeList.MissingCount(
+                            id = "start-${after.id}",
+                            count = gap,
+                        )
+                    )
+                }
+            }
+        }
+
+        // Default to first season if none selected and grouping is on
+        val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+            availableSeasonsList.firstOrNull()
+        } else {
+            selectedSeason
         }
 
         return this.copy(
             anime = anime,
             episodes = episodes.toImmutableList(),
             processedEpisodes = processedEpisodes,
-            episodeListItems = episodeListItems,
+            episodeListItems = episodeListItems.toImmutableList(),
             missingEpisodeCount = missingEpisodeCount,
             trackItems = trackItems.toImmutableList(),
             suggestionSections = suggestionSections,
@@ -299,7 +346,13 @@ class AnimeScreenModel(
             suggestions = suggestions,
             seasons = seasons,
             nextAiringEpisode = nextAiringEpisode,
+            availableSeasons = availableSeasonsList.toImmutableList(),
+            selectedSeason = finalSelectedSeason,
         )
+    }
+
+    fun onSeasonSelected(season: String?) {
+        updateSuccessState { it.copySuccess(selectedSeason = season) }
     }
 
     private inline fun updateSuccessState(func: (State.Success) -> State.Success) {
@@ -1131,6 +1184,12 @@ class AnimeScreenModel(
 
     fun setDisplayMode(mode: Long) {
         val anime = successState?.anime ?: return
+        if (mode == Anime.EPISODE_SHOW_SEASON_GROUP) {
+            screenModelScope.launchNonCancellable {
+                setAnimeEpisodeFlags.awaitSetSeasonGrouping(anime, !anime.groupEpisodesBySeason)
+            }
+            return
+        }
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetDisplayMode(anime, mode) }
     }
 
@@ -1400,6 +1459,8 @@ class AnimeScreenModel(
             val suggestions: ImmutableList<Anime> = persistentListOf(),
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
+            val availableSeasons: ImmutableList<String> = persistentListOf(),
+            val selectedSeason: String? = null,
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
         ) : State {
@@ -1411,33 +1472,84 @@ class AnimeScreenModel(
                     episodes: List<EpisodeList.Item>,
                     isRefreshingData: Boolean,
                     dialog: Dialog?,
+                    selectedSeason: String? = null,
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime).toImmutableList()
                     val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
-                    val episodeListItems = processedEpisodes.insertSeparators { before, after ->
-                        val (lowerEpisode, higherEpisode) = if (anime.sortDescending()) {
-                            after to before
-                        } else {
-                            before to after
+                    
+                    val episodeListItems = mutableListOf<EpisodeList>()
+                    val availableSeasonsList = mutableListOf<String>()
+                    var lastSeasonName: String? = null
+                    
+                    for (i in -1..processedEpisodes.lastIndex) {
+                        val before = processedEpisodes.getOrNull(i)
+                        before?.let(episodeListItems::add)
+                        val after = processedEpisodes.getOrNull(i + 1)
+                        
+                        // Handle Seasons
+                        if (anime.groupEpisodesBySeason) {
+                            val higher = if (anime.sortDescending()) before else after
+                            val lower = if (anime.sortDescending()) after else before
+                            
+                            val currentSeasonName = higher?.episode?.let { EpisodeSeasonUtils.getSeasonName(it) }
+                            
+                            if (currentSeasonName != null && currentSeasonName != lastSeasonName) {
+                                episodeListItems.add(EpisodeList.Season(currentSeasonName))
+                                availableSeasonsList.add(currentSeasonName)
+                                lastSeasonName = currentSeasonName
+                            } else if (currentSeasonName == null && before != null && after != null) {
+                                // Implicit season restart check (if no season in name)
+                                val isRestart = if (anime.sortDescending()) {
+                                    before.episode.episodeNumber < after.episode.episodeNumber
+                                } else {
+                                    before.episode.episodeNumber > after.episode.episodeNumber
+                                }
+                                if (isRestart) {
+                                    val newSeasonName = "New Season"
+                                    episodeListItems.add(EpisodeList.Season(newSeasonName))
+                                    availableSeasonsList.add(newSeasonName)
+                                }
+                            } else if (currentSeasonName == null && before == null && after != null) {
+                                // First item might still have a season name that we want to show
+                                val firstSeason = EpisodeSeasonUtils.getSeasonName(after.episode)
+                                if (firstSeason != null) {
+                                    episodeListItems.add(EpisodeList.Season(firstSeason))
+                                    availableSeasonsList.add(firstSeason)
+                                    lastSeasonName = firstSeason
+                                }
+                            }
                         }
-                        if (higherEpisode == null) return@insertSeparators null
 
-                        if (lowerEpisode == null) {
-                            floor(higherEpisode.episode.episodeNumber)
-                                .toInt()
-                                .minus(1)
-                                .coerceAtLeast(0)
-                        } else {
-                            calculateChapterGap(higherEpisode.episode, lowerEpisode.episode)
-                        }
-                            .takeIf { it > 0 }
-                            ?.let { missingCount ->
-                                EpisodeList.MissingCount(
-                                    id = "${lowerEpisode?.id}-${higherEpisode.id}",
-                                    count = missingCount,
+                        // Handle Missing Count
+                        if (higher != null && lower != null) {
+                            val gap = calculateChapterGap(higher.episode, lower.episode)
+                            if (gap > 0) {
+                                episodeListItems.add(
+                                    EpisodeList.MissingCount(
+                                        id = "${lower.id}-${higher.id}",
+                                        count = gap,
+                                    )
                                 )
                             }
-                    }.toImmutableList()
+                        } else if (before == null && after != null) {
+                            val gap = floor(after.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
+                            if (gap > 0 && !anime.sortDescending()) {
+                                episodeListItems.add(
+                                    EpisodeList.MissingCount(
+                                        id = "start-${after.id}",
+                                        count = gap,
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    // Default to first season if none selected and grouping is on
+                    val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+                        availableSeasonsList.firstOrNull()
+                    } else {
+                        selectedSeason
+                    }
 
                     return Success(
                         anime = anime,
@@ -1445,10 +1557,12 @@ class AnimeScreenModel(
                         isFromSource = isFromSource,
                         episodes = episodes.toImmutableList(),
                         processedEpisodes = processedEpisodes,
-                        episodeListItems = episodeListItems,
+                        episodeListItems = episodeListItems.toImmutableList(),
                         missingEpisodeCount = missingEpisodeCount,
                         isRefreshingData = isRefreshingData,
                         dialog = dialog,
+                        availableSeasons = availableSeasonsList.toImmutableList(),
+                        selectedSeason = finalSelectedSeason,
                     )
                 }
             }

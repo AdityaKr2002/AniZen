@@ -101,6 +101,7 @@ fun EpisodeSettingsDialog(
                 }
                 2 -> {
                     DisplayPage(
+                        anime = anime,
                         displayMode = anime?.displayMode ?: 0,
                         onItemSelected = onDisplayModeChanged,
                     )
@@ -169,6 +170,7 @@ private fun ColumnScope.SortPage(
 
 @Composable
 private fun ColumnScope.DisplayPage(
+    anime: Anime?,
     displayMode: Long,
     onItemSelected: (Long) -> Unit,
 ) {
@@ -180,6 +182,19 @@ private fun ColumnScope.DisplayPage(
             label = stringResource(titleRes),
             selected = displayMode == mode,
             onClick = { onItemSelected(mode) },
+        )
+    }
+
+    if (anime != null) {
+        androidx.compose.material3.HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+        )
+
+        LabeledCheckbox(
+            label = "Group by season",
+            checked = anime.groupEpisodesBySeason,
+            onCheckedChange = { onItemSelected(Anime.EPISODE_SHOW_SEASON_GROUP) },
         )
     }
 }
