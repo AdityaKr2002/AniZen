@@ -1486,11 +1486,11 @@ class AnimeScreenModel(
                         before?.let(episodeListItems::add)
                         val after = processedEpisodes.getOrNull(i + 1)
                         
+                        val higher = if (anime.sortDescending()) before else after
+                        val lower = if (anime.sortDescending()) after else before
+
                         // Handle Seasons
                         if (anime.groupEpisodesBySeason) {
-                            val higher = if (anime.sortDescending()) before else after
-                            val lower = if (anime.sortDescending()) after else before
-                            
                             val currentSeasonName = higher?.episode?.let { EpisodeSeasonUtils.getSeasonName(it) }
                             
                             if (currentSeasonName != null && currentSeasonName != lastSeasonName) {
