@@ -227,6 +227,7 @@ class AnimeScreen(
             onInvertSelection = screenModel::invertSelection,
             onLocalScoreClicked = screenModel::showLocalScoreDialog,
             onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
+            onSeasonSelected = screenModel::onSeasonSelected,
         )
 
         val onDismissRequest = {

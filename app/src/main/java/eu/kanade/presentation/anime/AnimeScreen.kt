@@ -1501,6 +1501,7 @@ private fun LazyListScope.sharedEpisodeItems(
             episodeSwipeEndAction = episodeSwipeEndAction,
             onEpisodeClicked = onEpisodeClicked,
             onDownloadEpisode = onDownloadEpisode,
+            onEpisodeSelected = onEpisodeSelected,
             onEpisodeSwipe = onEpisodeSwipe,
         )
     }
