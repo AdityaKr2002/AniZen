@@ -97,3 +97,12 @@ Progress is tracked via the `conductor/` directory using specialized "Tracks".
 ## 6. Security & Identity
 - **Signing Fingerprint**: `c7ebe223044970f2f9738f600dc25c180d3ed03994e088aaf5709338c57b93af`
 - **Hardcoded IDs**: Always use stable 64-bit Long IDs for sources to prevent Obsolete status in Mihon/Anikku.
+
+---
+
+## 7. STRICT ARCHITECTURAL GUARDRAILS (DO NOT TOUCH ZONES)
+1. **Coil Threading**: NEVER remove or uncap `Dispatchers.IO.limitedParallelism` bounds in `App.kt`. CPU starvation will ruin the 120Hz scrolling fluidity.
+2. **Image Scaling**: NEVER change `.precision(coil3.size.Precision.INEXACT)` in UI components. Forcing exact pixel math introduces stutter.
+3. **Coroutines**: NEVER replace `ScreenModel.ioCoroutineScope` with standard `viewModelScope`. The Jetpack Compose Main thread must remain idle for hardware interrupts.
+4. **MPV Video Engine**: NEVER alter `opengl-es=yes`, `vd-lavc-dr=yes`, or `gpu-context=android` to experimental APIs (e.g., Vulkan) without explicit instruction. Direct Rendering on OpenGL ES is the stable baseline.
+5. **Frame Pacing**: NEVER disable `video-sync=display-resample` in the player configuration. It is required to prevent judder on high-refresh-rate displays.
