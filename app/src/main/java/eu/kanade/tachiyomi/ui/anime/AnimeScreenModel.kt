@@ -257,6 +257,7 @@ class AnimeScreenModel(
         val episodeListItems = mutableListOf<EpisodeList>()
         val availableSeasonsList = mutableListOf<String>()
         var lastSeasonName: String? = null
+        var implicitSeasonCount = 0
         
         for (i in -1..processedEpisodes.lastIndex) {
             val before = processedEpisodes.getOrNull(i)
@@ -272,7 +273,9 @@ class AnimeScreenModel(
                 
                 if (currentSeasonName != null && currentSeasonName != lastSeasonName) {
                     episodeListItems.add(EpisodeList.Season(currentSeasonName))
-                    availableSeasonsList.add(currentSeasonName)
+                    if (!availableSeasonsList.contains(currentSeasonName)) {
+                        availableSeasonsList.add(currentSeasonName)
+                    }
                     lastSeasonName = currentSeasonName
                 } else if (currentSeasonName == null && before != null && after != null) {
                     // Implicit season restart check (if no season in name)
@@ -282,16 +285,21 @@ class AnimeScreenModel(
                         before.episode.episodeNumber > after.episode.episodeNumber
                     }
                     if (isRestart) {
-                        val newSeasonName = "New Season"
+                        implicitSeasonCount++
+                        val newSeasonName = "New Season $implicitSeasonCount"
                         episodeListItems.add(EpisodeList.Season(newSeasonName))
-                        availableSeasonsList.add(newSeasonName)
+                        if (!availableSeasonsList.contains(newSeasonName)) {
+                            availableSeasonsList.add(newSeasonName)
+                        }
                     }
                 } else if (currentSeasonName == null && before == null && after != null) {
                     // First item might still have a season name that we want to show
                     val firstSeason = EpisodeSeasonUtils.getSeasonName(after.episode)
                     if (firstSeason != null) {
                         episodeListItems.add(EpisodeList.Season(firstSeason))
-                        availableSeasonsList.add(firstSeason)
+                        if (!availableSeasonsList.contains(firstSeason)) {
+                            availableSeasonsList.add(firstSeason)
+                        }
                         lastSeasonName = firstSeason
                     }
                 }
@@ -1480,6 +1488,7 @@ class AnimeScreenModel(
                     val episodeListItems = mutableListOf<EpisodeList>()
                     val availableSeasonsList = mutableListOf<String>()
                     var lastSeasonName: String? = null
+                    var implicitSeasonCount = 0
                     
                     for (i in -1..processedEpisodes.lastIndex) {
                         val before = processedEpisodes.getOrNull(i)
@@ -1495,7 +1504,9 @@ class AnimeScreenModel(
                             
                             if (currentSeasonName != null && currentSeasonName != lastSeasonName) {
                                 episodeListItems.add(EpisodeList.Season(currentSeasonName))
-                                availableSeasonsList.add(currentSeasonName)
+                                if (!availableSeasonsList.contains(currentSeasonName)) {
+                                    availableSeasonsList.add(currentSeasonName)
+                                }
                                 lastSeasonName = currentSeasonName
                             } else if (currentSeasonName == null && before != null && after != null) {
                                 // Implicit season restart check (if no season in name)
@@ -1505,16 +1516,21 @@ class AnimeScreenModel(
                                     before.episode.episodeNumber > after.episode.episodeNumber
                                 }
                                 if (isRestart) {
-                                    val newSeasonName = "New Season"
+                                    implicitSeasonCount++
+                                    val newSeasonName = "New Season $implicitSeasonCount"
                                     episodeListItems.add(EpisodeList.Season(newSeasonName))
-                                    availableSeasonsList.add(newSeasonName)
+                                    if (!availableSeasonsList.contains(newSeasonName)) {
+                                        availableSeasonsList.add(newSeasonName)
+                                    }
                                 }
                             } else if (currentSeasonName == null && before == null && after != null) {
                                 // First item might still have a season name that we want to show
                                 val firstSeason = EpisodeSeasonUtils.getSeasonName(after.episode)
                                 if (firstSeason != null) {
                                     episodeListItems.add(EpisodeList.Season(firstSeason))
-                                    availableSeasonsList.add(firstSeason)
+                                    if (!availableSeasonsList.contains(firstSeason)) {
+                                        availableSeasonsList.add(firstSeason)
+                                    }
                                     lastSeasonName = firstSeason
                                 }
                             }
