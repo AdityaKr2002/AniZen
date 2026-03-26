@@ -300,6 +300,9 @@ class AnimeScreenModel(
                     val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                         (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
                     
+                    // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
+                    val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
+
                     val prevYear = if (prevItem.episode.dateUpload > 0) {
                         cal.timeInMillis = prevItem.episode.dateUpload
                         cal.get(Calendar.YEAR)
@@ -307,7 +310,7 @@ class AnimeScreenModel(
                     
                     val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                     
-                    numRestart || timeJump || yearChange
+                    numRestart || timeJump || yearChange || sameDateRestart
                 }
 
                 if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
@@ -1613,6 +1616,9 @@ class AnimeScreenModel(
                                 
                                 val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                                     (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
+
+                                // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
+                                val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
                                 
                                 val prevYear = if (prevItem.episode.dateUpload > 0) {
                                     cal.timeInMillis = prevItem.episode.dateUpload
@@ -1621,7 +1627,7 @@ class AnimeScreenModel(
                                 
                                 val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                                 
-                                numRestart || timeJump || yearChange
+                                numRestart || timeJump || yearChange || sameDateRestart
                             }
 
                             if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
