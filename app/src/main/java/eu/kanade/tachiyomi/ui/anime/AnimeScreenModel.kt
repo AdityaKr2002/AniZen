@@ -51,7 +51,6 @@ import eu.kanade.tachiyomi.util.system.toast
 import exh.source.MERGED_SOURCE_ID
 import exh.util.nullIfEmpty
 import exh.util.trimOrNull
-import java.util.Calendar
 import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
