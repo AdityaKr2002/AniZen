@@ -291,9 +291,16 @@ class AnimeScreenModel(
                     cal.get(Calendar.YEAR)
                 } else null
 
+                val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
+                val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+
                 val isNewBlock = if (prevItem == null) {
                     true
+                } else if (currentExplicit != null || prevExplicit != null) {
+                    // If titles explicitly mention seasons, split whenever they change
+                    currentExplicit != prevExplicit
                 } else {
+                    // Fallback for episodes without "S1/S2" in title
                     val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
                                     item.episode.episodeNumber < prevItem.episode.episodeNumber
                     
@@ -1610,16 +1617,22 @@ class AnimeScreenModel(
                                 cal.get(Calendar.YEAR)
                             } else null
 
+                            val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
+                            val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+
                             val isNewBlock = if (prevItem == null) {
                                 true
+                            } else if (currentExplicit != null || prevExplicit != null) {
+                                // If titles explicitly mention seasons, split whenever they change
+                                currentExplicit != prevExplicit
                             } else {
+                                // Fallback for episodes without "S1/S2" in title
                                 val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
                                                 item.episode.episodeNumber < prevItem.episode.episodeNumber
                                 
                                 val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                                     (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
 
-                                // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
                                 val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
                                 
                                 val prevYear = if (prevItem.episode.dateUpload > 0) {
