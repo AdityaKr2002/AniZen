@@ -53,10 +53,10 @@ open /* SY <-- */ class NetworkHelper(
             .dispatcher(
                 Dispatcher().apply {
                     maxRequests = 256
-                    maxRequestsPerHost = 32 // Professional level concurrency
+                    maxRequestsPerHost = 64 // Enhanced concurrency for BDIX
                 },
             )
-            .connectionPool(ConnectionPool(64, 5, TimeUnit.MINUTES))
+            .connectionPool(ConnectionPool(128, 10, TimeUnit.MINUTES))
             .build()
     }
 
@@ -73,10 +73,10 @@ open /* SY <-- */ class NetworkHelper(
             .dispatcher(
                 Dispatcher().apply {
                     maxRequests = 128
-                    maxRequestsPerHost = 16
+                    maxRequestsPerHost = 32
                 },
             )
-            .connectionPool(ConnectionPool(32, 2, TimeUnit.MINUTES))
+            .connectionPool(ConnectionPool(64, 5, TimeUnit.MINUTES))
             .cookieJar(cookieJar)
             // KMK -->
             .connectTimeout(connectTimeout, TimeUnit.SECONDS)

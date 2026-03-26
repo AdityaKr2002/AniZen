@@ -397,9 +397,14 @@ fun PlayerControls(
                         onValueChange = {
                             isSeeking = true
                             viewModel.updatePlayBackPos(it)
-                            viewModel.seekTo(it.toInt(), preciseSeeking)
+                            // Fast scrubbing: absolute+keyframes (precise=false) while dragging
+                            viewModel.seekTo(it.toInt(), false)
                         },
-                        onValueChangeFinished = { isSeeking = false },
+                        onValueChangeFinished = { 
+                            isSeeking = false 
+                            // Final precise seek on release
+                            viewModel.seekTo(position.toInt(), preciseSeeking)
+                        },
                         timersInverted = Pair(false, invertDuration),
                         durationTimerOnCLick = { playerPreferences.invertDuration().set(!invertDuration) },
                         positionTimerOnClick = {},
