@@ -326,18 +326,20 @@ class AnimeScreenModel(
             val episodeToSeason = mutableMapOf<Long, String>()
             var implicitSeasonCount = 0
             blocks.forEach { block ->
-                var seasonName: String? = null
+                var explicitSeasonName: String? = null
                 for (item in block.episodes) {
-                    val explicit = EpisodeSeasonUtils.getSeasonName(item.episode)
-                    if (explicit != null) {
-                        seasonName = explicit
+                    val found = EpisodeSeasonUtils.getSeasonName(item.episode)
+                    if (found != null) {
+                        explicitSeasonName = found
                         break
                     }
                 }
                 
-                if (seasonName == null) {
+                val seasonName = if (explicitSeasonName != null) {
+                    explicitSeasonName
+                } else {
                     implicitSeasonCount++
-                    seasonName = if (block.year != null) {
+                    if (block.year != null) {
                         "Season $implicitSeasonCount (${block.year})"
                     } else {
                         "Season $implicitSeasonCount"
@@ -345,7 +347,7 @@ class AnimeScreenModel(
                 }
                 
                 block.episodes.forEach { item ->
-                    episodeToSeason[item.episode.id] = seasonName!!
+                    episodeToSeason[item.episode.id] = seasonName
                 }
             }
 
@@ -1643,18 +1645,20 @@ class AnimeScreenModel(
                         val episodeToSeason = mutableMapOf<Long, String>()
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
-                            var seasonName: String? = null
+                            var explicitSeasonName: String? = null
                             for (item in block.episodes) {
-                                val explicit = EpisodeSeasonUtils.getSeasonName(item.episode)
-                                if (explicit != null) {
-                                    seasonName = explicit
+                                val found = EpisodeSeasonUtils.getSeasonName(item.episode)
+                                if (found != null) {
+                                    explicitSeasonName = found
                                     break
                                 }
                             }
                             
-                            if (seasonName == null) {
+                            val seasonName = if (explicitSeasonName != null) {
+                                explicitSeasonName
+                            } else {
                                 implicitSeasonCount++
-                                seasonName = if (block.year != null) {
+                                if (block.year != null) {
                                     "Season $implicitSeasonCount (${block.year})"
                                 } else {
                                     "Season $implicitSeasonCount"
@@ -1662,7 +1666,7 @@ class AnimeScreenModel(
                             }
                             
                             block.episodes.forEach { item ->
-                                episodeToSeason[item.episode.id] = seasonName!!
+                                episodeToSeason[item.episode.id] = seasonName
                             }
                         }
 

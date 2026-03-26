@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.util.episode
 import tachiyomi.domain.episode.model.Episode
 
 object EpisodeSeasonUtils {
-    private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:s|season\s*)(\d+)(?:\s|e|x|\.|\b|\]|$)""")
+    private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
 
     /**
      * Extracts season number from episode name.
