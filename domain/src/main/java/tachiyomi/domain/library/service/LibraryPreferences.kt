@@ -209,7 +209,7 @@ class LibraryPreferences(
 
     fun groupEpisodeBySeason() = preferenceStore.getBoolean(
         "default_chapter_group_by_season",
-        false,
+        true,
     )
 
     fun sortEpisodeByAscendingOrDescending() = preferenceStore.getLong(

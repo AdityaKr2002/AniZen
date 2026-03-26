@@ -279,6 +279,8 @@ class AnimeScreenModel(
                     lastSeasonName = currentSeasonName
                 } else if (currentSeasonName == null && before != null && after != null) {
                     // Implicit season restart check (if no season in name)
+                    // If descending: before EP 1, after EP 24 (of previous season) -> restart
+                    // If ascending: before EP 24, after EP 1 (of next season) -> restart
                     val isRestart = if (anime.sortDescending()) {
                         before.episode.episodeNumber < after.episode.episodeNumber
                     } else {
@@ -286,7 +288,7 @@ class AnimeScreenModel(
                     }
                     if (isRestart) {
                         implicitSeasonCount++
-                        val newSeasonName = "New Season $implicitSeasonCount"
+                        val newSeasonName = "Season $implicitSeasonCount"
                         episodeListItems.add(EpisodeList.Season(newSeasonName))
                         if (!availableSeasonsList.contains(newSeasonName)) {
                             availableSeasonsList.add(newSeasonName)
@@ -330,8 +332,9 @@ class AnimeScreenModel(
         }
 
         // Default to first season if none selected and grouping is on
+        val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
         val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
-            availableSeasonsList.firstOrNull()
+            sortedSeasons.firstOrNull()
         } else {
             selectedSeason
         }
@@ -354,7 +357,7 @@ class AnimeScreenModel(
             suggestions = suggestions,
             seasons = seasons,
             nextAiringEpisode = nextAiringEpisode,
-            availableSeasons = availableSeasonsList.toImmutableList(),
+            availableSeasons = sortedSeasons.toImmutableList(),
             selectedSeason = finalSelectedSeason,
         )
     }
@@ -1517,7 +1520,7 @@ class AnimeScreenModel(
                                 }
                                 if (isRestart) {
                                     implicitSeasonCount++
-                                    val newSeasonName = "New Season $implicitSeasonCount"
+                                    val newSeasonName = "Season $implicitSeasonCount"
                                     episodeListItems.add(EpisodeList.Season(newSeasonName))
                                     if (!availableSeasonsList.contains(newSeasonName)) {
                                         availableSeasonsList.add(newSeasonName)
@@ -1561,8 +1564,9 @@ class AnimeScreenModel(
                     }
 
                     // Default to first season if none selected and grouping is on
+                    val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
                     val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
-                        availableSeasonsList.firstOrNull()
+                        sortedSeasons.firstOrNull()
                     } else {
                         selectedSeason
                     }
@@ -1577,7 +1581,7 @@ class AnimeScreenModel(
                         missingEpisodeCount = missingEpisodeCount,
                         isRefreshingData = isRefreshingData,
                         dialog = dialog,
-                        availableSeasons = availableSeasonsList.toImmutableList(),
+                        availableSeasons = sortedSeasons.toImmutableList(),
                         selectedSeason = finalSelectedSeason,
                     )
                 }

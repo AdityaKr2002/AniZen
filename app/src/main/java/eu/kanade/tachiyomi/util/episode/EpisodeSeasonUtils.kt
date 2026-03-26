@@ -19,4 +19,17 @@ object EpisodeSeasonUtils {
             null
         }
     }
+
+    /**
+     * Comparator to sort season names naturally (Season 1, Season 2, Season 10).
+     */
+    val SeasonComparator = Comparator<String> { s1, s2 ->
+        val n1 = s1.filter { it.isDigit() }.toIntOrNull() ?: 0
+        val n2 = s2.filter { it.isDigit() }.toIntOrNull() ?: 0
+        if (n1 != n2) {
+            n1.compareTo(n2)
+        } else {
+            s1.compareTo(s2)
+        }
+    }
 }
