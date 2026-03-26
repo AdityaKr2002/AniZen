@@ -10,6 +10,8 @@ sealed class EpisodeList : Serializable {
 
     @Immutable data class MissingCount(val id: String, val count: Int) : EpisodeList()
 
+    @Immutable data class Season(val name: String) : EpisodeList()
+
     @Immutable data class Item(
         val episode: Episode,
         val downloadState: Download.State,

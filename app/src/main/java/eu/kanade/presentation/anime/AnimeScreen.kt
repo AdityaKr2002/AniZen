@@ -136,6 +136,7 @@ import tachiyomi.domain.source.model.StubSource
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
+import tachiyomi.presentation.core.components.ListGroupHeader
 import tachiyomi.presentation.core.components.TwoPanelBox
 import tachiyomi.presentation.core.components.VerticalFastScroller
 import tachiyomi.presentation.core.components.material.ExtendedFloatingActionButton
@@ -197,6 +198,7 @@ fun AnimeScreen(
     onInvertSelection: () -> Unit,
     onLocalScoreClicked: () -> Unit,
     onToggleDiscoveryExpansion: () -> Unit,
+    onSeasonSelected: (String?) -> Unit,
 ) {
     val sourcePreferences: SourcePreferences by injectLazy()
     val context = LocalContext.current
@@ -238,6 +240,7 @@ fun AnimeScreen(
             onContinueWatching = onContinueWatching,
             onSearch = onSearch,
             onCoverClicked = onCoverClicked,
+            onSeasonSelected = onSeasonSelected,
             onShareClicked = onShareClicked,
             onDownloadActionClicked = onDownloadActionClicked,
             onEditCategoryClicked = onEditCategoryClicked,
@@ -287,6 +290,7 @@ fun AnimeScreen(
             onContinueWatching = onContinueWatching,
             onSearch = onSearch,
             onCoverClicked = onCoverClicked,
+            onSeasonSelected = onSeasonSelected,
             onShareClicked = onShareClicked,
             onDownloadActionClicked = onDownloadActionClicked,
             onEditCategoryClicked = onEditCategoryClicked,
@@ -361,10 +365,33 @@ private fun AnimeScreenSmallImpl(
     onInvertSelection: () -> Unit,
     onLocalScoreClicked: () -> Unit,
     onToggleDiscoveryExpansion: () -> Unit,
+    onSeasonSelected: (String?) -> Unit,
 ) {
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
-    val listItem = state.episodeListItems
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
+        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+            state.episodeListItems
+        } else {
+            var inSelectedSeason = false
+            var currentSeason: String? = null
+            state.episodeListItems.filter { item ->
+                when (item) {
+                    is EpisodeList.Season -> {
+                        currentSeason = item.name
+                        inSelectedSeason = currentSeason == state.selectedSeason
+                        false // Hide the season header since we have a selector now
+                    }
+                    is EpisodeList.Item -> inSelectedSeason
+                    is EpisodeList.MissingCount -> inSelectedSeason
+                }
+            }
+        }
+    }
+    
+    val currentSeasonCount = remember(listItem) {
+        listItem.count { it is EpisodeList.Item }
+    }
 
             val isFirstItemVisible by remember {
                 derivedStateOf { episodeListState.firstVisibleItemIndex == 0 }
@@ -658,10 +685,20 @@ private fun AnimeScreenSmallImpl(
                             }
 
                             
+                            if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                                item(key = "season-selector", contentType = "season-selector") {
+                                    SeasonSelector(
+                                        seasons = state.availableSeasons,
+                                        selectedSeason = state.selectedSeason,
+                                        onSeasonSelected = onSeasonSelected,
+                                    )
+                                }
+                            }
+                            
                             item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                 EpisodeHeader(
                                     enabled = !isAnySelected,
-                                    episodeCount = episodes.size,
+                                    episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
                                     missingEpisodeCount = state.missingEpisodeCount,
                                     onClick = onFilterClicked,
                                 )
@@ -756,11 +793,34 @@ fun AnimeScreenLargeImpl(
     onInvertSelection: () -> Unit,
     onLocalScoreClicked: () -> Unit,
     onToggleDiscoveryExpansion: () -> Unit,
+    onSeasonSelected: (String?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
-    val listItem = state.episodeListItems
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
+        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+            state.episodeListItems
+        } else {
+            var inSelectedSeason = false
+            var currentSeason: String? = null
+            state.episodeListItems.filter { item ->
+                when (item) {
+                    is EpisodeList.Season -> {
+                        currentSeason = item.name
+                        inSelectedSeason = currentSeason == state.selectedSeason
+                        false // Hide the season header since we have a selector now
+                    }
+                    is EpisodeList.Item -> inSelectedSeason
+                    is EpisodeList.MissingCount -> inSelectedSeason
+                }
+            }
+        }
+    }
+    
+    val currentSeasonCount = remember(listItem) {
+        listItem.count { it is EpisodeList.Item }
+    }
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value
 
@@ -1052,10 +1112,20 @@ fun AnimeScreenLargeImpl(
                                         bottom = contentPadding.calculateBottomPadding(),
                                     ),
                                 ) {
+                                    if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                                        item(key = "season-selector", contentType = "season-selector") {
+                                            SeasonSelector(
+                                                seasons = state.availableSeasons,
+                                                selectedSeason = state.selectedSeason,
+                                                onSeasonSelected = onSeasonSelected,
+                                            )
+                                        }
+                                    }
+                                    
                                     item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
-                                            episodeCount = episodes.size,
+                                            episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
                                             missingEpisodeCount = state.missingEpisodeCount,
                                             onClick = onFilterButtonClicked,
                                         )
@@ -1119,6 +1189,12 @@ private fun EpisodeItemWrapper(
 ) {
     val haptic = LocalHapticFeedback.current
     when (item) {
+        is EpisodeList.Season -> {
+            ListGroupHeader(
+                text = item.name,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         is EpisodeList.MissingCount -> {
             MissingEpisodeCountListItem(count = item.count)
         }
@@ -1411,6 +1487,7 @@ private fun LazyListScope.sharedEpisodeItems(
             when (item) {
                 is EpisodeList.Item -> "anime-ep-${item.episode.id}-$index"
                 is EpisodeList.MissingCount -> "anime-ms-${item.id}-$index"
+                is EpisodeList.Season -> "anime-sn-${item.name}-$index"
             }
         },
     ) { _, item ->
@@ -1427,5 +1504,39 @@ private fun LazyListScope.sharedEpisodeItems(
             onEpisodeSelected = onEpisodeSelected,
             onEpisodeSwipe = onEpisodeSwipe,
         )
+    }
+}
+
+@androidx.compose.material3.ExperimentalMaterial3Api
+@Composable
+private fun SeasonSelector(
+    seasons: List<String>,
+    selectedSeason: String?,
+    onSeasonSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(seasons, key = { it }) { season ->
+            androidx.compose.material3.FilterChip(
+                selected = season == selectedSeason,
+                onClick = { onSeasonSelected(season) },
+                label = {
+                    Text(
+                        text = season,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                },
+                shape = androidx.compose.foundation.shape.CircleShape,
+                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+                border = null,
+            )
+        }
     }
 }

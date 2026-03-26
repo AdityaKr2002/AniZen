@@ -26,6 +26,7 @@ class SetAnimeDefaultEpisodeFlags(
                     sortingMode = sortEpisodeBySourceOrNumber().get(),
                     sortingDirection = sortEpisodeByAscendingOrDescending().get(),
                     displayMode = displayEpisodeByNameOrNumber().get(),
+                    seasonGrouping = groupEpisodeBySeason().get(),
                 )
             }
         }
