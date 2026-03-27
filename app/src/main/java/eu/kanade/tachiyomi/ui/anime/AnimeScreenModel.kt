@@ -328,7 +328,7 @@ class AnimeScreenModel(
                     
                     val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                     
-                    if (currentIsSpecial) {
+                    if (currentIsSpecial || currentVol != null) {
                         numRestart
                     } else {
                         numRestart || timeJump || yearChange || sameDateRestart
@@ -1677,7 +1677,7 @@ class AnimeScreenModel(
                                 
                                 val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                                 
-                                if (currentIsSpecial) {
+                                if (currentIsSpecial || currentVol != null) {
                                     numRestart
                                 } else {
                                     numRestart || timeJump || yearChange || sameDateRestart
