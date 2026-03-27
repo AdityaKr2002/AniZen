@@ -355,7 +355,7 @@ class AnimeScreenModel(
                     if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
                         hasSpecials = true
                     }
-                    if (EpisodeSeasonUtils.getVolumeName(item.episode) != null) {
+                    if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
                         hasVolume = true
                     }
                     if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -367,7 +367,7 @@ class AnimeScreenModel(
                     "Specials"
                 } else if (hasVolume) {
                     "Volumes"
-                } else if (block.episodes.all { it.episode.episodeNumber < 0 }) {
+                } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
                     "Extras"
                 } else {
                     implicitSeasonCount++
@@ -1704,7 +1704,7 @@ class AnimeScreenModel(
                                 if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
                                     hasSpecials = true
                                 }
-                                if (EpisodeSeasonUtils.getVolumeName(item.episode) != null) {
+                                if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
                                     hasVolume = true
                                 }
                                 if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -1716,7 +1716,7 @@ class AnimeScreenModel(
                                 "Specials"
                             } else if (hasVolume) {
                                 "Volumes"
-                            } else if (block.episodes.all { it.episode.episodeNumber < 0 }) {
+                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(item.episode) }) {
                                 "Extras"
                             } else {
                                 implicitSeasonCount++
