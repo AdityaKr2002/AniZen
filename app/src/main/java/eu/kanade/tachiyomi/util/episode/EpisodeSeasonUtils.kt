@@ -53,11 +53,18 @@ object EpisodeSeasonUtils {
     }
 
     /**
+     * Checks if the episode name contains digits.
+     */
+    fun hasDigits(s: String): Boolean {
+        return s.any { it.isDigit() }
+    }
+
+    /**
      * Checks if the episode is likely a non-standard content (Special, Volume, or Extra).
      */
     fun isSpecial(episode: Episode): Boolean {
-        // Contains special/volume keywords or is unrecognized with negative number
-        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode)
+        // Contains special/volume keywords, or is unrecognized with negative number, or name has no digits
+        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name)
     }
 
     /**
