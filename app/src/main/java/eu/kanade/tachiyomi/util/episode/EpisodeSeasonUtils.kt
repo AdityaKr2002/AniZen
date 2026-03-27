@@ -4,6 +4,7 @@ import tachiyomi.domain.episode.model.Episode
 
 object EpisodeSeasonUtils {
     private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
+    private val volumeRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:vol|volume\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
     private val specialKeywordsRegex = Regex("""(?i)\b(special|ova|ona|movie|pv|trailer|extra|bonus|recap|summary|prologue)\b""")
 
     /**
@@ -22,6 +23,21 @@ object EpisodeSeasonUtils {
     }
 
     /**
+     * Extracts volume number from episode name.
+     * Returns "Volume X" if found.
+     */
+    fun getVolumeName(episode: Episode): String? {
+        val name = episode.name
+        val match = volumeRegex.find(name)
+        return if (match != null) {
+            val volNumber = match.groupValues[1].toIntOrNull()
+            if (volNumber != null) "Volume $volNumber" else null
+        } else {
+            null
+        }
+    }
+
+    /**
      * Checks if the episode is likely a special content.
      */
     fun isSpecial(episode: Episode): Boolean {
@@ -30,15 +46,25 @@ object EpisodeSeasonUtils {
     }
 
     /**
-     * Comparator to sort season names naturally (Season 1, Season 2, Season 10, Specials).
+     * Comparator to sort section names naturally.
+     * Priority: Seasons > Specials > Volumes > Extras.
      */
     val SeasonComparator = Comparator<String> { s1, s2 ->
-        val isSpecial1 = s1.contains("Special", ignoreCase = true)
-        val isSpecial2 = s2.contains("Special", ignoreCase = true)
-        
-        if (isSpecial1 && !isSpecial2) return@Comparator 1
-        if (!isSpecial1 && isSpecial2) return@Comparator -1
-        
+        fun getPriority(s: String): Int {
+            return when {
+                s.startsWith("Season", ignoreCase = true) -> 0
+                s.contains("Special", ignoreCase = true) -> 1
+                s.startsWith("Volume", ignoreCase = true) -> 2
+                s.contains("Extra", ignoreCase = true) -> 3
+                else -> 4
+            }
+        }
+
+        val p1 = getPriority(s1)
+        val p2 = getPriority(s2)
+
+        if (p1 != p2) return@Comparator p1.compareTo(p2)
+
         val n1 = s1.filter { it.isDigit() }.toIntOrNull() ?: 0
         val n2 = s2.filter { it.isDigit() }.toIntOrNull() ?: 0
         if (n1 != n2) {
