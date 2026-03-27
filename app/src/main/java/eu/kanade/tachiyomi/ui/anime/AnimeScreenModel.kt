@@ -1716,7 +1716,7 @@ class AnimeScreenModel(
                                 "Specials"
                             } else if (hasVolume) {
                                 "Volumes"
-                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(item.episode) }) {
+                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
                                 "Extras"
                             } else {
                                 implicitSeasonCount++
