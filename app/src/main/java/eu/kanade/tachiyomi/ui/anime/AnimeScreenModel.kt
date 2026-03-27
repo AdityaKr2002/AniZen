@@ -328,7 +328,11 @@ class AnimeScreenModel(
                     
                     val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                     
-                    numRestart || timeJump || yearChange || sameDateRestart
+                    if (currentIsSpecial) {
+                        numRestart
+                    } else {
+                        numRestart || timeJump || yearChange || sameDateRestart
+                    }
                 }
 
                 if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
@@ -1673,7 +1677,11 @@ class AnimeScreenModel(
                                 
                                 val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                                 
-                                numRestart || timeJump || yearChange || sameDateRestart
+                                if (currentIsSpecial) {
+                                    numRestart
+                                } else {
+                                    numRestart || timeJump || yearChange || sameDateRestart
+                                }
                             }
 
                             if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
