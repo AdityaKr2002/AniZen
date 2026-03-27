@@ -60,11 +60,21 @@ object EpisodeSeasonUtils {
     }
 
     /**
+     * Checks if the episode is from Season 0.
+     * Also detects 0.x numbering (e.g., 0.1, 0.2) used by many extensions for specials.
+     */
+    fun isSeasonZero(episode: Episode): Boolean {
+        val hasSeasonZeroName = getSeasonName(episode) == "Season 0"
+        val hasSeasonZeroNumber = episode.episodeNumber > 0 && episode.episodeNumber < 1.0
+        return hasSeasonZeroName || hasSeasonZeroNumber
+    }
+
+    /**
      * Checks if the episode is likely a non-standard content (Special, Volume, or Extra).
      */
     fun isSpecial(episode: Episode): Boolean {
-        // Contains special/volume keywords, or is unrecognized with negative number, or name has no digits
-        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name)
+        // Contains special/volume keywords, or is Season 0, or is unrecognized with negative number, or name has no digits
+        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name) || isSeasonZero(episode)
     }
 
     /**

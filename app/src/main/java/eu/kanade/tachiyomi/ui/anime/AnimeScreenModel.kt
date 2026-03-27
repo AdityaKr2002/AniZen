@@ -352,13 +352,16 @@ class AnimeScreenModel(
                 var hasVolume = false
                 var hasSpecials = false
                 for (item in block.episodes) {
-                    if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
+                    if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                         hasSpecials = true
                     }
                     if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
                         hasVolume = true
                     }
-                    if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
+                    if (explicitSeasonName == null) {
+                        val name = EpisodeSeasonUtils.getSeasonName(item.episode)
+                        if (name != "Season 0") explicitSeasonName = name
+                    }
                 }
                 
                 val seasonName = if (hasSpecials) {
@@ -1701,13 +1704,16 @@ class AnimeScreenModel(
                             var hasVolume = false
                             var hasSpecials = false
                             for (item in block.episodes) {
-                                if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
+                                if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                                     hasSpecials = true
                                 }
                                 if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
                                     hasVolume = true
                                 }
-                                if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
+                                if (explicitSeasonName == null) {
+                                    val name = EpisodeSeasonUtils.getSeasonName(item.episode)
+                                    if (name != "Season 0") explicitSeasonName = name
+                                }
                             }
                             
                             val seasonName = if (hasSpecials) {
