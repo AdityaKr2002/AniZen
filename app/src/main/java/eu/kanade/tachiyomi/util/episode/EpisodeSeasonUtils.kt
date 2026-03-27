@@ -60,11 +60,18 @@ object EpisodeSeasonUtils {
     }
 
     /**
+     * Checks if the episode is from Season 0.
+     */
+    fun isSeasonZero(episode: Episode): Boolean {
+        return getSeasonName(episode) == "Season 0"
+    }
+
+    /**
      * Checks if the episode is likely a non-standard content (Special, Volume, or Extra).
      */
     fun isSpecial(episode: Episode): Boolean {
-        // Contains special/volume keywords, or is unrecognized with negative number, or name has no digits
-        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name)
+        // Contains special/volume keywords, or is Season 0, or is unrecognized with negative number, or name has no digits
+        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name) || isSeasonZero(episode)
     }
 
     /**
