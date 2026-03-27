@@ -3,10 +3,9 @@ package eu.kanade.tachiyomi.util.episode
 import tachiyomi.domain.episode.model.Episode
 
 object EpisodeSeasonUtils {
-    private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
-    private val volumeRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:vol|volume\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
+    // Added |_ to delimiters to support patterns like _s1e1_
+    private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[|_)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|_|$)""")
     private val specialKeywordsRegex = Regex("""(?i)\b(special|ova|ona|movie|pv|trailer|extra|bonus|recap|summary|prologue)\b""")
-    private val volumeKeywordsRegex = Regex("""(?i)\b(vol|volume)\b""")
 
     /**
      * Extracts season number from episode name.
@@ -21,28 +20,6 @@ object EpisodeSeasonUtils {
         } else {
             null
         }
-    }
-
-    /**
-     * Extracts volume number from episode name.
-     * Returns "Volume X" if found.
-     */
-    fun getVolumeName(episode: Episode): String? {
-        val name = episode.name
-        val match = volumeRegex.find(name)
-        return if (match != null) {
-            val volNumber = match.groupValues[1].toIntOrNull()
-            if (volNumber != null) "Volume $volNumber" else null
-        } else {
-            null
-        }
-    }
-
-    /**
-     * Checks if the episode name contains volume keywords.
-     */
-    fun hasVolumeKeywords(episode: Episode): Boolean {
-        return volumeKeywordsRegex.containsMatchIn(episode.name) || getVolumeName(episode) != null
     }
 
     /**
@@ -70,25 +47,24 @@ object EpisodeSeasonUtils {
     }
 
     /**
-     * Checks if the episode is likely a non-standard content (Special, Volume, or Extra).
+     * Checks if the episode is likely a non-standard content (Special or Extra).
      */
     fun isSpecial(episode: Episode): Boolean {
-        // Contains special/volume keywords, or is Season 0, or is unrecognized with negative number, or name has no digits
-        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || hasVolumeKeywords(episode) || !hasDigits(episode.name) || isSeasonZero(episode)
+        // Contains special keywords, or is Season 0, or is unrecognized with negative number, or name has no digits
+        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || !hasDigits(episode.name) || isSeasonZero(episode)
     }
 
     /**
      * Comparator to sort section names naturally.
-     * Priority: Seasons > Specials > Volumes > Extras.
+     * Priority: Seasons > Specials > Extras.
      */
     val SeasonComparator = Comparator<String> { s1, s2 ->
         fun getPriority(s: String): Int {
             return when {
                 s.startsWith("Season", ignoreCase = true) -> 0
                 s.contains("Special", ignoreCase = true) -> 1
-                s.startsWith("Volume", ignoreCase = true) || s.equals("Volumes", ignoreCase = true) -> 2
-                s.contains("Extra", ignoreCase = true) -> 3
-                else -> 4
+                s.contains("Extra", ignoreCase = true) -> 2
+                else -> 3
             }
         }
 

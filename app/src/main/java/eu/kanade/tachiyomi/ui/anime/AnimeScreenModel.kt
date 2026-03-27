@@ -296,16 +296,11 @@ class AnimeScreenModel(
                 val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                 val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                 val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
-                val currentHasVol = EpisodeSeasonUtils.hasVolumeKeywords(item.episode)
-                val prevHasVol = prevItem?.let { EpisodeSeasonUtils.hasVolumeKeywords(it.episode) }
 
                 val isNewBlock = if (prevItem == null) {
                     true
                 } else if (currentIsSpecial != prevIsSpecial) {
                     // Split when switching between special and regular content
-                    true
-                } else if (currentIsSpecial && currentHasVol != prevHasVol) {
-                    // Split when switching between volume and other special content (Specials/Extras)
                     true
                 } else if (currentExplicit != null || prevExplicit != null) {
                     // If titles explicitly mention seasons, split whenever they change
@@ -349,14 +344,10 @@ class AnimeScreenModel(
             var implicitSeasonCount = 0
             blocks.forEach { block ->
                 var explicitSeasonName: String? = null
-                var hasVolume = false
                 var hasSpecials = false
                 for (item in block.episodes) {
                     if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                         hasSpecials = true
-                    }
-                    if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
-                        hasVolume = true
                     }
                     if (explicitSeasonName == null) {
                         val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -366,8 +357,6 @@ class AnimeScreenModel(
                 
                 val seasonName = if (hasSpecials) {
                     "Specials"
-                } else if (hasVolume) {
-                    "Volumes"
                 } else if (explicitSeasonName != null) {
                     explicitSeasonName
                 } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
@@ -1649,16 +1638,11 @@ class AnimeScreenModel(
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                             val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                             val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
-                            val currentHasVol = EpisodeSeasonUtils.hasVolumeKeywords(item.episode)
-                            val prevHasVol = prevItem?.let { EpisodeSeasonUtils.hasVolumeKeywords(it.episode) }
 
                             val isNewBlock = if (prevItem == null) {
                                 true
                             } else if (currentIsSpecial != prevIsSpecial) {
                                 // Split when switching between special and regular content
-                                true
-                            } else if (currentIsSpecial && currentHasVol != prevHasVol) {
-                                // Split when switching between volume and other special content (Specials/Extras)
                                 true
                             } else if (currentExplicit != null || prevExplicit != null) {
                                 // If titles explicitly mention seasons, split whenever they change
@@ -1701,14 +1685,10 @@ class AnimeScreenModel(
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
-                            var hasVolume = false
                             var hasSpecials = false
                             for (item in block.episodes) {
                                 if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                                     hasSpecials = true
-                                }
-                                if (EpisodeSeasonUtils.hasVolumeKeywords(item.episode)) {
-                                    hasVolume = true
                                 }
                                 if (explicitSeasonName == null) {
                                     val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -1718,8 +1698,6 @@ class AnimeScreenModel(
                             
                             val seasonName = if (hasSpecials) {
                                 "Specials"
-                            } else if (hasVolume) {
-                                "Volumes"
                             } else if (explicitSeasonName != null) {
                                 explicitSeasonName
                             } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
