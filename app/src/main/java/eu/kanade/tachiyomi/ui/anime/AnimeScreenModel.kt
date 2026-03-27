@@ -296,16 +296,16 @@ class AnimeScreenModel(
                 val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                 val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                 val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
-                val currentVol = EpisodeSeasonUtils.getVolumeName(item.episode)
-                val prevVol = prevItem?.let { EpisodeSeasonUtils.getVolumeName(it.episode) }
+                val currentHasVol = EpisodeSeasonUtils.hasVolumeKeywords(item.episode)
+                val prevHasVol = prevItem?.let { EpisodeSeasonUtils.hasVolumeKeywords(it.episode) }
 
                 val isNewBlock = if (prevItem == null) {
                     true
                 } else if (currentIsSpecial != prevIsSpecial) {
                     // Split when switching between special and regular content
                     true
-                } else if (currentIsSpecial && (currentVol != null) != (prevVol != null)) {
-                    // Split when entering/leaving volume-tagged area within specials
+                } else if (currentIsSpecial && currentHasVol != prevHasVol) {
+                    // Split when switching between volume and other special content (Specials/Extras)
                     true
                 } else if (currentExplicit != null || prevExplicit != null) {
                     // If titles explicitly mention seasons, split whenever they change
@@ -328,7 +328,7 @@ class AnimeScreenModel(
                     
                     val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                     
-                    if (currentIsSpecial || currentVol != null) {
+                    if (currentIsSpecial) {
                         numRestart
                     } else {
                         numRestart || timeJump || yearChange || sameDateRestart
@@ -1646,16 +1646,16 @@ class AnimeScreenModel(
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                             val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                             val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
-                            val currentVol = EpisodeSeasonUtils.getVolumeName(item.episode)
-                            val prevVol = prevItem?.let { EpisodeSeasonUtils.getVolumeName(it.episode) }
+                            val currentHasVol = EpisodeSeasonUtils.hasVolumeKeywords(item.episode)
+                            val prevHasVol = prevItem?.let { EpisodeSeasonUtils.hasVolumeKeywords(it.episode) }
 
                             val isNewBlock = if (prevItem == null) {
                                 true
                             } else if (currentIsSpecial != prevIsSpecial) {
                                 // Split when switching between special and regular content
                                 true
-                            } else if (currentIsSpecial && (currentVol != null) != (prevVol != null)) {
-                                // Split when entering/leaving volume-tagged area within specials
+                            } else if (currentIsSpecial && currentHasVol != prevHasVol) {
+                                // Split when switching between volume and other special content (Specials/Extras)
                                 true
                             } else if (currentExplicit != null || prevExplicit != null) {
                                 // If titles explicitly mention seasons, split whenever they change
@@ -1677,7 +1677,7 @@ class AnimeScreenModel(
                                 
                                 val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                                 
-                                if (currentIsSpecial || currentVol != null) {
+                                if (currentIsSpecial) {
                                     numRestart
                                 } else {
                                     numRestart || timeJump || yearChange || sameDateRestart
