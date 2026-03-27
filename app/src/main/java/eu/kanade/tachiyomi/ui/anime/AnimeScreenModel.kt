@@ -361,12 +361,12 @@ class AnimeScreenModel(
                     if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
                 }
                 
-                val seasonName = if (explicitSeasonName != null) {
-                    explicitSeasonName
-                } else if (hasSpecials) {
+                val seasonName = if (hasSpecials) {
                     "Specials"
                 } else if (hasVolume) {
                     "Volumes"
+                } else if (explicitSeasonName != null) {
+                    explicitSeasonName
                 } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
                     "Extras"
                 } else {
@@ -1710,12 +1710,12 @@ class AnimeScreenModel(
                                 if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
                             }
                             
-                            val seasonName = if (explicitSeasonName != null) {
-                                explicitSeasonName
-                            } else if (hasSpecials) {
+                            val seasonName = if (hasSpecials) {
                                 "Specials"
                             } else if (hasVolume) {
                                 "Volumes"
+                            } else if (explicitSeasonName != null) {
+                                explicitSeasonName
                             } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
                                 "Extras"
                             } else {
