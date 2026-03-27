@@ -5,7 +5,7 @@ import tachiyomi.domain.episode.model.Episode
 object EpisodeSeasonUtils {
     private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
     private val volumeRegex = Regex("""(?i)(?:^|\b|\s|\[)(?:vol|volume\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|$)""")
-    private val specialKeywordsRegex = Regex("""(?i)\b(special|ova|ona|movie|pv|trailer|extra|bonus|recap|summary|prologue)\b""")
+    private val specialKeywordsRegex = Regex("""(?i)\b(special|ova|ona|movie|pv|trailer|bonus|recap|summary|prologue)\b""")
 
     /**
      * Extracts season number from episode name.
@@ -38,11 +38,18 @@ object EpisodeSeasonUtils {
     }
 
     /**
+     * Checks if the episode name contains special keywords.
+     */
+    fun hasSpecialKeywords(episode: Episode): Boolean {
+        return specialKeywordsRegex.containsMatchIn(episode.name)
+    }
+
+    /**
      * Checks if the episode is likely a special content.
      */
     fun isSpecial(episode: Episode): Boolean {
-        // Not a recognized number or contains special keywords
-        return episode.episodeNumber < 0 || specialKeywordsRegex.containsMatchIn(episode.name)
+        // Contains special keywords or is unrecognized with negative number
+        return episode.episodeNumber < 0 || hasSpecialKeywords(episode)
     }
 
     /**
@@ -54,7 +61,7 @@ object EpisodeSeasonUtils {
             return when {
                 s.startsWith("Season", ignoreCase = true) -> 0
                 s.contains("Special", ignoreCase = true) -> 1
-                s.startsWith("Volume", ignoreCase = true) -> 2
+                s.startsWith("Volume", ignoreCase = true) || s.equals("Volumes", ignoreCase = true) -> 2
                 s.contains("Extra", ignoreCase = true) -> 3
                 else -> 4
             }

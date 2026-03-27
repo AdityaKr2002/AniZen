@@ -304,8 +304,8 @@ class AnimeScreenModel(
                 } else if (currentIsSpecial != prevIsSpecial) {
                     // Split when switching between special and regular content
                     true
-                } else if (currentIsSpecial && currentVol != prevVol) {
-                    // Split different volumes within specials
+                } else if (currentIsSpecial && (currentVol != null) != (prevVol != null)) {
+                    // Split when entering/leaving volume-tagged area within specials
                     true
                 } else if (currentExplicit != null || prevExplicit != null) {
                     // If titles explicitly mention seasons, split whenever they change
@@ -345,22 +345,24 @@ class AnimeScreenModel(
             var implicitSeasonCount = 0
             blocks.forEach { block ->
                 var explicitSeasonName: String? = null
-                var explicitVolName: String? = null
+                var hasVolume = false
                 var hasSpecials = false
                 for (item in block.episodes) {
-                    if (EpisodeSeasonUtils.isSpecial(item.episode)) {
+                    if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
                         hasSpecials = true
                     }
+                    if (EpisodeSeasonUtils.getVolumeName(item.episode) != null) {
+                        hasVolume = true
+                    }
                     if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
-                    if (explicitVolName == null) explicitVolName = EpisodeSeasonUtils.getVolumeName(item.episode)
                 }
                 
                 val seasonName = if (explicitSeasonName != null) {
                     explicitSeasonName
                 } else if (hasSpecials) {
                     "Specials"
-                } else if (explicitVolName != null) {
-                    explicitVolName
+                } else if (hasVolume) {
+                    "Volumes"
                 } else if (block.episodes.all { it.episode.episodeNumber < 0 }) {
                     "Extras"
                 } else {
@@ -1648,8 +1650,8 @@ class AnimeScreenModel(
                             } else if (currentIsSpecial != prevIsSpecial) {
                                 // Split when switching between special and regular content
                                 true
-                            } else if (currentIsSpecial && currentVol != prevVol) {
-                                // Split different volumes within specials
+                            } else if (currentIsSpecial && (currentVol != null) != (prevVol != null)) {
+                                // Split when entering/leaving volume-tagged area within specials
                                 true
                             } else if (currentExplicit != null || prevExplicit != null) {
                                 // If titles explicitly mention seasons, split whenever they change
@@ -1688,22 +1690,24 @@ class AnimeScreenModel(
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
-                            var explicitVolName: String? = null
+                            var hasVolume = false
                             var hasSpecials = false
                             for (item in block.episodes) {
-                                if (EpisodeSeasonUtils.isSpecial(item.episode)) {
+                                if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode)) {
                                     hasSpecials = true
                                 }
+                                if (EpisodeSeasonUtils.getVolumeName(item.episode) != null) {
+                                    hasVolume = true
+                                }
                                 if (explicitSeasonName == null) explicitSeasonName = EpisodeSeasonUtils.getSeasonName(item.episode)
-                                if (explicitVolName == null) explicitVolName = EpisodeSeasonUtils.getVolumeName(item.episode)
                             }
                             
                             val seasonName = if (explicitSeasonName != null) {
                                 explicitSeasonName
                             } else if (hasSpecials) {
                                 "Specials"
-                            } else if (explicitVolName != null) {
-                                explicitVolName
+                            } else if (hasVolume) {
+                                "Volumes"
                             } else if (block.episodes.all { it.episode.episodeNumber < 0 }) {
                                 "Extras"
                             } else {
