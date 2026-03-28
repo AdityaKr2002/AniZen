@@ -769,8 +769,10 @@ class PlayerActivity : BaseActivity() {
             }
             "vo-passes" -> PlayerStats.voPasses.value = value
             "time-pos" -> {
-                viewModel.updatePlayBackPos(value.toFloat())
-                viewModel.setChapter(value.toFloat())
+                if (!viewModel.isSeekingUI.value) {
+                    viewModel.updatePlayBackPos(value.toFloat())
+                    viewModel.setChapter(value.toFloat())
+                }
             }
             "demuxer-cache-time" -> viewModel.updateReadAhead(value = value)
             "volume" -> viewModel.setMPVVolume(value.toInt())
