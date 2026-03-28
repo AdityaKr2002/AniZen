@@ -70,8 +70,6 @@ class ExtensionManager(
      */
     private val installer by lazy { ExtensionInstaller(context) }
 
-    private val activeDownloads = mutableMapOf<String, Long>()
-
     private val iconMap = mutableMapOf<String, Drawable>()
 
     private val githubRegex = """https://raw.githubusercontent.com/(.+?)/.+""".toRegex()
@@ -260,11 +258,6 @@ class ExtensionManager(
      */
     fun installExtension(extension: Extension.Available): Flow<InstallStep> {
         return installer.downloadAndInstall(api.getApkUrl(extension), extension)
-            .onEach { step ->
-                if (step is InstallStep.Installing) {
-                    activeDownloads[extension.pkgName] = step.downloadId
-                }
-            }
     }
 
     /**
