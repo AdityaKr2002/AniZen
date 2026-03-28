@@ -390,20 +390,31 @@ fun PlayerControls(
                     val invertDuration by playerPreferences.invertDuration().collectAsState()
                     val readAhead by viewModel.readAhead.collectAsState()
                     val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsState()
+
+                    var sliderPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+                    LaunchedEffect(position) {
+                        if (!isSeeking) {
+                            sliderPosition = position
+                        }
+                    }
+
                     SeekbarWithTimers(
-                        position = position,
+                        position = sliderPosition,
                         duration = duration,
                         readAheadValue = readAhead,
                         onValueChange = {
                             isSeeking = true
+                            viewModel.isSeekingUI.value = true
+                            sliderPosition = it
                             viewModel.updatePlayBackPos(it)
                             // Fast scrubbing: absolute+keyframes (precise=false) while dragging
                             viewModel.seekTo(it.toInt(), false)
                         },
                         onValueChangeFinished = { 
                             isSeeking = false 
+                            viewModel.isSeekingUI.value = false
                             // Final precise seek on release
-                            viewModel.seekTo(position.toInt(), preciseSeeking)
+                            viewModel.seekTo(sliderPosition.toInt(), preciseSeeking)
                         },
                         timersInverted = Pair(false, invertDuration),
                         durationTimerOnCLick = { playerPreferences.invertDuration().set(!invertDuration) },

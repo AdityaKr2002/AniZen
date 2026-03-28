@@ -294,6 +294,8 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _isSeekingForwards = MutableStateFlow(false)
     val isSeekingForwards = _isSeekingForwards.asStateFlow()
 
+    val isSeekingUI = MutableStateFlow(false)
+
     private var hasTriggeredWatching = false
     private var timerJob: Job? = null
     private val _remainingTime = MutableStateFlow(0)
