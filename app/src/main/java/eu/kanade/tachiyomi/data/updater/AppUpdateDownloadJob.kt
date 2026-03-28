@@ -239,7 +239,7 @@ class AppUpdateDownloadJob(private val context: Context, workerParams: WorkerPar
             )
             val statusReceiver = pendingIntent.intentSender
             session.commit(statusReceiver)
-            notifier.onInstalling()
+            notifier.onInstalling(file.getUriCompat(context), title)
             withContext(Dispatchers.IO) {
                 data.close()
             }
