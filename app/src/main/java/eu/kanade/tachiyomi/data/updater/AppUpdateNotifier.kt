@@ -130,7 +130,6 @@ internal class AppUpdateNotifier(private val context: Context) {
             setOnlyAlertOnce(false)
             setProgress(0, 0, false)
             setContentIntent(installIntent)
-            setOngoing(true)
 
             clearActions()
             addAction(
