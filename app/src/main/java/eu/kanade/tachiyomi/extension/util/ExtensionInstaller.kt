@@ -69,6 +69,8 @@ internal class ExtensionInstaller(private val context: Context) {
 
     private val extensionInstaller = Injekt.get<BasePreferences>().extensionInstaller()
 
+    private val activeNotifications = hashMapOf<String, Int>()
+
     /**
      * Adds the given extension to the downloads queue and returns an observable containing its
      * step in the installation process.
@@ -83,6 +85,10 @@ internal class ExtensionInstaller(private val context: Context) {
         if (oldDownload != null) {
             deleteDownload(pkgName)
         }
+
+        // KMK -->
+        dismissInstallNotification(pkgName)
+        // KMK <--
 
         // Register the receiver after removing (and unregistering) the previous download
         downloadReceiver.register()
@@ -164,7 +170,10 @@ internal class ExtensionInstaller(private val context: Context) {
      * @param uri The uri of the extension to install.
      */
     fun installApk(downloadId: Long, uri: Uri) {
-        promptInstall(downloadId, uri)
+        val pkgName = activeDownloads.entries.find { it.value == downloadId }?.key
+        if (pkgName != null) {
+            promptInstall(pkgName, downloadId, uri)
+        }
         when (val installer = extensionInstaller.get()) {
             BasePreferences.ExtensionInstaller.LEGACY -> {
                 val intent = Intent(context, ExtensionInstallActivity::class.java)
@@ -268,10 +277,11 @@ internal class ExtensionInstaller(private val context: Context) {
     /**
      * Shows a notification to prompt the user to install the extension.
      *
+     * @param pkgName The package name of the extension.
      * @param downloadId The id of the download.
      * @param uri The uri of the extension to install.
      */
-    private fun promptInstall(downloadId: Long, uri: Uri) {
+    private fun promptInstall(pkgName: String, downloadId: Long, uri: Uri) {
         val query = DownloadManager.Query().setFilterById(downloadId)
         val title = downloadManager.query(query).use { cursor ->
             if (cursor.moveToFirst()) {
@@ -283,6 +293,7 @@ internal class ExtensionInstaller(private val context: Context) {
 
         val installIntent = NotificationHandler.installApkPendingActivity(context, uri)
         val notificationId = Notifications.ID_EXTENSION_INSTALLER + downloadId.toInt()
+        activeNotifications[pkgName] = notificationId
 
         context.notify(
             notificationId,
@@ -306,6 +317,18 @@ internal class ExtensionInstaller(private val context: Context) {
                 context.stringResource(MR.strings.action_cancel),
                 NotificationReceiver.dismissNotificationPendingBroadcast(context, notificationId),
             )
+        }
+    }
+
+    /**
+     * Cancels the installation notification for the given package name.
+     *
+     * @param pkgName The package name of the extension.
+     */
+    fun dismissInstallNotification(pkgName: String) {
+        val notificationId = activeNotifications.remove(pkgName)
+        if (notificationId != null) {
+            context.cancelNotification(notificationId)
         }
     }
 
