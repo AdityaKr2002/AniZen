@@ -311,9 +311,11 @@ class Downloader(
             val filename = DiskUtil.buildValidFilename(download.episode.name)
             val url = video.videoUrl
             var isHls = video.type == VideoType.HLS || url.contains(".m3u8")
-            var isDash = video.type == VideoType.DASH || url.contains(".mpd")
+            var isDash = video.type == VideoType.DASH || url.contains(".mpd") || video.audioTracks.isNotEmpty()
             if (url.contains(".mkv") || url.contains(".mp4") || url.contains("discoveryftp.net") || url.contains("cineplexbd.net") || url.contains("download.php")) {
-                isHls = false; isDash = false
+                if (video.audioTracks.isEmpty()) {
+                    isHls = false; isDash = false
+                }
             }
             if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
             
@@ -801,7 +803,7 @@ class Downloader(
                 }
                 
                 download.selectedAudioTracks.filter { it.url != video.videoUrl }.forEach { track ->
-                    cmd += "-i \"${track.url}\" "
+                    cmd += "$headersArg-i \"${track.url}\" "
                     mapCmd += "-map $inputIndex:a:0? "
                     
                     // Assign language metadata if possible
@@ -820,7 +822,7 @@ class Downloader(
                 }
                 
                 download.selectedSubtitleTracks.filter { it.url != video.videoUrl }.forEach { track ->
-                    cmd += "-i \"${track.url}\" "
+                    cmd += "$headersArg-i \"${track.url}\" "
                     mapCmd += "-map $inputIndex:s:0? "
                     cmd += "-metadata:s:s:${inputIndex - 1} language=${track.lang} "
                     inputIndex++
