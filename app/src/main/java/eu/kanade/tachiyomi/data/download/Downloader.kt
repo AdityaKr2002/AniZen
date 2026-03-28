@@ -811,24 +811,26 @@ class Downloader(
         download.progress = 0
         notifier.onProgressChange(download)
 
-        // 1. Download the main video track (or single file if it's the only one)
-        val mainVideoFile = downloadTrack(client, video.videoUrl, video.headers, tmpDir, "video.part")
+        // Download tracks in parallel to prevent speed degradation
+        val (mainVideoFile, audioFiles, subFiles) = coroutineScope {
+            val videoDeferred = async { 
+                downloadTrack(client, video.videoUrl, video.headers, tmpDir, "video.part") 
+            }
+            
+            val externalAudios = download.selectedAudioTracks.filter { it.url != video.videoUrl }
+            val audioDeferreds = externalAudios.mapIndexed { index, track ->
+                async { downloadTrack(client, track.url, video.headers, tmpDir, "audio_$index.part") }
+            }
 
-        // 2. Download external audio tracks
-        val audioFiles = mutableListOf<UniFile>()
-        download.selectedAudioTracks.filter { it.url != video.videoUrl }.forEachIndexed { index, track ->
-            val audioFile = downloadTrack(client, track.url, video.headers, tmpDir, "audio_$index.part")
-            audioFiles.add(audioFile)
+            val externalSubs = download.selectedSubtitleTracks.filter { it.url != video.videoUrl }
+            val subDeferreds = externalSubs.mapIndexed { index, track ->
+                async { downloadTrack(client, track.url, video.headers, tmpDir, "sub_$index.part") }
+            }
+
+            Triple(videoDeferred.await(), audioDeferreds.awaitAll(), subDeferreds.awaitAll())
         }
 
-        // 3. Download external subtitle tracks
-        val subFiles = mutableListOf<UniFile>()
-        download.selectedSubtitleTracks.filter { it.url != video.videoUrl }.forEachIndexed { index, track ->
-            val subFile = downloadTrack(client, track.url, video.headers, tmpDir, "sub_$index.part")
-            subFiles.add(subFile)
-        }
-
-        // 4. Mux them together locally
+        // Mux them together locally
         download.status = Download.State.MERGING
         notifier.onProgressChange(download)
 
