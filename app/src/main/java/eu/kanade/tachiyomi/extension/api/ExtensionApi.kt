@@ -133,7 +133,7 @@ internal class ExtensionApi {
                     isTorrent = it.torrent == 1,
                     sources = it.sources?.map(extensionSourceMapper).orEmpty(),
                     apkName = it.apk,
-                    iconUrl = "${repoUrl}/icon/${it.pkg}.png",
+                    iconUrl = "${repoUrl.substringBefore("/index.min.json")}/icon/${it.pkg}.png",
                     repoUrl = repoUrl,
                     author = author,
                 )
@@ -144,7 +144,7 @@ internal class ExtensionApi {
         return if (extension.apkName.startsWith("http")) {
             extension.apkName
         } else {
-            "${extension.repoUrl}/${extension.apkName}"
+            "${extension.repoUrl.substringBefore("/index.min.json")}/${extension.apkName}"
         }
     }
 

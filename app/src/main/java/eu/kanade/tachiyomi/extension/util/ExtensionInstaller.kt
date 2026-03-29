@@ -9,25 +9,19 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.extension.ExtensionInstallerJob
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.installer.Installer
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
-import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import eu.kanade.tachiyomi.util.system.notify
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
 import logcat.LogPriority
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
@@ -44,12 +38,8 @@ internal class ExtensionInstaller(
     private val context: Context,
 ) {
 
-    private val scope = CoroutineScope(Dispatchers.IO)
-    private val activeJobs = mutableMapOf<String, Job>()
     private val activeSteps = mutableMapOf<Long, MutableStateFlow<InstallStep>>()
     private val extensionInstaller = Injekt.get<BasePreferences>().extensionInstaller()
-
-    private val httpClient: OkHttpClient = Injekt.get<NetworkHelper>().client
 
     /**
      * Adds the given extension to the downloads queue and returns an observable containing its
@@ -65,43 +55,11 @@ internal class ExtensionInstaller(
         val step = MutableStateFlow(InstallStep.Pending)
         activeSteps[downloadId] = step
 
-        val job = scope.launch {
-            val tmpFile = File(context.cacheDir, "extension_${extension.pkgName}.apk")
-            try {
-                step.value = InstallStep.Downloading
-                val request = Request.Builder().url(url).build()
-                val response = httpClient.newCall(request).execute()
-
-                if (!response.isSuccessful) {
-                    throw Exception("Failed to download extension: ${response.code}")
-                }
-                val body = response.body ?: throw Exception("Empty response body")
-                body.byteStream().use { input ->
-                    tmpFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-
-                step.value = InstallStep.Installing
-                promptInstall(extension.name, extension.pkgName, downloadId, tmpFile)
-                installApk(downloadId, tmpFile)
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException || e is InterruptedException) {
-                    // Canceled
-                } else {
-                    logcat(LogPriority.ERROR, e)
-                    step.value = InstallStep.Error
-                }
-            }
-        }
-
-        activeJobs[extension.pkgName] = job
+        ExtensionInstallerJob.start(context, url, extension.pkgName, downloadId)
 
         return step.asStateFlow()
             .onCompletion {
-                activeJobs.remove(extension.pkgName)
                 activeSteps.remove(downloadId)
-                job.cancel()
             }
     }
 
@@ -110,7 +68,7 @@ internal class ExtensionInstaller(
      *
      * @param tempFile The file of the extension to install.
      */
-    private fun installApk(downloadId: Long, tempFile: File) {
+    fun installApk(downloadId: Long, tempFile: File) {
         when (val installer = extensionInstaller.get()) {
             BasePreferences.ExtensionInstaller.LEGACY -> {
                 val intent = Intent(context, ExtensionInstallActivity::class.java)
@@ -150,7 +108,7 @@ internal class ExtensionInstaller(
     /**
      * Shows a notification to prompt the user to install the extension manually if needed.
      */
-    private fun promptInstall(name: String, pkgName: String, downloadId: Long, tempFile: File) {
+    fun promptInstall(name: String, pkgName: String, downloadId: Long, tempFile: File) {
         val uri = tempFile.getUriCompat(context)
         val installIntent = NotificationHandler.installApkPendingActivity(context, uri)
         val notificationId = Notifications.ID_EXTENSION_INSTALLER + downloadId.toInt()
@@ -184,7 +142,7 @@ internal class ExtensionInstaller(
      * Cancels extension install and remove from download manager and installer.
      */
     fun cancelInstall(pkgName: String) {
-        activeJobs.remove(pkgName)?.cancel()
+        ExtensionInstallerJob.stop(context, pkgName)
         Installer.cancelInstallQueue(context, pkgName.hashCode().toLong())
     }
 
