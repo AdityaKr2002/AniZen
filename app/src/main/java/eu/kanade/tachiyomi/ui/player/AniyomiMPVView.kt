@@ -268,8 +268,24 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         applyPlaybackStrategy()
 
+        val performanceProfile = decoderPreferences.performanceProfile().get()
+        val tier = when (performanceProfile) {
+            PerformanceProfile.HighPerformance -> DeviceTierManager.Tier.HIGH
+            PerformanceProfile.LowPower -> DeviceTierManager.Tier.LOW
+            else -> DeviceTierManager.getTier(context)
+        }
+
         // Stability and compatibility safeguards
-        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto threads
+        if (tier == DeviceTierManager.Tier.HIGH) {
+            // Aggressive buffering for high-end devices to support 120Hz/4K
+            MPVLib.setOptionString("hwdec-extra-frames", "24")
+            MPVLib.setOptionString("vd-lavc-threads", "8") // Cap at 8 threads to prevent extreme scheduling overhead
+        } else {
+            // Safe defaults for MID/LOW tier to prevent VRAM exhaustion and black screens
+            MPVLib.setOptionString("hwdec-extra-frames", "3") // Default MPV value
+            MPVLib.setOptionString("vd-lavc-threads", "0") // Auto thread count based on active cores
+        }
+        
         MPVLib.setOptionString("opengl-es", "yes") // Force GLES for stability
         MPVLib.setOptionString("gpu-context", "android")
         MPVLib.setOptionString("gpu-api", "opengl")
