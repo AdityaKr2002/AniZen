@@ -86,7 +86,7 @@ class HosterLoader {
                             semaphore.acquire()
                             try {
                                 val hosterState = try {
-                                    kotlinx.coroutines.withTimeout(15000) {
+                                    kotlinx.coroutines.withTimeout(45000) {
                                         EpisodeLoader.loadHosterVideos(source, hoster)
                                     }
                                 } catch (e: Exception) {
@@ -163,7 +163,7 @@ class HosterLoader {
         suspend fun getResolvedVideo(source: AnimeSource?, video: Video): Video? {
             val resolvedVideo = if (source is AnimeHttpSource && !video.initialized) {
                 try {
-                    kotlinx.coroutines.withTimeout(15000) {
+                    kotlinx.coroutines.withTimeout(45000) {
                         source.resolveVideo(video)
                     }
                 } catch (e: Exception) {

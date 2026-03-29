@@ -133,7 +133,7 @@ internal class ExtensionApi {
                     isTorrent = it.torrent == 1,
                     sources = it.sources?.map(extensionSourceMapper).orEmpty(),
                     apkName = it.apk,
-                    iconUrl = "$repoUrl/icon/${it.pkg}.png",
+                    iconUrl = "${repoUrl}/icon/${it.pkg}.png",
                     repoUrl = repoUrl,
                     author = author,
                 )
@@ -141,7 +141,11 @@ internal class ExtensionApi {
     }
 
     fun getApkUrl(extension: Extension.Available): String {
-        return "${extension.repoUrl}/apk/${extension.apkName}"
+        return if (extension.apkName.startsWith("http")) {
+            extension.apkName
+        } else {
+            "${extension.repoUrl}/${extension.apkName}"
+        }
     }
 
     private fun ExtensionJsonObject.extractLibVersion(): Double {

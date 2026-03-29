@@ -75,7 +75,7 @@ class EpisodeLoader {
             }
 
             return try {
-                kotlinx.coroutines.withTimeout(15000) {
+                kotlinx.coroutines.withTimeout(45000) {
                     if (hasMethod) {
                         source.getHosterList(anime.toSAnime(), episode.toSEpisode())
                     } else {
@@ -170,7 +170,7 @@ class EpisodeLoader {
 
                         try {
                             // High-speed resolution: Increased timeout for individual quality links
-                            kotlinx.coroutines.withTimeout(15000) {
+                            kotlinx.coroutines.withTimeout(45000) {
                                 val newVideoUrl = source.getVideoUrl(video)
                                 video.copy(videoUrl = newVideoUrl)
                             }

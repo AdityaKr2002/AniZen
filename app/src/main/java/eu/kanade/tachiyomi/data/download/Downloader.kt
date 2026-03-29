@@ -311,9 +311,11 @@ class Downloader(
             val filename = DiskUtil.buildValidFilename(download.episode.name)
             val url = video.videoUrl
             var isHls = video.type == VideoType.HLS || url.contains(".m3u8")
-            var isDash = video.type == VideoType.DASH || url.contains(".mpd")
+            var isDash = video.type == VideoType.DASH || url.contains(".mpd") || video.audioTracks.isNotEmpty()
             if (url.contains(".mkv") || url.contains(".mp4") || url.contains("discoveryftp.net") || url.contains("cineplexbd.net") || url.contains("download.php")) {
-                isHls = false; isDash = false
+                if (video.audioTracks.isEmpty()) {
+                    isHls = false; isDash = false
+                }
             }
             if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
             
@@ -688,9 +690,9 @@ class Downloader(
                             client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
                                 val source = res.body?.source() ?: throw IOException("Empty segment")
-                                val file = tmpDir.createFile("$index.seg")!!
+                                val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
                                 var segmentSize = 0L
-                                context.contentResolver.openFileDescriptor(file.uri, "w")?.use { pfd ->
+                                context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                         val buffer = ByteArray(64 * 1024)
                                         var bytesRead: Int
@@ -701,6 +703,7 @@ class Downloader(
                                         }
                                     }
                                 }
+                                tmpFile.renameTo("$index.seg")
                                 download.segmentProgress[index] = true
                                 val currentTotal = downloadedBytes.addAndGet(segmentSize)
                                 synchronized(download) { download.downloadedSegments++ }
@@ -760,86 +763,124 @@ class Downloader(
         return videoFile
     }
 
+    private suspend fun downloadTrack(
+        client: okhttp3.OkHttpClient,
+        url: String,
+        headers: Headers?,
+        tmpDir: UniFile,
+        filename: String
+    ): UniFile {
+        val file = tmpDir.createFile(filename)!!
+        val existing = file.length()
+        
+        val request = Request.Builder().url(url).headers(headers ?: Headers.headersOf())
+        if (existing > 0) {
+            request.header("Range", "bytes=$existing-")
+        }
+
+        retry {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            client.newCall(request.build()).execute().use { res ->
+                if (!res.isSuccessful && res.code != 206 && res.code != 416) throw IOException("Track failed: ${res.code}")
+                if (res.code == 416) return@use // Already fully downloaded
+
+                val append = res.code == 206
+                val source = res.body?.source() ?: throw IOException("Empty body")
+
+                context.contentResolver.openFileDescriptor(file.uri, if (append) "wa" else "w")?.use { pfd ->
+                    FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
+                        if (append) channel.position(channel.size())
+                        val buffer = ByteArray(64 * 1024)
+                        var bytesRead: Int
+                        while (source.read(buffer).also { bytesRead = it } != -1) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                            channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
+                        }
+                    }
+                }
+            }
+        }
+        return file
+    }
+
     private suspend fun nativeDashMuxDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
         val video = download.video!!
-        download.status = Download.State.MERGING
+        val client = networkHelper.downloadClient
+        
+        download.status = Download.State.DOWNLOADING
         download.progress = 0
         notifier.onProgressChange(download)
 
-        val videoFile = tmpDir.createFile("$filename.mkv")!!
-        val videoFilePath = videoFile.toFFmpegString(context)
+        // Download tracks in parallel to prevent speed degradation
+        val (mainVideoFile, audioFiles, subFiles) = coroutineScope {
+            val videoDeferred = async { 
+                downloadTrack(client, video.videoUrl, video.headers, tmpDir, "video.part") 
+            }
+            
+            val externalAudios = download.selectedAudioTracks.filter { it.url != video.videoUrl }
+            val audioDeferreds = externalAudios.mapIndexed { index, track ->
+                async { downloadTrack(client, track.url, video.headers, tmpDir, "audio_$index.part") }
+            }
 
-        val headersStr = video.headers?.joinToString("") { "${it.first}: ${it.second}\r\n" } ?: ""
-        val headersArg = if (headersStr.isNotEmpty()) "-headers \'$headersStr\' " else ""
+            val externalSubs = download.selectedSubtitleTracks.filter { it.url != video.videoUrl }
+            val subDeferreds = externalSubs.mapIndexed { index, track ->
+                async { downloadTrack(client, track.url, video.headers, tmpDir, "sub_$index.part") }
+            }
+
+            Triple(videoDeferred.await(), audioDeferreds.awaitAll(), subDeferreds.awaitAll())
+        }
+
+        // Mux them together locally
+        download.status = Download.State.MERGING
+        notifier.onProgressChange(download)
+
+        val finalFile = tmpDir.createFile("$filename.mkv")!!
+        val finalFilePath = finalFile.toFFmpegString(context)
 
         var cmd = ""
         var inputIndex = 0
 
-        // Main video input
-        cmd += "$headersArg-i \"${video.videoUrl}\" "
+        val mainVideoPath = mainVideoFile.toFFmpegString(context)
+        cmd += "-i \"$mainVideoPath\" "
         inputIndex++
 
-        // Start mapping logic
-        var mapCmd = ""
-        
-        val hasExternalAudio = download.selectedAudioTracks.any { it.url != video.videoUrl }
-        val hasExternalSubtitles = download.selectedSubtitleTracks.any { it.url != video.videoUrl }
+        var mapCmd = "-map 0:v:0? -map 0:a? -map 0:s? "
 
-        if (!hasExternalAudio && !hasExternalSubtitles && download.selectedAudioTracks.isEmpty() && download.selectedSubtitleTracks.isEmpty()) {
-            // Default: copy everything from the main file
-            mapCmd = "-map 0 "
-        } else {
-            // Map the primary video stream
-            mapCmd = "-map 0:v:0? "
+        audioFiles.forEachIndexed { i, audioFile ->
+            val audioPath = audioFile.toFFmpegString(context)
+            cmd += "-i \"$audioPath\" "
+            mapCmd += "-map $inputIndex:a:0? "
             
-            // Map audio tracks
-            if (download.selectedAudioTracks.isNotEmpty()) {
-                val internalAudio = download.selectedAudioTracks.filter { it.url == video.videoUrl }
-                if (internalAudio.isNotEmpty()) {
-                    // For internal tracks, we might not know the exact index, map all audio from 0
-                    mapCmd += "-map 0:a? "
-                }
-                
-                download.selectedAudioTracks.filter { it.url != video.videoUrl }.forEach { track ->
-                    cmd += "-i \"${track.url}\" "
-                    mapCmd += "-map $inputIndex:a:0? "
-                    
-                    // Assign language metadata if possible
-                    cmd += "-metadata:s:a:${inputIndex - 1} language=${track.lang} "
-                    inputIndex++
-                }
-            } else if (!hasExternalAudio) {
-                mapCmd += "-map 0:a? "
-            }
-
-            // Map subtitle tracks
-            if (download.selectedSubtitleTracks.isNotEmpty()) {
-                val internalSubs = download.selectedSubtitleTracks.filter { it.url == video.videoUrl }
-                if (internalSubs.isNotEmpty()) {
-                    mapCmd += "-map 0:s? "
-                }
-                
-                download.selectedSubtitleTracks.filter { it.url != video.videoUrl }.forEach { track ->
-                    cmd += "-i \"${track.url}\" "
-                    mapCmd += "-map $inputIndex:s:0? "
-                    cmd += "-metadata:s:s:${inputIndex - 1} language=${track.lang} "
-                    inputIndex++
-                }
-            } else if (!hasExternalSubtitles) {
-                mapCmd += "-map 0:s? "
-            }
+            val track = download.selectedAudioTracks.filter { it.url != video.videoUrl }[i]
+            cmd += "-metadata:s:a:${inputIndex - 1} language=${track.lang} "
+            inputIndex++
         }
 
-        cmd += "$mapCmd-c copy -y \"$videoFilePath\""
+        subFiles.forEachIndexed { i, subFile ->
+            val subPath = subFile.toFFmpegString(context)
+            cmd += "-i \"$subPath\" "
+            mapCmd += "-map $inputIndex:s:0? "
+            
+            val track = download.selectedSubtitleTracks.filter { it.url != video.videoUrl }[i]
+            cmd += "-metadata:s:s:${inputIndex - 1} language=${track.lang} "
+            inputIndex++
+        }
+
+        cmd += "$mapCmd-c copy -y \"$finalFilePath\""
 
         val session = com.arthenica.ffmpegkit.FFmpegKit.execute(cmd)
         if (!session.returnCode.isValueSuccess) {
-            videoFile.delete()
+            finalFile.delete()
             throw Exception("FFmpeg DASH muxing failed")
         }
 
+        // Clean up parts
+        mainVideoFile.delete()
+        audioFiles.forEach { it.delete() }
+        subFiles.forEach { it.delete() }
+
         download.progress = 100
-        return videoFile
+        return finalFile
     }
 
     private fun isTor(video: Video) = video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")

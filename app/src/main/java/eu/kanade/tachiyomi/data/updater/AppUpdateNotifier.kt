@@ -130,7 +130,6 @@ internal class AppUpdateNotifier(private val context: Context) {
             setOnlyAlertOnce(false)
             setProgress(0, 0, false)
             setContentIntent(installIntent)
-            setOngoing(true)
 
             clearActions()
             addAction(
@@ -195,13 +194,27 @@ internal class AppUpdateNotifier(private val context: Context) {
     }
 
     // KMK -->
-    fun onInstalling() {
+    fun onInstalling(uri: Uri, title: String? = null) {
+        val installIntent = NotificationHandler.installApkPendingActivity(context, uri)
         with(notificationBuilder) {
+            title?.let { setContentTitle(title) }
             setContentText(context.stringResource(MR.strings.ext_installing))
             setSmallIcon(android.R.drawable.stat_sys_download)
             setProgress(0, 0, true)
             setOnlyAlertOnce(true)
+            setContentIntent(installIntent)
+
             clearActions()
+            addAction(
+                R.drawable.ic_system_update_alt_white_24dp,
+                context.stringResource(MR.strings.action_install),
+                installIntent,
+            )
+            addAction(
+                R.drawable.ic_close_24dp,
+                context.stringResource(MR.strings.action_cancel),
+                NotificationReceiver.dismissNotificationPendingBroadcast(context, Notifications.ID_APP_INSTALL),
+            )
             show(Notifications.ID_APP_INSTALL)
         }
     }

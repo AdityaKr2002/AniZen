@@ -11,12 +11,19 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import eu.kanade.domain.base.BasePreferences
+import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.data.notification.NotificationHandler
+import eu.kanade.tachiyomi.data.notification.NotificationReceiver
+import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.installer.Installer
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.util.storage.getUriCompat
+import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
+import eu.kanade.tachiyomi.util.system.notificationBuilder
+import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +34,10 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.transformWhile
 import logcat.LogPriority
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -61,6 +70,8 @@ internal class ExtensionInstaller(private val context: Context) {
 
     private val extensionInstaller = Injekt.get<BasePreferences>().extensionInstaller()
 
+    private val activeNotifications = hashMapOf<String, Int>()
+
     /**
      * Adds the given extension to the downloads queue and returns an observable containing its
      * step in the installation process.
@@ -75,6 +86,10 @@ internal class ExtensionInstaller(private val context: Context) {
         if (oldDownload != null) {
             deleteDownload(pkgName)
         }
+
+        // KMK -->
+        dismissInstallNotification(pkgName)
+        // KMK <--
 
         // Register the receiver after removing (and unregistering) the previous download
         downloadReceiver.register()
@@ -156,6 +171,10 @@ internal class ExtensionInstaller(private val context: Context) {
      * @param uri The uri of the extension to install.
      */
     fun installApk(downloadId: Long, uri: Uri) {
+        val pkgName = activeDownloads.entries.find { it.value == downloadId }?.key
+        if (pkgName != null) {
+            promptInstall(pkgName, downloadId, uri)
+        }
         when (val installer = extensionInstaller.get()) {
             BasePreferences.ExtensionInstaller.LEGACY -> {
                 val intent = Intent(context, ExtensionInstallActivity::class.java)
@@ -253,6 +272,64 @@ internal class ExtensionInstaller(private val context: Context) {
         }
         if (activeDownloads.isEmpty()) {
             downloadReceiver.unregister()
+        }
+    }
+
+    /**
+     * Shows a notification to prompt the user to install the extension.
+     *
+     * @param pkgName The package name of the extension.
+     * @param downloadId The id of the download.
+     * @param uri The uri of the extension to install.
+     */
+    private fun promptInstall(pkgName: String, downloadId: Long, uri: Uri) {
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        val title = downloadManager.query(query).use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TITLE))
+            } else {
+                context.stringResource(MR.strings.extension_installer_not_found)
+            }
+        }
+
+        val installIntent = NotificationHandler.installApkPendingActivity(context, uri)
+        val notificationId = Notifications.ID_EXTENSION_INSTALLER + downloadId.toInt()
+        activeNotifications[pkgName] = notificationId
+
+        context.notify(
+            notificationId,
+            Notifications.CHANNEL_EXTENSIONS_UPDATE,
+        ) {
+            setContentTitle(title)
+            setContentText(context.stringResource(MR.strings.update_check_notification_download_complete))
+            setSmallIcon(android.R.drawable.stat_sys_download_done)
+            setOnlyAlertOnce(false)
+            setProgress(0, 0, false)
+            setContentIntent(installIntent)
+
+            clearActions()
+            addAction(
+                R.drawable.ic_system_update_alt_white_24dp,
+                context.stringResource(MR.strings.action_install),
+                installIntent,
+            )
+            addAction(
+                R.drawable.ic_close_24dp,
+                context.stringResource(MR.strings.action_cancel),
+                NotificationReceiver.dismissNotificationPendingBroadcast(context, notificationId),
+            )
+        }
+    }
+
+    /**
+     * Cancels the installation notification for the given package name.
+     *
+     * @param pkgName The package name of the extension.
+     */
+    fun dismissInstallNotification(pkgName: String) {
+        val notificationId = activeNotifications.remove(pkgName)
+        if (notificationId != null) {
+            context.cancelNotification(notificationId)
         }
     }
 
