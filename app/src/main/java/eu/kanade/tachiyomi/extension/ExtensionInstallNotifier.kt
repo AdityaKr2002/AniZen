@@ -17,9 +17,10 @@ class ExtensionInstallNotifier(private val context: Context) {
         setOnlyAlertOnce(true)
     }
 
-    fun showProgressNotification(progress: Int, max: Int) {
+    fun showProgressNotification(pkgName: String, progress: Int, max: Int) {
+        val notificationId = Notifications.ID_EXTENSION_PROGRESS + pkgName.hashCode()
         context.notify(
-            Notifications.ID_EXTENSION_PROGRESS,
+            notificationId,
             Notifications.CHANNEL_EXTENSIONS_UPDATE,
         ) {
             setContentTitle(context.stringResource(MR.strings.ext_installing))
@@ -30,9 +31,8 @@ class ExtensionInstallNotifier(private val context: Context) {
         }
     }
 
-    fun cancelProgressNotification() {
-        context.notify(Notifications.ID_EXTENSION_PROGRESS, Notifications.CHANNEL_EXTENSIONS_UPDATE) {
-            // Cancel handled by system or manual cancel
-        }
+    fun cancelProgressNotification(pkgName: String) {
+        val notificationId = Notifications.ID_EXTENSION_PROGRESS + pkgName.hashCode()
+        context.notificationManager.cancel(notificationId)
     }
 }

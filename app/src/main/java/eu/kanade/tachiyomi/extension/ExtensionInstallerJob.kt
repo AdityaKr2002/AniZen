@@ -33,7 +33,8 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
     private val httpClient by lazy { Injekt.get<NetworkHelper>().client }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
-        val id = Notifications.ID_EXTENSION_PROGRESS
+        val pkgName = inputData.getString(KEY_PKG_NAME) ?: "extension"
+        val id = Notifications.ID_EXTENSION_PROGRESS + pkgName.hashCode()
         val notification = ExtensionInstallNotifier(context).progressNotificationBuilder
             .setContentTitle(context.stringResource(MR.strings.ext_installing))
             .build()
@@ -49,6 +50,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         val url = inputData.getString(KEY_URL) ?: return Result.failure()
         val pkgName = inputData.getString(KEY_PKG_NAME) ?: return Result.failure()
         val downloadId = inputData.getLong(KEY_DOWNLOAD_ID, -1).takeIf { it >= 0 } ?: return Result.failure()
+        val notificationId = Notifications.ID_EXTENSION_PROGRESS + pkgName.hashCode()
 
         logcat { "Starting extension download job for $pkgName (URL: $url)" }
         val installer = Injekt.get<ExtensionInstaller>()
@@ -84,7 +86,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
                             bytesDownloaded += bytesRead
                             if (totalBytes > 0) {
                                 val progress = (bytesDownloaded * 100 / totalBytes).toInt()
-                                notifier.showProgressNotification(progress, 100)
+                                notifier.showProgressNotification(pkgName, progress, 100)
                             }
                         }
                     }
@@ -101,7 +103,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
             installer.updateInstallStep(downloadId, InstallStep.Error)
             return Result.failure()
         } finally {
-            context.notificationManager.cancel(Notifications.ID_EXTENSION_PROGRESS)
+            context.notificationManager.cancel(notificationId)
         }
     }
 
@@ -149,7 +151,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 "$TAG-$pkgName",
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.KEEP,
                 request,
             )
         }
