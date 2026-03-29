@@ -68,7 +68,7 @@ class ExtensionManager(
     /**
      * The installer which installs, updates and uninstalls the anime extensions.
      */
-    private val installer by lazy { ExtensionInstaller(context) }
+    private val installer: ExtensionInstaller = Injekt.get()
 
     private val iconMap = mutableMapOf<String, Drawable>()
 

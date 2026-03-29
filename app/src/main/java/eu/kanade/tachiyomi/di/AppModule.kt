@@ -19,6 +19,7 @@ import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.sync.service.GoogleDriveService
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.tachiyomi.extension.util.ExtensionInstaller
 import eu.kanade.tachiyomi.network.JavaScriptEngine
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.AndroidSourceManager
@@ -137,6 +138,7 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory<SourceManager> { AndroidSourceManager(app, get(), get()) }
 
         addSingletonFactory { ExtensionManager(app, get(), get(), get()) }
+        addSingletonFactory { ExtensionInstaller(app) }
 
         addSingletonFactory { DownloadProvider(app) }
         addSingletonFactory { DownloadManager(app) }

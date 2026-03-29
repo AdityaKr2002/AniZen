@@ -49,17 +49,25 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         val pkgName = inputData.getString(KEY_PKG_NAME) ?: return Result.failure()
         val downloadId = inputData.getLong(KEY_DOWNLOAD_ID, -1).takeIf { it >= 0 } ?: return Result.failure()
 
+        logcat { "Starting extension download job for $pkgName" }
         val installer = Injekt.get<ExtensionInstaller>()
         val notifier = ExtensionInstallNotifier(context)
 
         try {
             setForeground(getForegroundInfo())
             
+            // Signal UI that download has started
+            installer.updateInstallStep(downloadId, InstallStep.Downloading)
+
             val tmpFile = File(context.cacheDir, "extension_$pkgName.apk")
             val request = Request.Builder().url(url).build()
-            val response = httpClient.newCall(request).execute()
+            
+            val response = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                httpClient.newCall(request).execute()
+            }
 
             if (!response.isSuccessful) {
+                logcat(LogPriority.ERROR) { "Failed to download extension: ${response.code}" }
                 throw Exception("Failed to download extension: ${response.code}")
             }
 
@@ -67,27 +75,30 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
             val totalBytes = body.contentLength()
             var bytesDownloaded = 0L
 
-            body.byteStream().use { input ->
-                tmpFile.outputStream().use { output ->
-                    val buffer = ByteArray(8 * 1024)
-                    var bytesRead: Int
-                    while (input.read(buffer).also { bytesRead = it } != -1) {
-                        output.write(buffer, 0, bytesRead)
-                        bytesDownloaded += bytesRead
-                        if (totalBytes > 0) {
-                            val progress = (bytesDownloaded * 100 / totalBytes).toInt()
-                            notifier.showProgressNotification(progress, 100)
+            kotlinx.coroutines.withContext(Dispatchers.IO) {
+                body.byteStream().use { input ->
+                    tmpFile.outputStream().use { output ->
+                        val buffer = ByteArray(8 * 1024)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            bytesDownloaded += bytesRead
+                            if (totalBytes > 0) {
+                                val progress = (bytesDownloaded * 100 / totalBytes).toInt()
+                                notifier.showProgressNotification(progress, 100)
+                            }
                         }
                     }
                 }
             }
 
+            logcat { "Extension $pkgName downloaded successfully, triggering install" }
             installer.updateInstallStep(downloadId, InstallStep.Installing)
             installer.installApk(downloadId, tmpFile)
             
             return Result.success()
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
+            logcat(LogPriority.ERROR, e) { "Error in extension installer job for $pkgName" }
             installer.updateInstallStep(downloadId, InstallStep.Error)
             return Result.failure()
         } finally {
