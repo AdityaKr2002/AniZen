@@ -223,10 +223,6 @@ internal class ExtensionInstaller(
      */
     fun dismissInstallNotification(pkgName: String) {
         val notificationId = Notifications.ID_EXTENSION_INSTALLER + pkgName.hashCode()
-        context.notify(notificationId, Notifications.CHANNEL_EXTENSIONS_UPDATE) {
-            // Dismiss by showing with 0 priority or just cancel
-        }
-        // Use standard cancellation
         val manager = ContextCompat.getSystemService(context, android.app.NotificationManager::class.java)
         manager?.cancel(notificationId)
     }
