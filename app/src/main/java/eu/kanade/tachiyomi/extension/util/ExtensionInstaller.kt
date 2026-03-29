@@ -50,6 +50,7 @@ internal class ExtensionInstaller(
      */
     fun downloadAndInstall(url: String, extension: Extension): Flow<InstallStep> {
         val downloadId = extension.pkgName.hashCode().toLong()
+        logcat { "downloadAndInstall: ${extension.pkgName}, id: $downloadId, url: $url" }
         
         // Use existing step if available to keep state persistent
         val step = activeSteps.getOrPut(downloadId) { MutableStateFlow(InstallStep.Pending) }

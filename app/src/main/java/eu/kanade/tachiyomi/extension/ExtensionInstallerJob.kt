@@ -57,10 +57,15 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         val notifier = ExtensionInstallNotifier(context)
 
         try {
-            setForeground(getForegroundInfo())
-            
-            // Signal UI that download has started
+            // Signal UI that download has started immediately
             installer.updateInstallStep(downloadId, InstallStep.Downloading)
+
+            if (!url.startsWith("http")) {
+                logcat(LogPriority.ERROR) { "Invalid download URL for $pkgName: $url" }
+                throw Exception("Invalid download URL: $url")
+            }
+
+            setForeground(getForegroundInfo())
 
             val tmpFile = File(context.cacheDir, "extension_$pkgName.apk")
             val request = Request.Builder().url(url).build()
@@ -131,7 +136,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 "$TAG-$pkgName",
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.REPLACE,
                 request,
             )
         }
