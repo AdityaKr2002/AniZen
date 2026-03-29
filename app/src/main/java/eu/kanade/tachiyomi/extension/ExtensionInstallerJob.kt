@@ -19,7 +19,9 @@ import eu.kanade.tachiyomi.util.system.notificationManager
 import kotlinx.coroutines.flow.collectLatest
 import logcat.LogPriority
 import okhttp3.Request
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -31,8 +33,9 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val id = Notifications.ID_EXTENSION_PROGRESS
-        val notification = context.notificationManager.getNotification(id) ?: 
-            ExtensionInstallNotifier(context).progressNotificationBuilder.build()
+        val notification = ExtensionInstallNotifier(context).progressNotificationBuilder
+            .setContentTitle(context.stringResource(MR.strings.ext_installing))
+            .build()
         
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)

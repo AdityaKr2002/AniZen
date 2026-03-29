@@ -15,7 +15,6 @@ class ExtensionInstallNotifier(private val context: Context) {
         setSmallIcon(R.drawable.ic_extension_24dp)
         setOngoing(true)
         setOnlyAlertOnce(true)
-        showCustomTime(false)
     }
 
     fun showProgressNotification(progress: Int, max: Int) {
