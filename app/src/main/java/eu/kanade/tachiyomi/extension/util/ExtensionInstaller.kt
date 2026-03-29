@@ -156,6 +156,8 @@ internal class ExtensionInstaller(private val context: Context) {
             if (downloadStatus == DownloadManager.STATUS_SUCCESSFUL ||
                 downloadStatus == DownloadManager.STATUS_FAILED
             ) {
+                // For failures, we cleanup here.
+                // For success, onReceive handles cleanup after finding the APK.
                 if (downloadStatus == DownloadManager.STATUS_FAILED) {
                     val pkgName = activeDownloads.entries.find { it.value == id }?.key
                     if (pkgName != null) {
@@ -385,23 +387,33 @@ internal class ExtensionInstaller(private val context: Context) {
             // Avoid events for downloads we didn't request
             if (id !in activeDownloads.values) return
 
-            val uri = downloadManager.getUriForDownloadedFile(id)
-
-            // Set next installation step
-            if (uri == null) {
-                logcat(LogPriority.ERROR) { "Couldn't locate downloaded APK" }
-                updateInstallStep(id, InstallStep.Error)
-                return
-            }
-
             val query = DownloadManager.Query().setFilterById(id)
             downloadManager.query(query).use { cursor ->
                 if (cursor.moveToFirst()) {
-                    val localUri = cursor.getString(
-                        cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI),
-                    ).removePrefix(FILE_SCHEME)
+                    val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        val localUri = cursor.getString(
+                            cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI),
+                        ).removePrefix(FILE_SCHEME)
 
-                    installApk(id, File(localUri).getUriCompat(context))
+                        installApk(id, File(localUri).getUriCompat(context))
+                    } else if (status == DownloadManager.STATUS_FAILED) {
+                        val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                        logcat(LogPriority.ERROR) { "Download failed for ID $id, reason: $reason" }
+                        updateInstallStep(id, InstallStep.Error)
+                        
+                        // Cleanup on failure
+                        val pkgName = activeDownloads.entries.find { it.value == id }?.key
+                        if (pkgName != null) {
+                            activeDownloads.remove(pkgName)
+                            if (activeDownloads.isEmpty()) {
+                                unregister()
+                            }
+                        }
+                    }
+                } else {
+                    logcat(LogPriority.ERROR) { "Couldn't locate download with ID $id" }
+                    updateInstallStep(id, InstallStep.Error)
                 }
             }
         }
