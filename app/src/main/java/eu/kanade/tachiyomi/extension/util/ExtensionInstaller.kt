@@ -54,7 +54,7 @@ internal class ExtensionInstaller(
         // Use existing step if available to keep state persistent
         val step = activeSteps.getOrPut(downloadId) { MutableStateFlow(InstallStep.Pending) }
         
-        if (step.value == InstallStep.Idle || step.value == InstallStep.Error) {
+        if (step.value == InstallStep.Pending || step.value == InstallStep.Idle || step.value == InstallStep.Error) {
             step.value = InstallStep.Pending
             ExtensionInstallerJob.start(context, url, extension.pkgName, downloadId)
         }
@@ -141,8 +141,10 @@ internal class ExtensionInstaller(
      * Cancels extension install and remove from download manager and installer.
      */
     fun cancelInstall(pkgName: String) {
+        val downloadId = pkgName.hashCode().toLong()
+        updateInstallStep(downloadId, InstallStep.Idle)
         ExtensionInstallerJob.stop(context, pkgName)
-        Installer.cancelInstallQueue(context, pkgName.hashCode().toLong())
+        Installer.cancelInstallQueue(context, downloadId)
     }
 
     /**
