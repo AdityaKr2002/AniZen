@@ -116,6 +116,7 @@ internal class ExtensionApi {
     }
 
     private fun List<ExtensionJsonObject>.toExtensions(repoUrl: String, author: String): List<Extension.Available> {
+        val normalizedRepoUrl = repoUrl.substringBefore("/index.min.json").removeSuffix("/")
         return this
             .filter {
                 val libVersion = it.extractLibVersion()
@@ -133,7 +134,7 @@ internal class ExtensionApi {
                     isTorrent = it.torrent == 1,
                     sources = it.sources?.map(extensionSourceMapper).orEmpty(),
                     apkName = it.apk,
-                    iconUrl = "${repoUrl.substringBefore("/index.min.json")}/icon/${it.pkg}.png",
+                    iconUrl = "${normalizedRepoUrl}/icon/${it.pkg}.png",
                     repoUrl = repoUrl,
                     author = author,
                 )
@@ -144,7 +145,8 @@ internal class ExtensionApi {
         return if (extension.apkName.startsWith("http")) {
             extension.apkName
         } else {
-            "${extension.repoUrl.substringBefore("/index.min.json")}/${extension.apkName}"
+            val normalizedRepoUrl = extension.repoUrl!!.substringBefore("/index.min.json").removeSuffix("/")
+            "${normalizedRepoUrl}/${extension.apkName}"
         }
     }
 

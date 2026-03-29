@@ -50,7 +50,7 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         val pkgName = inputData.getString(KEY_PKG_NAME) ?: return Result.failure()
         val downloadId = inputData.getLong(KEY_DOWNLOAD_ID, -1).takeIf { it >= 0 } ?: return Result.failure()
 
-        logcat { "Starting extension download job for $pkgName" }
+        logcat { "Starting extension download job for $pkgName (URL: $url)" }
         val installer = Injekt.get<ExtensionInstaller>()
         val notifier = ExtensionInstallNotifier(context)
 
@@ -61,14 +61,12 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
             installer.updateInstallStep(downloadId, InstallStep.Downloading)
 
             val tmpFile = File(context.cacheDir, "extension_$pkgName.apk")
-            val request = Request.Builder().url(url).build()
             
-            val response = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                httpClient.newCall(request).execute()
-            }
+            // Try to download with fallback logic
+            var response = downloadWithPossibleFallback(url)
 
             if (!response.isSuccessful) {
-                logcat(LogPriority.ERROR) { "Failed to download extension: ${response.code}" }
+                logcat(LogPriority.ERROR) { "All download attempts failed for $pkgName. Final code: ${response.code}" }
                 throw Exception("Failed to download extension: ${response.code}")
             }
 
@@ -105,6 +103,28 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         } finally {
             context.notificationManager.cancel(Notifications.ID_EXTENSION_PROGRESS)
         }
+    }
+
+    private suspend fun downloadWithPossibleFallback(primaryUrl: String): okhttp3.Response {
+        val request = Request.Builder().url(primaryUrl).build()
+        val response = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            httpClient.newCall(request).execute()
+        }
+
+        if (response.code == 404 && !primaryUrl.contains("/apk/")) {
+            // If flat URL fails, try nested /apk/ folder (old Mihon style)
+            val fileName = primaryUrl.substringAfterLast("/")
+            val baseUrl = primaryUrl.substringBeforeLast("/")
+            val fallbackUrl = "$baseUrl/apk/$fileName"
+            
+            logcat { "Primary URL 404, trying fallback: $fallbackUrl" }
+            val fallbackRequest = Request.Builder().url(fallbackUrl).build()
+            return kotlinx.coroutines.withContext(Dispatchers.IO) {
+                httpClient.newCall(fallbackRequest).execute()
+            }
+        }
+        
+        return response
     }
 
     companion object {
