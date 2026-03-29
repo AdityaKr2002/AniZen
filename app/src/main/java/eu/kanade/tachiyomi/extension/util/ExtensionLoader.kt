@@ -30,7 +30,7 @@ import java.io.File
  * Class that handles the loading of the extensions installed in the system.
  */
 @SuppressLint("PackageManagerGetSignatures")
-internal object ExtensionLoader {
+object ExtensionLoader {
 
     private val preferences: SourcePreferences by injectLazy()
     private val trustExtension: TrustExtension by injectLazy()
@@ -54,9 +54,9 @@ internal object ExtensionLoader {
         PackageManager.GET_SIGNATURES or
         (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else 0)
 
-    private const val PRIVATE_EXTENSION_EXTENSION = "ext"
+    const val PRIVATE_EXTENSION_EXTENSION = "ext"
 
-    private fun getPrivateExtensionDir(context: Context) = File(context.filesDir, "exts")
+    fun getPrivateExtensionDir(context: Context) = File(context.filesDir, "exts")
 
     fun installPrivateExtensionFile(context: Context, file: File): Boolean {
         val extension = context.packageManager.getPackageArchiveInfo(
