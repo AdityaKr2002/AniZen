@@ -270,8 +270,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         // Stability and compatibility safeguards
         MPVLib.setOptionString("vd-lavc-threads", "0") // Auto threads
-        MPVLib.setOptionString("vd-lavc-dr", "yes") // Direct rendering for performance
-        MPVLib.setOptionString("hwdec-extra-frames", "24") // Further stability for 10-bit/4K
         MPVLib.setOptionString("opengl-es", "yes") // Force GLES for stability
         MPVLib.setOptionString("gpu-context", "android")
         MPVLib.setOptionString("gpu-api", "opengl")

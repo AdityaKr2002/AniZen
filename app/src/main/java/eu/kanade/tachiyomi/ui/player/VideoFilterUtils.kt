@@ -190,11 +190,7 @@ fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boo
     logcat("Anime4K", LogPriority.DEBUG) { "Applying Anime4K chain (enabled=$enabled): $chain" }
     
     if (chain.isNotEmpty()) {
-        // Optimized settings for GLSL shaders found in mpvEx
         if (isInit) {
-            MPVLib.setOptionString("opengl-pbo", "yes")
-            MPVLib.setOptionString("vd-lavc-dr", "yes")
-            MPVLib.setOptionString("opengl-early-flush", "no")
             MPVLib.setOptionString("glsl-shaders", chain)
         } else {
             MPVLib.setPropertyString("glsl-shaders", chain)
