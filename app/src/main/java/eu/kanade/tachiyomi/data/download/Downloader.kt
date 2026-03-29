@@ -945,12 +945,15 @@ class Downloader(
     }
 
     private fun deleteTempFiles(download: Download) {
-        try {
-            val animeDir = provider.findAnimeDir(download.anime.title, download.source) ?: return
-            val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
-            animeDir.findFile(episodeDirname + TMP_DIR_SUFFIX)?.delete()
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Failed to delete temp files for ${download.episode.name}" }
+        scope.launch(Dispatchers.IO) {
+            delay(500) // Give the downloader job time to cancel and release file locks
+            try {
+                val animeDir = provider.findAnimeDir(download.anime.title, download.source) ?: return@launch
+                val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
+                animeDir.findFile(episodeDirname + TMP_DIR_SUFFIX)?.delete()
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to delete temp files for ${download.episode.name}" }
+            }
         }
     }
 
