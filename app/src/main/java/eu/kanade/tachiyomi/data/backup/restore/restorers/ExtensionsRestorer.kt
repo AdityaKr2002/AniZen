@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.data.backup.restore.restorers
 import android.content.Context
 import android.content.Intent
 import eu.kanade.domain.base.BasePreferences
-import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.data.backup.models.BackupExtension
 import eu.kanade.tachiyomi.extension.util.ExtensionLoader
 import eu.kanade.tachiyomi.util.storage.getUriCompat
@@ -13,7 +12,7 @@ import java.io.File
 
 class ExtensionsRestorer(
     private val context: Context,
-    private val preferences: SourcePreferences = Injekt.get(),
+    private val preferences: BasePreferences = Injekt.get(),
 ) {
 
     fun restoreExtensions(extensions: List<BackupExtension>) {
