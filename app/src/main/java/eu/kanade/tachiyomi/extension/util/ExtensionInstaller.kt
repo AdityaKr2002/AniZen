@@ -156,6 +156,15 @@ internal class ExtensionInstaller(private val context: Context) {
             if (downloadStatus == DownloadManager.STATUS_SUCCESSFUL ||
                 downloadStatus == DownloadManager.STATUS_FAILED
             ) {
+                if (downloadStatus == DownloadManager.STATUS_FAILED) {
+                    val pkgName = activeDownloads.entries.find { it.value == id }?.key
+                    if (pkgName != null) {
+                        activeDownloads.remove(pkgName)
+                        if (activeDownloads.isEmpty()) {
+                            downloadReceiver.unregister()
+                        }
+                    }
+                }
                 return@flow
             }
 
@@ -174,6 +183,11 @@ internal class ExtensionInstaller(private val context: Context) {
         val pkgName = activeDownloads.entries.find { it.value == downloadId }?.key
         if (pkgName != null) {
             promptInstall(pkgName, downloadId, uri)
+            // Cleanup mapping after it has served its purpose
+            activeDownloads.remove(pkgName)
+            if (activeDownloads.isEmpty()) {
+                downloadReceiver.unregister()
+            }
         }
         when (val installer = extensionInstaller.get()) {
             BasePreferences.ExtensionInstaller.LEGACY -> {
@@ -260,18 +274,15 @@ internal class ExtensionInstaller(private val context: Context) {
     }
 
     /**
-     * Deletes the download for the given package name.
+     * Deletes the download session state for the given package name.
+     * This only cleans up UI-related flows, not the actual background download.
      *
      * @param pkgName The package name of the download to delete.
      */
     private fun deleteDownload(pkgName: String) {
-        val downloadId = activeDownloads.remove(pkgName)
+        val downloadId = activeDownloads[pkgName]
         if (downloadId != null) {
-            downloadManager.remove(downloadId)
             downloadsStateFlows.remove(downloadId)
-        }
-        if (activeDownloads.isEmpty()) {
-            downloadReceiver.unregister()
         }
     }
 
