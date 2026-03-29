@@ -63,12 +63,14 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
             installer.updateInstallStep(downloadId, InstallStep.Downloading)
 
             val tmpFile = File(context.cacheDir, "extension_$pkgName.apk")
+            val request = Request.Builder().url(url).build()
             
-            // Try to download with fallback logic
-            var response = downloadWithPossibleFallback(url)
+            val response = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                httpClient.newCall(request).execute()
+            }
 
             if (!response.isSuccessful) {
-                logcat(LogPriority.ERROR) { "All download attempts failed for $pkgName. Final code: ${response.code}" }
+                logcat(LogPriority.ERROR) { "Download failed for $pkgName. Code: ${response.code}" }
                 throw Exception("Failed to download extension: ${response.code}")
             }
 
@@ -105,28 +107,6 @@ class ExtensionInstallerJob(val context: Context, workerParams: WorkerParameters
         } finally {
             context.notificationManager.cancel(notificationId)
         }
-    }
-
-    private suspend fun downloadWithPossibleFallback(primaryUrl: String): okhttp3.Response {
-        val request = Request.Builder().url(primaryUrl).build()
-        val response = kotlinx.coroutines.withContext(Dispatchers.IO) {
-            httpClient.newCall(request).execute()
-        }
-
-        if (response.code == 404 && !primaryUrl.contains("/apk/")) {
-            // If flat URL fails, try nested /apk/ folder (old Mihon style)
-            val fileName = primaryUrl.substringAfterLast("/")
-            val baseUrl = primaryUrl.substringBeforeLast("/")
-            val fallbackUrl = "$baseUrl/apk/$fileName"
-            
-            logcat { "Primary URL 404, trying fallback: $fallbackUrl" }
-            val fallbackRequest = Request.Builder().url(fallbackUrl).build()
-            return kotlinx.coroutines.withContext(Dispatchers.IO) {
-                httpClient.newCall(fallbackRequest).execute()
-            }
-        }
-        
-        return response
     }
 
     companion object {

@@ -50,17 +50,16 @@ internal class ExtensionInstaller(
      */
     fun downloadAndInstall(url: String, extension: Extension): Flow<InstallStep> {
         val downloadId = extension.pkgName.hashCode().toLong()
-        cancelInstall(extension.pkgName)
-
-        val step = MutableStateFlow(InstallStep.Pending)
-        activeSteps[downloadId] = step
-
-        ExtensionInstallerJob.start(context, url, extension.pkgName, downloadId)
+        
+        // Use existing step if available to keep state persistent
+        val step = activeSteps.getOrPut(downloadId) { MutableStateFlow(InstallStep.Pending) }
+        
+        if (step.value == InstallStep.Idle || step.value == InstallStep.Error) {
+            step.value = InstallStep.Pending
+            ExtensionInstallerJob.start(context, url, extension.pkgName, downloadId)
+        }
 
         return step.asStateFlow()
-            .onCompletion {
-                activeSteps.remove(downloadId)
-            }
     }
 
     /**

@@ -135,7 +135,7 @@ internal class ExtensionApi {
                     sources = it.sources?.map(extensionSourceMapper).orEmpty(),
                     apkName = it.apk,
                     iconUrl = "${normalizedRepoUrl}/icon/${it.pkg}.png",
-                    repoUrl = repoUrl,
+                    repoUrl = normalizedRepoUrl,
                     author = author,
                 )
             }
@@ -145,8 +145,7 @@ internal class ExtensionApi {
         return if (extension.apkName.startsWith("http")) {
             extension.apkName
         } else {
-            val normalizedRepoUrl = extension.repoUrl!!.substringBefore("/index.min.json").removeSuffix("/")
-            "${normalizedRepoUrl}/${extension.apkName}"
+            "${extension.repoUrl}/apk/${extension.apkName}"
         }
     }
 
