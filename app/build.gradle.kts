@@ -46,8 +46,8 @@ android {
     defaultConfig {
         applicationId = "app.anizen"
 
-        versionCode = 599
-        versionName = "0.5.99"
+        versionCode = 605
+        versionName = "0.5.105"
 
         manifestPlaceholders["author"] = "@salmanbappi"
 
@@ -411,4 +411,4 @@ buildscript {
     dependencies {
         classpath(kotlinx.gradle)
     }
-}// Trigger build Tue Feb 17 19:30:12 +06 2026
+}// Trigger build Sun Mar 29 21:15:36 +06 2026
