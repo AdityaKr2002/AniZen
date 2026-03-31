@@ -1019,11 +1019,12 @@ class Downloader(
         val video = download.video ?: return false
         val url = video.videoUrl
         val packageName = preferences.externalDownloaderSelection().get()
-        val pm = context.packageManager
         
         try {
             val intent = Intent(Intent.ACTION_VIEW)
-            val filename = DiskUtil.buildValidFilename(download.episode.name) + ".mp4"
+            val animeTitle = download.anime.title
+            val episodeName = download.episode.name
+            val filename = DiskUtil.buildValidFilename("$animeTitle - $episodeName") + ".mp4"
             
             // Create the episode directory so external downloader can save inside it
             val episodeDir = animeDir.createDirectory(episodeDirname)
