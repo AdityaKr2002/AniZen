@@ -192,14 +192,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("hwdec-codecs", "all")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        // Use audio sync by default for better performance on Android
-        MPVLib.setOptionString("video-sync", "audio")
-
+        
         // Force detect refresh rate
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
         } else {
             60f
+        }
+
+        // Use display-resample by default for high-refresh displays to ensure smooth frame pacing,
+        // otherwise fallback to audio sync for power efficiency on standard 60Hz panels.
+        if (displayRefreshRate >= 90f || smoothMotionEnabled) {
+            MPVLib.setOptionString("video-sync", "display-resample")
+        } else {
+            MPVLib.setOptionString("video-sync", "audio")
         }
 
         val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()

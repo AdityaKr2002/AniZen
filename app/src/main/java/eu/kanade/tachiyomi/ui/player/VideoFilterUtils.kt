@@ -69,10 +69,11 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
     val sharpen = decoderPreferences.sharpenFilter().get()
     val blur = decoderPreferences.blurFilter().get()
     val deband = decoderPreferences.videoDebanding().get()
+    val useYuv420p = decoderPreferences.useYUV420P().get()
 
-    // If any filter requires CPU processing, we MUST ensure a stable pixel format
-    // inside the lavfi context to prevent green tint/alignment issues.
-    if (deband == Debanding.CPU || sharpen > 0 || blur > 0) {
+    // If any filter requires CPU processing, or the user manually requested it, 
+    // we MUST ensure a stable pixel format inside the lavfi context.
+    if (deband == Debanding.CPU || sharpen > 0 || blur > 0 || useYuv420p) {
         lavfiList.add("format=yuv420p")
     }
 
