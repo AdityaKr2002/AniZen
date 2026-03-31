@@ -192,14 +192,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("hwdec-codecs", "all")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        // Use audio sync by default for better performance on Android
-        MPVLib.setOptionString("video-sync", "audio")
-
+        
         // Force detect refresh rate
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
         } else {
             60f
+        }
+
+        // Use display-resample by default for high-refresh displays to ensure smooth frame pacing,
+        // otherwise fallback to audio sync for power efficiency on standard 60Hz panels.
+        if (displayRefreshRate >= 90f || smoothMotionEnabled) {
+            MPVLib.setOptionString("video-sync", "display-resample")
+        } else {
+            MPVLib.setOptionString("video-sync", "audio")
         }
 
         val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
@@ -268,10 +274,11 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         applyPlaybackStrategy()
 
+        // Let FFmpeg and Android MediaCodec auto-negotiate thread counts and hardware frame buffers.
+        // Forcing these values causes instability across fragmented Android GPU/VPU drivers.
+        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto
+        
         // Stability and compatibility safeguards
-        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto threads
-        MPVLib.setOptionString("vd-lavc-dr", "yes") // Direct rendering for performance
-        MPVLib.setOptionString("hwdec-extra-frames", "24") // Further stability for 10-bit/4K
         MPVLib.setOptionString("opengl-es", "yes") // Force GLES for stability
         MPVLib.setOptionString("gpu-context", "android")
         MPVLib.setOptionString("gpu-api", "opengl")
