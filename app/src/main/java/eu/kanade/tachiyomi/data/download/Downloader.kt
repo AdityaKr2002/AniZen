@@ -1103,6 +1103,7 @@ class Downloader(
 
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
             
+            val pm = context.packageManager
             if (packageName.isNotBlank() && packageName != "None") {
                 intent.setPackage(packageName)
                 // Attempt to find the specific downloader activity to bypass the 'Open With' dialog
