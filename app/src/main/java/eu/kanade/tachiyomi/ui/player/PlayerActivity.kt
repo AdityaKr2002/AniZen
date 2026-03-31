@@ -1323,6 +1323,11 @@ class PlayerActivity : BaseActivity() {
         }.joinToString(",")
 
         MPVLib.setOptionString("http-header-fields", httpHeaderString)
+        // Also set the global user-agent for this specific video request to be safe, 
+        // as some MPV versions prioritize it over the fields string.
+        headers["User-Agent"]?.let {
+            MPVLib.setOptionString("user-agent", it)
+        }
     }
 
     /**

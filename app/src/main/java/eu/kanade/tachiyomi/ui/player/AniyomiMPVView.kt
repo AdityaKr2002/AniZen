@@ -265,7 +265,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         // Network optimizations
         MPVLib.setOptionString("http-proxy", "")
-        MPVLib.setOptionString("user-agent", networkHelper.defaultUserAgentProvider())
         MPVLib.setOptionString("cookies", "yes")
         MPVLib.setOptionString("cache", "yes")
         MPVLib.setOptionString("cache-pause", "yes") // Enable classic buffering when underrunning
