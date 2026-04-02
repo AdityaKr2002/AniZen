@@ -2,30 +2,29 @@ package eu.kanade.presentation.library.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.murgupluoglu.flagkit.FlagKit
-import eu.kanade.presentation.theme.TachiyomiPreviewTheme
-import tachiyomi.presentation.core.components.Badge
-
-import eu.kanade.presentation.browse.components.SourceIcon
-import tachiyomi.domain.source.model.Source
-import androidx.compose.ui.draw.scale
 import eu.kanade.domain.source.model.icon
-import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.filled.Warning
+import eu.kanade.presentation.browse.components.SourceIcon
+import eu.kanade.presentation.theme.TachiyomiPreviewTheme
+import tachiyomi.domain.source.model.Source
+import tachiyomi.presentation.core.components.Badge
 import tachiyomi.source.local.isLocal
-import androidx.compose.material.icons.outlined.LocalLibrary
 
 @Composable
 internal fun SourceIconBadge(
@@ -86,8 +85,6 @@ internal fun UnviewedBadge(count: Long) {
     }
 }
 
-import androidx.compose.foundation.layout.width
-
 @Composable
 internal fun LanguageBadge(
     isLocal: Boolean,
@@ -108,7 +105,7 @@ internal fun LanguageBadge(
             if (flagResId != 0) {
                 Badge(
                     painter = painterResource(id = flagResId),
-                    color = androidx.compose.ui.graphics.Color.Transparent,
+                    color = Color.Transparent,
                     modifier = Modifier
                         .width(25.dp)
                         .height(18.dp),

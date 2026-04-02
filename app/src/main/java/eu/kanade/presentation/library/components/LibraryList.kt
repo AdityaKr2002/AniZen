@@ -72,7 +72,7 @@ internal fun LibraryList(
                         showLanguageIcon = libraryItem.showLanguageIcon,
                     )
                     if (libraryItem.showSourceIcon) {
-                        SourceIconBadge(source = libraryItem.source)
+                        SourceIconBadge(source = libraryItem.domainSource)
                     }
                 },
                 onLongClick = { onLongClick(libraryItem.libraryAnime) },
