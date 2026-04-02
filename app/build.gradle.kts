@@ -46,8 +46,8 @@ android {
     defaultConfig {
         applicationId = "app.anizen"
 
-        versionCode = 608
-        versionName = "0.5.108"
+        versionCode = 609
+        versionName = "0.5.109"
 
         manifestPlaceholders["author"] = "@salmanbappi"
 
