@@ -488,7 +488,7 @@ class LibraryScreenModel(
                         },
                         showSourceIcon = prefs.showSourceIcon,
                         showLanguageIcon = prefs.showLanguageIcon,
-                        domainSource = sources.find { it.id == libraryManga.anime.source },
+                        domainSource = sources.find { it.first.id == libraryManga.anime.source }?.first,
                     )
                 }
                 .groupBy { it.libraryAnime.category }
