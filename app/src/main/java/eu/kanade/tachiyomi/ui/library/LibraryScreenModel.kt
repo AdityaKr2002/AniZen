@@ -16,6 +16,7 @@ import eu.kanade.core.preference.asState
 import eu.kanade.core.util.fastFilterNot
 import eu.kanade.core.util.fastPartition
 import eu.kanade.domain.anime.interactor.UpdateAnime
+import eu.kanade.domain.source.interactor.GetSourcesWithFavoriteCount
 import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.domain.base.BasePreferences
@@ -107,6 +108,7 @@ class LibraryScreenModel(
     private val setSeenStatus: SetSeenStatus = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
     private val setAnimeCategories: SetAnimeCategories = Injekt.get(),
+    private val getSourcesWithFavoriteCount: GetSourcesWithFavoriteCount = Injekt.get(),
     private val preferences: BasePreferences = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val trackPreferences: TrackPreferences = Injekt.get(),
@@ -464,8 +466,9 @@ class LibraryScreenModel(
         val animelibAnimesFlow = combine(
             getLibraryAnime.subscribe(),
             getAnimelibItemPreferencesFlow(),
+            getSourcesWithFavoriteCount.subscribe(),
             downloadCache.changes.debounce(500L),
-        ) { libraryMangaList, prefs, _ ->
+        ) { libraryMangaList, prefs, sources, _ ->
             libraryMangaList
                 .map { libraryManga ->
                     // Display mode based on user preference: take it from global library setting or category
@@ -485,6 +488,7 @@ class LibraryScreenModel(
                         },
                         showSourceIcon = prefs.showSourceIcon,
                         showLanguageIcon = prefs.showLanguageIcon,
+                        domainSource = sources.find { it.id == libraryManga.anime.source },
                     )
                 }
                 .groupBy { it.libraryAnime.category }
