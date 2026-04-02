@@ -432,6 +432,8 @@ class LibraryScreenModel(
             // <-- AM (FILLERMARK)
             libraryPreferences.filterCompleted().changes(),
             libraryPreferences.filterIntervalCustom().changes(),
+            libraryPreferences.showSourceIcon().changes(),
+            libraryPreferences.showLanguageIcon().changes(),
             transform = {
                 ItemPreferences(
                     downloadBadge = it[0] as Boolean,
@@ -448,6 +450,8 @@ class LibraryScreenModel(
                     filterCompleted = it[10] as TriState,
                     filterIntervalCustom = it[11] as TriState,
                     // <-- AM (FILLERMARK)
+                    showSourceIcon = it[12] as Boolean,
+                    showLanguageIcon = it[13] as Boolean,
                 )
             },
         )
@@ -474,11 +478,13 @@ class LibraryScreenModel(
                         },
                         unseenCount = libraryManga.unseenCount,
                         isLocal = if (prefs.localBadge) libraryManga.anime.isLocal() else false,
-                        sourceLanguage = if (prefs.languageBadge) {
+                        sourceLanguage = if (prefs.languageBadge || prefs.showLanguageIcon) {
                             sourceManager.getOrStub(libraryManga.anime.source).lang
                         } else {
                             ""
                         },
+                        showSourceIcon = prefs.showSourceIcon,
+                        showLanguageIcon = prefs.showLanguageIcon,
                     )
                 }
                 .groupBy { it.libraryAnime.category }
@@ -1069,6 +1075,8 @@ class LibraryScreenModel(
         // <-- AM (FILLERMARK)
         val filterCompleted: TriState,
         val filterIntervalCustom: TriState,
+        val showSourceIcon: Boolean,
+        val showLanguageIcon: Boolean,
     )
 
     @Immutable

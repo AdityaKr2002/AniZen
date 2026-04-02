@@ -373,6 +373,14 @@ private fun ColumnScope.DisplayPage(
         pref = screenModel.libraryPreferences.languageBadge(),
     )
     CheckboxItem(
+        label = stringResource(KMR.strings.action_display_language_icon),
+        pref = screenModel.libraryPreferences.showLanguageIcon(),
+    )
+    CheckboxItem(
+        label = stringResource(KMR.strings.action_display_source_badge),
+        pref = screenModel.libraryPreferences.showSourceIcon(),
+    )
+    CheckboxItem(
         label = stringResource(AMR.strings.action_display_show_continue_watching_button),
         pref = screenModel.libraryPreferences.showContinueWatchingButton(),
     )
