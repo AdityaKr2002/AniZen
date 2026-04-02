@@ -89,14 +89,14 @@ class BackupCreator(
             val backupAnime = backupAnimes(getFavorites.await() + nonFavoriteAnime, options)
 
             val backup = Backup(
-                backupAnime = backupAnime,
-                backupAnimeCategories = backupAnimeCategories(options),
-                backupSources = backupAnimeSources(backupAnime),
+                backupAnimeModern = backupAnime,
+                backupCategoriesModern = backupAnimeCategories(options),
+                backupSourcesModern = backupAnimeSources(backupAnime),
                 backupPreferences = backupAppPreferences(options),
-                backupAnimeExtensionRepo = backupAnimeExtensionRepos(options),
-                backupCustomButton = backupCustomButtons(options),
+                backupExtensionRepoModern = backupAnimeExtensionRepos(options),
+                backupCustomButtonModern = backupCustomButtons(options),
                 backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensions = backupExtensions(options),
+                backupExtensionsModern = backupExtensions(options),
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)

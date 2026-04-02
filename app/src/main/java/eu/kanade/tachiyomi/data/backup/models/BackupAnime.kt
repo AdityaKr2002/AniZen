@@ -41,7 +41,6 @@ data class BackupAnime(
     // Mihon values start here
     @ProtoNumber(109) var version: Long = 0,
     @ProtoNumber(110) var notes: String = "",
-    @ProtoNumber(111) var initialized: Boolean = false,
 
     // AM (CUSTOM_INFORMATION) -->
     // Bump values by 200

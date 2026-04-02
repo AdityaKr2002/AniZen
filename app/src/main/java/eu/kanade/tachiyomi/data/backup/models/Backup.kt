@@ -48,7 +48,7 @@ data class Backup(
     @ProtoNumber(109) var backupCustomButton: List<BackupCustomButtons> = emptyList(),
 
     // Aniyomi/Animiru specific values
-    @ProtoNumber(500) val isLegacy: Boolean = true,
+    @ProtoNumber(500) val isLegacy: Boolean = false,
     @ProtoNumber(501) val backupAnimeModern: List<BackupAnime> = emptyList(),
     @ProtoNumber(502) var backupCategoriesModern: List<BackupCategory> = emptyList(),
     @ProtoNumber(503) var backupSourcesModern: List<BackupSource> = emptyList(),
