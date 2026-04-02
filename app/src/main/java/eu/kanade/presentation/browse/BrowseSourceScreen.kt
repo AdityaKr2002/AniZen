@@ -56,7 +56,7 @@ fun BrowseSourceContent(
     animeList: LazyPagingItems<Anime>,
     columns: GridCells,
     entries: Int = 0,
-    displayMode: LibraryDisplayMode,
+    displayMode: LibraryDisplayMode?,
     snackbarHostState: SnackbarHostState,
     contentPadding: PaddingValues,
     onWebViewClick: () -> Unit,
@@ -142,7 +142,8 @@ fun BrowseSourceContent(
                 val browseMode = browseModeState.value
                 val effectivePanorama = remember(globalPanorama, browseMode) { browseMode.resolve(globalPanorama) }
 
-                when (displayMode) {
+                val mode = displayMode ?: LibraryDisplayMode.default
+                when (mode) {
                     LibraryDisplayMode.ComfortableGrid -> {
                         BrowseSourceComfortableGrid(
                             animeList = animeList,
@@ -160,7 +161,7 @@ fun BrowseSourceContent(
                         BrowseSourceCompactGrid(
                             animeList = animeList,
                             columns = columns,
-                            showTitle = displayMode is LibraryDisplayMode.CompactGrid,
+                            showTitle = mode is LibraryDisplayMode.CompactGrid,
                             contentPadding = contentPadding,
                             onAnimeClick = onAnimeClick,
                             onAnimeLongClick = onAnimeLongClick,
@@ -193,7 +194,7 @@ fun BrowseSourceScreen(
     source: Source?,
     animeList: LazyPagingItems<Anime>,
     columns: GridCells,
-    displayMode: LibraryDisplayMode,
+    displayMode: LibraryDisplayMode?,
     snackbarHostState: SnackbarHostState,
     contentPadding: PaddingValues,
     onWebViewClick: () -> Unit,
