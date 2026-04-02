@@ -31,8 +31,6 @@ class ExtensionRepoRestorer(
                     short_name = backupRepo.shortName,
                     website = backupRepo.website,
                     fingerprint = backupRepo.signingKeyFingerprint,
-                    is_visible = backupRepo.isVisible,
-                    author = backupRepo.author,
                 )
             }
         }
