@@ -430,19 +430,30 @@ class Downloader(
         } else {
             tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
         }
+
+        // Pre-allocate file size to enable direct offset writing (1DM+ behavior)
+        if (size > 0 && videoFile.length() < size) {
+            context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
+                FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
+                    channel.truncate(size)
+                }
+            }
+        }
+
         var initialDownloadedBytes = 0L
-        
         download.partProgress.clear()
         
         if (size > 0 && threadCount > 1) {
             val partSize = size / threadCount
             for (i in 0 until threadCount) {
-                val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
                 val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                
-                val existing = partFile.length().coerceAtMost(partTotalSize)
-                initialDownloadedBytes += existing
-                download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
+                val isDone = tmpDir.findFile("$filename.part$i")?.exists() ?: false
+                if (isDone) {
+                    initialDownloadedBytes += partTotalSize
+                    download.partProgress[i] = 1f
+                } else {
+                    download.partProgress[i] = 0f
+                }
             }
         } else {
             initialDownloadedBytes = videoFile.length()
@@ -457,26 +468,21 @@ class Downloader(
                 val partSize = size / threadCount
                 download.totalSegments = threadCount
                 
-                // Track completed segments without double-adding bytes to downloadedBytes
+                // Count already finished segments
                 var completedParts = 0
                 for (i in 0 until threadCount) {
-                    val partFile = tmpDir.findFile("$filename.part$i")
-                    val existing = partFile?.length() ?: 0L
-                    val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                    if (existing >= partTotalSize) completedParts++
+                    if (tmpDir.findFile("$filename.part$i")?.exists() == true) completedParts++
                 }
                 download.downloadedSegments = completedParts
 
                 (0 until threadCount).map { i ->
                     async {
-                        val partFile = tmpDir.findFile("$filename.part$i") ?: tmpDir.createFile("$filename.part$i")!!
-                        var existing = partFile.length()
-                        val start = i * partSize + existing
-                        val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                        val partTotalSize = end - (i * partSize) + 1
-                        
-                        if (existing >= partTotalSize) return@async
+                        if (tmpDir.findFile("$filename.part$i")?.exists() == true) return@async
 
+                        val start = i * partSize
+                        val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
+                        val partTotalSize = end - start + 1
+                        
                         retry(times = 5) {
                             val request = Request.Builder()
                                 .url(video.videoUrl)
@@ -487,6 +493,7 @@ class Downloader(
                             client.newCall(request).execute().use { res ->
                                 if (!res.isSuccessful) {
                                     if (res.code == 416) {
+                                        tmpDir.createFile("$filename.part$i")
                                         synchronized(download) { download.downloadedSegments++ }
                                         return@use
                                     }
@@ -494,38 +501,45 @@ class Downloader(
                                 }
                                 val source = res.body?.source() ?: throw IOException("Empty Part")
                                 
-                                context.contentResolver.openFileDescriptor(partFile.uri, "wa")?.use { pfd ->
+                                context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                        // Dynamic buffer size: smaller buffers for high thread counts to save memory
-                                        val bufferSize = if (threadCount > 16) 128 * 1024 else if (threadCount > 8) 256 * 1024 else 512 * 1024
+                                        channel.position(start)
+                                        val bufferSize = if (threadCount > 16) 256 * 1024 else if (threadCount > 8) 512 * 1024 else 1024 * 1024
                                         val buffer = ByteArray(bufferSize)
                                         var bytesRead: Int
+                                        var partDownloaded = 0L
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                             
-                                            // Prevent over-downloading beyond the assigned part size
-                                            val maxToWrite = Math.min(bytesRead.toLong(), partTotalSize - existing).toInt()
+                                            val maxToWrite = Math.min(bytesRead.toLong(), partTotalSize - partDownloaded).toInt()
                                             if (maxToWrite <= 0) break
                                             
                                             channel.write(ByteBuffer.wrap(buffer, 0, maxToWrite))
                                             val total = downloadedBytes.addAndGet(maxToWrite.toLong())
                                             
-                                            existing += maxToWrite.toLong()
-                                            download.partProgress[i] = (existing.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
+                                            partDownloaded += maxToWrite.toLong()
+                                            download.partProgress[i] = (partDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                                             download.update(total, size, false)
                                             throttleNotification(download)
                                             kotlinx.coroutines.yield()
                                             
-                                            if (existing >= partTotalSize) break
+                                            if (partDownloaded >= partTotalSize) break
                                         }
                                     }
                                 }
+                                // Mark part as finished
+                                tmpDir.createFile("$filename.part$i")
                                 synchronized(download) { download.downloadedSegments++ }
                             }
                         }
                     }
                 }.awaitAll()
+                
+                // Clean up tokens
+                for (i in 0 until threadCount) {
+                    tmpDir.findFile("$filename.part$i")?.delete()
+                }
             } else {
                 download.totalSegments = 1
                 val existing = videoFile.length()
@@ -556,7 +570,7 @@ class Downloader(
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                val buffer = ByteArray(1024 * 1024) // 1MB buffer for single thread efficiency
+                                val buffer = ByteArray(2 * 1024 * 1024) // 2MB buffer for single thread efficiency
                                 var bytesRead: Int
                                 var localDownloaded = existing
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
@@ -584,58 +598,12 @@ class Downloader(
             }
         }
 
-        // Merge parts after coroutineScope finishes all threads
-        if (size > 0 && threadCount > 1) {
-            mergeParts(download, tmpDir, filename, threadCount, videoFile)
-        }
-        
         // Final sanity check: Ensure the file actually has content
         if (videoFile.length() <= 0) {
             throw Exception("Download failed: Resulting file is empty")
         }
 
         return videoFile
-    }
-
-    private suspend fun mergeParts(download: Download, dir: UniFile, filename: String, count: Int, outputFile: UniFile) {
-        download.status = Download.State.MERGING
-        download.progress = 0
-        notifier.onProgressChange(download)
-        
-        context.contentResolver.openFileDescriptor(outputFile.uri, "w")?.use { pfd ->
-            FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
-                var currentPos = 0L
-                var mergedSoFar = 0L
-                val totalToMerge = (0 until count).sumOf { i -> dir.findFile("$filename.part$i")?.length() ?: 0L }
-                for (i in 0 until count) {
-                    val partFile = dir.findFile("$filename.part$i") ?: continue
-                    context.contentResolver.openFileDescriptor(partFile.uri, "r")?.use { ppfd ->
-                        java.io.FileInputStream(ppfd.fileDescriptor).channel.use { inChannel ->
-                            val size = inChannel.size()
-                            var remaining = size
-                            var position = 0L
-                            while (remaining > 0) {
-                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                // Transfer in 32MB chunks to allow for cancellation and progress updates
-                                val toTransfer = Math.min(remaining, 32L * 1024 * 1024)
-                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
-                                if (transferred <= 0) break
-                                position += transferred
-                                remaining -= transferred
-                                currentPos += transferred
-                                mergedSoFar += transferred
-                                outChannel.position(currentPos)
-                                
-                                download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                                throttleNotification(download)
-                                kotlinx.coroutines.yield()
-                            }
-                        }
-                    }
-                    partFile.delete()
-                }
-            }
-        }
     }
 
     private var lastNotifiedTime = 0L
@@ -672,6 +640,7 @@ class Downloader(
             } else if (line.startsWith("#EXT-X-KEY:")) {
                 val method = line.substringAfter("METHOD=").substringBefore(",")
                 if (method.contains("AES-128")) {
+                    download.engineType = "HLS-Enc"
                     val uri = line.substringAfter("URI=\"").substringBefore("\"")
                     currentEncryptionKeyUrl = if (uri.startsWith("http")) uri else baseUrl + uri
                     val ivString = line.substringAfter("IV=", "")
@@ -741,7 +710,14 @@ class Downloader(
                             client.newCall(Request.Builder().url(segment.url).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
                                 val bodyStream = res.body?.byteStream() ?: throw IOException("Empty segment")
-                                val inputStream = if (cipher != null) javax.crypto.CipherInputStream(bodyStream, cipher) else bodyStream
+                                val inputStream = if (cipher != null) {
+                                    if (download.status != Download.State.DECRYPTING) {
+                                        download.status = Download.State.DECRYPTING
+                                    }
+                                    javax.crypto.CipherInputStream(bodyStream, cipher)
+                                } else {
+                                    bodyStream
+                                }
                                 
                                 val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
                                 var segmentSize = 0L

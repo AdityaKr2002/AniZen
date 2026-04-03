@@ -174,6 +174,7 @@ data class Download(
         ERROR(4),
         PAUSED(5),
         MERGING(6),
+        DECRYPTING(7),
     }
 
     companion object {
