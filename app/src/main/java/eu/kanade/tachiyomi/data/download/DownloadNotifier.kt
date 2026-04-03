@@ -87,6 +87,10 @@ internal class DownloadNotifier(private val context: Context) {
      * @param download download object containing download information.
      */
     fun onProgressChange(download: Download) {
+        if (download.status == Download.State.DOWNLOADED) {
+            dismissProgress(download)
+            return
+        }
         val now = System.currentTimeMillis()
         if (now - lastNotificationTime < 500 && download.status == Download.State.DOWNLOADING && download.progress < 100) {
             return

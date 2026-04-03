@@ -401,9 +401,9 @@ class Downloader(
         // KMK -->
         _queueState.update { it - download }
         store.remove(download)
+        notifier.dismissProgress(download)
         // KMK <--
 
-        store.update(download, force = true)
         notifier.onProgressChange(download)
         cache.addEpisode(filename, publicDir, download.anime)
     }
@@ -573,11 +573,6 @@ class Downloader(
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
         var lastUpdate = System.currentTimeMillis()
 
-        // KMK -->
-        download.status = Download.State.DECRYPTING
-        notifier.onProgressChange(download)
-        // KMK <--
-
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
                 launch {
@@ -630,7 +625,7 @@ class Downloader(
             }
         }
 
-    download.status = Download.State.MERGING
+    download.status = if (secretKey != null) Download.State.DECRYPTING else Download.State.MERGING
     download.progress = 0
     notifier.onProgressChange(download)
 
