@@ -344,30 +344,30 @@ class Downloader(
 
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
-        store.update(download, force = true)
         notifier.onProgressChange(download)
-        
-        // CRITICAL: Delete any corrupt partial tmp file from previous failed runs
-        var destFile = publicDir.findFile("$filename.tmp")
-        if (destFile != null) destFile.delete()
-        destFile = publicDir.createFile("$filename.tmp")!!
 
-        val totalSize = sandboxFile.length()
-        var totalCopied = 0L
-        
+        // CRITICAL: Prevent file bloating by deleting existing tmp files
+        val destDir = publicDir // Passed in directly
+        var destFile = destDir.findFile("$filename.tmp")
+        if (destFile != null) destFile.delete()
+        destFile = destDir.createFile("$filename.tmp")!!
+
         java.io.FileInputStream(sandboxFile).use { input ->
             destFile.openOutputStream().use { output ->
-                val buffer = ByteArray(8 * 1024 * 1024) // 8MB buffer for high-speed SAF copy
+                val buffer = ByteArray(8 * 1024 * 1024) // 8MB buffer for speed
+                var bytesCopied = 0L
+                val totalBytes = sandboxFile.length()
                 var read: Int
                 var lastUpdate = System.currentTimeMillis()
+                
                 while (input.read(buffer).also { read = it } != -1) {
                     coroutineContext.ensureActive()
                     output.write(buffer, 0, read)
-                    totalCopied += read
+                    bytesCopied += read
                     
                     val now = System.currentTimeMillis()
-                    if (now - lastUpdate > 1000 || totalCopied == totalSize) {
-                        download.progress = ((totalCopied.toDouble() / totalSize) * 100).toInt()
+                    if (now - lastUpdate > 1000 || bytesCopied == totalBytes) {
+                        download.progress = ((bytesCopied.toDouble() / totalBytes) * 100).toInt()
                         notifier.onProgressChange(download)
                         store.update(download)
                         lastUpdate = now
@@ -376,11 +376,10 @@ class Downloader(
             }
         }
         
-        // Rename to actual video extension
         val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
         destFile.renameTo("$filename.$finalExt")
-        
         sandboxFile.parentFile?.deleteRecursively()
+
         download.status = Download.State.DOWNLOADED
         store.update(download, force = true)
         notifier.onProgressChange(download)
@@ -527,6 +526,7 @@ class Downloader(
 
         val downloadedCount = java.util.concurrent.atomic.LongAdder()
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
+        var lastUpdate = System.currentTimeMillis()
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
@@ -534,9 +534,10 @@ class Downloader(
                     while (isActive) {
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
                         val segmentFile = File(sandboxDir, "seg_${seg.first}.part")
-                        
+
                         if (segmentFile.exists() && segmentFile.length() > 0) {
                             downloadedCount.increment()
+                            download.segmentProgress[seg.first] = true
                             continue
                         }
 
@@ -544,7 +545,7 @@ class Downloader(
                             client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Segment failed: ${res.code}")
                                 var data = res.body?.bytes() ?: throw IOException("Empty segment")
-                                
+
                                 coroutineContext.ensureActive()
 
                                 // THREAD-SAFE AES DECRYPTION WITH CORRECT SEQUENCE IV
@@ -555,23 +556,23 @@ class Downloader(
                                     cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.IvParameterSpec(ivBytes))
                                     data = cipher.doFinal(data)
                                 }
-java.io.FileOutputStream(segmentFile).use { it.write(data) }
-downloadedCount.increment()
 
-val currentCount = downloadedCount.sum().toInt()
-download.downloadedSegments = currentCount
+                                java.io.FileOutputStream(segmentFile).use { it.write(data) }
+                                downloadedCount.increment()
 
-// NEW: Mark this exact segment as complete for the UI's secondary progress bar
-download.segmentProgress[seg.first] = true
+                                val currentCount = downloadedCount.sum().toInt()
+                                download.downloadedSegments = currentCount
 
-// Fix UI Progress Bar
-download.progress = (currentCount * 100) / segments.size 
+                                // NEW: Mark this exact segment as complete for the UI's secondary progress bar
+                                download.segmentProgress[seg.first] = true
 
-if (currentCount % 5 == 0 || currentCount == segments.size) {
-    store.update(download)
-    notifier.onProgressChange(download)
-}
-
+                                val now = System.currentTimeMillis()
+                                if (now - lastUpdate > 1000 || currentCount == segments.size) {
+                                    download.progress = (currentCount * 100) / segments.size 
+                                    store.update(download)
+                                    notifier.onProgressChange(download)
+                                    lastUpdate = now
+                                }
                             }
                         }
                     }
