@@ -2,6 +2,9 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.StatFs
+import androidx.annotation.RequiresApi
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -328,16 +331,44 @@ class Downloader(
         }
     }
 
+    private fun checkFreeSpace(dir: File, requiredSize: Long) {
+        val stats = StatFs(dir.absolutePath)
+        val available = stats.availableBlocksLong * stats.blockSizeLong
+        if (available < requiredSize + MIN_DISK_SPACE) {
+            throw IOException(context.stringResource(MR.strings.low_disk_space))
+        }
+    }
+
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
         store.update(download, force = true)
         
         val finalFile = publicDir.createFile(sandboxFile.name!!)!!
+        val totalSize = sandboxFile.length()
+        var totalCopied = 0L
         
         context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
-            java.io.FileInputStream(sandboxFile).channel.use { inChannel ->
-                java.io.FileOutputStream(opfd.fileDescriptor).channel.use { outChannel ->
-                    inChannel.transferTo(0, inChannel.size(), outChannel)
+            java.io.FileInputStream(sandboxFile).use { input ->
+                java.io.FileOutputStream(opfd.fileDescriptor).use { output ->
+                    val buffer = BufferPool.obtain()
+                    try {
+                        var read: Int
+                        var lastUpdate = System.currentTimeMillis()
+                        while (input.read(buffer).also { read = it } != -1) {
+                            ensureActive()
+                            output.write(buffer, 0, read)
+                            totalCopied += read
+                            
+                            val now = System.currentTimeMillis()
+                            if (now - lastUpdate > 500) {
+                                download.progress = ((totalCopied.toDouble() / totalSize) * 100).toInt()
+                                notifier.onProgressChange(download)
+                                lastUpdate = now
+                            }
+                        }
+                    } finally {
+                        BufferPool.recycle(buffer)
+                    }
                 }
             }
         }
@@ -357,6 +388,8 @@ class Downloader(
         
         val headRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).head().build()).execute()
         val size = headRes.header("Content-Length")?.toLong() ?: -1L
+        if (size > 0) checkFreeSpace(sandboxDir, size)
+        
         download.totalSize = size
         download.activeThreads = threadCount
 
@@ -526,6 +559,9 @@ class Downloader(
         }
 
         // Sequential Merge (Zero-Copy)
+        val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
+        checkFreeSpace(sandboxDir, totalMergeSize)
+        
         java.io.FileOutputStream(finalFile).use { outStream ->
             val channel = outStream.channel
             for (i in segments.indices) {
