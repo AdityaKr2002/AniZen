@@ -570,11 +570,15 @@ class Downloader(
         }
 
         val downloadedCount = java.util.concurrent.atomic.LongAdder()
+        val downloadedBytes = java.util.concurrent.atomic.LongAdder()
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
         var lastUpdate = System.currentTimeMillis()
+        
+        val threadCount = calculateDynamicConcurrency("")
+        download.activeThreads = threadCount
 
         coroutineScope {
-            repeat(calculateDynamicConcurrency("")) {
+            repeat(threadCount) {
                 launch {
                     while (isActive) {
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
@@ -582,6 +586,7 @@ class Downloader(
 
                         if (segmentFile.exists() && segmentFile.length() > 0) {
                             downloadedCount.increment()
+                            downloadedBytes.add(segmentFile.length())
                             download.segmentProgress[seg.first] = true
                             continue
                         }
@@ -604,6 +609,7 @@ class Downloader(
 
                                 java.io.FileOutputStream(segmentFile).use { it.write(data) }
                                 downloadedCount.increment()
+                                downloadedBytes.add(data.size.toLong())
 
                                 val currentCount = downloadedCount.sum().toInt()
                                 download.downloadedSegments = currentCount
@@ -613,7 +619,7 @@ class Downloader(
 
                                 val now = System.currentTimeMillis()
                                 if (now - lastUpdate > 1000 || currentCount == segments.size) {
-                                    download.progress = (currentCount * 100) / segments.size 
+                                    download.update(downloadedBytes.sum(), -1, false)
                                     store.update(download)
                                     notifier.onProgressChange(download)
                                     lastUpdate = now
@@ -658,6 +664,7 @@ class Downloader(
                         val now = System.currentTimeMillis()
                         if (now - lastMergeUpdate > 500 && totalMergeSize > 0) {
                             download.progress = ((mergedBytes.toDouble() / totalMergeSize) * 100).toInt()
+                            download.updateSpeed(downloadedBytes.sum()) // Keep speed updated during merge
                             notifier.onProgressChange(download)
                             lastMergeUpdate = now
                         }
