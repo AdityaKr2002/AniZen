@@ -320,9 +320,11 @@ class Downloader(
             finalizeDownload(download, videoFile, animeDir, episodeDirname)
             
         } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            download.status = Download.State.ERROR
-            notifier.onError(e.message)
+            logcat(LogPriority.ERROR, e) { "Download failed" }
+            if (e !is CancellationException) {
+                download.status = Download.State.ERROR
+                notifier.onError(e.message)
+            }
         }
     }
 
@@ -380,39 +382,37 @@ class Downloader(
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
                             if (i > 0) delay(50L)
 
-                            kotlinx.coroutines.withTimeout(15000L) {
-                                val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf())
-                                    .header("Range", "bytes=$start-$end").build()
-                                client.newCall(req).execute().use { res ->
-                                    val source = res.body?.source() ?: throw IOException("Empty body")
-                                    FileOutputStream(partFile, true).use { out ->
-                                        val buffer = BufferPool.obtain()
-                                        try {
-                                            var read: Int
-                                            var lastUpdate = System.currentTimeMillis()
-                                            while (source.read(buffer).also { read = it } != -1) {
-                                                ensureActive()
-                                                out.write(buffer, 0, read)
-                                                localDownloaded += read
-                                                downloadedBytes.add(read.toLong())
+                            val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf())
+                                .header("Range", "bytes=$start-$end").build()
+                            client.newCall(req).execute().use { res ->
+                                val source = res.body?.source() ?: throw IOException("Empty body")
+                                java.io.FileOutputStream(partFile, true).use { out ->
+                                    val buffer = BufferPool.obtain()
+                                    try {
+                                        var read: Int
+                                        var lastUpdate = System.currentTimeMillis()
+                                        while (source.read(buffer).also { read = it } != -1) {
+                                            ensureActive()
+                                            out.write(buffer, 0, read)
+                                            localDownloaded += read
+                                            downloadedBytes.add(read.toLong())
 
-                                                val now = System.currentTimeMillis()
-                                                if (now - lastUpdate > 500) {
-                                                    download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
-                                                    download.update(downloadedBytes.sum(), size, false)
-                                                    notifier.onProgressChange(download)
-                                                    store.update(download)
-                                                    lastUpdate = now
-                                                }
+                                            val now = System.currentTimeMillis()
+                                            if (now - lastUpdate > 500) {
+                                                download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                                download.update(downloadedBytes.sum(), size, false)
+                                                notifier.onProgressChange(download)
+                                                store.update(download)
+                                                lastUpdate = now
                                             }
-                                            // Final update for this part
-                                            download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
-                                            download.update(downloadedBytes.sum(), size, false)
-                                            notifier.onProgressChange(download)
-                                            store.update(download)
-                                        } finally {
-                                            BufferPool.recycle(buffer)
                                         }
+                                        // Final update for this part
+                                        download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                        download.update(downloadedBytes.sum(), size, false)
+                                        notifier.onProgressChange(download)
+                                        store.update(download)
+                                    } finally {
+                                        BufferPool.recycle(buffer)
                                     }
                                 }
                             }
@@ -441,52 +441,82 @@ class Downloader(
     private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
         val client = networkHelper.downloadClient
+        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
+        
+        if (!playlistRes.isSuccessful) throw IOException("Failed to fetch playlist: ${playlistRes.code}")
+        val lines = playlistRes.body?.string()?.lines() ?: emptyList()
+        if (lines.isEmpty()) throw IOException("Empty HLS playlist")
+
         val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
-        
-        val segments = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-            if (!res.isSuccessful) throw IOException("Failed to fetch playlist: ${res.code}")
-            res.body?.string()?.lines()?.filter { it.isNotBlank() && !it.startsWith("#") } ?: emptyList()
+        val segments = mutableListOf<String>()
+        var encryptionKeyUrl: String? = null
+
+        // Proper Playlist Parsing
+        for (line in lines) {
+            if (line.startsWith("#EXT-X-KEY:METHOD=AES-128")) {
+                val match = Regex("URI=\"([^\"]+)\"").find(line)
+                encryptionKeyUrl = match?.groupValues?.get(1)
+                if (encryptionKeyUrl != null && !encryptionKeyUrl.startsWith("http")) {
+                    encryptionKeyUrl = baseUrl + encryptionKeyUrl
+                }
+            } else if (!line.startsWith("#") && line.isNotBlank()) {
+                val fullUrl = if (line.startsWith("http")) line else baseUrl + line
+                segments.add(fullUrl)
+            }
         }
-        
+
         if (segments.isEmpty()) throw IOException("No segments found in HLS playlist")
         
         download.totalSegments = segments.size
+        val downloadedCount = java.util.concurrent.atomic.LongAdder()
+        val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
+
+        // Fetch AES Key if present
+        var cipher: javax.crypto.Cipher? = null
+        if (encryptionKeyUrl != null) {
+            val keyRes = client.newCall(Request.Builder().url(encryptionKeyUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
+            val keyBytes = keyRes.body?.bytes() ?: throw IOException("Failed to fetch AES key")
+            val secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
+            // Basic AES-128 CBC with empty IV (standard for many HLS streams unless IV is specified)
+            cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding")
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.IvParameterSpec(ByteArray(16)))
+        }
+
         val finalFile = File(sandboxDir, "$filename.ts")
-        val segmentQueue = segments.mapIndexed { index, url -> 
-            val fullUrl = if (url.startsWith("http")) url else baseUrl + url
-            index to fullUrl 
-        }.toMutableList()
-        val downloadedCount = LongAdder()
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
                 launch {
                     while (isActive) {
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
+                        val segmentFile = File(sandboxDir, "seg_${seg.first}.part")
+                        
+                        if (segmentFile.exists() && segmentFile.length() > 0) {
+                            downloadedCount.increment()
+                            continue
+                        }
+
                         retry(times = 5) {
-                            kotlinx.coroutines.withTimeout(30000L) {
-                                val segmentFile = File(sandboxDir, "seg_${seg.first}.part")
-                                if (segmentFile.exists() && segmentFile.length() > 0) {
-                                    downloadedCount.increment()
-                                    return@withTimeout
-                                }
+                            client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
+                                var data = res.body?.bytes() ?: throw IOException("Empty segment")
                                 
-                                client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-                                    if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
-                                    res.body?.byteStream()?.use { input ->
-                                        segmentFile.outputStream().use { output ->
-                                            input.copyTo(output)
-                                        }
-                                    }
-                                    
-                                    downloadedCount.increment()
-                                    val currentCount = downloadedCount.sum().toInt()
-                                    download.downloadedSegments = currentCount
-                                    
-                                    if (currentCount % 5 == 0 || currentCount == segments.size) {
-                                        store.update(download)
-                                        notifier.onProgressChange(download)
-                                    }
+                                // DECRYPT IN RAM
+                                if (cipher != null) {
+                                    data = cipher.doFinal(data)
+                                }
+
+                                java.io.FileOutputStream(segmentFile).use { it.write(data) }
+                                downloadedCount.increment()
+                                
+                                val currentCount = downloadedCount.sum().toInt()
+                                download.downloadedSegments = currentCount
+                                // Fix UI Progress Bar
+                                download.progress = (currentCount * 100) / segments.size 
+                                
+                                if (currentCount % 5 == 0 || currentCount == segments.size) {
+                                    store.update(download)
+                                    notifier.onProgressChange(download)
                                 }
                             }
                         }
@@ -494,9 +524,9 @@ class Downloader(
                 }
             }
         }
-        
-        // Sequential Merge: Ensure strict segment order
-        FileOutputStream(finalFile).use { outStream ->
+
+        // Sequential Merge (Zero-Copy)
+        java.io.FileOutputStream(finalFile).use { outStream ->
             val channel = outStream.channel
             for (i in segments.indices) {
                 val segmentFile = File(sandboxDir, "seg_$i.part")
@@ -507,7 +537,6 @@ class Downloader(
                 segmentFile.delete()
             }
         }
-        
         return finalFile
     }
 
