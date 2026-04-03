@@ -358,7 +358,7 @@ class Downloader(
                         var read: Int
                         var lastUpdate = System.currentTimeMillis()
                         while (input.read(buffer).also { read = it } != -1) {
-                            ensureActive()
+                            coroutineContext.ensureActive()
                             output.write(buffer, 0, read)
                             totalCopied += read
                             
@@ -428,7 +428,7 @@ class Downloader(
                                         var read: Int
                                         var lastUpdate = System.currentTimeMillis()
                                         while (source.read(buffer).also { read = it } != -1) {
-                                            ensureActive()
+                                            coroutineContext.ensureActive()
                                             out.write(buffer, 0, read)
                                             localDownloaded += read
                                             downloadedBytes.add(read.toLong())
@@ -538,7 +538,7 @@ class Downloader(
                                 if (!res.isSuccessful) throw IOException("Segment failed: ${res.code}")
                                 var data = res.body?.bytes() ?: throw IOException("Empty segment")
                                 
-                                ensureActive()
+                                coroutineContext.ensureActive()
 
                                 // THREAD-SAFE AES DECRYPTION WITH CORRECT SEQUENCE IV
                                 if (secretKey != null) {
