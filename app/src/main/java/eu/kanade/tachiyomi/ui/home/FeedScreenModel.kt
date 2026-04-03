@@ -24,6 +24,7 @@ import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.toDomainAnime
+import eu.kanade.tachiyomi.ui.browse.source.browse.FilterSerializer
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchCategories
 import tachiyomi.domain.source.interactor.GetFeedSavedSearchGlobal
 import tachiyomi.domain.source.interactor.GetSavedSearchGlobalFeed
@@ -49,6 +50,7 @@ class FeedScreenModel(
     private val insertFeedSavedSearchCategory: InsertFeedSavedSearchCategory = Injekt.get(),
     private val updateFeedSavedSearch: tachiyomi.domain.source.interactor.UpdateFeedSavedSearch = Injekt.get(),
     private val logActivity: LogActivity = Injekt.get(),
+    private val filterSerializer: FilterSerializer = Injekt.get(),
 ) : StateScreenModel<FeedScreenModel.State>(State()) {
 
     private val feedJobs = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.Job>()
@@ -129,6 +131,7 @@ class FeedScreenModel(
                                 source = source ?: return@mapNotNull null,
                                 savedSearch = savedSearches.find { it.id == feed.savedSearch },
                                 animeList = existingAnime,
+                                isLoading = true,
                             )
                         }.toImmutableList()
 
@@ -149,7 +152,7 @@ class FeedScreenModel(
 
                                     try {
                                         // Use withTimeout to ensure a slow source cannot hang the UI infinitely
-                                        kotlinx.coroutines.withTimeout(30000L) {
+                                        kotlinx.coroutines.withTimeout(15000L) {
                                             val results = when (FeedSavedSearch.Type.from(feed.type)) {
                                                 FeedSavedSearch.Type.Latest -> {
                                                     try {
@@ -163,6 +166,9 @@ class FeedScreenModel(
                                                     val savedSearch = savedSearches.find { it.id == feed.savedSearch }
                                                     if (savedSearch != null) {
                                                         val filters = source.getFilterList()
+                                                        savedSearch.filtersJson?.let {
+                                                            filterSerializer.deserialize(filters, it)
+                                                        }
                                                         source.getSearchAnime(1, savedSearch.query ?: "", filters).animes
                                                     } else {
                                                         emptyList()
@@ -203,7 +209,7 @@ class FeedScreenModel(
                                                 val currentCategoryItems = state.items[category.id] ?: initialItems
                                                 val updatedItems = currentCategoryItems.map { item ->
                                                     if (item.feed.id == feed.id) {
-                                                        item.copy(animeList = animeList)
+                                                        item.copy(animeList = animeList, isLoading = false)
                                                     } else {
                                                         item
                                                     }
@@ -216,7 +222,21 @@ class FeedScreenModel(
                                         }
                                     } catch (e: Exception) {
                                         logcat(LogPriority.ERROR, e) { "Feed fetch failed or timed out for ${source.name}" }
-                                        // On failure, we just leave the container with placeholders or its last state
+                                        // On failure, update state to stop loading
+                                        mutableState.update { state ->
+                                            val currentCategoryItems = state.items[category.id] ?: initialItems
+                                            val updatedItems = currentCategoryItems.map { item ->
+                                                if (item.feed.id == feed.id) {
+                                                    item.copy(isLoading = false)
+                                                } else {
+                                                    item
+                                                }
+                                            }.toImmutableList()
+                                            
+                                            val newItemsMap = state.items.toMutableMap()
+                                            newItemsMap[category.id] = updatedItems
+                                            state.copy(items = newItemsMap.toImmutableMap())
+                                        }
                                     }
                                 }
                             }
@@ -242,5 +262,6 @@ class FeedScreenModel(
         val source: AnimeCatalogueSource,
         val savedSearch: SavedSearch?,
         val animeList: ImmutableList<Anime>,
+        val isLoading: Boolean = false,
     )
 }

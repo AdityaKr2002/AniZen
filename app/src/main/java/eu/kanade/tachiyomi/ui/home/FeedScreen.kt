@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
@@ -255,6 +256,15 @@ private fun FeedIsland(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                if (item.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
                 
                 androidx.compose.material3.TextButton(
                     onClick = onSeeAllClick,

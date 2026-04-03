@@ -119,7 +119,10 @@ private fun Header(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        IconButton(onClick = onSave) {
+        TextButton(
+            onClick = onSave,
+            modifier = Modifier.padding(end = 4.dp),
+        ) {
             Icon(
                 imageVector = Icons.Default.Save,
                 contentDescription = null,

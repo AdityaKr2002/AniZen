@@ -255,11 +255,6 @@ data class BrowseSourceScreen(
                         }
 
                         if (state.savedSearches.isNotEmpty()) {
-                            HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(vertical = 4.dp)
-                                    .size(width = 1.dp, height = FilterChipDefaults.Height),
-                            )
                             state.savedSearches.forEach { savedSearch ->
                                 FilterChip(
                                     selected = state.currentSavedSearch?.id == savedSearch.id,
