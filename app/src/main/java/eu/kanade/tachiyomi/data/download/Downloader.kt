@@ -2,12 +2,10 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.Context
 import android.net.Uri
-import android.os.Bundle
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.download.model.Download
-import eu.kanade.tachiyomi.data.download.model.DownloadNotifier
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
@@ -49,7 +47,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
@@ -248,7 +245,7 @@ class Downloader(
         val animeDir = provider.getAnimeDir(download.anime.title, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         
-        // Use getExternalFilesDir for Sandbox - Protected from OS Cache cleanup
+        // Sandbox Storage: Protected from OS Cache cleanup
         val sandboxDir = File(context.getExternalFilesDir("downloads"), episodeDirname)
         sandboxDir.mkdirs()
 
