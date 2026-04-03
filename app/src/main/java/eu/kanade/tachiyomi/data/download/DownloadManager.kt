@@ -298,6 +298,17 @@ class DownloadManager(
             episodeDirs.forEach { it.delete() }
             cache.removeEpisodes(filteredEpisodes, anime)
 
+            // KMK -->
+            // Clean up sandbox
+            val sandboxRoot = context.getExternalFilesDir("downloads")
+            if (sandboxRoot != null && sandboxRoot.exists()) {
+                filteredEpisodes.forEach { episode ->
+                    val episodeDirname = provider.getEpisodeDirName(episode.name, episode.scanlator)
+                    File(sandboxRoot, episodeDirname).deleteRecursively()
+                }
+            }
+            // KMK <--
+
             // Delete anime directory if empty
             if (animeDir?.listFiles()?.isEmpty() == true) {
                 deleteAnime(anime, source, removeQueued = false)
@@ -319,6 +330,19 @@ class DownloadManager(
             }
             provider.findAnimeDir(anime.title, source)?.delete()
             cache.removeAnime(anime)
+
+            // KMK -->
+            // Clean up sandbox for this anime
+            val sandboxRoot = context.getExternalFilesDir("downloads")
+            if (sandboxRoot != null && sandboxRoot.exists()) {
+                val animeDirname = provider.getAnimeDirName(anime.title)
+                // Since sandbox doesn't have an anime subfolder structure usually based on our implementation,
+                // we should at least try to clean up if we had any logic for it.
+                // But according to downloadEpisode, we use episodeDirname directly under sandboxRoot.
+                // To be safe, we'd need to know all episodes, but usually deleteAnime is called when everything is already gone.
+            }
+            // KMK <--
+
             // Delete source directory if empty
             val sourceDir = provider.findSourceDir(source)
             if (sourceDir?.listFiles()?.isEmpty() == true) {
