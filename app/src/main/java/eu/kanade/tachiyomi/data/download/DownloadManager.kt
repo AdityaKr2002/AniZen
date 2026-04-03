@@ -182,7 +182,11 @@ class DownloadManager(
         val episodeDir =
             provider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
         val files = episodeDir?.listFiles().orEmpty()
-            .filter { "video" in it.type.orEmpty() }
+            .filter { 
+                val type = it.type.orEmpty().lowercase()
+                val name = it.name.orEmpty().lowercase()
+                "video" in type || name.endsWith(".mp4") || name.endsWith(".mkv") 
+            }
 
         if (files.isEmpty()) {
             throw Exception(context.stringResource(MR.strings.video_list_empty_error))

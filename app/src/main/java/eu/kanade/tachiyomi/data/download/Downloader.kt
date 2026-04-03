@@ -397,6 +397,12 @@ class Downloader(
         sandboxFile.parentFile?.deleteRecursively()
 
         download.status = Download.State.DOWNLOADED
+        
+        // KMK -->
+        _queueState.update { it - download }
+        store.remove(download)
+        // KMK <--
+
         store.update(download, force = true)
         notifier.onProgressChange(download)
         cache.addEpisode(filename, publicDir, download.anime)
@@ -566,6 +572,11 @@ class Downloader(
         val downloadedCount = java.util.concurrent.atomic.LongAdder()
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
         var lastUpdate = System.currentTimeMillis()
+
+        // KMK -->
+        download.status = Download.State.DECRYPTING
+        notifier.onProgressChange(download)
+        // KMK <--
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {

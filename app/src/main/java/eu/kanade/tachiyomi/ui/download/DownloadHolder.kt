@@ -94,10 +94,23 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
         
         // 1DM+ Core Status Logic
         val statusText = buildString {
-            if (download.status == Download.State.MERGING) {
-                append("Merging... (").append(download.progress).append("%)")
-                append("\nProcessing parts into final file...")
-                return@buildString
+            when (download.status) {
+                Download.State.MERGING -> {
+                    append("Merging... (").append(download.progress).append("%)")
+                    append("\nProcessing parts into final file...")
+                    return@buildString
+                }
+                Download.State.DECRYPTING -> {
+                    append("Decrypting... (").append(download.progress).append("%)")
+                    append("\nDecrypting segments in RAM...")
+                    return@buildString
+                }
+                Download.State.FINALIZING -> {
+                    append("Finalizing... (").append(download.progress).append("%)")
+                    append("\nMoving to public downloads folder...")
+                    return@buildString
+                }
+                else -> {}
             }
 
             // Line 1: Progress & Size

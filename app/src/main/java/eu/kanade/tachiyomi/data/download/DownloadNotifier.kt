@@ -119,7 +119,7 @@ internal class DownloadNotifier(private val context: Context) {
                 NotificationReceiver.openAnimeEntryPendingActivity(context, download.anime.id),
             )
 
-            val downloadingProgressText = if (download.progress <= 0 && download.downloadedSize.isEmpty()) {
+            val downloadingProgressText = if (download.progress <= 0 && download.downloadedSize.isEmpty() && download.status == Download.State.DOWNLOADING) {
                 context.stringResource(MR.strings.update_check_notification_download_in_progress)
             } else {
                 // 1DM+ Style Rich Notification
@@ -129,10 +129,20 @@ internal class DownloadNotifier(private val context: Context) {
                 val progress = if (download.progress > 0) "${download.progress}%" else "0%"
                 
                 buildString {
+                    val statePrefix = when (download.status) {
+                        Download.State.MERGING -> "Merging: "
+                        Download.State.DECRYPTING -> "Decrypting: "
+                        Download.State.FINALIZING -> "Finalizing: "
+                        else -> ""
+                    }
+                    append(statePrefix)
                     append(progress)
-                    if (size.isNotEmpty()) append(" | ").append(size)
-                    if (speed.isNotEmpty()) append(" | ").append(speed)
-                    if (eta.isNotEmpty()) append(" | ETA: ").append(eta)
+                    
+                    if (download.status == Download.State.DOWNLOADING) {
+                        if (size.isNotEmpty()) append(" | ").append(size)
+                        if (speed.isNotEmpty()) append(" | ").append(speed)
+                        if (eta.isNotEmpty()) append(" | ETA: ").append(eta)
+                    }
                 }
             }
 

@@ -397,12 +397,12 @@ class DownloadCache(
                                     when {
                                         // Ignore incomplete downloads
                                         it.name?.endsWith(Downloader.TMP_DIR_SUFFIX) == true -> null
-                                        // Folder of videos
-                                        it.isDirectory -> it.name
                                         // MP4 files
                                         it.isFile && it.extension == "mp4" -> it.nameWithoutExtension
                                         // MKV files
                                         it.isFile && it.extension == "mkv" -> it.nameWithoutExtension
+                                        // Folder of videos
+                                        it.isDirectory -> it.name
                                         // Anything else is irrelevant
                                         else -> null
                                     }
