@@ -115,7 +115,7 @@ class ExternalIntents {
             torrentIntentForPackage(context, videoUrl, video)
         } else if (pkgName.isEmpty()) {
             Intent(Intent.ACTION_VIEW).apply {
-                setDataAndTypeAndNormalize(videoUrl, getMime(videoUrl))
+                setDataAndTypeAndNormalize(videoUrl, "video/*")
                 addExtrasAndFlags(false, this)
                 addVideoHeaders(false, video, this)
             }

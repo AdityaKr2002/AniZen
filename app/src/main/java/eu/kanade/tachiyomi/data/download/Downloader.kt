@@ -810,14 +810,24 @@ class Downloader(
                 // Attempt to find the specific downloader activity to bypass the 'Open With' dialog
                 val resolveInfo = pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
                 if (resolveInfo.isNotEmpty()) {
-                    // Try to find an activity with 'Download' in its name, otherwise pick the first one
-                    val bestMatch = resolveInfo.find { it.activityInfo.name.contains("Download", ignoreCase = true) } 
+                    // Optimized for 1DM+: Look for Editor or Add activity first to avoid browser-only components
+                    val bestMatch = resolveInfo.find { it.activityInfo.name.contains("Editor", ignoreCase = true) }
+                                     ?: resolveInfo.find { it.activityInfo.name.contains("Add", ignoreCase = true) }
+                                     ?: resolveInfo.find { it.activityInfo.name.contains("Download", ignoreCase = true) }
                                      ?: resolveInfo.first()
                     intent.component = ComponentName(bestMatch.activityInfo.packageName, bestMatch.activityInfo.name)
                 }
             }
             
-            context.startActivity(intent)
+            try {
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                // Fallback to chooser if direct launch fails or component is invalid
+                intent.component = null
+                val chooser = Intent.createChooser(intent, "Download with...")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+            }
             
             // Explicitly remove from queue after successful handoff
             download.status = Download.State.DOWNLOADED
