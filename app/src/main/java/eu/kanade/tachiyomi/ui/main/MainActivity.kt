@@ -566,7 +566,7 @@ class MainActivity : BaseActivity() {
                     null
                 } ?: return
                 
-                val chooserIntent = if (intent.package == null && intent.component == null) {
+                val chooserIntent = if (intent.getPackage() == null && intent.component == null) {
                     Intent.createChooser(intent, context.getString(R.string.action_play_externally))
                 } else {
                     intent
