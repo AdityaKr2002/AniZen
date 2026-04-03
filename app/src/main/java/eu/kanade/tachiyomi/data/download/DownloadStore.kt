@@ -48,6 +48,15 @@ class DownloadStore(
     }
 
     /**
+     * Updates a single download in the store.
+     */
+    fun update(download: Download) {
+        preferences.edit {
+            putString(getKey(download), serialize(download))
+        }
+    }
+
+    /**
      * Removes a download from the store.
      *
      * @param download the download to remove.
@@ -99,13 +108,20 @@ class DownloadStore(
         val downloads = mutableListOf<Download>()
         if (objs.isNotEmpty()) {
             val cachedAnime = mutableMapOf<Long, Anime?>()
-            for ((animeId, episodeId) in objs) {
-                val anime = cachedAnime.getOrPut(animeId) {
-                    runBlocking { getAnime.await(animeId) }
+            for (obj in objs) {
+                val anime = cachedAnime.getOrPut(obj.animeId) {
+                    runBlocking { getAnime.await(obj.animeId) }
                 } ?: continue
                 val source = sourceManager.get(anime.source) as? HttpSource ?: continue
-                val episode = runBlocking { getEpisode.await(episodeId) } ?: continue
-                downloads.add(Download(source, anime, episode))
+                val episode = runBlocking { getEpisode.await(obj.episodeId) } ?: continue
+                val download = Download(source, anime, episode)
+                
+                // Restore metadata for 1DM-style resume
+                download.totalSegments = obj.totalSegments
+                download.downloadedSegments = obj.downloadedSegments
+                obj.segmentProgress?.let { download.segmentProgress.putAll(it) }
+                
+                downloads.add(download)
             }
         }
 
@@ -120,7 +136,14 @@ class DownloadStore(
      * @param download the download to serialize.
      */
     private fun serialize(download: Download): String {
-        val obj = AnimeDownloadObject(download.anime.id, download.episode.id!!, counter++)
+        val obj = AnimeDownloadObject(
+            animeId = download.anime.id, 
+            episodeId = download.episode.id!!, 
+            order = counter++,
+            totalSegments = download.totalSegments,
+            downloadedSegments = download.downloadedSegments,
+            segmentProgress = if (download.totalSegments > 0) download.segmentProgress.toMap() else null
+        )
         return json.encodeToString(obj)
     }
 
@@ -146,4 +169,11 @@ class DownloadStore(
  * @param order the order of the download in the queue.
  */
 @Serializable
-private data class AnimeDownloadObject(val animeId: Long, val episodeId: Long, val order: Int)
+private data class AnimeDownloadObject(
+    val animeId: Long, 
+    val episodeId: Long, 
+    val order: Int,
+    val totalSegments: Int = 0,
+    val downloadedSegments: Int = 0,
+    val segmentProgress: Map<Int, Boolean>? = null
+)

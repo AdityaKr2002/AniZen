@@ -52,11 +52,12 @@ open /* SY <-- */ class NetworkHelper(
         client.newBuilder()
             .dispatcher(
                 Dispatcher().apply {
-                    maxRequests = 256
-                    maxRequestsPerHost = 64 // Enhanced concurrency for BDIX
+                    maxRequests = 512 // Increased from 256
+                    maxRequestsPerHost = 64
                 },
             )
-            .connectionPool(ConnectionPool(128, 10, TimeUnit.MINUTES))
+            .connectionPool(ConnectionPool(256, 5, TimeUnit.MINUTES)) // More aggressive pooling
+            .retryOnConnectionFailure(true)
             .build()
     }
 

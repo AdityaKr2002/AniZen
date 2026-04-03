@@ -490,8 +490,10 @@ class Downloader(
                                 .header("Range", "bytes=$start-$end")
                                 .build()
                             
-                            client.newCall(request).execute().use { res ->
-                                if (!res.isSuccessful) {
+                            // Smart Timeout: 60s per part to prevent stalling
+                            kotlinx.coroutines.withTimeout(60000L) {
+                                client.newCall(request).execute().use { res ->
+                                    if (!res.isSuccessful) {
                                     if (res.code == 416) {
                                         tmpDir.createFile("$filename.part$i")
                                         synchronized(download) { download.downloadedSegments++ }
@@ -530,7 +532,10 @@ class Downloader(
                                 }
                                 // Mark part as finished
                                 tmpDir.createFile("$filename.part$i")
-                                synchronized(download) { download.downloadedSegments++ }
+                                synchronized(download) { 
+                                    download.downloadedSegments++ 
+                                    store.update(download) // Persist progress to DB
+                                }
                             }
                         }
                     }
@@ -683,7 +688,7 @@ class Downloader(
                 
                 async {
                     memorySemaphore.withPermit {
-                        retry {
+                        retry(times = 5) {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                             
                             var cipher: javax.crypto.Cipher? = null
@@ -707,38 +712,44 @@ class Downloader(
                                 }
                             }
                             
-                            client.newCall(Request.Builder().url(segment.url).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-                                if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
-                                val bodyStream = res.body?.byteStream() ?: throw IOException("Empty segment")
-                                val inputStream = if (cipher != null) {
-                                    if (download.status != Download.State.DECRYPTING) {
-                                        download.status = Download.State.DECRYPTING
+                            // Smart Timeout: 30s per segment to prevent stalling
+                            kotlinx.coroutines.withTimeout(30000L) {
+                                client.newCall(Request.Builder().url(segment.url).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                    if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
+                                    val bodyStream = res.body?.byteStream() ?: throw IOException("Empty segment")
+                                    val inputStream = if (cipher != null) {
+                                        if (download.status != Download.State.DECRYPTING) {
+                                            download.status = Download.State.DECRYPTING
+                                        }
+                                        javax.crypto.CipherInputStream(bodyStream, cipher)
+                                    } else {
+                                        bodyStream
                                     }
-                                    javax.crypto.CipherInputStream(bodyStream, cipher)
-                                } else {
-                                    bodyStream
-                                }
-                                
-                                val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
-                                var segmentSize = 0L
-                                context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
-                                    FileOutputStream(pfd.fileDescriptor).use { outStream ->
-                                        val buffer = ByteArray(128 * 1024)
-                                        var bytesRead: Int
-                                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                            outStream.write(buffer, 0, bytesRead)
-                                            segmentSize += bytesRead
+                                    
+                                    val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
+                                    var segmentSize = 0L
+                                    context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
+                                        FileOutputStream(pfd.fileDescriptor).use { outStream ->
+                                            val buffer = ByteArray(128 * 1024)
+                                            var bytesRead: Int
+                                            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                                outStream.write(buffer, 0, bytesRead)
+                                                segmentSize += bytesRead
+                                            }
                                         }
                                     }
+                                    tmpFile.renameTo("$index.seg")
+                                    download.segmentProgress[index] = true
+                                    val currentTotal = downloadedBytes.addAndGet(segmentSize)
+                                    synchronized(download) { 
+                                        download.downloadedSegments++ 
+                                        store.update(download) // Persist progress to DB
+                                    }
+                                    download.update(currentTotal, -1, false)
+                                    throttleNotification(download)
+                                    kotlinx.coroutines.yield()
                                 }
-                                tmpFile.renameTo("$index.seg")
-                                download.segmentProgress[index] = true
-                                val currentTotal = downloadedBytes.addAndGet(segmentSize)
-                                synchronized(download) { download.downloadedSegments++ }
-                                download.update(currentTotal, -1, false)
-                                throttleNotification(download)
-                                kotlinx.coroutines.yield()
                             }
                         }
                     }
