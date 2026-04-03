@@ -71,6 +71,7 @@ import eu.kanade.presentation.more.settings.screen.data.RestoreBackupScreen
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.DefaultNavigatorScreenTransition
 import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
@@ -564,7 +565,19 @@ class MainActivity : BaseActivity() {
                     withUIContext { Injekt.get<Application>().toast(e.message) }
                     null
                 } ?: return
-                externalPlayerResult?.launch(intent) ?: return
+                
+                val chooserIntent = if (intent.getPackage() == null && intent.component == null) {
+                    Intent.createChooser(intent, context.getString(R.string.action_play_externally))
+                } else {
+                    intent
+                }
+                
+                try {
+                    externalPlayerResult?.launch(chooserIntent)
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR, e)
+                    withUIContext { context.toast("No external player found") }
+                }
             } else {
                 context.startActivity(
                     PlayerActivity.newIntent(

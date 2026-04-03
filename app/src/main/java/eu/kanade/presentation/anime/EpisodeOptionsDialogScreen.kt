@@ -528,8 +528,8 @@ private fun VideoList(
                 }
 
                 QualityOptions(
-                    onDownloadClicked = { downloadEpisode(!useExternalDownloader) },
-                    onExtDownloadClicked = { downloadEpisode(useExternalDownloader) },
+                    onDownloadClicked = { downloadEpisode(false) },
+                    onExtDownloadClicked = { downloadEpisode(true) },
                     onCopyClicked = {
                         clipboardManager.setText(AnnotatedString(currentVideo.videoUrl))
                         scope.launch { context.toast(copiedString) }
