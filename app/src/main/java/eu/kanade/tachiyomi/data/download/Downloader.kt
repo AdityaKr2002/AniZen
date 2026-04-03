@@ -345,36 +345,40 @@ class Downloader(
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
         store.update(download, force = true)
+        notifier.onProgressChange(download)
         
-        val finalFile = publicDir.createFile(sandboxFile.name!!)!!
+        // CRITICAL: Delete any corrupt partial tmp file from previous failed runs
+        var destFile = publicDir.findFile("$filename.tmp")
+        if (destFile != null) destFile.delete()
+        destFile = publicDir.createFile("$filename.tmp")!!
+
         val totalSize = sandboxFile.length()
         var totalCopied = 0L
         
-        context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
-            java.io.FileInputStream(sandboxFile).use { input ->
-                java.io.FileOutputStream(opfd.fileDescriptor).use { output ->
-                    val buffer = BufferPool.obtain()
-                    try {
-                        var read: Int
-                        var lastUpdate = System.currentTimeMillis()
-                        while (input.read(buffer).also { read = it } != -1) {
-                            coroutineContext.ensureActive()
-                            output.write(buffer, 0, read)
-                            totalCopied += read
-                            
-                            val now = System.currentTimeMillis()
-                            if (now - lastUpdate > 500) {
-                                download.progress = ((totalCopied.toDouble() / totalSize) * 100).toInt()
-                                notifier.onProgressChange(download)
-                                lastUpdate = now
-                            }
-                        }
-                    } finally {
-                        BufferPool.recycle(buffer)
+        java.io.FileInputStream(sandboxFile).use { input ->
+            destFile.openOutputStream().use { output ->
+                val buffer = ByteArray(8 * 1024 * 1024) // 8MB buffer for high-speed SAF copy
+                var read: Int
+                var lastUpdate = System.currentTimeMillis()
+                while (input.read(buffer).also { read = it } != -1) {
+                    coroutineContext.ensureActive()
+                    output.write(buffer, 0, read)
+                    totalCopied += read
+                    
+                    val now = System.currentTimeMillis()
+                    if (now - lastUpdate > 1000 || totalCopied == totalSize) {
+                        download.progress = ((totalCopied.toDouble() / totalSize) * 100).toInt()
+                        notifier.onProgressChange(download)
+                        store.update(download)
+                        lastUpdate = now
                     }
                 }
             }
         }
+        
+        // Rename to actual video extension
+        val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
+        destFile.renameTo("$filename.$finalExt")
         
         sandboxFile.parentFile?.deleteRecursively()
         download.status = Download.State.DOWNLOADED
@@ -551,18 +555,23 @@ class Downloader(
                                     cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.IvParameterSpec(ivBytes))
                                     data = cipher.doFinal(data)
                                 }
+java.io.FileOutputStream(segmentFile).use { it.write(data) }
+downloadedCount.increment()
 
-                                java.io.FileOutputStream(segmentFile).use { it.write(data) }
-                                downloadedCount.increment()
-                                
-                                val currentCount = downloadedCount.sum().toInt()
-                                download.downloadedSegments = currentCount
-                                download.progress = (currentCount * 100) / segments.size 
-                                
-                                if (currentCount % 5 == 0 || currentCount == segments.size) {
-                                    store.update(download)
-                                    notifier.onProgressChange(download)
-                                }
+val currentCount = downloadedCount.sum().toInt()
+download.downloadedSegments = currentCount
+
+// NEW: Mark this exact segment as complete for the UI's secondary progress bar
+download.segmentProgress[seg.first] = true
+
+// Fix UI Progress Bar
+download.progress = (currentCount * 100) / segments.size 
+
+if (currentCount % 5 == 0 || currentCount == segments.size) {
+    store.update(download)
+    notifier.onProgressChange(download)
+}
+
                             }
                         }
                     }
