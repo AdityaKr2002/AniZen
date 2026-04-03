@@ -649,6 +649,8 @@ class Downloader(
     }
 
     private suspend fun nativeHlsDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
+        data class HlsSegment(val url: String, val keyUrl: String?, val iv: String?, val sequenceNumber: Int)
+        
         val video = download.video!!
         val client = networkHelper.downloadClient
         val threadCount = calculateDynamicConcurrency()
@@ -658,8 +660,33 @@ class Downloader(
         }
         val playlistBody = playlistRes.body?.string() ?: throw IOException("Empty HLS")
         val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
-        val segments = playlistBody.lines().filter { it.isNotBlank() && !it.startsWith("#") }
-            .map { if (it.startsWith("http")) it else baseUrl + it }
+        
+        var currentEncryptionKeyUrl: String? = null
+        var currentEncryptionIv: String? = null
+        var sequenceNumber = 0
+        val segments = mutableListOf<HlsSegment>()
+
+        playlistBody.lines().forEach { line ->
+            if (line.startsWith("#EXT-X-MEDIA-SEQUENCE:")) {
+                sequenceNumber = line.substringAfter(":").toIntOrNull() ?: sequenceNumber
+            } else if (line.startsWith("#EXT-X-KEY:")) {
+                val method = line.substringAfter("METHOD=").substringBefore(",")
+                if (method.contains("AES-128")) {
+                    val uri = line.substringAfter("URI=\"").substringBefore("\"")
+                    currentEncryptionKeyUrl = if (uri.startsWith("http")) uri else baseUrl + uri
+                    val ivString = line.substringAfter("IV=", "")
+                    currentEncryptionIv = if (ivString.isNotBlank()) ivString.substringBefore(",") else null
+                } else if (method == "NONE") {
+                    currentEncryptionKeyUrl = null
+                    currentEncryptionIv = null
+                }
+            } else if (line.isNotBlank() && !line.startsWith("#")) {
+                val url = if (line.startsWith("http")) line else baseUrl + line
+                segments.add(HlsSegment(url, currentEncryptionKeyUrl, currentEncryptionIv, sequenceNumber))
+                sequenceNumber++
+            }
+        }
+        
         download.totalSegments = segments.size
         
         download.segmentProgress.clear()
@@ -679,26 +706,52 @@ class Downloader(
         }
         download.downloadedSegments = initialDownloadedSegments
 
+        val keyCache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+
         coroutineScope {
-            segments.mapIndexed { index, segUrl ->
+            segments.mapIndexed { index, segment ->
                 if (download.segmentProgress[index] == true) return@mapIndexed null
                 
                 async {
                     memorySemaphore.withPermit {
                         retry {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                            client.newCall(Request.Builder().url(segUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                            
+                            var cipher: javax.crypto.Cipher? = null
+                            if (segment.keyUrl != null) {
+                                val keyBytes = keyCache.getOrPut(segment.keyUrl) {
+                                    val req = Request.Builder().url(segment.keyUrl).headers(video.headers ?: Headers.headersOf()).build()
+                                    val res = client.newCall(req).execute()
+                                    if (!res.isSuccessful) throw IOException("Failed to fetch key")
+                                    res.body?.bytes() ?: throw IOException("Empty key")
+                                }
+                                val ivBytes = if (segment.iv != null) {
+                                    val hex = segment.iv.removePrefix("0x")
+                                    hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray().let {
+                                        if (it.size < 16) ByteArray(16 - it.size) + it else it.takeLast(16).toByteArray()
+                                    }
+                                } else {
+                                    java.nio.ByteBuffer.allocate(16).putLong(8, segment.sequenceNumber.toLong()).array()
+                                }
+                                cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding").apply {
+                                    init(javax.crypto.Cipher.DECRYPT_MODE, javax.crypto.spec.SecretKeySpec(keyBytes, "AES"), javax.crypto.spec.IvParameterSpec(ivBytes))
+                                }
+                            }
+                            
+                            client.newCall(Request.Builder().url(segment.url).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
-                                val source = res.body?.source() ?: throw IOException("Empty segment")
+                                val bodyStream = res.body?.byteStream() ?: throw IOException("Empty segment")
+                                val inputStream = if (cipher != null) javax.crypto.CipherInputStream(bodyStream, cipher) else bodyStream
+                                
                                 val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
                                 var segmentSize = 0L
                                 context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
-                                    FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
+                                    FileOutputStream(pfd.fileDescriptor).use { outStream ->
                                         val buffer = ByteArray(128 * 1024)
                                         var bytesRead: Int
-                                        while (source.read(buffer).also { bytesRead = it } != -1) {
+                                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                            channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
+                                            outStream.write(buffer, 0, bytesRead)
                                             segmentSize += bytesRead
                                         }
                                     }
@@ -721,12 +774,8 @@ class Downloader(
         download.progress = 0
         notifier.onProgressChange(download)
 
-        val videoFile = if (video.videoUrl.contains(".mp4")) {
-            tmpDir.createFile("$filename.mp4")!!
-        } else {
-            tmpDir.createFile("$filename.mkv")!!
-        }
-        context.contentResolver.openFileDescriptor(videoFile.uri, "w")?.use { pfd ->
+        val concatFile = tmpDir.createFile("$filename.ts")!!
+        context.contentResolver.openFileDescriptor(concatFile.uri, "w")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
                 var currentPos = 0L
                 val totalToMerge = (0 until segments.size).sumOf { i -> tmpDir.findFile("$i.seg")?.length() ?: 0L }
@@ -760,7 +809,27 @@ class Downloader(
                 }
             }
         }
-        return videoFile
+        
+        // Final FFmpeg Remuxing to clean up timestamps
+        val isMp4 = video.videoUrl.contains(".mp4")
+        val finalExt = if (isMp4) "mp4" else "mkv"
+        val finalFile = tmpDir.createFile("$filename.$finalExt")!!
+        
+        val concatPath = concatFile.toFFmpegString(context)
+        val finalPath = finalFile.toFFmpegString(context)
+        
+        val cmd = "-i \"$concatPath\" -c copy -y \"$finalPath\""
+        val session = com.arthenica.ffmpegkit.FFmpegKit.execute(cmd)
+        
+        if (session.returnCode.isValueSuccess) {
+            concatFile.delete()
+            return finalFile
+        } else {
+            finalFile.delete()
+            val fallbackFile = tmpDir.createFile("$filename.mkv")!!
+            concatFile.renameTo("$filename.mkv")
+            return fallbackFile
+        }
     }
 
     private suspend fun downloadTrack(
