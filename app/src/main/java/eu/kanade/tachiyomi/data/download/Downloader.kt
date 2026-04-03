@@ -460,11 +460,14 @@ class Downloader(
             download.status = Download.State.MERGING
             notifier.onProgressChange(download)
 
-            FileOutputStream(finalFile).channel.use { outChannel ->
+            java.io.FileOutputStream(finalFile).use { outStream ->
+                val outChannel = outStream.channel
                 for (i in 0 until threadCount) {
                     val partFile = File(sandboxDir, "$filename.part$i")
                     if (partFile.exists()) {
-                        java.io.FileInputStream(partFile).channel.use { it.transferTo(0, it.size(), outChannel) }
+                        java.io.FileInputStream(partFile).use { inStream ->
+                            inStream.channel.transferTo(0, inStream.channel.size(), outChannel)
+                        }
                         partFile.delete()
                     }
                 }
@@ -567,26 +570,27 @@ class Downloader(
             }
         }
 
-        download.status = Download.State.MERGING
-        notifier.onProgressChange(download)
+    download.status = Download.State.MERGING
+    notifier.onProgressChange(download)
 
-        val finalFile = File(sandboxDir, "$filename.ts")
-        val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
-        checkFreeSpace(sandboxDir, totalMergeSize)
+    val finalFile = File(sandboxDir, "$filename.ts")
+    val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
+    checkFreeSpace(sandboxDir, totalMergeSize)
 
-        java.io.FileOutputStream(finalFile).channel.use { outChannel ->
-            for (i in segments.indices) {
-                val segmentFile = File(sandboxDir, "seg_$i.part")
-                if (segmentFile.exists()) {
-                    java.io.FileInputStream(segmentFile).channel.use { inStream ->
-                        inStream.channel.transferTo(0, segmentFile.length(), outChannel)
-                    }
-                    segmentFile.delete()
+    java.io.FileOutputStream(finalFile).use { outStream ->
+        val outChannel = outStream.channel
+        for (i in segments.indices) {
+            val segmentFile = File(sandboxDir, "seg_$i.part")
+            if (segmentFile.exists()) {
+                java.io.FileInputStream(segmentFile).use { inStream ->
+                    inStream.channel.transferTo(0, segmentFile.length(), outChannel)
                 }
+                segmentFile.delete()
             }
         }
-        return finalFile
     }
+    return finalFile
+}
 
     private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
     private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
