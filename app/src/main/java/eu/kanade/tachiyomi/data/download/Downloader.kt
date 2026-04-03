@@ -497,7 +497,7 @@ class Downloader(
                                 context.contentResolver.openFileDescriptor(partFile.uri, "wa")?.use { pfd ->
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                                         // Dynamic buffer size: smaller buffers for high thread counts to save memory
-                                        val bufferSize = if (threadCount > 16) 32 * 1024 else if (threadCount > 8) 64 * 1024 else 128 * 1024
+                                        val bufferSize = if (threadCount > 16) 128 * 1024 else if (threadCount > 8) 256 * 1024 else 512 * 1024
                                         val buffer = ByteArray(bufferSize)
                                         var bytesRead: Int
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
@@ -556,7 +556,7 @@ class Downloader(
                         
                         context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
                             FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                val buffer = ByteArray(256 * 1024) // Larger buffer for single thread efficiency
+                                val buffer = ByteArray(1024 * 1024) // 1MB buffer for single thread efficiency
                                 var bytesRead: Int
                                 var localDownloaded = existing
                                 while (source.read(buffer).also { bytesRead = it } != -1) {
@@ -616,8 +616,8 @@ class Downloader(
                             var position = 0L
                             while (remaining > 0) {
                                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                // Transfer in 4MB chunks to allow for cancellation and progress updates
-                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                                // Transfer in 32MB chunks to allow for cancellation and progress updates
+                                val toTransfer = Math.min(remaining, 32L * 1024 * 1024)
                                 val transferred = inChannel.transferTo(position, toTransfer, outChannel)
                                 if (transferred <= 0) break
                                 position += transferred
@@ -694,7 +694,7 @@ class Downloader(
                                 var segmentSize = 0L
                                 context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
                                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                        val buffer = ByteArray(64 * 1024)
+                                        val buffer = ByteArray(128 * 1024)
                                         var bytesRead: Int
                                         while (source.read(buffer).also { bytesRead = it } != -1) {
                                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -741,7 +741,7 @@ class Downloader(
                             var position = 0L
                             while (remaining > 0) {
                                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                                val toTransfer = Math.min(remaining, 32L * 1024 * 1024)
                                 val transferred = inChannel.transferTo(position, toTransfer, outChannel)
                                 if (transferred <= 0) break
                                 position += transferred
@@ -790,7 +790,7 @@ class Downloader(
                 context.contentResolver.openFileDescriptor(file.uri, if (append) "wa" else "w")?.use { pfd ->
                     FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
                         if (append) channel.position(channel.size())
-                        val buffer = ByteArray(64 * 1024)
+                        val buffer = ByteArray(256 * 1024)
                         var bytesRead: Int
                         while (source.read(buffer).also { bytesRead = it } != -1) {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
