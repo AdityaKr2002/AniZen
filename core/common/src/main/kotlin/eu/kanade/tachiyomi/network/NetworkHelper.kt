@@ -9,9 +9,12 @@ import okhttp3.Cache
 import okhttp3.ConnectionPool
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /* SY --> */
@@ -124,6 +127,21 @@ open /* SY <-- */ class NetworkHelper(
         get() = client
 
     fun defaultUserAgentProvider() = preferences.defaultUserAgent().get().trim()
+
+    /**
+     * Simple download function for general use (e.g. app updates).
+     * Not multi-threaded or resumable, but handles progress via listener.
+     */
+    fun downloadFile(url: String, outputFile: File, progressListener: ProgressListener) {
+        val request = Request.Builder().url(url).build()
+        client.newCachelessCallWithProgress(request, progressListener).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Unexpected response code: ${response.code}")
+            val body = response.body ?: throw IOException("Empty response body")
+            outputFile.outputStream().use { output ->
+                body.byteStream().copyTo(output)
+            }
+        }
+    }
 
     companion object {
     }

@@ -141,22 +141,11 @@ class AppUpdateDownloadJob(private val context: Context, workerParams: WorkerPar
             override fun update(bytesRead: Long, contentLength: Long, done: Boolean) {
                 // KMK -->
                 if (totalSize == 0L && contentLength > 0) {
-                    val apkFile = File(context.externalCacheDir, "update.apk")
-                    totalSize = if (apkFile.exists()) {
-                        apkFile.length() + contentLength
-                    } else {
-                        contentLength
-                    }
-                }
-                val apkFile = File(context.externalCacheDir, "update.apk")
-                val downloadedSize = if (apkFile.exists()) {
-                    apkFile.length() + bytesRead
-                } else {
-                    bytesRead
+                    totalSize = contentLength
                 }
                 // KMK <--
                 val progress = if (totalSize > 0) {
-                    (100 * (downloadedSize.toFloat() / totalSize)).toInt()
+                    (100 * (bytesRead.toFloat() / totalSize)).toInt()
                 } else {
                     0
                 }
@@ -174,13 +163,12 @@ class AppUpdateDownloadJob(private val context: Context, workerParams: WorkerPar
             val apkFile = File(context.externalCacheDir, "update.apk")
 
             // KMK -->
-            network.downloadFileWithResume(url, apkFile, progressListener)
+            network.downloadFile(url, apkFile, progressListener)
             if (isStopped) {
                 cancel()
                 return@coroutineScope
             }
             // KMK <--
-
             notifier.cancel()
             // KMK -->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
