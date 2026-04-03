@@ -287,7 +287,9 @@ class Downloader(
         
         // Sandbox Storage: Protected from OS Cache cleanup
         val sandboxDir = File(context.getExternalFilesDir("downloads"), episodeDirname)
-        sandboxDir.mkdirs()
+        if (!sandboxDir.exists() && !sandboxDir.mkdirs()) {
+            throw IOException("Failed to create sandbox directory: ${sandboxDir.absolutePath}")
+        }
 
         notifier.onProgressChange(download)
         try {
@@ -454,11 +456,17 @@ class Downloader(
                     }
                 }.awaitAll()
             }
+
+            download.status = Download.State.MERGING
+            notifier.onProgressChange(download)
+
             FileOutputStream(finalFile).channel.use { outChannel ->
                 for (i in 0 until threadCount) {
                     val partFile = File(sandboxDir, "$filename.part$i")
-                    java.io.FileInputStream(partFile).channel.use { it.transferTo(0, it.size(), outChannel) }
-                    partFile.delete()
+                    if (partFile.exists()) {
+                        java.io.FileInputStream(partFile).channel.use { it.transferTo(0, it.size(), outChannel) }
+                        partFile.delete()
+                    }
                 }
             }
         } else {
@@ -479,44 +487,39 @@ class Downloader(
         
         if (!playlistRes.isSuccessful) throw IOException("Failed to fetch playlist: ${playlistRes.code}")
         val lines = playlistRes.body?.string()?.lines() ?: emptyList()
-        if (lines.isEmpty()) throw IOException("Empty HLS playlist")
 
         val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
         val segments = mutableListOf<String>()
         var encryptionKeyUrl: String? = null
+        var mediaSequence = 0
 
-        // Proper Playlist Parsing
+        // Extract correct Media Sequence and AES Key
         for (line in lines) {
-            if (line.startsWith("#EXT-X-KEY:METHOD=AES-128")) {
+            if (line.startsWith("#EXT-X-MEDIA-SEQUENCE:")) {
+                mediaSequence = line.substringAfter(":").toIntOrNull() ?: 0
+            } else if (line.startsWith("#EXT-X-KEY:METHOD=AES-128")) {
                 val match = Regex("URI=\"([^\"]+)\"").find(line)
                 encryptionKeyUrl = match?.groupValues?.get(1)
                 if (encryptionKeyUrl != null && !encryptionKeyUrl.startsWith("http")) {
                     encryptionKeyUrl = baseUrl + encryptionKeyUrl
                 }
             } else if (!line.startsWith("#") && line.isNotBlank()) {
-                val fullUrl = if (line.startsWith("http")) line else baseUrl + line
-                segments.add(fullUrl)
+                segments.add(if (line.startsWith("http")) line else baseUrl + line)
             }
         }
 
         if (segments.isEmpty()) throw IOException("No segments found in HLS playlist")
-        
         download.totalSegments = segments.size
-        val downloadedCount = java.util.concurrent.atomic.LongAdder()
-        val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
-
-        // Fetch AES Key if present
-        var cipher: javax.crypto.Cipher? = null
+        
+        var secretKey: javax.crypto.spec.SecretKeySpec? = null
         if (encryptionKeyUrl != null) {
             val keyRes = client.newCall(Request.Builder().url(encryptionKeyUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
             val keyBytes = keyRes.body?.bytes() ?: throw IOException("Failed to fetch AES key")
-            val secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
-            // Basic AES-128 CBC with empty IV (standard for many HLS streams unless IV is specified)
-            cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding")
-            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.IvParameterSpec(ByteArray(16)))
+            secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
         }
 
-        val finalFile = File(sandboxDir, "$filename.ts")
+        val downloadedCount = java.util.concurrent.atomic.LongAdder()
+        val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
@@ -532,13 +535,17 @@ class Downloader(
 
                         retry(times = 5) {
                             client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-                                if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
+                                if (!res.isSuccessful) throw IOException("Segment failed: ${res.code}")
                                 var data = res.body?.bytes() ?: throw IOException("Empty segment")
                                 
                                 ensureActive()
 
-                                // DECRYPT IN RAM
-                                if (cipher != null) {
+                                // THREAD-SAFE AES DECRYPTION WITH CORRECT SEQUENCE IV
+                                if (secretKey != null) {
+                                    val seqNum = mediaSequence + seg.first
+                                    val ivBytes = java.nio.ByteBuffer.allocate(16).putLong(8, seqNum.toLong()).array()
+                                    val cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding")
+                                    cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey, javax.crypto.spec.IvParameterSpec(ivBytes))
                                     data = cipher.doFinal(data)
                                 }
 
@@ -547,7 +554,6 @@ class Downloader(
                                 
                                 val currentCount = downloadedCount.sum().toInt()
                                 download.downloadedSegments = currentCount
-                                // Fix UI Progress Bar
                                 download.progress = (currentCount * 100) / segments.size 
                                 
                                 if (currentCount % 5 == 0 || currentCount == segments.size) {
@@ -561,19 +567,22 @@ class Downloader(
             }
         }
 
-        // Sequential Merge (Zero-Copy)
+        download.status = Download.State.MERGING
+        notifier.onProgressChange(download)
+
+        val finalFile = File(sandboxDir, "$filename.ts")
         val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
         checkFreeSpace(sandboxDir, totalMergeSize)
-        
-        java.io.FileOutputStream(finalFile).use { outStream ->
-            val channel = outStream.channel
+
+        java.io.FileOutputStream(finalFile).channel.use { outChannel ->
             for (i in segments.indices) {
                 val segmentFile = File(sandboxDir, "seg_$i.part")
-                if (!segmentFile.exists()) throw IOException("Missing segment $i")
-                java.io.FileInputStream(segmentFile).use { inStream ->
-                    inStream.channel.transferTo(0, segmentFile.length(), channel)
+                if (segmentFile.exists()) {
+                    java.io.FileInputStream(segmentFile).channel.use { inStream ->
+                        inStream.channel.transferTo(0, segmentFile.length(), outChannel)
+                    }
+                    segmentFile.delete()
                 }
-                segmentFile.delete()
             }
         }
         return finalFile
