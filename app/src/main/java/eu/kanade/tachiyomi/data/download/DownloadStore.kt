@@ -34,6 +34,22 @@ class DownloadStore(
     private val lastUpdateMap = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /**
+     * Counter used to keep the queue order.
+     */
+    private var counter = 0
+
+    /**
+     * Adds a list of downloads to the store.
+     *
+     * @param downloads the list of downloads to add.
+     */
+    fun addAll(downloads: List<Download>) {
+        preferences.edit {
+            downloads.forEach { putString(getKey(it), serialize(it)) }
+        }
+    }
+
+    /**
      * Updates a single download in the store with internal throttling.
      * Prevents SQLiteDatabaseLockedException during high-concurrency downloads.
      */

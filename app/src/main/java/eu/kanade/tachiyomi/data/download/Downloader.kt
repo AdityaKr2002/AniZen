@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.download.model.DownloadNotifier
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -217,9 +218,6 @@ class Downloader(
         }
     }
 
-    /**
-     * Resilient retry with Jittered Exponential Backoff.
-     */
     private suspend fun <T> retry(
         times: Int = 5,
         initialDelay: Long = 1000,
@@ -295,9 +293,6 @@ class Downloader(
         }
     }
 
-    /**
-     * Moves merged file from Sandbox to Public Storage with State tracking.
-     */
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
         store.update(download, force = true)
@@ -307,7 +302,6 @@ class Downloader(
         context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
             java.io.FileInputStream(sandboxFile).channel.use { inChannel ->
                 java.io.FileOutputStream(opfd.fileDescriptor).channel.use { outChannel ->
-                    // Zero-copy kernel level transfer
                     inChannel.transferTo(0, inChannel.size(), outChannel)
                 }
             }
@@ -340,8 +334,6 @@ class Downloader(
                 (0 until threadCount).map { i ->
                     async {
                         val partFile = File(sandboxDir, "$filename.part$i")
-                        
-                        // Startup Truncation Protocol: Match DB state with Disk
                         val expected = (download.partProgress[i] ?: 0f) * (if (i == threadCount - 1) size - (i * partSize) else partSize)
                         if (partFile.exists() && partFile.length() > expected.toLong()) {
                             RandomAccessFile(partFile, "rw").use { it.setLength(expected.toLong()) }
@@ -353,8 +345,6 @@ class Downloader(
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                            
-                            // Connection Pacing: 50ms stagger
                             if (i > 0) delay(50L)
 
                             kotlinx.coroutines.withTimeout(15000L) {
@@ -363,17 +353,16 @@ class Downloader(
                                 client.newCall(req).execute().use { res ->
                                     val source = res.body?.source() ?: throw IOException("Empty body")
                                     FileOutputStream(partFile, true).use { out ->
-                                        val buffer = ByteArray(if (threadCount > 16) 128 * 1024 else 256 * 1024)
+                                        val buffer = ByteArray(256 * 1024)
                                         var read: Int
                                         while (source.read(buffer).also { read = it } != -1) {
                                             ensureActive()
                                             out.write(buffer, 0, read)
                                             localDownloaded += read
-                                            val total = downloadedBytes.addAndGet(read.toLong())
                                             download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
-                                            download.update(total, size, false)
-                                            throttleNotification(download)
-                                            store.update(download) // Throttled 2s flush in Store
+                                            download.update(downloadedBytes.addAndGet(read.toLong()), size, false)
+                                            notifier.onProgressChange(download)
+                                            store.update(download)
                                         }
                                     }
                                 }
@@ -382,7 +371,6 @@ class Downloader(
                     }
                 }.awaitAll()
             }
-            // Fast Zero-Copy Merge in Sandbox
             FileOutputStream(finalFile).channel.use { outChannel ->
                 for (i in 0 until threadCount) {
                     val partFile = File(sandboxDir, "$filename.part$i")
@@ -391,7 +379,6 @@ class Downloader(
                 }
             }
         } else {
-            // Single-thread...
             retry {
                 val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()
                 client.newCall(req).execute().use { res ->
@@ -411,8 +398,6 @@ class Downloader(
         download.totalSegments = segments.size
         val finalFile = File(sandboxDir, "$filename.ts")
         val outStream = FileOutputStream(finalFile, true)
-        
-        // HLS Worker-Queue (1DM+ style)
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
         val downloadedCount = AtomicLong(0)
 
@@ -425,11 +410,10 @@ class Downloader(
                             kotlinx.coroutines.withTimeout(15000L) {
                                 client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                     val data = res.body?.bytes() ?: throw IOException("Empty segment")
-                                    // In-Memory Decryption would happen here...
                                     synchronized(outStream) { outStream.write(data) }
                                     download.downloadedSegments = downloadedCount.incrementAndGet().toInt()
                                     store.update(download)
-                                    throttleNotification(download)
+                                    notifier.onProgressChange(download)
                                 }
                             }
                         }
@@ -444,18 +428,8 @@ class Downloader(
     private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
     private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
 
-    private var lastNotifiedTime = 0L
-    private fun throttleNotification(download: Download) {
-        val now = System.currentTimeMillis()
-        if (now - lastNotifiedTime > 1000) {
-            lastNotifiedTime = now
-            notifier.onProgressChange(download)
-        }
-    }
-
     companion object {
         const val TMP_DIR_SUFFIX = "_tmp"
-        const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
     }
 }
 
