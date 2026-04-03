@@ -6,6 +6,7 @@ import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.download.model.Download
+import eu.kanade.tachiyomi.network.HttpException
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
@@ -48,6 +49,7 @@ import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 import kotlin.random.Random
 
 /**
@@ -82,6 +84,7 @@ class Downloader(
         launchIO {
             val downloads = store.restore()
             addAllToQueue(downloads)
+            sweepOrphanedFiles(downloads) // Fire the janitor on startup
         }
     }
 
@@ -230,6 +233,15 @@ class Downloader(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 
+                // FATAL ERROR CHECK: Do not retry dead/forbidden links
+                if (e is HttpException) {
+                    val code = e.code
+                    if (code == 401 || code == 403 || code == 404 || code == 410) {
+                        logcat(LogPriority.ERROR) { "Fatal HTTP $code. Aborting retry." }
+                        throw e 
+                    }
+                }
+                
                 // Exponential Backoff with Jitter
                 val jitter = Random.nextLong(0, 500)
                 val backoff = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
@@ -239,6 +251,30 @@ class Downloader(
             }
         }
         return block()
+    }
+
+    private fun sweepOrphanedFiles(activeDownloads: List<Download>) {
+        launchIO {
+            try {
+                val sandboxRoot = context.getExternalFilesDir("downloads") ?: return@launchIO
+                if (!sandboxRoot.exists()) return@launchIO
+                
+                // Map the valid, active download directory names
+                val expectedDirs = activeDownloads.map { 
+                    provider.getEpisodeDirName(it.episode.name, it.episode.scanlator) 
+                }.toSet()
+
+                // Sweep the sandbox directory
+                sandboxRoot.listFiles()?.forEach { file ->
+                    if (file.isDirectory && file.name !in expectedDirs) {
+                        logcat(LogPriority.INFO) { "Janitor Protocol: Deleting orphaned sandbox directory: ${file.name}" }
+                        file.deleteRecursively()
+                    }
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to sweep orphaned files" }
+            }
+        }
     }
 
     private suspend fun downloadEpisode(download: Download) {
@@ -323,7 +359,7 @@ class Downloader(
         download.activeThreads = threadCount
 
         val finalFile = File(sandboxDir, "$filename.tmp")
-        val downloadedBytes = AtomicLong(0)
+        val downloadedBytes = LongAdder()
 
         if (size > 0 && threadCount > 1) {
             val partSize = size / threadCount
@@ -337,7 +373,7 @@ class Downloader(
                         }
                         
                         var localDownloaded = partFile.length()
-                        downloadedBytes.addAndGet(localDownloaded)
+                        downloadedBytes.add(localDownloaded)
 
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
@@ -350,16 +386,21 @@ class Downloader(
                                 client.newCall(req).execute().use { res ->
                                     val source = res.body?.source() ?: throw IOException("Empty body")
                                     FileOutputStream(partFile, true).use { out ->
-                                        val buffer = ByteArray(256 * 1024)
-                                        var read: Int
-                                        while (source.read(buffer).also { read = it } != -1) {
-                                            ensureActive()
-                                            out.write(buffer, 0, read)
-                                            localDownloaded += read
-                                            download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
-                                            download.update(downloadedBytes.addAndGet(read.toLong()), size, false)
-                                            notifier.onProgressChange(download)
-                                            store.update(download)
+                                        val buffer = BufferPool.obtain()
+                                        try {
+                                            var read: Int
+                                            while (source.read(buffer).also { read = it } != -1) {
+                                                ensureActive()
+                                                out.write(buffer, 0, read)
+                                                localDownloaded += read
+                                                download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                                downloadedBytes.add(read.toLong())
+                                                download.update(downloadedBytes.sum(), size, false)
+                                                notifier.onProgressChange(download)
+                                                store.update(download)
+                                            }
+                                        } finally {
+                                            BufferPool.recycle(buffer)
                                         }
                                     }
                                 }
@@ -432,3 +473,9 @@ class Downloader(
 }
 
 private const val MIN_DISK_SPACE = 200L * 1024 * 1024
+
+object BufferPool {
+    private val pool = java.util.concurrent.ArrayBlockingQueue<ByteArray>(128)
+    fun obtain(): ByteArray = pool.poll() ?: ByteArray(256 * 1024)
+    fun recycle(buffer: ByteArray) { pool.offer(buffer) }
+}

@@ -251,9 +251,9 @@ private fun DownloadedIndicator(
 
 // AM (FILE_SIZE) -->
 private fun formatFileSize(fileSize: Long): String {
-    val megaByteSize = fileSize / 1000.0 / 1000.0
-    return if (megaByteSize > 900) {
-        val gigaByteSize = megaByteSize / 1000.0
+    val megaByteSize = fileSize / 1024.0 / 1024.0
+    return if (megaByteSize >= 1024.0) {
+        val gigaByteSize = megaByteSize / 1024.0
         "${BigDecimal(gigaByteSize).setScale(2, RoundingMode.HALF_EVEN)} GB"
     } else {
         "${BigDecimal(megaByteSize).setScale(0, RoundingMode.HALF_EVEN)} MB"
