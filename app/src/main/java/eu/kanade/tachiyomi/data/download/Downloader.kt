@@ -344,13 +344,31 @@ class Downloader(
 
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
+        download.progress = 0
         notifier.onProgressChange(download)
 
-        // CRITICAL: Prevent file bloating by deleting existing tmp files
-        val destDir = publicDir // Passed in directly
-        var destFile = destDir.findFile("$filename.tmp")
+        // Create episode directory
+        var destDir = publicDir.findFile(filename)
+        if (destDir != null && destDir.isFile) {
+            destDir.delete()
+            destDir = publicDir.createDirectory(filename)!!
+        } else if (destDir == null) {
+            destDir = publicDir.createDirectory(filename)!!
+        }
+
+        val videoFilename = DiskUtil.buildValidFilename(download.episode.name)
+        val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
+        val finalName = "$videoFilename.$finalExt"
+
+        // CRITICAL: Prevent file bloating by deleting existing partial files from failed runs
+        var destFile = destDir.findFile(finalName)
         if (destFile != null) destFile.delete()
-        destFile = destDir.createFile("$filename.tmp")!!
+        
+        // Also delete any corrupt tmp file from previous buggy versions
+        destDir.findFile("$videoFilename.tmp")?.delete()
+
+        // Create the file with the final extension immediately so SAF assigns the correct video MIME type
+        destFile = destDir.createFile(finalName)!!
 
         java.io.FileInputStream(sandboxFile).use { input ->
             destFile.openOutputStream().use { output ->
@@ -376,8 +394,6 @@ class Downloader(
             }
         }
         
-        val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
-        destFile.renameTo("$filename.$finalExt")
         sandboxFile.parentFile?.deleteRecursively()
 
         download.status = Download.State.DOWNLOADED
@@ -461,7 +477,11 @@ class Downloader(
             }
 
             download.status = Download.State.MERGING
+            download.progress = 0
             notifier.onProgressChange(download)
+
+            var mergedBytes = 0L
+            var lastUpdate = System.currentTimeMillis()
 
             java.io.FileOutputStream(finalFile).use { outStream ->
                 val outChannel = outStream.channel
@@ -469,7 +489,26 @@ class Downloader(
                     val partFile = File(sandboxDir, "$filename.part$i")
                     if (partFile.exists()) {
                         java.io.FileInputStream(partFile).use { inStream ->
-                            inStream.channel.transferTo(0, inStream.channel.size(), outChannel)
+                            val inChannel = inStream.channel
+                            val size = inChannel.size()
+                            var remaining = size
+                            var position = 0L
+                            while (remaining > 0) {
+                                coroutineContext.ensureActive()
+                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
+                                if (transferred <= 0) break
+                                position += transferred
+                                remaining -= transferred
+                                mergedBytes += transferred
+
+                                val now = System.currentTimeMillis()
+                                if (now - lastUpdate > 500) {
+                                    download.progress = ((mergedBytes.toDouble() / download.totalSize) * 100).toInt()
+                                    notifier.onProgressChange(download)
+                                    lastUpdate = now
+                                }
+                            }
                         }
                         partFile.delete()
                     }
@@ -581,11 +620,15 @@ class Downloader(
         }
 
     download.status = Download.State.MERGING
+    download.progress = 0
     notifier.onProgressChange(download)
 
     val finalFile = File(sandboxDir, "$filename.ts")
     val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
     checkFreeSpace(sandboxDir, totalMergeSize)
+
+    var mergedBytes = 0L
+    var lastMergeUpdate = System.currentTimeMillis()
 
     java.io.FileOutputStream(finalFile).use { outStream ->
         val outChannel = outStream.channel
@@ -593,7 +636,26 @@ class Downloader(
             val segmentFile = File(sandboxDir, "seg_$i.part")
             if (segmentFile.exists()) {
                 java.io.FileInputStream(segmentFile).use { inStream ->
-                    inStream.channel.transferTo(0, segmentFile.length(), outChannel)
+                    val inChannel = inStream.channel
+                    val size = inChannel.size()
+                    var remaining = size
+                    var position = 0L
+                    while (remaining > 0) {
+                        coroutineContext.ensureActive()
+                        val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                        val transferred = inChannel.transferTo(position, toTransfer, outChannel)
+                        if (transferred <= 0) break
+                        position += transferred
+                        remaining -= transferred
+                        mergedBytes += transferred
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastMergeUpdate > 500 && totalMergeSize > 0) {
+                            download.progress = ((mergedBytes.toDouble() / totalMergeSize) * 100).toInt()
+                            notifier.onProgressChange(download)
+                            lastMergeUpdate = now
+                        }
+                    }
                 }
                 segmentFile.delete()
             }
