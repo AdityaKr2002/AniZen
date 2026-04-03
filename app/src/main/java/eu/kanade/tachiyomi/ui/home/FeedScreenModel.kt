@@ -169,7 +169,12 @@ class FeedScreenModel(
                                                         savedSearch.filtersJson?.let {
                                                             filterSerializer.deserialize(filters, it)
                                                         }
-                                                        source.getSearchAnime(1, savedSearch.query ?: "", filters).animes
+                                                        try {
+                                                            source.getSearchAnime(1, savedSearch.query ?: "", filters).animes
+                                                        } catch (e: Exception) {
+                                                            logcat(LogPriority.ERROR, e) { "Saved search failed for source: ${source.name} (ID: ${source.id})" }
+                                                            emptyList()
+                                                        }
                                                     } else {
                                                         emptyList()
                                                     }
