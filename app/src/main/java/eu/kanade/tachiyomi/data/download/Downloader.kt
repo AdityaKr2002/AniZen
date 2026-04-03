@@ -1,8 +1,11 @@
 package eu.kanade.tachiyomi.data.download
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.StatFs
 import androidx.annotation.RequiresApi
 import com.hippo.unifile.UniFile
@@ -16,6 +19,7 @@ import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import tachiyomi.core.common.util.system.logcat
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.toFFmpegString
+import eu.kanade.tachiyomi.util.system.copyToClipboard
 import okhttp3.Headers
 import okhttp3.Request
 import kotlinx.coroutines.CancellationException
@@ -38,6 +42,7 @@ import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.launchIO
+import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.model.Episode
@@ -332,6 +337,11 @@ class Downloader(
             
             // Check again for cancellation after slow network call
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
+
+            if (download.changeDownloader) {
+                val success = externalDownload(download, animeDir, episodeDirname)
+                if (success) return else throw Exception("Could not open external downloader")
+            }
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
                 download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
@@ -696,6 +706,132 @@ class Downloader(
     }
     return finalFile
 }
+
+    private fun isPackageInstalled(packageName: String): Boolean {
+        return try {
+            context.packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private suspend fun externalDownload(download: Download, animeDir: UniFile, episodeDirname: String): Boolean {
+        val video = download.video ?: return false
+        val url = video.videoUrl
+        val packageName = preferences.externalDownloaderSelection().get()
+
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            val animeTitle = download.anime.title
+            val episodeName = download.episode.name
+            val filename = DiskUtil.buildValidFilename("$animeTitle - $episodeName") + ".mp4"
+
+            // Create the episode directory so external downloader can save inside it
+            val episodeDir = animeDir.createDirectory(episodeDirname)
+            val dirPath = episodeDir?.filePath ?: animeDir.filePath
+
+            withUIContext {
+                if (dirPath != null) {
+                    context.copyToClipboard("Episode download location", dirPath)
+                }
+            }
+
+            intent.setDataAndType(Uri.parse(url), "video/*")
+
+            when {
+                packageName.startsWith("idm.internet.download.manager") -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    val bundle = Bundle()
+                    headers?.let {
+                        for (i in 0 until it.size()) {
+                            bundle.putString(it.name(i), it.value(i))
+                        }
+                    }
+
+                    intent.apply {
+                        putExtra("extra_filename", filename)
+                        putExtra("extra_headers", bundle)
+                        if (dirPath != null) {
+                            putExtra("extra_path", dirPath)
+                        }
+                    }
+                }
+                packageName.startsWith("com.dv.adm") -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    val bundle = Bundle()
+                    headers?.let {
+                        for (i in 0 until it.size()) {
+                            bundle.putString(it.name(i), it.value(i).replace("http", "h_ttp"))
+                        }
+                    }
+
+                    intent.apply {
+                        putExtra(
+                            "com.dv.get.ACTION_LIST_ADD",
+                            "${Uri.parse(url)}<info>$filename",
+                        )
+                        if (dirPath != null) {
+                            putExtra("com.dv.get.ACTION_LIST_PATH", dirPath)
+                        }
+                        putExtra("android.media.intent.extra.HTTP_HEADERS", bundle)
+                    }
+                }
+                else -> {
+                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
+                    if (headers != null) {
+                        val headersBundle = Bundle()
+                        for (i in 0 until headers.size()) {
+                            headersBundle.putString(headers.name(i), headers.value(i))
+                        }
+                        intent.putExtra("android.media.intent.extra.HTTP_HEADERS", headersBundle)
+                        
+                        val headersArray = Array(headers.size()) { i -> "${headers.name(i)}: ${headers.value(i)}" }
+                        intent.putExtra("headers", headersArray)
+                    }
+
+                    intent.apply {
+                        putExtra("title", "${download.anime.title} - ${download.episode.name}")
+                        putExtra("filename", filename)
+                        putExtra("extra_filename", filename)
+                        if (dirPath != null) {
+                            putExtra("extra_path", dirPath) // fallback 1DM
+                            putExtra("com.dv.get.ext_dir", dirPath) // fallback ADM
+                        }
+                    }
+                }
+            }
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            val pm = context.packageManager
+            if (packageName.isNotBlank() && packageName != "None" && isPackageInstalled(packageName)) {
+                intent.setPackage(packageName)
+                // Attempt to find the specific downloader activity to bypass the 'Open With' dialog
+                val resolveInfo = pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                if (resolveInfo.isNotEmpty()) {
+                    // Try to find an activity with 'Download' in its name, otherwise pick the first one
+                    val bestMatch = resolveInfo.find { it.activityInfo.name.contains("Download", ignoreCase = true) } 
+                                     ?: resolveInfo.first()
+                    intent.component = ComponentName(bestMatch.activityInfo.packageName, bestMatch.activityInfo.name)
+                }
+            }
+            
+            context.startActivity(intent)
+            
+            // Explicitly remove from queue after successful handoff
+            download.status = Download.State.DOWNLOADED
+            _queueState.update { it - download }
+            store.remove(download)
+            notifier.dismissProgress(download)
+            
+            delay(1500) // Give external downloader time to register intent and prevent dropping multiple downloads
+            return true
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to launch external downloader: ${e.message}" }
+            return false
+        }
+    }
 
     private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
     private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder

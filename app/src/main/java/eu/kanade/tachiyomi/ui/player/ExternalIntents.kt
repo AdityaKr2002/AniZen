@@ -351,7 +351,7 @@ class ExternalIntents {
             "mp4" -> "video/mp4"
             "mkv" -> "video/x-matroska"
             "m3u8" -> "application/x-mpegURL"
-            else -> "video/any"
+            else -> "video/*"
         }
     }
 
