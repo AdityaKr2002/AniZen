@@ -102,13 +102,29 @@ class Downloader(
 
     fun start(): Boolean {
         if (isRunning || queueState.value.isEmpty()) return false
-        val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
-        if (pending.isEmpty()) return false
-
+        
         _isRunningFlow.value = true
         downloaderJob = scope.launch {
-            pending.forEach { download ->
-                if (!isRunning) return@launch
+            // Pro-Active: Pre-fetch video URLs in parallel to eliminate transition lag
+            launch {
+                queueState.value.filter { it.video == null && it.status == Download.State.QUEUE }
+                    .forEach { download ->
+                        if (!isRunning) return@launch
+                        try {
+                            val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
+                            download.video = HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
+                        } catch (e: Exception) {
+                            logcat(LogPriority.WARN) { "Pre-fetch failed for ${download.episode.name}" }
+                        }
+                    }
+            }
+
+            // Dynamic Queue Processing
+            while (isRunning) {
+                val download = queueState.value.firstOrNull { 
+                    it.status == Download.State.QUEUE || it.status == Download.State.DOWNLOADING 
+                } ?: break
+                
                 try {
                     downloadEpisode(download)
                 } catch (e: Exception) {
@@ -117,7 +133,9 @@ class Downloader(
                     download.status = Download.State.ERROR
                     notifier.onError(e.message)
                 }
+                delay(100) // Cooling period to prevent CPU spikes on rapid failures
             }
+
             _isRunningFlow.value = false
             val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
             if (!hasPending) {
@@ -310,8 +328,10 @@ class Downloader(
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
                     HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
                 } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
-            }
-            download.video = video
+            }.also { download.video = it }
+            
+            // Check again for cancellation after slow network call
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
                 download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
