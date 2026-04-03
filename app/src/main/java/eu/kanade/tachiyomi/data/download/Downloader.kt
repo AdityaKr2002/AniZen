@@ -50,10 +50,11 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.random.Random
 
 /**
  * Pro-Level Downloader matching 1DM+ Architecture.
- * Features: Sandbox I/O, Startup Truncation, Micro-Chunk Queueing, Adaptive Watchdog.
+ * Features: FilesDir Sandbox, Startup Truncation, Micro-Chunk Queueing, Jittered Exponential Backoff.
  */
 class Downloader(
     private val context: Context,
@@ -216,6 +217,9 @@ class Downloader(
         }
     }
 
+    /**
+     * Resilient retry with Jittered Exponential Backoff.
+     */
     private suspend fun <T> retry(
         times: Int = 5,
         initialDelay: Long = 1000,
@@ -224,14 +228,19 @@ class Downloader(
         block: suspend () -> T
     ): T {
         var currentDelay = initialDelay
-        repeat(times - 1) {
+        repeat(times - 1) { attempt ->
             try {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 return block()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                delay(currentDelay)
-                currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+                
+                // Exponential Backoff with Jitter
+                val jitter = Random.nextLong(0, 500)
+                val backoff = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+                delay(backoff + jitter)
+                currentDelay = backoff
+                logcat(LogPriority.WARN) { "Retry attempt ${attempt + 1} failed, backing off..." }
             }
         }
         return block()
@@ -240,11 +249,25 @@ class Downloader(
     private suspend fun downloadEpisode(download: Download) {
         val animeDir = provider.getAnimeDir(download.anime.title, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
-        download.status = Download.State.DOWNLOADING
+        
+        // Use getExternalFilesDir for Sandbox - Protected from OS Cache cleanup
+        val sandboxDir = File(context.getExternalFilesDir("downloads"), episodeDirname)
+        sandboxDir.mkdirs()
 
         notifier.onProgressChange(download)
         try {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            
+            val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
+            val mergedFile = File(sandboxDir, "$episodeDirname.$finalExt")
+
+            // RECOVERY: Handle interrupted FINALIZING state
+            if (download.status == Download.State.FINALIZING && mergedFile.exists()) {
+                finalizeDownload(download, mergedFile, animeDir, episodeDirname)
+                return
+            }
+
+            download.status = Download.State.DOWNLOADING
             val video = retry {
                 download.video ?: run {
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
@@ -252,10 +275,6 @@ class Downloader(
                 } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
             }
             download.video = video
-
-            // Sandbox Storage: High-speed I/O directory
-            val sandboxDir = File(context.externalCacheDir, "downloads/$episodeDirname")
-            sandboxDir.mkdirs()
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
                 download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
@@ -267,27 +286,38 @@ class Downloader(
                 download.engineType = "Normal"; internalDownload(download, sandboxDir, episodeDirname)
             }
 
-            // The Final Move: High-speed merge to public SAF directory
-            val finalExt = if (video.videoUrl.contains(".mp4")) "mp4" else "mkv"
-            val finalFile = animeDir.createFile("$episodeDirname.$finalExt")!!
+            finalizeDownload(download, videoFile, animeDir, episodeDirname)
             
-            context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
-                java.io.FileInputStream(videoFile).channel.use { inChannel ->
-                    java.io.FileOutputStream(opfd.fileDescriptor).channel.use { outChannel ->
-                        inChannel.transferTo(0, inChannel.size(), outChannel)
-                    }
-                }
-            }
-            
-            sandboxDir.deleteRecursively()
-            download.status = Download.State.DOWNLOADED
-            notifier.onProgressChange(download)
-            cache.addEpisode(episodeDirname, animeDir, download.anime)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             download.status = Download.State.ERROR
             notifier.onError(e.message)
         }
+    }
+
+    /**
+     * Moves merged file from Sandbox to Public Storage with State tracking.
+     */
+    private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
+        download.status = Download.State.FINALIZING
+        store.update(download, force = true)
+        
+        val finalFile = publicDir.createFile(sandboxFile.name!!)!!
+        
+        context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
+            java.io.FileInputStream(sandboxFile).channel.use { inChannel ->
+                java.io.FileOutputStream(opfd.fileDescriptor).channel.use { outChannel ->
+                    // Zero-copy kernel level transfer
+                    inChannel.transferTo(0, inChannel.size(), outChannel)
+                }
+            }
+        }
+        
+        sandboxFile.parentFile?.deleteRecursively()
+        download.status = Download.State.DOWNLOADED
+        store.update(download, force = true)
+        notifier.onProgressChange(download)
+        cache.addEpisode(filename, publicDir, download.anime)
     }
 
     private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): File {
@@ -323,15 +353,17 @@ class Downloader(
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                            if (localDownloaded >= (end - start + localDownloaded + 1)) return@retry
+                            
+                            // Connection Pacing: 50ms stagger
+                            if (i > 0) delay(50L)
 
-                            kotlinx.coroutines.withTimeout(15000L) { // Aggressive 15s Watchdog
+                            kotlinx.coroutines.withTimeout(15000L) {
                                 val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf())
                                     .header("Range", "bytes=$start-$end").build()
                                 client.newCall(req).execute().use { res ->
                                     val source = res.body?.source() ?: throw IOException("Empty body")
                                     FileOutputStream(partFile, true).use { out ->
-                                        val buffer = ByteArray(256 * 1024)
+                                        val buffer = ByteArray(if (threadCount > 16) 128 * 1024 else 256 * 1024)
                                         var read: Int
                                         while (source.read(buffer).also { read = it } != -1) {
                                             ensureActive()
@@ -341,7 +373,7 @@ class Downloader(
                                             download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
                                             download.update(total, size, false)
                                             throttleNotification(download)
-                                            store.update(download) // Throttled 2s flush
+                                            store.update(download) // Throttled 2s flush in Store
                                         }
                                     }
                                 }
@@ -371,7 +403,6 @@ class Downloader(
     }
 
     private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
-        // HLS logic with In-Memory Decryption
         val video = download.video!!
         val client = networkHelper.downloadClient
         val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
@@ -381,9 +412,9 @@ class Downloader(
         val finalFile = File(sandboxDir, "$filename.ts")
         val outStream = FileOutputStream(finalFile, true)
         
-        // Simplified Worker-Queue for HLS (1DM+ style)
+        // HLS Worker-Queue (1DM+ style)
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
-        val downloadedCount = AtomicInteger(0)
+        val downloadedCount = AtomicLong(0)
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
@@ -396,7 +427,7 @@ class Downloader(
                                     val data = res.body?.bytes() ?: throw IOException("Empty segment")
                                     // In-Memory Decryption would happen here...
                                     synchronized(outStream) { outStream.write(data) }
-                                    download.downloadedSegments = downloadedCount.incrementAndGet()
+                                    download.downloadedSegments = downloadedCount.incrementAndGet().toInt()
                                     store.update(download)
                                     throttleNotification(download)
                                 }
