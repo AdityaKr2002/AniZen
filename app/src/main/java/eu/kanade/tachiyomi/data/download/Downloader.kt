@@ -338,7 +338,7 @@ class Downloader(
         val stats = StatFs(dir.absolutePath)
         val available = stats.availableBlocksLong * stats.blockSizeLong
         if (available < requiredSize + MIN_DISK_SPACE) {
-            throw IOException(context.stringResource(MR.strings.low_disk_space))
+            throw IOException(context.stringResource(MR.strings.download_insufficient_space))
         }
     }
 
