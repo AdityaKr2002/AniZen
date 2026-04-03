@@ -30,6 +30,7 @@ import tachiyomi.source.local.io.Archive
 import tachiyomi.source.local.io.LocalSourceFileSystem
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.File
 
 /**
  * This class is used to manage episode downloads in the application. It must be instantiated once
