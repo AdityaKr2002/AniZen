@@ -5,27 +5,14 @@ import eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor
 import eu.kanade.tachiyomi.network.interceptor.IgnoreGzipInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
 import okhttp3.Cache
 import okhttp3.ConnectionPool
 import okhttp3.Dispatcher
-import okhttp3.Headers
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
-import kotlin.math.pow
-import kotlin.random.Random
 
 /* SY --> */
 open /* SY <-- */ class NetworkHelper(
@@ -140,5 +127,4 @@ open /* SY <-- */ class NetworkHelper(
 
     companion object {
     }
-}
 }
