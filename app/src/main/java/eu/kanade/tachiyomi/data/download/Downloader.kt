@@ -452,12 +452,11 @@ class Downloader(
         
         download.totalSegments = segments.size
         val finalFile = File(sandboxDir, "$filename.ts")
-        val outStream = FileOutputStream(finalFile, true)
         val segmentQueue = segments.mapIndexed { index, url -> 
             val fullUrl = if (url.startsWith("http")) url else baseUrl + url
             index to fullUrl 
         }.toMutableList()
-        val downloadedCount = AtomicLong(0)
+        val downloadedCount = LongAdder()
 
         coroutineScope {
             repeat(calculateDynamicConcurrency("")) {
@@ -466,15 +465,24 @@ class Downloader(
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
                         retry(times = 5) {
                             kotlinx.coroutines.withTimeout(30000L) {
+                                val segmentFile = File(sandboxDir, "seg_${seg.first}.part")
+                                if (segmentFile.exists() && segmentFile.length() > 0) {
+                                    downloadedCount.increment()
+                                    return@withTimeout
+                                }
+                                
                                 client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
                                     if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
-                                    val data = res.body?.bytes() ?: throw IOException("Empty segment")
-                                    synchronized(outStream) { outStream.write(data) }
+                                    res.body?.byteStream()?.use { input ->
+                                        segmentFile.outputStream().use { output ->
+                                            input.copyTo(output)
+                                        }
+                                    }
                                     
-                                    val currentCount = downloadedCount.incrementAndGet().toInt()
+                                    downloadedCount.increment()
+                                    val currentCount = downloadedCount.sum().toInt()
                                     download.downloadedSegments = currentCount
                                     
-                                    // Throttle updates for HLS too
                                     if (currentCount % 5 == 0 || currentCount == segments.size) {
                                         store.update(download)
                                         notifier.onProgressChange(download)
@@ -486,7 +494,20 @@ class Downloader(
                 }
             }
         }
-        outStream.close()
+        
+        // Sequential Merge: Ensure strict segment order
+        FileOutputStream(finalFile).use { outStream ->
+            val channel = outStream.channel
+            for (i in segments.indices) {
+                val segmentFile = File(sandboxDir, "seg_$i.part")
+                if (!segmentFile.exists()) throw IOException("Missing segment $i")
+                java.io.FileInputStream(segmentFile).use { inStream ->
+                    inStream.channel.transferTo(0, segmentFile.length(), channel)
+                }
+                segmentFile.delete()
+            }
+        }
+        
         return finalFile
     }
 
