@@ -744,7 +744,7 @@ class Downloader(
                     val headers = video.headers ?: (download.source as? HttpSource)?.headers
                     val bundle = Bundle()
                     headers?.let {
-                        for (i in 0 until it.size()) {
+                        for (i in 0 until it.size) {
                             bundle.putString(it.name(i), it.value(i))
                         }
                     }
@@ -761,7 +761,7 @@ class Downloader(
                     val headers = video.headers ?: (download.source as? HttpSource)?.headers
                     val bundle = Bundle()
                     headers?.let {
-                        for (i in 0 until it.size()) {
+                        for (i in 0 until it.size) {
                             bundle.putString(it.name(i), it.value(i).replace("http", "h_ttp"))
                         }
                     }
@@ -781,12 +781,12 @@ class Downloader(
                     val headers = video.headers ?: (download.source as? HttpSource)?.headers
                     if (headers != null) {
                         val headersBundle = Bundle()
-                        for (i in 0 until headers.size()) {
+                        for (i in 0 until headers.size) {
                             headersBundle.putString(headers.name(i), headers.value(i))
                         }
                         intent.putExtra("android.media.intent.extra.HTTP_HEADERS", headersBundle)
                         
-                        val headersArray = Array(headers.size()) { i -> "${headers.name(i)}: ${headers.value(i)}" }
+                        val headersArray = Array(headers.size) { i -> "${headers.name(i)}: ${headers.value(i)}" }
                         intent.putExtra("headers", headersArray)
                     }
 
