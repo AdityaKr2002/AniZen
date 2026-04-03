@@ -53,6 +53,7 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAdder
+import kotlin.coroutines.coroutineContext
 import kotlin.random.Random
 
 /**
@@ -534,6 +535,8 @@ class Downloader(
                                 if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
                                 var data = res.body?.bytes() ?: throw IOException("Empty segment")
                                 
+                                ensureActive()
+
                                 // DECRYPT IN RAM
                                 if (cipher != null) {
                                     data = cipher.doFinal(data)
