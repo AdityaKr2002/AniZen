@@ -389,16 +389,27 @@ class Downloader(
                                         val buffer = BufferPool.obtain()
                                         try {
                                             var read: Int
+                                            var lastUpdate = System.currentTimeMillis()
                                             while (source.read(buffer).also { read = it } != -1) {
                                                 ensureActive()
                                                 out.write(buffer, 0, read)
                                                 localDownloaded += read
-                                                download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
                                                 downloadedBytes.add(read.toLong())
-                                                download.update(downloadedBytes.sum(), size, false)
-                                                notifier.onProgressChange(download)
-                                                store.update(download)
+
+                                                val now = System.currentTimeMillis()
+                                                if (now - lastUpdate > 500) {
+                                                    download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                                    download.update(downloadedBytes.sum(), size, false)
+                                                    notifier.onProgressChange(download)
+                                                    store.update(download)
+                                                    lastUpdate = now
+                                                }
                                             }
+                                            // Final update for this part
+                                            download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                            download.update(downloadedBytes.sum(), size, false)
+                                            notifier.onProgressChange(download)
+                                            store.update(download)
                                         } finally {
                                             BufferPool.recycle(buffer)
                                         }
@@ -430,13 +441,22 @@ class Downloader(
     private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
         val client = networkHelper.downloadClient
-        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
-        val segments = playlistRes.body?.string()?.lines()?.filter { it.isNotBlank() && !it.startsWith("#") } ?: emptyList()
+        val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
+        
+        val segments = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+            if (!res.isSuccessful) throw IOException("Failed to fetch playlist: ${res.code}")
+            res.body?.string()?.lines()?.filter { it.isNotBlank() && !it.startsWith("#") } ?: emptyList()
+        }
+        
+        if (segments.isEmpty()) throw IOException("No segments found in HLS playlist")
         
         download.totalSegments = segments.size
         val finalFile = File(sandboxDir, "$filename.ts")
         val outStream = FileOutputStream(finalFile, true)
-        val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
+        val segmentQueue = segments.mapIndexed { index, url -> 
+            val fullUrl = if (url.startsWith("http")) url else baseUrl + url
+            index to fullUrl 
+        }.toMutableList()
         val downloadedCount = AtomicLong(0)
 
         coroutineScope {
@@ -445,13 +465,20 @@ class Downloader(
                     while (isActive) {
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
                         retry(times = 5) {
-                            kotlinx.coroutines.withTimeout(15000L) {
+                            kotlinx.coroutines.withTimeout(30000L) {
                                 client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                    if (!res.isSuccessful) throw IOException("Failed to download segment: ${res.code}")
                                     val data = res.body?.bytes() ?: throw IOException("Empty segment")
                                     synchronized(outStream) { outStream.write(data) }
-                                    download.downloadedSegments = downloadedCount.incrementAndGet().toInt()
-                                    store.update(download)
-                                    notifier.onProgressChange(download)
+                                    
+                                    val currentCount = downloadedCount.incrementAndGet().toInt()
+                                    download.downloadedSegments = currentCount
+                                    
+                                    // Throttle updates for HLS too
+                                    if (currentCount % 5 == 0 || currentCount == segments.size) {
+                                        store.update(download)
+                                        notifier.onProgressChange(download)
+                                    }
                                 }
                             }
                         }
