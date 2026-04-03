@@ -67,7 +67,7 @@ fun EpisodeDownloadIndicator(
             modifier = modifier,
             onClick = onClick,
         )
-        Download.State.QUEUE, Download.State.DOWNLOADING, Download.State.MERGING -> DownloadingIndicator(
+        Download.State.QUEUE, Download.State.DOWNLOADING, Download.State.MERGING, Download.State.DECRYPTING -> DownloadingIndicator(
             enabled = enabled,
             modifier = modifier,
             downloadState = downloadState,

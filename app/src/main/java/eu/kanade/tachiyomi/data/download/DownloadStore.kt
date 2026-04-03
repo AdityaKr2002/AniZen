@@ -31,28 +31,22 @@ class DownloadStore(
      */
     private val preferences = context.getSharedPreferences("active_downloads", Context.MODE_PRIVATE)
 
-    /**
-     * Counter used to keep the queue order.
-     */
-    private var counter = 0
+    private val lastUpdateMap = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /**
-     * Adds a list of downloads to the store.
-     *
-     * @param downloads the list of downloads to add.
+     * Updates a single download in the store with internal throttling.
+     * Prevents SQLiteDatabaseLockedException during high-concurrency downloads.
      */
-    fun addAll(downloads: List<Download>) {
-        preferences.edit {
-            downloads.forEach { putString(getKey(it), serialize(it)) }
-        }
-    }
-
-    /**
-     * Updates a single download in the store.
-     */
-    fun update(download: Download) {
-        preferences.edit {
-            putString(getKey(download), serialize(download))
+    fun update(download: Download, force: Boolean = false) {
+        val key = getKey(download)
+        val now = System.currentTimeMillis()
+        val lastUpdate = lastUpdateMap.getOrDefault(key, 0L)
+        
+        if (force || now - lastUpdate > 2000L) { // Flush to disk every 2 seconds
+            preferences.edit {
+                putString(key, serialize(download))
+            }
+            lastUpdateMap[key] = now
         }
     }
 

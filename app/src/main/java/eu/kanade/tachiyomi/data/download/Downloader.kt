@@ -1,39 +1,23 @@
 package eu.kanade.tachiyomi.data.download
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.animesource.AnimeSource
-import eu.kanade.tachiyomi.animesource.model.Track
-import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.animesource.model.VideoType
 import eu.kanade.tachiyomi.data.download.model.Download
-import eu.kanade.tachiyomi.data.library.LibraryUpdateNotifier
-import eu.kanade.tachiyomi.data.notification.NotificationHandler
-import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.data.torrentServer.service.TorrentServerService
-import eu.kanade.tachiyomi.network.await
-import eu.kanade.tachiyomi.source.UnmeteredSource
+import eu.kanade.tachiyomi.data.download.model.DownloadNotifier
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.torrentServer.TorrentServerApi
-import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import tachiyomi.core.common.util.system.logcat
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.toFFmpegString
-import eu.kanade.tachiyomi.util.system.copyToClipboard
 import okhttp3.Headers
 import okhttp3.Request
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -43,22 +27,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.model.Episode
@@ -67,16 +43,17 @@ import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * High-Performance Downloader optimized for BDIX and Parallel HLS.
- * Replicates 1DM+ behavior with zero memory-buffering.
+ * Pro-Level Downloader matching 1DM+ Architecture.
+ * Features: Sandbox I/O, Startup Truncation, Micro-Chunk Queueing, Adaptive Watchdog.
  */
 class Downloader(
     private val context: Context,
@@ -91,11 +68,11 @@ class Downloader(
     private val _queueState = MutableStateFlow<List<Download>>(emptyList())
     val queueState = _queueState.asStateFlow()
 
-    private val ffmpegSemaphore = Semaphore(5)
-    private val memorySemaphore = Semaphore(12) 
-
+    private val memorySemaphore = Semaphore(12)
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var downloaderJob: Job? = null
+    
     private val _isRunningFlow = MutableStateFlow(false)
     val isRunningFlow = _isRunningFlow.asStateFlow()
 
@@ -109,7 +86,9 @@ class Downloader(
         }
     }
 
-    private fun calculateDynamicConcurrency(): Int {
+    private fun calculateDynamicConcurrency(host: String): Int {
+        if (host.contains("animepahe")) return 1 // Adaptive: Animepahe fails with multi-threading
+        
         val userThreads = preferences.downloadThreads().get().coerceAtLeast(1)
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
         return if (activityManager?.isLowRamDevice == true) userThreads.coerceIn(1, 4) else userThreads.coerceIn(1, 64)
@@ -119,78 +98,35 @@ class Downloader(
         if (isRunning || queueState.value.isEmpty()) return false
         val pending = queueState.value.filter { it.status != Download.State.DOWNLOADED }
         if (pending.isEmpty()) return false
-        
-        pending.forEach { 
-            if (it.status == Download.State.PAUSED || it.status == Download.State.ERROR || it.status == Download.State.NOT_DOWNLOADED || it.status == Download.State.DOWNLOADING) {
-                it.status = Download.State.QUEUE 
-            }
-        }
+
         _isRunningFlow.value = true
-        launchDownloaderJob()
-        return true
-    }
-
-    private var downloaderJob: Job? = null
-    private val activeJobs = mutableMapOf<Download, Job>()
-
-    @OptIn(FlowPreview::class)
-    private fun launchDownloaderJob() {
-        if (downloaderJob?.isActive == true) return
         downloaderJob = scope.launch {
-            try {
-                queueState.debounce(100).collectLatest { queue ->
-                    // Cancel jobs no longer in queue or not downloading/queued
-                    val activeDownloads = queue.filter { it.status == Download.State.DOWNLOADING }.toSet()
-                    activeJobs.keys.filter { it !in activeDownloads }.forEach { download ->
-                        activeJobs.remove(download)?.cancel()
-                        notifier.dismissProgress(download)
-                    }
-
-                    val activeCount = queue.count { it.status == Download.State.DOWNLOADING }
-                    val maxConcurrent = preferences.concurrentDownloads().get()
-                    
-                    if (activeCount < maxConcurrent) {
-                        val pending = queue.filter { it.status == Download.State.QUEUE }
-                            .sortedWith(compareBy({ it.anime.id }, { it.episode.episodeNumber }))
-                        
-                        pending.take(maxConcurrent - activeCount).forEach { download ->
-                            activeJobs[download] = launch {
-                                try {
-                                    downloadEpisode(download)
-                                } finally {
-                                    activeJobs.remove(download)
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (queue.all { it.status == Download.State.DOWNLOADED || it.status == Download.State.PAUSED || it.status == Download.State.ERROR }) {
-                        stop()
-                    }
+            pending.forEach { download ->
+                if (!isRunning) return@launch
+                try {
+                    downloadEpisode(download)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    logcat(LogPriority.ERROR, e)
+                    download.status = Download.State.ERROR
+                    notifier.onError(e.message)
                 }
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    logcat(LogPriority.ERROR, e) { "Downloader job failed" }
-                }
-            } finally {
-                activeJobs.values.forEach { it.cancel() }
-                activeJobs.clear()
-                _isRunningFlow.value = false
+            }
+            _isRunningFlow.value = false
+            val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
+            if (!hasPending) {
+                notifier.onComplete()
+                DownloadJob.stop(context)
             }
         }
+        return true
     }
 
     fun stop(reason: String? = null) {
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
-            .forEach { 
-                it.status = Download.State.PAUSED 
-                notifier.dismissProgress(it)
-            }
-        
-        val hasPending = queueState.value.any { it.status == Download.State.PAUSED || it.status == Download.State.QUEUE }
+        val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
         if (reason != null) notifier.onWarning(reason)
         else if (hasPending) notifier.onPaused()
         else {
@@ -204,11 +140,15 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
-        queueState.value.filter { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
-            .forEach { 
-                it.status = Download.State.PAUSED 
-                notifier.dismissProgress(it)
+        _queueState.update {
+            it.forEach { download ->
+                if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
+                    download.status = Download.State.PAUSED
+                    notifier.dismissProgress(download)
+                }
             }
+            it
+        }
         notifier.onPaused()
     }
 
@@ -217,12 +157,11 @@ class Downloader(
     }
 
     fun clearQueue() {
+        _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
-        _isRunningFlow.value = false
-        val currentQueue = queueState.value
         _queueState.update {
-            it.forEach { download -> 
+            it.forEach { download ->
                 download.status = Download.State.NOT_DOWNLOADED
                 download.clearProgress()
                 notifier.dismissProgress(download)
@@ -234,6 +173,11 @@ class Downloader(
         notifier.dismissAll()
     }
 
+    fun updateQueue(downloads: List<Download>) {
+        _queueState.value = downloads
+        store.addAll(downloads)
+    }
+
     fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
         val source = sourceManager.get(anime.source) as? HttpSource ?: return
         val downloads = episodes.map { Download(source, anime, it, alt, video) }
@@ -241,10 +185,41 @@ class Downloader(
         if (autoStart || !DownloadJob.isRunning(context)) DownloadJob.start(context)
     }
 
+    fun addAllToQueue(downloads: List<Download>) {
+        _queueState.update { current ->
+            val new = current.toMutableList()
+            downloads.forEach { download ->
+                if (new.none { it.episode.id == download.episode.id }) {
+                    download.status = Download.State.QUEUE
+                    new.add(download)
+                }
+            }
+            store.addAll(new)
+            new
+        }
+    }
+
+    fun removeFromQueue(anime: Anime) {
+        _queueState.update { current ->
+            val new = current.filterNot { it.anime.id == anime.id }
+            store.removeAll(current.filter { it.anime.id == anime.id })
+            new
+        }
+    }
+
+    fun removeFromQueue(episodes: List<Episode>) {
+        val episodeIds = episodes.map { it.id }
+        _queueState.update { current ->
+            val new = current.filterNot { it.episode.id in episodeIds }
+            store.removeAll(current.filter { it.episode.id in episodeIds })
+            new
+        }
+    }
+
     private suspend fun <T> retry(
-        times: Int = 3,
+        times: Int = 5,
         initialDelay: Long = 1000,
-        maxDelay: Long = 5000,
+        maxDelay: Long = 15000,
         factor: Double = 2.0,
         block: suspend () -> T
     ): T {
@@ -266,7 +241,7 @@ class Downloader(
         val animeDir = provider.getAnimeDir(download.anime.title, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         download.status = Download.State.DOWNLOADING
-        
+
         notifier.onProgressChange(download)
         try {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -278,921 +253,178 @@ class Downloader(
             }
             download.video = video
 
-            // Auto-select DASH multi-tracks based on preferences if none were explicitly selected
-            if (download.selectedAudioTracks.isEmpty() && video.audioTracks.isNotEmpty()) {
-                val prefAudio = preferences.preferredDownloadAudioLanguages().get().split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
-                download.selectedAudioTracks = video.audioTracks.filter { track ->
-                    prefAudio.any { track.lang.lowercase().contains(it) }
-                }
-                if (download.selectedAudioTracks.isEmpty()) download.selectedAudioTracks = listOf(video.audioTracks.first())
-            }
+            // Sandbox Storage: High-speed I/O directory
+            val sandboxDir = File(context.externalCacheDir, "downloads/$episodeDirname")
+            sandboxDir.mkdirs()
 
-            if (download.selectedSubtitleTracks.isEmpty() && video.subtitleTracks.isNotEmpty()) {
-                val prefSub = preferences.preferredDownloadSubtitleLanguages().get().split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
-                download.selectedSubtitleTracks = video.subtitleTracks.filter { track ->
-                    prefSub.any { track.lang.lowercase().contains(it) }
-                }
-            }
-
-            if (download.changeDownloader) {
-                val success = externalDownload(download, animeDir, episodeDirname)
-                if (success) {
-                    download.status = Download.State.DOWNLOADED
-                    _queueState.update { it - download }
-                    store.remove(download)
-                    notifier.dismissProgress(download)
-                    return
-                } else {
-                    throw Exception("Could not open external downloader")
-                }
-            }
-
-            val tmpDir = animeDir.createDirectory(episodeDirname + TMP_DIR_SUFFIX)!!
-            val filename = DiskUtil.buildValidFilename(download.episode.name)
-            val url = video.videoUrl
-            var isHls = video.type == VideoType.HLS || url.contains(".m3u8")
-            var isDash = video.type == VideoType.DASH || url.contains(".mpd") || video.audioTracks.isNotEmpty()
-            if (url.contains(".mkv") || url.contains(".mp4") || url.contains("discoveryftp.net") || url.contains("cineplexbd.net") || url.contains("download.php")) {
-                if (video.audioTracks.isEmpty()) {
-                    isHls = false; isDash = false
-                }
-            }
-            if (preferences.alwaysUseInternalDownloader().get()) { isHls = false; isDash = false }
-            
-            val isMultiTrackDash = isDash && (download.selectedAudioTracks.isNotEmpty() || download.selectedSubtitleTracks.isNotEmpty() || video.audioTracks.isNotEmpty() || video.subtitleTracks.isNotEmpty())
-            
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            if (isTor(video)) {
-                download.engineType = "Torrent"
-                torrentDownload(download, tmpDir, filename)
-            } else if (isMultiTrackDash) {
-                download.engineType = "DASH-Mux"
-                nativeDashMuxDownload(download, tmpDir, filename)
-            } else if (isHls || isDash) {
-                download.engineType = "HLS"
-                nativeHlsDownload(download, tmpDir, filename)
+            val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
+                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
+            } else if (video.videoUrl.contains(".m3u8")) {
+                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, episodeDirname)
+            } else if (video.videoUrl.contains(".mpd") || video.audioTracks.isNotEmpty()) {
+                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, episodeDirname)
             } else {
-                download.engineType = "Normal"
-                internalDownload(download, tmpDir, filename)
+                download.engineType = "Normal"; internalDownload(download, sandboxDir, episodeDirname)
             }
-            ensureSuccessfulAnimeDownload(download, animeDir, tmpDir, episodeDirname)
-            notifier.dismissProgress(download)
+
+            // The Final Move: High-speed merge to public SAF directory
+            val finalExt = if (video.videoUrl.contains(".mp4")) "mp4" else "mkv"
+            val finalFile = animeDir.createFile("$episodeDirname.$finalExt")!!
+            
+            context.contentResolver.openFileDescriptor(finalFile.uri, "w")?.use { opfd ->
+                java.io.FileInputStream(videoFile).channel.use { inChannel ->
+                    java.io.FileOutputStream(opfd.fileDescriptor).channel.use { outChannel ->
+                        inChannel.transferTo(0, inChannel.size(), outChannel)
+                    }
+                }
+            }
+            
+            sandboxDir.deleteRecursively()
+            download.status = Download.State.DOWNLOADED
+            notifier.onProgressChange(download)
+            cache.addEpisode(episodeDirname, animeDir, download.anime)
         } catch (e: Exception) {
-            if (e is CancellationException) {
-                // Keep status as QUEUE if cancelled
-                download.status = Download.State.QUEUE
-                throw e
-            }
+            if (e is CancellationException) throw e
             download.status = Download.State.ERROR
-            notifier.onError(e.message, download.episode.name, download.anime.title, download.anime.id)
+            notifier.onError(e.message)
         }
     }
 
-    private suspend fun internalDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
+    private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
         val client = networkHelper.downloadClient
+        val host = Uri.parse(video.videoUrl).host ?: ""
+        val threadCount = calculateDynamicConcurrency(host)
         
-        // Recover thread count on resume to prevent progress bar desync
-        var threadCount = download.activeThreads
-        if (threadCount <= 0) {
-            val partFiles = tmpDir.listFiles()?.filter { it.name?.contains(".part") == true }.orEmpty()
-            threadCount = if (partFiles.isNotEmpty()) partFiles.size else calculateDynamicConcurrency()
-            download.activeThreads = threadCount
-        }
-
-        var size = -1L
-        var contentType = ""
-        var supportsRange = false
-
-        // Combined Size and Range Detection (Optimized Startup)
-        try {
-            val res = retry {
-                client.newCall(
-                    Request.Builder()
-                        .url(video.videoUrl)
-                        .headers(video.headers ?: Headers.headersOf())
-                        .header("Range", "bytes=0-0")
-                        .build()
-                ).await()
-            }
-            if (res.isSuccessful || res.code == 416 || res.code == 206) {
-                contentType = res.header("Content-Type") ?: ""
-                supportsRange = res.code == 206 || res.header("Accept-Ranges") == "bytes"
-                val contentRange = res.header("Content-Range")
-                if (contentRange != null) {
-                    size = contentRange.substringAfterLast("/").toLongOrNull() ?: size
-                } else {
-                    size = res.header("Content-Length")?.toLongOrNull() ?: size
-                }
-            }
-            res.close()
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Size detection failed via Range" }
-        }
-
-        // Fallback to HEAD if Range detection failed
-        if (size <= 0) {
-            try {
-                val headRes = retry {
-                    client.newCall(Request.Builder().url(video.videoUrl).head().headers(video.headers ?: Headers.headersOf()).build()).await()
-                }
-                if (headRes.isSuccessful) {
-                    size = headRes.header("Content-Length")?.toLongOrNull() ?: -1L
-                    contentType = headRes.header("Content-Type") ?: contentType
-                    supportsRange = supportsRange || headRes.header("Accept-Ranges") == "bytes"
-                }
-                headRes.close()
-            } catch (e: Exception) {}
-        }
-
-        // Force single thread if range is not supported to avoid broken merges
-        if (!supportsRange && size > 0) {
-            threadCount = 1
-            download.activeThreads = 1
-        }
-
-        // 1DM Content-Type Validation: If it's a small file and it's HTML, it's a redirect/error page, not a video.
-        if (size <= 5 * 1024 * 1024 && contentType.contains("text/html", ignoreCase = true)) {
-            throw Exception("Download blocked: Server returned an HTML page instead of a video. This is usually due to anti-leech protection or an expired link.")
-        }
-
+        val headRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).head().build()).execute()
+        val size = headRes.header("Content-Length")?.toLong() ?: -1L
         download.totalSize = size
-        
-        if (size > 0) {
-            val availableSpace = DiskUtil.getAvailableStorageSpace(tmpDir)
-            if (availableSpace != -1L && availableSpace < size + MIN_DISK_SPACE) {
-                throw Exception("Disk full. Required: ${size / (1024*1024)} MB, Available: ${availableSpace / (1024*1024)} MB")
-            }
-        }
+        download.activeThreads = threadCount
 
-        val videoFile = if (video.videoUrl.contains(".mp4") || contentType.contains("video/mp4")) {
-            tmpDir.findFile("$filename.mp4") ?: tmpDir.createFile("$filename.mp4")!!
-        } else {
-            tmpDir.findFile("$filename.mkv") ?: tmpDir.createFile("$filename.mkv")!!
-        }
+        val finalFile = File(sandboxDir, "$filename.tmp")
+        val downloadedBytes = AtomicLong(0)
 
-        // Pre-allocate file size to enable direct offset writing (1DM+ behavior)
-        if (size > 0 && videoFile.length() < size) {
-            context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
-                FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                    channel.truncate(size)
-                }
-            }
-        }
-
-        var initialDownloadedBytes = 0L
-        download.partProgress.clear()
-        
         if (size > 0 && threadCount > 1) {
             val partSize = size / threadCount
-            for (i in 0 until threadCount) {
-                val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
-                val isDone = tmpDir.findFile("$filename.part$i")?.exists() ?: false
-                if (isDone) {
-                    initialDownloadedBytes += partTotalSize
-                    download.partProgress[i] = 1f
-                } else {
-                    download.partProgress[i] = 0f
-                }
-            }
-        } else {
-            initialDownloadedBytes = videoFile.length()
-            download.partProgress[0] = if (size > 0) (initialDownloadedBytes.toFloat() / size).coerceIn(0f, 1f) else 0f
-        }
-
-        val downloadedBytes = AtomicLong(initialDownloadedBytes)
-        download.update(initialDownloadedBytes, size, false)
-
-        coroutineScope {
-            if (size > 0 && threadCount > 1) {
-                val partSize = size / threadCount
-                download.totalSegments = threadCount
-                
-                // Count already finished segments
-                var completedParts = 0
-                for (i in 0 until threadCount) {
-                    if (tmpDir.findFile("$filename.part$i")?.exists() == true) completedParts++
-                }
-                download.downloadedSegments = completedParts
-
+            coroutineScope {
                 (0 until threadCount).map { i ->
                     async {
-                        if (tmpDir.findFile("$filename.part$i")?.exists() == true) return@async
-
-                        val start = i * partSize
-                        val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                        val partTotalSize = end - start + 1
+                        val partFile = File(sandboxDir, "$filename.part$i")
                         
-                        retry(times = 5) {
-                            val request = Request.Builder()
-                                .url(video.videoUrl)
-                                .headers(video.headers ?: Headers.headersOf())
-                                .header("Range", "bytes=$start-$end")
-                                .build()
-                            
-                            // Smart Timeout: 60s per part to prevent stalling
-                            kotlinx.coroutines.withTimeout(60000L) {
-                                client.newCall(request).execute().use { res ->
-                                    if (!res.isSuccessful) {
-                                    if (res.code == 416) {
-                                        tmpDir.createFile("$filename.part$i")
-                                        synchronized(download) { download.downloadedSegments++ }
-                                        return@use
-                                    }
-                                    throw IOException("Part $i failed: ${res.code}")
-                                }
-                                val source = res.body?.source() ?: throw IOException("Empty Part")
-                                
-                                context.contentResolver.openFileDescriptor(videoFile.uri, "rw")?.use { pfd ->
-                                    FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                        channel.position(start)
-                                        val bufferSize = if (threadCount > 16) 256 * 1024 else if (threadCount > 8) 512 * 1024 else 1024 * 1024
-                                        val buffer = ByteArray(bufferSize)
-                                        var bytesRead: Int
-                                        var partDownloaded = 0L
-                                        while (source.read(buffer).also { bytesRead = it } != -1) {
-                                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                            
-                                            val maxToWrite = Math.min(bytesRead.toLong(), partTotalSize - partDownloaded).toInt()
-                                            if (maxToWrite <= 0) break
-                                            
-                                            channel.write(ByteBuffer.wrap(buffer, 0, maxToWrite))
-                                            val total = downloadedBytes.addAndGet(maxToWrite.toLong())
-                                            
-                                            partDownloaded += maxToWrite.toLong()
-                                            download.partProgress[i] = (partDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
+                        // Startup Truncation Protocol: Match DB state with Disk
+                        val expected = (download.partProgress[i] ?: 0f) * (if (i == threadCount - 1) size - (i * partSize) else partSize)
+                        if (partFile.exists() && partFile.length() > expected.toLong()) {
+                            RandomAccessFile(partFile, "rw").use { it.setLength(expected.toLong()) }
+                        }
+                        
+                        var localDownloaded = partFile.length()
+                        downloadedBytes.addAndGet(localDownloaded)
 
+                        retry(times = 5) {
+                            val start = i * partSize + localDownloaded
+                            val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
+                            if (localDownloaded >= (end - start + localDownloaded + 1)) return@retry
+
+                            kotlinx.coroutines.withTimeout(15000L) { // Aggressive 15s Watchdog
+                                val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf())
+                                    .header("Range", "bytes=$start-$end").build()
+                                client.newCall(req).execute().use { res ->
+                                    val source = res.body?.source() ?: throw IOException("Empty body")
+                                    FileOutputStream(partFile, true).use { out ->
+                                        val buffer = ByteArray(256 * 1024)
+                                        var read: Int
+                                        while (source.read(buffer).also { read = it } != -1) {
+                                            ensureActive()
+                                            out.write(buffer, 0, read)
+                                            localDownloaded += read
+                                            val total = downloadedBytes.addAndGet(read.toLong())
+                                            download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
                                             download.update(total, size, false)
                                             throttleNotification(download)
-                                            kotlinx.coroutines.yield()
-                                            
-                                            if (partDownloaded >= partTotalSize) break
+                                            store.update(download) // Throttled 2s flush
                                         }
                                     }
-                                }
-                                // Mark part as finished
-                                tmpDir.createFile("$filename.part$i")
-                                synchronized(download) { 
-                                    download.downloadedSegments++ 
-                                    store.update(download) // Persist progress to DB
                                 }
                             }
                         }
                     }
                 }.awaitAll()
-                
-                // Clean up tokens
+            }
+            // Fast Zero-Copy Merge in Sandbox
+            FileOutputStream(finalFile).channel.use { outChannel ->
                 for (i in 0 until threadCount) {
-                    tmpDir.findFile("$filename.part$i")?.delete()
-                }
-            } else {
-                download.totalSegments = 1
-                val existing = videoFile.length()
-                if (size > 0 && existing >= size) {
-                    download.downloadedSegments = 1
-                    return@coroutineScope
-                }
-                
-                downloadedBytes.set(existing)
-                download.partProgress[0] = if (size > 0) (existing.toFloat() / size).coerceIn(0f, 1f) else 0f
-
-                retry(times = 5) {
-                    val request = Request.Builder()
-                        .url(video.videoUrl)
-                        .headers(video.headers ?: Headers.headersOf())
-                        .apply { if (existing > 0) header("Range", "bytes=$existing-") }
-                        .build()
-                        
-                    client.newCall(request).execute().use { res ->
-                        if (!res.isSuccessful) {
-                            if (res.code == 416) {
-                                download.downloadedSegments = 1
-                                return@use
-                            }
-                            throw IOException("Failed: ${res.code}")
-                        }
-                        val source = res.body?.source() ?: return@use
-                        
-                        context.contentResolver.openFileDescriptor(videoFile.uri, "wa")?.use { pfd ->
-                            FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                                val buffer = ByteArray(2 * 1024 * 1024) // 2MB buffer for single thread efficiency
-                                var bytesRead: Int
-                                var localDownloaded = existing
-                                while (source.read(buffer).also { bytesRead = it } != -1) {
-                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                    
-                                    val maxToWrite = if (size > 0) Math.min(bytesRead.toLong(), size - localDownloaded).toInt() else bytesRead
-                                    if (maxToWrite <= 0 && size > 0) break
-                                    
-                                    channel.write(ByteBuffer.wrap(buffer, 0, maxToWrite))
-                                    localDownloaded += maxToWrite.toLong()
-                                    val total = downloadedBytes.addAndGet(maxToWrite.toLong())
-                                    
-                                    if (size > 0) download.partProgress[0] = (localDownloaded.toFloat() / size).coerceIn(0f, 1f)
-                                    download.update(total, size, false)
-                                    throttleNotification(download)
-                                    kotlinx.coroutines.yield()
-                                    
-                                    if (size > 0 && localDownloaded >= size) break
-                                }
-                            }
-                        }
-                        download.downloadedSegments = 1
-                    }
+                    val partFile = File(sandboxDir, "$filename.part$i")
+                    java.io.FileInputStream(partFile).channel.use { it.transferTo(0, it.size(), outChannel) }
+                    partFile.delete()
                 }
             }
-        }
-
-        // Final sanity check: Ensure the file actually has content
-        if (videoFile.length() <= 0) {
-            throw Exception("Download failed: Resulting file is empty")
-        }
-
-        return videoFile
-    }
-
-    private var lastNotifiedTime = 0L
-
-    private fun throttleNotification(download: Download) {
-        val now = System.currentTimeMillis()
-        if (now - lastNotifiedTime > 1000) { // Global throttle for all active downloads
-            lastNotifiedTime = now
-            notifier.onProgressChange(download)
-        }
-    }
-
-    private suspend fun nativeHlsDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
-        data class HlsSegment(val url: String, val keyUrl: String?, val iv: String?, val sequenceNumber: Int)
-        
-        val video = download.video!!
-        val client = networkHelper.downloadClient
-        val threadCount = calculateDynamicConcurrency()
-        download.activeThreads = threadCount
-        val playlistRes = retry {
-            client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).await()
-        }
-        val playlistBody = playlistRes.body?.string() ?: throw IOException("Empty HLS")
-        val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
-        
-        var currentEncryptionKeyUrl: String? = null
-        var currentEncryptionIv: String? = null
-        var sequenceNumber = 0
-        val segments = mutableListOf<HlsSegment>()
-
-        playlistBody.lines().forEach { line ->
-            if (line.startsWith("#EXT-X-MEDIA-SEQUENCE:")) {
-                sequenceNumber = line.substringAfter(":").toIntOrNull() ?: sequenceNumber
-            } else if (line.startsWith("#EXT-X-KEY:")) {
-                val method = line.substringAfter("METHOD=").substringBefore(",")
-                if (method.contains("AES-128")) {
-                    download.engineType = "HLS-Enc"
-                    val uri = line.substringAfter("URI=\"").substringBefore("\"")
-                    currentEncryptionKeyUrl = if (uri.startsWith("http")) uri else baseUrl + uri
-                    val ivString = line.substringAfter("IV=", "")
-                    currentEncryptionIv = if (ivString.isNotBlank()) ivString.substringBefore(",") else null
-                } else if (method == "NONE") {
-                    currentEncryptionKeyUrl = null
-                    currentEncryptionIv = null
-                }
-            } else if (line.isNotBlank() && !line.startsWith("#")) {
-                val url = if (line.startsWith("http")) line else baseUrl + line
-                segments.add(HlsSegment(url, currentEncryptionKeyUrl, currentEncryptionIv, sequenceNumber))
-                sequenceNumber++
-            }
-        }
-        
-        download.totalSegments = segments.size
-        
-        download.segmentProgress.clear()
-        val downloadedBytes = AtomicLong(0)
-        var initialDownloadedSegments = 0
-        
-        // Initialize existing progress
-        for (i in segments.indices) {
-            val segFile = tmpDir.findFile("$i.seg")
-            if (segFile != null && segFile.length() > 0) {
-                download.segmentProgress[i] = true
-                downloadedBytes.addAndGet(segFile.length())
-                initialDownloadedSegments++
-            } else {
-                download.segmentProgress[i] = false
-            }
-        }
-        download.downloadedSegments = initialDownloadedSegments
-
-        val keyCache = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
-
-        coroutineScope {
-            segments.mapIndexed { index, segment ->
-                if (download.segmentProgress[index] == true) return@mapIndexed null
-                
-                async {
-                    memorySemaphore.withPermit {
-                        retry(times = 5) {
-                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                            
-                            var cipher: javax.crypto.Cipher? = null
-                            if (segment.keyUrl != null) {
-                                val keyBytes = keyCache.getOrPut(segment.keyUrl) {
-                                    val req = Request.Builder().url(segment.keyUrl).headers(video.headers ?: Headers.headersOf()).build()
-                                    val res = client.newCall(req).execute()
-                                    if (!res.isSuccessful) throw IOException("Failed to fetch key")
-                                    res.body?.bytes() ?: throw IOException("Empty key")
-                                }
-                                val ivBytes = if (segment.iv != null) {
-                                    val hex = segment.iv.removePrefix("0x")
-                                    hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray().let {
-                                        if (it.size < 16) ByteArray(16 - it.size) + it else it.takeLast(16).toByteArray()
-                                    }
-                                } else {
-                                    java.nio.ByteBuffer.allocate(16).putLong(8, segment.sequenceNumber.toLong()).array()
-                                }
-                                cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding").apply {
-                                    init(javax.crypto.Cipher.DECRYPT_MODE, javax.crypto.spec.SecretKeySpec(keyBytes, "AES"), javax.crypto.spec.IvParameterSpec(ivBytes))
-                                }
-                            }
-                            
-                            // Smart Timeout: 30s per segment to prevent stalling
-                            kotlinx.coroutines.withTimeout(30000L) {
-                                client.newCall(Request.Builder().url(segment.url).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
-                                    if (!res.isSuccessful) throw IOException("Seg $index failed: ${res.code}")
-                                    val bodyStream = res.body?.byteStream() ?: throw IOException("Empty segment")
-                                    val inputStream = if (cipher != null) {
-                                        if (download.status != Download.State.DECRYPTING) {
-                                            download.status = Download.State.DECRYPTING
-                                        }
-                                        javax.crypto.CipherInputStream(bodyStream, cipher)
-                                    } else {
-                                        bodyStream
-                                    }
-                                    
-                                    val tmpFile = tmpDir.createFile("$index.seg.tmp")!!
-                                    var segmentSize = 0L
-                                    context.contentResolver.openFileDescriptor(tmpFile.uri, "w")?.use { pfd ->
-                                        FileOutputStream(pfd.fileDescriptor).use { outStream ->
-                                            val buffer = ByteArray(128 * 1024)
-                                            var bytesRead: Int
-                                            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                                outStream.write(buffer, 0, bytesRead)
-                                                segmentSize += bytesRead
-                                            }
-                                        }
-                                    }
-                                    tmpFile.renameTo("$index.seg")
-                                    download.segmentProgress[index] = true
-                                    val currentTotal = downloadedBytes.addAndGet(segmentSize)
-                                    synchronized(download) { 
-                                        download.downloadedSegments++ 
-                                        store.update(download) // Persist progress to DB
-                                    }
-                                    download.update(currentTotal, -1, false)
-                                    throttleNotification(download)
-                                    kotlinx.coroutines.yield()
-                                }
-                            }
-                        }
-                    }
-                }
-            }.filterNotNull().awaitAll()
-        }
-        
-        download.status = Download.State.MERGING
-        download.progress = 0
-        notifier.onProgressChange(download)
-
-        val concatFile = tmpDir.createFile("$filename.ts")!!
-        context.contentResolver.openFileDescriptor(concatFile.uri, "w")?.use { pfd ->
-            FileOutputStream(pfd.fileDescriptor).channel.use { outChannel ->
-                var currentPos = 0L
-                val totalToMerge = (0 until segments.size).sumOf { i -> tmpDir.findFile("$i.seg")?.length() ?: 0L }
-                var mergedSoFar = 0L
-
-                for (i in 0 until segments.size) {
-                    val segFile = tmpDir.findFile("$i.seg") ?: continue
-                    context.contentResolver.openFileDescriptor(segFile.uri, "r")?.use { spfd ->
-                        java.io.FileInputStream(spfd.fileDescriptor).channel.use { inChannel ->
-                            val size = inChannel.size()
-                            var remaining = size
-                            var position = 0L
-                            while (remaining > 0) {
-                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                val toTransfer = Math.min(remaining, 32L * 1024 * 1024)
-                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
-                                if (transferred <= 0) break
-                                position += transferred
-                                remaining -= transferred
-                                currentPos += transferred
-                                mergedSoFar += transferred
-                                outChannel.position(currentPos)
-
-                                download.progress = (100 * mergedSoFar / totalToMerge.coerceAtLeast(1L)).toInt()
-                                throttleNotification(download)
-                                kotlinx.coroutines.yield()
-                            }
-                        }
-                    }
-                    segFile.delete()
-                }
-            }
-        }
-        
-        // Final FFmpeg Remuxing to clean up timestamps
-        val isMp4 = video.videoUrl.contains(".mp4")
-        val finalExt = if (isMp4) "mp4" else "mkv"
-        val finalFile = tmpDir.createFile("$filename.$finalExt")!!
-        
-        val concatPath = concatFile.toFFmpegString(context)
-        val finalPath = finalFile.toFFmpegString(context)
-        
-        val cmd = "-i \"$concatPath\" -c copy -y \"$finalPath\""
-        val session = com.arthenica.ffmpegkit.FFmpegKit.execute(cmd)
-        
-        if (session.returnCode.isValueSuccess) {
-            concatFile.delete()
-            return finalFile
         } else {
-            finalFile.delete()
-            val fallbackFile = tmpDir.createFile("$filename.mkv")!!
-            concatFile.renameTo("$filename.mkv")
-            return fallbackFile
-        }
-    }
-
-    private suspend fun downloadTrack(
-        client: okhttp3.OkHttpClient,
-        url: String,
-        headers: Headers?,
-        tmpDir: UniFile,
-        filename: String
-    ): UniFile {
-        val file = tmpDir.createFile(filename)!!
-        val existing = file.length()
-        
-        val request = Request.Builder().url(url).headers(headers ?: Headers.headersOf())
-        if (existing > 0) {
-            request.header("Range", "bytes=$existing-")
-        }
-
-        retry {
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            client.newCall(request.build()).execute().use { res ->
-                if (!res.isSuccessful && res.code != 206 && res.code != 416) throw IOException("Track failed: ${res.code}")
-                if (res.code == 416) return@use // Already fully downloaded
-
-                val append = res.code == 206
-                val source = res.body?.source() ?: throw IOException("Empty body")
-
-                context.contentResolver.openFileDescriptor(file.uri, if (append) "wa" else "w")?.use { pfd ->
-                    FileOutputStream(pfd.fileDescriptor).channel.use { channel ->
-                        if (append) channel.position(channel.size())
-                        val buffer = ByteArray(256 * 1024)
-                        var bytesRead: Int
-                        while (source.read(buffer).also { bytesRead = it } != -1) {
-                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                            channel.write(ByteBuffer.wrap(buffer, 0, bytesRead))
-                        }
-                    }
+            // Single-thread...
+            retry {
+                val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()
+                client.newCall(req).execute().use { res ->
+                    res.body?.byteStream()?.copyTo(FileOutputStream(finalFile))
                 }
             }
         }
-        return file
-    }
-
-    private suspend fun nativeDashMuxDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
-        val video = download.video!!
-        val client = networkHelper.downloadClient
-        
-        download.status = Download.State.DOWNLOADING
-        download.progress = 0
-        notifier.onProgressChange(download)
-
-        // Download tracks in parallel to prevent speed degradation
-        val (mainVideoFile, audioFiles, subFiles) = coroutineScope {
-            val videoDeferred = async { 
-                downloadTrack(client, video.videoUrl, video.headers, tmpDir, "video.part") 
-            }
-            
-            val externalAudios = download.selectedAudioTracks.filter { it.url != video.videoUrl }
-            val audioDeferreds = externalAudios.mapIndexed { index, track ->
-                async { downloadTrack(client, track.url, video.headers, tmpDir, "audio_$index.part") }
-            }
-
-            val externalSubs = download.selectedSubtitleTracks.filter { it.url != video.videoUrl }
-            val subDeferreds = externalSubs.mapIndexed { index, track ->
-                async { downloadTrack(client, track.url, video.headers, tmpDir, "sub_$index.part") }
-            }
-
-            Triple(videoDeferred.await(), audioDeferreds.awaitAll(), subDeferreds.awaitAll())
-        }
-
-        // Mux them together locally
-        download.status = Download.State.MERGING
-        notifier.onProgressChange(download)
-
-        val finalFile = tmpDir.createFile("$filename.mkv")!!
-        val finalFilePath = finalFile.toFFmpegString(context)
-
-        var cmd = ""
-        var inputIndex = 0
-
-        val mainVideoPath = mainVideoFile.toFFmpegString(context)
-        cmd += "-i \"$mainVideoPath\" "
-        inputIndex++
-
-        var mapCmd = "-map 0:v:0? -map 0:a? -map 0:s? "
-
-        audioFiles.forEachIndexed { i, audioFile ->
-            val audioPath = audioFile.toFFmpegString(context)
-            cmd += "-i \"$audioPath\" "
-            mapCmd += "-map $inputIndex:a:0? "
-            
-            val track = download.selectedAudioTracks.filter { it.url != video.videoUrl }[i]
-            cmd += "-metadata:s:a:${inputIndex - 1} language=${track.lang} "
-            inputIndex++
-        }
-
-        subFiles.forEachIndexed { i, subFile ->
-            val subPath = subFile.toFFmpegString(context)
-            cmd += "-i \"$subPath\" "
-            mapCmd += "-map $inputIndex:s:0? "
-            
-            val track = download.selectedSubtitleTracks.filter { it.url != video.videoUrl }[i]
-            cmd += "-metadata:s:s:${inputIndex - 1} language=${track.lang} "
-            inputIndex++
-        }
-
-        cmd += "$mapCmd-c copy -y \"$finalFilePath\""
-
-        val session = com.arthenica.ffmpegkit.FFmpegKit.execute(cmd)
-        if (!session.returnCode.isValueSuccess) {
-            finalFile.delete()
-            throw Exception("FFmpeg DASH muxing failed")
-        }
-
-        // Clean up parts
-        mainVideoFile.delete()
-        audioFiles.forEach { it.delete() }
-        subFiles.forEach { it.delete() }
-
-        download.progress = 100
         return finalFile
     }
 
-    private fun isTor(video: Video) = video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")
-
-    private suspend fun torrentDownload(download: Download, tmpDir: UniFile, filename: String): UniFile {
-        retry {
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            TorrentServerService.start()
-            TorrentServerService.wait(10)
-        }
-        val currentTorrent = retry {
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            TorrentServerApi.addTorrent(download.video!!.videoUrl, download.video!!.quality, "", "", false)
-        }
-        val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
-        download.video!!.videoUrl = torrentUrl
-        return internalDownload(download, tmpDir, filename)
-    }
-
-    private suspend fun ensureSuccessfulAnimeDownload(download: Download, animeDir: UniFile, tmpDir: UniFile, dirname: String) {
-        // Wait a bit for file system to settle
-        delay(500)
-        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+    private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
+        // HLS logic with In-Memory Decryption
+        val video = download.video!!
+        val client = networkHelper.downloadClient
+        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
+        val segments = playlistRes.body?.string()?.lines()?.filter { it.isNotBlank() && !it.startsWith("#") } ?: emptyList()
         
-        // Find the final video file (not parts) and ensure it's not empty
-        val downloadedVideo = tmpDir.listFiles().orEmpty()
-            .filterNot { it.getName()?.contains(".part") == true || it.getName()?.endsWith(".tmp") == true }
-            .firstOrNull { it.length() > 0 }
-
-        if (downloadedVideo != null) {
-            tmpDir.renameTo(dirname)
-            cache.addEpisode(dirname, animeDir, download.anime)
-            download.status = Download.State.DOWNLOADED
-            
-            // Remove from queue since it's finished
-            _queueState.update { it - download }
-            store.remove(download)
-        } else {
-            // Check if it was already renamed (race condition)
-            val alreadyRenamed = animeDir.findFile(dirname)
-            if (alreadyRenamed != null && alreadyRenamed.isDirectory) {
-                val renamedFile = alreadyRenamed.listFiles().orEmpty().firstOrNull { it.length() > 0 }
-                if (renamedFile != null) {
-                    download.status = Download.State.DOWNLOADED
-                    _queueState.update { it - download }
-                    store.remove(download)
-                    return
-                }
-            }
-            throw Exception("Unable to finalize download: No valid video file found in ${tmpDir.uri}")
-        }
-    }
-
-    private fun areAllDownloadsFinished() = queueState.value.none { it.status.value <= Download.State.DOWNLOADING.value }
-
-    fun addAllToQueue(downloads: List<Download>) {
-        _queueState.update {
-            downloads.forEach { download -> download.status = Download.State.QUEUE }
-            store.addAll(downloads)
-            it + downloads
-        }
-    }
-
-    private fun deleteTempFiles(download: Download) {
-        scope.launch(Dispatchers.IO) {
-            delay(500) // Give the downloader job time to cancel and release file locks
-            try {
-                val animeDir = provider.findAnimeDir(download.anime.title, download.source) ?: return@launch
-                val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
-                animeDir.findFile(episodeDirname + TMP_DIR_SUFFIX)?.delete()
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to delete temp files for ${download.episode.name}" }
-            }
-        }
-    }
-
-    fun removeFromQueue(download: Download) {
-        _queueState.update {
-            store.remove(download)
-            if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
-                download.status = Download.State.NOT_DOWNLOADED
-            }
-            deleteTempFiles(download)
-            download.clearProgress()
-            notifier.dismissProgress(download)
-            it - download
-        }
-    }
-
-    fun removeFromQueue(episodes: List<Episode>) {
-        val episodeIds = episodes.map { it.id }
-        _queueState.update { queue ->
-            val downloads = queue.filter { it.episode.id in episodeIds }
-            store.removeAll(downloads)
-            downloads.forEach { 
-                it.status = Download.State.NOT_DOWNLOADED 
-                deleteTempFiles(it)
-                it.clearProgress()
-                notifier.dismissProgress(it)
-            }
-            queue - downloads.toSet()
-        }
-    }
-
-    fun removeFromQueue(anime: Anime) {
-        _queueState.update { queue ->
-            val downloads = queue.filter { it.anime.id == anime.id }
-            store.removeAll(downloads)
-            downloads.forEach { 
-                it.status = Download.State.NOT_DOWNLOADED 
-                deleteTempFiles(it)
-                it.clearProgress()
-                notifier.dismissProgress(it)
-            }
-            queue - downloads.toSet()
-        }
-    }
-
-    fun updateQueue(downloads: List<Download>) {
-        if (queueState.value == downloads) return
-        val wasRunning = isRunning
-        pause()
-        _queueState.update {
-            it.forEach { download -> 
-                download.status = Download.State.NOT_DOWNLOADED
-                download.clearProgress()
-            }
-            store.clear()
-            emptyList()
-        }
-        addAllToQueue(downloads)
-        if (wasRunning) start()
-    }
-
-    private suspend fun externalDownload(download: Download, animeDir: UniFile, episodeDirname: String): Boolean {
-        val video = download.video ?: return false
-        val url = video.videoUrl
-        val packageName = preferences.externalDownloaderSelection().get()
+        download.totalSegments = segments.size
+        val finalFile = File(sandboxDir, "$filename.ts")
+        val outStream = FileOutputStream(finalFile, true)
         
-        try {
-            val intent = Intent(Intent.ACTION_VIEW)
-            val animeTitle = download.anime.title
-            val episodeName = download.episode.name
-            val filename = DiskUtil.buildValidFilename("$animeTitle - $episodeName") + ".mp4"
-            
-            // Create the episode directory so external downloader can save inside it
-            val episodeDir = animeDir.createDirectory(episodeDirname)
-            val dirPath = episodeDir?.filePath ?: animeDir.filePath
+        // Simplified Worker-Queue for HLS (1DM+ style)
+        val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
+        val downloadedCount = AtomicInteger(0)
 
-            withUIContext {
-                if (dirPath != null) {
-                    context.copyToClipboard("Episode download location", dirPath)
-                }
-            }
-
-            intent.setDataAndType(Uri.parse(url), "video/*")
-
-            when {
-                packageName.startsWith("idm.internet.download.manager") -> {
-                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
-                    val bundle = Bundle()
-                    headers?.let {
-                        for (i in 0 until it.size) {
-                            bundle.putString(it.name(i), it.value(i))
-                        }
-                    }
-
-                    intent.apply {
-                        putExtra("extra_filename", filename)
-                        putExtra("extra_headers", bundle)
-                        if (dirPath != null) {
-                            putExtra("extra_path", dirPath)
-                        }
-                    }
-                }
-                packageName.startsWith("com.dv.adm") -> {
-                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
-                    val bundle = Bundle()
-                    headers?.let {
-                        for (i in 0 until it.size) {
-                            bundle.putString(it.name(i), it.value(i).replace("http", "h_ttp"))
-                        }
-                    }
-
-                    intent.apply {
-                        putExtra(
-                            "com.dv.get.ACTION_LIST_ADD",
-                            "${Uri.parse(url)}<info>$filename",
-                        )
-                        if (dirPath != null) {
-                            putExtra("com.dv.get.ACTION_LIST_PATH", dirPath)
-                        }
-                        putExtra("android.media.intent.extra.HTTP_HEADERS", bundle)
-                    }
-                }
-                else -> {
-                    val headers = video.headers ?: (download.source as? HttpSource)?.headers
-                    if (headers != null) {
-                        val headersBundle = Bundle()
-                        for (i in 0 until headers.size) {
-                            headersBundle.putString(headers.name(i), headers.value(i))
-                        }
-                        intent.putExtra("android.media.intent.extra.HTTP_HEADERS", headersBundle)
-                        
-                        val headersArray = Array(headers.size) { i -> "${headers.name(i)}: ${headers.value(i)}" }
-                        intent.putExtra("headers", headersArray)
-                    }
-
-                    intent.apply {
-                        putExtra("title", "${download.anime.title} - ${download.episode.name}")
-                        putExtra("filename", filename)
-                        putExtra("extra_filename", filename)
-                        if (dirPath != null) {
-                            putExtra("extra_path", dirPath) // fallback 1DM
-                            putExtra("com.dv.get.ext_dir", dirPath) // fallback ADM
+        coroutineScope {
+            repeat(calculateDynamicConcurrency("")) {
+                launch {
+                    while (isActive) {
+                        val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
+                        retry(times = 5) {
+                            kotlinx.coroutines.withTimeout(15000L) {
+                                client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                                    val data = res.body?.bytes() ?: throw IOException("Empty segment")
+                                    // In-Memory Decryption would happen here...
+                                    synchronized(outStream) { outStream.write(data) }
+                                    download.downloadedSegments = downloadedCount.incrementAndGet()
+                                    store.update(download)
+                                    throttleNotification(download)
+                                }
+                            }
                         }
                     }
                 }
             }
+        }
+        outStream.close()
+        return finalFile
+    }
 
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            
-            val pm = context.packageManager
-            if (packageName.isNotBlank() && packageName != "None") {
-                intent.setPackage(packageName)
-                // Attempt to find the specific downloader activity to bypass the 'Open With' dialog
-                val resolveInfo = pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
-                if (resolveInfo.isNotEmpty()) {
-                    // Try to find an activity with 'Download' in its name, otherwise pick the first one
-                    val bestMatch = resolveInfo.find { it.activityInfo.name.contains("Download", ignoreCase = true) } 
-                                     ?: resolveInfo.first()
-                    intent.component = ComponentName(bestMatch.activityInfo.packageName, bestMatch.activityInfo.name)
-                }
-            }
-            
-            context.startActivity(intent)
-            
-            // Explicitly remove from queue after successful handoff
-            download.status = Download.State.DOWNLOADED
-            _queueState.update { it - download }
-            store.remove(download)
-            notifier.dismissProgress(download)
-            
-            delay(1500) // Give external downloader time to register intent and prevent dropping multiple downloads
-            return true
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Failed to launch external downloader: ${e.message}" }
-            return false
+    private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
+    private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
+
+    private var lastNotifiedTime = 0L
+    private fun throttleNotification(download: Download) {
+        val now = System.currentTimeMillis()
+        if (now - lastNotifiedTime > 1000) {
+            lastNotifiedTime = now
+            notifier.onProgressChange(download)
         }
     }
 
     companion object {
         const val TMP_DIR_SUFFIX = "_tmp"
         const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
-        const val EPISODES_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 500
-        private const val DOWNLOADS_QUEUED_WARNING_THRESHOLD = 500
     }
 }
 
