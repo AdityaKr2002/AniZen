@@ -7,7 +7,10 @@ import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.source.model.Video
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.PreferenceScreen
 import exh.pref.DelegateSourcePreferences
+import android.content.SharedPreferences
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -16,7 +19,16 @@ import uy.kohesive.injekt.api.get
 class EnhancedHttpSource(
     val originalSource: HttpSource,
     val enhancedSource: HttpSource,
-) : HttpSource() {
+) : HttpSource(), ConfigurableAnimeSource {
+
+    override fun getSourcePreferences(): SharedPreferences {
+        return (source() as? ConfigurableAnimeSource)?.getSourcePreferences()
+            ?: super.getSourcePreferences()
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        (source() as? ConfigurableAnimeSource)?.setupPreferenceScreen(screen)
+    }
 
     /**
      * Returns the request for the popular anime given the page.
