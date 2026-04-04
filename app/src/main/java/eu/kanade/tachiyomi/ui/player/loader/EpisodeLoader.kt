@@ -78,8 +78,11 @@ class EpisodeLoader {
                 kotlinx.coroutines.withTimeout(45000) {
                     if (hasMethod) {
                         source.getHosterList(anime.toSAnime(), episode.toSEpisode())
+                            .let { source.run { it.sortHosters() } }
                     } else {
-                        source.getVideoList(episode.toSEpisode()).toHosterList()
+                        source.getVideoList(episode.toSEpisode())
+                            .let { source.run { it.sortVideos() } }
+                            .toHosterList()
                     }
                 }
             } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
@@ -143,11 +146,17 @@ class EpisodeLoader {
          * @param hoster the hoster.
          */
         private suspend fun getVideos(source: AnimeSource, hoster: Hoster): List<Video> {
-            return when {
+            val videos = when {
                 hoster.videoList != null && source is AnimeHttpSource -> hoster.videoList!!.parseVideoUrls(source)
                 hoster.videoList != null -> hoster.videoList!!
                 source is AnimeHttpSource -> getVideosOnHttp(source, hoster)
                 else -> error("source not supported")
+            }
+
+            return if (source is AnimeHttpSource) {
+                source.run { videos.sortVideos() }
+            } else {
+                videos
             }
         }
 

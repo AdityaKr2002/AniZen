@@ -314,12 +314,14 @@ class Downloader(
             throw IOException("Failed to create sandbox directory: ${sandboxDir.absolutePath}")
         }
 
+        val videoFilename = DiskUtil.buildValidFilename(download.episode.name)
+
         notifier.onProgressChange(download)
         try {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             
             val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
-            val mergedFile = File(sandboxDir, "$episodeDirname.$finalExt")
+            val mergedFile = File(sandboxDir, "$videoFilename.tmp")
 
             // RECOVERY: Handle interrupted FINALIZING state
             if (download.status == Download.State.FINALIZING && mergedFile.exists()) {
@@ -344,14 +346,17 @@ class Downloader(
             }
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
-                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, videoFilename)
             } else if (video.videoUrl.contains(".m3u8")) {
-                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, videoFilename)
             } else if (video.videoUrl.contains(".mpd") || video.audioTracks.isNotEmpty()) {
-                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, videoFilename)
             } else {
-                download.engineType = "Normal"; internalDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "Normal"; internalDownload(download, sandboxDir, videoFilename)
             }
+
+            // Download soft subtitles
+            downloadSubtitles(video, sandboxDir, videoFilename)
 
             finalizeDownload(download, videoFile, animeDir, episodeDirname)
             
@@ -369,6 +374,38 @@ class Downloader(
         val available = stats.availableBlocksLong * stats.blockSizeLong
         if (available < requiredSize + MIN_DISK_SPACE) {
             throw IOException(context.stringResource(MR.strings.download_insufficient_space))
+        }
+    }
+
+    private suspend fun downloadSubtitles(video: Video, sandboxDir: File, videoFilename: String) {
+        if (video.subtitleTracks.isEmpty()) return
+        
+        val client = networkHelper.client
+        coroutineScope {
+            video.subtitleTracks.forEach { track ->
+                launch {
+                    val subExt = when {
+                        track.url.endsWith(".vtt") -> "vtt"
+                        track.url.endsWith(".ass") -> "ass"
+                        else -> "srt"
+                    }
+                    val filename = "${videoFilename}.${track.lang}.$subExt"
+                    val subFile = File(sandboxDir, filename)
+                    if (subFile.exists() && subFile.length() > 0) return@launch
+
+                    retry(times = 3) {
+                        val req = Request.Builder().url(track.url).build()
+                        client.newCall(req).execute().use { res ->
+                            if (!res.isSuccessful) throw IOException("Failed to download subtitle: ${res.code}")
+                            res.body?.byteStream()?.use { input ->
+                                java.io.FileOutputStream(subFile).use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -419,6 +456,21 @@ class Downloader(
                         notifier.onProgressChange(download)
                         store.update(download)
                         lastUpdate = now
+                    }
+                }
+            }
+        }
+
+        // Pro-Active: Move soft subtitles to the destination directory
+        val sandboxDir = sandboxFile.parentFile
+        sandboxDir?.listFiles()?.forEach { file ->
+            if (file.name != sandboxFile.name && !file.name.endsWith(".part") && !file.name.endsWith(".tmp")) {
+                val subFile = destDir.createFile(file.name)
+                if (subFile != null) {
+                    java.io.FileInputStream(file).use { input ->
+                        subFile.openOutputStream().use { output ->
+                            input.copyTo(output)
+                        }
                     }
                 }
             }
