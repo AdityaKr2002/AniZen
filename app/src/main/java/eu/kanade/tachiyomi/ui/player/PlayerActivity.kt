@@ -125,12 +125,14 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 import eu.kanade.tachiyomi.data.download.DownloadManager
+import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import uy.kohesive.injekt.injectLazy
 
 class PlayerActivity : BaseActivity() {
     private val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
     private val downloadManager: DownloadManager by injectLazy()
+    private val downloadProvider: DownloadProvider by injectLazy()
     private val binding by lazy { PlayerLayoutBinding.inflate(layoutInflater) }
     private val playerObserver by lazy { PlayerObserver(this) }
     val player by lazy { binding.player }
@@ -1420,7 +1422,7 @@ class PlayerActivity : BaseActivity() {
         val episode = viewModel.currentEpisode.value ?: return
         val source = viewModel.currentSource.value ?: return
 
-        val episodeDir = downloadManager.provider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
+        val episodeDir = downloadProvider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
         if (episodeDir == null || !episodeDir.exists()) return
 
         val videoFilename = DiskUtil.buildValidFilename(episode.name)
