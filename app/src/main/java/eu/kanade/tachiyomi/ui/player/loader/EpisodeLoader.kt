@@ -20,12 +20,13 @@ import tachiyomi.source.local.io.LocalSourceFileSystem
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+
 /**
  * Loader used to retrieve the hosters for a given episode.
  */
 class EpisodeLoader {
     companion object {
-        private val hasHosterListMethod = mutableMapOf<String, Boolean>()
 
         /**
          * Returns a list of hosters of an [episode] based on the type of [source] used.
@@ -35,10 +36,10 @@ class EpisodeLoader {
          * @param source the source of the anime.
          */
         suspend fun getHosters(episode: Episode, anime: Anime, source: AnimeSource): List<Hoster> {
-            val isDownloaded = isDownload(episode, anime, skipCache = false)
+            val isDownloaded = isDownload(episode, anime)
             return when {
                 isDownloaded -> getHostersOnDownloaded(episode, anime, source)
-                source is AnimeHttpSource -> getHostersOnHttp(episode, anime, source)
+                source is AnimeHttpSource -> getHostersOnHttp(episode, source)
                 source is LocalSource -> getHostersOnLocal(episode)
                 else -> error("source not supported")
             }
@@ -50,28 +51,29 @@ class EpisodeLoader {
          * @param episode the episode being parsed.
          * @param anime the anime of the episode.
          */
-        fun isDownload(episode: Episode, anime: Anime, skipCache: Boolean = true): Boolean {
+        fun isDownload(episode: Episode, anime: Anime): Boolean {
             val downloadManager: DownloadManager = Injekt.get()
             return downloadManager.isEpisodeDownloaded(
                 episode.name,
                 episode.scanlator,
                 anime.title,
                 anime.source,
-                skipCache = skipCache,
+                skipCache = true,
             )
         }
 
         private fun checkHasHosters(source: AnimeHttpSource): Boolean {
-            var current: Class<*> = source.javaClass
+            var current: Class<in AnimeHttpSource> = source.javaClass
             while (true) {
-                if (current.name == "eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource" ||
-                    current.name == "eu.kanade.tachiyomi.animesource.online.AnimeHttpSource" ||
-                    current.name == "eu.kanade.tachiyomi.animesource.AnimeSource"
+                if (current == ParsedAnimeHttpSource::class.java ||
+                    current == AnimeHttpSource::class.java ||
+                    current == AnimeSource::class.java
                 ) {
                     return false
                 }
                 if (current.declaredMethods.any {
-                        it.name in listOf("getHosterList", "hosterListRequest", "hosterListParse")
+                        it.name in
+                            listOf("getHosterList", "hosterListRequest", "hosterListParse")
                     }
                 ) {
                     return true
@@ -84,23 +86,17 @@ class EpisodeLoader {
          * Returns a list of hosters when the [episode] is online.
          *
          * @param episode the episode being parsed.
-         * @param anime the anime of the episode.
          * @param source the online source of the episode.
          */
-        private suspend fun getHostersOnHttp(episode: Episode, anime: Anime, source: AnimeHttpSource): List<Hoster> {
-            return try {
-                kotlinx.coroutines.withTimeout(45000) {
-                    if (checkHasHosters(source)) {
-                        source.getHosterList(anime.toSAnime(), episode.toSEpisode())
-                            .let { source.run { it.sortHosters() } }
-                    } else {
-                        source.getVideoList(episode.toSEpisode())
-                            .let { source.run { it.sortVideos() } }
-                            .toHosterList()
-                    }
-                }
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                throw java.io.IOException("Connection timed out while fetching hosters")
+        private suspend fun getHostersOnHttp(episode: Episode, source: AnimeHttpSource): List<Hoster> {
+            // TODO(1.6): Remove else block when dropping support for ext lib <1.6
+            return if (checkHasHosters(source)) {
+                source.getHosterList(episode.toSEpisode())
+                    .let { source.run { it.sortHosters() } }
+            } else {
+                source.getVideoList(episode.toSEpisode())
+                    .let { source.run { it.sortVideos() } }
+                    .toHosterList()
             }
         }
 
@@ -181,9 +177,11 @@ class EpisodeLoader {
          * @param hoster the hoster.
          */
         private suspend fun getVideosOnHttp(source: AnimeHttpSource, hoster: Hoster): List<Video> {
-            return source.getVideoList(hoster).parseVideoUrls(source)
+            return source.getVideoList(hoster)
+                .parseVideoUrls(source)
         }
 
+        // TODO(1.6): Remove after ext lib bump
         private suspend fun List<Video>.parseVideoUrls(source: AnimeHttpSource): List<Video> {
             return this.map { video ->
                 if (video.videoUrl != "null") return@map video
@@ -205,5 +203,7 @@ class EpisodeLoader {
                 HosterState.Error(hoster.hosterName)
             }
         }
+    }
+}
     }
 }
