@@ -393,6 +393,24 @@ class Downloader(
                     val subFile = File(sandboxDir, filename)
                     if (subFile.exists() && subFile.length() > 0) return@launch
 
+                    if (track.url.isBlank()) return@launch
+
+                    if (track.url.startsWith("file://")) {
+                        try {
+                            val sourceFile = File(track.url.removePrefix("file://"))
+                            if (sourceFile.exists()) {
+                                sourceFile.inputStream().use { input ->
+                                    java.io.FileOutputStream(subFile).use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            logcat(LogPriority.ERROR, e) { "Failed to copy local subtitle: ${track.url}" }
+                        }
+                        return@launch
+                    }
+
                     retry(times = 3) {
                         val req = Request.Builder().url(track.url).build()
                         client.newCall(req).execute().use { res ->
