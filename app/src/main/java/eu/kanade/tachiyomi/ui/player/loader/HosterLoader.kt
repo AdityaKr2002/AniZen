@@ -122,8 +122,8 @@ class HosterLoader {
                     coroutineContext.cancelChildren()
                     return@withContext null
                 }
-            } catch (e: EarlyReturnException) {
-                e.video
+            } finally {
+                // Ensure everything is cleaned up
             }
         }
 
