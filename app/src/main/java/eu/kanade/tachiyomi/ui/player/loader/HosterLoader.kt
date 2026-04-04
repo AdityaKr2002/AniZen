@@ -13,12 +13,6 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
-import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
-import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
-import eu.kanade.tachiyomi.ui.player.utils.VideoComparator
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-
 class HosterLoader {
     companion object {
         /**
@@ -34,63 +28,45 @@ class HosterLoader {
             val availableHosters = hosterState.withIndex()
                 .filter { (_, state) -> state is HosterState.Ready }
 
-            // 1. Priority: Pick the first video marked as 'preferred' 
-            // following the order provided by the extension (already sorted)
-            availableHosters.forEach { (index, state) ->
-                val readyState = state as HosterState.Ready
-                readyState.videoList.forEachIndexed { vidIdx, video ->
-                    if (video.preferred) {
-                        val videoState = readyState.videoState[vidIdx]
-                        if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
-                            return index to vidIdx
-                        }
-                    }
+            // Check for first preferred
+            val isPreferred: (Pair<Video, Video.State>) -> Boolean = { (v, s) ->
+                v.preferred && (s == Video.State.READY || s == Video.State.QUEUE)
+            }
+            val prefHosterIdx = availableHosters.indexOfFirst {
+                (it.value as HosterState.Ready).let { hoster ->
+                    hoster.videoList zip hoster.videoState
+                }.any(isPreferred)
+            }
+            if (prefHosterIdx != -1) {
+                val videoList = (availableHosters[prefHosterIdx].value as HosterState.Ready).let { hoster ->
+                    hoster.videoList zip hoster.videoState
                 }
+                val prefVideoIdx = videoList.indexOfFirst(isPreferred)
+                return availableHosters[prefHosterIdx].index to prefVideoIdx
             }
 
-            // 2. Secondary Priority: Apply global preferences via VideoComparator
-            val videoComparator = VideoComparator(Injekt.get<PlayerPreferences>(), Injekt.get<AudioPreferences>())
-            val allVideos = availableHosters.flatMap { (hosterIdx, state) ->
-                val readyState = state as HosterState.Ready
-                readyState.videoList.mapIndexed { vidIdx, video ->
-                    Triple(hosterIdx, vidIdx, video)
-                }
+            // Check for first video with non-empty url
+            val firstValid: (Pair<Video, Video.State>) -> Boolean = { (v, s) ->
+                v.videoUrl.isNotEmpty() && (s == Video.State.READY || s == Video.State.QUEUE)
             }
-            
-            val bestPreferredByGlobal = allVideos
-                .filter { (_, _, video) -> 
-                    val playerPrefs = Injekt.get<PlayerPreferences>()
-                    val audioPrefs = Injekt.get<AudioPreferences>()
-                    video.quality.contains(playerPrefs.preferredQuality().get()) ||
-                    (audioPrefs.preferredAudioLanguages().get().isNotBlank() && 
-                     video.quality.contains(audioPrefs.preferredAudioLanguages().get(), ignoreCase = true))
-                }
-                .minWithOrNull { a, b -> videoComparator.compare(a.third, b.third) }
-
-            if (bestPreferredByGlobal != null) {
-                val (hIdx, vIdx, _) = bestPreferredByGlobal
-                val videoState = (hosterState[hIdx] as HosterState.Ready).videoState[vIdx]
-                if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
-                    return hIdx to vIdx
-                }
+            val firstAvailableHosterIdx = availableHosters.indexOfFirst {
+                (it.value as HosterState.Ready).let { hoster ->
+                    hoster.videoList zip hoster.videoState
+                }.any(firstValid)
             }
-
-            // 3. Fallback: Pick the very first video in the sorted list
-            availableHosters.forEach { (index, state) ->
-                val readyState = state as HosterState.Ready
-                readyState.videoList.forEachIndexed { vidIdx, video ->
-                    if (video.videoUrl.isNotEmpty()) {
-                        val videoState = readyState.videoState[vidIdx]
-                        if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
-                            return index to vidIdx
-                        }
-                    }
+            if (firstAvailableHosterIdx != -1) {
+                val videoList = (availableHosters[firstAvailableHosterIdx].value as HosterState.Ready).let { hoster ->
+                    hoster.videoList zip hoster.videoState
                 }
+                val firstVideoIdx = videoList.indexOfFirst(firstValid)
+                return availableHosters[firstAvailableHosterIdx].index to firstVideoIdx
             }
 
             // No success
             return Pair(-1, -1)
         }
+
+        class EarlyReturnException(val video: Video) : Exception()
 
         /**
          * Return the first loaded and valid "best" video, based on the criteria in the function `selectBestVideo` above.
@@ -101,42 +77,53 @@ class HosterLoader {
          */
         suspend fun getBestVideo(source: AnimeSource, hosterList: List<Hoster>): Video? {
             val hosterStates = MutableList<HosterState>(hosterList.size) { HosterState.Idle("") }
-            val semaphore = kotlinx.coroutines.sync.Semaphore(5)
 
             return try {
                 withContext<Video?>(Dispatchers.IO) {
                     hosterList.mapIndexed { hosterIdx, hoster ->
                         async {
-                            semaphore.acquire()
-                            try {
-                                val hosterState = try {
-                                    kotlinx.coroutines.withTimeout(45000) {
-                                        EpisodeLoader.loadHosterVideos(source, hoster)
-                                    }
-                                } catch (e: Exception) {
-                                    HosterState.Error(hoster.hosterName)
-                                }
-                                hosterStates[hosterIdx] = hosterState
+                            val hosterState = EpisodeLoader.loadHosterVideos(source, hoster)
+                            hosterStates[hosterIdx] = hosterState
 
-                                if (hosterState is HosterState.Ready) {
-                                    // Pre-resolve preferred videos to avoid selecting broken ones
-                                    hosterState.videoList.forEachIndexed { index, video ->
-                                        if (video.preferred && !video.initialized) {
-                                            getResolvedVideo(source, video)
-                                        }
+                            if (hosterState is HosterState.Ready) {
+                                val prefIndex = hosterState.videoList.indexOfFirst { it.preferred && !it.initialized }
+                                if (prefIndex != -1) {
+                                    val video = hosterState.videoList[prefIndex]
+                                    hosterStates[hosterIdx] =
+                                        (hosterStates[hosterIdx] as HosterState.Ready).getChangedAt(
+                                            prefIndex,
+                                            video,
+                                            Video.State.LOAD_VIDEO,
+                                        )
+
+                                    val resolvedVideo = getResolvedVideo(source, video)
+                                    if (resolvedVideo?.videoUrl?.isNotEmpty() == true) {
+                                        coroutineContext.cancelChildren()
+                                        throw EarlyReturnException(resolvedVideo)
                                     }
+
+                                    hosterStates[hosterIdx] =
+                                        (hosterStates[hosterIdx] as HosterState.Ready).getChangedAt(
+                                            prefIndex,
+                                            video,
+                                            Video.State.ERROR,
+                                        )
                                 }
-                            } finally {
-                                semaphore.release()
                             }
                         }
                     }.awaitAll()
 
-                    // Final attempt to find any READY video using our established priority (Preferred first, then First Valid)
                     var (hosterIdx, videoIdx) = selectBestVideo(hosterStates)
                     while (hosterIdx != -1) {
                         val hosterState = hosterStates[hosterIdx] as HosterState.Ready
                         val video = hosterState.videoList[videoIdx]
+                        hosterStates[hosterIdx] =
+                            (hosterStates[hosterIdx] as HosterState.Ready).getChangedAt(
+                                videoIdx,
+                                video,
+                                Video.State.LOAD_VIDEO,
+                            )
+
                         val resolvedVideo = getResolvedVideo(source, video)
                         if (resolvedVideo?.videoUrl?.isNotEmpty() == true) {
                             coroutineContext.cancelChildren()
@@ -157,6 +144,8 @@ class HosterLoader {
                     coroutineContext.cancelChildren()
                     return@withContext null
                 }
+            } catch (e: EarlyReturnException) {
+                e.video
             } finally {
                 // Ensure everything is cleaned up
             }

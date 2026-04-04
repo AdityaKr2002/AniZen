@@ -61,6 +61,25 @@ class EpisodeLoader {
             )
         }
 
+        private fun checkHasHosters(source: AnimeHttpSource): Boolean {
+            var current: Class<in AnimeHttpSource> = source.javaClass
+            while (true) {
+                if (current == AnimeHttpSource::class.java ||
+                    current == AnimeSource::class.java
+                ) {
+                    return false
+                }
+                if (current.declaredMethods.any {
+                        it.name in
+                            listOf("getHosterList", "hosterListRequest", "hosterListParse")
+                    }
+                ) {
+                    return true
+                }
+                current = current.superclass ?: return false
+            }
+        }
+
         /**
          * Returns a list of hosters when the [episode] is online.
          *
@@ -69,14 +88,9 @@ class EpisodeLoader {
          * @param source the online source of the episode.
          */
         private suspend fun getHostersOnHttp(episode: Episode, anime: Anime, source: AnimeHttpSource): List<Hoster> {
-            val sourceClass = source.javaClass.name
-            val hasMethod = hasHosterListMethod.getOrPut(sourceClass) {
-                source.javaClass.declaredMethods.any { it.name == "getHosterList" }
-            }
-
             return try {
                 kotlinx.coroutines.withTimeout(45000) {
-                    if (hasMethod) {
+                    if (checkHasHosters(source)) {
                         source.getHosterList(anime.toSAnime(), episode.toSEpisode())
                             .let { source.run { it.sortHosters() } }
                     } else {
