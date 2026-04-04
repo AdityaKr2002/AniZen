@@ -13,6 +13,12 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
+import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
+import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.ui.player.utils.VideoComparator
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+
 class HosterLoader {
     companion object {
         /**
@@ -42,7 +48,34 @@ class HosterLoader {
                 }
             }
 
-            // 2. Fallback: Pick the very first video in the sorted list
+            // 2. Secondary Priority: Apply global preferences via VideoComparator
+            val videoComparator = VideoComparator(Injekt.get<PlayerPreferences>(), Injekt.get<AudioPreferences>())
+            val allVideos = availableHosters.flatMap { (hosterIdx, state) ->
+                val readyState = state as HosterState.Ready
+                readyState.videoList.mapIndexed { vidIdx, video ->
+                    Triple(hosterIdx, vidIdx, video)
+                }
+            }
+            
+            val bestPreferredByGlobal = allVideos
+                .filter { (_, _, video) -> 
+                    val playerPrefs = Injekt.get<PlayerPreferences>()
+                    val audioPrefs = Injekt.get<AudioPreferences>()
+                    video.quality.contains(playerPrefs.preferredQuality().get()) ||
+                    (audioPrefs.preferredAudioLanguages().get().isNotBlank() && 
+                     video.quality.contains(audioPrefs.preferredAudioLanguages().get(), ignoreCase = true))
+                }
+                .minWithOrNull { a, b -> videoComparator.compare(a.third, b.third) }
+
+            if (bestPreferredByGlobal != null) {
+                val (hIdx, vIdx, _) = bestPreferredByGlobal
+                val videoState = (hosterState[hIdx] as HosterState.Ready).videoState[vIdx]
+                if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
+                    return hIdx to vIdx
+                }
+            }
+
+            // 3. Fallback: Pick the very first video in the sorted list
             availableHosters.forEach { (index, state) ->
                 val readyState = state as HosterState.Ready
                 readyState.videoList.forEachIndexed { vidIdx, video ->

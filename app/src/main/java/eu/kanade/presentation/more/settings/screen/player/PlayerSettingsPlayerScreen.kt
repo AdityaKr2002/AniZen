@@ -191,10 +191,21 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
     private fun getHosterGroup(playerPreferences: PlayerPreferences): Preference.PreferenceGroup {
         val showFailure = playerPreferences.showFailedHosters()
         val showEmpty = playerPreferences.showEmptyHosters()
+        val preferredQuality = playerPreferences.preferredQuality()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_hosters),
             preferenceItems = persistentListOf(
+                Preference.PreferenceItem.ListPreference(
+                    pref = preferredQuality,
+                    title = stringResource(MR.strings.pref_preferred_quality),
+                    entries = persistentMapOf(
+                        "1080" to stringResource(MR.strings.pref_high_quality),
+                        "720" to "720p",
+                        "480" to "480p",
+                        "360" to "360p",
+                    ),
+                ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = showFailure,
                     title = stringResource(MR.strings.pref_hosters_show_failure),

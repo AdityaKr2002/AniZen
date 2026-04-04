@@ -19,6 +19,8 @@ class PlayerPreferences(
         PlayerOrientation.SensorLandscape,
     )
 
+    fun preferredQuality() = preferenceStore.getString("pref_preferred_quality", "1080")
+
     // Controls
 
     fun allowGestures() = preferenceStore.getBoolean("pref_allow_gestures_in_panels", false)
