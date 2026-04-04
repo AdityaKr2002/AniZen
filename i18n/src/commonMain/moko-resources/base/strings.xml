@@ -1488,6 +1488,10 @@
     <string name="action_use_hls_download">Use HLS Engine (Native/FFmpeg)</string>
     <string name="action_use_normal_download">Use Normal Engine (Multi-threaded)</string>
 
+    <!-- Player Preferences -->
+    <string name="pref_preferred_quality">Preferred quality</string>
+    <string name="pref_high_quality">Highest quality</string>
+
     <!-- Migration Config -->
     <string name="migrationConfigScreen_removeDownloadsTitle">Remove downloads</string>
     <string name="migrationConfigScreen_dataToMigrateHeader">Data to migrate</string>
