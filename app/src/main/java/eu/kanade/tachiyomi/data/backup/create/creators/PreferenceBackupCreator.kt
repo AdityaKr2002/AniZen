@@ -31,12 +31,11 @@ class PreferenceBackupCreator(
             .filterIsInstance<ConfigurableSource>()
             .map {
                 BackupSourcePreferences(
-                    it.preferenceKey(),
+                    preferencesKey(it.id),
                     it.sourcePreferences().all.toBackupPreferences()
                         .withPrivatePreferences(includePrivatePreferences),
                 )
             }
-            .filter { it.prefs.isNotEmpty() }
         return animePreferences
     }
 
