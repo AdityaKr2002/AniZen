@@ -239,6 +239,28 @@ class EnhancedHttpSource(
      * [1.x API] Get the list of videos a episode has.
      */
     override suspend fun getVideoList(episode: SEpisode): List<Video> = source().getVideoList(episode)
+
+    override fun List<Hoster>.sortHosters(): List<Hoster> {
+        return with(source()) {
+            this@sortHosters.sortHosters()
+        }
+    }
+
+    override fun List<Video>.sortVideos(): List<Video> {
+        return with(source()) {
+            this@sortVideos.sortVideos()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    override fun List<Video>.sort(): List<Video> {
+        return with(source()) {
+            this@sort.sort()
+        }
+    }
+
+    override suspend fun resolveVideo(video: Video): Video? = source().resolveVideo(video)
+
     override fun videoListParse(response: Response, hoster: Hoster) =
         throw UnsupportedOperationException("Should never be called!")
 
