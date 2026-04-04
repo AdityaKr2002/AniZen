@@ -448,7 +448,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @since extensions-lib 16
      */
     open fun List<Video>.sortVideos(): List<Video> {
-        return this
+        return sort()
     }
 
     /**
