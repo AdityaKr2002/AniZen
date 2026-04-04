@@ -28,27 +28,29 @@ class HosterLoader {
             val availableHosters = hosterState.withIndex()
                 .filter { (_, state) -> state is HosterState.Ready }
 
-            // Check for first preferred video across all ready hosters
-            // (We follow the hoster order provided by the extension)
+            // 1. Priority: Pick the first video marked as 'preferred' 
+            // following the order provided by the extension (already sorted)
             availableHosters.forEach { (index, state) ->
                 val readyState = state as HosterState.Ready
-                val prefIdx = readyState.videoList.indexOfFirst { it.preferred }
-                if (prefIdx != -1) {
-                    val videoState = readyState.videoState[prefIdx]
-                    if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
-                        return index to prefIdx
+                readyState.videoList.forEachIndexed { vidIdx, video ->
+                    if (video.preferred) {
+                        val videoState = readyState.videoState[vidIdx]
+                        if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
+                            return index to vidIdx
+                        }
                     }
                 }
             }
 
-            // Fallback: Check for first video with non-empty url
+            // 2. Fallback: Pick the very first video in the sorted list
             availableHosters.forEach { (index, state) ->
                 val readyState = state as HosterState.Ready
-                val firstIdx = readyState.videoList.indexOfFirst { it.videoUrl.isNotEmpty() }
-                if (firstIdx != -1) {
-                    val videoState = readyState.videoState[firstIdx]
-                    if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
-                        return index to firstIdx
+                readyState.videoList.forEachIndexed { vidIdx, video ->
+                    if (video.videoUrl.isNotEmpty()) {
+                        val videoState = readyState.videoState[vidIdx]
+                        if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
+                            return index to vidIdx
+                        }
                     }
                 }
             }

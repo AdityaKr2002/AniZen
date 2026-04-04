@@ -1385,6 +1385,7 @@ class PlayerActivity : BaseActivity() {
         setMpvMediaTitle()
         setupPlayerOrientation()
         setupChapters()
+        addExternalSubtitles()
         setupTracks()
 
         // aniSkip stuff
@@ -1404,6 +1405,29 @@ class PlayerActivity : BaseActivity() {
                         ),
                     )
                     viewModel.setChapter(viewModel.pos.value)
+                }
+            }
+        }
+    }
+
+    private fun addExternalSubtitles() {
+        val anime = viewModel.currentAnime.value ?: return
+        val episode = viewModel.currentEpisode.value ?: return
+        val source = viewModel.currentSource.value ?: return
+
+        val episodeDir = downloadManager.provider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
+        if (episodeDir == null || !episodeDir.exists()) return
+
+        val videoFilename = DiskUtil.buildValidFilename(episode.name)
+        val subExtensions = listOf("srt", "ass", "vtt")
+
+        episodeDir.listFiles()?.forEach { file ->
+            val filename = file.name ?: return@forEach
+            val extension = filename.substringAfterLast(".", "")
+            if (subExtensions.contains(extension.lowercase()) && filename.startsWith(videoFilename)) {
+                val path = file.uri.openContentFd(this)
+                if (path != null) {
+                    MPVLib.command(arrayOf("sub-add", path, "auto", filename))
                 }
             }
         }
