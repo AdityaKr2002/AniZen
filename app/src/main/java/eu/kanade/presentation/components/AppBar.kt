@@ -371,18 +371,28 @@ fun SearchToolbar(
                     )
                 },
             )
-
-            LaunchedEffect(focusRequester) {
-                focusRequester.requestFocus()
-            }
         },
         navigateUp = if (searchQuery != null) onClickCloseSearch else navigateUp,
         actions = {
-            if (searchQuery == null && searchEnabled) {
-                IconButton(onClick = { onChangeSearchQuery("") }) {
+            if (searchQuery == null) {
+                if (searchEnabled) {
+                    IconButton(onClick = { onChangeSearchQuery("") }) {
+                        Icon(
+                            Icons.Outlined.Search,
+                            contentDescription = stringResource(MR.strings.action_search),
+                        )
+                    }
+                }
+            } else if (searchQuery.isNotEmpty()) {
+                IconButton(
+                    onClick = {
+                        onChangeSearchQuery("")
+                        focusRequester.requestFocus()
+                    },
+                ) {
                     Icon(
-                        Icons.Outlined.Search,
-                        contentDescription = stringResource(MR.strings.action_search),
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(MR.strings.action_reset),
                     )
                 }
             }
