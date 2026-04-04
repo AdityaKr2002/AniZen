@@ -184,24 +184,12 @@ class EpisodeLoader {
             return source.getVideoList(hoster).parseVideoUrls(source)
         }
 
-        // Parallelized video URL parsing for faster startup
         private suspend fun List<Video>.parseVideoUrls(source: AnimeHttpSource): List<Video> {
-            return coroutineScope {
-                this@parseVideoUrls.map { video ->
-                    async {
-                        if (video.videoUrl != "null" && video.videoUrl.isNotBlank() && !video.videoUrl.contains("placeholder")) return@async video
+            return this.map { video ->
+                if (video.videoUrl != "null") return@map video
 
-                        try {
-                            // High-speed resolution: Increased timeout for individual quality links
-                            kotlinx.coroutines.withTimeout(45000) {
-                                val newVideoUrl = source.getVideoUrl(video)
-                                video.copy(videoUrl = newVideoUrl)
-                            }
-                        } catch (e: Exception) {
-                            video
-                        }
-                    }
-                }.awaitAll()
+                val newVideoUrl = source.getVideoUrl(video)
+                video.copy(videoUrl = newVideoUrl)
             }
         }
 
