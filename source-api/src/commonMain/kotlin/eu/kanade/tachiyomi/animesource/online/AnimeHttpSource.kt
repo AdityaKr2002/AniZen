@@ -431,7 +431,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      *
      * @since extensions-lib 16
      */
-    protected open fun List<Hoster>.sortHosters(): List<Hoster> {
+    open fun List<Hoster>.sortHosters(): List<Hoster> {
         return this
     }
 
@@ -440,7 +440,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      *
      * @since extensions-lib 16
      */
-    protected open fun List<Video>.sortVideos(): List<Video> {
+    open fun List<Video>.sortVideos(): List<Video> {
         return this
     }
 
@@ -448,7 +448,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * Sorts the video list. Override this according to the user's preference.
      */
     @Deprecated("Use .sortVideos() instead", replaceWith = ReplaceWith("sortVideos"))
-    protected open fun List<Video>.sort(): List<Video> {
+    open fun List<Video>.sort(): List<Video> {
         return this
     }
 
