@@ -148,6 +148,11 @@ class EnhancedHttpSource(
      */
     override val lang get() = source().lang
 
+    /**
+     * Preferences for the source.
+     */
+    override val preferences get() = source().preferences
+
     // ===> OPTIONAL FIELDS
 
     /**

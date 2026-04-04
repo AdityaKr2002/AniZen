@@ -50,6 +50,13 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
     open val versionId = 1
 
     /**
+     * Preferences for the source.
+     */
+    val preferences: android.content.SharedPreferences by lazy {
+        uy.kohesive.injekt.Injekt.get<android.app.Application>().getSharedPreferences("source_$id", android.content.Context.MODE_PRIVATE)
+    }
+
+    /**
      * ID of the source. By default it uses a generated id using the first 16 characters (64 bits)
      * of the MD5 of the string `"${name.lowercase()}/$lang/$versionId"`.
      *

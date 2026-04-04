@@ -145,6 +145,11 @@ abstract class DelegatedHttpSource(val delegate: HttpSource) : HttpSource(), Con
     override val id get() = delegate.id
 
     /**
+     * Preferences for the source.
+     */
+    override val preferences get() = delegate.preferences
+
+    /**
      * Default network client for doing requests.
      */
     final override val client get() = delegate.client
