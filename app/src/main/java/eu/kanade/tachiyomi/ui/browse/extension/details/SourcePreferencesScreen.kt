@@ -36,6 +36,8 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.SharedPreferencesDataStore
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.sourcePreferences
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.sourcePreferences
 import eu.kanade.tachiyomi.widget.TachiyomiTextInputEditText.Companion.setIncognito
@@ -139,8 +141,14 @@ class SourcePreferencesFragment : PreferenceFragmentCompat() {
         if (source is ConfigurableSource) {
             val dataStore = SharedPreferencesDataStore(source.sourcePreferences())
             preferenceManager.preferenceDataStore = dataStore
-
             source.setupPreferenceScreen(sourceScreen)
+        } else if (source is ConfigurableAnimeSource) {
+            val dataStore = SharedPreferencesDataStore(source.sourcePreferences())
+            preferenceManager.preferenceDataStore = dataStore
+            source.setupPreferenceScreen(sourceScreen)
+        }
+
+        if (source is ConfigurableSource || source is ConfigurableAnimeSource) {
             sourceScreen.forEach { pref ->
                 pref.isIconSpaceReserved = false
                 pref.isSingleLineTitle = false
