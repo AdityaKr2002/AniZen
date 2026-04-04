@@ -63,16 +63,21 @@ class EpisodeLoader {
 
         private fun checkHasHosters(source: AnimeHttpSource): Boolean {
             var current: Class<*> = source.javaClass
-            while (current != Any::class.java) {
+            while (true) {
+                if (current.name == "eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource" ||
+                    current.name == "eu.kanade.tachiyomi.animesource.online.AnimeHttpSource" ||
+                    current.name == "eu.kanade.tachiyomi.animesource.AnimeSource"
+                ) {
+                    return false
+                }
                 if (current.declaredMethods.any {
                         it.name in listOf("getHosterList", "hosterListRequest", "hosterListParse")
                     }
                 ) {
                     return true
                 }
-                current = current.superclass ?: break
+                current = current.superclass ?: return false
             }
-            return false
         }
 
         /**
