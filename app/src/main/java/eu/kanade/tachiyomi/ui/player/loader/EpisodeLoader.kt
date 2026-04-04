@@ -62,22 +62,17 @@ class EpisodeLoader {
         }
 
         private fun checkHasHosters(source: AnimeHttpSource): Boolean {
-            var current: Class<in AnimeHttpSource> = source.javaClass
-            while (true) {
-                if (current == AnimeHttpSource::class.java ||
-                    current == AnimeSource::class.java
-                ) {
-                    return false
-                }
+            var current: Class<*> = source.javaClass
+            while (current != Any::class.java) {
                 if (current.declaredMethods.any {
-                        it.name in
-                            listOf("getHosterList", "hosterListRequest", "hosterListParse")
+                        it.name in listOf("getHosterList", "hosterListRequest", "hosterListParse")
                     }
                 ) {
                     return true
                 }
-                current = current.superclass ?: return false
+                current = current.superclass ?: break
             }
+            return false
         }
 
         /**

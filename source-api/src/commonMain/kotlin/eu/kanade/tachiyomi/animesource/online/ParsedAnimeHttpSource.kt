@@ -185,7 +185,7 @@ abstract class ParsedAnimeHttpSource : AnimeHttpSource() {
      *
      * @since extensions-lib 16
      */
-    protected abstract fun hosterListSelector(): String
+    protected open fun hosterListSelector(): String = throw Exception("Not used")
 
     /**
      * Returns a hoster from the given element.
@@ -193,7 +193,7 @@ abstract class ParsedAnimeHttpSource : AnimeHttpSource() {
      * @since extensions-lib 16
      * @param element an element obtained from [hosterListSelector].
      */
-    protected abstract fun hosterFromElement(element: Element): Hoster
+    protected open fun hosterFromElement(element: Element): Hoster = throw Exception("Not used")
 
     /**
      * Parses the response from the site and returns the page list.
