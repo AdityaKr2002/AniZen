@@ -139,16 +139,10 @@ class SourcePreferencesFragment : PreferenceFragmentCompat() {
         val sourceScreen = preferenceManager.createPreferenceScreen(requireContext())
 
         if (source is ConfigurableSource) {
-            val dataStore = SharedPreferencesDataStore(source.sourcePreferences())
+            val dataStore = SharedPreferencesDataStore(source.getSourcePreferences())
             preferenceManager.preferenceDataStore = dataStore
-            source.setupPreferenceScreen(sourceScreen)
-        } else if (source is ConfigurableAnimeSource) {
-            val dataStore = SharedPreferencesDataStore(source.sourcePreferences())
-            preferenceManager.preferenceDataStore = dataStore
-            source.setupPreferenceScreen(sourceScreen)
-        }
 
-        if (source is ConfigurableSource || source is ConfigurableAnimeSource) {
+            source.setupPreferenceScreen(sourceScreen)
             sourceScreen.forEach { pref ->
                 pref.isIconSpaceReserved = false
                 pref.isSingleLineTitle = false
