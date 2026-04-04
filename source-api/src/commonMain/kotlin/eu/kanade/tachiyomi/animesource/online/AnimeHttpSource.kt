@@ -52,7 +52,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
     /**
      * Preferences for the source.
      */
-    val preferences: android.content.SharedPreferences by lazy {
+    open val preferences: android.content.SharedPreferences by lazy {
         uy.kohesive.injekt.Injekt.get<android.app.Application>().getSharedPreferences("source_$id", android.content.Context.MODE_PRIVATE)
     }
 
