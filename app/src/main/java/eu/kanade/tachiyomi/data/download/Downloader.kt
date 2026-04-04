@@ -481,8 +481,10 @@ class Downloader(
 
         // Pro-Active: Move soft subtitles to the destination directory
         val sandboxDir = sandboxFile.parentFile
+        val baseName = sandboxFile.nameWithoutExtension
         sandboxDir?.listFiles()?.forEach { file ->
-            if (file.name != sandboxFile.name && !file.name.endsWith(".part") && !file.name.endsWith(".tmp")) {
+            if (file.nameWithoutExtension.startsWith(baseName) && file.name != sandboxFile.name && 
+                !file.name.endsWith(".part") && !file.name.endsWith(".tmp")) {
                 val subFile = destDir.createFile(file.name)
                 if (subFile != null) {
                     java.io.FileInputStream(file).use { input ->

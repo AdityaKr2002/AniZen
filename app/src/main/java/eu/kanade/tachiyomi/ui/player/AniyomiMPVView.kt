@@ -284,7 +284,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         
         MPVLib.setOptionString("hr-seek", "default")
         MPVLib.setOptionString("hr-seek-framedrop", "yes")
-        //
+        
+        // Enable automatic external subtitle detection
+        MPVLib.setOptionString("sub-auto", "fuzzy")
+        
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
