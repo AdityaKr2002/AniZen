@@ -28,45 +28,34 @@ class HosterLoader {
             val availableHosters = hosterState.withIndex()
                 .filter { (_, state) -> state is HosterState.Ready }
 
-            // Check for first preferred
-            val isPreferred: (Pair<Video, Video.State>) -> Boolean = { (v, s) ->
-                v.preferred && (s == Video.State.READY || s == Video.State.QUEUE)
-            }
-            val prefHosterIdx = availableHosters.indexOfFirst {
-                (it.value as HosterState.Ready).let { hoster ->
-                    hoster.videoList zip hoster.videoState
-                }.any(isPreferred)
-            }
-            if (prefHosterIdx != -1) {
-                val videoList = (availableHosters[prefHosterIdx].value as HosterState.Ready).let { hoster ->
-                    hoster.videoList zip hoster.videoState
+            // Check for first preferred video across all ready hosters
+            // (We follow the hoster order provided by the extension)
+            availableHosters.forEach { (index, state) ->
+                val readyState = state as HosterState.Ready
+                val prefIdx = readyState.videoList.indexOfFirst { it.preferred }
+                if (prefIdx != -1) {
+                    val videoState = readyState.videoState[prefIdx]
+                    if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
+                        return index to prefIdx
+                    }
                 }
-                val prefVideoIdx = videoList.indexOfFirst(isPreferred)
-                return availableHosters[prefHosterIdx].index to prefVideoIdx
             }
 
-            // Check for first video with non-empty url
-            val firstValid: (Pair<Video, Video.State>) -> Boolean = { (v, s) ->
-                v.videoUrl.isNotEmpty() && (s == Video.State.READY || s == Video.State.QUEUE)
-            }
-            val firstAvailableHosterIdx = availableHosters.indexOfFirst {
-                (it.value as HosterState.Ready).let { hoster ->
-                    hoster.videoList zip hoster.videoState
-                }.any(firstValid)
-            }
-            if (firstAvailableHosterIdx != -1) {
-                val videoList = (availableHosters[firstAvailableHosterIdx].value as HosterState.Ready).let { hoster ->
-                    hoster.videoList zip hoster.videoState
+            // Fallback: Check for first video with non-empty url
+            availableHosters.forEach { (index, state) ->
+                val readyState = state as HosterState.Ready
+                val firstIdx = readyState.videoList.indexOfFirst { it.videoUrl.isNotEmpty() }
+                if (firstIdx != -1) {
+                    val videoState = readyState.videoState[firstIdx]
+                    if (videoState == Video.State.READY || videoState == Video.State.QUEUE) {
+                        return index to firstIdx
+                    }
                 }
-                val firstVideoIdx = videoList.indexOfFirst(firstValid)
-                return availableHosters[firstAvailableHosterIdx].index to firstVideoIdx
             }
 
             // No success
             return Pair(-1, -1)
         }
-
-        class EarlyReturnException(val video: Video) : Exception()
 
         /**
          * Return the first loaded and valid "best" video, based on the criteria in the function `selectBestVideo` above.
@@ -95,32 +84,10 @@ class HosterLoader {
                                 hosterStates[hosterIdx] = hosterState
 
                                 if (hosterState is HosterState.Ready) {
-                                    // 1. Priority: Preferred video
-                                    val prefIndex = hosterState.videoList.indexOfFirst { it.preferred && !it.initialized }
-                                    if (prefIndex != -1) {
-                                        val video = hosterState.videoList[prefIndex]
-                                        hosterStates[hosterIdx] =
-                                            (hosterStates[hosterIdx] as HosterState.Ready).getChangedAt(
-                                                prefIndex,
-                                                video,
-                                                Video.State.LOAD_VIDEO,
-                                            )
-
-                                        val resolvedVideo = getResolvedVideo(source, video)
-                                        if (resolvedVideo?.videoUrl?.isNotEmpty() == true) {
-                                            coroutineContext.cancelChildren()
-                                            throw EarlyReturnException(resolvedVideo)
-                                        }
-                                    }
-
-                                    // 2. Fallback: ANY valid video
-                                    val validIndex = hosterState.videoList.indexOfFirst { it.videoUrl.isNotEmpty() || !it.initialized }
-                                    if (validIndex != -1) {
-                                        val video = hosterState.videoList[validIndex]
-                                        val resolvedVideo = getResolvedVideo(source, video)
-                                        if (resolvedVideo?.videoUrl?.isNotEmpty() == true) {
-                                            coroutineContext.cancelChildren()
-                                            throw EarlyReturnException(resolvedVideo)
+                                    // Pre-resolve preferred videos to avoid selecting broken ones
+                                    hosterState.videoList.forEachIndexed { index, video ->
+                                        if (video.preferred && !video.initialized) {
+                                            getResolvedVideo(source, video)
                                         }
                                     }
                                 }
@@ -130,7 +97,7 @@ class HosterLoader {
                         }
                     }.awaitAll()
 
-                    // Final attempt to find any READY video that might have been loaded but missed the early return
+                    // Final attempt to find any READY video using our established priority (Preferred first, then First Valid)
                     var (hosterIdx, videoIdx) = selectBestVideo(hosterStates)
                     while (hosterIdx != -1) {
                         val hosterState = hosterStates[hosterIdx] as HosterState.Ready
