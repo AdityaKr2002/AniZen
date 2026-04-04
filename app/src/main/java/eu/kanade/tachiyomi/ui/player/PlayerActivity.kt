@@ -124,8 +124,13 @@ import java.util.Calendar
 import kotlin.math.ceil
 import kotlin.math.floor
 
+import eu.kanade.tachiyomi.data.download.DownloadManager
+import eu.kanade.tachiyomi.util.storage.DiskUtil
+import uy.kohesive.injekt.injectLazy
+
 class PlayerActivity : BaseActivity() {
     private val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
+    private val downloadManager: DownloadManager by injectLazy()
     private val binding by lazy { PlayerLayoutBinding.inflate(layoutInflater) }
     private val playerObserver by lazy { PlayerObserver(this) }
     val player by lazy { binding.player }
