@@ -113,7 +113,7 @@ class Downloader(
     }
 
     private fun calculateDynamicConcurrency(host: String): Int {
-        if (host.contains("animepahe")) return 1 // Adaptive: Animepahe fails with multi-threading
+        if (host.contains("animepahe") || host.contains("sibnet") || host.contains("video.sibnet")) return 1 // Adaptive: Hosters failing with multi-threading
         
         val userThreads = preferences.downloadThreads().get().coerceAtLeast(1)
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
