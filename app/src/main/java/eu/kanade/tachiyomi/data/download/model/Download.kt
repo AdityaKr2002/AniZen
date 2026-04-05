@@ -53,12 +53,12 @@ data class Download(
     // Rich Notification Fields
     @Transient var speed: String = ""
     @Transient var eta: String = ""
-    @Transient var totalSize: Long = -1L
+    var totalSize: Long = -1L
     @Transient var downloadedSize: String = ""
     @Transient var downloadedSegments: Int = 0
-    @Transient var totalSegments: Int = 0
+    var totalSegments: Int = 0
     @Transient var activeThreads: Int = 0
-    @Transient var engineType: String = "" // "HLS" or "Normal"
+    var engineType: String = "" // "HLS", "DASH", or "Normal"
     
     // 1DM-style granular progress
     @Transient val partProgress = ConcurrentHashMap<Int, Float>()

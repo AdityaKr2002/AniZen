@@ -319,6 +319,17 @@ class Downloader(
         }
     }
 
+    private fun detectEngineType(video: Video): String {
+        return when {
+            video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent") -> "Torrent"
+            video.videoUrl.contains(".m3u8") -> "HLS"
+            video.videoUrl.contains(".mpd") || 
+            (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || 
+            video.audioTracks.isNotEmpty() -> "DASH"
+            else -> "Normal"
+        }
+    }
+
     private suspend fun downloadEpisode(download: Download) {
         val animeDir = provider.getAnimeDir(download.anime.title, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
@@ -352,6 +363,11 @@ class Downloader(
                 } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
             }.also { download.video = it }
             
+            // Pro-Active: Set engine type early for UI and logic
+            if (download.engineType.isBlank()) {
+                download.engineType = detectEngineType(video)
+            }
+
             // Check again for cancellation after slow network call
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
 
@@ -360,14 +376,11 @@ class Downloader(
                 if (success) return else throw Exception("Could not open external downloader")
             }
 
-            val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
-                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, videoFilename)
-            } else if (video.videoUrl.contains(".m3u8")) {
-                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, videoFilename)
-            } else if (video.videoUrl.contains(".mpd") || (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || video.audioTracks.isNotEmpty()) {
-                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, videoFilename)
-            } else {
-                download.engineType = "Normal"; internalDownload(download, sandboxDir, videoFilename)
+            val videoFile = when (download.engineType) {
+                "Torrent" -> torrentDownload(download, sandboxDir, videoFilename)
+                "HLS" -> nativeHlsDownload(download, sandboxDir, videoFilename)
+                "DASH" -> nativeDashMuxDownload(download, sandboxDir, videoFilename)
+                else -> internalDownload(download, sandboxDir, videoFilename)
             }
 
             // Download soft subtitles
@@ -531,11 +544,20 @@ class Downloader(
         val host = Uri.parse(video.videoUrl).host ?: ""
         val threadCount = calculateDynamicConcurrency(host)
         
-        val headRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).head().build()).execute()
-        val size = headRes.header("Content-Length")?.toLong() ?: -1L
+        // Instant Startup: Use cached size if available, otherwise probe in parallel
+        var size = download.totalSize
+        if (size <= 0) {
+            val headRes = try {
+                client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).head().build()).execute()
+            } catch (e: Exception) {
+                null
+            }
+            size = headRes?.header("Content-Length")?.toLong() ?: -1L
+            download.totalSize = size
+        }
+
         if (size > 0) checkFreeSpace(sandboxDir, size)
         
-        download.totalSize = size
         download.activeThreads = threadCount
 
         val finalFile = File(sandboxDir, "$filename.tmp")
