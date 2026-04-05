@@ -90,6 +90,7 @@ class Downloader(
     val queueState = _queueState.asStateFlow()
 
     private val memorySemaphore = Semaphore(12)
+    private val ffmpegMutex = kotlinx.coroutines.sync.Mutex()
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
@@ -540,6 +541,12 @@ class Downloader(
 
     private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
+        
+        // Scheme Validation: OkHttp only supports http/https
+        if (!video.videoUrl.startsWith("http", ignoreCase = true)) {
+            throw IllegalArgumentException("Unsupported URL scheme: ${video.videoUrl.substringBefore(":")}")
+        }
+
         val client = networkHelper.downloadClient
         val host = Uri.parse(video.videoUrl).host ?: ""
         val threadCount = calculateDynamicConcurrency(host)
@@ -956,7 +963,7 @@ class Downloader(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
-    ): java.io.File {
+    ): java.io.File = ffmpegMutex.withLock {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
         val ffmpegFilename = { 
@@ -970,9 +977,8 @@ class Downloader(
             "${it.first}: ${it.second}\r\n"
         }
 
-        // Pro-Active: Parallel Metadata Extraction to eliminate handshake lag
-        var duration = 0L
-        val probeJob = scope.launch {
+        // Sequential Probing (Stable): Only run if duration is unknown
+        if (download.totalDuration <= 0L) {
             try {
                 val ffprobeCommand = FFmpegKitConfig.parseArguments(
                     "${headerOptions} -v quiet -show_entries " +
@@ -980,10 +986,11 @@ class Downloader(
                 )
                 val session = com.arthenica.ffmpegkit.FFprobeKit.executeWithArguments(ffprobeCommand)
                 if (session.returnCode.isValueSuccess) {
-                    duration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
+                    download.totalDuration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
+                    store.update(download)
                 }
             } catch (e: Exception) {
-                logcat(LogPriority.DEBUG) { "FFprobe failed, continuing with partial metadata" }
+                logcat(LogPriority.DEBUG) { "FFprobe failed, continuing without duration metadata" }
             }
         }
 
@@ -1009,11 +1016,11 @@ class Downloader(
             
             // UI Awareness: Transition from Starting to Processing
             if (download.status == Download.State.DOWNLOADING && outTime > 0) {
-                download.status = Download.State.MERGING // Using MERGING for active DASH processing
+                download.status = Download.State.MERGING
             }
 
-            if (duration > 0) {
-                download.progress = (100 * outTime / duration).toInt().coerceIn(0, 100)
+            if (download.totalDuration > 0) {
+                download.progress = (100 * outTime / download.totalDuration).toInt().coerceIn(0, 100)
             }
             
             if (now - lastUpdate > 500L) {
@@ -1023,11 +1030,10 @@ class Downloader(
             }
         }
 
-        return suspendCancellableCoroutine { continuation ->
+        return@withLock suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {
-                    probeJob.cancel()
                     if (it.returnCode.isValueSuccess) {
                         val finalFile = java.io.File(sandboxDir, "$filename.mkv")
                         tmpFile.copyTo(finalFile, overwrite = true)
@@ -1047,7 +1053,6 @@ class Downloader(
             )
             continuation.invokeOnCancellation {
                 session.cancel()
-                probeJob.cancel()
             }
         }
     }

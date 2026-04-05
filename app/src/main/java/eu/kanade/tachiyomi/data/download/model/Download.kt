@@ -54,6 +54,7 @@ data class Download(
     @Transient var speed: String = ""
     @Transient var eta: String = ""
     var totalSize: Long = -1L
+    var totalDuration: Long = 0L
     @Transient var downloadedSize: String = ""
     @Transient var downloadedSegments: Int = 0
     var totalSegments: Int = 0
