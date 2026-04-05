@@ -91,6 +91,7 @@ class Downloader(
     val queueState = _queueState.asStateFlow()
 
     private val memorySemaphore = Semaphore(12)
+    private val ffmpegSemaphore = Semaphore(2) // Allow up to 2 concurrent FFmpeg tasks
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
@@ -936,7 +937,7 @@ class Downloader(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
-    ): java.io.File {
+    ): java.io.File = ffmpegSemaphore.withPermit {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
         val ffmpegFilename = { UniFile.fromFile(tmpFile)!!.toFFmpegString(context) }
@@ -946,18 +947,22 @@ class Downloader(
             "${it.first}: ${it.second}\r\n"
         }
 
-        // Get duration for progress bar
+        // Pro-Active: Parallel Metadata Extraction to eliminate handshake lag
         var duration = 0L
-        try {
-            val ffprobeCommand = FFmpegKitConfig.parseArguments(
-                "${headerOptions} -v quiet -show_entries " +
-                    "format=duration -of default=noprint_wrappers=1:nokey=1 \"${video.videoUrl}\""
-            )
-            val session = com.arthenica.ffmpegkit.FFprobeKit.executeWithArguments(ffprobeCommand)
-            if (session.returnCode.isValueSuccess) {
-                duration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
+        val probeJob = scope.launch {
+            try {
+                val ffprobeCommand = FFmpegKitConfig.parseArguments(
+                    "${headerOptions} -v quiet -show_entries " +
+                        "format=duration -of default=noprint_wrappers=1:nokey=1 \"${video.videoUrl}\""
+                )
+                val session = com.arthenica.ffmpegkit.FFprobeKit.executeWithArguments(ffprobeCommand)
+                if (session.returnCode.isValueSuccess) {
+                    duration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.DEBUG) { "FFprobe failed, continuing with partial metadata" }
             }
-        } catch (e: Exception) {}
+        }
 
         val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename())
 
@@ -969,7 +974,7 @@ class Downloader(
 
         val logCallback = LogCallback { log ->
             if (log.level <= Level.AV_LOG_WARNING) {
-                logcat(LogPriority.ERROR) { log.message }
+                logcat(LogPriority.ERROR) { "FFmpeg: ${log.message}" }
             }
         }
 
@@ -978,9 +983,16 @@ class Downloader(
             val now = System.currentTimeMillis()
             download.updateSpeed(s.size)
             val outTime = (s.time / 1000.0).toLong()
-            if (duration > 0) {
-                download.progress = (100 * outTime / duration).toInt()
+            
+            // UI Awareness: Transition from Starting to Processing
+            if (download.status == Download.State.DOWNLOADING && outTime > 0) {
+                download.status = Download.State.MERGING // Using MERGING for active DASH processing
             }
+
+            if (duration > 0) {
+                download.progress = (100 * outTime / duration).toInt().coerceIn(0, 100)
+            }
+            
             if (now - lastUpdate > 500L) {
                 lastUpdate = now
                 notifier.onProgressChange(download)
@@ -988,10 +1000,11 @@ class Downloader(
             }
         }
 
-        return suspendCancellableCoroutine { continuation ->
+        return@withPermit suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {
+                    probeJob.cancel()
                     if (it.returnCode.isValueSuccess) {
                         val finalFile = java.io.File(sandboxDir, "$filename.mkv")
                         tmpFile.copyTo(finalFile, overwrite = true)
@@ -1011,6 +1024,7 @@ class Downloader(
             )
             continuation.invokeOnCancellation {
                 session.cancel()
+                probeJob.cancel()
             }
         }
     }

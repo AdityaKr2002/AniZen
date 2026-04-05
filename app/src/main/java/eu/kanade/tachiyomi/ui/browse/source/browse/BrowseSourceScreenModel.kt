@@ -37,7 +37,9 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
@@ -119,7 +121,20 @@ class BrowseSourceScreenModel(
             }
         }
 
+        // debounce search updates
+        state.map { it.toolbarQuery }
+            .distinctUntilChanged()
+            .drop(1) // ignore initial state
+            .debounce(500)
+            .onEach { query ->
+                if (state.value.listing.query != query) {
+                    search(query)
+                }
+            }
+            .launchIn(screenModelScope)
+
         if (!basePreferences.incognitoMode().get()) {
+...
             sourcePreferences.lastUsedSource().set(source.id)
         }
 

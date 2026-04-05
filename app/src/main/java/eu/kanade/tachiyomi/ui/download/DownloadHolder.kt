@@ -92,14 +92,16 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
         val eta = download.eta
         val sizeInfo = download.downloadedSize
         val engine = download.engineType ?: "Normal"
+        val isDash = engine.contains("DASH")
         val isHls = engine == "HLS"
         
         // 1DM+ Core Status Logic
         val statusText = buildString {
             when (download.status) {
                 Download.State.MERGING -> {
-                    append("Merging... (").append(download.progress).append("%)")
-                    append("\nProcessing parts into final file...")
+                    append(if (isDash) "Processing adaptive streams..." else "Merging...").append(" (").append(download.progress).append("%)")
+                    if (isDash) append("\nMultiplexing audio & video buffers...")
+                    else append("\nProcessing parts into final file...")
                     return@buildString
                 }
                 Download.State.DECRYPTING -> {
@@ -136,29 +138,38 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
             
             // Line 3: Connection Intelligence
             append("\n")
-            append("Threads: ").append(download.activeThreads).append(" Active")
+            append("Threads: ").append(if (isDash) 1 else download.activeThreads).append(" Active")
             if (download.totalSegments > 0) {
                 append(" • ").append(if (isHls) "Segments: " else "Parts: ")
                 append(download.downloadedSegments).append("/").append(download.totalSegments)
             }
             
             // Line 4: Engine Identity
-            append("\nEngine: ").append(if (isHls) "HLS (Sequential Merge)" else "Normal (Direct Multi-threaded)")
+            append("\nEngine: ").append(
+                when {
+                    isDash -> "DASH (FFmpeg Adaptive)"
+                    isHls -> "HLS (Sequential Merge)"
+                    else -> "Normal (Direct Multi-threaded)"
+                }
+            )
         }
         
         binding.downloadProgressText.text = statusText
 
         // Update Engine Icon & Visibility
         binding.engineIcon.visibility = View.VISIBLE
-        when (engine) {
-            "Normal" -> {
-                binding.engineIcon.setImageResource(R.drawable.ic_download_item_24dp)
-            }
-            "HLS" -> {
+        when {
+            isDash -> {
                 binding.engineIcon.setImageResource(R.drawable.ic_video_chapter_20dp)
             }
-            "Torrent" -> {
+            isHls -> {
+                binding.engineIcon.setImageResource(R.drawable.ic_video_chapter_20dp)
+            }
+            engine == "Torrent" -> {
                 binding.engineIcon.setImageResource(R.drawable.ic_sync_24dp)
+            }
+            engine == "Normal" -> {
+                binding.engineIcon.setImageResource(R.drawable.ic_download_item_24dp)
             }
             else -> {
                 binding.engineIcon.visibility = View.GONE
