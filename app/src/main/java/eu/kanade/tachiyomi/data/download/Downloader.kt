@@ -585,23 +585,29 @@ class Downloader(
         // Instant Startup: Use cached size if available, otherwise probe in parallel
         var size = download.totalSize
         if (size <= 0) {
-            val headRes = try {
-                client.newCall(Request.Builder().url(video.videoUrl).headers(headers).head().build()).execute()
+            try {
+                client.newCall(Request.Builder().url(video.videoUrl).headers(headers).head().build()).execute().use { res ->
+                    size = res.header("Content-Length")?.toLong() ?: -1L
+                }
             } catch (e: Exception) {
-                null
+                logcat(LogPriority.DEBUG) { "HEAD request failed: ${e.message}" }
             }
-            
-            size = headRes?.header("Content-Length")?.toLong() ?: -1L
             
             // Pro-Active: Fallback to partial GET if HEAD failed (Sibnet/sensitive hoster support)
             if (size <= 0) {
-                val getRes = try {
-                    client.newCall(Request.Builder().url(video.videoUrl).headers(headers).header("Range", "bytes=0-0").build()).execute()
+                try {
+                    client.newCall(Request.Builder().url(video.videoUrl).headers(headers).header("Range", "bytes=0-0").build()).execute().use { res ->
+                        val contentRange = res.header("Content-Range")
+                        size = if (contentRange != null) {
+                            contentRange.substringAfterLast("/").toLongOrNull() ?: -1L
+                        } else {
+                            // If server returned 200 OK instead of 206 Partial Content
+                            res.header("Content-Length")?.toLong() ?: -1L
+                        }
+                    }
                 } catch (e: Exception) {
-                    null
+                    logcat(LogPriority.DEBUG) { "Fallback GET failed: ${e.message}" }
                 }
-                val contentRange = getRes?.header("Content-Range")
-                size = contentRange?.substringAfterLast("/")?.toLongOrNull() ?: -1L
             }
             
             download.totalSize = size
