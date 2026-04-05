@@ -48,7 +48,8 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
             binding.downloadProgress.progress = 0
             binding.downloadProgress.max = 1
             binding.downloadProgressText.text = ""
-            if (download.status == Download.State.DOWNLOADING) {
+            val engine = download.engineType ?: "Normal"
+            if (download.status == Download.State.DOWNLOADING && !engine.startsWith("DASH")) {
                 binding.granularProgress.visibility = View.VISIBLE
                 binding.granularProgress.bind(download)
             } else {
@@ -68,7 +69,8 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
         if (binding.downloadProgress.max == 1) {
             binding.downloadProgress.max = 100
         }
-        if (download.status == Download.State.DOWNLOADING) {
+        val engine = download.engineType ?: "Normal"
+        if (download.status == Download.State.DOWNLOADING && !engine.startsWith("DASH")) {
             binding.granularProgress.visibility = View.VISIBLE
             binding.granularProgress.bind(download)
         } else {

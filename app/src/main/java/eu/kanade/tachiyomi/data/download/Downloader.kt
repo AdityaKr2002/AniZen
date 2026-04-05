@@ -9,6 +9,18 @@ import android.os.Bundle
 import android.os.StatFs
 import androidx.annotation.RequiresApi
 import com.hippo.unifile.UniFile
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.FFmpegKitConfig
+import com.arthenica.ffmpegkit.FFmpegSession
+import com.arthenica.ffmpegkit.Level
+import com.arthenica.ffmpegkit.LogCallback
+import com.arthenica.ffmpegkit.ReturnCode
+import com.arthenica.ffmpegkit.StatisticsCallback
+import eu.kanade.tachiyomi.animesource.model.Track
+import eu.kanade.tachiyomi.util.storage.toFFmpegString
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.download.model.Download
@@ -127,16 +139,21 @@ class Downloader(
             // Dynamic Queue Processing
             while (isRunning) {
                 val download = queueState.value.firstOrNull { 
-                    it.status == Download.State.QUEUE || it.status == Download.State.DOWNLOADING 
+                    it.status == Download.State.QUEUE || 
+                    it.status == Download.State.DOWNLOADING ||
+                    it.status == Download.State.PAUSED
                 } ?: break
                 
                 try {
                     downloadEpisode(download)
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    logcat(LogPriority.ERROR, e)
-                    download.status = Download.State.ERROR
-                    notifier.onError(e.message)
+                    if (e is CancellationException) {
+                        logcat(LogPriority.INFO) { "Individual download paused" }
+                    } else {
+                        logcat(LogPriority.ERROR, e)
+                        download.status = Download.State.ERROR
+                        notifier.onError(e.message)
+                    }
                 }
                 delay(100) // Cooling period to prevent CPU spikes on rapid failures
             }
@@ -346,13 +363,13 @@ class Downloader(
             }
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
-                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, videoFilename)
+                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
             } else if (video.videoUrl.contains(".m3u8")) {
-                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, videoFilename)
-            } else if (video.videoUrl.contains(".mpd") || video.audioTracks.isNotEmpty()) {
-                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, videoFilename)
+                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, episodeDirname)
+            } else if (video.videoUrl.contains(".mpd") || (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || video.audioTracks.isNotEmpty()) {
+                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, episodeDirname)
             } else {
-                download.engineType = "Normal"; internalDownload(download, sandboxDir, videoFilename)
+                download.engineType = "Normal"; internalDownload(download, sandboxDir, episodeDirname)
             }
 
             // Download soft subtitles
@@ -915,7 +932,115 @@ class Downloader(
         }
     }
 
-    private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
+    private suspend fun ffmpegDownload(
+        download: Download,
+        sandboxDir: java.io.File,
+        filename: String,
+    ): java.io.File {
+        val video = download.video!!
+        val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
+        val ffmpegFilename = { UniFile.fromFile(tmpFile)!!.toFFmpegString(context) }
+
+        val headers = video.headers ?: download.source.headers
+        val headerOptions = headers.joinToString("", "-headers '", "'") {
+            "${it.first}: ${it.second}\r\n"
+        }
+
+        // Get duration for progress bar
+        var duration = 0L
+        try {
+            val ffprobeCommand = FFmpegKitConfig.parseArguments(
+                "${headerOptions} -v quiet -show_entries " +
+                    "format=duration -of default=noprint_wrappers=1:nokey=1 \"${video.videoUrl}\""
+            )
+            val session = com.arthenica.ffmpegkit.FFprobeKit.executeWithArguments(ffprobeCommand)
+            if (session.returnCode.isValueSuccess) {
+                duration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
+            }
+        } catch (e: Exception) {}
+
+        val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename())
+
+        // Initial UI State
+        download.status = Download.State.DOWNLOADING
+        download.activeThreads = 0
+        notifier.onProgressChange(download)
+        store.update(download)
+
+        val logCallback = LogCallback { log ->
+            if (log.level <= Level.AV_LOG_WARNING) {
+                logcat(LogPriority.ERROR) { log.message }
+            }
+        }
+
+        var lastUpdate = System.currentTimeMillis()
+        val statCallback = StatisticsCallback { s ->
+            val now = System.currentTimeMillis()
+            download.updateSpeed(s.size)
+            val outTime = (s.time / 1000.0).toLong()
+            if (duration > 0) {
+                download.progress = (100 * outTime / duration).toInt()
+            }
+            if (now - lastUpdate > 500L) {
+                lastUpdate = now
+                notifier.onProgressChange(download)
+                store.update(download)
+            }
+        }
+
+        return suspendCancellableCoroutine { continuation ->
+            val session = FFmpegKit.executeWithArgumentsAsync(
+                ffmpegOptions,
+                {
+                    if (it.returnCode.isValueSuccess) {
+                        val finalFile = java.io.File(sandboxDir, "$filename.mkv")
+                        tmpFile.copyTo(finalFile, overwrite = true)
+                        tmpFile.delete()
+                        continuation.resume(finalFile)
+                    } else {
+                        if (it.returnCode.isValueCancel) {
+                            download.status = Download.State.PAUSED
+                            continuation.cancel()
+                        } else {
+                            continuation.resumeWithException(Exception("FFmpeg failed: ${it.returnCode}"))
+                        }
+                    }
+                },
+                logCallback,
+                statCallback,
+            )
+            continuation.invokeOnCancellation {
+                session.cancel()
+            }
+        }
+    }
+
+    private fun getFFmpegOptions(video: Video, headerOptions: String, ffmpegFilename: String): Array<String> {
+        fun formatInputs(tracks: List<Track>) = tracks.joinToString(" ", postfix = " ") {
+            buildList {
+                if (it.url.startsWith("http")) add(headerOptions)
+                add("-i")
+                add("\"${it.url}\"")
+            }.joinToString(" ")
+        }
+
+        val audioInputs = formatInputs(video.audioTracks)
+        val audioMaps = video.audioTracks.indices.joinToString(" ") { "-map ${it + 1}:a" }
+        val audioMetadata = video.audioTracks.mapIndexed { i, t -> "-metadata:s:a:$i \"title=${t.lang}\"" }.joinToString(" ")
+
+        val command = listOf(
+            if (video.videoUrl.startsWith("http")) headerOptions else "",
+            "-i \"${video.videoUrl}\"", audioInputs,
+            "-map 0:v", audioMaps, "-map 0:a?",
+            "-f matroska -c:a copy -c:v copy",
+            audioMetadata,
+            "\"$ffmpegFilename\" -y"
+        ).filter { it.isNotBlank() }.joinToString(" ")
+
+        return FFmpegKitConfig.parseArguments(command)
+    }
+
+    private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: java.io.File, filename: String): java.io.File = ffmpegDownload(download, sandboxDir, filename)
     private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
 
     companion object {
