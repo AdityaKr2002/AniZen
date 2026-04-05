@@ -90,7 +90,6 @@ class Downloader(
     val queueState = _queueState.asStateFlow()
 
     private val memorySemaphore = Semaphore(12)
-    private val ffmpegSemaphore = Semaphore(2) // Allow up to 2 concurrent FFmpeg tasks
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
@@ -140,8 +139,7 @@ class Downloader(
             while (isRunning) {
                 val download = queueState.value.firstOrNull { 
                     it.status == Download.State.QUEUE || 
-                    it.status == Download.State.DOWNLOADING ||
-                    it.status == Download.State.PAUSED
+                    it.status == Download.State.DOWNLOADING
                 } ?: break
                 
                 try {
@@ -363,13 +361,13 @@ class Downloader(
             }
 
             val videoFile = if (video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent")) {
-                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "Torrent"; torrentDownload(download, sandboxDir, videoFilename)
             } else if (video.videoUrl.contains(".m3u8")) {
-                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "HLS"; nativeHlsDownload(download, sandboxDir, videoFilename)
             } else if (video.videoUrl.contains(".mpd") || (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || video.audioTracks.isNotEmpty()) {
-                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "DASH"; nativeDashMuxDownload(download, sandboxDir, videoFilename)
             } else {
-                download.engineType = "Normal"; internalDownload(download, sandboxDir, episodeDirname)
+                download.engineType = "Normal"; internalDownload(download, sandboxDir, videoFilename)
             }
 
             // Download soft subtitles
@@ -936,10 +934,14 @@ class Downloader(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
-    ): java.io.File = ffmpegSemaphore.withPermit {
+    ): java.io.File {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
-        val ffmpegFilename = { UniFile.fromFile(tmpFile)!!.toFFmpegString(context) }
+        val ffmpegFilename = { 
+            val uniFile = UniFile.fromFile(tmpFile)
+            if (uniFile == null) throw IOException("Failed to create temporary file for FFmpeg")
+            uniFile.toFFmpegString(context) 
+        }
 
         val headers = video.headers ?: download.source.headers
         val headerOptions = headers.joinToString("", "-headers '", "'") {
@@ -999,7 +1001,7 @@ class Downloader(
             }
         }
 
-        return@withPermit suspendCancellableCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {
