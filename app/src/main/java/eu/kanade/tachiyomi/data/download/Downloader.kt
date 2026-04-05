@@ -620,28 +620,26 @@ class Downloader(
         val finalFile = File(sandboxDir, "$filename.tmp")
         val downloadedBytes = LongAdder()
 
-        if (size > 0) {
+        if (size > 0 && threadCount > 1) {
             val partSize = size / threadCount
             coroutineScope {
                 (0 until threadCount).map { i ->
                     async {
                         val partFile = File(sandboxDir, "$filename.part$i")
-                        val expected = (download.partProgress[i] ?: 0f) * (if (i == threadCount - 1) size - (i * partSize) else partSize)
-                        if (partFile.exists() && partFile.length() > expected.toLong()) {
-                            RandomAccessFile(partFile, "rw").use { it.setLength(expected.toLong()) }
-                        }
-                        
                         var localDownloaded = partFile.length()
                         downloadedBytes.add(localDownloaded)
 
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
-                            if (i > 0) delay(50L)
+                            
+                            // Server-Side Safety: Skip if part is already finished
+                            if (start > end) return@retry
 
                             val req = Request.Builder().url(video.videoUrl).headers(headers)
                                 .header("Range", "bytes=$start-$end").build()
                             client.newCall(req).execute().use { res ->
+                                if (!res.isSuccessful) throw IOException("Unexpected code $res")
                                 val source = res.body?.source() ?: throw IOException("Empty body")
                                 java.io.FileOutputStream(partFile, true).use { out ->
                                     val buffer = BufferPool.obtain()
@@ -657,18 +655,12 @@ class Downloader(
 
                                             val now = System.currentTimeMillis()
                                             if (now - lastUpdate > 500) {
-                                                download.partProgress[i] = (localDownloaded.toDouble() / (if (i == threadCount - 1) size - (i * partSize) else partSize)).toFloat()
                                                 download.update(downloadedBytes.sum(), size, false)
                                                 notifier.onProgressChange(download)
                                                 store.update(download)
                                                 lastUpdate = now
                                             }
                                         }
-                                        // Final update for this part
-                                        download.partProgress[i] = (localDownloaded.toDouble() / (if (i == threadCount - 1) size - (i * partSize) else partSize)).toFloat()
-                                        download.update(downloadedBytes.sum(), size, false)
-                                        notifier.onProgressChange(download)
-                                        store.update(download)
                                     } finally {
                                         BufferPool.recycle(buffer)
                                     }
@@ -693,8 +685,8 @@ class Downloader(
                     if (partFile.exists()) {
                         java.io.FileInputStream(partFile).use { inStream ->
                             val inChannel = inStream.channel
-                            val size = inChannel.size()
-                            var remaining = size
+                            val pSize = inChannel.size()
+                            var remaining = pSize
                             var position = 0L
                             while (remaining > 0) {
                                 coroutineContext.ensureActive()
@@ -718,23 +710,35 @@ class Downloader(
                 }
             }
         } else {
+            // Robust Single-Threaded/Unknown Size Downloader
             retry {
-                val req = Request.Builder().url(video.videoUrl).headers(headers).build()
-                client.newCall(req).execute().use { res ->
+                val start = if (finalFile.exists()) finalFile.length() else 0L
+                val reqBuilder = Request.Builder().url(video.videoUrl).headers(headers)
+                if (start > 0) reqBuilder.header("Range", "bytes=$start-")
+                
+                client.newCall(reqBuilder.build()).execute().use { res ->
+                    // Handle 200 OK when 206 was requested (server doesn't support Range)
+                    val isResuming = start > 0 && res.code == 206
+                    val append = isResuming
+                    val actualStart = if (isResuming) start else 0L
+                    
                     val source = res.body?.source() ?: throw IOException("Empty body")
-                    java.io.FileOutputStream(finalFile).use { out ->
+                    java.io.FileOutputStream(finalFile, append).use { out ->
                         val buffer = BufferPool.obtain()
                         try {
                             var read: Int
-                            var totalRead = 0L
+                            var totalRead = actualStart
                             var lastUpdate = System.currentTimeMillis()
                             while (source.read(buffer).also { read = it } != -1) {
+                                coroutineContext.ensureActive()
+                                if (download.status == Download.State.PAUSED) throw CancellationException()
+                                
                                 out.write(buffer, 0, read)
                                 totalRead += read
                                 
                                 val now = System.currentTimeMillis()
                                 if (now - lastUpdate > 500) {
-                                    download.update(totalRead, -1, false)
+                                    download.update(totalRead, size, false)
                                     notifier.onProgressChange(download)
                                     lastUpdate = now
                                 }
@@ -1046,23 +1050,6 @@ class Downloader(
         val headers = video.headers ?: download.source.headers
         val headerOptions = headers.joinToString("", "-headers '", "'") {
             "${it.first}: ${it.second}\r\n"
-        }
-
-        // Sequential Probing (Stable): Only run if duration is unknown
-        if (download.totalDuration <= 0L) {
-            try {
-                val ffprobeCommand = FFmpegKitConfig.parseArguments(
-                    "${headerOptions} -v quiet -show_entries " +
-                        "format=duration -of default=noprint_wrappers=1:nokey=1 \"${video.videoUrl}\""
-                )
-                val session = com.arthenica.ffmpegkit.FFprobeKit.executeWithArguments(ffprobeCommand)
-                if (session.returnCode.isValueSuccess) {
-                    download.totalDuration = session.allLogsAsString.trim().toFloatOrNull()?.toLong() ?: 0L
-                    store.update(download)
-                }
-            } catch (e: Exception) {
-                logcat(LogPriority.DEBUG) { "FFprobe failed, continuing without duration metadata" }
-            }
         }
 
         val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename)
