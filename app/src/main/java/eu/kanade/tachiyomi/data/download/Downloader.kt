@@ -1024,11 +1024,6 @@ class Downloader(
             // Sync with Normal design: report current bytes read
             download.update(s.size, download.totalSize, false)
             
-            // UI Awareness: Transition from Starting to Processing
-            if (download.status == Download.State.DOWNLOADING && outTime > 0) {
-                download.status = Download.State.MERGING
-            }
-
             if (download.totalDuration > 0) {
                 download.progress = (100 * outTime / download.totalDuration).toInt().coerceIn(0, 100)
             }

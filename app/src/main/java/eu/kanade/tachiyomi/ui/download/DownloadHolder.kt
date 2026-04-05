@@ -91,44 +91,40 @@ class DownloadHolder(private val view: View, val adapter: DownloadAdapter) :
             when (download.status) {
                 Download.State.MERGING -> {
                     append(if (isDash) "Processing adaptive streams..." else "Merging...").append(" (").append(download.progress).append("%)")
-                    if (isDash) append("\nMultiplexing audio & video buffers...")
-                    else append("\nProcessing parts into final file...")
-                    return@buildString
+                    append("\n")
                 }
                 Download.State.DECRYPTING -> {
                     append("Decrypting... (").append(download.progress).append("%)")
-                    append("\nDecrypting segments in RAM...")
-                    return@buildString
+                    append("\n")
                 }
                 Download.State.FINALIZING -> {
                     append("Finalizing... (").append(download.progress).append("%)")
-                    append("\nMoving to public downloads folder...")
-                    return@buildString
+                    append("\n")
                 }
-                else -> {}
+                else -> {
+                    // Line 1: Progress & Size
+                    if (sizeInfo.isNotEmpty()) {
+                        append(sizeInfo).append(" (").append(download.progress).append("%)")
+                    } else if (download.progress > 0) {
+                        append(download.progress).append("%")
+                    } else {
+                        append("0% • Starting...")
+                    }
+                    append("\n")
+                }
             }
 
-            // Line 1: Progress & Size
-            if (sizeInfo.isNotEmpty()) {
-                append(sizeInfo).append(" (").append(download.progress).append("%)")
-            } else if (download.progress > 0) {
-                append(download.progress).append("%")
-            } else {
-                append("0% • Starting...")
-            }
-            
-            // Line 2: Network Performance
+            // Line 2: Network Performance (Speed/ETA)
             if (speed.isNotEmpty() || eta.isNotEmpty()) {
-                append("\n")
                 if (speed.isNotEmpty()) append("Speed: ").append(speed)
                 if (eta.isNotEmpty()) {
                     if (speed.isNotEmpty()) append(" • ")
                     append("ETA: ").append(eta)
                 }
+                append("\n")
             }
             
             // Line 3: Connection Intelligence
-            append("\n")
             append("Threads: ").append(if (isDash) 1 else download.activeThreads).append(" Active")
             if (download.totalSegments > 0) {
                 append(" • ").append(if (isHls) "Segments: " else "Parts: ")
