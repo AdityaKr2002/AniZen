@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
@@ -966,11 +967,8 @@ class Downloader(
     ): java.io.File = ffmpegMutex.withLock {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
-        val ffmpegFilename = { 
-            val uniFile = UniFile.fromFile(tmpFile)
-            if (uniFile == null) throw IOException("Failed to create temporary file for FFmpeg")
-            uniFile.toFFmpegString(context) 
-        }
+        val uniFile = UniFile.fromFile(tmpFile) ?: throw IOException("Failed to create temporary file for FFmpeg")
+        val ffmpegFilename = uniFile.toFFmpegString(context)
 
         val headers = video.headers ?: download.source.headers
         val headerOptions = headers.joinToString("", "-headers '", "'") {
@@ -994,7 +992,7 @@ class Downloader(
             }
         }
 
-        val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename())
+        val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename)
 
         // Initial UI State
         download.status = Download.State.DOWNLOADING
@@ -1030,7 +1028,7 @@ class Downloader(
             }
         }
 
-        return@withLock suspendCancellableCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {
