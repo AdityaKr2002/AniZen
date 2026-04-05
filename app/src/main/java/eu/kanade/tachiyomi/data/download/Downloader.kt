@@ -561,6 +561,14 @@ class Downloader(
         cache.addEpisode(filename, publicDir, download.anime)
     }
 
+    private fun getHeaders(video: Video): Headers {
+        val builder = (video.headers ?: Headers.headersOf()).newBuilder()
+        if (builder.get("User-Agent") == null) {
+            builder.add("User-Agent", networkHelper.defaultUserAgentProvider())
+        }
+        return builder.build()
+    }
+
     private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
         
@@ -572,16 +580,30 @@ class Downloader(
         val client = networkHelper.downloadClient
         val host = Uri.parse(video.videoUrl).host ?: ""
         val threadCount = calculateDynamicConcurrency(host)
+        val headers = getHeaders(video)
         
         // Instant Startup: Use cached size if available, otherwise probe in parallel
         var size = download.totalSize
         if (size <= 0) {
             val headRes = try {
-                client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).head().build()).execute()
+                client.newCall(Request.Builder().url(video.videoUrl).headers(headers).head().build()).execute()
             } catch (e: Exception) {
                 null
             }
+            
             size = headRes?.header("Content-Length")?.toLong() ?: -1L
+            
+            // Pro-Active: Fallback to partial GET if HEAD failed (Sibnet/sensitive hoster support)
+            if (size <= 0) {
+                val getRes = try {
+                    client.newCall(Request.Builder().url(video.videoUrl).headers(headers).header("Range", "bytes=0-0").build()).execute()
+                } catch (e: Exception) {
+                    null
+                }
+                val contentRange = getRes?.header("Content-Range")
+                size = contentRange?.substringAfterLast("/")?.toLongOrNull() ?: -1L
+            }
+            
             download.totalSize = size
         }
 
@@ -611,7 +633,7 @@ class Downloader(
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
                             if (i > 0) delay(50L)
 
-                            val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf())
+                            val req = Request.Builder().url(video.videoUrl).headers(headers)
                                 .header("Range", "bytes=$start-$end").build()
                             client.newCall(req).execute().use { res ->
                                 val source = res.body?.source() ?: throw IOException("Empty body")
@@ -691,7 +713,7 @@ class Downloader(
             }
         } else {
             retry {
-                val req = Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()
+                val req = Request.Builder().url(video.videoUrl).headers(headers).build()
                 client.newCall(req).execute().use { res ->
                     res.body?.byteStream()?.copyTo(FileOutputStream(finalFile))
                 }
@@ -703,7 +725,8 @@ class Downloader(
     private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
         val video = download.video!!
         val client = networkHelper.downloadClient
-        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
+        val headers = getHeaders(video)
+        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(headers).build()).execute()
         
         if (!playlistRes.isSuccessful) throw IOException("Failed to fetch playlist: ${playlistRes.code}")
         val lines = playlistRes.body?.string()?.lines() ?: emptyList()
@@ -733,7 +756,7 @@ class Downloader(
         
         var secretKey: javax.crypto.spec.SecretKeySpec? = null
         if (encryptionKeyUrl != null) {
-            val keyRes = client.newCall(Request.Builder().url(encryptionKeyUrl).headers(video.headers ?: Headers.headersOf()).build()).execute()
+            val keyRes = client.newCall(Request.Builder().url(encryptionKeyUrl).headers(headers).build()).execute()
             val keyBytes = keyRes.body?.bytes() ?: throw IOException("Failed to fetch AES key")
             secretKey = javax.crypto.spec.SecretKeySpec(keyBytes, "AES")
         }
@@ -762,7 +785,7 @@ class Downloader(
                         }
 
                         retry(times = 5) {
-                            client.newCall(Request.Builder().url(seg.second).headers(video.headers ?: Headers.headersOf()).build()).execute().use { res ->
+                            client.newCall(Request.Builder().url(seg.second).headers(headers).build()).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Segment failed: ${res.code}")
                                 var data = res.body?.bytes() ?: throw IOException("Empty segment")
 
