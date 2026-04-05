@@ -235,7 +235,12 @@ class Downloader(
         _queueState.update { current ->
             val new = current.toMutableList()
             downloads.forEach { download ->
-                if (new.none { it.episode.id == download.episode.id }) {
+                val existing = new.find { it.episode.id == download.episode.id }
+                if (existing != null) {
+                    if (existing.status == Download.State.PAUSED) {
+                        existing.status = Download.State.QUEUE
+                    }
+                } else {
                     download.status = Download.State.QUEUE
                     new.add(download)
                 }
@@ -1009,8 +1014,15 @@ class Downloader(
         var lastUpdate = System.currentTimeMillis()
         val statCallback = StatisticsCallback { s ->
             val now = System.currentTimeMillis()
-            download.updateSpeed(s.size)
             val outTime = (s.time / 1000.0).toLong()
+            
+            // Estimation: If we have duration and bitrate, estimate final size
+            if (download.totalSize <= 0 && download.totalDuration > 0 && s.bitrate > 0) {
+                download.totalSize = (download.totalDuration * s.bitrate / 8).toLong()
+            }
+
+            // Sync with Normal design: report current bytes read
+            download.update(s.size, download.totalSize, false)
             
             // UI Awareness: Transition from Starting to Processing
             if (download.status == Download.State.DOWNLOADING && outTime > 0) {
