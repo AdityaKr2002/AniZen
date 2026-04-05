@@ -30,7 +30,6 @@ import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import tachiyomi.core.common.util.system.logcat
 import eu.kanade.tachiyomi.util.storage.DiskUtil
-import eu.kanade.tachiyomi.util.storage.toFFmpegString
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import okhttp3.Headers
 import okhttp3.Request
