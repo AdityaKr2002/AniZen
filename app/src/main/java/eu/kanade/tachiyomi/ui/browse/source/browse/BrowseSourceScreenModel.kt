@@ -127,7 +127,11 @@ class BrowseSourceScreenModel(
             .drop(1) // ignore initial state
             .debounce(500)
             .onEach { query ->
-                if (state.value.listing.query != query) {
+                val currentListing = state.value.listing
+                if (currentListing.query != query) {
+                    if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
+                        return@onEach
+                    }
                     search(query)
                 }
             }
