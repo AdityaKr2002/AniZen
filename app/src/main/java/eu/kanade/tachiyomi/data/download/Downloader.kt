@@ -228,7 +228,7 @@ class Downloader(
         val source = sourceManager.get(anime.source) as? HttpSource ?: return
         val downloads = episodes.map { Download(source, anime, it, alt, video) }
         addAllToQueue(downloads)
-        if (autoStart || !DownloadJob.isRunning(context)) DownloadJob.start(context)
+        if (autoStart) start()
     }
 
     fun addAllToQueue(downloads: List<Download>) {
@@ -237,7 +237,7 @@ class Downloader(
             downloads.forEach { download ->
                 val existing = new.find { it.episode.id == download.episode.id }
                 if (existing != null) {
-                    if (existing.status == Download.State.PAUSED) {
+                    if (existing.status == Download.State.PAUSED || existing.status == Download.State.ERROR) {
                         existing.status = Download.State.QUEUE
                     }
                 } else {
@@ -248,6 +248,7 @@ class Downloader(
             store.addAll(new)
             new
         }
+        start()
     }
 
     fun removeFromQueue(anime: Anime) {
@@ -1046,7 +1047,6 @@ class Downloader(
                         continuation.resume(finalFile)
                     } else {
                         if (it.returnCode.isValueCancel) {
-                            download.status = Download.State.PAUSED
                             continuation.cancel()
                         } else {
                             continuation.resumeWithException(Exception("FFmpeg failed: ${it.returnCode}"))
