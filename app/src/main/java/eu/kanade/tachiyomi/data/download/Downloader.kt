@@ -620,7 +620,7 @@ class Downloader(
         val finalFile = File(sandboxDir, "$filename.tmp")
         val downloadedBytes = LongAdder()
 
-        if (size > 0 && threadCount > 1) {
+        if (size > 0) {
             val partSize = size / threadCount
             coroutineScope {
                 (0 until threadCount).map { i ->
@@ -657,7 +657,7 @@ class Downloader(
 
                                             val now = System.currentTimeMillis()
                                             if (now - lastUpdate > 500) {
-                                                download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                                download.partProgress[i] = (localDownloaded.toDouble() / (if (i == threadCount - 1) size - (i * partSize) else partSize)).toFloat()
                                                 download.update(downloadedBytes.sum(), size, false)
                                                 notifier.onProgressChange(download)
                                                 store.update(download)
@@ -665,7 +665,7 @@ class Downloader(
                                             }
                                         }
                                         // Final update for this part
-                                        download.partProgress[i] = (localDownloaded.toDouble() / (end - (i * partSize) + 1)).toFloat()
+                                        download.partProgress[i] = (localDownloaded.toDouble() / (if (i == threadCount - 1) size - (i * partSize) else partSize)).toFloat()
                                         download.update(downloadedBytes.sum(), size, false)
                                         notifier.onProgressChange(download)
                                         store.update(download)
@@ -721,7 +721,28 @@ class Downloader(
             retry {
                 val req = Request.Builder().url(video.videoUrl).headers(headers).build()
                 client.newCall(req).execute().use { res ->
-                    res.body?.byteStream()?.copyTo(FileOutputStream(finalFile))
+                    val source = res.body?.source() ?: throw IOException("Empty body")
+                    java.io.FileOutputStream(finalFile).use { out ->
+                        val buffer = BufferPool.obtain()
+                        try {
+                            var read: Int
+                            var totalRead = 0L
+                            var lastUpdate = System.currentTimeMillis()
+                            while (source.read(buffer).also { read = it } != -1) {
+                                out.write(buffer, 0, read)
+                                totalRead += read
+                                
+                                val now = System.currentTimeMillis()
+                                if (now - lastUpdate > 500) {
+                                    download.update(totalRead, -1, false)
+                                    notifier.onProgressChange(download)
+                                    lastUpdate = now
+                                }
+                            }
+                        } finally {
+                            BufferPool.recycle(buffer)
+                        }
+                    }
                 }
             }
         }
