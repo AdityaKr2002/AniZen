@@ -95,6 +95,8 @@ class Downloader(
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
+    private var currentDownloadJob: Job? = null
+    private var currentDownload: Download? = null
     
     private val _isRunningFlow = MutableStateFlow(false)
     val isRunningFlow = _isRunningFlow.asStateFlow()
@@ -144,17 +146,24 @@ class Downloader(
                     it.status == Download.State.DOWNLOADING
                 } ?: break
                 
-                try {
-                    downloadEpisode(download)
-                } catch (e: Exception) {
-                    if (e is CancellationException) {
-                        logcat(LogPriority.INFO) { "Individual download paused" }
-                    } else {
-                        logcat(LogPriority.ERROR, e)
-                        download.status = Download.State.ERROR
-                        notifier.onError(e.message)
+                currentDownload = download
+                currentDownloadJob = launch {
+                    try {
+                        downloadEpisode(download)
+                    } catch (e: Exception) {
+                        if (e is CancellationException || e.cause is CancellationException) {
+                            logcat(LogPriority.INFO) { "Individual download cancelled: ${download.episode.name}" }
+                        } else {
+                            logcat(LogPriority.ERROR, e)
+                            download.status = Download.State.ERROR
+                            notifier.onError(e.message)
+                        }
                     }
                 }
+                currentDownloadJob?.join()
+                currentDownload = null
+                currentDownloadJob = null
+                
                 delay(100) // Cooling period to prevent CPU spikes on rapid failures
             }
 
@@ -252,6 +261,9 @@ class Downloader(
     }
 
     fun removeFromQueue(anime: Anime) {
+        if (currentDownload?.anime?.id == anime.id) {
+            currentDownloadJob?.cancel()
+        }
         _queueState.update { current ->
             val new = current.filterNot { it.anime.id == anime.id }
             store.removeAll(current.filter { it.anime.id == anime.id })
@@ -261,6 +273,9 @@ class Downloader(
 
     fun removeFromQueue(episodes: List<Episode>) {
         val episodeIds = episodes.map { it.id }
+        if (episodeIds.contains(currentDownload?.episode?.id)) {
+            currentDownloadJob?.cancel()
+        }
         _queueState.update { current ->
             val new = current.filterNot { it.episode.id in episodeIds }
             store.removeAll(current.filter { it.episode.id in episodeIds })
@@ -607,6 +622,7 @@ class Downloader(
                                         var lastUpdate = System.currentTimeMillis()
                                         while (source.read(buffer).also { read = it } != -1) {
                                             coroutineContext.ensureActive()
+                                            if (download.status == Download.State.PAUSED) throw CancellationException()
                                             out.write(buffer, 0, read)
                                             localDownloaded += read
                                             downloadedBytes.add(read.toLong())
@@ -734,6 +750,7 @@ class Downloader(
             repeat(threadCount) {
                 launch {
                     while (isActive) {
+                        if (download.status == Download.State.PAUSED) break
                         val seg = synchronized(segmentQueue) { if (segmentQueue.isNotEmpty()) segmentQueue.removeAt(0) else null } ?: break
                         val segmentFile = File(sandboxDir, "seg_${seg.first}.part")
 
