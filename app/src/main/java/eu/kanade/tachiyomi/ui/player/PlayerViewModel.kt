@@ -622,11 +622,13 @@ class PlayerViewModel @JvmOverloads constructor(
             activity.windowInsetsController.show(WindowInsetsCompat.Type.statusBars())
         }
         _controlsShown.update { true }
+        _seekBarShown.update { true }
     }
 
     fun hideControls() {
         activity.windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
         _controlsShown.update { false }
+        _seekBarShown.update { false }
     }
 
     fun hideSeekBar() {
