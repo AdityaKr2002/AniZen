@@ -134,7 +134,6 @@ class BrowseSourceScreenModel(
             .launchIn(screenModelScope)
 
         if (!basePreferences.incognitoMode().get()) {
-...
             sourcePreferences.lastUsedSource().set(source.id)
         }
 
