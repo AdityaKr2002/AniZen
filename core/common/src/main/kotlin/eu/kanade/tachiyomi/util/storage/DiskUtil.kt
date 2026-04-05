@@ -119,9 +119,28 @@ object DiskUtil {
                 sb.append('_')
             }
         }
-        // Even though vfat allows 255 UCS-2 chars, we might eventually write to
-        // ext4 through a FUSE layer, so use that limit minus 15 reserved characters.
-        return sb.toString().take(240)
+        
+        val result = sb.toString()
+        if (result.toByteArray(Charsets.UTF_8).size <= MAX_FILE_NAME_BYTES) {
+            return result
+        }
+
+        val truncatedSb = StringBuilder()
+        var currentByteCount = 0
+        var i = 0
+        while (i < result.length) {
+            val codePoint = result.codePointAt(i)
+            val charCount = Character.charCount(codePoint)
+            val charStr = result.substring(i, i + charCount)
+            val charBytes = charStr.toByteArray(Charsets.UTF_8).size
+
+            if (currentByteCount + charBytes > MAX_FILE_NAME_BYTES) break
+
+            truncatedSb.append(charStr)
+            currentByteCount += charBytes
+            i += charCount
+        }
+        return truncatedSb.toString()
     }
 
     /**
