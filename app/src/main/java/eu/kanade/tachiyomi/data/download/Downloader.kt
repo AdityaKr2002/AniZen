@@ -717,6 +717,8 @@ class Downloader(
                 if (start > 0) reqBuilder.header("Range", "bytes=$start-")
                 
                 client.newCall(reqBuilder.build()).execute().use { res ->
+                    if (!res.isSuccessful) throw IOException("Unexpected code $res")
+
                     // Handle 200 OK when 206 was requested (server doesn't support Range)
                     val isResuming = start > 0 && res.code == 206
                     val append = isResuming
@@ -797,7 +799,8 @@ class Downloader(
         val segmentQueue = segments.mapIndexed { index, url -> index to url }.toMutableList()
         var lastUpdate = System.currentTimeMillis()
         
-        val threadCount = calculateDynamicConcurrency("")
+        val host = Uri.parse(video.videoUrl).host ?: ""
+        val threadCount = calculateDynamicConcurrency(host)
         download.activeThreads = threadCount
 
         coroutineScope {
