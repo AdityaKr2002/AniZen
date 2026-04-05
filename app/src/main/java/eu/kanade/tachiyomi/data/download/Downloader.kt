@@ -123,6 +123,16 @@ class Downloader(
     fun start(): Boolean {
         if (isRunning || queueState.value.isEmpty()) return false
         
+        // Resume paused downloads by marking them as QUEUE
+        _queueState.update { 
+            it.forEach { download ->
+                if (download.status == Download.State.PAUSED) {
+                    download.status = Download.State.QUEUE
+                }
+            }
+            it
+        }
+
         _isRunningFlow.value = true
         downloaderJob = scope.launch {
             // Pro-Active: Pre-fetch video URLs in parallel to eliminate transition lag
@@ -483,18 +493,19 @@ class Downloader(
         download.progress = 0
         notifier.onProgressChange(download)
 
-        // Create episode directory
-        var destDir = publicDir.findFile(filename)
-        if (destDir != null && destDir.isFile) {
-            destDir.delete()
-            destDir = publicDir.createDirectory(filename)!!
-        } else if (destDir == null) {
-            destDir = publicDir.createDirectory(filename)!!
-        }
-
         val videoFilename = DiskUtil.buildValidFilename(download.episode.name)
         val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
         val finalName = "$videoFilename.$finalExt"
+
+        // Create temporary episode directory
+        val tmpFilename = filename + TMP_DIR_SUFFIX
+        var destDir = publicDir.findFile(tmpFilename)
+        if (destDir != null && destDir.isFile) {
+            destDir.delete()
+            destDir = publicDir.createDirectory(tmpFilename)!!
+        } else if (destDir == null) {
+            destDir = publicDir.createDirectory(tmpFilename)!!
+        }
 
         // CRITICAL: Prevent file bloating by deleting existing partial files from failed runs
         var destFile = destDir.findFile(finalName)
@@ -546,6 +557,11 @@ class Downloader(
                 }
             }
         }
+        
+        // Finalize: Rename directory to final name
+        val finalDir = publicDir.findFile(filename)
+        finalDir?.delete() // Cleanup if somehow exists
+        destDir.renameTo(filename)
         
         sandboxFile.parentFile?.deleteRecursively()
 
