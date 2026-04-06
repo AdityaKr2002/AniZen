@@ -468,6 +468,7 @@ class AnimeScreenModel(
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = sortedSeasons.toImmutableList(),
             selectedSeason = finalSelectedSeason,
+            episodeToSeason = episodeToSeason,
         )
     }
 
@@ -1112,7 +1113,10 @@ class AnimeScreenModel(
 
     fun getNextUnseenEpisode(): Episode? {
         val successState = successState ?: return null
-        return successState.episodes.getNextUnseen(successState.anime)
+        return successState.episodes.getNextUnseen(
+            anime = successState.anime,
+            seasonName = successState.selectedSeason.takeIf { successState.anime.groupEpisodesBySeason },
+        )
     }
 
     private fun getUnseenEpisodes(): List<Episode> {
@@ -1801,6 +1805,7 @@ class AnimeScreenModel(
                         dialog = dialog,
                         availableSeasons = sortedSeasons.toImmutableList(),
                         selectedSeason = finalSelectedSeason,
+                        episodeToSeason = episodeToSeason,
                     )
                 }
             }
