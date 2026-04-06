@@ -46,6 +46,7 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMaxBy
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.sample
@@ -129,6 +130,7 @@ fun VerticalFastScroller(
 
             // Thumb alpha
             val alpha = remember { Animatable(0f) }
+            val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
                 scrolled
                     .sample(100)
@@ -317,6 +319,7 @@ fun VerticalGridFastScroller(
 
             // Thumb alpha
             val alpha = remember { Animatable(0f) }
+            val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
                 scrolled
                     .sample(100)
