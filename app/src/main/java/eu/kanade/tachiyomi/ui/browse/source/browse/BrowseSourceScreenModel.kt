@@ -487,7 +487,7 @@ class BrowseSourceScreenModel(
                 return@launch
             }
 
-            if (defaultCategory != null || defaultCategoryId == 0L || categories.isEmpty()) {
+            if (defaultCategory != null || defaultCategoryId == 0 || categories.isEmpty()) {
                 val categoryIds = defaultCategory?.let { listOf(it.id) } ?: emptyList()
                 toAdd.forEach { anime ->
                     moveAnimeToCategories(anime, categoryIds)
