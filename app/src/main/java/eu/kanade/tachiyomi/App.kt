@@ -276,8 +276,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             }
 
             val coreCount = Runtime.getRuntime().availableProcessors()
-            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(6, 16)))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12))) // Aggressive decoding based on hardware power
+            fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12)))
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(3, 8))) // Balanced for performance and UI smoothness
         }.build()
     }
 
