@@ -1203,14 +1203,3 @@ object BufferPool {
     fun obtain(): ByteArray = pool.poll() ?: ByteArray(256 * 1024)
     fun recycle(buffer: ByteArray) { pool.offer(buffer) }
 }
-ARNING_NOTIF_TIMEOUT_MS = 30_000L
-    }
-}
-
-private const val MIN_DISK_SPACE = 200L * 1024 * 1024
-
-object BufferPool {
-    private val pool = java.util.concurrent.ArrayBlockingQueue<ByteArray>(128)
-    fun obtain(): ByteArray = pool.poll() ?: ByteArray(256 * 1024)
-    fun recycle(buffer: ByteArray) { pool.offer(buffer) }
-}
