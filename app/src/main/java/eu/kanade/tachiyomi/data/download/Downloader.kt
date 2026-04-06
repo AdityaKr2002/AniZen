@@ -255,6 +255,7 @@ class Downloader(
         }
         notifier.dismissProgress()
         notifier.dismissAll()
+        stop()
     }
 
     fun updateQueue(downloads: List<Download>) {
@@ -291,28 +292,36 @@ class Downloader(
 
     fun removeFromQueue(anime: Anime) {
         val activeIds = activeDownloads.keys().toList()
-        queueState.value.filter { it.anime.id == anime.id && it.episode.id in activeIds }.forEach {
-            activeDownloads[it.episode.id]?.cancel()
-            activeDownloads.remove(it.episode.id)
+        queueState.value.filter { it.anime.id == anime.id }.forEach {
+            if (it.episode.id in activeIds) {
+                activeDownloads[it.episode.id]?.cancel()
+                activeDownloads.remove(it.episode.id)
+            }
+            notifier.dismissProgress(it)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.anime.id == anime.id }
             store.removeAll(current.filter { it.anime.id == anime.id })
             new
         }
+        if (_queueState.value.isEmpty()) stop()
     }
 
     fun removeFromQueue(episodes: List<Episode>) {
         val episodeIds = episodes.map { it.id }
-        episodeIds.forEach {
-            activeDownloads[it]?.cancel()
-            activeDownloads.remove(it)
+        queueState.value.filter { it.episode.id in episodeIds }.forEach {
+            if (it.episode.id in activeDownloads.keys()) {
+                activeDownloads[it.episode.id]?.cancel()
+                activeDownloads.remove(it.episode.id)
+            }
+            notifier.dismissProgress(it)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.episode.id in episodeIds }
             store.removeAll(current.filter { it.episode.id in episodeIds })
             new
         }
+        if (_queueState.value.isEmpty()) stop()
     }
 
     private suspend fun <T> retry(
@@ -659,6 +668,7 @@ class Downloader(
         val downloadedBytes = LongAdder()
 
         if (size > 0 && threadCount > 1) {
+            download.partProgress.clear()
             val partSize = size / threadCount
             coroutineScope {
                 (0 until threadCount).map { i ->
@@ -666,13 +676,19 @@ class Downloader(
                         val partFile = File(sandboxDir, "$filename.part$i")
                         var localDownloaded = partFile.length()
                         downloadedBytes.add(localDownloaded)
+                        
+                        val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
+                        download.partProgress[i] = (localDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
                             
                             // Server-Side Safety: Skip if part is already finished
-                            if (start > end) return@retry
+                            if (start > end) {
+                                download.partProgress[i] = 1f
+                                return@retry
+                            }
 
                             val req = Request.Builder().url(video.videoUrl).headers(headers)
                                 .header("Range", "bytes=$start-$end").build()
@@ -690,6 +706,8 @@ class Downloader(
                                             out.write(buffer, 0, read)
                                             localDownloaded += read
                                             downloadedBytes.add(read.toLong())
+
+                                            download.partProgress[i] = (localDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                                             val now = System.currentTimeMillis()
                                             if (now - lastUpdate > 500) {
@@ -1087,7 +1105,7 @@ class Downloader(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
-    ): java.io.File = ffmpegMutex.withLock {
+    ): java.io.File {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
         val uniFile = UniFile.fromFile(tmpFile) ?: throw IOException("Failed to create temporary file for FFmpeg")
@@ -1136,7 +1154,7 @@ class Downloader(
             }
         }
 
-        suspendCancellableCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {

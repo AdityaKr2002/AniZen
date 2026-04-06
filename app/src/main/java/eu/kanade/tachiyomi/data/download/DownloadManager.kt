@@ -487,7 +487,21 @@ class DownloadManager(
         .flatMapLatest { downloads ->
             downloads
                 .map { download ->
-                    download.progressFlow.drop(1).map { download }
+                    kotlinx.coroutines.flow.merge(
+                        download.progressFlow.drop(1).map { download },
+                        download.statusFlow.flatMapLatest { status ->
+                            if (status == Download.State.DOWNLOADING) {
+                                kotlinx.coroutines.flow.flow {
+                                    while (true) {
+                                        kotlinx.coroutines.delay(1000)
+                                        emit(download)
+                                    }
+                                }
+                            } else {
+                                kotlinx.coroutines.flow.emptyFlow()
+                            }
+                        }
+                    )
                 }
                 .merge()
         }
