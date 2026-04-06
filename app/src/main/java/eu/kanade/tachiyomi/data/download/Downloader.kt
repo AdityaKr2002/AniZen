@@ -291,7 +291,7 @@ class Downloader(
     }
 
     fun removeFromQueue(anime: Anime) {
-        val activeIds = activeDownloads.keys().toList()
+        val activeIds = activeDownloads.keys.toList()
         queueState.value.filter { it.anime.id == anime.id }.forEach {
             if (it.episode.id in activeIds) {
                 activeDownloads[it.episode.id]?.cancel()
@@ -310,7 +310,7 @@ class Downloader(
     fun removeFromQueue(episodes: List<Episode>) {
         val episodeIds = episodes.map { it.id }
         queueState.value.filter { it.episode.id in episodeIds }.forEach {
-            if (it.episode.id in activeDownloads.keys()) {
+            if (it.episode.id in activeDownloads.keys) {
                 activeDownloads[it.episode.id]?.cancel()
                 activeDownloads.remove(it.episode.id)
             }
