@@ -384,7 +384,7 @@ data class BrowseSourceScreen(
                     if (state.selectionMode) {
                         screenModel.toggleSelection(anime, index)
                     } else {
-                        navigator.push((AnimeScreen(it.id, true)))
+                        navigator.push((AnimeScreen(anime.id, true)))
                     }
                 },
                 onAnimeLongClick = { anime, index ->
