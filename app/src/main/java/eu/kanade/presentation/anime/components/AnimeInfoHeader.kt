@@ -414,6 +414,7 @@ private fun AnimeAndSourceTitlesLarge(
             contentDescription = stringResource(MR.strings.manga_cover),
             onClick = onCoverClick,
             ratio = ratio,
+            shouldExtract = true,
         )
         Column(
             modifier = Modifier.weight(1f),
@@ -460,6 +461,7 @@ private fun AnimeAndSourceTitlesSmall(
             contentDescription = stringResource(MR.strings.manga_cover),
             onClick = onCoverClick,
             ratio = ratio,
+            shouldExtract = true,
         )
         Column(
             modifier = Modifier.weight(1f),

@@ -2,12 +2,8 @@
 
 package eu.kanade.presentation.anime.components
 
-import android.annotation.SuppressLint
-import android.app.Application
-import android.content.Context
-import android.graphics.Bitmap
-import android.os.Build
 import androidx.annotation.ColorInt
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,20 +35,18 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.util.system.CoverColorObserver
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import tachiyomi.presentation.core.components.SkeletonItem
-import tachiyomi.presentation.core.util.collectAsState
-import eu.kanade.tachiyomi.R
-import eu.kanade.domain.ui.UiPreferences
-import eu.kanade.tachiyomi.util.system.CoverColorObserver
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
-import tachiyomi.domain.anime.model.AnimeCover as DomainMangaCover
-import androidx.compose.runtime.collectAsState
+import tachiyomi.presentation.core.components.SkeletonItem
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import tachiyomi.domain.anime.model.AnimeCover as DomainMangaCover
 
 enum class AnimeCover(val ratio: Float) {
     Square(1f / 1f),
@@ -85,6 +79,7 @@ enum class AnimeCover(val ratio: Float) {
         size: Size = Size.Normal,
         scale: ContentScale = ContentScale.Crop,
         ratio: Float = this.ratio,
+        shouldExtract: Boolean = false,
         // KMK <--
     ) {
         val context = LocalContext.current
@@ -94,9 +89,9 @@ enum class AnimeCover(val ratio: Float) {
         val isSuccess = state is AsyncImagePainter.State.Success
         val isError = state is AsyncImagePainter.State.Error
 
-        LaunchedEffect(state, data) {
+        LaunchedEffect(state, data, shouldExtract) {
             val currentState = state
-            if (currentState is AsyncImagePainter.State.Success) {
+            if (shouldExtract && currentState is AsyncImagePainter.State.Success) {
                 val cover = when (data) {
                     is Anime -> data.asAnimeCover()
                     is DomainMangaCover -> data
@@ -186,19 +181,16 @@ enum class AnimeCover(val ratio: Float) {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
             
+            if (!usePanorama) return Book.ratio
+
             val ratio by androidx.compose.runtime.produceState(
-                initialValue = if (usePanorama) CoverColorObserver.ratios.value[animeId] ?: Book.ratio else Book.ratio,
+                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
                 animeId,
-                usePanorama,
             ) {
-                if (usePanorama) {
-                    CoverColorObserver.ratios
-                        .map { it[animeId] ?: Book.ratio }
-                        .distinctUntilChanged()
-                        .collect { value = it }
-                } else {
-                    value = Book.ratio
-                }
+                CoverColorObserver.ratios
+                    .map { it[animeId] ?: Book.ratio }
+                    .distinctUntilChanged()
+                    .collect { value = it }
             }
             return ratio
         }
@@ -209,23 +201,20 @@ enum class AnimeCover(val ratio: Float) {
             val globalUsePanorama by uiPreferences.panoramaCover().collectAsStatePref()
             val usePanorama = usePanoramaOverride ?: globalUsePanorama
             
+            if (!usePanorama) return Book to Book.ratio
+
             val ratio by androidx.compose.runtime.produceState(
-                initialValue = if (usePanorama) CoverColorObserver.ratios.value[animeId] ?: Book.ratio else Book.ratio,
+                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
                 animeId,
-                usePanorama,
             ) {
-                if (usePanorama) {
-                    CoverColorObserver.ratios
-                        .map { it[animeId] ?: Book.ratio }
-                        .distinctUntilChanged()
-                        .collect { value = it }
-                } else {
-                    value = Book.ratio
-                }
+                CoverColorObserver.ratios
+                    .map { it[animeId] ?: Book.ratio }
+                    .distinctUntilChanged()
+                    .collect { value = it }
             }
 
-            return remember(ratio, usePanorama) {
-                val entry = if (usePanorama && ratio > RatioSwitchToPanorama) Panorama else Book
+            return remember(ratio) {
+                val entry = if (ratio > RatioSwitchToPanorama) Panorama else Book
                 entry to ratio
             }
         }
