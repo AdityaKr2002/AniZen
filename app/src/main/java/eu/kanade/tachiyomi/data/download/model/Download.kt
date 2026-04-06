@@ -5,8 +5,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.ProgressListener
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import tachiyomi.domain.anime.interactor.GetAnime
@@ -42,14 +40,14 @@ data class Download(
         }
 
     @Transient
-    private val _progressFlow = MutableSharedFlow<Int>(replay = 1, onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST).apply { tryEmit(0) }
+    private val progressStateFlow = MutableStateFlow(0)
 
     @Transient
-    val progressFlow = _progressFlow.asSharedFlow()
+    val progressFlow = progressStateFlow.asStateFlow()
     var progress: Int = 0
         set(value) {
             field = value
-            _progressFlow.tryEmit(value)
+            progressStateFlow.update { value }
         }
 
     // Rich Notification Fields
@@ -87,9 +85,7 @@ data class Download(
         
         calculateSpeed(bytesRead)
 
-        progress = newProgress
-        // Always trigger flow update to ensure secondary granular progress bars redraw
-        _progressFlow.tryEmit(newProgress)
+        if (progress != newProgress) progress = newProgress
     }
 
     /**
