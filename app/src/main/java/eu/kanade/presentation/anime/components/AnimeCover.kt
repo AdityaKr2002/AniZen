@@ -79,26 +79,31 @@ enum class AnimeCover(val ratio: Float) {
         size: Size = Size.Normal,
         scale: ContentScale = ContentScale.Crop,
         ratio: Float = this.ratio,
-        shouldExtract: Boolean = false,
+        shouldExtractColor: Boolean = false,
         // KMK <--
     ) {
         val context = LocalContext.current
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         var state by remember(data) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
         val isSuccess = state is AsyncImagePainter.State.Success
         val isError = state is AsyncImagePainter.State.Error
 
-        LaunchedEffect(state, data, shouldExtract) {
+        LaunchedEffect(state, data, shouldExtractColor, usePanorama) {
             val currentState = state
-            if (shouldExtract && currentState is AsyncImagePainter.State.Success) {
+            if (currentState is AsyncImagePainter.State.Success) {
                 val cover = when (data) {
                     is Anime -> data.asAnimeCover()
                     is DomainMangaCover -> data
                     else -> null
                 }
-                if (cover != null) {
-                    eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(cover, currentState)
+                if (cover != null && (shouldExtractColor || usePanorama)) {
+                    eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                        cover = cover,
+                        state = currentState,
+                        extractColor = shouldExtractColor,
+                    )
                 }
                 if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), currentState)
                 if (data is DomainMangaCover) onCoverLoaded?.invoke(data, currentState)
