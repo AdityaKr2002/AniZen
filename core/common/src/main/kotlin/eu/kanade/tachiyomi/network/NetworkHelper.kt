@@ -69,6 +69,7 @@ open /* SY <-- */ class NetworkHelper(
             )
             .connectionPool(ConnectionPool(64, 5, TimeUnit.MINUTES))
             .cookieJar(cookieJar)
+            .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
             // KMK -->
             .connectTimeout(connectTimeout, TimeUnit.SECONDS)
             .readTimeout(readTimeout, TimeUnit.SECONDS)
