@@ -90,7 +90,7 @@ enum class AnimeCover(val ratio: Float) {
         val isSuccess = state is AsyncImagePainter.State.Success
         val isError = state is AsyncImagePainter.State.Error
 
-        LaunchedEffect(state, data, shouldExtractColor, usePanorama) {
+        LaunchedEffect(state, data, shouldExtractColor) {
             val currentState = state
             if (currentState is AsyncImagePainter.State.Success) {
                 val cover = when (data) {
@@ -98,7 +98,7 @@ enum class AnimeCover(val ratio: Float) {
                     is DomainMangaCover -> data
                     else -> null
                 }
-                if (cover != null && (shouldExtractColor || usePanorama)) {
+                if (cover != null) {
                     eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
                         cover = cover,
                         state = currentState,
