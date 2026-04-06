@@ -73,21 +73,11 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      */
     open val headers: Headers by lazy { headersBuilder().build() }
 
-    private val http1Client: OkHttpClient by lazy {
-        network.client.newBuilder()
-            .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
-            .build()
-    }
-
     /**
      * Default network client for doing requests.
      */
     open val client: OkHttpClient
-        get() = if (name.contains("AnimePahe") || name.contains("AnimeKai")) {
-            http1Client
-        } else {
-            network.client
-        }
+        get() = network.client
 
     /**
      * Generates a unique ID for the source based on the provided [name], [lang] and
