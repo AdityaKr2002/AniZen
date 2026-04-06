@@ -1186,13 +1186,15 @@ private fun EpisodeItemWrapper(
     onDownloadEpisode: ((List<EpisodeList.Item>, EpisodeDownloadAction) -> Unit)?,
     onEpisodeSelected: (EpisodeList.Item, Boolean, Boolean, Boolean) -> Unit,
     onEpisodeSwipe: (EpisodeList.Item, LibraryPreferences.EpisodeSwipeAction) -> Unit,
+    onPlayFromSeason: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     when (item) {
         is EpisodeList.Season -> {
             ListGroupHeader(
                 text = item.name,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                onPlayClick = onPlayFromSeason,
             )
         }
         is EpisodeList.MissingCount -> {
@@ -1490,7 +1492,20 @@ private fun LazyListScope.sharedEpisodeItems(
                 is EpisodeList.Season -> "anime-sn-${item.name}-$index"
             }
         },
-    ) { _, item ->
+    ) { index, item ->
+        val onPlayFromSeason: (() -> Unit)? = if (item is EpisodeList.Season) {
+            {
+                // Find first EpisodeList.Item after this season header
+                val firstEpisode = episodes.subList(index + 1, episodes.size)
+                    .filterIsInstance<EpisodeList.Item>()
+                    .firstOrNull()
+                
+                if (firstEpisode != null) {
+                    onEpisodeClicked(firstEpisode.episode, false)
+                }
+            }
+        } else null
+
         EpisodeItemWrapper(
             item = item,
             anime = anime,
@@ -1503,6 +1518,7 @@ private fun LazyListScope.sharedEpisodeItems(
             onDownloadEpisode = onDownloadEpisode,
             onEpisodeSelected = onEpisodeSelected,
             onEpisodeSwipe = onEpisodeSwipe,
+            onPlayFromSeason = onPlayFromSeason,
         )
     }
 }

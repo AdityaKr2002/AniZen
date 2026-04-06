@@ -5,7 +5,8 @@ import tachiyomi.domain.episode.model.Episode
 object EpisodeSeasonUtils {
     // Added |_ to delimiters to support patterns like _s1e1_
     private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[|_)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|_|$)""")
-    private val specialKeywordsRegex = Regex("""(?i)\b(special|ova|ona|movie|pv|trailer|extra|bonus|recap|summary|prologue)\b""")
+    private val specialKeywordsRegex = Regex("""(?i)\b(ova|ona|movie|pv|trailer|bonus|recap|summary|prologue)\b""")
+
 
     /**
      * Extracts season number from episode name.
