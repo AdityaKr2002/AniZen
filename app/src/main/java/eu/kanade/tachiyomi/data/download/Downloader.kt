@@ -95,8 +95,7 @@ class Downloader(
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
-    private var currentDownloadJob: Job? = null
-    private var currentDownload: Download? = null
+    private val activeDownloads = java.util.concurrent.ConcurrentHashMap<Long, Job>()
     
     private val _isRunningFlow = MutableStateFlow(false)
     val isRunningFlow = _isRunningFlow.asStateFlow()
@@ -151,13 +150,30 @@ class Downloader(
 
             // Dynamic Queue Processing
             while (isRunning) {
-                val download = queueState.value.firstOrNull { 
-                    it.status == Download.State.QUEUE || 
-                    it.status == Download.State.DOWNLOADING
-                } ?: break
+                val maxConcurrency = preferences.numberOfDownloads().get().coerceAtLeast(1)
                 
-                currentDownload = download
-                currentDownloadJob = launch {
+                // Clean up completed jobs
+                activeDownloads.entries.removeIf { !it.value.isActive }
+
+                if (activeDownloads.size >= maxConcurrency) {
+                    delay(500)
+                    continue
+                }
+
+                val download = queueState.value.firstOrNull { 
+                    it.status == Download.State.QUEUE && !activeDownloads.containsKey(it.episode.id)
+                } 
+                
+                if (download == null) {
+                    val hasPending = queueState.value.any { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
+                    if (!hasPending) break
+                    delay(500)
+                    continue
+                }
+
+                download.status = Download.State.DOWNLOADING
+                
+                val job = launch {
                     try {
                         downloadEpisode(download)
                     } catch (e: Exception) {
@@ -168,11 +184,11 @@ class Downloader(
                             download.status = Download.State.ERROR
                             notifier.onError(e.message)
                         }
+                    } finally {
+                        activeDownloads.remove(download.episode.id)
                     }
                 }
-                currentDownloadJob?.join()
-                currentDownload = null
-                currentDownloadJob = null
+                activeDownloads[download.episode.id] = job
                 
                 delay(100) // Cooling period to prevent CPU spikes on rapid failures
             }
@@ -191,6 +207,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
         if (reason != null) notifier.onWarning(reason)
         else if (hasPending) notifier.onPaused()
@@ -205,6 +222,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         _queueState.update {
             it.forEach { download ->
                 if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
@@ -225,6 +243,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         _queueState.update {
             it.forEach { download ->
                 download.status = Download.State.NOT_DOWNLOADED
@@ -271,8 +290,10 @@ class Downloader(
     }
 
     fun removeFromQueue(anime: Anime) {
-        if (currentDownload?.anime?.id == anime.id) {
-            currentDownloadJob?.cancel()
+        val activeIds = activeDownloads.keys().toList()
+        queueState.value.filter { it.anime.id == anime.id && it.episode.id in activeIds }.forEach {
+            activeDownloads[it.episode.id]?.cancel()
+            activeDownloads.remove(it.episode.id)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.anime.id == anime.id }
@@ -283,8 +304,9 @@ class Downloader(
 
     fun removeFromQueue(episodes: List<Episode>) {
         val episodeIds = episodes.map { it.id }
-        if (episodeIds.contains(currentDownload?.episode?.id)) {
-            currentDownloadJob?.cancel()
+        episodeIds.forEach {
+            activeDownloads[it]?.cancel()
+            activeDownloads.remove(it)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.episode.id in episodeIds }
