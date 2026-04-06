@@ -242,6 +242,7 @@ class AnimeScreenModel(
         seasons: ImmutableList<Season> = this.seasons,
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
+        episodeToSeason: Map<Long, String> = this.episodeToSeason,
     ): State.Success {
         val processedEpisodes = if (anime === this.anime && episodes === this.episodes) {
             this.processedEpisodes
@@ -257,6 +258,7 @@ class AnimeScreenModel(
 
         val episodeListItems = mutableListOf<EpisodeList>()
         val availableSeasonsList = mutableListOf<String>()
+        val episodeToSeason = mutableMapOf<Long, String>()
         
         // Handle Seasons
         if (anime.groupEpisodesBySeason) {
@@ -340,7 +342,6 @@ class AnimeScreenModel(
             if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
             // Step 3: Assign season names to blocks
-            val episodeToSeason = mutableMapOf<Long, String>()
             var implicitSeasonCount = 0
             blocks.forEach { block ->
                 var explicitSeasonName: String? = null
@@ -468,6 +469,7 @@ class AnimeScreenModel(
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = sortedSeasons.toImmutableList(),
             selectedSeason = finalSelectedSeason,
+            episodeToSeason = episodeToSeason,
         )
     }
 
@@ -1112,7 +1114,11 @@ class AnimeScreenModel(
 
     fun getNextUnseenEpisode(): Episode? {
         val successState = successState ?: return null
-        return successState.episodes.getNextUnseen(successState.anime)
+        return successState.episodes.getNextUnseen(
+            anime = successState.anime,
+            seasonName = successState.selectedSeason.takeIf { successState.anime.groupEpisodesBySeason },
+            episodeToSeason = successState.episodeToSeason,
+        )
     }
 
     private fun getUnseenEpisodes(): List<Episode> {
@@ -1583,6 +1589,7 @@ class AnimeScreenModel(
             val selectedSeason: String? = null,
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
+            val episodeToSeason: Map<Long, String> = emptyMap(),
         ) : State {
             companion object {
                 fun create(
@@ -1599,6 +1606,7 @@ class AnimeScreenModel(
                     
                     val episodeListItems = mutableListOf<EpisodeList>()
                     val availableSeasonsList = mutableListOf<String>()
+                    val episodeToSeason = mutableMapOf<Long, String>()
                     
                     // Handle Seasons
                     if (anime.groupEpisodesBySeason) {
@@ -1681,7 +1689,6 @@ class AnimeScreenModel(
                         if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
                         // Step 3: Assign season names to blocks
-                        val episodeToSeason = mutableMapOf<Long, String>()
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
@@ -1801,6 +1808,7 @@ class AnimeScreenModel(
                         dialog = dialog,
                         availableSeasons = sortedSeasons.toImmutableList(),
                         selectedSeason = finalSelectedSeason,
+                        episodeToSeason = episodeToSeason,
                     )
                 }
             }

@@ -46,9 +46,9 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMaxBy
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.sample
 import tachiyomi.presentation.core.components.Scroller.STICKY_HEADER_KEY_PREFIX
 import kotlin.math.abs
 import kotlin.math.max
@@ -115,12 +115,15 @@ fun VerticalFastScroller(
             }
 
             // When list scrolled
-            LaunchedEffect(listState.firstVisibleItemScrollOffset) {
+            LaunchedEffect(listState.firstVisibleItemScrollOffset, listState.firstVisibleItemIndex) {
                 if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 val scrollOffset = computeScrollOffset(state = listState)
                 val scrollRange = computeScrollRange(state = listState)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx)
-                thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
+                    thumbTopPadding,
+                    thumbTopPadding + trackHeightPx,
+                )
                 scrolled.tryEmit(Unit)
             }
 
@@ -128,16 +131,15 @@ fun VerticalFastScroller(
             val alpha = remember { Animatable(0f) }
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
-                scrolled
-                    .sample(100)
-                    .collectLatest {
-                        if (thumbAllowed()) {
-                            alpha.snapTo(1f)
-                            alpha.animateTo(0f, animationSpec = FadeOutAnimationSpec)
-                        } else {
-                            alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
-                        }
+                scrolled.collectLatest {
+                    if (thumbAllowed()) {
+                        alpha.snapTo(1f)
+                        delay(2000)
+                        alpha.animateTo(0f, animationSpec = tween(durationMillis = 500))
+                    } else {
+                        alpha.snapTo(0f)
                     }
+                }
             }
 
             Box(
@@ -300,12 +302,15 @@ fun VerticalGridFastScroller(
             }
 
             // When list scrolled
-            LaunchedEffect(state.firstVisibleItemScrollOffset) {
+            LaunchedEffect(state.firstVisibleItemScrollOffset, state.firstVisibleItemIndex) {
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 val scrollOffset = computeScrollOffset(state = state)
                 val scrollRange = computeScrollRange(state = state)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx)
-                thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
+                    thumbTopPadding,
+                    thumbTopPadding + trackHeightPx,
+                )
                 scrolled.tryEmit(Unit)
             }
 
@@ -313,16 +318,15 @@ fun VerticalGridFastScroller(
             val alpha = remember { Animatable(0f) }
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
-                scrolled
-                    .sample(100)
-                    .collectLatest {
-                        if (thumbAllowed()) {
-                            alpha.snapTo(1f)
-                            alpha.animateTo(0f, animationSpec = FadeOutAnimationSpec)
-                        } else {
-                            alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
-                        }
+                scrolled.collectLatest {
+                    if (thumbAllowed()) {
+                        alpha.snapTo(1f)
+                        delay(2000)
+                        alpha.animateTo(0f, animationSpec = tween(durationMillis = 500))
+                    } else {
+                        alpha.snapTo(0f)
                     }
+                }
             }
 
             Box(
@@ -375,7 +379,7 @@ fun VerticalGridFastScroller(
 }
 
 private fun computeScrollOffset(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
+    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
     val endChild = visibleItems.last()
@@ -390,7 +394,7 @@ private fun computeScrollOffset(state: LazyGridState): Int {
 }
 
 private fun computeScrollRange(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
+    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
     val endChild = visibleItems.last()
@@ -400,10 +404,10 @@ private fun computeScrollRange(state: LazyGridState): Int {
 }
 
 private fun computeScrollOffset(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
+    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems
-        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true }!!
+        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true } ?: visibleItems.first()
     val endChild = visibleItems.last()
     val minPosition = min(startChild.index, endChild.index)
     val maxPosition = max(startChild.index, endChild.index)
@@ -416,10 +420,10 @@ private fun computeScrollOffset(state: LazyListState): Int {
 }
 
 private fun computeScrollRange(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
+    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems
-        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true }!!
+        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true } ?: visibleItems.first()
     val endChild = visibleItems.last()
     val laidOutArea = endChild.bottom - startChild.top
     val laidOutRange = abs(startChild.index - endChild.index) + 1
@@ -433,13 +437,6 @@ object Scroller {
 private val ThumbLength = 48.dp
 private val ThumbThickness = 12.dp
 private val ThumbShape = RoundedCornerShape(ThumbThickness / 2)
-private val FadeOutAnimationSpec = tween<Float>(
-    durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
-    delayMillis = 2000,
-)
-private val ImmediateFadeOutAnimationSpec = tween<Float>(
-    durationMillis = ViewConfiguration.getScrollBarFadeDuration(),
-)
 
 private val LazyListItemInfo.top: Int
     get() = offset

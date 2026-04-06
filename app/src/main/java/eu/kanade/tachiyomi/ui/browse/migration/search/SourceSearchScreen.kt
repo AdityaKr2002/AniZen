@@ -144,8 +144,8 @@ data class SourceSearchScreen(
                 },
                 onHelpClick = { uriHandler.openUri(Constants.URL_HELP) },
                 onLocalSourceHelpClick = { uriHandler.openUri(LocalSource.HELP_URL) },
-                onAnimeClick = openMigrateDialog,
-                onAnimeLongClick = { navigator.push(AnimeScreen(it.id, true)) },
+                onAnimeClick = { anime, _ -> openMigrateDialog(anime) },
+                onAnimeLongClick = { anime, _ -> navigator.push(AnimeScreen(anime.id, true)) },
                 selection = state.selection.toImmutableList(),
                 favoriteIds = state.favoriteIds,
             )

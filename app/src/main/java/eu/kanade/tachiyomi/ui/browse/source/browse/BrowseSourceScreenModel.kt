@@ -162,7 +162,13 @@ class BrowseSourceScreenModel(
     val animePagerFlowFlow = state.map { it.listing }
         .distinctUntilChanged()
         .map { listing ->
-            Pager(PagingConfig(pageSize = 25)) {
+            Pager(
+                PagingConfig(
+                    pageSize = 20,
+                    prefetchDistance = 5,
+                    initialLoadSize = 40,
+                ),
+            ) {
                 getRemoteAnime.subscribe(sourceId, listing.query ?: "", listing.filters)
             }.flow.map { pagingData ->
                 pagingData.map {
@@ -382,7 +388,7 @@ class BrowseSourceScreenModel(
                 val preselectedIds = getCategories.await(anime.id).map { it.id }
                 setDialog(
                     Dialog.ChangeAnimeCategory(
-                        anime,
+                        listOf(anime),
                         categories.mapAsCheckboxState { it.id in preselectedIds }.toImmutableList(),
                     ),
                 )
@@ -390,7 +396,7 @@ class BrowseSourceScreenModel(
         }
     }
 
-    fun toggleSelection(anime: Anime) {
+    fun toggleSelection(anime: Anime, index: Int = -1) {
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
                 if (list.fastAny { it.id == anime.id }) {
@@ -399,7 +405,24 @@ class BrowseSourceScreenModel(
                     list.add(anime)
                 }
             }
-            state.copy(selection = newSelection)
+            state.copy(selection = newSelection, lastSelectedIndex = if (newSelection.isNotEmpty()) index else null)
+        }
+    }
+
+    fun selectRange(animeList: List<Anime?>, fromIndex: Int, toIndex: Int) {
+        mutableState.update { state ->
+            val start = minOf(fromIndex, toIndex)
+            val end = maxOf(fromIndex, toIndex)
+            val rangeItems = animeList.subList(start, end + 1).filterNotNull()
+
+            val newSelection = state.selection.mutate { list ->
+                rangeItems.forEach { anime ->
+                    if (list.none { it.id == anime.id }) {
+                        list.add(anime)
+                    }
+                }
+            }
+            state.copy(selection = newSelection, lastSelectedIndex = toIndex)
         }
     }
 
@@ -448,24 +471,49 @@ class BrowseSourceScreenModel(
                 }
             }
             // Invert selection turns off select all mode usually as it's a specific manual action
-            state.copy(selection = newSelection, isSelectAllMode = false, targetCount = 0)
+            state.copy(selection = newSelection, isSelectAllMode = false, targetCount = 0, lastSelectedIndex = null)
         }
     }
 
     fun clearSelection() {
-        mutableState.update { it.copy(selection = persistentListOf(), isSelectAllMode = false, targetCount = 0) }
+        mutableState.update { it.copy(selection = persistentListOf(), isSelectAllMode = false, targetCount = 0, lastSelectedIndex = null) }
     }
 
     fun addSelectionToLibrary() {
         val selection = state.value.selection
         val favoriteIds = state.value.favoriteIds
         screenModelScope.launch {
-            selection.forEach { anime ->
-                if (anime.id !in favoriteIds) {
-                    addFavorite(anime)
-                }
+            val categories = getCategories()
+            val defaultCategoryId = libraryPreferences.defaultCategory().get()
+            val defaultCategory = categories.find { it.id == defaultCategoryId.toLong() }
+
+            val toAdd = selection.filter { it.id !in favoriteIds }
+            if (toAdd.isEmpty()) {
+                clearSelection()
+                return@launch
             }
-            clearSelection()
+
+            if (defaultCategory != null || defaultCategoryId == 0 || categories.isEmpty()) {
+                val categoryIds = defaultCategory?.let { listOf(it.id) } ?: emptyList()
+                toAdd.forEach { anime ->
+                    moveAnimeToCategories(anime, categoryIds)
+                    changeAnimeFavorite(anime)
+                }
+            } else {
+                // Just add to default if no specific category chosen yet, 
+                // but usually we should show category dialog for the first one and apply to all if multiple
+                // For simplicity and to fix the "only one added" bug, we'll show the dialog for the whole selection
+                val preselectedIds = emptyList<Long>() // New additions
+                setDialog(
+                    Dialog.ChangeAnimeCategory(
+                        toAdd, // Pass the whole selection
+                        categories.mapAsCheckboxState { it.id in preselectedIds }.toImmutableList(),
+                    ),
+                )
+            }
+            if (state.value.dialog !is Dialog.ChangeAnimeCategory) {
+                clearSelection()
+            }
         }
     }
 
@@ -563,7 +611,7 @@ class BrowseSourceScreenModel(
         data class RemoveAnime(val anime: Anime) : Dialog
         data class AddDuplicateAnime(val anime: Anime, val duplicate: Anime) : Dialog
         data class ChangeAnimeCategory(
-            val anime: Anime,
+            val animes: List<Anime>,
             val initialSelection: ImmutableList<CheckboxState.State<Category>>,
         ) : Dialog
         data class Migrate(val newAnime: Anime, val oldAnime: Anime) : Dialog
@@ -584,6 +632,7 @@ class BrowseSourceScreenModel(
         val isSelectAllMode: Boolean = false,
         val favoriteIds: ImmutableSet<Long> = persistentSetOf(),
         val targetCount: Int = 0,
+        val lastSelectedIndex: Int? = null,
     ) {
         val isUserQuery get() = listing is Listing.Search && !listing.query.isNullOrEmpty()
         val selectionMode get() = selection.isNotEmpty()

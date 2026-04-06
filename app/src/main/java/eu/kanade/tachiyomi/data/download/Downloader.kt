@@ -95,8 +95,7 @@ class Downloader(
     private val notifier by lazy { DownloadNotifier(context) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
-    private var currentDownloadJob: Job? = null
-    private var currentDownload: Download? = null
+    private val activeDownloads = java.util.concurrent.ConcurrentHashMap<Long, Job>()
     
     private val _isRunningFlow = MutableStateFlow(false)
     val isRunningFlow = _isRunningFlow.asStateFlow()
@@ -151,13 +150,30 @@ class Downloader(
 
             // Dynamic Queue Processing
             while (isRunning) {
-                val download = queueState.value.firstOrNull { 
-                    it.status == Download.State.QUEUE || 
-                    it.status == Download.State.DOWNLOADING
-                } ?: break
+                val maxConcurrency = preferences.concurrentDownloads().get().coerceAtLeast(1)
                 
-                currentDownload = download
-                currentDownloadJob = launch {
+                // Clean up completed jobs
+                activeDownloads.entries.removeIf { !it.value.isActive }
+
+                if (activeDownloads.size >= maxConcurrency) {
+                    delay(500)
+                    continue
+                }
+
+                val download = queueState.value.firstOrNull { 
+                    it.status == Download.State.QUEUE && !activeDownloads.containsKey(it.episode.id)
+                } 
+                
+                if (download == null) {
+                    val hasPending = queueState.value.any { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
+                    if (!hasPending) break
+                    delay(500)
+                    continue
+                }
+
+                download.status = Download.State.DOWNLOADING
+                
+                val job = launch {
                     try {
                         downloadEpisode(download)
                     } catch (e: Exception) {
@@ -168,11 +184,11 @@ class Downloader(
                             download.status = Download.State.ERROR
                             notifier.onError(e.message)
                         }
+                    } finally {
+                        activeDownloads.remove(download.episode.id)
                     }
                 }
-                currentDownloadJob?.join()
-                currentDownload = null
-                currentDownloadJob = null
+                activeDownloads[download.episode.id] = job
                 
                 delay(100) // Cooling period to prevent CPU spikes on rapid failures
             }
@@ -191,6 +207,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
         if (reason != null) notifier.onWarning(reason)
         else if (hasPending) notifier.onPaused()
@@ -205,6 +222,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         _queueState.update {
             it.forEach { download ->
                 if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
@@ -225,6 +243,7 @@ class Downloader(
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
+        activeDownloads.clear()
         _queueState.update {
             it.forEach { download ->
                 download.status = Download.State.NOT_DOWNLOADED
@@ -236,6 +255,7 @@ class Downloader(
         }
         notifier.dismissProgress()
         notifier.dismissAll()
+        stop()
     }
 
     fun updateQueue(downloads: List<Download>) {
@@ -271,26 +291,37 @@ class Downloader(
     }
 
     fun removeFromQueue(anime: Anime) {
-        if (currentDownload?.anime?.id == anime.id) {
-            currentDownloadJob?.cancel()
+        val activeIds = activeDownloads.keys.toList()
+        queueState.value.filter { it.anime.id == anime.id }.forEach {
+            if (it.episode.id in activeIds) {
+                activeDownloads[it.episode.id]?.cancel()
+                activeDownloads.remove(it.episode.id)
+            }
+            notifier.dismissProgress(it)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.anime.id == anime.id }
             store.removeAll(current.filter { it.anime.id == anime.id })
             new
         }
+        if (_queueState.value.isEmpty()) stop()
     }
 
     fun removeFromQueue(episodes: List<Episode>) {
         val episodeIds = episodes.map { it.id }
-        if (episodeIds.contains(currentDownload?.episode?.id)) {
-            currentDownloadJob?.cancel()
+        queueState.value.filter { it.episode.id in episodeIds }.forEach {
+            if (it.episode.id in activeDownloads.keys) {
+                activeDownloads[it.episode.id]?.cancel()
+                activeDownloads.remove(it.episode.id)
+            }
+            notifier.dismissProgress(it)
         }
         _queueState.update { current ->
             val new = current.filterNot { it.episode.id in episodeIds }
             store.removeAll(current.filter { it.episode.id in episodeIds })
             new
         }
+        if (_queueState.value.isEmpty()) stop()
     }
 
     private suspend fun <T> retry(
@@ -637,6 +668,7 @@ class Downloader(
         val downloadedBytes = LongAdder()
 
         if (size > 0 && threadCount > 1) {
+            download.partProgress.clear()
             val partSize = size / threadCount
             coroutineScope {
                 (0 until threadCount).map { i ->
@@ -644,13 +676,19 @@ class Downloader(
                         val partFile = File(sandboxDir, "$filename.part$i")
                         var localDownloaded = partFile.length()
                         downloadedBytes.add(localDownloaded)
+                        
+                        val partTotalSize = if (i == threadCount - 1) size - (i * partSize) else partSize
+                        download.partProgress[i] = (localDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                         retry(times = 5) {
                             val start = i * partSize + localDownloaded
                             val end = if (i == threadCount - 1) size - 1 else (i + 1) * partSize - 1
                             
                             // Server-Side Safety: Skip if part is already finished
-                            if (start > end) return@retry
+                            if (start > end) {
+                                download.partProgress[i] = 1f
+                                return@retry
+                            }
 
                             val req = Request.Builder().url(video.videoUrl).headers(headers)
                                 .header("Range", "bytes=$start-$end").build()
@@ -668,6 +706,8 @@ class Downloader(
                                             out.write(buffer, 0, read)
                                             localDownloaded += read
                                             downloadedBytes.add(read.toLong())
+
+                                            download.partProgress[i] = (localDownloaded.toDouble() / partTotalSize.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f)
 
                                             val now = System.currentTimeMillis()
                                             if (now - lastUpdate > 500) {
@@ -727,8 +767,11 @@ class Downloader(
             }
         } else {
             // Robust Single-Threaded/Unknown Size Downloader
+            download.partProgress.clear()
             retry {
                 val start = if (finalFile.exists()) finalFile.length() else 0L
+                if (size > 0) download.partProgress[0] = (start.toFloat() / size).coerceIn(0f, 1f)
+                
                 val reqBuilder = Request.Builder().url(video.videoUrl).headers(headers)
                 if (start > 0) reqBuilder.header("Range", "bytes=$start-")
                 
@@ -754,6 +797,8 @@ class Downloader(
                                 out.write(buffer, 0, read)
                                 totalRead += read
                                 
+                                if (size > 0) download.partProgress[0] = (totalRead.toFloat() / size).coerceIn(0f, 1f)
+
                                 val now = System.currentTimeMillis()
                                 if (now - lastUpdate > 500) {
                                     download.update(totalRead, size, false)
@@ -1060,7 +1105,7 @@ class Downloader(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
-    ): java.io.File = ffmpegMutex.withLock {
+    ): java.io.File {
         val video = download.video!!
         val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
         val uniFile = UniFile.fromFile(tmpFile) ?: throw IOException("Failed to create temporary file for FFmpeg")
@@ -1109,7 +1154,7 @@ class Downloader(
             }
         }
 
-        suspendCancellableCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             val session = FFmpegKit.executeWithArgumentsAsync(
                 ffmpegOptions,
                 {

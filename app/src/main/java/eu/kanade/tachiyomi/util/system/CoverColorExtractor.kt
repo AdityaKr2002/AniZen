@@ -19,11 +19,19 @@ object CoverColorExtractor {
 
     suspend fun extract(
         cover: AnimeCover,
-        state: AsyncImagePainter.State.Success
+        state: AsyncImagePainter.State.Success,
+        extractColor: Boolean = true,
     ) = withContext(Dispatchers.Default) {
         val context = Injekt.get<Application>()
         val image = state.result.image
         
+        // Fast ratio extraction without bitmap conversion
+        val ratio = image.width.toFloat() / image.height.toFloat()
+        cover.ratio = ratio
+        CoverColorObserver.updateRatio(cover.animeId, ratio)
+
+        if (!extractColor || cover.vibrantCoverColor != null) return@withContext
+
         val bitmap = when (image) {
             is BitmapImage -> image.bitmap
             else -> image.asDrawable(context.resources).toBitmap()
@@ -34,12 +42,6 @@ object CoverColorExtractor {
                 it
             }
         }
-
-        val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
-        cover.ratio = ratio
-        CoverColorObserver.updateRatio(cover.animeId, ratio)
-
-        if (cover.vibrantCoverColor != null) return@withContext
 
         Palette.from(bitmap).generate { palette ->
             palette?.let {
