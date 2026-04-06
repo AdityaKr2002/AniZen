@@ -1186,15 +1186,13 @@ private fun EpisodeItemWrapper(
     onDownloadEpisode: ((List<EpisodeList.Item>, EpisodeDownloadAction) -> Unit)?,
     onEpisodeSelected: (EpisodeList.Item, Boolean, Boolean, Boolean) -> Unit,
     onEpisodeSwipe: (EpisodeList.Item, LibraryPreferences.EpisodeSwipeAction) -> Unit,
-    onPlayFromSeason: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     when (item) {
         is EpisodeList.Season -> {
             ListGroupHeader(
                 text = item.name,
-                modifier = Modifier.fillMaxWidth(),
-                onPlayClick = onPlayFromSeason,
+                modifier = Modifier.fillMaxWidth()
             )
         }
         is EpisodeList.MissingCount -> {
