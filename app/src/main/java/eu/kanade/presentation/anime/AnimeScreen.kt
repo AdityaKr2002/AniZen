@@ -1490,20 +1490,7 @@ private fun LazyListScope.sharedEpisodeItems(
                 is EpisodeList.Season -> "anime-sn-${item.name}-$index"
             }
         },
-    ) { index, item ->
-        val onPlayFromSeason: (() -> Unit)? = if (item is EpisodeList.Season) {
-            {
-                // Find first EpisodeList.Item after this season header
-                val firstEpisode = episodes.subList(index + 1, episodes.size)
-                    .filterIsInstance<EpisodeList.Item>()
-                    .firstOrNull()
-                
-                if (firstEpisode != null) {
-                    onEpisodeClicked(firstEpisode.episode, false)
-                }
-            }
-        } else null
-
+    ) { _, item ->
         EpisodeItemWrapper(
             item = item,
             anime = anime,
@@ -1516,7 +1503,6 @@ private fun LazyListScope.sharedEpisodeItems(
             onDownloadEpisode = onDownloadEpisode,
             onEpisodeSelected = onEpisodeSelected,
             onEpisodeSwipe = onEpisodeSwipe,
-            onPlayFromSeason = onPlayFromSeason,
         )
     }
 }
