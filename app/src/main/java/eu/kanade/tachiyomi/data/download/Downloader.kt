@@ -150,7 +150,7 @@ class Downloader(
 
             // Dynamic Queue Processing
             while (isRunning) {
-                val maxConcurrency = preferences.numberOfDownloads().get().coerceAtLeast(1)
+                val maxConcurrency = preferences.concurrentDownloads().get().coerceAtLeast(1)
                 
                 // Clean up completed jobs
                 activeDownloads.entries.removeIf { !it.value.isActive }
@@ -749,8 +749,11 @@ class Downloader(
             }
         } else {
             // Robust Single-Threaded/Unknown Size Downloader
+            download.partProgress.clear()
             retry {
                 val start = if (finalFile.exists()) finalFile.length() else 0L
+                if (size > 0) download.partProgress[0] = (start.toFloat() / size).coerceIn(0f, 1f)
+                
                 val reqBuilder = Request.Builder().url(video.videoUrl).headers(headers)
                 if (start > 0) reqBuilder.header("Range", "bytes=$start-")
                 
@@ -776,6 +779,8 @@ class Downloader(
                                 out.write(buffer, 0, read)
                                 totalRead += read
                                 
+                                if (size > 0) download.partProgress[0] = (totalRead.toFloat() / size).coerceIn(0f, 1f)
+
                                 val now = System.currentTimeMillis()
                                 if (now - lastUpdate > 500) {
                                     download.update(totalRead, size, false)
@@ -1188,6 +1193,17 @@ class Downloader(
     companion object {
         const val TMP_DIR_SUFFIX = "_tmp"
         const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
+    }
+}
+
+private const val MIN_DISK_SPACE = 200L * 1024 * 1024
+
+object BufferPool {
+    private val pool = java.util.concurrent.ArrayBlockingQueue<ByteArray>(128)
+    fun obtain(): ByteArray = pool.poll() ?: ByteArray(256 * 1024)
+    fun recycle(buffer: ByteArray) { pool.offer(buffer) }
+}
+ARNING_NOTIF_TIMEOUT_MS = 30_000L
     }
 }
 
