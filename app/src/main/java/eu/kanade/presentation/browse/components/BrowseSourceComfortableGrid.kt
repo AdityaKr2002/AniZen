@@ -22,8 +22,8 @@ fun BrowseSourceComfortableGrid(
     animeList: LazyPagingItems<Anime>,
     columns: GridCells,
     contentPadding: PaddingValues,
-    onAnimeClick: (Anime) -> Unit,
-    onAnimeLongClick: (Anime) -> Unit,
+    onAnimeClick: (Anime, Int) -> Unit,
+    onAnimeLongClick: (Anime, Int) -> Unit,
     selection: List<Anime>,
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
@@ -53,8 +53,8 @@ fun BrowseSourceComfortableGrid(
                 anime = anime,
                 isFavorite = anime.id in favoriteIds,
                 isSelected = anime.id in selectionIds,
-                onClick = { onAnimeClick(anime) },
-                onLongClick = { onAnimeLongClick(anime) },
+                onClick = { onAnimeClick(anime, index) },
+                onLongClick = { onAnimeLongClick(anime, index) },
                 usePanorama = usePanorama,
             )
         }

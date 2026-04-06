@@ -380,20 +380,21 @@ data class BrowseSourceScreen(
                 onWebViewClick = onWebViewClick,
                 onHelpClick = { uriHandler.openUri(Constants.URL_HELP) },
                 onLocalSourceHelpClick = onHelpClick,
-                onAnimeClick = {
+                onAnimeClick = { anime, index ->
                     if (state.selectionMode) {
-                        screenModel.toggleSelection(it)
+                        screenModel.toggleSelection(anime, index)
                     } else {
                         navigator.push((AnimeScreen(it.id, true)))
                     }
                 },
-                onAnimeLongClick = { anime ->
-                    if (state.selectionMode) {
-                        screenModel.toggleSelection(anime)
+                onAnimeLongClick = { anime, index ->
+                    val lastIndex = state.lastSelectedIndex
+                    if (state.selectionMode && lastIndex != null) {
+                        val items = animeList.itemSnapshotList.items
+                        screenModel.selectRange(items, lastIndex, index)
                     } else {
-                        screenModel.toggleSelection(anime)
+                        screenModel.toggleSelection(anime, index)
                     }
-                    
                 },
                 selection = state.selection.toImmutableList(),
                 favoriteIds = state.favoriteIds,
@@ -516,8 +517,11 @@ data class BrowseSourceScreen(
                     onDismissRequest = onDismissRequest,
                     onEditCategories = { navigator.push(CategoryScreen) },
                     onConfirm = { include, _ ->
-                        screenModel.changeAnimeFavorite(dialog.anime)
-                        screenModel.moveAnimeToCategories(dialog.anime, include)
+                        dialog.animes.forEach { anime ->
+                            screenModel.changeAnimeFavorite(anime)
+                            screenModel.moveAnimeToCategories(anime, include)
+                        }
+                        screenModel.clearSelection()
                     },
                 )
             }

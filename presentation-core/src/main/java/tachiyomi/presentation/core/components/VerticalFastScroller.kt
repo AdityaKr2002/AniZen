@@ -129,10 +129,10 @@ fun VerticalFastScroller(
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
                 scrolled
-                    .sample(100)
+                    .sample(300)
                     .collectLatest {
                         if (thumbAllowed()) {
-                            alpha.snapTo(1f)
+                            alpha.animateTo(1f, animationSpec = tween(durationMillis = 150))
                             alpha.animateTo(0f, animationSpec = FadeOutAnimationSpec)
                         } else {
                             alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
@@ -314,10 +314,10 @@ fun VerticalGridFastScroller(
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
                 scrolled
-                    .sample(100)
+                    .sample(300)
                     .collectLatest {
                         if (thumbAllowed()) {
-                            alpha.snapTo(1f)
+                            alpha.animateTo(1f, animationSpec = tween(durationMillis = 150))
                             alpha.animateTo(0f, animationSpec = FadeOutAnimationSpec)
                         } else {
                             alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
