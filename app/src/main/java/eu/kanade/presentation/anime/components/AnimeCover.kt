@@ -275,7 +275,7 @@ enum class AnimeCoverHide(private val ratio: Float) {
     }
 }
 
-internal const val RatioSwitchToPanorama = 0.75f
+internal const val RatioSwitchToPanorama = 1.1f
 
 internal val CoverPlaceholderColor = Color(0x1F888888)
 internal val CoverPlaceholderOnBgColor = Color(0x8F888888)
