@@ -368,17 +368,7 @@ class AnimeScreen(
                     anime = dialog.anime,
                     onDismissRequest = screenModel::dismissDialog,
                     onConfirm = { newScore, newStatus ->
-                        screenModel.updateAnimeInfo(
-                            title = null,
-                            author = null,
-                            artist = null,
-                            thumbnailUrl = null,
-                            description = null,
-                            tags = null,
-                            status = newStatus,
-                            score = newScore,
-                            note = null,
-                        )
+                        screenModel.setLocalTrack(score = newScore, status = newStatus)
                     }
                 )
             }

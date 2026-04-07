@@ -792,6 +792,27 @@ class AnimeScreenModel(
         }
     }
 
+    fun setLocalTrack(score: Double, status: Long) {
+        val state = successState ?: return
+        val anime = state.anime
+        screenModelScope.launchIO {
+            val tracks = getTracks.await(anime.id)
+            val existingTrack = tracks.find { it.trackerId == TrackerManager.LOCAL }
+            
+            if (existingTrack != null) {
+                insertTrack.await(existingTrack.copy(status = status, score = score))
+            } else {
+                val dbTrack = eu.kanade.tachiyomi.data.database.models.Track.create(TrackerManager.LOCAL).apply {
+                    anime_id = anime.id
+                    this.title = anime.title.ifBlank { anime.ogTitle }
+                    this.status = status
+                    this.score = score
+                }
+                insertTrack.await(dbTrack.toDomainTrack(idRequired = false)!!)
+            }
+        }
+    }
+
     fun updateAnimeInfo(
         title: String?,
         author: String?,
@@ -805,18 +826,6 @@ class AnimeScreenModel(
     ) {
         val state = successState ?: return
         var anime = state.anime
-        
-        if (status != null || score != null) {
-            screenModelScope.launchIO {
-                val dbTrack = eu.kanade.tachiyomi.data.database.models.Track.create(TrackerManager.LOCAL).apply {
-                    anime_id = anime.id
-                    this.title = anime.title.ifBlank { anime.ogTitle }
-                    this.status = status ?: anime.ogStatus
-                    this.score = score ?: (anime.score ?: 0.0)
-                }
-                insertTrack.await(dbTrack.toDomainTrack(idRequired = false)!!)
-            }
-        }
 
         if (state.anime.isLocal()) {
             val newTitle = if (title.isNullOrBlank()) anime.url else title.trim()
@@ -1466,7 +1475,7 @@ class AnimeScreenModel(
         data class SetAnimeFetchInterval(val anime: Anime) : Dialog
         data class ShowQualities(val episode: Episode, val anime: Anime, val source: Source) : Dialog
         data class EditAnimeInfo(val anime: Anime) : Dialog
-        data class LocalScorePicker(val anime: Anime) : Dialog
+        data class LocalScorePicker(val score: Double, val status: Long) : Dialog
         data class EditMergedAnimeSettings(val data: MergedAnimeData) : Dialog
         data object ChangeAnimeSkipIntro : Dialog
         data object ClearAnime : Dialog
@@ -1518,7 +1527,13 @@ class AnimeScreenModel(
         }
     }
 
-    fun showLocalScoreDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.LocalScorePicker(it.anime)) }
+    fun showLocalScoreDialog() {
+        val state = successState ?: return
+        val localTrack = state.trackItems.find { it.tracker.id == TrackerManager.LOCAL }?.track
+        val currentScore = localTrack?.score ?: 0.0
+        val currentStatus = localTrack?.status ?: eu.kanade.tachiyomi.data.track.local.LocalTracker.WATCHING
+        updateSuccessState { it.copySuccess(dialog = Dialog.LocalScorePicker(currentScore, currentStatus)) }
+    }
     fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copySuccess(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
     fun showAnimeSkipIntroDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ChangeAnimeSkipIntro) }
     fun showClearAnimeDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ClearAnime) }

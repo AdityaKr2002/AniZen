@@ -24,10 +24,12 @@ import tachiyomi.domain.anime.model.Anime
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.WheelTextPicker
 import tachiyomi.presentation.core.i18n.stringResource
+import eu.kanade.tachiyomi.data.track.local.LocalTracker
 
 @Composable
 fun LocalScoreDialog(
-    anime: Anime,
+    score: Double,
+    status: Long,
     onDismissRequest: () -> Unit,
     onConfirm: (Double, Long) -> Unit,
 ) {
@@ -40,12 +42,18 @@ fun LocalScoreDialog(
         stringResource(MR.strings.plan_to_watch)
     ).toImmutableList()
     
-    val statusValues = listOf(1L, 2L, 3L, 4L, 5L) // Align with LocalTracker.kt constants
+    val statusValues = listOf(
+        LocalTracker.WATCHING,
+        LocalTracker.COMPLETED,
+        LocalTracker.ON_HOLD,
+        LocalTracker.DROPPED,
+        LocalTracker.PLAN_TO_WATCH
+    )
 
-    var selectedScore by remember { mutableStateOf(anime.score?.toInt()?.toString() ?: "0") }
+    var selectedScore by remember { mutableStateOf(score.toInt().toString()) }
     var selectedStatusIndex by remember { 
         mutableStateOf(
-            statusValues.indexOf(anime.ogStatus.takeIf { it in 1L..5L } ?: 1L).coerceAtLeast(0)
+            statusValues.indexOf(status).coerceAtLeast(0)
         )
     }
     
