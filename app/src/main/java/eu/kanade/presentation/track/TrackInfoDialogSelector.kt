@@ -101,6 +101,7 @@ fun TrackItemSelector(
     onDismissRequest: () -> Unit,
     isManga: Boolean,
 ) {
+    var internalSelection = remember { selection }
     val titleText = if (isManga) MR.strings.chapters else MR.strings.episodes
     BaseSelector(
         title = stringResource(titleText),
@@ -109,10 +110,13 @@ fun TrackItemSelector(
                 items = range.toImmutableList(),
                 modifier = Modifier.align(Alignment.Center),
                 startIndex = selection,
-                onSelectionChanged = { onSelectionChange(it) },
+                onSelectionChanged = { internalSelection = it },
             )
         },
-        onConfirm = onConfirm,
+        onConfirm = {
+            onSelectionChange(internalSelection)
+            onConfirm()
+        },
         onDismissRequest = onDismissRequest,
     )
 }
@@ -125,6 +129,7 @@ fun TrackScoreSelector(
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
+    var internalSelection = remember { selection }
     BaseSelector(
         title = stringResource(MR.strings.score),
         content = {
@@ -132,10 +137,13 @@ fun TrackScoreSelector(
                 items = selections,
                 modifier = Modifier.align(Alignment.Center),
                 startIndex = selections.indexOf(selection).takeIf { it >= 0 } ?: (selections.size / 2),
-                onSelectionChanged = { onSelectionChange(selections[it]) },
+                onSelectionChanged = { internalSelection = selections[it] },
             )
         },
-        onConfirm = onConfirm,
+        onConfirm = {
+            onSelectionChange(internalSelection)
+            onConfirm()
+        },
         onDismissRequest = onDismissRequest,
     )
 }
