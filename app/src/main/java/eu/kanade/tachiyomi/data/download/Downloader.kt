@@ -24,8 +24,11 @@ import kotlin.coroutines.resumeWithException
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.data.download.model.Download
+import eu.kanade.tachiyomi.data.torrentServer.service.TorrentServerService
 import eu.kanade.tachiyomi.network.HttpException
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.torrentServer.TorrentServerApi
+import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import tachiyomi.core.common.util.system.logcat
@@ -1206,7 +1209,26 @@ class Downloader(
     }
 
     private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: java.io.File, filename: String): java.io.File = ffmpegDownload(download, sandboxDir, filename)
-    private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File = File("") // Placeholder
+    private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File {
+        retry {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            TorrentServerService.start()
+            TorrentServerService.wait(10)
+        }
+        val currentTorrent = retry {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            TorrentServerApi.addTorrent(
+                link = download.video!!.videoUrl,
+                title = download.video!!.quality,
+                poster = "",
+                data = "",
+                save = false,
+            )
+        }
+        val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
+        download.video!!.videoUrl = torrentUrl
+        return internalDownload(download, sandboxDir, filename)
+    }
 
     companion object {
         const val TMP_DIR_SUFFIX = "_tmp"
