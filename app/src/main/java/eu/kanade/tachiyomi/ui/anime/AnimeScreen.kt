@@ -365,7 +365,8 @@ class AnimeScreen(
             }
             is AnimeScreenModel.Dialog.LocalScorePicker -> {
                 LocalScoreDialog(
-                    anime = dialog.anime,
+                    score = dialog.score,
+                    status = dialog.status,
                     onDismissRequest = screenModel::dismissDialog,
                     onConfirm = { newScore, newStatus ->
                         screenModel.setLocalTrack(score = newScore, status = newStatus)
