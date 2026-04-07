@@ -24,7 +24,6 @@ fun IntegerPickerDialog(
     onDismissRequest: () -> Unit,
 ) {
     var newValue by remember { mutableStateOf(defaultValue) }
-    var isInitialComposition by remember { mutableStateOf(true) }
     val values = remember { (minValue..maxValue step step).toList() }
     val items = remember { values.map { String.format(nameFormat, it) }.toImmutableList() }
 
@@ -43,11 +42,8 @@ fun IntegerPickerDialog(
             WheelTextPicker(
                 modifier = Modifier.align(Alignment.Center),
                 items = items,
-                onSelectionChanged = { 
-                    if (!isInitialComposition) {
-                        newValue = values[it]
-                    }
-                    isInitialComposition = false
+                onSelectionChanged = {
+                    newValue = values[it]
                 },
                 startIndex = values.indexOfFirst { it == defaultValue }.coerceAtLeast(0),
             )
