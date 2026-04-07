@@ -119,6 +119,8 @@ private fun <T> WheelPicker(
     val lazyListState = rememberLazyListState(startIndex)
 
     var internalIndex by remember { mutableIntStateOf(startIndex) }
+    var isInitialComposition by remember { mutableStateOf(true) }
+
     val internalOnSelectionChanged: (Int) -> Unit = {
         internalIndex = it
         onSelectionChanged(it)
@@ -133,7 +135,10 @@ private fun <T> WheelPicker(
             .map { calculateSnappedItemIndex(lazyListState) }
             .distinctUntilChanged()
             .collectLatest {
-                internalOnSelectionChanged(it)
+                if (!isInitialComposition) {
+                    internalOnSelectionChanged(it)
+                }
+                isInitialComposition = false
             }
     }
 
