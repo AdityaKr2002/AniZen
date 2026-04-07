@@ -40,70 +40,73 @@ abstract class CommonStorageScreenModel<T>(
             val showHiddenCategories = libraryPreferences.showHiddenCategories().get()
 
             combine(
-                flow = downloadCacheChanges,
-                flow2 = downloadCacheIsInitializing,
-                flow3 = libraries,
-                flow4 = categories(showHiddenCategories),
-                flow5 = selectedCategory,
-                transform = { _, _, libraries, categories, selectedCategory ->
-                    // initialize the screen with an empty state
-                    mutableState.update {
+                downloadCacheChanges,
+                downloadCacheIsInitializing,
+                libraries,
+                categories(showHiddenCategories),
+                selectedCategory,
+            ) { _, _, libraries, categories, selectedCategory ->
+                // Fast update for category switch
+                val allCategories = listOf(AllCategory, *categories.toTypedArray())
+                mutableState.update { state ->
+                    if (state is StorageScreenState.Success) {
+                        state.copy(
+                            selectedCategory = selectedCategory,
+                            categories = allCategories,
+                            items = emptyList(), // Clear while re-calculating
+                        )
+                    } else {
                         StorageScreenState.Success(
                             selectedCategory = selectedCategory,
-                            categories = listOf(AllCategory, *categories.toTypedArray()),
+                            categories = allCategories,
                             items = emptyList(),
                         )
                     }
+                }
 
-                    val distinctLibraries = libraries.distinctBy {
-                        it.getId()
-                    }.filter { item ->
-                        val categoryId = item.getCategoryId()
-                        when {
-                            // if all is selected, we want to make sure to include all entries
-                            // from only visible categories
-                            selectedCategory == AllCategory -> categories.find {
-                                it.id == categoryId
-                            } != null
+                // Offload heavy calculation to a separate job to not block the collector
+                val distinctLibraries = libraries.distinctBy { it.getId() }.filter { item ->
+                    val categoryId = item.getCategoryId()
+                    if (selectedCategory == AllCategory) {
+                        categories.any { it.id == categoryId }
+                    } else {
+                        categoryId == selectedCategory.id
+                    }
+                }
 
-                            // else include only entries from the selected category
-                            else -> categoryId == selectedCategory.id
+                distinctLibraries.forEach { library ->
+                    val random = Random(library.getId())
+                    val item = StorageItem(
+                        id = library.getId(),
+                        title = library.getTitle(),
+                        size = library.getDownloadSize(),
+                        thumbnail = library.getThumbnail(),
+                        entriesCount = library.getDownloadCount(),
+                        color = Color(
+                            random.nextInt(255),
+                            random.nextInt(255),
+                            random.nextInt(255),
+                        ),
+                    )
+
+                    mutableState.update { state ->
+                        if (state is StorageScreenState.Success && state.selectedCategory == selectedCategory) {
+                            state.copy(
+                                items = (state.items + item).sortedByDescending { it.size },
+                            )
+                        } else {
+                            state
                         }
                     }
-
-                    distinctLibraries.forEach { library ->
-                        val random = Random(library.getId())
-                        val item = StorageItem(
-                            id = library.getId(),
-                            title = library.getTitle(),
-                            size = library.getDownloadSize(),
-                            thumbnail = library.getThumbnail(),
-                            entriesCount = library.getDownloadCount(),
-                            color = Color(
-                                random.nextInt(255),
-                                random.nextInt(255),
-                                random.nextInt(255),
-                            ),
-                        )
-
-                        mutableState.update { state ->
-                            when (state) {
-                                is StorageScreenState.Success -> state.copy(
-                                    items = (state.items + item).sortedByDescending { it.size },
-                                )
-
-                                else -> state
-                            }
-                        }
-                    }
-                },
-            ).collectLatest {}
+                }
+            }.collectLatest {}
         }
     }
 
     fun setSelectedCategory(category: Category) {
         selectedCategory.update { category }
     }
+
 
     abstract fun deleteEntry(id: Long)
 
