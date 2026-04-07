@@ -1225,7 +1225,16 @@ class Downloader(
                 save = false,
             )
         }
-        val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, 0)
+        var index = 0
+        if (download.video!!.videoUrl.contains("index=")) {
+            index = try {
+                download.video!!.videoUrl.substringAfter("index=")
+                    .substringBefore("&").toInt()
+            } catch (_: Exception) {
+                0
+            }
+        }
+        val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, index)
         download.video!!.videoUrl = torrentUrl
         return internalDownload(download, sandboxDir, filename)
     }
