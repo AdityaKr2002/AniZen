@@ -50,18 +50,14 @@ fun LocalScoreDialog(
         LocalTracker.PLAN_TO_WATCH
     )
 
-    var selectedScore by remember { mutableStateOf(score.toInt().toString()) }
-    var selectedStatusIndex by remember { 
-        mutableStateOf(
-            statusValues.indexOf(status).coerceAtLeast(0)
-        )
-    }
+    var newScore = score.toInt().toString()
+    var newStatusIndex = statusValues.indexOf(status).coerceAtLeast(0)
     
     AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(onClick = {
-                onConfirm(selectedScore.toDouble(), statusValues[selectedStatusIndex])
+                onConfirm(newScore.toDouble(), statusValues[newStatusIndex])
                 onDismissRequest()
             }) {
                 Text(stringResource(MR.strings.action_ok))
@@ -85,8 +81,8 @@ fun LocalScoreDialog(
                     Text(text = stringResource(MR.strings.score), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     WheelTextPicker(
                         items = scores,
-                        startIndex = scores.indexOf(selectedScore).coerceAtLeast(0),
-                        onSelectionChanged = { selectedScore = scores[it] }
+                        startIndex = scores.indexOf(newScore).coerceAtLeast(0),
+                        onSelectionChanged = { newScore = scores[it] }
                     )
                 }
                 
@@ -94,8 +90,8 @@ fun LocalScoreDialog(
                     Text(text = stringResource(MR.strings.status), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     WheelTextPicker(
                         items = statuses,
-                        startIndex = selectedStatusIndex,
-                        onSelectionChanged = { selectedStatusIndex = it }
+                        startIndex = newStatusIndex,
+                        onSelectionChanged = { newStatusIndex = it }
                     )
                 }
             }
