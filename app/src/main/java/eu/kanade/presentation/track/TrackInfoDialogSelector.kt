@@ -26,6 +26,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,7 +105,7 @@ fun TrackItemSelector(
     onDismissRequest: () -> Unit,
     isManga: Boolean,
 ) {
-    var internalSelection = remember { selection }
+    var internalSelection by remember { mutableStateOf(selection) }
     val titleText = if (isManga) MR.strings.chapters else MR.strings.episodes
     BaseSelector(
         title = stringResource(titleText),
@@ -129,7 +133,7 @@ fun TrackScoreSelector(
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    var internalSelection = remember { selection }
+    var internalSelection by remember { mutableStateOf(selection) }
     BaseSelector(
         title = stringResource(MR.strings.score),
         content = {
