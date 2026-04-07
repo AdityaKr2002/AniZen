@@ -105,16 +105,23 @@ fun TrackItemSelector(
     onDismissRequest: () -> Unit,
     isManga: Boolean,
 ) {
+    val items = remember { range.toImmutableList() }
     var internalSelection by remember { mutableStateOf(selection) }
+    var isInitialComposition by remember { mutableStateOf(true) }
     val titleText = if (isManga) MR.strings.chapters else MR.strings.episodes
     BaseSelector(
         title = stringResource(titleText),
         content = {
             WheelNumberPicker(
-                items = range.toImmutableList(),
+                items = items,
                 modifier = Modifier.align(Alignment.Center),
-                startIndex = selection,
-                onSelectionChanged = { internalSelection = it },
+                startIndex = items.indexOf(selection).coerceAtLeast(0),
+                onSelectionChanged = { 
+                    if (!isInitialComposition) {
+                        internalSelection = items[it].toInt()
+                    }
+                    isInitialComposition = false
+                },
             )
         },
         onConfirm = {
@@ -134,6 +141,7 @@ fun TrackScoreSelector(
     onDismissRequest: () -> Unit,
 ) {
     var internalSelection by remember { mutableStateOf(selection) }
+    var isInitialComposition by remember { mutableStateOf(true) }
     BaseSelector(
         title = stringResource(MR.strings.score),
         content = {
@@ -141,7 +149,12 @@ fun TrackScoreSelector(
                 items = selections,
                 modifier = Modifier.align(Alignment.Center),
                 startIndex = selections.indexOf(selection).takeIf { it >= 0 } ?: (selections.size / 2),
-                onSelectionChanged = { internalSelection = selections[it] },
+                onSelectionChanged = { 
+                    if (!isInitialComposition) {
+                        internalSelection = selections[it]
+                    }
+                    isInitialComposition = false
+                },
             )
         },
         onConfirm = {

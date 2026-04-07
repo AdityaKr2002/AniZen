@@ -1,0 +1,954 @@
+Build & Preview Artifacts	Build Preview APK	﻿2026-04-06T17:44:00.7287201Z ##[group]Run ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7288139Z [36;1m./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=false -PabiList=arm64-v8a --no-daemon[0m
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7314201Z shell: /usr/bin/bash -e {0}
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7314499Z env:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7314751Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7315438Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7315997Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7316480Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7316826Z   GRADLE_USER_HOME: /home/runner/.gradle
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7317160Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7317495Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7318001Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7318573Z   DEVELOCITY_INJECTION_CUSTOM_VALUE: gradle-actions
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7318937Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7319245Z   TAG: r2118
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7319478Z   VERSION_NAME: 0.5.78
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7319740Z   COMMIT_COUNT: 2118
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7325559Z   AI_CHANGELOG: 🚀 Exciting News, AniZen Fans 🚀
+Build & Preview Artifacts	Build Preview APK	We've got a brand new update for you, packed with fixes, polishes, and new features ✨. Here's what's new and what's changed:
+Build & Preview Artifacts	Build Preview APK	
+Build & Preview Artifacts	Build Preview APK	### What's New
+Build & Preview Artifacts	Build Preview APK	- **Concurrent Downloads**: You can now enjoy faster download speeds with our new concurrent downloads feature 🛠️. This means you can download multiple episodes at the same time, making it easier to catch up on your favorite shows.
+Build & Preview Artifacts	Build Preview APK	- **Secondary Progress Tracking**: We've added a new progress tracking system that lets you see how much of each episode has been downloaded, so you can stay up-to-date on your downloads' status 📊.
+Build & Preview Artifacts	Build Preview APK	
+Build & Preview Artifacts	Build Preview APK	### Fixed
+Build & Preview Artifacts	Build Preview APK	- **Download Preferences**: We've fixed an issue where your download preferences weren't being used correctly. Now, your concurrent downloads setting will be applied as expected 🙌.
+Build & Preview Artifacts	Build Preview APK	- **Robust Downloading**: We've made some changes to make our downloader more robust, so you can enjoy a smoother downloading experience 🌟.
+Build & Preview Artifacts	Build Preview APK	- **Low Disk Space Warning**: We've added a warning system that will notify you if your device is running low on disk space, so you can free up some space and keep downloading 💻.
+Build & Preview Artifacts	Build Preview APK	
+Build & Preview Artifacts	Build Preview APK	### Polished
+Build & Preview Artifacts	Build Preview APK	- **Buffer Pool Optimization**: We've optimized our buffer pool to make downloads more efficient and reduce memory usage 📈.
+Build & Preview Artifacts	Build Preview APK	- **Improved Error Handling**: We've made some changes to improve how we handle errors during downloads, so you can get back to watching your favorite shows quickly 🚀.
+Build & Preview Artifacts	Build Preview APK	
+Build & Preview Artifacts	Build Preview APK	That's it for this update, folks 🎉. We're always working to improve AniZen and bring you the best possible experience. Thanks for being part of our community, and happy watching 📺! 👏
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7331583Z   SIGNING_STORE_PASSWORD: ***
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7331910Z   SIGNING_KEY_ALIAS: ***
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7332212Z   SIGNING_KEY_PASSWORD: ***
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:00.7332488Z ##[endgroup]
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:01.4000128Z To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:02.3997523Z Daemon will be stopped at the end of the build 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:02.7990089Z Configuration on demand is an incubating feature.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:06.0011514Z Type-safe project accessors is an incubating feature.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.2009062Z > Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.2989850Z > Task :buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.4005285Z > Task :buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.4994359Z > Task :buildSrc:compilePluginsBlocks UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.8990981Z > Task :buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:09.8991964Z > Task :buildSrc:generateScriptPluginAdapters UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2006069Z > Task :buildSrc:compileKotlin UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2006946Z > Task :buildSrc:compileJava NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2007671Z > Task :buildSrc:compileGroovy NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2008433Z > Task :buildSrc:pluginDescriptors UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2009196Z > Task :buildSrc:processResources UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2009908Z > Task :buildSrc:classes UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:10.2010541Z > Task :buildSrc:jar UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5996305Z > Task :core-metadata:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5997037Z > Task :domain:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5997688Z > Task :core-metadata:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5998360Z > Task :domain:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5999037Z > Task :data:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.5999696Z > Task :data:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.6000300Z > Task :app:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.6000882Z > Task :app:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7988088Z > Task :data:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7990706Z > Task :domain:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7992874Z > Task :app:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7995184Z > Task :core-metadata:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7997375Z > Task :flagkit:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.7999341Z > Task :flagkit:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8001590Z > Task :domain:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8002824Z > Task :core-metadata:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8004019Z > Task :data:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8006285Z > Task :core-metadata:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8007803Z > Task :domain:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8009295Z > Task :data:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8010410Z > Task :i18n:generateLocalesConfig UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8012106Z > Task :flagkit:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.8013211Z > Task :flagkit:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.9004634Z > Task :flagkit:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.9996209Z > Task :i18n-ank:generateMRcommonMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:20.9997270Z > Task :i18n-ank:generateMRandroidBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0010604Z > Task :i18n-ank:generateMRandroidDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0012889Z > Task :i18n-sy:generateMRcommonMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0017904Z > Task :i18n-sy:generateMRandroidBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0018633Z > Task :i18n-sy:generateMRandroidDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0019442Z > Task :i18n-ank:generateMRandroidInstrumentedTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0020349Z > Task :i18n-ank:generateMRandroidInstrumentedTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0021292Z > Task :i18n-sy:generateMRandroidInstrumentedTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.0022198Z > Task :i18n-sy:generateMRandroidInstrumentedTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1026906Z > Task :i18n-ank:generateMRandroidMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1056037Z > Task :i18n-ank:generateMRandroidPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1074773Z > Task :i18n-ank:generateMRandroidRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1077238Z > Task :i18n-ank:generateMRcommonTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1079369Z > Task :i18n-ank:generateMRandroidUnitTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1081477Z > Task :i18n-ank:generateMRandroidUnitTestBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1094615Z > Task :i18n-ank:generateMRandroidUnitTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1097479Z > Task :i18n-ank:generateMRandroidUnitTestPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1100077Z > Task :i18n-ank:generateMRandroidUnitTestRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1103236Z > Task :i18n-ank:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1105811Z > Task :i18n-ank:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1107503Z > Task :i18n-sy:generateMRandroidMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1110801Z > Task :i18n-sy:generateMRandroidPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1113593Z > Task :i18n-sy:generateMRandroidRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1116555Z > Task :i18n:generateMRcommonMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1120032Z > Task :i18n:generateMRandroidBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1122135Z > Task :i18n:generateMRandroidDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1141836Z > Task :i18n-ank:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1146875Z > Task :i18n-sy:generateMRcommonTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1149881Z > Task :i18n-ank:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1152902Z > Task :i18n-ank:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1156912Z > Task :presentation-core:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1159042Z > Task :i18n:generateMRandroidInstrumentedTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1161222Z > Task :presentation-core:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1163340Z > Task :i18n:generateMRandroidInstrumentedTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1165836Z > Task :i18n-sy:generateMRandroidUnitTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1169065Z > Task :i18n-sy:generateMRandroidUnitTestBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1171545Z > Task :i18n-sy:generateMRandroidUnitTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1174429Z > Task :i18n-sy:generateMRandroidUnitTestPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1177365Z > Task :i18n-sy:generateMRandroidUnitTestRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1180118Z > Task :i18n-sy:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1208557Z > Task :i18n-sy:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.1998426Z > Task :presentation-core:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2013260Z > Task :presentation-core:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2035635Z > Task :i18n-sy:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2052390Z > Task :i18n-sy:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2055400Z > Task :presentation-core:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2057871Z > Task :presentation-widget:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2059748Z > Task :presentation-widget:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2062105Z > Task :i18n-sy:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2064412Z > Task :source-api:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2066886Z > Task :source-api:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2069358Z > Task :presentation-widget:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2072049Z > Task :presentation-widget:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2086217Z > Task :presentation-widget:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2088455Z > Task :source-local:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2090552Z > Task :source-local:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2092337Z > Task :source-api:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2094212Z > Task :source-api:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2096751Z > Task :source-api:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2098919Z > Task :source-local:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2100392Z > Task :telemetry:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2102579Z > Task :source-local:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2104081Z > Task :telemetry:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2106820Z > Task :source-local:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2109151Z > Task :telemetry:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2111160Z > Task :core:archive:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2113829Z > Task :core:archive:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2116343Z > Task :telemetry:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2131068Z > Task :telemetry:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2141578Z > Task :core:common:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2143493Z > Task :core:common:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.2145822Z > Task :core:archive:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3036924Z > Task :core:archive:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3039954Z > Task :core:common:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3042276Z > Task :core:archive:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3044428Z > Task :core:common:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3046842Z > Task :core-metadata:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3049251Z > Task :core:common:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3051623Z > Task :domain:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3054301Z > Task :data:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3056127Z > Task :flagkit:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3058697Z > Task :i18n-ank:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3060955Z > Task :i18n-sy:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3063168Z > Task :presentation-core:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3066091Z > Task :presentation-widget:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3068578Z > Task :source-local:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3070984Z > Task :source-api:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3073261Z > Task :telemetry:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3097786Z > Task :core:archive:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3100223Z > Task :core-metadata:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3102640Z > Task :core:common:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3105108Z > Task :core-metadata:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.3106516Z > Task :source-api:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4040251Z > Task :source-api:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4042956Z > Task :core-metadata:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4045699Z > Task :i18n:generateMRandroidMain FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4048212Z > Task :i18n:generateMRandroidPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4050876Z > Task :i18n:generateMRandroidRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4988029Z > Task :i18n:generateMRcommonTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.4992279Z > Task :i18n:generateMRandroidUnitTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5003829Z > Task :i18n:generateMRandroidUnitTestBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5006517Z > Task :i18n:generateMRandroidUnitTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5008761Z > Task :i18n:generateMRandroidUnitTestPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5010694Z > Task :i18n:generateMRandroidUnitTestRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5012928Z > Task :i18n:preBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5045702Z > Task :i18n:prePreviewBuild UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5047790Z > Task :i18n:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5049835Z > Task :i18n:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5051830Z > Task :i18n:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5053792Z > Task :i18n:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5055884Z > Task :i18n:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5057891Z > Task :i18n:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5059962Z > Task :core-metadata:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.5062035Z > Task :source-api:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:21.9999337Z > Task :core-metadata:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0002477Z > Task :source-api:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0005181Z > Task :i18n-sy:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0008343Z > Task :core:common:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0009696Z > Task :core:common:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0011391Z > Task :i18n-sy:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0013309Z > Task :i18n-kmk:generateMRcommonMain
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0015473Z > Task :i18n-kmk:generateMRandroidBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0018269Z > Task :i18n-kmk:generateMRandroidDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0019070Z > Task :i18n-kmk:generateMRandroidInstrumentedTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0019959Z > Task :i18n-kmk:generateMRandroidInstrumentedTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.0020792Z > Task :core:common:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1010911Z > Task :core:common:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1013761Z > Task :source-api:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1016826Z > Task :source-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1019487Z > Task :core:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1021926Z > Task :core:common:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1024077Z > Task :source-api:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1026131Z > Task :core-metadata:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1027068Z > Task :domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1027869Z > Task :domain:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1028552Z > Task :domain:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1029316Z > Task :domain:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.1030115Z > Task :domain:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.2008885Z > Task :i18n-ank:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.2011385Z > Task :i18n-ank:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.7993910Z > Task :i18n-kmk:generateMRandroidMain
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.7996928Z > Task :i18n-kmk:generateMRandroidPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.7999365Z > Task :i18n-kmk:generateMRandroidRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8001769Z > Task :i18n-kmk:generateMRcommonTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8004036Z > Task :i18n-ank:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8006440Z > Task :i18n-ank:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8008830Z > Task :i18n-kmk:generateMRandroidUnitTest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8012206Z > Task :i18n-kmk:generateMRandroidUnitTestBenchmark SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8080510Z > Task :i18n-kmk:generateMRandroidUnitTestDebug SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8082657Z > Task :i18n-kmk:generateMRandroidUnitTestPreview SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8100923Z > Task :i18n-kmk:generateMRandroidUnitTestRelease SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8103027Z > Task :i18n-kmk:preBuild
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8105078Z > Task :i18n-kmk:prePreviewBuild
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8107020Z > Task :i18n-kmk:mergePreviewJniLibFolders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8108635Z > Task :i18n-kmk:mergePreviewNativeLibs NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.8109326Z > Task :i18n-kmk:copyPreviewJniLibsProjectOnly
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.9041026Z > Task :i18n-ank:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.9043304Z > Task :i18n-kmk:preparePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.9045695Z > Task :i18n-ank:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:22.9051155Z > Task :i18n-ank:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:23.2075229Z > Task :i18n-sy:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:23.2076168Z > Task :i18n-sy:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:23.2076834Z > Task :i18n-sy:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:23.2077554Z > Task :i18n-sy:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:23.2988612Z > Task :i18n-sy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:25.1988290Z > Task :i18n:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:25.7006085Z > Task :app:mergePreviewNativeLibs
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:25.7008995Z > Task :i18n:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:25.7011116Z > Task :i18n:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:26.2007947Z > Task :core:common:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:26.3006978Z > Task :app:mergePreviewArtProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:26.3010758Z > Task :source-api:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:27.2987889Z > Task :app:stripPreviewDebugSymbols
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:27.4019656Z > Task :core-metadata:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:27.4022071Z > Task :i18n:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:27.4024310Z > Task :i18n:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0009880Z > Task :app:expandPreviewL8ArtProfileWildcards FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0012670Z > Task :app:extractPreviewNativeSymbolTables FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0015228Z > Task :app:mergePreviewNativeDebugMetadata NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0016634Z > Task :i18n:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0018023Z > Task :i18n-sy:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.0988282Z > Task :domain:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2005026Z > Task :i18n-ank:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2008775Z > Task :domain:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2016858Z > Task :source-local:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2019283Z > Task :source-local:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2032311Z > Task :source-local:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2035391Z > Task :source-local:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2036226Z > Task :source-local:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2037036Z > Task :source-local:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.2037870Z > Task :core:archive:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.3010641Z > Task :core:archive:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.3013193Z > Task :core:archive:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.3015504Z > Task :core:archive:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.3998358Z > Task :core:archive:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.5006619Z > Task :source-local:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.5009196Z > Task :core:archive:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.5997747Z > Task :core:archive:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.6008395Z > Task :source-local:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:28.6033866Z > Task :data:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.5988646Z > Task :data:generatePreviewDatabaseInterface
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.5989563Z > Task :data:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.5990325Z > Task :data:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7018473Z > Task :data:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7019315Z > Task :data:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7989036Z > Task :data:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7991547Z > Task :data:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7993959Z > Task :presentation-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.7996597Z > Task :presentation-core:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.8025521Z > Task :presentation-core:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.9988232Z > Task :presentation-core:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:38.9990526Z > Task :presentation-core:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.2005176Z > Task :presentation-core:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.3024619Z > Task :presentation-core:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.3027487Z > Task :presentation-widget:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.3029942Z > Task :presentation-widget:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.3045386Z > Task :presentation-widget:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.4009736Z > Task :presentation-widget:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.4012364Z > Task :presentation-widget:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.6987700Z > Task :presentation-widget:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.6990454Z > Task :presentation-widget:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.6992846Z > Task :flagkit:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.6995344Z > Task :flagkit:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:39.7986997Z > Task :flagkit:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.1986947Z > Task :flagkit:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.1989342Z > Task :flagkit:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.2988645Z > Task :flagkit:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.3005300Z > Task :flagkit:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.3007924Z > Task :i18n-kmk:kmpPartiallyResolvedDependenciesChecker
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.3010391Z > Task :i18n-kmk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.3015856Z > Task :i18n-kmk:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.3045589Z > Task :i18n-kmk:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.5987295Z > Task :i18n-kmk:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:40.7986945Z > Task :i18n-kmk:parsePreviewLocalResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.0038690Z > Task :i18n-kmk:generatePreviewRFile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3003456Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3005664Z > Task :i18n-ank:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3008600Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3009922Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3010881Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3011421Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.3012385Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.4986649Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.5006164Z > Task :i18n-ank:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.5987118Z > Task :i18n-ank:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.5989560Z > Task :i18n-kmk:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.5991682Z > Task :i18n-ank:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.6986949Z > Task :i18n-ank:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.6990688Z > Task :telemetry:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.7045783Z > Task :telemetry:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.7048191Z > Task :telemetry:generatePreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.7050646Z > Task :telemetry:packagePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.7053671Z > Task :telemetry:parsePreviewLocalResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:41.8008182Z > Task :telemetry:generatePreviewRFile FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:42.9997128Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:42.9999439Z > Task :telemetry:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0002087Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0005201Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0006797Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0008722Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0009802Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0010304Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0010607Z > Task :telemetry:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.0011406Z > Task :telemetry:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1008099Z > Task :telemetry:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1010810Z > Task :telemetry:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1987849Z > Task :app:buildKotlinToolingMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1988416Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1988697Z > Task :i18n-sy:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1989608Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1990909Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1991787Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1992344Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.1993367Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9006220Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9007610Z > Task :i18n-sy:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9008776Z > Task :i18n-sy:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9011128Z > Task :i18n-sy:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9012209Z > Task :i18n-sy:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9012964Z > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:43.9988560Z > Task :app:checkPreviewDuplicateClasses
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.0987437Z > Task :core-metadata:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.1988995Z > Task :data:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.1993640Z > Task :app:dataBindingMergeDependencyArtifactsPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.2001001Z > Task :domain:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.2005779Z > Task :app:generatePreviewResValues FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.2009670Z > Task :flagkit:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.2012597Z > Task :i18n:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3029390Z > Task :i18n-ank:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3032301Z > Task :i18n-kmk:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3135897Z > Task :i18n-sy:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3138495Z > Task :presentation-core:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3165784Z > Task :presentation-widget:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3168197Z > Task :source-api:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3170557Z > Task :app:generatePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.3174263Z > Task :source-local:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4053162Z > Task :telemetry:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4055998Z > Task :core:archive:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4057934Z > Task :core:common:writePreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4060065Z > Task :core-metadata:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4062712Z > Task :core-metadata:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4063456Z > Task :data:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4063885Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4064137Z > Task :i18n-kmk:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4065164Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4066708Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4067538Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4068062Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4069041Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4988519Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4990804Z > Task :data:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4993153Z > Task :domain:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4995584Z > Task :domain:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.4997895Z > Task :flagkit:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.5000321Z > Task :flagkit:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.5002636Z > Task :i18n:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6061840Z > Task :i18n-kmk:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6065942Z > Task :i18n-kmk:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6068653Z > Task :i18n:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6071379Z > Task :i18n-kmk:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6074103Z > Task :i18n-ank:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6077000Z > Task :i18n-kmk:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6079733Z > Task :i18n-kmk:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6083777Z > Task :i18n-ank:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6084575Z > Task :presentation-core:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6091234Z > Task :i18n-sy:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6092051Z > Task :presentation-core:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6092836Z > Task :i18n-sy:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6093626Z > Task :presentation-widget:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6993316Z > Task :source-api:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6995911Z > Task :presentation-widget:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.6998320Z > Task :source-api:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7000594Z > Task :telemetry:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7004311Z > Task :source-local:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7008388Z > Task :telemetry:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7011856Z > Task :source-local:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7018542Z > Task :core:common:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7019330Z > Task :core:archive:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7020109Z > Task :core:common:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.7020843Z > Task :core:archive:processPreviewManifest FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8026553Z > Task :i18n-kmk:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8028918Z > Task :telemetry:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8031254Z > Task :i18n-ank:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8041451Z > Task :i18n-kmk:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8043908Z > Task :i18n-sy:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8046583Z > Task :telemetry:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8048919Z > Task :i18n-ank:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8051249Z > Task :i18n-kmk:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.8987809Z > Task :i18n-sy:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9153908Z > Task :telemetry:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9156714Z > Task :data:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9157343Z > Task :core-metadata:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9158001Z > Task :data:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9158721Z > Task :core-metadata:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9159431Z > Task :data:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9160147Z > Task :core-metadata:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9160827Z > Task :data:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9161775Z > Task :core-metadata:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9162419Z > Task :flagkit:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9162964Z > Task :domain:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9163483Z > Task :flagkit:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9164065Z > Task :flagkit:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9164649Z > Task :domain:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9165484Z > Task :domain:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9166008Z > Task :flagkit:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9166484Z > Task :domain:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9166954Z > Task :i18n-ank:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9167436Z > Task :i18n:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9167938Z > Task :i18n-ank:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9168518Z > Task :i18n-ank:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9169078Z > Task :i18n:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9169648Z > Task :i18n:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9170230Z > Task :i18n-ank:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9170806Z > Task :i18n:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:44.9171326Z > Task :i18n-ank:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0019641Z > Task :i18n-kmk:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0022140Z > Task :i18n:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0024338Z > Task :i18n-kmk:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0086287Z > Task :i18n-kmk:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0088643Z > Task :i18n-kmk:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0090892Z > Task :i18n-sy:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0092962Z > Task :i18n-sy:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0095325Z > Task :i18n-sy:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0097277Z > Task :i18n-sy:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0099257Z > Task :i18n-kmk:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0101105Z > Task :i18n-sy:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0103307Z > Task :presentation-core:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0105440Z > Task :presentation-core:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0186238Z > Task :presentation-core:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0187067Z > Task :presentation-widget:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0187807Z > Task :presentation-widget:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0188602Z > Task :presentation-widget:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0189307Z > Task :presentation-core:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0189932Z > Task :presentation-widget:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0190500Z > Task :source-local:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0190999Z > Task :source-api:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0191556Z > Task :source-local:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0192176Z > Task :source-local:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0192823Z > Task :source-api:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0193484Z > Task :source-api:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0194099Z > Task :source-api:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0195053Z > Task :source-local:previewAssetsCopyForAGP NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0986259Z > Task :source-local:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0986999Z > Task :source-api:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0988191Z > Task :telemetry:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0988894Z > Task :telemetry:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0994039Z > Task :telemetry:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.0994999Z > Task :core:archive:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1001084Z > Task :core:archive:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1001862Z > Task :core:archive:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1002506Z > Task :telemetry:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1003097Z > Task :core:archive:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1004160Z > Task :core-metadata:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1005110Z > Task :core:common:mergePreviewShaders
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1005784Z > Task :core:common:compilePreviewShaders NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1006518Z > Task :core:common:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1007289Z > Task :core-metadata:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1008056Z > Task :core:common:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1008791Z > Task :core-metadata:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1009606Z > Task :i18n:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1010387Z > Task :i18n-sy:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.1011215Z > Task :source-api:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.2002875Z > Task :core-metadata:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3038163Z > Task :core:common:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3040700Z > Task :data:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3043082Z > Task :data:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3061636Z > Task :core-metadata:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3064069Z > Task :data:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3066266Z > Task :data:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:45.3068305Z > Task :data:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.8987016Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.8989188Z > Task :i18n:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.8991778Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.8995174Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.8998070Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.9000483Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:47.9003361Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:48.0986638Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:48.0989094Z > Task :i18n:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:48.0991922Z > Task :i18n:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.4986592Z > Task :core-metadata:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.5986678Z > Task :i18n:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.5988942Z > Task :i18n:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.5990901Z > Task :i18n:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.5992798Z > Task :i18n:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.6986845Z > Task :data:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.6989308Z > Task :domain:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:51.7987224Z > Task :i18n-ank:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1008124Z > Task :core-metadata:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1010688Z > Task :domain:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1012759Z > Task :domain:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1015146Z > Task :domain:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1019242Z > Task :domain:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1019839Z > Task :data:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1020407Z > Task :domain:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1021016Z > Task :flagkit:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1021671Z > Task :flagkit:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1022364Z > Task :flagkit:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1022986Z > Task :flagkit:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:52.1987187Z > Task :flagkit:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.3987334Z > Task :flagkit:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.6998709Z > Task :flagkit:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.7000960Z > Task :i18n:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.7009423Z > Task :i18n:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.7029715Z > Task :i18n:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:57.8027835Z > Task :domain:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:58.0998568Z > Task :domain:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:58.1001104Z > Task :i18n-ank:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:58.1003473Z > Task :i18n-ank:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:58.1006549Z > Task :i18n-ank:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:59.7987161Z > Task :i18n:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:59.7989509Z > Task :i18n:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:59.8987062Z > Task :i18n:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:44:59.9995828Z > Task :i18n-ank:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.0997959Z > Task :i18n:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.1000755Z > Task :i18n:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.1003327Z > Task :i18n-ank:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.1006133Z > Task :i18n-ank:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.2000563Z > Task :i18n-ank:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.2002775Z > Task :i18n-ank:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.3998325Z > Task :i18n-ank:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.4000592Z > Task :i18n-ank:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.8986530Z > Task :i18n-ank:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.9996407Z > Task :i18n-ank:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.9997174Z > Task :i18n-ank:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.9997827Z > Task :i18n-kmk:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.9998632Z > Task :i18n-kmk:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:00.9999476Z > Task :i18n-kmk:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.0000220Z > Task :i18n-kmk:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.0000863Z > Task :i18n-kmk:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.1018272Z > Task :i18n-kmk:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.1020515Z > Task :i18n-kmk:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.1022506Z > Task :i18n-kmk:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.1986702Z > Task :i18n-kmk:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.1989512Z > Task :i18n-kmk:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:01.8015401Z > Task :i18n-kmk:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.1987631Z > Task :i18n:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.2986833Z > Task :i18n:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4026733Z > Task :i18n-kmk:verifyPreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4052362Z > Task :i18n-kmk:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4054691Z > Task :i18n-sy:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4057184Z > Task :i18n-sy:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4059519Z > Task :i18n-sy:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4064092Z > Task :i18n-sy:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.4066431Z > Task :i18n-sy:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.5011017Z > Task :i18n-sy:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.5026446Z > Task :i18n-sy:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.5056184Z > Task :i18n-sy:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.6010429Z > Task :i18n-sy:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.6012717Z > Task :i18n-sy:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.8986873Z > Task :i18n:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.9989927Z > Task :i18n:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.9991999Z > Task :i18n:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.9993903Z > Task :presentation-core:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.9996298Z > Task :presentation-core:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:04.9998781Z > Task :presentation-core:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.0988287Z > Task :presentation-core:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.3987180Z > Task :presentation-core:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.6986755Z > Task :i18n-sy:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.7987677Z > Task :i18n-sy:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.7990178Z > Task :i18n-sy:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.7993324Z > Task :presentation-widget:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.7999620Z > Task :presentation-widget:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.8014120Z > Task :presentation-widget:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.8987186Z > Task :presentation-widget:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:05.8989541Z > Task :presentation-widget:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:11.3987255Z > Task :app:prepareLibraryDefinitionsPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.0997874Z > Task :app:preparePreviewShortcutXML
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.1987019Z > Task :presentation-core:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.4989336Z > Task :presentation-core:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.4995874Z > Task :presentation-core:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.4998407Z > Task :source-api:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5000385Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5002747Z > Task :core:common:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5003632Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5005155Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5005967Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5006466Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5007397Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5008947Z w: file:///home/runner/work/AniZen/AniZen/core/common/src/main/kotlin/eu/kanade/tachiyomi/network/OkHttpExtensions.kt:135:1 Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5010822Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5011579Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5012045Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5012947Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5014775Z w: file:///home/runner/work/AniZen/AniZen/core/common/src/main/kotlin/eu/kanade/tachiyomi/network/OkHttpExtensions.kt:140:1 Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5016817Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5017565Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5018018Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5018879Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5020309Z w: file:///home/runner/work/AniZen/AniZen/core/common/src/main/kotlin/eu/kanade/tachiyomi/util/system/WebViewUtil.kt:71:9 'var databaseEnabled: Boolean' is deprecated. Deprecated in Java.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5997810Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.5999254Z > Task :source-api:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.6001663Z > Task :source-api:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.6026494Z > Task :source-api:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.6997816Z > Task :source-api:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.8008700Z > Task :core:common:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:12.8987029Z > Task :core:common:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:15.6986705Z > Task :presentation-widget:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.1986842Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.1988752Z > Task :core:archive:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.1991371Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.1994194Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.1996972Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.2003138Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.2004265Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.2990508Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.2992854Z > Task :core:archive:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.2995345Z > Task :core:archive:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.3986703Z > Task :core:archive:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:16.3989561Z > Task :core:archive:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5008263Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5036469Z > Task :flagkit:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5038609Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5040934Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5042892Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5044543Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5046873Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5048467Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5050373Z > Task :flagkit:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5051093Z > Task :flagkit:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5051768Z > Task :flagkit:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5052432Z > Task :core:common:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5053106Z > Task :core:common:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5053769Z > Task :flagkit:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5989542Z > Task :flagkit:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5990389Z > Task :core:archive:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5991389Z > Task :core:common:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.5992308Z > Task :flagkit:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.7016160Z > Task :core:archive:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.7017103Z > Task :core:common:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.8007822Z > Task :flagkit:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.8010205Z > Task :flagkit:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.8012412Z > Task :flagkit:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:17.8987013Z > Task :flagkit:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:18.0992005Z > Task :flagkit:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:18.0995576Z > Task :flagkit:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.1986895Z > Task :presentation-widget:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.1990989Z > Task :source-local:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.1993581Z > Task :source-local:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.3007801Z > Task :source-local:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.3010486Z > Task :source-local:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.3012890Z > Task :core-metadata:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.3015277Z > Task :source-local:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:19.5986983Z > Task :source-api:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:25.2987044Z > Task :source-local:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:25.2989525Z > Task :app:generatePreviewBuildConfig
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7987486Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7989689Z > Task :source-api:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7992114Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7995074Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7997347Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.7999245Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.8001640Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.8003670Z w: file:///home/runner/work/AniZen/AniZen/source-api/src/commonMain/kotlin/eu/kanade/tachiyomi/animesource/AnimeSource.kt:61:81 'suspend fun getHosterList(episode: SEpisode): List<Hoster>' is deprecated. Use the version with anime instead.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.8007417Z w: file:///home/runner/work/AniZen/AniZen/source-api/src/commonMain/kotlin/eu/kanade/tachiyomi/animesource/online/AnimeHttpSource.kt:319:26 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.8011160Z w: file:///home/runner/work/AniZen/AniZen/source-api/src/commonMain/kotlin/eu/kanade/tachiyomi/animesource/online/AnimeHttpSource.kt:451:16 'fun List<Video>.sort(): List<Video>' is deprecated. Use .sortVideos() instead.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:28.8014392Z w: file:///home/runner/work/AniZen/AniZen/source-api/src/commonMain/kotlin/exh/source/EnhancedHttpSource.kt:273:30 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:30.1987304Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:30.1989323Z > Task :source-api:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:30.1991416Z > Task :source-api:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:30.6986414Z > Task :app:checkPreviewAarMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6987078Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6989309Z > Task :core-metadata:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6991402Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6992691Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6993530Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6994068Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6995320Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6995753Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6996020Z > Task :core-metadata:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.6996622Z > Task :core-metadata:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.7987251Z > Task :core-metadata:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.7990459Z > Task :core-metadata:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.7991315Z > Task :source-api:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.7992097Z > Task :source-api:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.8987324Z > Task :app:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.8997948Z > Task :app:createPreviewCompatibleScreenManifests
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:32.8999997Z > Task :app:extractDeepLinksPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.1987255Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.1989352Z > Task :app:processPreviewMainManifest
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.1991833Z /home/runner/work/AniZen/AniZen/app/src/main/AndroidManifest.xml:44:5-46:31 Warning:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2013593Z 	uses-permission#com.google.android.gms.permission.AD_ID was tagged at AndroidManifest.xml:44 to remove other declarations but no other declaration present
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2016273Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2016517Z > Task :app:processPreviewManifest
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2017133Z > Task :app:processPreviewManifestForPackage
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2017746Z > Task :app:javaPreCompilePreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.2018381Z > Task :core-metadata:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3003493Z > Task :source-api:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3006099Z > Task :app:extractProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3008067Z > Task :core-metadata:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3009263Z > Task :source-api:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3045640Z > Task :app:mergePreviewStartupProfile
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.3047867Z > Task :app:generatePreviewAssets UP-TO-DATE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.5986764Z > Task :app:mergePreviewAssets
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:34.7987514Z > Task :app:compressPreviewAssets FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.0008487Z > Task :app:extractPreviewVersionControlInfo
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.0010841Z > Task :app:validateSigningPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.0012923Z > Task :app:writePreviewAppMetadata
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.0025228Z > Task :app:writePreviewSigningConfigVersions
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.1991294Z > Task :core-metadata:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.1992115Z > Task :core-metadata:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.1992817Z > Task :core-metadata:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.2987029Z > Task :core-metadata:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.2989539Z > Task :core-metadata:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.2991546Z > Task :core-metadata:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.3987113Z > Task :source-api:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.3990315Z > Task :source-api:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.3993179Z > Task :source-api:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.5028058Z > Task :source-api:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.5986821Z > Task :source-api:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.9016885Z > Task :source-api:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.9019560Z > Task :source-api:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:35.9021902Z > Task :core:archive:compilePreviewLibraryResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0986782Z > Task :source-local:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0989108Z > Task :telemetry:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0991066Z > Task :telemetry:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0993355Z > Task :telemetry:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0995743Z > Task :telemetry:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.0997844Z > Task :telemetry:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.1000002Z > Task :telemetry:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.1994465Z > Task :telemetry:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2019887Z > Task :telemetry:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2020465Z > Task :telemetry:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2021041Z > Task :telemetry:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2021650Z > Task :telemetry:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2022293Z > Task :telemetry:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2023106Z > Task :telemetry:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2023739Z > Task :core:archive:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2024524Z > Task :core:archive:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2025554Z > Task :core:archive:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.2987007Z > Task :core:archive:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.3028932Z > Task :core:archive:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.3029690Z > Task :core:archive:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.3030274Z > Task :core:archive:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.3030857Z > Task :core:archive:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.3986958Z > Task :core:archive:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:36.4026058Z > Task :core:archive:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:39.5986865Z > Task :app:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:39.7987071Z > Task :app:dataBindingGenBaseClassesPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.1988635Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.1991049Z > Task :presentation-core:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.1994401Z w: The feature plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=OptimizeNonSkippingGroups is enabled by default and specifying this option explicitly is not necessary.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2006245Z w: The feature plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=StrongSkipping is enabled by default and specifying this option explicitly is not necessary.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2009184Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2011720Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2015936Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2016467Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2017429Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2022004Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/AdaptiveSheet.kt:120:13 'fun <T> AnchoredDraggableState(initialValue: T, positionalThreshold: (Float) -> Float, velocityThreshold: () -> Float, snapAnimationSpec: AnimationSpec<Float>, decayAnimationSpec: DecayAnimationSpec<Float>, confirmValueChange: (T) -> Boolean = ...): AnchoredDraggableState<T>' is deprecated. This constructor of AnchoredDraggableState has been deprecated. Please pass thresholds and animation specs to AnchoredDraggableDefaults.flingBehavior(..) instead, which can be passed to Modifier.anchoredDraggable.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2029067Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/AdaptiveSheet.kt:163:91 'suspend fun settle(velocity: Float): Float' is deprecated. settle does not accept a velocity anymore. Please use FlingBehavior#performFling instead. See AnchoredDraggableSample.kt for example usages.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2033023Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/SettingsItems.kt:365:18 'fun Modifier.menuAnchor(): Modifier' is deprecated. Use overload that takes MenuAnchorType and enabled parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2036978Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/material/Scaffold.kt:150:34 'fun Modifier.hazeChild(state: HazeState, style: HazeStyle = ..., block: (HazeEffectScope.() -> Unit)? = ...): Modifier' is deprecated. Renamed to Modifier.hazeEffect().
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2040947Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/material/Scaffold.kt:169:34 'fun Modifier.hazeChild(state: HazeState, style: HazeStyle = ..., block: (HazeEffectScope.() -> Unit)? = ...): Modifier' is deprecated. Renamed to Modifier.hazeEffect().
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.2044252Z w: file:///home/runner/work/AniZen/AniZen/presentation-core/src/main/java/tachiyomi/presentation/core/components/material/Scaffold.kt:185:58 'fun Modifier.haze(state: HazeState): Modifier' is deprecated. Renamed to Modifier.hazeSource().
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.3997467Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.3999895Z > Task :presentation-core:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.4987009Z > Task :presentation-core:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.4990308Z > Task :presentation-core:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.4992960Z > Task :presentation-core:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.4995862Z > Task :presentation-core:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.5986781Z > Task :presentation-core:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.6986602Z > Task :presentation-core:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.6989416Z > Task :presentation-core:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:41.7986575Z > Task :presentation-core:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0007689Z > Task :presentation-core:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0987306Z > Task :presentation-core:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0989364Z > Task :presentation-core:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0991260Z > Task :core:common:stripPreviewDebugSymbols NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0993280Z > Task :core:common:copyPreviewJniLibsProjectAndLocalJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.0997341Z > Task :core:common:extractDeepLinksForAarPreview FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.2986865Z > Task :core:common:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.2989263Z > Task :core:common:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.2991388Z > Task :core:common:prepareLintJarForPublish
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.2993409Z > Task :core:common:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.4986560Z > Task :core:common:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.5987012Z > Task :core:common:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:42.6005459Z > Task :core:common:mapPreviewSourceSetPaths
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:43.9986817Z > Task :core:archive:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:44.1986966Z > Task :core:archive:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:44.1989188Z > Task :core:archive:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:46.8986762Z > Task :core:common:mergePreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:47.1986949Z > Task :core:common:verifyPreviewResources FROM-CACHE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:47.1990064Z > Task :core:common:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8986119Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8988739Z > Task :domain:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8991429Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8994576Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8997743Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.8999640Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:48.9001981Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.1986306Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.1997110Z > Task :domain:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.2000364Z > Task :domain:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.2003541Z > Task :domain:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.2986739Z > Task :domain:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.2989438Z > Task :domain:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:49.2991810Z > Task :domain:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.2987652Z > Task :app:processPreviewResources
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3000105Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3026311Z > Task :source-local:compilePreviewKotlinAndroid
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3028537Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3031256Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3033362Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3035608Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3038304Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3041651Z w: file:///home/runner/work/AniZen/AniZen/source-local/src/androidMain/kotlin/tachiyomi/source/local/LocalSource.kt:150:49 'fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage>' is deprecated. Use the non-RxJava API instead.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3046842Z w: file:///home/runner/work/AniZen/AniZen/source-local/src/androidMain/kotlin/tachiyomi/source/local/LocalSource.kt:153:50 'fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage>' is deprecated. Use the non-RxJava API instead.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3986515Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.3988704Z > Task :source-local:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.4987585Z > Task :source-local:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.4990149Z > Task :source-local:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.4992080Z > Task :source-local:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.5001573Z > Task :source-local:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.5004008Z > Task :source-local:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.5987020Z > Task :domain:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.5996163Z > Task :domain:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.5998396Z > Task :domain:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.6987270Z > Task :source-local:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.6990015Z > Task :source-local:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.6992401Z > Task :source-local:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.7986950Z > Task :source-local:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.7989625Z > Task :source-local:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.7991932Z > Task :source-local:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.9037766Z > Task :domain:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.9987173Z > Task :domain:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:52.9989394Z > Task :domain:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:53.9987518Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:53.9989734Z > Task :presentation-widget:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:53.9993020Z w: The feature plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=OptimizeNonSkippingGroups is enabled by default and specifying this option explicitly is not necessary.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:53.9997119Z w: The feature plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=StrongSkipping is enabled by default and specifying this option explicitly is not necessary.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0000597Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0003275Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0005773Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0007961Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0010690Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0986814Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0989045Z > Task :presentation-widget:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0991821Z > Task :presentation-widget:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.0994461Z > Task :presentation-widget:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.1987057Z > Task :presentation-widget:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.1992552Z > Task :presentation-widget:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.1995751Z > Task :presentation-widget:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.2986934Z > Task :presentation-widget:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.2989506Z > Task :presentation-widget:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.2991757Z > Task :presentation-widget:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.2993786Z > Task :presentation-widget:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.3986459Z > Task :presentation-widget:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:45:54.3987164Z > Task :presentation-widget:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.3985741Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.3996896Z > Task :data:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.3998358Z w: Experimental context receivers are superseded by context parameters.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.4000568Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.4001413Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.4001980Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.4003245Z This warning will become an error in future releases.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.4005558Z w: file:///home/runner/work/AniZen/AniZen/data/src/main/java/tachiyomi/data/anime/CustomAnimeRepositoryImpl.kt:58:41 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.5985687Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6006939Z > Task :data:compilePreviewJavaWithJavac NO-SOURCE
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6007728Z > Task :data:mergePreviewGeneratedProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6008445Z > Task :data:exportPreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6009090Z > Task :data:processPreviewJavaRes
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6009698Z > Task :data:bundleLibCompileToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.6010332Z > Task :data:bundleLibRuntimeToJarPreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.7986623Z > Task :data:extractPreviewAnnotations
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.7988809Z > Task :data:mergePreviewConsumerProguardFiles
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:00.8997823Z > Task :data:mergePreviewJavaResource
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:01.3017424Z > Task :data:syncPreviewLibJars
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:01.3021031Z > Task :data:bundlePreviewAar
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:01.3024263Z > Task :data:assemblePreview
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:30.7987725Z > Task :app:compilePreviewKotlin
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6989936Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:458:40 Overload resolution ambiguity between candidates:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6991440Z val MIN_DISK_SPACE: Long
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6991927Z val MIN_DISK_SPACE: Long
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6993083Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1199:19 Conflicting declarations:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6994323Z val MIN_DISK_SPACE: Long
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6995925Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1201:8 Redeclaration:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6997448Z object BufferPool : Any
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.6998763Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1206:1 Syntax error: Expecting a top level declaration.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7001005Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1206:25 Syntax error: Expecting a top level declaration.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7003192Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1206:27 Syntax error: Expecting a top level declaration.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7005613Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1207:5 Syntax error: Expecting a top level declaration.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7007774Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1208:1 Syntax error: Expecting a top level declaration.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7009821Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1210:19 Conflicting declarations:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7011064Z val MIN_DISK_SPACE: Long
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7012173Z e: file:///home/runner/work/AniZen/AniZen/app/src/main/java/eu/kanade/tachiyomi/data/download/Downloader.kt:1212:8 Redeclaration:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7013338Z object BufferPool : Any
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7988291Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.7991524Z > Task :app:compilePreviewKotlin FAILED
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9016719Z gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1775497444106.json
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9017890Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9018841Z [Incubating] Problems report is available at: file:///home/runner/work/AniZen/AniZen/build/reports/problems/problems-report.html
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9987112Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9988501Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9990075Z FAILURE: Build failed with an exception.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9991592Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9993386Z * What went wrong:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9995215Z Execution failed for task ':app:compilePreviewKotlin'.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:36.9997576Z > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0000098Z    > Compilation error. See log for more details
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0002512Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0004597Z * Try:
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0017770Z > Run with --stacktrace option to get the stack trace.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0018483Z > Run with --info or --debug option to get more log output.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0019084Z > Run with --scan to get full insights.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0019631Z > Get more help at https://help.gradle.org.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0019991Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0020158Z BUILD FAILED in 2m 36s
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0020861Z Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0022265Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0022970Z You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0023825Z 
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0024646Z For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.0026221Z 544 actionable tasks: 378 executed, 157 from cache, 9 up-to-date
+Build & Preview Artifacts	Build Preview APK	2026-04-06T17:46:37.6372391Z ##[error]Process completed with exit code 1.

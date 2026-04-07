@@ -50,8 +50,11 @@ fun LocalScoreDialog(
         LocalTracker.PLAN_TO_WATCH
     )
 
-    var newScore = score.toInt().toString()
-    var newStatusIndex = statusValues.indexOf(status).coerceAtLeast(0)
+    var newScore by remember { mutableStateOf(score.toInt().toString()) }
+    var newStatusIndex by remember { mutableStateOf(statusValues.indexOf(status).coerceAtLeast(0)) }
+    
+    var isInitialScoreComposition by remember { mutableStateOf(true) }
+    var isInitialStatusComposition by remember { mutableStateOf(true) }
     
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -82,7 +85,12 @@ fun LocalScoreDialog(
                     WheelTextPicker(
                         items = scores,
                         startIndex = scores.indexOf(newScore).coerceAtLeast(0),
-                        onSelectionChanged = { newScore = scores[it] }
+                        onSelectionChanged = { 
+                            if (!isInitialScoreComposition) {
+                                newScore = scores[it]
+                            }
+                            isInitialScoreComposition = false
+                        }
                     )
                 }
                 
@@ -91,7 +99,12 @@ fun LocalScoreDialog(
                     WheelTextPicker(
                         items = statuses,
                         startIndex = newStatusIndex,
-                        onSelectionChanged = { newStatusIndex = it }
+                        onSelectionChanged = { 
+                            if (!isInitialStatusComposition) {
+                                newStatusIndex = it
+                            }
+                            isInitialStatusComposition = false
+                        }
                     )
                 }
             }
