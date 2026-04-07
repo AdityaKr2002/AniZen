@@ -59,12 +59,14 @@ abstract class CommonStorageScreenModel<T>(
                             selectedCategory = selectedCategory,
                             categories = allCategories,
                             items = emptyList(),
+                            isLoading = true,
                         )
                     } else {
                         StorageScreenState.Success(
                             selectedCategory = selectedCategory,
                             categories = allCategories,
                             items = emptyList(),
+                            isLoading = true,
                         )
                     }
                 }
@@ -84,8 +86,8 @@ abstract class CommonStorageScreenModel<T>(
                         }
 
                         // Process in chunks to reduce state churn
-                        distinctLibraries.chunked(10).forEach { chunk ->
-                            if (!isActive) return@forEach
+                        distinctLibraries.chunked(10).forEachIndexed { index, chunk ->
+                            if (!isActive) return@forEachIndexed
                             
                             val newItems = chunk.map { library ->
                                 val random = Random(library.getId())
@@ -105,12 +107,23 @@ abstract class CommonStorageScreenModel<T>(
 
                             mutableState.update { state ->
                                 if (state is StorageScreenState.Success && state.selectedCategory == selectedCategory) {
+                                    val isLastChunk = index == (distinctLibraries.size / 10) || distinctLibraries.size <= 10
                                     state.copy(
                                         items = (state.items + newItems).sortedByDescending { it.size },
+                                        isLoading = !isLastChunk,
                                     )
                                 } else {
                                     state
                                 }
+                            }
+                        }
+                        
+                        // Final safety update to ensure isLoading is false
+                        mutableState.update { state ->
+                            if (state is StorageScreenState.Success && state.selectedCategory == selectedCategory) {
+                                state.copy(isLoading = false)
+                            } else {
+                                state
                             }
                         }
                     }

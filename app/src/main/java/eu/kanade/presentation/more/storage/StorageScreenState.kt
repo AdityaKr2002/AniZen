@@ -12,5 +12,6 @@ sealed class StorageScreenState {
         val selectedCategory: Category,
         val items: List<StorageItem>,
         val categories: List<Category>,
+        val isLoading: Boolean = false,
     ) : StorageScreenState()
 }
