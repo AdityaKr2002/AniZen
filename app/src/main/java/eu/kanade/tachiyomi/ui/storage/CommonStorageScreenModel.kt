@@ -5,6 +5,8 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.presentation.more.storage.StorageItem
 import eu.kanade.presentation.more.storage.StorageScreenState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -12,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -34,6 +38,7 @@ abstract class CommonStorageScreenModel<T>(
 ) : StateScreenModel<StorageScreenState>(StorageScreenState.Loading) {
 
     private val selectedCategory = MutableStateFlow(AllCategory)
+    private var calculationJob: Job? = null
 
     init {
         screenModelScope.launchIO {
@@ -53,7 +58,7 @@ abstract class CommonStorageScreenModel<T>(
                         state.copy(
                             selectedCategory = selectedCategory,
                             categories = allCategories,
-                            items = emptyList(), // Clear while re-calculating
+                            items = emptyList(),
                         )
                     } else {
                         StorageScreenState.Success(
@@ -64,38 +69,49 @@ abstract class CommonStorageScreenModel<T>(
                     }
                 }
 
-                // Offload heavy calculation to a separate job to not block the collector
-                val distinctLibraries = libraries.distinctBy { it.getId() }.filter { item ->
-                    val categoryId = item.getCategoryId()
-                    if (selectedCategory == AllCategory) {
-                        categories.any { it.id == categoryId }
-                    } else {
-                        categoryId == selectedCategory.id
-                    }
-                }
+                // Immediate cancellation of any previous job
+                calculationJob?.cancel()
+                
+                calculationJob = launch {
+                    coroutineScope {
+                        val distinctLibraries = libraries.distinctBy { it.getId() }.filter { item ->
+                            val categoryId = item.getCategoryId()
+                            if (selectedCategory == AllCategory) {
+                                categories.any { it.id == categoryId }
+                            } else {
+                                categoryId == selectedCategory.id
+                            }
+                        }
 
-                distinctLibraries.forEach { library ->
-                    val random = Random(library.getId())
-                    val item = StorageItem(
-                        id = library.getId(),
-                        title = library.getTitle(),
-                        size = library.getDownloadSize(),
-                        thumbnail = library.getThumbnail(),
-                        entriesCount = library.getDownloadCount(),
-                        color = Color(
-                            random.nextInt(255),
-                            random.nextInt(255),
-                            random.nextInt(255),
-                        ),
-                    )
+                        // Process in chunks to reduce state churn
+                        distinctLibraries.chunked(10).forEach { chunk ->
+                            if (!isActive) return@forEach
+                            
+                            val newItems = chunk.map { library ->
+                                val random = Random(library.getId())
+                                StorageItem(
+                                    id = library.getId(),
+                                    title = library.getTitle(),
+                                    size = library.getDownloadSize(),
+                                    thumbnail = library.getThumbnail(),
+                                    entriesCount = library.getDownloadCount(),
+                                    color = Color(
+                                        random.nextInt(255),
+                                        random.nextInt(255),
+                                        random.nextInt(255),
+                                    ),
+                                )
+                            }
 
-                    mutableState.update { state ->
-                        if (state is StorageScreenState.Success && state.selectedCategory == selectedCategory) {
-                            state.copy(
-                                items = (state.items + item).sortedByDescending { it.size },
-                            )
-                        } else {
-                            state
+                            mutableState.update { state ->
+                                if (state is StorageScreenState.Success && state.selectedCategory == selectedCategory) {
+                                    state.copy(
+                                        items = (state.items + newItems).sortedByDescending { it.size },
+                                    )
+                                } else {
+                                    state
+                                }
+                            }
                         }
                     }
                 }
