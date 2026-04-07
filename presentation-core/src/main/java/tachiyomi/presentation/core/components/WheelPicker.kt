@@ -129,7 +129,7 @@ private fun <T> WheelPicker(
     LaunchedEffect(lazyListState, onSelectionChanged) {
         snapshotFlow {
             lazyListState.layoutInfo.viewportSize.height to
-                (lazyListState.firstVisibleItemIndex to lazyListState.firstVisibleItemScrollOffset)
+                lazyListState.firstVisibleItemScrollOffset
         }
             .filter { it.first > 0 }
             .map { calculateSnappedItemIndex(lazyListState) }
@@ -232,7 +232,7 @@ private fun <T> WheelPicker(
 }
 
 private fun LazyListState.snapOffsetForItem(itemInfo: LazyListItemInfo): Int {
-    val startScrollOffset = layoutInfo.beforeContentPadding
+    val startScrollOffset = 0
     val endScrollOffset = layoutInfo.let { it.viewportEndOffset - it.afterContentPadding }
     return startScrollOffset + (endScrollOffset - startScrollOffset - itemInfo.size) / 2
 }
