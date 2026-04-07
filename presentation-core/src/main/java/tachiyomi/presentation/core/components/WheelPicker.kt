@@ -115,26 +115,7 @@ private fun <T> WheelPicker(
     itemContent: @Composable LazyItemScope.(item: T) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val itemSizePx = remember(density, size) { with(density) { (size.height / ROW_COUNT).roundToPx() } }
-
-    val initialIndex = remember(startIndex) {
-        if (startIndex == 0) 0
-        else if (startIndex == 1) 0
-        else startIndex - 1
-    }
-    
-    val initialOffset = remember(startIndex, itemSizePx) {
-        if (startIndex == 0) 0
-        else if (startIndex == 1) itemSizePx
-        else 0
-    }
-
-    val lazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = initialIndex,
-        initialFirstVisibleItemScrollOffset = initialOffset
-    )
+    val lazyListState = rememberLazyListState(startIndex)
 
     var internalIndex by remember { mutableIntStateOf(startIndex) }
     val internalOnSelectionChanged: (Int) -> Unit = {
