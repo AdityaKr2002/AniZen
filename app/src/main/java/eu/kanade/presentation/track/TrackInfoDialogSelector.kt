@@ -26,6 +26,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,18 +105,25 @@ fun TrackItemSelector(
     onDismissRequest: () -> Unit,
     isManga: Boolean,
 ) {
+    val items = remember { range.toImmutableList() }
+    var internalSelection by remember { mutableStateOf(selection) }
     val titleText = if (isManga) MR.strings.chapters else MR.strings.episodes
     BaseSelector(
         title = stringResource(titleText),
         content = {
             WheelNumberPicker(
-                items = range.toImmutableList(),
+                items = items,
                 modifier = Modifier.align(Alignment.Center),
-                startIndex = selection,
-                onSelectionChanged = { onSelectionChange(it) },
+                startIndex = items.indexOf(selection).coerceAtLeast(0),
+                onSelectionChanged = { 
+                    internalSelection = items[it].toInt()
+                },
             )
         },
-        onConfirm = onConfirm,
+        onConfirm = {
+            onSelectionChange(internalSelection)
+            onConfirm()
+        },
         onDismissRequest = onDismissRequest,
     )
 }
@@ -125,6 +136,7 @@ fun TrackScoreSelector(
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
+    var internalSelection by remember { mutableStateOf(selection) }
     BaseSelector(
         title = stringResource(MR.strings.score),
         content = {
@@ -132,10 +144,15 @@ fun TrackScoreSelector(
                 items = selections,
                 modifier = Modifier.align(Alignment.Center),
                 startIndex = selections.indexOf(selection).takeIf { it >= 0 } ?: (selections.size / 2),
-                onSelectionChanged = { onSelectionChange(selections[it]) },
+                onSelectionChanged = { 
+                    internalSelection = selections[it]
+                },
             )
         },
-        onConfirm = onConfirm,
+        onConfirm = {
+            onSelectionChange(internalSelection)
+            onConfirm()
+        },
         onDismissRequest = onDismissRequest,
     )
 }

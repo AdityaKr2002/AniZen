@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import tachiyomi.presentation.core.components.material.padding
@@ -124,7 +125,11 @@ private fun <T> WheelPicker(
     }
 
     LaunchedEffect(lazyListState, onSelectionChanged) {
-        snapshotFlow { lazyListState.firstVisibleItemIndex to lazyListState.firstVisibleItemScrollOffset }
+        snapshotFlow {
+            lazyListState.layoutInfo.viewportSize.height to
+                (lazyListState.firstVisibleItemIndex to lazyListState.firstVisibleItemScrollOffset)
+        }
+            .filter { it.first > 0 }
             .map { calculateSnappedItemIndex(lazyListState) }
             .distinctUntilChanged()
             .collectLatest {
@@ -239,8 +244,9 @@ private fun calculateAnimatedAlpha(
     lazyListState: LazyListState,
     index: Int,
 ): Float {
-    val distanceToIndexSnap = lazyListState.distanceToSnapForIndex(index).absoluteValue
     val viewPortHeight = lazyListState.layoutInfo.viewportSize.height.toFloat()
+    if (viewPortHeight <= 0f) return 0f
+    val distanceToIndexSnap = lazyListState.distanceToSnapForIndex(index).absoluteValue
     val singleViewPortHeight = viewPortHeight / ROW_COUNT
     return if (distanceToIndexSnap in 0..singleViewPortHeight.toInt()) {
         1.2f - (distanceToIndexSnap / singleViewPortHeight)
