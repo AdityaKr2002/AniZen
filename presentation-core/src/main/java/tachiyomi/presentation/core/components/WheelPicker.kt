@@ -136,7 +136,6 @@ private fun <T> WheelPicker(
             .distinctUntilChanged()
             .collectLatest {
                 if (!isInitialComposition) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     internalOnSelectionChanged(it)
                 }
                 isInitialComposition = false
