@@ -38,6 +38,8 @@ import coil3.request.crossfade
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.util.system.CoverColorObserver
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
