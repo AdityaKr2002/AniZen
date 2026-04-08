@@ -154,22 +154,26 @@ private fun BoxScope.CoverTextOverlay(
     title: String,
     onClickContinueWatching: (() -> Unit)? = null,
 ) {
-    Box(
+    val gradient = remember {
+        Brush.verticalGradient(
+            0f to Color.Transparent,
+            1f to Color(0xCC000000),
+        )
+    }
+    Spacer(
         modifier = Modifier
-            .background(
-                Brush.verticalGradient(
-                    0f to Color.Transparent,
-                    1f to Color(0xCC000000),
-                ),
-            )
             .fillMaxHeight(0.33f)
             .fillMaxWidth()
-            .align(Alignment.BottomCenter),
+            .align(Alignment.BottomCenter)
+            .drawBehind {
+                drawRect(brush = gradient)
+            },
     )
     Row(
         modifier = Modifier.align(Alignment.BottomStart),
         verticalAlignment = Alignment.Bottom,
     ) {
+// ... rest of Row unchanged
         GridItemTitle(
             modifier = Modifier
                 .weight(1f)
@@ -342,58 +346,48 @@ private fun GridItemSelectable(
     )
     val shape = MaterialTheme.shapes.medium
 
-    val selectableModifier = modifier
-        .graphicsLayer {
-            scaleX = scale
-            scaleY = scale
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.shape = shape
+                clip = true
+            }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .then(
+                if (isSelected) {
+                    Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(4.dp),
+    ) {
+        val contentColor = if (isSelected) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            LocalContentColor.current
+        }
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            content()
         }
 
-    val contentBlock = @Composable {
-        Box(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                )
-                .padding(4.dp),
-        ) {
-            val contentColor = if (isSelected) {
-                MaterialTheme.colorScheme.onSurface
-            } else {
-                LocalContentColor.current
-            }
-            CompositionLocalProvider(LocalContentColor provides contentColor) {
-                content()
-            }
-
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .background(MaterialTheme.colorScheme.surface, CircleShape),
-                )
-            }
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape),
+            )
         }
-    }
-
-    if (isSelected) {
-        Surface(
-            modifier = selectableModifier,
-            shape = shape,
-            color = Color.Transparent,
-            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-            content = contentBlock,
-        )
-    } else {
-        Box(
-            modifier = selectableModifier,
-            content = { contentBlock() },
-        )
     }
 }
 
