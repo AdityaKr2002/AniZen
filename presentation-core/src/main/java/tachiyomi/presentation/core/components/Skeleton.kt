@@ -37,10 +37,10 @@ fun SkeletonItem(
 ) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.6f,
+        initialValue = 0.5f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000),
+            animation = tween(durationMillis = 3000), // 3-second breathing cycle
             repeatMode = RepeatMode.Reverse,
         ),
         label = "alpha",

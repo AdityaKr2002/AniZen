@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -112,7 +113,10 @@ fun AnimeCompactGridItem(
                 entry(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                        .graphicsLayer {
+                            this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha
+                            this.compositingStrategy = CompositingStrategy.ModulateAlpha
+                        },
                     data = coverData,
                     ratio = ratio,
                     shape = RectangleShape, // Optimization: AnimeGridCover clips
@@ -219,7 +223,10 @@ fun AnimeComfortableGridItem(
                     entry(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                            .graphicsLayer {
+                                this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha
+                                this.compositingStrategy = CompositingStrategy.ModulateAlpha
+                            },
                         data = coverData,
                         ratio = ratio,
                         shape = RectangleShape, // Optimization: AnimeGridCover clips
@@ -416,7 +423,10 @@ fun AnimeListItem(
         entry(
             modifier = Modifier
                 .fillMaxHeight()
-                .graphicsLayer { alpha = coverAlpha },
+                .graphicsLayer {
+                    alpha = coverAlpha
+                    this.compositingStrategy = CompositingStrategy.ModulateAlpha
+                },
             data = coverData,
             ratio = ratio,
         )
