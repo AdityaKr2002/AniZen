@@ -22,8 +22,9 @@ fun BaseBrowseItem(
 ) {
     Row(
         modifier = modifier
-            .clickable(
+            .combinedClickable(
                 onClick = onClickItem,
+                onLongClick = onLongClickItem,
             )
             .padding(
                 horizontal = MaterialTheme.padding.medium,
