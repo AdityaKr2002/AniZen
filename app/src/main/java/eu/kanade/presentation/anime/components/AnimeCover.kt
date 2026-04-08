@@ -103,7 +103,7 @@ enum class AnimeCover(val ratio: Float) {
         val isSuccess by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Success } }
 
         val scope = rememberCoroutineScope()
-        LaunchedEffect(isSuccess) {
+        LaunchedEffect(isSuccess, usePanorama, shouldExtractColor) {
             if (isSuccess) {
                 val state = painter.state
                 if (state is AsyncImagePainter.State.Success) {
@@ -222,9 +222,8 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book.ratio
 
-            return remember(animeId) {
-                CoverColorObserver.ratios.value[animeId] ?: Book.ratio
-            }
+            val ratios by CoverColorObserver.ratios.collectAsState()
+            return ratios[animeId] ?: Book.ratio
         }
 
         @Composable
@@ -235,9 +234,8 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book to Book.ratio
 
-            val ratio = remember(animeId) {
-                CoverColorObserver.ratios.value[animeId] ?: Book.ratio
-            }
+            val ratios by CoverColorObserver.ratios.collectAsState()
+            val ratio = ratios[animeId] ?: Book.ratio
 
             return remember(ratio) {
                 val entry = if (ratio > RatioSwitchToPanorama) Panorama else Book
