@@ -94,6 +94,7 @@ enum class AnimeCover(val ratio: Float) {
         }
         
         val painter = rememberAsyncImagePainter(model = request)
+        val painterState = painter.state
         
         val isLoading by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Loading } }
         val isError by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Error } }
@@ -174,39 +175,39 @@ enum class AnimeCover(val ratio: Float) {
         }
     }
 
-    @Composable
-    private fun CoverLoading(shape: Shape, bgColor: Color?) {
-        SkeletonItem(
-            modifier = Modifier.fillMaxSize(),
-            shape = shape,
-            color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f),
-        )
-    }
-
-    @Composable
-    private fun BoxScope.CoverError(size: Size, tint: Int?, contentDescription: String) {
-        androidx.compose.foundation.Image(
-            imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
-            contentDescription = contentDescription,
-            modifier = Modifier
-                .size(
-                    when (size) {
-                        Size.Big -> COVER_TEMPLATE_SIZE_BIG
-                        Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
-                        else -> COVER_TEMPLATE_SIZE_NORMAL
-                    },
-                )
-                .align(Alignment.Center),
-            colorFilter = ColorFilter.tint(
-                tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-            ),
-        )
-    }
-
     companion object {
         val COVER_TEMPLATE_SIZE_BIG = 16.dp
         val COVER_TEMPLATE_SIZE_MEDIUM = 24.dp
         val COVER_TEMPLATE_SIZE_NORMAL = 32.dp
+
+        @Composable
+        private fun BoxScope.CoverLoading(shape: Shape, bgColor: Color?) {
+            SkeletonItem(
+                modifier = Modifier.fillMaxSize(),
+                shape = shape,
+                color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f),
+            )
+        }
+
+        @Composable
+        private fun BoxScope.CoverError(size: Size, tint: Int?, contentDescription: String) {
+            androidx.compose.foundation.Image(
+                imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
+                contentDescription = contentDescription,
+                modifier = Modifier
+                    .size(
+                        when (size) {
+                            Size.Big -> COVER_TEMPLATE_SIZE_BIG
+                            Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
+                            else -> COVER_TEMPLATE_SIZE_NORMAL
+                        },
+                    )
+                    .align(Alignment.Center),
+                colorFilter = ColorFilter.tint(
+                    tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
+                ),
+            )
+        }
 
         @Composable
         fun getRatio(animeId: Long): Float {
