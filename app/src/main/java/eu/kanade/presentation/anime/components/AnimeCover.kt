@@ -93,11 +93,10 @@ enum class AnimeCover(val ratio: Float) {
         }
         
         val painter = rememberAsyncImagePainter(model = request)
-        val painterState = painter.state
         
-        val isLoading by remember { derivedStateOf { painterState is AsyncImagePainter.State.Loading } }
-        val isError by remember { derivedStateOf { painterState is AsyncImagePainter.State.Error } }
-        val isSuccess by remember { derivedStateOf { painterState is AsyncImagePainter.State.Success } }
+        val isLoading by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Loading } }
+        val isError by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Error } }
+        val isSuccess by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Success } }
 
         Box(
             modifier = modifier
@@ -141,26 +140,29 @@ enum class AnimeCover(val ratio: Float) {
                 contentScale = scale,
             )
 
-            if (isSuccess && shouldExtractColor) {
+            if (shouldExtractColor) {
                 val scope = rememberCoroutineScope()
-                LaunchedEffect(painterState) {
-                    if (painterState is AsyncImagePainter.State.Success) {
-                        val cover = when (data) {
-                            is Anime -> data.asAnimeCover()
-                            is DomainMangaCover -> data
-                            else -> null
-                        }
-                        if (cover != null) {
-                            scope.launch {
-                                eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                                    cover = cover,
-                                    state = painterState,
-                                    extractColor = true,
-                                )
+                LaunchedEffect(isSuccess) {
+                    if (isSuccess) {
+                        val state = painter.state
+                        if (state is AsyncImagePainter.State.Success) {
+                            val cover = when (data) {
+                                is Anime -> data.asAnimeCover()
+                                is DomainMangaCover -> data
+                                else -> null
                             }
+                            if (cover != null) {
+                                scope.launch {
+                                    eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                                        cover = cover,
+                                        state = state,
+                                        extractColor = true,
+                                    )
+                                }
+                            }
+                            if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
+                            if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
                         }
-                        if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), painterState)
-                        if (data is DomainMangaCover) onCoverLoaded?.invoke(data, painterState)
                     }
                 }
             }
@@ -181,7 +183,7 @@ enum class AnimeCover(val ratio: Float) {
     }
 
     @Composable
-    private fun CoverError(size: Size, tint: Int?, contentDescription: String) {
+    private fun BoxScope.CoverError(size: Size, tint: Int?, contentDescription: String) {
         androidx.compose.foundation.Image(
             imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
             contentDescription = contentDescription,

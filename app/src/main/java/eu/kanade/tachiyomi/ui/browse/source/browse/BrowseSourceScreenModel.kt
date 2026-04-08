@@ -175,6 +175,7 @@ class BrowseSourceScreenModel(
                     val localAnime = networkToLocalAnime.getLocal(it.toDomainAnime(sourceId))
                     getAnime.subscribe(localAnime.url, localAnime.source)
                         .filterNotNull()
+                        .distinctUntilChanged()
                         .stateIn(ioCoroutineScope)
                 }
                     .filter { !hideInLibraryItems || !it.value.favorite }
