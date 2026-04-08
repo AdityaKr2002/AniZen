@@ -4,9 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Public
@@ -24,10 +27,12 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.domain.ui.model.PanoramaMode
+import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.browse.components.BrowseSourceComfortableGrid
 import eu.kanade.presentation.browse.components.BrowseSourceCompactGrid
 import eu.kanade.presentation.browse.components.BrowseSourceList
 import eu.kanade.presentation.components.AppBar
+import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.source.Source
 import kotlinx.collections.immutable.ImmutableList
@@ -39,12 +44,12 @@ import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.SkeletonAnimeCard
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
-import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.source.local.LocalSource
@@ -130,8 +135,18 @@ fun BrowseSourceContent(
                 )
             }
             "Loading" -> {
-                LoadingScreen(
-                    modifier = Modifier.padding(contentPadding),
+                val uiPreferences = remember { Injekt.get<UiPreferences>() }
+                val globalPanoramaState = uiPreferences.panoramaCover().collectAsStatePref()
+                val browseModeState = uiPreferences.browsePanoramaMode().collectAsStatePref()
+                
+                val globalPanorama = globalPanoramaState.value
+                val browseMode = browseModeState.value
+                val effectivePanorama = remember(globalPanorama, browseMode) { browseMode.resolve(globalPanorama) }
+
+                BrowseSourceSkeleton(
+                    columns = columns,
+                    contentPadding = contentPadding,
+                    usePanorama = effectivePanorama,
                 )
             }
             "Content" -> {
@@ -251,4 +266,26 @@ fun BrowseSourceScreen(
         onBatchIncrement = onBatchIncrement,
         entries = entries,
     )
+}
+
+@Composable
+private fun BrowseSourceSkeleton(
+    columns: GridCells,
+    contentPadding: PaddingValues,
+    usePanorama: Boolean,
+) {
+    LazyVerticalGrid(
+        columns = columns,
+        contentPadding = contentPadding + PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridVerticalSpacer),
+        horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
+        userScrollEnabled = false,
+    ) {
+        items(24) {
+            SkeletonAnimeCard(
+                modifier = Modifier.fillMaxWidth(),
+                ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio,
+            )
+        }
+    }
 }
