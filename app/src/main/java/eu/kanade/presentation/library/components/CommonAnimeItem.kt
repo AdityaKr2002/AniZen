@@ -106,7 +106,10 @@ fun AnimeCompactGridItem(
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
+        val (entry, ratio) = AnimeCover.getEntry(
+            coverData.animeId,
+            forcePanorama = usePanorama == true,
+        )
         AnimeGridCover(
             cover = {
                 entry(
@@ -212,7 +215,10 @@ fun AnimeComfortableGridItem(
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
+        val (entry, ratio) = AnimeCover.getEntry(
+            coverData.animeId,
+            forcePanorama = usePanorama == true,
+        )
         Column {
             AnimeGridCover(
                 cover = {
@@ -409,7 +415,10 @@ fun AnimeListItem(
             .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
+        val (entry, ratio) = AnimeCover.getEntry(
+            coverData.animeId,
+            forcePanorama = usePanorama == true,
+        )
         entry(
             modifier = Modifier
                 .fillMaxHeight()

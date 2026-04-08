@@ -227,11 +227,16 @@ enum class AnimeCover(val ratio: Float) {
         }
 
         @Composable
-        fun getEntry(animeId: Long, usePanoramaOverride: Boolean? = null): Pair<AnimeCover, Float> {
+        fun getEntry(
+            animeId: Long,
+            usePanoramaOverride: Boolean? = null,
+            forcePanorama: Boolean = false,
+        ): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val globalUsePanorama by uiPreferences.panoramaCover().collectAsStatePref()
             val usePanorama = usePanoramaOverride ?: globalUsePanorama
             
+            if (forcePanorama) return Panorama to Panorama.ratio
             if (!usePanorama) return Book to Book.ratio
 
             val ratio = remember(animeId) {
