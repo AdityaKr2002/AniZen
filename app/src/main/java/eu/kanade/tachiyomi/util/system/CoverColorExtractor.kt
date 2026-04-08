@@ -23,6 +23,7 @@ object CoverColorExtractor {
         cover: AnimeCover,
         state: AsyncImagePainter.State.Success,
         extractColor: Boolean = true,
+        forceRatio: Boolean = false,
     ) = withContext(Dispatchers.Default) {
         val context = Injekt.get<Application>()
         val image = state.result.image

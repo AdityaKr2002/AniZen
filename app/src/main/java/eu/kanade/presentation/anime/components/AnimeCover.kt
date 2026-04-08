@@ -85,6 +85,8 @@ enum class AnimeCover(val ratio: Float) {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         
+        val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
+        
         val request = remember(data, animatedTransitions) {
             ImageRequest.Builder(context)
                 .data(data)
@@ -99,6 +101,32 @@ enum class AnimeCover(val ratio: Float) {
         val isLoading by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Loading } }
         val isError by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Error } }
         val isSuccess by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Success } }
+
+        val scope = rememberCoroutineScope()
+        LaunchedEffect(isSuccess) {
+            if (isSuccess) {
+                val state = painter.state
+                if (state is AsyncImagePainter.State.Success) {
+                    val cover = when (data) {
+                        is Anime -> data.asAnimeCover()
+                        is DomainMangaCover -> data
+                        else -> null
+                    }
+                    if (cover != null) {
+                        scope.launch {
+                            eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                                cover = cover,
+                                state = state,
+                                extractColor = shouldExtractColor,
+                                forceRatio = usePanorama,
+                            )
+                        }
+                    }
+                    if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
+                    if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
+                }
+            }
+        }
 
         Box(
             modifier = modifier
@@ -146,33 +174,6 @@ enum class AnimeCover(val ratio: Float) {
                     ),
                 contentScale = scale,
             )
-
-            if (shouldExtractColor) {
-                val scope = rememberCoroutineScope()
-                LaunchedEffect(isSuccess) {
-                    if (isSuccess) {
-                        val state = painter.state
-                        if (state is AsyncImagePainter.State.Success) {
-                            val cover = when (data) {
-                                is Anime -> data.asAnimeCover()
-                                is DomainMangaCover -> data
-                                else -> null
-                            }
-                            if (cover != null) {
-                                scope.launch {
-                                    eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                                        cover = cover,
-                                        state = state,
-                                        extractColor = true,
-                                    )
-                                }
-                            }
-                            if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
-                            if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
-                        }
-                    }
-                }
-            }
 
             if (isError) {
                 CoverError(size, tint, contentDescription)
@@ -227,16 +228,11 @@ enum class AnimeCover(val ratio: Float) {
         }
 
         @Composable
-        fun getEntry(
-            animeId: Long,
-            usePanoramaOverride: Boolean? = null,
-            forcePanorama: Boolean = false,
-        ): Pair<AnimeCover, Float> {
+        fun getEntry(animeId: Long, usePanoramaOverride: Boolean? = null): Pair<AnimeCover, Float> {
             val uiPreferences = remember { Injekt.get<UiPreferences>() }
             val globalUsePanorama by uiPreferences.panoramaCover().collectAsStatePref()
             val usePanorama = usePanoramaOverride ?: globalUsePanorama
             
-            if (forcePanorama) return Panorama to Panorama.ratio
             if (!usePanorama) return Book to Book.ratio
 
             val ratio = remember(animeId) {

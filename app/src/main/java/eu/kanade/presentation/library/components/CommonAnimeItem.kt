@@ -100,6 +100,7 @@ fun AnimeCompactGridItem(
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    shouldExtractColor: Boolean = false,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
@@ -108,7 +109,7 @@ fun AnimeCompactGridItem(
     ) {
         val (entry, ratio) = AnimeCover.getEntry(
             coverData.animeId,
-            forcePanorama = usePanorama == true,
+            usePanoramaOverride = usePanorama,
         )
         AnimeGridCover(
             cover = {
@@ -119,6 +120,7 @@ fun AnimeCompactGridItem(
                     data = coverData,
                     ratio = ratio,
                     shape = RectangleShape, // Optimization: AnimeGridCover clips
+                    shouldExtractColor = shouldExtractColor,
                 )
             },
             ratio = ratio,
@@ -209,6 +211,7 @@ fun AnimeComfortableGridItem(
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueWatching: (() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    shouldExtractColor: Boolean = false,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
@@ -217,7 +220,7 @@ fun AnimeComfortableGridItem(
     ) {
         val (entry, ratio) = AnimeCover.getEntry(
             coverData.animeId,
-            forcePanorama = usePanorama == true,
+            usePanoramaOverride = usePanorama,
         )
         Column {
             AnimeGridCover(
@@ -229,6 +232,7 @@ fun AnimeComfortableGridItem(
                         data = coverData,
                         ratio = ratio,
                         shape = RectangleShape, // Optimization: AnimeGridCover clips
+                        shouldExtractColor = shouldExtractColor,
                     )
                 },
                 ratio = ratio,
@@ -417,7 +421,7 @@ fun AnimeListItem(
     ) {
         val (entry, ratio) = AnimeCover.getEntry(
             coverData.animeId,
-            forcePanorama = usePanorama == true,
+            usePanoramaOverride = usePanorama,
         )
         entry(
             modifier = Modifier
