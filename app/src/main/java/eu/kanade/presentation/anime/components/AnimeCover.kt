@@ -163,8 +163,8 @@ enum class AnimeCover(val ratio: Float) {
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (!isSuccess || alpha < 1f) {
-                            Modifier.graphicsLayer { this.alpha = if (isSuccess) alpha else 0f }
+                        if (alpha < 1f) {
+                            Modifier.graphicsLayer { this.alpha = alpha }
                         } else {
                             Modifier
                         },
