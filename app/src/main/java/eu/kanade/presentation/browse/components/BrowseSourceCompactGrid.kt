@@ -53,12 +53,20 @@ fun BrowseSourceCompactGrid(
         ) { index ->
             val anime by animeList[index]?.collectAsState() ?: return@items
             onBatchIncrement(index)
+
+            val currentOnAnimeClick = remember(onAnimeClick, anime, index) { 
+                { onAnimeClick(anime, index) } 
+            }
+            val currentOnAnimeLongClick = remember(onAnimeLongClick, anime, index) { 
+                { onAnimeLongClick(anime, index) } 
+            }
+
             BrowseSourceCompactGridItem(
                 anime = anime,
                 isFavorite = anime.id in favoriteIds,
                 isSelected = anime.id in selectionIds,
-                onClick = { onAnimeClick(anime, index) },
-                onLongClick = { onAnimeLongClick(anime, index) },
+                onClick = currentOnAnimeClick,
+                onLongClick = currentOnAnimeLongClick,
                 showTitle = showTitle,
                 usePanorama = usePanorama,
             )

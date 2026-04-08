@@ -3,7 +3,6 @@
 package eu.kanade.presentation.anime.components
 
 import androidx.annotation.ColorInt
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -13,12 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,15 +30,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.util.system.CoverColorObserver
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
@@ -87,11 +82,22 @@ enum class AnimeCover(val ratio: Float) {
     ) {
         val context = LocalContext.current
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
-        var isError by remember(data) { mutableStateOf(false) }
-        var isLoading by remember(data) { mutableStateOf(true) }
-        val scope = rememberCoroutineScope()
+        
+        val request = remember(data, animatedTransitions) {
+            ImageRequest.Builder(context)
+                .data(data)
+                .precision(coil3.size.Precision.INEXACT)
+                .crossfade(animatedTransitions)
+                .build()
+        }
+        
+        val painter = rememberAsyncImagePainter(model = request)
+        val painterState = painter.state
+        
+        val isLoading by remember { derivedStateOf { painterState is AsyncImagePainter.State.Loading } }
+        val isError by remember { derivedStateOf { painterState is AsyncImagePainter.State.Error } }
+        val isSuccess by remember { derivedStateOf { painterState is AsyncImagePainter.State.Success } }
 
         Box(
             modifier = modifier
@@ -117,25 +123,11 @@ enum class AnimeCover(val ratio: Float) {
         ) {
             // Pulsing background
             if (animatedTransitions && isLoading) {
-                SkeletonItem(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = shape,
-                    color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f),
-                )
+                CoverLoading(shape, bgColor)
             }
 
-            AsyncImage(
-                model = remember(data, animatedTransitions) {
-                    ImageRequest.Builder(context)
-                        .data(data)
-                        // Use automatic sizing from AsyncImage but ensure precision is handled
-                        .precision(coil3.size.Precision.INEXACT)
-                        .crossfade(animatedTransitions)
-                        .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .build()
-                },
+            androidx.compose.foundation.Image(
+                painter = painter,
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
@@ -147,10 +139,12 @@ enum class AnimeCover(val ratio: Float) {
                         },
                     ),
                 contentScale = scale,
-                onState = { state ->
-                    isLoading = state is AsyncImagePainter.State.Loading
-                    if (state is AsyncImagePainter.State.Success) {
-                        isError = false
+            )
+
+            if (isSuccess && shouldExtractColor) {
+                val scope = rememberCoroutineScope()
+                LaunchedEffect(painterState) {
+                    if (painterState is AsyncImagePainter.State.Success) {
                         val cover = when (data) {
                             is Anime -> data.asAnimeCover()
                             is DomainMangaCover -> data
@@ -160,38 +154,50 @@ enum class AnimeCover(val ratio: Float) {
                             scope.launch {
                                 eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
                                     cover = cover,
-                                    state = state,
-                                    extractColor = shouldExtractColor,
+                                    state = painterState,
+                                    extractColor = true,
                                 )
                             }
                         }
-                        if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
-                        if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
-                    } else if (state is AsyncImagePainter.State.Error) {
-                        isError = true
+                        if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), painterState)
+                        if (data is DomainMangaCover) onCoverLoaded?.invoke(data, painterState)
                     }
-                },
-            )
+                }
+            }
 
             if (isError) {
-                androidx.compose.foundation.Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
-                    contentDescription = contentDescription,
-                    modifier = Modifier
-                        .size(
-                            when (size) {
-                                Size.Big -> COVER_TEMPLATE_SIZE_BIG
-                                Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
-                                else -> COVER_TEMPLATE_SIZE_NORMAL
-                            },
-                        )
-                        .align(Alignment.Center),
-                    colorFilter = ColorFilter.tint(
-                        tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
-                    ),
-                )
+                CoverError(size, tint, contentDescription)
             }
         }
+    }
+
+    @Composable
+    private fun CoverLoading(shape: Shape, bgColor: Color?) {
+        SkeletonItem(
+            modifier = Modifier.fillMaxSize(),
+            shape = shape,
+            color = (bgColor ?: CoverPlaceholderColor).copy(alpha = 0.5f),
+        )
+    }
+
+    @Composable
+    private fun CoverError(size: Size, tint: Int?, contentDescription: String) {
+        androidx.compose.foundation.Image(
+            imageVector = ImageVector.vectorResource(R.drawable.cover_error_vector),
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .size(
+                    when (size) {
+                        Size.Big -> COVER_TEMPLATE_SIZE_BIG
+                        Size.Medium -> COVER_TEMPLATE_SIZE_MEDIUM
+                        else -> COVER_TEMPLATE_SIZE_NORMAL
+                    },
+                )
+                .align(Alignment.Center),
+            colorFilter = ColorFilter.tint(
+                tint?.let { Color(it) } ?: CoverPlaceholderOnBgColor,
+            ),
+        )
     }
 
     companion object {
