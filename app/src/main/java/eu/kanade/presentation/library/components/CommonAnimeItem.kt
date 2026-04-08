@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -113,6 +114,7 @@ fun AnimeCompactGridItem(
                         .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                     data = coverData,
                     ratio = ratio,
+                    shape = RectangleShape, // Optimization: AnimeGridCover clips
                 )
             },
             ratio = ratio,
@@ -219,6 +221,7 @@ fun AnimeComfortableGridItem(
                             .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                         data = coverData,
                         ratio = ratio,
+                        shape = RectangleShape, // Optimization: AnimeGridCover clips
                     )
                 },
                 ratio = ratio,
@@ -327,47 +330,45 @@ private fun GridItemSelectable(
         label = "selection_scale",
     )
     val shape = MaterialTheme.shapes.medium
-    Box(
+    Surface(
         modifier = modifier
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-                this.shape = shape
-                clip = true
-            }
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-            )
-            .then(
-                if (isSelected) {
-                    Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
-                } else {
-                    Modifier
-                },
-            )
-            .padding(4.dp),
+            },
+        shape = shape,
+        color = Color.Transparent,
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
     ) {
-        val contentColor = if (isSelected) {
-            MaterialTheme.colorScheme.onSurface
-        } else {
-            LocalContentColor.current
-        }
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
-            content()
-        }
+        Box(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .padding(4.dp),
+        ) {
+            val contentColor = if (isSelected) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                LocalContentColor.current
+            }
+            CompositionLocalProvider(LocalContentColor provides contentColor) {
+                content()
+            }
 
-        if (isSelected) {
-            Icon(
-                imageVector = Icons.Filled.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-                    .background(MaterialTheme.colorScheme.surface, CircleShape),
-            )
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape),
+                )
+            }
         }
     }
 }

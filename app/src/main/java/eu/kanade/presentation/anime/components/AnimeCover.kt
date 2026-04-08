@@ -109,7 +109,13 @@ enum class AnimeCover(val ratio: Float) {
                         clip = true
                     }
                 }
-                .background(bgColor ?: CoverPlaceholderColor)
+                .then(
+                    if (!isSuccess) {
+                        Modifier.background(bgColor ?: CoverPlaceholderColor)
+                    } else {
+                        Modifier
+                    },
+                )
                 .then(
                     if (onClick != null) {
                         Modifier.clickable(
