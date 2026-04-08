@@ -118,12 +118,16 @@ enum class AnimeCover(val ratio: Float) {
         Box(
             modifier = modifier
                 .aspectRatio(ratio)
-                .graphicsLayer {
+                .then(
                     if (shape != RectangleShape) {
-                        this.shape = shape
-                        clip = true
-                    }
-                }
+                        Modifier.graphicsLayer {
+                            this.shape = shape
+                            clip = true
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
                 .then(
                     if (!isSuccess) {
                         Modifier.background(bgColor ?: CoverPlaceholderColor)
@@ -158,7 +162,13 @@ enum class AnimeCover(val ratio: Float) {
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
+                    .then(
+                        if (!isSuccess || alpha < 1f) {
+                            Modifier.graphicsLayer { this.alpha = if (isSuccess) alpha else 0f }
+                        } else {
+                            Modifier
+                        },
+                    ),
                 contentScale = scale,
                 onState = { state = it },
             )

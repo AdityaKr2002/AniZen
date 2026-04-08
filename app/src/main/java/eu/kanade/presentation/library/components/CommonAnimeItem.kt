@@ -234,7 +234,6 @@ fun AnimeComfortableGridItem(
                             },
                         data = coverData,
                         ratio = ratio,
-                        shape = RectangleShape, // Optimization: AnimeGridCover clips
                     )
                 },
                 ratio = ratio,
@@ -252,6 +251,7 @@ fun AnimeComfortableGridItem(
                         )
                     }
                 },
+                needsClip = false, // Optimization: Cover handles its own shape
             )
             GridItemTitle(
                 modifier = Modifier.padding(4.dp),
@@ -276,15 +276,22 @@ private fun AnimeGridCover(
     badgesStart: (@Composable RowScope.() -> Unit)? = null,
     badgesEnd: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable (BoxScope.() -> Unit)? = null,
+    needsClip: Boolean = true,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .graphicsLayer {
-                this.shape = shape
-                clip = true
-            },
+            .then(
+                if (needsClip) {
+                    Modifier.graphicsLayer {
+                        this.shape = shape
+                        clip = true
+                    }
+                } else {
+                    Modifier
+                }
+            ),
     ) {
         cover()
         content?.invoke(this)
@@ -351,14 +358,22 @@ private fun GridItemSelectable(
 
     Box(
         modifier = modifier
-            .graphicsLayer {
-                if (scale < 1f) {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                this.shape = shape
-                clip = true
-            }
+            .then(
+                if (scale < 1f || isSelected) {
+                    Modifier.graphicsLayer {
+                        if (scale < 1f) {
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                        if (isSelected) {
+                            this.shape = shape
+                            clip = true
+                        }
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .drawBehind {
                 if (isSelected) {
                     drawRoundRect(
