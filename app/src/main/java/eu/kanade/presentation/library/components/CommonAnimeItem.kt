@@ -112,7 +112,6 @@ fun AnimeCompactGridItem(
                         .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                     data = coverData,
                     ratio = ratio,
-                    shape = RectangleShape, // Parent clips
                 )
             },
             ratio = ratio,
@@ -219,7 +218,6 @@ fun AnimeComfortableGridItem(
                             .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                         data = coverData,
                         ratio = ratio,
-                        shape = RectangleShape, // Parent clips
                     )
                 },
                 ratio = ratio,

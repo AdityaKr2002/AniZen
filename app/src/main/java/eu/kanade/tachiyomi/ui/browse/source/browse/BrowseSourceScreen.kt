@@ -325,19 +325,25 @@ data class BrowseSourceScreen(
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { paddingValues ->
-            // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
-            val isSelectAllMode = state.isSelectAllMode
-            val targetCount = state.targetCount
-            val selectionSize = state.selection.size
-            val itemCount = animeList.itemCount
             var isPoking by remember { mutableStateOf(false) }
+            val isSelectAllMode = state.isSelectAllMode
+            
+            // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
+            // It selects items in batches of 60 and uses 'safe boundary access' to trigger Paging 3 fetches.
+            LaunchedEffect(isSelectAllMode) {
+                if (!isSelectAllMode) {
+                    isPoking = false
+                    return@LaunchedEffect
+                }
 
-            LaunchedEffect(isSelectAllMode, targetCount, itemCount) {
-                if (isSelectAllMode) {
+                snapshotFlow { 
+                    Triple(state.targetCount, state.selection.size, animeList.itemCount) 
+                }
+                .collectLatest { (targetCount, selectionSize, itemCount) ->
+                    // Expand selection to available items, capped at the current targetCount.
                     val snapshot = animeList.itemSnapshotList
                     val loadedItems = snapshot.items.filterNotNull()
                     
-                    // Expand selection to available items, capped at the current targetCount.
                     if (loadedItems.size > selectionSize) {
                         val nextBatch = loadedItems.take(targetCount).map { it.value }
                         if (nextBatch.size > selectionSize) {
@@ -354,11 +360,8 @@ data class BrowseSourceScreen(
                             try {
                                 animeList[itemCount - 1]
                             } catch (e: Exception) {}
-                            // The next itemCount update will trigger this LaunchedEffect again and reset isPoking
                         }
                     }
-                } else {
-                    isPoking = false
                 }
             }
             
