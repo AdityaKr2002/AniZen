@@ -138,6 +138,7 @@ object HomeScreen : Screen() {
         val hideOnScroll by uiPreferences.hideBottomBarOnScroll().collectAsStatePref()
         val bottomNavTabs by uiPreferences.bottomNavTabs().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
+        val hazeEnabled by uiPreferences.hazeEnabled().collectAsStatePref()
         val tabFadeDuration = remember(animatedTransitions) { if (animatedTransitions) 200 else 0 }
 
         val navigator = LocalNavigator.currentOrThrow
@@ -179,6 +180,7 @@ object HomeScreen : Screen() {
             CompositionLocalProvider(LocalNavigator provides navigator) {
                 Scaffold(
                     modifier = Modifier.nestedScroll(nestedScrollConnection),
+                    hazeEnabled = hazeEnabled,
                     startBar = {
                         if (isTabletUi()) {
                             NavigationRail(

@@ -350,14 +350,18 @@ private fun GridItemSelectable(
 
     Box(
         modifier = modifier
-            .graphicsLayer {
+            .then(
                 if (scale < 1f) {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                this.shape = shape
-                this.clip = true
-            }
+                    Modifier.graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        this.shape = shape
+                        this.clip = true
+                    }
+                } else {
+                    Modifier.clip(shape)
+                },
+            )
             .drawBehind {
                 if (isSelected) {
                     drawRoundRect(

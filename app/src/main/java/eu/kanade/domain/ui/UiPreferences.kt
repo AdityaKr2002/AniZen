@@ -208,6 +208,8 @@ class UiPreferences(
     fun animatedTransitions() = preferenceStore.getBoolean("pref_animated_transitions_key", true)
 
     fun preloadLibraryColor() = preferenceStore.getBoolean("preload_library_color", true)
+
+    fun hazeEnabled() = preferenceStore.getBoolean("pref_haze_enabled", false)
     // SY <--
 
     companion object {

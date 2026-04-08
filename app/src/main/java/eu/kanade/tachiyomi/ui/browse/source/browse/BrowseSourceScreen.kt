@@ -56,6 +56,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.core.util.ifSourcesLoaded
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.DuplicateAnimeDialog
 import eu.kanade.presentation.browse.BrowseSourceContent
 import eu.kanade.presentation.browse.components.BrowseSourceToolbar
@@ -86,7 +87,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -107,6 +108,7 @@ data class BrowseSourceScreen(
             return
         }
 
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val screenModel = rememberScreenModel { BrowseSourceScreenModel(sourceId, listingQuery) }
         val state by screenModel.state.collectAsState()
 
@@ -163,6 +165,7 @@ data class BrowseSourceScreen(
         }
 
         val entries = screenModel.getColumnsPreferenceForCurrentOrientation(LocalConfiguration.current.orientation)
+        val hazeEnabled by uiPreferences.hazeEnabled().collectAsStatePref()
 
         Scaffold(
             topBar = {
@@ -325,6 +328,7 @@ data class BrowseSourceScreen(
                 }
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            hazeEnabled = hazeEnabled,
         ) { paddingValues ->
             var isPoking by remember { mutableStateOf(false) }
             val isSelectAllMode = state.isSelectAllMode
@@ -560,4 +564,3 @@ data class BrowseSourceScreen(
         class Genre(txt: String) : SearchType(txt)
     }
 }
-

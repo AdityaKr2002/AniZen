@@ -176,7 +176,7 @@ class BrowseSourceScreenModel(
                     getAnime.subscribe(localAnime.url, localAnime.source)
                         .filterNotNull()
                         .distinctUntilChanged()
-                        .stateIn(ioCoroutineScope)
+                        .stateIn(ioCoroutineScope, SharingStarted.WhileSubscribed(5000), localAnime)
                 }
                     .filter { !hideInLibraryItems || !it.value.favorite }
             }.cachedIn(ioCoroutineScope)

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
@@ -28,10 +29,16 @@ fun SkeletonItem(
 ) {
     Box(
         modifier = modifier
-            .graphicsLayer {
-                this.shape = shape
-                clip = true
-            }
+            .then(
+                if (shape != RectangleShape) {
+                    Modifier.graphicsLayer {
+                        this.shape = shape
+                        clip = true
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .drawBehind {
                 drawRect(color = color)
             },
