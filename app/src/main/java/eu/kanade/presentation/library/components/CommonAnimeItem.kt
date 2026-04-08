@@ -346,6 +346,8 @@ private fun GridItemSelectable(
         label = "selection_scale",
     )
     val shape = MaterialTheme.shapes.medium
+    val borderColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
 
     Box(
         modifier = modifier
@@ -357,16 +359,18 @@ private fun GridItemSelectable(
                 this.shape = shape
                 clip = true
             }
+            .drawBehind {
+                if (isSelected) {
+                    drawRoundRect(
+                        color = borderColor,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx()),
+                    )
+                }
+            }
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
-            )
-            .then(
-                if (isSelected) {
-                    Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
-                } else {
-                    Modifier
-                },
             )
             .padding(4.dp),
     ) {
@@ -388,7 +392,9 @@ private fun GridItemSelectable(
                     .size(24.dp)
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
-                    .background(MaterialTheme.colorScheme.surface, CircleShape),
+                    .drawBehind {
+                        drawCircle(color = surfaceColor)
+                    },
             )
         }
     }
