@@ -339,7 +339,7 @@ data class BrowseSourceScreen(
                     
                     // Expand selection to available items, capped at the current targetCount.
                     if (loadedItems.size > selectionSize) {
-                        val nextBatch = loadedItems.take(targetCount)
+                        val nextBatch = loadedItems.take(targetCount).map { it.value }
                         if (nextBatch.size > selectionSize) {
                             screenModel.updateSelection(nextBatch)
                         }
