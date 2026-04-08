@@ -53,7 +53,7 @@ import uy.kohesive.injekt.api.get
 @Composable
 fun BrowseSourceContent(
     source: Source?,
-    animeList: LazyPagingItems<Anime>,
+    animeList: LazyPagingItems<StateFlow<Anime>>,
     columns: GridCells,
     entries: Int = 0,
     displayMode: LibraryDisplayMode?,
@@ -249,5 +249,8 @@ fun BrowseSourceScreen(
         favoriteIds = favoriteIds,
         onBatchIncrement = onBatchIncrement,
         entries = entries,
+    )
+}
+   entries = entries,
     )
 }

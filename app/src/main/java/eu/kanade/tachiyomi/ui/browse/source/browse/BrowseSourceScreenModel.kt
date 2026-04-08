@@ -172,9 +172,12 @@ class BrowseSourceScreenModel(
                 getRemoteAnime.subscribe(sourceId, listing.query ?: "", listing.filters)
             }.flow.map { pagingData ->
                 pagingData.map {
-                    networkToLocalAnime.getLocal(it.toDomainAnime(sourceId))
+                    val localAnime = networkToLocalAnime.getLocal(it.toDomainAnime(sourceId))
+                    getAnime.subscribe(localAnime.url, localAnime.source)
+                        .filterNotNull()
+                        .stateIn(ioCoroutineScope)
                 }
-                    .filter { !hideInLibraryItems || !it.favorite }
+                    .filter { !hideInLibraryItems || !it.value.favorite }
             }.cachedIn(ioCoroutineScope)
                 .cachedIn(screenModelScope)
         }

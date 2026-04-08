@@ -19,7 +19,7 @@ import tachiyomi.presentation.core.util.plus
 
 @Composable
 fun BrowseSourceComfortableGrid(
-    animeList: LazyPagingItems<Anime>,
+    animeList: LazyPagingItems<StateFlow<Anime>>,
     columns: GridCells,
     contentPadding: PaddingValues,
     onAnimeClick: (Anime, Int) -> Unit,
@@ -44,10 +44,10 @@ fun BrowseSourceComfortableGrid(
 
         items(
             count = animeList.itemCount,
-            key = { index -> "source-comfortable-grid-${animeList.peek(index)?.id ?: "placeholder"}-$index" },
+            key = { index -> "source-comfortable-grid-${animeList.peek(index)?.value?.id ?: "placeholder"}-$index" },
             contentType = { index -> if (animeList.peek(index) != null) "anime" else "placeholder" },
         ) { index ->
-            val anime = animeList[index] ?: return@items
+            val anime by animeList[index]?.collectAsState() ?: return@items
             onBatchIncrement(index)
             BrowseSourceComfortableGridItem(
                 anime = anime,
@@ -87,6 +87,11 @@ internal fun BrowseSourceComfortableGridItem(
         },
         onLongClick = onLongClick,
         onClick = onClick,
+        isSelected = isSelected,
+        usePanorama = usePanorama,
+    )
+}
+lick = onClick,
         isSelected = isSelected,
         usePanorama = usePanorama,
     )
