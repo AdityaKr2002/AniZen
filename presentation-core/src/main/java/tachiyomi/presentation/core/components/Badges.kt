@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentMapOf
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 @Composable
 fun BadgeGroup(
     modifier: Modifier = Modifier,
@@ -36,10 +38,12 @@ fun BadgeGroup(
     content: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = modifier.clip(shape)
-            // KMK -->
+        modifier = modifier
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .height(18.dp),
-        // KMK <--
     ) {
         content()
     }
@@ -56,7 +60,10 @@ fun Badge(
     Text(
         text = text,
         modifier = modifier
-            .clip(shape)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .background(color)
             .padding(horizontal = 4.dp, vertical = 1.dp),
         color = textColor,
@@ -74,41 +81,23 @@ fun Badge(
     iconColor: Color = MaterialTheme.colorScheme.onSecondary,
     shape: Shape = MaterialTheme.shapes.extraSmall,
 ) {
-    val iconContentPlaceholder = "[icon]"
-    val text = buildAnnotatedString {
-        appendInlineContent(iconContentPlaceholder)
-    }
-    val inlineContent = persistentMapOf(
-        Pair(
-            iconContentPlaceholder,
-            InlineTextContent(
-                Placeholder(
-                    width = MaterialTheme.typography.bodySmall.fontSize,
-                    height = MaterialTheme.typography.bodySmall.fontSize,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                ),
-            ) {
-                Icon(
-                    imageVector = imageVector,
-                    tint = iconColor,
-                    contentDescription = null,
-                )
-            },
-        ),
-    )
-
-    Text(
-        text = text,
-        inlineContent = inlineContent,
+    Box(
         modifier = modifier
-            .clip(shape)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .background(color)
             .padding(horizontal = 4.dp, vertical = 1.dp),
-        color = iconColor,
-        fontWeight = FontWeight.Medium,
-        maxLines = 1,
-        style = MaterialTheme.typography.bodySmall,
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(12.dp),
+            tint = iconColor,
+        )
+    }
 }
 
 // KMK -->
@@ -123,7 +112,10 @@ fun Badge(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .clip(shape)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .background(color),
     ) {
         Icon(
@@ -146,7 +138,10 @@ fun Badge(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .clip(shape)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .background(color),
     ) {
         Image(
