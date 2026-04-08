@@ -101,6 +101,12 @@ internal fun BrowseSourceListItem(
         usePanorama = usePanorama,
     )
 }
+lick = onClick,
+        entries = entries,
+        containerHeight = containerHeight,
+        usePanorama = usePanorama,
+    )
+}
 ries,
         containerHeight = containerHeight,
         usePanorama = usePanorama,

@@ -91,6 +91,12 @@ internal fun BrowseSourceComfortableGridItem(
         usePanorama = usePanorama,
     )
 }
+nLongClick = onLongClick,
+        onClick = onClick,
+        isSelected = isSelected,
+        usePanorama = usePanorama,
+    )
+}
 lick = onClick,
         isSelected = isSelected,
         usePanorama = usePanorama,
