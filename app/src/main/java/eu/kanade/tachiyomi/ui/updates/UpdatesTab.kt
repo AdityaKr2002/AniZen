@@ -31,6 +31,7 @@ import eu.kanade.tachiyomi.ui.anime.AnimeScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import mihon.feature.upcoming.UpcomingScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import tachiyomi.i18n.MR
@@ -90,7 +91,7 @@ data object UpdatesTab : Tab {
             onClickCover = { navigator.push(AnimeScreen(it.update.animeId)) },
             onSelectAll = screenModel::toggleAllSelection,
             onInvertSelection = { /* Not in model */ },
-            onCalendarClicked = {},
+            onCalendarClicked = { navigator.push(UpcomingScreen()) },
             onUpdateLibrary = screenModel::updateLibrary,
             onDownloadEpisode = screenModel::downloadEpisodes,
             onMultiBookmarkClicked = { updates, bookmark -> /* Not in model? */ },
