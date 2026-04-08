@@ -44,7 +44,8 @@ object PerformanceBenchmarkHelper {
         }
     }
 
-    fun startBenchmark(activity: Activity, scope: CoroutineScope, onFinish: (String) -> Unit) {
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    fun startBenchmark(activity: Activity, onFinish: (String) -> Unit) {
         if (isBenchmarking) return
         isBenchmarking = true
         frameDurations.clear()
@@ -57,7 +58,7 @@ object PerformanceBenchmarkHelper {
             activity.window.addOnFrameMetricsAvailableListener(frameMetricsListener, handler)
         }
 
-        benchmarkJob = scope.launch {
+        benchmarkJob = kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
             val startTime = System.currentTimeMillis()
             while (System.currentTimeMillis() - startTime < 30_000) {
                 maxMemory = max(maxMemory, getUsedMemory())
@@ -77,6 +78,8 @@ object PerformanceBenchmarkHelper {
         }
 
         val report = generateReport()
+        activity.copyToClipboard("Performance Report", report)
+        activity.toast("Benchmark finished! Report copied to clipboard.")
         onFinish(report)
     }
 
