@@ -36,10 +36,10 @@ fun SkeletonItem(
 ) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.7f,
+        initialValue = 0.4f,
+        targetValue = 0.6f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000),
+            animation = tween(durationMillis = 2000),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "alpha",
@@ -47,8 +47,12 @@ fun SkeletonItem(
 
     Box(
         modifier = modifier
-            .clip(shape)
-            .background(color.copy(alpha = alpha * color.alpha)),
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+                this.alpha = alpha
+            }
+            .background(color),
     )
 }
 

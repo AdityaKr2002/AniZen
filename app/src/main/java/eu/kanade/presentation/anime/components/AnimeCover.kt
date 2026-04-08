@@ -103,13 +103,12 @@ enum class AnimeCover(val ratio: Float) {
         Box(
             modifier = modifier
                 .aspectRatio(ratio)
-                .then(
+                .graphicsLayer {
                     if (shape != RectangleShape) {
-                        Modifier.clip(shape)
-                    } else {
-                        Modifier
-                    },
-                )
+                        this.shape = shape
+                        clip = true
+                    }
+                }
                 .background(bgColor ?: CoverPlaceholderColor)
                 .then(
                     if (onClick != null) {

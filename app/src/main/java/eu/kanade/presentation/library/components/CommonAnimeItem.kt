@@ -253,6 +253,7 @@ fun AnimeComfortableGridItem(
 @Composable
 private fun AnimeGridCover(
     modifier: Modifier = Modifier,
+    shape: Shape = MaterialTheme.shapes.medium,
     ratio: Float = AnimeCover.Book.ratio,
     cover: @Composable BoxScope.() -> Unit = {},
     badgesStart: (@Composable RowScope.() -> Unit)? = null,
@@ -262,7 +263,8 @@ private fun AnimeGridCover(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(ratio),
+            .aspectRatio(ratio)
+            .clip(shape),
     ) {
         cover()
         content?.invoke(this)
@@ -319,7 +321,6 @@ private fun GridItemSelectable(
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scale by animateFloatAsState(
         if (isSelected && animatedTransitions) 0.95f else 1f,
         label = "selection_scale",
@@ -327,24 +328,15 @@ private fun GridItemSelectable(
     val shape = MaterialTheme.shapes.medium
     Box(
         modifier = modifier
-            .then(
-                if (scale < 1f) {
-                    Modifier.graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                } else {
-                    Modifier
-                },
-            )
-            .clip(shape)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.shape = shape
+                clip = true
+            }
             .combinedClickable(
-                onClick = {
-                    onClick()
-                },
-                onLongClick = {
-                    onLongClick()
-                },
+                onClick = onClick,
+                onLongClick = onLongClick,
             )
             .then(
                 if (isSelected) {
