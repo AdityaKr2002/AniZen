@@ -281,10 +281,7 @@ private fun AnimeGridCover(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .graphicsLayer {
-                this.shape = shape
-                clip = true
-            },
+            .clip(shape),
     ) {
         cover()
         content?.invoke(this)
@@ -349,12 +346,17 @@ private fun GridItemSelectable(
 
     Box(
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.shape = shape
-                clip = true
-            }
+            .then(
+                if (scale < 1f) {
+                    Modifier.graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                } else {
+                    Modifier
+                }
+            )
+            .clip(shape)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
