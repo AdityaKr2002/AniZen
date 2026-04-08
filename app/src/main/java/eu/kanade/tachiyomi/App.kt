@@ -277,7 +277,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
             val coreCount = Runtime.getRuntime().availableProcessors()
             fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(4, 12)))
-            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(3, 8))) // Balanced for performance and UI smoothness
+            decoderCoroutineContext(Dispatchers.IO.limitedParallelism(coreCount.coerceIn(2, 3))) // Optimized for UI smoothness by reducing context switching
         }.build()
     }
 

@@ -396,24 +396,17 @@ fun AnimeListItem(
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val density = LocalDensity.current
-    val height = remember(entries, containerHeight, density) {
-        if (entries > 0 && containerHeight > 0) {
-            with(density) { (containerHeight / entries).toDp() } - (3 / entries).dp
-        } else {
-            76.dp
-        }
+    val height = remember(usePanorama) {
+        if (usePanorama == true) 96.dp else 76.dp
     }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .selectedBackground(isSelected)
             .height(height)
-            .combinedClickable(
+            .clickable(
                 onClick = {
                     onClick()
-                },
-                onLongClick = {
-                    onLongClick()
                 },
             )
             .padding(horizontal = 16.dp, vertical = 3.dp),

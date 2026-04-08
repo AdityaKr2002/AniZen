@@ -188,16 +188,9 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book.ratio
 
-            val ratio by androidx.compose.runtime.produceState(
-                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
-                animeId,
-            ) {
-                CoverColorObserver.ratios
-                    .map { it[animeId] ?: Book.ratio }
-                    .distinctUntilChanged()
-                    .collect { value = it }
+            return remember(animeId) {
+                CoverColorObserver.ratios.value[animeId] ?: Book.ratio
             }
-            return ratio
         }
 
         @Composable
@@ -208,14 +201,8 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book to Book.ratio
 
-            val ratio by androidx.compose.runtime.produceState(
-                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
-                animeId,
-            ) {
-                CoverColorObserver.ratios
-                    .map { it[animeId] ?: Book.ratio }
-                    .distinctUntilChanged()
-                    .collect { value = it }
+            val ratio = remember(animeId) {
+                CoverColorObserver.ratios.value[animeId] ?: Book.ratio
             }
 
             return remember(ratio) {
