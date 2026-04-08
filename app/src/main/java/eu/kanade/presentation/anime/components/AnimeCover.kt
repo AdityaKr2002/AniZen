@@ -103,7 +103,7 @@ enum class AnimeCover(val ratio: Float) {
         val isSuccess by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Success } }
 
         val scope = rememberCoroutineScope()
-        LaunchedEffect(isSuccess, usePanorama, shouldExtractColor) {
+        LaunchedEffect(isSuccess, data, shouldExtractColor) {
             if (isSuccess) {
                 val state = painter.state
                 if (state is AsyncImagePainter.State.Success) {
@@ -118,7 +118,6 @@ enum class AnimeCover(val ratio: Float) {
                                 cover = cover,
                                 state = state,
                                 extractColor = shouldExtractColor,
-                                forceRatio = usePanorama,
                             )
                         }
                     }
@@ -222,8 +221,16 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book.ratio
 
-            val ratios by CoverColorObserver.ratios.collectAsState()
-            return ratios[animeId] ?: Book.ratio
+            val ratio by androidx.compose.runtime.produceState(
+                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
+                animeId,
+            ) {
+                CoverColorObserver.ratios
+                    .map { it[animeId] ?: Book.ratio }
+                    .distinctUntilChanged()
+                    .collect { value = it }
+            }
+            return ratio
         }
 
         @Composable
@@ -234,8 +241,15 @@ enum class AnimeCover(val ratio: Float) {
             
             if (!usePanorama) return Book to Book.ratio
 
-            val ratios by CoverColorObserver.ratios.collectAsState()
-            val ratio = ratios[animeId] ?: Book.ratio
+            val ratio by androidx.compose.runtime.produceState(
+                initialValue = CoverColorObserver.ratios.value[animeId] ?: Book.ratio,
+                animeId,
+            ) {
+                CoverColorObserver.ratios
+                    .map { it[animeId] ?: Book.ratio }
+                    .distinctUntilChanged()
+                    .collect { value = it }
+            }
 
             return remember(ratio) {
                 val entry = if (ratio > RatioSwitchToPanorama) Panorama else Book

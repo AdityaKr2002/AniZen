@@ -100,17 +100,13 @@ fun AnimeCompactGridItem(
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
     usePanorama: Boolean? = null,
-    shouldExtractColor: Boolean = false,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(
-            coverData.animeId,
-            usePanoramaOverride = usePanorama,
-        )
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         AnimeGridCover(
             cover = {
                 entry(
@@ -120,7 +116,6 @@ fun AnimeCompactGridItem(
                     data = coverData,
                     ratio = ratio,
                     shape = RectangleShape, // Optimization: AnimeGridCover clips
-                    shouldExtractColor = shouldExtractColor,
                 )
             },
             ratio = ratio,
@@ -211,17 +206,13 @@ fun AnimeComfortableGridItem(
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueWatching: (() -> Unit)? = null,
     usePanorama: Boolean? = null,
-    shouldExtractColor: Boolean = false,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(
-            coverData.animeId,
-            usePanoramaOverride = usePanorama,
-        )
+        val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         Column {
             AnimeGridCover(
                 cover = {
@@ -232,7 +223,6 @@ fun AnimeComfortableGridItem(
                         data = coverData,
                         ratio = ratio,
                         shape = RectangleShape, // Optimization: AnimeGridCover clips
-                        shouldExtractColor = shouldExtractColor,
                     )
                 },
                 ratio = ratio,
