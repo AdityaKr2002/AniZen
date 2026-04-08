@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.util.system.CoverColorObserver
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.presentation.core.components.SkeletonItem
@@ -87,6 +89,7 @@ enum class AnimeCover(val ratio: Float) {
         val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         var isError by remember(data) { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
 
         Box(
             modifier = modifier
