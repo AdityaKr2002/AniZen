@@ -33,6 +33,7 @@ import eu.kanade.tachiyomi.source.Source
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.StateFlow
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.library.model.LibraryDisplayMode
