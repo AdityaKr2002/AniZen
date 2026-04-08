@@ -40,7 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -109,9 +109,10 @@ fun AnimeCompactGridItem(
                 entry(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                        .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                     data = coverData,
                     ratio = ratio,
+                    shape = RectangleShape, // Parent clips
                 )
             },
             ratio = ratio,
@@ -148,7 +149,6 @@ private fun BoxScope.CoverTextOverlay(
 ) {
     Box(
         modifier = Modifier
-            .clip(MaterialTheme.shapes.medium)
             .background(
                 Brush.verticalGradient(
                     0f to Color.Transparent,
@@ -170,10 +170,6 @@ private fun BoxScope.CoverTextOverlay(
             title = title,
             style = MaterialTheme.typography.titleSmall.copy(
                 color = Color.White,
-                shadow = Shadow(
-                    color = Color.Black,
-                    blurRadius = 4f,
-                ),
             ),
             minLines = 1,
         )
@@ -220,9 +216,10 @@ fun AnimeComfortableGridItem(
                     entry(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .graphicsLayer { alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
+                            .graphicsLayer { this.alpha = if (isSelected) GRID_SELECTED_COVER_ALPHA else coverAlpha },
                         data = coverData,
                         ratio = ratio,
+                        shape = RectangleShape, // Parent clips
                     )
                 },
                 ratio = ratio,
@@ -332,10 +329,16 @@ private fun GridItemSelectable(
     val shape = MaterialTheme.shapes.medium
     Box(
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .then(
+                if (scale < 1f) {
+                    Modifier.graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .clip(shape)
             .combinedClickable(
                 onClick = {

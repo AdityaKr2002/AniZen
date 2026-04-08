@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -89,12 +90,19 @@ enum class AnimeCover(val ratio: Float) {
         val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         var isError by remember(data) { mutableStateOf(false) }
+        var isLoading by remember(data) { mutableStateOf(true) }
         val scope = rememberCoroutineScope()
 
         Box(
             modifier = modifier
                 .aspectRatio(ratio)
-                .clip(shape)
+                .then(
+                    if (shape != RectangleShape) {
+                        Modifier.clip(shape)
+                    } else {
+                        Modifier
+                    },
+                )
                 .background(bgColor ?: CoverPlaceholderColor)
                 .then(
                     if (onClick != null) {
@@ -108,7 +116,7 @@ enum class AnimeCover(val ratio: Float) {
                 ),
         ) {
             // Pulsing background
-            if (animatedTransitions) {
+            if (animatedTransitions && isLoading) {
                 SkeletonItem(
                     modifier = Modifier.fillMaxSize(),
                     shape = shape,
@@ -131,9 +139,16 @@ enum class AnimeCover(val ratio: Float) {
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = alpha },
+                    .then(
+                        if (alpha < 1f) {
+                            Modifier.graphicsLayer { this.alpha = alpha }
+                        } else {
+                            Modifier
+                        },
+                    ),
                 contentScale = scale,
                 onState = { state ->
+                    isLoading = state is AsyncImagePainter.State.Loading
                     if (state is AsyncImagePainter.State.Success) {
                         isError = false
                         val cover = when (data) {
