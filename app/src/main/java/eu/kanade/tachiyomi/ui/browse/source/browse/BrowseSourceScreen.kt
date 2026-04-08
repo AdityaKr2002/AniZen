@@ -390,7 +390,7 @@ data class BrowseSourceScreen(
                 onAnimeLongClick = { anime, index ->
                     val lastIndex = state.lastSelectedIndex
                     if (state.selectionMode && lastIndex != null) {
-                        val items = animeList.itemSnapshotList.items
+                        val items = animeList.itemSnapshotList.items.mapNotNull { it?.value }
                         screenModel.selectRange(items, lastIndex, index)
                     } else {
                         screenModel.toggleSelection(anime, index)
