@@ -139,11 +139,13 @@ enum class AnimeCover(val ratio: Float) {
                             else -> null
                         }
                         if (cover != null) {
-                            eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                                cover = cover,
-                                state = state,
-                                extractColor = shouldExtractColor,
-                            )
+                            scope.launch {
+                                eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                                    cover = cover,
+                                    state = state,
+                                    extractColor = shouldExtractColor,
+                                )
+                            }
                         }
                         if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
                         if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
