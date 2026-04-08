@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -13,6 +15,7 @@ import androidx.paging.compose.LazyPagingItems
 import eu.kanade.presentation.library.components.AnimeCompactGridItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.coroutines.flow.StateFlow
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.asAnimeCover
 import tachiyomi.presentation.core.util.plus
@@ -90,17 +93,6 @@ internal fun BrowseSourceCompactGridItem(
         },
         onLongClick = onLongClick,
         onClick = onClick,
-        isSelected = isSelected,
-        usePanorama = usePanorama,
-    )
-}
-nLongClick = onLongClick,
-        onClick = onClick,
-        isSelected = isSelected,
-        usePanorama = usePanorama,
-    )
-}
-lick = onClick,
         isSelected = isSelected,
         usePanorama = usePanorama,
     )

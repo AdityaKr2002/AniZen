@@ -192,7 +192,7 @@ fun BrowseSourceContent(
 @Composable
 fun BrowseSourceScreen(
     source: Source?,
-    animeList: LazyPagingItems<Anime>,
+    animeList: LazyPagingItems<StateFlow<Anime>>,
     columns: GridCells,
     displayMode: LibraryDisplayMode?,
     snackbarHostState: SnackbarHostState,
@@ -249,12 +249,5 @@ fun BrowseSourceScreen(
         favoriteIds = favoriteIds,
         onBatchIncrement = onBatchIncrement,
         entries = entries,
-    )
-}
-ment,
-        entries = entries,
-    )
-}
-   entries = entries,
     )
 }

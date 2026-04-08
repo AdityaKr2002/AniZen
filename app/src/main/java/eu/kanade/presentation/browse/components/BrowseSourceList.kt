@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,6 +15,7 @@ import androidx.paging.compose.LazyPagingItems
 import eu.kanade.presentation.library.components.AnimeListItem
 import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.coroutines.flow.StateFlow
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeCover
 import tachiyomi.presentation.core.util.plus
@@ -97,17 +100,6 @@ internal fun BrowseSourceListItem(
         onLongClick = onLongClick,
         onClick = onClick,
         entries = entries,
-        containerHeight = containerHeight,
-        usePanorama = usePanorama,
-    )
-}
-lick = onClick,
-        entries = entries,
-        containerHeight = containerHeight,
-        usePanorama = usePanorama,
-    )
-}
-ries,
         containerHeight = containerHeight,
         usePanorama = usePanorama,
     )
