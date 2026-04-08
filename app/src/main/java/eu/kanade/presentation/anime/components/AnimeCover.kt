@@ -86,29 +86,7 @@ enum class AnimeCover(val ratio: Float) {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
-        var state by remember(data) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
-        val isSuccess = state is AsyncImagePainter.State.Success
-        val isError = state is AsyncImagePainter.State.Error
-
-        LaunchedEffect(state, data, shouldExtractColor) {
-            val currentState = state
-            if (currentState is AsyncImagePainter.State.Success) {
-                val cover = when (data) {
-                    is Anime -> data.asAnimeCover()
-                    is DomainMangaCover -> data
-                    else -> null
-                }
-                if (cover != null) {
-                    eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                        cover = cover,
-                        state = currentState,
-                        extractColor = shouldExtractColor,
-                    )
-                }
-                if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), currentState)
-                if (data is DomainMangaCover) onCoverLoaded?.invoke(data, currentState)
-            }
-        }
+        var isError by remember(data) { mutableStateOf(false) }
 
         Box(
             modifier = modifier
@@ -150,9 +128,29 @@ enum class AnimeCover(val ratio: Float) {
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
+                    .graphicsLayer { this.alpha = alpha },
                 contentScale = scale,
-                onState = { state = it },
+                onState = { state ->
+                    if (state is AsyncImagePainter.State.Success) {
+                        isError = false
+                        val cover = when (data) {
+                            is Anime -> data.asAnimeCover()
+                            is DomainMangaCover -> data
+                            else -> null
+                        }
+                        if (cover != null) {
+                            eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                                cover = cover,
+                                state = state,
+                                extractColor = shouldExtractColor,
+                            )
+                        }
+                        if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
+                        if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
+                    } else if (state is AsyncImagePainter.State.Error) {
+                        isError = true
+                    }
+                },
             )
 
             if (isError) {
