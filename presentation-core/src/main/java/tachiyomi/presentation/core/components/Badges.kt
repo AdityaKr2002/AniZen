@@ -1,33 +1,28 @@
 package tachiyomi.presentation.core.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.persistentMapOf
 
 @Composable
 fun BadgeGroup(
@@ -36,10 +31,12 @@ fun BadgeGroup(
     content: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = modifier.clip(shape)
-            // KMK -->
+        modifier = modifier
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
             .height(18.dp),
-        // KMK <--
     ) {
         content()
     }
@@ -56,8 +53,13 @@ fun Badge(
     Text(
         text = text,
         modifier = modifier
-            .clip(shape)
-            .background(color)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
+            .drawBehind {
+                drawRect(color = color)
+            }
             .padding(horizontal = 4.dp, vertical = 1.dp),
         color = textColor,
         fontWeight = FontWeight.Medium,
@@ -74,41 +76,25 @@ fun Badge(
     iconColor: Color = MaterialTheme.colorScheme.onSecondary,
     shape: Shape = MaterialTheme.shapes.extraSmall,
 ) {
-    val iconContentPlaceholder = "[icon]"
-    val text = buildAnnotatedString {
-        appendInlineContent(iconContentPlaceholder)
-    }
-    val inlineContent = persistentMapOf(
-        Pair(
-            iconContentPlaceholder,
-            InlineTextContent(
-                Placeholder(
-                    width = MaterialTheme.typography.bodySmall.fontSize,
-                    height = MaterialTheme.typography.bodySmall.fontSize,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                ),
-            ) {
-                Icon(
-                    imageVector = imageVector,
-                    tint = iconColor,
-                    contentDescription = null,
-                )
-            },
-        ),
-    )
-
-    Text(
-        text = text,
-        inlineContent = inlineContent,
+    Box(
         modifier = modifier
-            .clip(shape)
-            .background(color)
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
+            .drawBehind {
+                drawRect(color = color)
+            }
             .padding(horizontal = 4.dp, vertical = 1.dp),
-        color = iconColor,
-        fontWeight = FontWeight.Medium,
-        maxLines = 1,
-        style = MaterialTheme.typography.bodySmall,
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(12.dp),
+            tint = iconColor,
+        )
+    }
 }
 
 // KMK -->
@@ -123,8 +109,13 @@ fun Badge(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .clip(shape)
-            .background(color),
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
+            .drawBehind {
+                drawRect(color = color)
+            },
     ) {
         Icon(
             painter = painter,
@@ -146,8 +137,13 @@ fun Badge(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .clip(shape)
-            .background(color),
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            }
+            .drawBehind {
+                drawRect(color = color)
+            },
     ) {
         Image(
             bitmap = imageBitmap,

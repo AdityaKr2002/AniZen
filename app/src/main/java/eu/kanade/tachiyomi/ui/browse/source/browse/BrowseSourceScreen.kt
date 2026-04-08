@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -55,6 +56,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.core.util.ifSourcesLoaded
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.DuplicateAnimeDialog
 import eu.kanade.presentation.browse.BrowseSourceContent
 import eu.kanade.presentation.browse.components.BrowseSourceToolbar
@@ -85,7 +87,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.util.collectAsState
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -106,6 +108,7 @@ data class BrowseSourceScreen(
             return
         }
 
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val screenModel = rememberScreenModel { BrowseSourceScreenModel(sourceId, listingQuery) }
         val state by screenModel.state.collectAsState()
 
@@ -162,6 +165,7 @@ data class BrowseSourceScreen(
         }
 
         val entries = screenModel.getColumnsPreferenceForCurrentOrientation(LocalConfiguration.current.orientation)
+        val hazeEnabled by uiPreferences.hazeEnabled().collectAsStatePref()
 
         Scaffold(
             topBar = {
@@ -182,13 +186,13 @@ data class BrowseSourceScreen(
                         selectedCount = state.selection.size,
                         onUnselectAll = screenModel::clearSelection,
                         onSelectAll = {
-                            val items = animeList.itemSnapshotList.items.filterNotNull()
+                            val items = animeList.itemSnapshotList.items.filterNotNull().map { it.value }
                             if (items.isNotEmpty()) {
                                 screenModel.selectAll(items)
                             }
                         },
                         onInvertSelection = {
-                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull())
+                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull().map { it.value })
                         },
                     )
 
@@ -324,41 +328,48 @@ data class BrowseSourceScreen(
                 }
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            hazeEnabled = hazeEnabled,
         ) { paddingValues ->
-            // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
-            val isSelectAllMode = state.isSelectAllMode
-            val targetCount = state.targetCount
-            val selectionSize = state.selection.size
-            val itemCount = animeList.itemCount
             var isPoking by remember { mutableStateOf(false) }
+            val isSelectAllMode = state.isSelectAllMode
+            
+            // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
+            // It selects items in batches of 60 and uses 'safe boundary access' to trigger Paging 3 fetches.
+            LaunchedEffect(isSelectAllMode) {
+                if (!isSelectAllMode) {
+                    isPoking = false
+                    return@LaunchedEffect
+                }
 
-            LaunchedEffect(isSelectAllMode, targetCount, itemCount) {
-                if (isSelectAllMode) {
+                snapshotFlow { 
+                    val target = state.targetCount
+                    val current = state.selection.size
+                    val total = animeList.itemCount
+                    Triple(target, current, total)
+                }
+                .collectLatest { (target, current, total) ->
+                    // Expand selection to available items, capped at the current targetCount.
                     val snapshot = animeList.itemSnapshotList
                     val loadedItems = snapshot.items.filterNotNull()
                     
-                    // Expand selection to available items, capped at the current targetCount.
-                    if (loadedItems.size > selectionSize) {
-                        val nextBatch = loadedItems.take(targetCount)
-                        if (nextBatch.size > selectionSize) {
+                    if (loadedItems.size > current) {
+                        val nextBatch = loadedItems.take(target).map { it.value }
+                        if (nextBatch.size > current) {
                             screenModel.updateSelection(nextBatch)
                         }
                     }
 
                     // TRIGGER THE NEXT PAGE (The Safe Poke) only if we haven't reached the manual targetCount
                     // AND we are not already poking.
-                    if (selectionSize < targetCount && itemCount > 0 && itemCount < targetCount && !isPoking) {
+                    if (current < target && total > 0 && total < target && !isPoking) {
                         val appendState = animeList.loadState.append
                         if (appendState is androidx.paging.LoadState.NotLoading && !appendState.endOfPaginationReached) {
                             isPoking = true
                             try {
-                                animeList[itemCount - 1]
+                                animeList[total - 1]
                             } catch (e: Exception) {}
-                            // The next itemCount update will trigger this LaunchedEffect again and reset isPoking
                         }
                     }
-                } else {
-                    isPoking = false
                 }
             }
             
@@ -390,7 +401,7 @@ data class BrowseSourceScreen(
                 onAnimeLongClick = { anime, index ->
                     val lastIndex = state.lastSelectedIndex
                     if (state.selectionMode && lastIndex != null) {
-                        val items = animeList.itemSnapshotList.items
+                        val items = animeList.itemSnapshotList.items.mapNotNull { it?.value }
                         screenModel.selectRange(items, lastIndex, index)
                     } else {
                         screenModel.toggleSelection(anime, index)

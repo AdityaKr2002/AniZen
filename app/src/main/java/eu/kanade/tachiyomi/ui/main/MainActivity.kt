@@ -196,6 +196,11 @@ class MainActivity : BaseActivity() {
 
                 LaunchedEffect(navigator) {
                     this@MainActivity.navigator = navigator
+                    
+                    // Set performance screen provider
+                    eu.kanade.tachiyomi.util.system.PerformanceBenchmarkHelper.setCurrentScreenProvider {
+                        navigator.lastItem::class.simpleName
+                    }
 
                     if (isLaunch) {
                         // Set start screen

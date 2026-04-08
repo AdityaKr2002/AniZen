@@ -208,6 +208,11 @@ object SettingsAppearanceScreen : SearchableSettings {
                     title = "Auto-expand details",
                     subtitle = "Expand anime description by default",
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.hazeEnabled(),
+                    title = "Glassmorphism (Haze)",
+                    subtitle = "Applies blur effect to Top Bar and Bottom Bar (Can cause lag)",
+                ),
                 Preference.PreferenceItem.MultiSelectListPreference(
                     pref = uiPreferences.containerStyles(),
                     title = "Container Style",

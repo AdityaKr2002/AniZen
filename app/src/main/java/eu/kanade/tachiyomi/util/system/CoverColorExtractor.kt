@@ -15,6 +15,8 @@ import tachiyomi.domain.anime.model.AnimeCover
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import kotlin.math.abs
+
 object CoverColorExtractor {
 
     suspend fun extract(
@@ -30,7 +32,7 @@ object CoverColorExtractor {
         cover.ratio = ratio
         CoverColorObserver.updateRatio(cover.animeId, ratio)
 
-        if (!extractColor || cover.vibrantCoverColor != null) return@withContext
+        if (!extractColor || cover.vibrantCoverColor != null || CoverColorObserver.get(cover.animeId) != null) return@withContext
 
         val bitmap = when (image) {
             is BitmapImage -> image.bitmap
@@ -43,14 +45,11 @@ object CoverColorExtractor {
             }
         }
 
-        Palette.from(bitmap).generate { palette ->
-            palette?.let {
-                val color = it.getVibrantColor(it.getMutedColor(0))
-                if (color != 0) {
-                    cover.vibrantCoverColor = color
-                    CoverColorObserver.update(cover.animeId, color)
-                }
-            }
+        val palette = Palette.from(bitmap).generate()
+        val color = palette.getVibrantColor(palette.getMutedColor(0))
+        if (color != 0) {
+            cover.vibrantCoverColor = color
+            CoverColorObserver.update(cover.animeId, color)
         }
     }
 }

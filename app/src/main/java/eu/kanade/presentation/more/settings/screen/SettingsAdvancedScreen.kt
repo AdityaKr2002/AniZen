@@ -174,7 +174,7 @@ object SettingsAdvancedScreen : SearchableSettings {
                         val activity = context.findActivity() ?: return@TextPreference
                         isBenchmarking = true
                         context.toast("Benchmark started! Interact with the app for 30 seconds.")
-                        eu.kanade.tachiyomi.util.system.PerformanceBenchmarkHelper.startBenchmark(activity, scope) {
+                        eu.kanade.tachiyomi.util.system.PerformanceBenchmarkHelper.startBenchmark(activity) {
                             report = it
                             isBenchmarking = false
                         }

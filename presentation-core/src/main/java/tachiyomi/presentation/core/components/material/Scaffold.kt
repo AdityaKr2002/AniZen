@@ -123,7 +123,7 @@ fun Scaffold(
     containerColor: Color = MaterialTheme.colorScheme.background,
     contentColor: Color = contentColorFor(containerColor),
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
-    hazeEnabled: Boolean = true,
+    hazeEnabled: Boolean = false,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     // Tachiyomi: Handle consumed window insets
