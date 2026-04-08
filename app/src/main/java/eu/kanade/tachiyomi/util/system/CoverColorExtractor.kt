@@ -29,11 +29,8 @@ object CoverColorExtractor {
         
         // Fast ratio extraction without bitmap conversion
         val ratio = image.width.toFloat() / image.height.toFloat()
-        val existingRatio = CoverColorObserver.getRatio(cover.animeId)
-        if (existingRatio == null || abs(existingRatio - ratio) > 0.01f) {
-            cover.ratio = ratio
-            CoverColorObserver.updateRatio(cover.animeId, ratio)
-        }
+        cover.ratio = ratio
+        CoverColorObserver.updateRatio(cover.animeId, ratio)
 
         if (!extractColor || cover.vibrantCoverColor != null || CoverColorObserver.get(cover.animeId) != null) return@withContext
 

@@ -13,10 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,8 +32,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
-import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import eu.kanade.domain.ui.UiPreferences
@@ -87,45 +88,30 @@ enum class AnimeCover(val ratio: Float) {
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         
-        val usePanorama by uiPreferences.panoramaCover().collectAsStatePref()
-        
-        val request = remember(data, animatedTransitions) {
-            ImageRequest.Builder(context)
-                .data(data)
-                .precision(coil3.size.Precision.INEXACT)
-                .crossfade(animatedTransitions)
-                .build()
-        }
-        
-        val painter = rememberAsyncImagePainter(model = request)
-        val painterState = painter.state
-        
-        val isLoading by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Loading } }
-        val isError by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Error } }
-        val isSuccess by remember { derivedStateOf { painter.state is AsyncImagePainter.State.Success } }
+        var state by remember(data) { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
+        val isSuccess = state is AsyncImagePainter.State.Success
+        val isError = state is AsyncImagePainter.State.Error
 
         val scope = rememberCoroutineScope()
-        LaunchedEffect(isSuccess, data, shouldExtractColor) {
-            if (isSuccess) {
-                val state = painter.state
-                if (state is AsyncImagePainter.State.Success) {
-                    val cover = when (data) {
-                        is Anime -> data.asAnimeCover()
-                        is DomainMangaCover -> data
-                        else -> null
-                    }
-                    if (cover != null) {
-                        scope.launch {
-                            eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                                cover = cover,
-                                state = state,
-                                extractColor = shouldExtractColor,
-                            )
-                        }
-                    }
-                    if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), state)
-                    if (data is DomainMangaCover) onCoverLoaded?.invoke(data, state)
+        LaunchedEffect(state, data, shouldExtractColor) {
+            val currentState = state
+            if (currentState is AsyncImagePainter.State.Success) {
+                val cover = when (data) {
+                    is Anime -> data.asAnimeCover()
+                    is DomainMangaCover -> data
+                    else -> null
                 }
+                if (cover != null) {
+                    scope.launch {
+                        eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                            cover = cover,
+                            state = currentState,
+                            extractColor = shouldExtractColor,
+                        )
+                    }
+                }
+                if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), currentState)
+                if (data is DomainMangaCover) onCoverLoaded?.invoke(data, currentState)
             }
         }
 
@@ -157,23 +143,24 @@ enum class AnimeCover(val ratio: Float) {
                 ),
         ) {
             // Pulsing background
-            if (animatedTransitions && isLoading) {
+            if (animatedTransitions && !isSuccess) {
                 CoverLoading(shape, bgColor)
             }
 
-            androidx.compose.foundation.Image(
-                painter = painter,
+            AsyncImage(
+                model = remember(data, animatedTransitions) {
+                    ImageRequest.Builder(context)
+                        .data(data)
+                        .precision(coil3.size.Precision.INEXACT)
+                        .crossfade(animatedTransitions)
+                        .build()
+                },
                 contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(
-                        if (alpha < 1f) {
-                            Modifier.graphicsLayer { this.alpha = alpha }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .graphicsLayer { this.alpha = if (isSuccess) alpha else 0f },
                 contentScale = scale,
+                onState = { state = it },
             )
 
             if (isError) {
