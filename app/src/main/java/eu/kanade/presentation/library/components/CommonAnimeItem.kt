@@ -120,7 +120,7 @@ fun AnimeCompactGridItem(
                         },
                     data = coverData,
                     ratio = ratio,
-                    shape = RectangleShape, // Optimization: AnimeGridCover clips
+                    shape = RectangleShape, // Optimization: Parent clips
                 )
             },
             ratio = ratio,
@@ -174,7 +174,6 @@ private fun BoxScope.CoverTextOverlay(
         modifier = Modifier.align(Alignment.BottomStart),
         verticalAlignment = Alignment.Bottom,
     ) {
-// ... rest of Row unchanged
         GridItemTitle(
             modifier = Modifier
                 .weight(1f)
@@ -234,6 +233,7 @@ fun AnimeComfortableGridItem(
                             },
                         data = coverData,
                         ratio = ratio,
+                        shape = RectangleShape, // Optimization: Parent clips
                     )
                 },
                 ratio = ratio,
@@ -251,7 +251,6 @@ fun AnimeComfortableGridItem(
                         )
                     }
                 },
-                needsClip = false, // Optimization: Cover handles its own shape
             )
             GridItemTitle(
                 modifier = Modifier.padding(4.dp),
@@ -276,22 +275,15 @@ private fun AnimeGridCover(
     badgesStart: (@Composable RowScope.() -> Unit)? = null,
     badgesEnd: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable (BoxScope.() -> Unit)? = null,
-    needsClip: Boolean = true,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .then(
-                if (needsClip) {
-                    Modifier.graphicsLayer {
-                        this.shape = shape
-                        clip = true
-                    }
-                } else {
-                    Modifier
-                }
-            ),
+            .graphicsLayer {
+                this.shape = shape
+                this.clip = true
+            },
     ) {
         cover()
         content?.invoke(this)
@@ -358,22 +350,14 @@ private fun GridItemSelectable(
 
     Box(
         modifier = modifier
-            .then(
-                if (scale < 1f || isSelected) {
-                    Modifier.graphicsLayer {
-                        if (scale < 1f) {
-                            scaleX = scale
-                            scaleY = scale
-                        }
-                        if (isSelected) {
-                            this.shape = shape
-                            clip = true
-                        }
-                    }
-                } else {
-                    Modifier
-                },
-            )
+            .graphicsLayer {
+                if (scale < 1f) {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                this.shape = shape
+                this.clip = true
+            }
             .drawBehind {
                 if (isSelected) {
                     drawRoundRect(
@@ -432,7 +416,6 @@ fun AnimeListItem(
     containerHeight: Int = 0,
     usePanorama: Boolean? = null,
 ) {
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val density = LocalDensity.current
     val height = remember(usePanorama) {
         if (usePanorama == true) 96.dp else 76.dp
