@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -337,28 +338,31 @@ data class BrowseSourceScreen(
                 }
 
                 snapshotFlow { 
-                    Triple(state.targetCount, state.selection.size, animeList.itemCount) 
+                    val target = state.targetCount
+                    val current = state.selection.size
+                    val total = animeList.itemCount
+                    Triple(target, current, total)
                 }
-                .collectLatest { (targetCount, selectionSize, itemCount) ->
+                .collectLatest { (target, current, total) ->
                     // Expand selection to available items, capped at the current targetCount.
                     val snapshot = animeList.itemSnapshotList
                     val loadedItems = snapshot.items.filterNotNull()
                     
-                    if (loadedItems.size > selectionSize) {
-                        val nextBatch = loadedItems.take(targetCount).map { it.value }
-                        if (nextBatch.size > selectionSize) {
+                    if (loadedItems.size > current) {
+                        val nextBatch = loadedItems.take(target).map { it.value }
+                        if (nextBatch.size > current) {
                             screenModel.updateSelection(nextBatch)
                         }
                     }
 
                     // TRIGGER THE NEXT PAGE (The Safe Poke) only if we haven't reached the manual targetCount
                     // AND we are not already poking.
-                    if (selectionSize < targetCount && itemCount > 0 && itemCount < targetCount && !isPoking) {
+                    if (current < target && total > 0 && total < target && !isPoking) {
                         val appendState = animeList.loadState.append
                         if (appendState is androidx.paging.LoadState.NotLoading && !appendState.endOfPaginationReached) {
                             isPoking = true
                             try {
-                                animeList[itemCount - 1]
+                                animeList[total - 1]
                             } catch (e: Exception) {}
                         }
                     }
