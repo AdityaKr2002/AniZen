@@ -276,7 +276,10 @@ private fun AnimeGridCover(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .clip(shape),
+            .graphicsLayer {
+                this.shape = shape
+                clip = true
+            },
     ) {
         cover()
         content?.invoke(this)
@@ -338,16 +341,14 @@ private fun GridItemSelectable(
         label = "selection_scale",
     )
     val shape = MaterialTheme.shapes.medium
-    Surface(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        shape = shape,
-        color = Color.Transparent,
-        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-    ) {
+
+    val selectableModifier = modifier
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+
+    val contentBlock = @Composable {
         Box(
             modifier = Modifier
                 .combinedClickable(
@@ -378,6 +379,21 @@ private fun GridItemSelectable(
                 )
             }
         }
+    }
+
+    if (isSelected) {
+        Surface(
+            modifier = selectableModifier,
+            shape = shape,
+            color = Color.Transparent,
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+            content = contentBlock,
+        )
+    } else {
+        Box(
+            modifier = selectableModifier,
+            content = { contentBlock() },
+        )
     }
 }
 
