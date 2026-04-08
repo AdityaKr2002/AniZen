@@ -182,7 +182,7 @@ data class BrowseSourceScreen(
                         selectedCount = state.selection.size,
                         onUnselectAll = screenModel::clearSelection,
                         onSelectAll = {
-                            val items = animeList.itemSnapshotList.items.filterNotNull()
+                            val items = animeList.itemSnapshotList.items.filterNotNull().map { it.value }
                             if (items.isNotEmpty()) {
                                 screenModel.selectAll(items)
                             }
@@ -553,3 +553,4 @@ data class BrowseSourceScreen(
         class Genre(txt: String) : SearchType(txt)
     }
 }
+
