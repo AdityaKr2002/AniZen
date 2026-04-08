@@ -32,9 +32,12 @@ fun Modifier.selectedBackground(isSelected: Boolean): Modifier = if (isSelected)
     composed {
         val alpha = if (isSystemInDarkTheme()) 0.16f else 0.22f
         val color = MaterialTheme.colorScheme.secondary.copy(alpha = alpha)
-        Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(color)
+        Modifier.drawBehind {
+            drawRoundRect(
+                color = color,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx()),
+            )
+        }
     }
 } else {
     this
