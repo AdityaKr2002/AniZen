@@ -426,13 +426,13 @@ private fun AnimeScreenSmallImpl(
                         .background(MaterialTheme.colorScheme.background),
                 ) {
                     val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    val isFABVisible = remember(episodes, isAnySelected) {
+                        episodes.fastAny { !it.episode.seen } && !isAnySelected
+                    }
                     Scaffold(
                         hazeEnabled = false,
                         contentWindowInsets = scaffoldInsets,
                         floatingActionButton = {
-                    val isFABVisible = remember(episodes) {
-                        episodes.fastAny { !it.episode.seen } && !isAnySelected
-                    }
                     AnimatedVisibility(
                         visible = isFABVisible,
                         enter = fadeIn(),
@@ -524,6 +524,7 @@ private fun AnimeScreenSmallImpl(
                     VerticalFastScroller(
                         listState = episodeListState,
                         topContentPadding = topPadding,
+                        bottomContentPadding = if (isFABVisible) 88.dp else 0.dp,
                         endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
                     ) {
                         LazyColumn(
@@ -859,13 +860,13 @@ fun AnimeScreenLargeImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+            val isFABVisible = remember(episodes, isAnySelected) {
+                episodes.fastAny { !it.episode.seen } && !isAnySelected
+            }
             Scaffold(
                 hazeEnabled = false,
                 contentWindowInsets = scaffoldInsets,
                 floatingActionButton = {
-                    val isFABVisible = remember(episodes) {
-                        episodes.fastAny { !it.episode.seen } && !isAnySelected
-                    }
                     AnimatedVisibility(
                         visible = isFABVisible,
                         enter = fadeIn(),
@@ -1103,6 +1104,8 @@ fun AnimeScreenLargeImpl(
                             VerticalFastScroller(
                                 listState = episodeListState,
                                 topContentPadding = contentPadding.calculateTopPadding(),
+                                bottomContentPadding = if (isFABVisible) 88.dp else 0.dp,
+                                endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
                             ) {
                                 LazyColumn(
                                     modifier = Modifier.fillMaxHeight(),
