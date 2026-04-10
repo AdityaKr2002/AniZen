@@ -771,23 +771,25 @@ class AnimeScreenModel(
 
             // 4. Smart Recommendations (Parallel Tag Search)
             launchIO {
-                kotlinx.coroutines.coroutineScope {
-                    val tags = anime.genre?.take(3) ?: emptyList()
-                    val results = tags.map { tag ->
-                        async {
-                            try {
-                                val searchResult = source.getSearchAnime(1, tag, source.getFilterList())
-                                searchResult.animes
-                                    .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                    .awaitAll()
-                                    .mapNotNull { getAnime.await(it.id) }
-                            } catch (_: Exception) {
-                                emptyList()
+                kotlinx.coroutines.withTimeoutOrNull(15000L) {
+                    kotlinx.coroutines.coroutineScope {
+                        val tags = anime.genre?.take(3) ?: emptyList()
+                        val results = tags.map { tag ->
+                            async {
+                                try {
+                                    val searchResult = source.getSearchAnime(1, tag, source.getFilterList())
+                                    searchResult.animes
+                                        .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
+                                        .awaitAll()
+                                        .mapNotNull { getAnime.await(it.id) }
+                                } catch (_: Exception) {
+                                    emptyList()
+                                }
                             }
-                        }
-                    }.awaitAll().flatten()
-                    
-                    if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Tag, results)
+                        }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
+                        
+                        if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Tag, results)
+                    }
                 }
             }
         }
