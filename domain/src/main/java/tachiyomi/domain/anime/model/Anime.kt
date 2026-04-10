@@ -98,6 +98,7 @@ data class Anime(
                 EPISODE_SEASON_GROUP_ON -> LibraryPreferences.SeasonGrouping.Headers
                 EPISODE_SEASON_GROUP_TABS -> LibraryPreferences.SeasonGrouping.Tabs
                 EPISODE_SEASON_GROUP_OFF -> LibraryPreferences.SeasonGrouping.Disabled
+                // Default follows the global preference
                 else -> libraryPreferences.seasonGroupingMode().get()
             }
         }
