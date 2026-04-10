@@ -208,7 +208,7 @@ data class Anime(
             fetchInterval = 0,
             dateAdded = 0L,
             viewerFlags = 0L,
-            episodeFlags = 0L,
+            episodeFlags = EPISODE_SHOW_SEASON_GROUP,
             coverLastModified = 0L,
             // SY -->
             ogArtist = null,
