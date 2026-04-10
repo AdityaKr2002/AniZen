@@ -605,7 +605,7 @@ class AnimeScreenModel(
         private const val CACHE_TTL = 60 * 60 * 1000L // 1 hour
 
         private val _suggestionsUpdateFlow = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 1)
-        val suggestionsUpdateFlow = _suggestionsUpdateFlow.asStateFlow()
+        val suggestionsUpdateFlow = _suggestionsUpdateFlow.asSharedFlow()
     }
 
     private suspend fun fetchSuggestions(anime: Anime) {
