@@ -272,8 +272,8 @@ object SettingsLibraryScreen : SearchableSettings {
                     title = "Season grouping",
                     entries = persistentMapOf(
                         LibraryPreferences.SeasonGrouping.Disabled to "Disabled",
-                        LibraryPreferences.SeasonGrouping.Headers to "Grouped with headers",
-                        LibraryPreferences.SeasonGrouping.Tabs to "Grouped with tabs",
+                        LibraryPreferences.SeasonGrouping.Headers to "Headers",
+                        LibraryPreferences.SeasonGrouping.Tabs to "Tabs",
                     ),
                 ),
             ),

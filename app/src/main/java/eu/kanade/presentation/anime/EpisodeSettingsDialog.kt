@@ -192,11 +192,18 @@ private fun ColumnScope.DisplayPage(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
         )
 
+        Text(
+            text = "Season grouping",
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+
         listOf(
-            "Default" to Anime.EPISODE_SEASON_GROUP_DEFAULT,
-            "Linear" to Anime.EPISODE_SEASON_GROUP_OFF,
-            "Grouped with headers" to Anime.EPISODE_SEASON_GROUP_ON,
-            "Grouped with tabs" to Anime.EPISODE_SEASON_GROUP_TABS,
+            "Default (Use app setting)" to Anime.EPISODE_SEASON_GROUP_DEFAULT,
+            "Disabled" to Anime.EPISODE_SEASON_GROUP_OFF,
+            "Headers" to Anime.EPISODE_SEASON_GROUP_ON,
+            "Tabs" to Anime.EPISODE_SEASON_GROUP_TABS,
         ).map { (label, flag) ->
             RadioItem(
                 label = label,
