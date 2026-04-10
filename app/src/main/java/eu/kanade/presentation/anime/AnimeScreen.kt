@@ -390,8 +390,12 @@ private fun AnimeScreenSmallImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem) {
-        listItem.count { it is EpisodeList.Item }
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            listItem.count { it is EpisodeList.Item }
+        } else {
+            state.processedEpisodes.size
+        }
     }
 
             val isFirstItemVisible by remember {
@@ -778,8 +782,12 @@ fun AnimeScreenLargeImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem) {
-        listItem.count { it is EpisodeList.Item }
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            listItem.count { it is EpisodeList.Item }
+        } else {
+            state.processedEpisodes.size
+        }
     }
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value

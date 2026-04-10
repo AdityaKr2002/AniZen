@@ -56,7 +56,12 @@ class SetAnimeEpisodeFlags(
     }
 
     suspend fun awaitSetSeasonGrouping(manga: Anime, enabled: Boolean): Boolean {
-        val flag = if (enabled) Anime.EPISODE_SEASON_GROUP_ON else Anime.EPISODE_SEASON_GROUP_OFF
+        val flag = if (enabled) {
+            // Default to Tabs if enabled via this simple toggle (legacy support)
+            Anime.EPISODE_SEASON_GROUP_TABS
+        } else {
+            Anime.EPISODE_SEASON_GROUP_OFF
+        }
         return awaitSetSeasonGroupingRaw(manga, flag)
     }
 
@@ -119,7 +124,7 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
-                    .setFlag(if (seasonGrouping) Anime.EPISODE_SEASON_GROUP_ON else Anime.EPISODE_SEASON_GROUP_OFF, Anime.EPISODE_SEASON_GROUP_MASK),
+                    .setFlag(if (seasonGrouping) Anime.EPISODE_SEASON_GROUP_TABS else Anime.EPISODE_SEASON_GROUP_OFF, Anime.EPISODE_SEASON_GROUP_MASK),
             ),
         )
     }
