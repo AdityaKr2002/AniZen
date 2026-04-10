@@ -614,14 +614,14 @@ private fun AnimeScreenSmallImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (state.suggestionSections.all { it.items.isEmpty() }) {
+                                            if (!state.isSuggestionsLoading && state.suggestionSections.all { it.items.isEmpty() }) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
                                                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
-                                            } else {
+                                            } else if (!state.isSuggestionsLoading) {
                                                 val combinedItems = remember(state.suggestionSections) {
                                                     state.suggestionSections.flatMap { it.items.take(3) }
                                                         .distinctBy { it.id }.take(15)
@@ -1011,14 +1011,14 @@ fun AnimeScreenLargeImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (state.suggestionSections.all { it.items.isEmpty() }) {
+                                            if (!state.isSuggestionsLoading && state.suggestionSections.all { it.items.isEmpty() }) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
                                                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
-                                            } else {
+                                            } else if (!state.isSuggestionsLoading) {
                                                 val combinedItems = remember(state.suggestionSections) {
                                                     state.suggestionSections.flatMap { it.items.take(3) }
                                                         .distinctBy { it.id }.take(15)
