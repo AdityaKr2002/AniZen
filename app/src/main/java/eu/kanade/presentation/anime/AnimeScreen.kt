@@ -614,32 +614,39 @@ private fun AnimeScreenSmallImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (state.suggestionSections.isEmpty()) {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    items(5) {
-                                                        tachiyomi.presentation.core.components.SkeletonAnimeCard(width = 104.dp)
-                                                    }
-                                                }
+                                            if (state.suggestionSections.all { it.items.isEmpty() }) {
+                                                Text(
+                                                    text = "No suggestions found for this entry",
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
                                             } else {
                                                 val combinedItems = remember(state.suggestionSections) {
                                                     state.suggestionSections.flatMap { it.items.take(3) }
                                                         .distinctBy { it.id }.take(15)
                                                 }
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(
-                                                            anime = anime,
-                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                        )
+                                                if (combinedItems.isEmpty()) {
+                                                     Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
+                                                        ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1004,32 +1011,39 @@ fun AnimeScreenLargeImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (state.suggestionSections.isEmpty()) {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    items(5) {
-                                                        tachiyomi.presentation.core.components.SkeletonAnimeCard(width = 104.dp)
-                                                    }
-                                                }
+                                            if (state.suggestionSections.all { it.items.isEmpty() }) {
+                                                Text(
+                                                    text = "No suggestions found for this entry",
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
                                             } else {
                                                 val combinedItems = remember(state.suggestionSections) {
                                                     state.suggestionSections.flatMap { it.items.take(3) }
                                                         .distinctBy { it.id }.take(15)
                                                 }
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(
-                                                            anime = anime,
-                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                        )
+                                                if (combinedItems.isEmpty()) {
+                                                     Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
+                                                        ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }

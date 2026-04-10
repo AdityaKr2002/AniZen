@@ -690,7 +690,6 @@ class AnimeScreenModel(
                         }
                     }
                     val finalSections = initialSections
-                        .filter { it.items.isNotEmpty() }
                         .sortedBy { it.type }
                         .toImmutableList()
                     suggestionsCache.put(anime.id, CachedSuggestions(finalSections, System.currentTimeMillis()))
@@ -788,9 +787,9 @@ class AnimeScreenModel(
                             }
                         }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
                         
-                        if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Tag, results)
+                        updateSection(SuggestionSection.Type.Tag, results)
                     }
-                }
+                } ?: updateSection(SuggestionSection.Type.Tag, emptyList())
             }
         }
     }
