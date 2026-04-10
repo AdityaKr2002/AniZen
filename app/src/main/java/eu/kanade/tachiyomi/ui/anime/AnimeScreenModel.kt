@@ -603,6 +603,9 @@ class AnimeScreenModel(
         // Limit to 50 anime to prevent OOM, LruCache is thread-safe
         val suggestionsCache = android.util.LruCache<Long, CachedSuggestions>(50)
         private const val CACHE_TTL = 60 * 60 * 1000L // 1 hour
+
+        private val _suggestionsUpdateFlow = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 1)
+        val suggestionsUpdateFlow = _suggestionsUpdateFlow.asStateFlow()
     }
 
     private suspend fun fetchSuggestions(anime: Anime) {
@@ -696,6 +699,7 @@ class AnimeScreenModel(
                         .sortedBy { it.type }
                         .toImmutableList()
                     suggestionsCache.put(anime.id, CachedSuggestions(finalSections, System.currentTimeMillis()))
+                    _suggestionsUpdateFlow.tryEmit(anime.id)
                     state.copySuccess(suggestionSections = finalSections)
                 }
             }

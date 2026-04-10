@@ -53,21 +53,28 @@ class RelatedAnimeScreenModel(
             val anime = getAnime.await(animeId) ?: return@launchIO
             mutableState.update { it.copy(title = anime.title) }
 
-            val cached = AnimeScreenModel.suggestionsCache.get(animeId)
-            if (cached != null) {
-                var newItems = state.value.items
-                cached.sections.forEach { section ->
-                    val title = when (section.type) {
-                        SuggestionSection.Type.Franchise -> "Franchise"
-                        SuggestionSection.Type.Similarity -> "Similar"
-                        SuggestionSection.Type.Author -> section.title
-                        SuggestionSection.Type.Source -> section.title
-                        SuggestionSection.Type.Tag -> "Tags"
+            // Reactive update: Listen for cache changes
+            AnimeScreenModel.suggestionsUpdateFlow
+                .filter { it == animeId }
+                .onStart { emit(animeId) } // Initial load
+                .collect {
+                    val cached = AnimeScreenModel.suggestionsCache.get(animeId)
+                    if (cached != null) {
+                        var newItems = persistentMapOf<String, ImmutableList<Anime>>()
+                        cached.sections.forEach { section ->
+                            if (section.items.isEmpty()) return@forEach
+                            val title = when (section.type) {
+                                SuggestionSection.Type.Franchise -> "Franchise"
+                                SuggestionSection.Type.Similarity -> "Similar"
+                                SuggestionSection.Type.Author -> section.title
+                                SuggestionSection.Type.Source -> section.title
+                                SuggestionSection.Type.Tag -> "Tags"
+                            }
+                            newItems = newItems.put(title, section.items)
+                        }
+                        mutableState.update { it.copy(items = newItems) }
                     }
-                    newItems = newItems.put(title, section.items)
                 }
-                mutableState.update { it.copy(items = newItems) }
-            }
         }
 
         screenModelScope.launchIO {
