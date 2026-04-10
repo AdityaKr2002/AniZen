@@ -1391,7 +1391,7 @@ private fun DiscoveryHeader(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Filled.ArrowForward,
+                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = stringResource(tachiyomi.i18n.MR.strings.label_more),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
