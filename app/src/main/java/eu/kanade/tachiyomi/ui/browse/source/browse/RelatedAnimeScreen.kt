@@ -92,7 +92,7 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
         val orientation = LocalConfiguration.current.orientation
         val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
         val isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE
-        val columnsCount by (if (isLandscape) libraryPreferences.landscapeColumns() else libraryPreferences.portraitColumns()).collectAsState()
+        val columnsCount = (if (isLandscape) libraryPreferences.landscapeColumns() else libraryPreferences.portraitColumns()).get()
         val columns = if (columnsCount == 0) GridCells.Adaptive(128.dp) else GridCells.Fixed(columnsCount)
 
         LazyVerticalGrid(
