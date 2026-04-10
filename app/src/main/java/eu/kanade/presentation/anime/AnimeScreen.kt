@@ -980,48 +980,46 @@ fun AnimeScreenLargeImpl(
                                 )
 
                                 if (showSuggestions) {
-                                    item(key = "discovery-section-container", contentType = "discovery") {
-                                        val navigator = LocalNavigator.currentOrThrow
-                                        Surface(
-                                            modifier = Modifier
-                                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                                .fillMaxWidth(),
-                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                                            tonalElevation = 2.dp,
-                                        ) {
-                                            Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                                                DiscoveryHeader(
-                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
-                                                )
+                                    val navigator = LocalNavigator.currentOrThrow
+                                    Surface(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                            .fillMaxWidth(),
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                        tonalElevation = 2.dp,
+                                    ) {
+                                        Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                                            DiscoveryHeader(
+                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
+                                            )
 
-                                                if (state.suggestionSections.isEmpty()) {
-                                                    androidx.compose.foundation.lazy.LazyRow(
-                                                        contentPadding = PaddingValues(horizontal = 12.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    ) {
-                                                        items(5) {
-                                                            tachiyomi.presentation.core.components.SkeletonAnimeCard(width = 104.dp)
-                                                        }
+                                            if (state.suggestionSections.isEmpty()) {
+                                                androidx.compose.foundation.lazy.LazyRow(
+                                                    contentPadding = PaddingValues(horizontal = 12.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                ) {
+                                                    items(5) {
+                                                        tachiyomi.presentation.core.components.SkeletonAnimeCard(width = 104.dp)
                                                     }
-                                                } else {
-                                                    val combinedItems = remember(state.suggestionSections) {
-                                                        state.suggestionSections.flatMap { it.items.take(3) }
-                                                            .distinctBy { it.id }.take(15)
-                                                    }
-                                                    androidx.compose.foundation.lazy.LazyRow(
-                                                        contentPadding = PaddingValues(horizontal = 12.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    ) {
-                                                        itemsIndexed(
-                                                            items = combinedItems,
-                                                            key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                        ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                            SuggestionItem(
-                                                                anime = anime,
-                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                            )
-                                                        }
+                                                }
+                                            } else {
+                                                val combinedItems = remember(state.suggestionSections) {
+                                                    state.suggestionSections.flatMap { it.items.take(3) }
+                                                        .distinctBy { it.id }.take(15)
+                                                }
+                                                androidx.compose.foundation.lazy.LazyRow(
+                                                    contentPadding = PaddingValues(horizontal = 12.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                ) {
+                                                    itemsIndexed(
+                                                        items = combinedItems,
+                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
+                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                        SuggestionItem(
+                                                            anime = anime,
+                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                        )
                                                     }
                                                 }
                                             }
@@ -1383,7 +1381,7 @@ private fun DiscoveryHeader(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = stringResource(tachiyomi.i18n.MR.strings.az_recommends),
+                text = stringResource(tachiyomi.i18n.sy.SYMR.strings.az_recommends),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -1393,7 +1391,7 @@ private fun DiscoveryHeader(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
+                imageVector = androidx.compose.material.icons.Icons.Filled.ArrowForward,
                 contentDescription = stringResource(tachiyomi.i18n.MR.strings.label_more),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
