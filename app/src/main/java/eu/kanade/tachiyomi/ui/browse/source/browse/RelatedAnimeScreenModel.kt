@@ -2,32 +2,32 @@ package eu.kanade.tachiyomi.ui.browse.source.browse
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import eu.kanade.core.util.asRef
+import eu.kanade.core.preference.asState
 import eu.kanade.domain.anime.interactor.UpdateAnime
 import eu.kanade.domain.source.service.SourcePreferences
+import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.ui.anime.AnimeScreenModel
 import eu.kanade.tachiyomi.ui.anime.SuggestionSection
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.GetLibraryAnime
-import tachiyomi.domain.anime.interactor.SetAnimeCategories
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.toAnimeUpdate
 import tachiyomi.domain.category.interactor.GetCategories
+import tachiyomi.domain.category.interactor.SetAnimeCategories
+import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
@@ -45,8 +45,7 @@ class RelatedAnimeScreenModel(
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
 ) : StateScreenModel<RelatedAnimeScreenModel.State>(State()) {
 
-    private val _displayMode = sourcePreferences.relatedAnimeDisplayMode().asRef(screenModelScope)
-    var displayMode by _displayMode
+    var displayMode by sourcePreferences.relatedAnimeDisplayMode().asState(screenModelScope)
 
     init {
         screenModelScope.launchIO {
