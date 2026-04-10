@@ -523,7 +523,6 @@ private fun AnimeScreenSmallImpl(
                     indicatorPadding = PaddingValues(top = topPadding),
                 ) {
                     val layoutDirection = LocalLayoutDirection.current
-import tachiyomi.presentation.core.components.Scroller.STICKY_HEADER_KEY_PREFIX
 
                     VerticalFastScroller(
                         listState = episodeListState,
@@ -1317,10 +1316,9 @@ private fun SuggestionItem(
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
-    val coverEntry = remember(anime.id, globalPanorama) {
+    val (entry, ratio) = remember(anime.id, globalPanorama) {
         eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id, usePanoramaOverride = globalPanorama)
     }
-    val (entry, ratio) = coverEntry
     val width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp
 
     Column(
