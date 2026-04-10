@@ -48,6 +48,7 @@ fun BrowseSourceToolbar(
     onSelectAll: () -> Unit = {},
     onInvertSelection: () -> Unit = {},
     selectedCount: Int = 0,
+    subtitle: String? = null,
 ) {
     // Avoid capturing unstable source in actions lambda
     val title = source?.name
@@ -64,7 +65,7 @@ fun BrowseSourceToolbar(
             if (selectedCount > 0) {
                 Text(text = selectedCount.toString())
             } else {
-                AppBarTitle(title)
+                AppBarTitle(title, subtitle = subtitle)
             }
         },
         searchQuery = searchQuery,
