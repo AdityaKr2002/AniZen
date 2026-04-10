@@ -152,11 +152,15 @@ fun AnimeInfoBox(
             Color.Transparent,
             MaterialTheme.colorScheme.background,
         )
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
+        val context = LocalContext.current
+        val backdropImageRequest = remember(anime) {
+            ImageRequest.Builder(context)
                 .data(anime)
                 .crossfade(true)
-                .build(),
+                .build()
+        }
+        AsyncImage(
+            model = backdropImageRequest,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -168,7 +172,9 @@ fun AnimeInfoBox(
                     )
                 }
                 .blur(4.dp)
-                .alpha(0.25f),
+                .graphicsLayer {
+                    alpha = 0.25f
+                },
         )
 
         // Anime & source info
