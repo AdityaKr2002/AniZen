@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.browse.source.browse
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +35,7 @@ import eu.kanade.presentation.library.components.CommonAnimeItemDefaults
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ListGroupHeader
 import tachiyomi.presentation.core.components.material.Scaffold
@@ -86,16 +89,11 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
         contentPadding: PaddingValues,
         onAnimeClick: (tachiyomi.domain.anime.model.Anime) -> Unit,
     ) {
-        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-        val columns = remember(configuration.screenWidthDp) {
-            when {
-                configuration.screenWidthDp >= 1200 -> GridCells.Fixed(6)
-                configuration.screenWidthDp >= 840 -> GridCells.Fixed(5)
-                configuration.screenWidthDp >= 600 -> GridCells.Fixed(4)
-                configuration.screenWidthDp >= 480 -> GridCells.Fixed(3)
-                else -> GridCells.Fixed(2)
-            }
-        }
+        val orientation = LocalConfiguration.current.orientation
+        val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
+        val isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE
+        val columnsCount by (if (isLandscape) libraryPreferences.animeLandscapeColumns() else libraryPreferences.animePortraitColumns()).collectAsState()
+        val columns = if (columnsCount == 0) GridCells.Adaptive(128.dp) else GridCells.Fixed(columnsCount)
 
         LazyVerticalGrid(
             columns = columns,

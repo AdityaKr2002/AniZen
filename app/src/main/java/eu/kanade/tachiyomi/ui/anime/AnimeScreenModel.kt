@@ -590,14 +590,14 @@ class AnimeScreenModel(
         }
     }
 
-    private data class CachedSuggestions(
+    internal data class CachedSuggestions(
         val sections: ImmutableList<SuggestionSection>,
         val timestamp: Long,
     )
 
-    private companion object {
+    internal companion object {
         // Limit to 50 anime to prevent OOM, LruCache is thread-safe
-        private val suggestionsCache = android.util.LruCache<Long, CachedSuggestions>(50)
+        val suggestionsCache = android.util.LruCache<Long, CachedSuggestions>(50)
         private const val CACHE_TTL = 60 * 60 * 1000L // 1 hour
     }
 
