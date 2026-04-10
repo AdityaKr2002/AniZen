@@ -59,8 +59,8 @@ class RelatedAnimeScreenModel(
             // Reactive update: Listen for cache changes
             AnimeScreenModel.suggestionsUpdateFlow
                 .filter { it == animeId }
-                .onStart { emit(animeId) } // Initial load
-                .collect {
+                .onStart { emit(animeId) }
+                .collect { _ ->
                     val cached = AnimeScreenModel.suggestionsCache.get(animeId)
                     if (cached != null) {
                         var newItems = persistentMapOf<String, ImmutableList<Anime>>()
