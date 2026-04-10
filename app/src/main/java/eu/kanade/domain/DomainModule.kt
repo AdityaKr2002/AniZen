@@ -140,7 +140,7 @@ class DomainModule : InjektModule {
         addFactory { GetNextEpisodes(get(), get(), get(), get()) }
         addFactory { GetUpcomingAnime(get()) }
         addFactory { ResetViewerFlags(get()) }
-        addFactory { SetAnimeEpisodeFlags(get()) }
+        addFactory { SetAnimeEpisodeFlags(get(), get()) }
         addFactory { FetchInterval(get()) }
         addFactory { SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
         addFactory { SetAnimeViewerFlags(get()) }

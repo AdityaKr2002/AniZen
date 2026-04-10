@@ -6,6 +6,7 @@ import tachiyomi.domain.anime.repository.AnimeRepository
 
 class SetAnimeEpisodeFlags(
     private val animeRepository: AnimeRepository,
+    private val getFavorites: GetFavorites,
 ) {
 
     suspend fun awaitSetDownloadedFilter(manga: Anime, flag: Long): Boolean {
@@ -139,9 +140,9 @@ class SetAnimeEpisodeFlags(
         sortingDirection: Long,
         seasonGrouping: Long,
     ) {
-        animeRepository.updateAllEpisodeFlags(
+        val updates = getFavorites.await().map { anime ->
             AnimeUpdate(
-                id = -1L,
+                id = anime.id,
                 episodeFlags = 0L.setFlag(unseenFilter, Anime.EPISODE_UNSEEN_MASK)
                     .setFlag(downloadedFilter, Anime.EPISODE_DOWNLOADED_MASK)
                     .setFlag(bookmarkedFilter, Anime.EPISODE_BOOKMARKED_MASK)
@@ -152,9 +153,15 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
                     .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK),
-            ),
-        )
+            )
+        }
+        animeRepository.updateAll(updates)
     }
+
+    private fun Long.setFlag(flag: Long, mask: Long): Long {
+        return this and mask.inv() or (flag and mask)
+    }
+}
 
     private fun Long.setFlag(flag: Long, mask: Long): Long {
         return this and mask.inv() or (flag and mask)
