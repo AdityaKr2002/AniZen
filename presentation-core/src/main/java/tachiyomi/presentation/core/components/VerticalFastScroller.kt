@@ -390,7 +390,7 @@ private fun computeScrollOffset(state: LazyGridState): Int {
     val laidOutArea = abs((endChild.offset.y + endChild.size.height) - startDecoratedTop)
     val itemRange = abs(minPosition - maxPosition) + 1
     val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
+    return (itemsBefore * avgSizePerRow + (state.layoutInfo.beforeContentPadding - startDecoratedTop)).roundToInt().coerceAtLeast(0)
 }
 
 private fun computeScrollRange(state: LazyGridState): Int {
@@ -400,7 +400,8 @@ private fun computeScrollRange(state: LazyGridState): Int {
     val endChild = visibleItems.last()
     val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
     val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
+    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt() +
+        state.layoutInfo.beforeContentPadding + state.layoutInfo.afterContentPadding
 }
 
 private fun computeScrollOffset(state: LazyListState): Int {
@@ -416,7 +417,7 @@ private fun computeScrollOffset(state: LazyListState): Int {
     val laidOutArea = abs(endChild.bottom - startDecoratedTop)
     val itemRange = abs(minPosition - maxPosition) + 1
     val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
+    return (itemsBefore * avgSizePerRow + (state.layoutInfo.beforeContentPadding - startDecoratedTop)).roundToInt().coerceAtLeast(0)
 }
 
 private fun computeScrollRange(state: LazyListState): Int {
@@ -427,7 +428,8 @@ private fun computeScrollRange(state: LazyListState): Int {
     val endChild = visibleItems.last()
     val laidOutArea = endChild.bottom - startChild.top
     val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
+    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt() +
+        state.layoutInfo.beforeContentPadding + state.layoutInfo.afterContentPadding
 }
 
 object Scroller {
