@@ -136,6 +136,7 @@ import java.util.Calendar
 import kotlin.math.floor
 
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.domain.episode.model.applyFilters
@@ -784,14 +785,16 @@ class AnimeScreenModel(
                                     if (genreFilter != null) {
                                         when (genreFilter) {
                                             is AnimeFilter.Select<*> -> {
-                                                val index = genreFilter.values.indexOfFirst { it.toString().contains(tag, true) }
+                                                val select = genreFilter as AnimeFilter.Select<Any>
+                                                val index = select.values.indexOfFirst { it.toString().contains(tag, true) }
                                                 if (index != -1) {
-                                                    genreFilter.state = index
+                                                    select.state = index
                                                     query = "" // Clear query to use filter search
                                                 }
                                             }
                                             is AnimeFilter.Group<*> -> {
-                                                val subFilter = genreFilter.state.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
+                                                val subFilters = genreFilter.state as? List<*>
+                                                val subFilter = subFilters?.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
                                                 if (subFilter is AnimeFilter.CheckBox) {
                                                     subFilter.state = true
                                                     query = "" // Clear query to use filter search
