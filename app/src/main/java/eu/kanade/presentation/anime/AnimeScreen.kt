@@ -42,6 +42,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Compare
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Label
@@ -1391,7 +1392,7 @@ private fun DiscoveryHeader(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = stringResource(tachiyomi.i18n.MR.strings.label_more),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
