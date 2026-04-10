@@ -1339,7 +1339,18 @@ class AnimeScreenModel(
         val anime = successState?.anime ?: return
         screenModelScope.launchNonCancellable {
             libraryPreferences.setEpisodeSettingsDefault(anime)
-            if (applyToExisting) setAnimeDefaultEpisodeFlags.awaitAll()
+            if (applyToExisting) {
+                setAnimeEpisodeFlags.awaitSetAllAnimeFlags(
+                    unseenFilter = anime.unseenFilterRaw,
+                    downloadedFilter = anime.downloadedFilterRaw,
+                    bookmarkedFilter = anime.bookmarkedFilterRaw,
+                    fillermarkedFilter = anime.fillermarkedFilterRaw,
+                    sortingMode = anime.sorting,
+                    displayMode = anime.displayMode,
+                    sortingDirection = if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
+                    seasonGrouping = anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK,
+                )
+            }
             snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.episode_settings_updated))
         }
     }

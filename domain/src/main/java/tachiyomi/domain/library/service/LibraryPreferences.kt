@@ -236,9 +236,10 @@ class LibraryPreferences(
         // <-- AM (FILLERMARK)
         sortEpisodeBySourceOrNumber().set(anime.sorting)
         displayEpisodeByNameOrNumber().set(anime.displayMode)
-        // We don't set seasonGroupingMode here as it's global and should stay as is
-        // unless the user specifically wants to reset it too.
-        // For now we keep it consistent with how it was.
+        val seasonGroupRaw = anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK
+        if (seasonGroupRaw != Anime.EPISODE_SEASON_GROUP_DEFAULT) {
+            seasonGroupingMode().set(anime.seasonGroupingMode)
+        }
         sortEpisodeByAscendingOrDescending().set(
             if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
         )

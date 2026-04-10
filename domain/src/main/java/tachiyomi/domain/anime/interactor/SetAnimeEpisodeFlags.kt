@@ -110,7 +110,7 @@ class SetAnimeEpisodeFlags(
         sortingMode: Long,
         sortingDirection: Long,
         displayMode: Long,
-        seasonGrouping: Boolean,
+        seasonGrouping: Long,
     ): Boolean {
         return animeRepository.update(
             AnimeUpdate(
@@ -124,7 +124,34 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
-                    .setFlag(if (seasonGrouping) Anime.EPISODE_SEASON_GROUP_TABS else Anime.EPISODE_SEASON_GROUP_OFF, Anime.EPISODE_SEASON_GROUP_MASK),
+                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK),
+            ),
+        )
+    }
+
+    suspend fun awaitSetAllAnimeFlags(
+        unseenFilter: Long,
+        downloadedFilter: Long,
+        bookmarkedFilter: Long,
+        fillermarkedFilter: Long,
+        sortingMode: Long,
+        displayMode: Long,
+        sortingDirection: Long,
+        seasonGrouping: Long,
+    ) {
+        animeRepository.updateAllEpisodeFlags(
+            AnimeUpdate(
+                id = -1L,
+                episodeFlags = 0L.setFlag(unseenFilter, Anime.EPISODE_UNSEEN_MASK)
+                    .setFlag(downloadedFilter, Anime.EPISODE_DOWNLOADED_MASK)
+                    .setFlag(bookmarkedFilter, Anime.EPISODE_BOOKMARKED_MASK)
+                    // AM (FILLERMARK) -->
+                    .setFlag(fillermarkedFilter, Anime.EPISODE_FILLERMARKED_MASK)
+                    // <-- AM (FILLERMARK)
+                    .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
+                    .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
+                    .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
+                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK),
             ),
         )
     }
