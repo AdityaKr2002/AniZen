@@ -776,7 +776,35 @@ class AnimeScreenModel(
                         val results = tags.map { tag ->
                             async {
                                 try {
-                                    val searchResult = source.getSearchAnime(1, tag, source.getFilterList())
+                                    val filterList = source.getFilterList()
+                                    var query = tag
+                                    
+                                    // Pro-Level: Try to find and apply the actual Genre/Tag filter from the extension
+                                    val genreFilter = filterList.find { it.name.contains("Genre", true) || it.name.contains("Tag", true) }
+                                    if (genreFilter != null) {
+                                        when (genreFilter) {
+                                            is AnimeFilter.Select<*> -> {
+                                                val index = genreFilter.values.indexOfFirst { it.toString().contains(tag, true) }
+                                                if (index != -1) {
+                                                    genreFilter.state = index
+                                                    query = "" // Clear query to use filter search
+                                                }
+                                            }
+                                            is AnimeFilter.Group<*> -> {
+                                                val subFilter = genreFilter.state.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
+                                                if (subFilter is AnimeFilter.CheckBox) {
+                                                    subFilter.state = true
+                                                    query = "" // Clear query to use filter search
+                                                } else if (subFilter is AnimeFilter.TriState) {
+                                                    subFilter.state = AnimeFilter.TriState.STATE_INCLUDE
+                                                    query = "" // Clear query to use filter search
+                                                }
+                                            }
+                                            else -> {}
+                                        }
+                                    }
+
+                                    val searchResult = source.getSearchAnime(1, query, filterList)
                                     searchResult.animes
                                         .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                         .awaitAll()
