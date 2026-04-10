@@ -175,6 +175,7 @@ class Downloader(
                 }
 
                 download.status = Download.State.DOWNLOADING
+                notifyProgress(download)
                 
                 val job = launch {
                     try {
@@ -185,6 +186,7 @@ class Downloader(
                         } else {
                             logcat(LogPriority.ERROR, e)
                             download.status = Download.State.ERROR
+                            notifyProgress(download)
                             notifier.onError(e.message)
                         }
                     } finally {
@@ -327,6 +329,18 @@ class Downloader(
         if (_queueState.value.isEmpty()) stop()
     }
 
+    private fun notifyProgress(download: Download) {
+        _queueState.update { it }
+        notifier.onProgressChange(download)
+    }
+
+    private fun isNetworkConnected(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+        val network = connectivityManager?.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private suspend fun <T> retry(
         times: Int = 5,
         initialDelay: Long = 1000,
@@ -338,6 +352,12 @@ class Downloader(
         repeat(times - 1) { attempt ->
             try {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                
+                // Fast-Fail: Check internet before each retry
+                if (!isNetworkConnected()) {
+                    throw IOException("No internet connection")
+                }
+                
                 return block()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -356,7 +376,7 @@ class Downloader(
                 val backoff = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
                 delay(backoff + jitter)
                 currentDelay = backoff
-                logcat(LogPriority.WARN) { "Retry attempt ${attempt + 1} failed, backing off..." }
+                logcat(LogPriority.WARN) { "Retry attempt ${attempt + 1} failed for network reason, backing off..." }
             }
         }
         return block()
@@ -423,6 +443,7 @@ class Downloader(
             }
 
             download.status = Download.State.DOWNLOADING
+            notifyProgress(download)
             val video = retry {
                 download.video ?: run {
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
@@ -459,6 +480,7 @@ class Downloader(
             logcat(LogPriority.ERROR, e) { "Download failed" }
             if (e !is CancellationException) {
                 download.status = Download.State.ERROR
+                notifyProgress(download)
                 notifier.onError(e.message)
             }
         }
@@ -525,7 +547,7 @@ class Downloader(
     private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
         download.progress = 0
-        notifier.onProgressChange(download)
+        notifyProgress(download)
 
         val videoFilename = DiskUtil.buildValidFilename(download.episode.name)
         val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
@@ -600,6 +622,7 @@ class Downloader(
         sandboxFile.parentFile?.deleteRecursively()
 
         download.status = Download.State.DOWNLOADED
+        notifyProgress(download)
         
         // KMK -->
         _queueState.update { it - download }
@@ -607,7 +630,6 @@ class Downloader(
         notifier.dismissProgress(download)
         // KMK <--
 
-        notifier.onProgressChange(download)
         cache.addEpisode(filename, publicDir, download.anime)
     }
 
@@ -732,7 +754,7 @@ class Downloader(
 
             download.status = Download.State.MERGING
             download.progress = 0
-            notifier.onProgressChange(download)
+            notifyProgress(download)
 
             var mergedBytes = 0L
             var lastUpdate = System.currentTimeMillis()
@@ -924,7 +946,7 @@ class Downloader(
 
     download.status = if (secretKey != null) Download.State.DECRYPTING else Download.State.MERGING
     download.progress = 0
-    notifier.onProgressChange(download)
+    notifyProgress(download)
 
     val finalFile = File(sandboxDir, "$filename.ts")
     val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
