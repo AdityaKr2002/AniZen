@@ -138,7 +138,6 @@ import tachiyomi.i18n.MR
 import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.components.ListGroupHeader
-import tachiyomi.presentation.core.components.Scroller.STICKY_HEADER_KEY_PREFIX
 import tachiyomi.presentation.core.components.TwoPanelBox
 import tachiyomi.presentation.core.components.VerticalFastScroller
 import tachiyomi.presentation.core.components.material.ExtendedFloatingActionButton
@@ -538,7 +537,7 @@ private fun AnimeScreenSmallImpl(
                                 bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
-                            item(key = "${STICKY_HEADER_KEY_PREFIX}info-box", contentType = AnimeScreenItem.INFO_BOX) {
+                            item(key = "info-box", contentType = AnimeScreenItem.INFO_BOX) {
                                 AnimeInfoBox(
                                     isTabletUi = false,
                                     appBarPadding = topPadding,
@@ -552,7 +551,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
                             if (showSeasonsSection) {
-                                item(key = "${STICKY_HEADER_KEY_PREFIX}season-section", contentType = "season") {
+                                item(key = "season-section", contentType = "season") {
                                     val navigator = LocalNavigator.currentOrThrow
                                     AnimeSeasonSection(
                                         seasons = state.seasons,
@@ -561,7 +560,7 @@ private fun AnimeScreenSmallImpl(
                                     )
                                 }
                             }
-                            item(key = "${STICKY_HEADER_KEY_PREFIX}action-row", contentType = AnimeScreenItem.ACTION_ROW) {
+                            item(key = "action-row", contentType = AnimeScreenItem.ACTION_ROW) {
                                 val isWatching = remember(state.episodes) {
                                     state.episodes.fastAny { it.episode.seen }
                                 }
@@ -583,7 +582,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
 
-                            item(key = "${STICKY_HEADER_KEY_PREFIX}description-with-tag", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
+                            item(key = "description-with-tag", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
                                 ExpandableAnimeDescription(
                                     modifier = Modifier.padding(bottom = 8.dp),
                                     defaultExpandState = autoExpandDescription,
@@ -596,7 +595,7 @@ private fun AnimeScreenSmallImpl(
                             }
 
                             if (showSuggestions) {
-                                item(key = "${STICKY_HEADER_KEY_PREFIX}discovery-section-container", contentType = "discovery") {
+                                item(key = "discovery-section-container", contentType = "discovery") {
                                     val navigator = LocalNavigator.currentOrThrow
                                     Surface(
                                         modifier = Modifier
@@ -1049,7 +1048,7 @@ fun AnimeScreenLargeImpl(
                                     ),
                                 ) {
                                     if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
-                                        item(key = "${STICKY_HEADER_KEY_PREFIX}season-selector", contentType = "season-selector") {
+                                        item(key = "season-selector", contentType = "season-selector") {
                                             SeasonSelector(
                                                 seasons = state.availableSeasons,
                                                 selectedSeason = state.selectedSeason,
@@ -1058,7 +1057,7 @@ fun AnimeScreenLargeImpl(
                                         }
                                     }
                                     
-                                    item(key = "${STICKY_HEADER_KEY_PREFIX}episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                    item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
                                             episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
@@ -1067,7 +1066,7 @@ fun AnimeScreenLargeImpl(
                                         )
                                     }
                                     if (state.airingTime > 0L) {
-                                        item(key = "${STICKY_HEADER_KEY_PREFIX}airing-time", contentType = AnimeScreenItem.AIRING_TIME) {
+                                        item(key = "airing-time", contentType = AnimeScreenItem.AIRING_TIME) {
                                             var timer by remember { mutableLongStateOf(state.airingTime) }
                                             LaunchedEffect(key1 = timer) {
                                                 if (timer > 0L) {
@@ -1317,7 +1316,7 @@ private fun SuggestionItem(
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
     val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id, usePanoramaOverride = globalPanorama)
-    val width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp
+    val width = remember(entry) { if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp }
 
     Column(
         modifier = Modifier.width(width),
@@ -1340,7 +1339,7 @@ private fun SuggestionItem(
             }
 
             if (anime.score != null && anime.score!! > 0) {
-                val scoreText = String.format("%.1f", anime.score)
+                val scoreText = remember(anime.score) { String.format("%.1f", anime.score) }
                 tachiyomi.presentation.core.components.BadgeGroup(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
