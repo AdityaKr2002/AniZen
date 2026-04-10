@@ -162,8 +162,3 @@ class SetAnimeEpisodeFlags(
         return this and mask.inv() or (flag and mask)
     }
 }
-
-    private fun Long.setFlag(flag: Long, mask: Long): Long {
-        return this and mask.inv() or (flag and mask)
-    }
-}
