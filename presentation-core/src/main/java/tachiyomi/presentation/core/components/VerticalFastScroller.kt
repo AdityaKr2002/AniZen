@@ -106,20 +106,16 @@ fun VerticalFastScroller(
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
                 val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
-                val scrollItemRounded = scrollItem.roundToInt()
-                val scrollItemSize = layoutInfo.visibleItemsInfo.find { it.index == scrollItemRounded }?.size ?: 0
-                val scrollItemOffset = scrollItemSize * (scrollItem - scrollItemRounded)
-                listState.scrollToItem(index = scrollItemRounded, scrollOffset = scrollItemOffset.roundToInt())
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
+                listState.scrollToItem(index = scrollItem.roundToInt(), scrollOffset = 0)
                 scrolled.tryEmit(Unit)
             }
 
             // When list scrolled
             LaunchedEffect(listState.firstVisibleItemScrollOffset, listState.firstVisibleItemIndex) {
-                if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = listState)
-                val scrollRange = computeScrollRange(state = listState)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                if (listState.layoutInfo.totalItemsCount <= 1 || isThumbDragged) return@LaunchedEffect
+                
+                val proportion = listState.firstVisibleItemIndex.toFloat() / (listState.layoutInfo.totalItemsCount - 1)
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
@@ -278,35 +274,16 @@ fun VerticalGridFastScroller(
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
                 val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
-                // I can't think of anything else rn but this'll do
-                val scrollItemWhole = scrollItem.toInt()
-                val columnNum = ((scrollItemWhole + 1) % columnCount).takeIf { it != 0 } ?: columnCount
-                val scrollItemFraction = if (scrollItemWhole == 0) scrollItem else scrollItem % scrollItemWhole
-                val offsetPerItem = 1f / columnCount
-                val offsetRatio = (offsetPerItem * scrollItemFraction) + (offsetPerItem * (columnNum - 1))
-
-                // TODO: Sometimes item height is not available when scrolling up
-                val scrollItemSize = (1..columnCount).maxOf { num ->
-                    val actualIndex = if (num != columnNum) {
-                        scrollItemWhole + num - columnCount
-                    } else {
-                        scrollItemWhole
-                    }
-                    layoutInfo.visibleItemsInfo.find { it.index == actualIndex }?.size?.height ?: 0
-                }
-                val scrollItemOffset = scrollItemSize * offsetRatio
-
-                state.scrollToItem(index = scrollItemWhole, scrollOffset = scrollItemOffset.roundToInt())
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
+                state.scrollToItem(index = scrollItem.roundToInt(), scrollOffset = 0)
                 scrolled.tryEmit(Unit)
             }
 
             // When list scrolled
             LaunchedEffect(state.firstVisibleItemScrollOffset, state.firstVisibleItemIndex) {
-                if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = state)
-                val scrollRange = computeScrollRange(state = state)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                if (state.layoutInfo.totalItemsCount <= 1 || isThumbDragged) return@LaunchedEffect
+                
+                val proportion = state.firstVisibleItemIndex.toFloat() / (state.layoutInfo.totalItemsCount - 1)
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,

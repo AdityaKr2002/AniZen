@@ -149,10 +149,16 @@ fun AnimeInfoBox(
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.05f)),
     ) {
         // Backdrop
-        val backdropGradientColors = listOf(
-            Color.Transparent,
-            MaterialTheme.colorScheme.background,
-        )
+        val backgroundColor = MaterialTheme.colorScheme.background
+        val backdropGradientColors = remember(backgroundColor) {
+            listOf(
+                Color.Transparent,
+                backgroundColor,
+            )
+        }
+        val backdropBrush = remember(backdropGradientColors) {
+            Brush.verticalGradient(colors = backdropGradientColors)
+        }
         val context = LocalContext.current
         val backdropImageRequest = remember(anime) {
             ImageRequest.Builder(context)
@@ -166,11 +172,10 @@ fun AnimeInfoBox(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .matchParentSize()
+                .clipToBounds()
                 .drawWithContent {
                     drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(colors = backdropGradientColors),
-                    )
+                    drawRect(brush = backdropBrush)
                 }
                 .blur(4.dp)
                 .graphicsLayer {
@@ -227,7 +232,7 @@ fun AnimeActionRow(
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
-    val uiPreferences: eu.kanade.domain.ui.UiPreferences = Injekt.get()
+    val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val topPadding by uiPreferences.animeItemSpacing().collectAsState()
 
     Column(
