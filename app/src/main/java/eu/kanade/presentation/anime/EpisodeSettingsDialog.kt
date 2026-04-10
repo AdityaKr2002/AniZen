@@ -192,11 +192,20 @@ private fun ColumnScope.DisplayPage(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
         )
 
-        LabeledCheckbox(
-            label = "Group by season",
-            checked = anime.groupEpisodesBySeason,
-            onCheckedChange = { onItemSelected(Anime.EPISODE_SHOW_SEASON_GROUP) },
-        )
+        listOf(
+            "Default" to Anime.EPISODE_SEASON_GROUP_DEFAULT,
+            "Linear" to Anime.EPISODE_SEASON_GROUP_OFF,
+            "Grouped with headers" to Anime.EPISODE_SEASON_GROUP_ON,
+            "Grouped with tabs" to Anime.EPISODE_SEASON_GROUP_TABS,
+        ).map { (label, flag) ->
+            RadioItem(
+                label = label,
+                selected = (anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK) == flag,
+                onClick = {
+                    onItemSelected(flag or 0x10000000L) // Use a high bit to indicate season grouping change
+                },
+            )
+        }
     }
 }
 

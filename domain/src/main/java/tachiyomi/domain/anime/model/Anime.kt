@@ -88,7 +88,18 @@ data class Anime(
         get() = episodeFlags and EPISODE_DISPLAY_MASK
 
     val groupEpisodesBySeason: Boolean
-        get() = episodeFlags and EPISODE_SHOW_SEASON_GROUP == EPISODE_SHOW_SEASON_GROUP
+        get() = seasonGroupingMode != LibraryPreferences.SeasonGrouping.Disabled
+
+    val seasonGroupingMode: LibraryPreferences.SeasonGrouping
+        get() {
+            val libraryPreferences: LibraryPreferences by injectLazy()
+            return when (episodeFlags and EPISODE_SEASON_GROUP_MASK) {
+                EPISODE_SEASON_GROUP_ON -> LibraryPreferences.SeasonGrouping.Headers
+                EPISODE_SEASON_GROUP_TABS -> LibraryPreferences.SeasonGrouping.Tabs
+                EPISODE_SEASON_GROUP_OFF -> LibraryPreferences.SeasonGrouping.Disabled
+                else -> libraryPreferences.seasonGroupingMode().get()
+            }
+        }
 
     val unseenFilterRaw: Long
         get() = episodeFlags and EPISODE_UNSEEN_MASK
@@ -184,7 +195,14 @@ data class Anime(
         const val EPISODE_DISPLAY_NUMBER = 0x00100000L
         const val EPISODE_DISPLAY_MASK = 0x00100000L
 
-        const val EPISODE_SHOW_SEASON_GROUP = 0x00400000L
+        const val EPISODE_SEASON_GROUP_DEFAULT = 0x00000000L
+        const val EPISODE_SEASON_GROUP_ON = 0x00400000L
+        const val EPISODE_SEASON_GROUP_OFF = 0x00800000L
+        const val EPISODE_SEASON_GROUP_TABS = 0x00C00000L
+        const val EPISODE_SEASON_GROUP_MASK = 0x00C00000L
+
+        @Deprecated("Use EPISODE_SEASON_GROUP_ON")
+        const val EPISODE_SHOW_SEASON_GROUP = EPISODE_SEASON_GROUP_ON
 
         const val ANIME_INTRO_MASK = 0x0000000000000FFL
         const val ANIME_AIRING_EPISODE_MASK = 0x000000000FFFF00L
@@ -208,7 +226,7 @@ data class Anime(
             fetchInterval = 0,
             dateAdded = 0L,
             viewerFlags = 0L,
-            episodeFlags = EPISODE_SHOW_SEASON_GROUP,
+            episodeFlags = 0L,
             coverLastModified = 0L,
             // SY -->
             ogArtist = null,

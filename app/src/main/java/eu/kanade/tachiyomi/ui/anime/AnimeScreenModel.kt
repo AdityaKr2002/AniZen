@@ -260,8 +260,9 @@ class AnimeScreenModel(
         val availableSeasonsList = mutableListOf<String>()
         val episodeToSeason = mutableMapOf<Long, String>()
         
+        val groupingMode = anime.seasonGroupingMode
         // Handle Seasons
-        if (anime.groupEpisodesBySeason) {
+        if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
             // Step 1: Detect if source provides episodes in descending order (newest first)
             val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
             
@@ -384,7 +385,9 @@ class AnimeScreenModel(
                 // 1. Season Header (Must be BEFORE the item)
                 val seasonName = episodeToSeason[item.episode.id]
                 if (seasonName != null && seasonName != lastSeasonHeader) {
-                    episodeListItems.add(EpisodeList.Season(seasonName))
+                    if (groupingMode == LibraryPreferences.SeasonGrouping.Headers) {
+                        episodeListItems.add(EpisodeList.Season(seasonName))
+                    }
                     if (!availableSeasonsList.contains(seasonName)) {
                         availableSeasonsList.add(seasonName)
                     }
@@ -441,9 +444,9 @@ class AnimeScreenModel(
             }
         }
 
-        // Default to first season if none selected and grouping is on
+        // Default to first season if none selected and grouping is in Tabs mode
         val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-        val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+        val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             sortedSeasons.firstOrNull()
         } else {
             selectedSeason
@@ -1125,7 +1128,7 @@ class AnimeScreenModel(
         val successState = successState ?: return null
         return successState.episodes.getNextUnseen(
             anime = successState.anime,
-            seasonName = successState.selectedSeason.takeIf { successState.anime.groupEpisodesBySeason },
+            seasonName = successState.selectedSeason.takeIf { successState.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs },
             episodeToSeason = successState.episodeToSeason,
         )
     }
@@ -1319,9 +1322,10 @@ class AnimeScreenModel(
 
     fun setDisplayMode(mode: Long) {
         val anime = successState?.anime ?: return
-        if (mode == Anime.EPISODE_SHOW_SEASON_GROUP) {
+        if (mode and 0x10000000L != 0L) {
+            val flag = mode and 0x10000000L.inv()
             screenModelScope.launchNonCancellable {
-                setAnimeEpisodeFlags.awaitSetSeasonGrouping(anime, !anime.groupEpisodesBySeason)
+                setAnimeEpisodeFlags.awaitSetSeasonGroupingRaw(anime, flag)
             }
             return
         }
@@ -1623,8 +1627,9 @@ class AnimeScreenModel(
                     val availableSeasonsList = mutableListOf<String>()
                     val episodeToSeason = mutableMapOf<Long, String>()
                     
+                    val groupingMode = anime.seasonGroupingMode
                     // Handle Seasons
-                    if (anime.groupEpisodesBySeason) {
+                    if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                         // Step 1: Detect if source provides episodes in descending order (newest first)
                         val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
                         
@@ -1746,7 +1751,9 @@ class AnimeScreenModel(
                             // 1. Season Header (Must be BEFORE the item)
                             val seasonName = episodeToSeason[item.episode.id]
                             if (seasonName != null && seasonName != lastSeasonHeader) {
-                                episodeListItems.add(EpisodeList.Season(seasonName))
+                                if (groupingMode == LibraryPreferences.SeasonGrouping.Headers) {
+                                    episodeListItems.add(EpisodeList.Season(seasonName))
+                                }
                                 if (!availableSeasonsList.contains(seasonName)) {
                                     availableSeasonsList.add(seasonName)
                                 }
@@ -1803,9 +1810,9 @@ class AnimeScreenModel(
                         }
                     }
 
-                    // Default to first season if none selected and grouping is on
+                    // Default to first season if none selected and grouping is in Tabs mode
                     val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-                    val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+                    val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
                         sortedSeasons.firstOrNull()
                     } else {
                         selectedSeason

@@ -211,6 +211,12 @@ class LibraryPreferences(
         Anime.EPISODE_DISPLAY_NAME,
     )
 
+    fun seasonGroupingMode() = preferenceStore.getEnum(
+        "default_chapter_group_by_season_v2",
+        SeasonGrouping.Tabs,
+    )
+
+    @Deprecated("Use seasonGroupingMode")
     fun groupEpisodeBySeason() = preferenceStore.getBoolean(
         "default_chapter_group_by_season",
         true,
@@ -230,7 +236,9 @@ class LibraryPreferences(
         // <-- AM (FILLERMARK)
         sortEpisodeBySourceOrNumber().set(anime.sorting)
         displayEpisodeByNameOrNumber().set(anime.displayMode)
-        groupEpisodeBySeason().set(anime.groupEpisodesBySeason)
+        // We don't set seasonGroupingMode here as it's global and should stay as is
+        // unless the user specifically wants to reset it too.
+        // For now we keep it consistent with how it was.
         sortEpisodeByAscendingOrDescending().set(
             if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
         )
@@ -262,6 +270,12 @@ class LibraryPreferences(
 
         Download,
         Disabled,
+    }
+
+    enum class SeasonGrouping {
+        Disabled,
+        Headers,
+        Tabs,
     }
 
     // SY -->

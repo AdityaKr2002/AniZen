@@ -56,11 +56,15 @@ class SetAnimeEpisodeFlags(
     }
 
     suspend fun awaitSetSeasonGrouping(manga: Anime, enabled: Boolean): Boolean {
-        val flag = if (enabled) Anime.EPISODE_SHOW_SEASON_GROUP else 0L
+        val flag = if (enabled) Anime.EPISODE_SEASON_GROUP_ON else Anime.EPISODE_SEASON_GROUP_OFF
+        return awaitSetSeasonGroupingRaw(manga, flag)
+    }
+
+    suspend fun awaitSetSeasonGroupingRaw(manga: Anime, flag: Long): Boolean {
         return animeRepository.update(
             AnimeUpdate(
                 id = manga.id,
-                episodeFlags = manga.episodeFlags.setFlag(flag, Anime.EPISODE_SHOW_SEASON_GROUP),
+                episodeFlags = manga.episodeFlags.setFlag(flag, Anime.EPISODE_SEASON_GROUP_MASK),
             ),
         )
     }
@@ -115,7 +119,7 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
-                    .setFlag(if (seasonGrouping) Anime.EPISODE_SHOW_SEASON_GROUP else 0L, Anime.EPISODE_SHOW_SEASON_GROUP),
+                    .setFlag(if (seasonGrouping) Anime.EPISODE_SEASON_GROUP_ON else Anime.EPISODE_SEASON_GROUP_OFF, Anime.EPISODE_SEASON_GROUP_MASK),
             ),
         )
     }

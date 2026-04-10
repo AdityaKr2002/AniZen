@@ -370,8 +370,8 @@ private fun AnimeScreenSmallImpl(
 ) {
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
-        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false
@@ -645,7 +645,7 @@ private fun AnimeScreenSmallImpl(
                             }
 
                             
-                            if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                            if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
                                 item(key = "season-selector", contentType = "season-selector") {
                                     SeasonSelector(
                                         seasons = state.availableSeasons,
@@ -658,7 +658,7 @@ private fun AnimeScreenSmallImpl(
                             item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                 EpisodeHeader(
                                     enabled = !isAnySelected,
-                                    episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
+                                    episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
                                     missingEpisodeCount = state.missingEpisodeCount,
                                     onClick = onFilterClicked,
                                 )
@@ -758,8 +758,8 @@ fun AnimeScreenLargeImpl(
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
-        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false
@@ -1047,7 +1047,7 @@ fun AnimeScreenLargeImpl(
                                         bottom = contentPadding.calculateBottomPadding(),
                                     ),
                                 ) {
-                                    if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                                    if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
                                         item(key = "season-selector", contentType = "season-selector") {
                                             SeasonSelector(
                                                 seasons = state.availableSeasons,
@@ -1060,7 +1060,7 @@ fun AnimeScreenLargeImpl(
                                     item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
-                                            episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
+                                            episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
                                             missingEpisodeCount = state.missingEpisodeCount,
                                             onClick = onFilterButtonClicked,
                                         )

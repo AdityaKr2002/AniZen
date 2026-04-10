@@ -267,6 +267,15 @@ object SettingsLibraryScreen : SearchableSettings {
                     title = stringResource(MR.strings.pref_sync_manga_on_add),
                     subtitle = stringResource(MR.strings.pref_sync_manga_on_add_description),
                 ),
+                Preference.PreferenceItem.ListPreference(
+                    pref = libraryPreferences.seasonGroupingMode(),
+                    title = "Season grouping",
+                    entries = persistentMapOf(
+                        LibraryPreferences.SeasonGrouping.Disabled to "Disabled",
+                        LibraryPreferences.SeasonGrouping.Headers to "Grouped with headers",
+                        LibraryPreferences.SeasonGrouping.Tabs to "Grouped with tabs",
+                    ),
+                ),
             ),
         )
     }
