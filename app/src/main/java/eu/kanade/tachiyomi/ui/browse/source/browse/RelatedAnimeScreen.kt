@@ -105,6 +105,8 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
                     onUnselectAll = screenModel::clearSelection,
                     onSelectAll = screenModel::selectAll,
                     onInvertSelection = screenModel::invertSelection,
+                    searchEnabled = false,
+                    showMore = false,
                 )
             },
             bottomBar = {

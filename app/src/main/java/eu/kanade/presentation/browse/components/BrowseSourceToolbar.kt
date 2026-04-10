@@ -49,6 +49,8 @@ fun BrowseSourceToolbar(
     onInvertSelection: () -> Unit = {},
     selectedCount: Int = 0,
     subtitle: String? = null,
+    searchEnabled: Boolean = true,
+    showMore: Boolean = true,
 ) {
     // Avoid capturing unstable source in actions lambda
     val title = source?.name
@@ -72,6 +74,7 @@ fun BrowseSourceToolbar(
         onChangeSearchQuery = onSearchQueryChange,
         onSearch = onSearch,
         onClickCloseSearch = navigateUp,
+        searchEnabled = searchEnabled,
         actions = {
             if (selectedCount > 0) {
                 AppBarActions(
@@ -103,28 +106,30 @@ fun BrowseSourceToolbar(
                                     onClick = { selectingDisplayMode = true },
                                 ),
                             )
-                            if (isLocalSource) {
-                                add(
-                                    AppBar.OverflowAction(
-                                        title = stringResource(MR.strings.label_help),
-                                        onClick = onHelpClick,
-                                    ),
-                                )
-                            } else {
-                                add(
-                                    AppBar.OverflowAction(
-                                        title = stringResource(MR.strings.action_open_in_web_view),
-                                        onClick = onWebViewClick,
-                                    ),
-                                )
-                            }
-                            if (isConfigurableSource) {
-                                add(
-                                    AppBar.OverflowAction(
-                                        title = stringResource(MR.strings.action_settings),
-                                        onClick = onSettingsClick,
-                                    ),
-                                )
+                            if (showMore) {
+                                if (isLocalSource) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.label_help),
+                                            onClick = onHelpClick,
+                                        ),
+                                    )
+                                } else {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_open_in_web_view),
+                                            onClick = onWebViewClick,
+                                        ),
+                                    )
+                                }
+                                if (isConfigurableSource) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(MR.strings.action_settings),
+                                            onClick = onSettingsClick,
+                                        ),
+                                    )
+                                }
                             }
                         }
                         .build(),
