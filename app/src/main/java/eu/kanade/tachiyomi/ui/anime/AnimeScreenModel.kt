@@ -385,9 +385,7 @@ class AnimeScreenModel(
                 // 1. Season Header (Must be BEFORE the item)
                 val seasonName = episodeToSeason[item.episode.id]
                 if (seasonName != null && seasonName != lastSeasonHeader) {
-                    if (groupingMode == LibraryPreferences.SeasonGrouping.Headers) {
-                        episodeListItems.add(EpisodeList.Season(seasonName))
-                    }
+                    episodeListItems.add(EpisodeList.Season(seasonName))
                     if (!availableSeasonsList.contains(seasonName)) {
                         availableSeasonsList.add(seasonName)
                     }
@@ -1751,9 +1749,7 @@ class AnimeScreenModel(
                             // 1. Season Header (Must be BEFORE the item)
                             val seasonName = episodeToSeason[item.episode.id]
                             if (seasonName != null && seasonName != lastSeasonHeader) {
-                                if (groupingMode == LibraryPreferences.SeasonGrouping.Headers) {
-                                    episodeListItems.add(EpisodeList.Season(seasonName))
-                                }
+                                episodeListItems.add(EpisodeList.Season(seasonName))
                                 if (!availableSeasonsList.contains(seasonName)) {
                                     availableSeasonsList.add(seasonName)
                                 }
