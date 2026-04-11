@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.CallToAction
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Explore
@@ -100,7 +101,7 @@ object SettingsMainScreen : Screen() {
                     ),
                     Item(
                         titleRes = MR.strings.pref_bottom_nav_settings,
-                        icon = Icons.Outlined.Explore,
+                        icon = Icons.Outlined.CallToAction,
                         screen = NavigationSettingsScreen(null),
                     ),
                 ),
