@@ -82,11 +82,18 @@ class NavigationGalleryScreen : Screen() {
                         PreferenceGroupHeader(title = "Personalized for You")
                     }
                     
-                    val strategies = listOf(
-                        BrainStrategy.CLASSIC to ("Daily Driver" to "Your overall habits and most used tabs over time."),
-                        BrainStrategy.TRENDING to ("Trending Now" to "What you've been focused on in the last 24 hours."),
-                        BrainStrategy.FOCUS to ("Laser Focus" to "The absolute most essential tab for your current usage.")
-                    )
+                    val strategies = remember(context) {
+                        buildList {
+                            add(BrainStrategy.CLASSIC to ("Daily Driver" to "Your overall habits and most used tabs over time."))
+                            
+                            // Only show Trending if there is recent activity to avoid redundancy
+                            if (NavLearningBrain.hasTrendingData()) {
+                                add(BrainStrategy.TRENDING to ("Trending Now" to "What you've been focused on in the last 24 hours."))
+                            }
+                            
+                            add(BrainStrategy.FOCUS to ("Laser Focus" to "The absolute most essential tab for your current usage."))
+                        }
+                    }
 
                     items(strategies) { (strategy, details) ->
                         val (name, desc) = details

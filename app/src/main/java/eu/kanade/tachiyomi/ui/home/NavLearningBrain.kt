@@ -84,4 +84,10 @@ object NavLearningBrain {
     fun hasEnoughData(context: Context): Boolean {
         return NavActionExecutor.getHistory().size >= 10
     }
+
+    fun hasTrendingData(): Boolean {
+        val now = System.currentTimeMillis()
+        val dayMs = 24 * 60 * 60 * 1000L
+        return NavActionExecutor.getHistory().any { (now - it.timestamp) <= dayMs }
+    }
 }
