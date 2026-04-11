@@ -89,6 +89,7 @@ import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
+import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.Tab
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.R
