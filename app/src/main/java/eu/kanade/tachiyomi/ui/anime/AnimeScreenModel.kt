@@ -614,16 +614,18 @@ class AnimeScreenModel(
         val now = System.currentTimeMillis()
         val cached = suggestionsCache.get(anime.id)
         if (cached != null && (now - cached.timestamp) < CACHE_TTL) {
-            updateSuccessState { it.copySuccess(suggestionSections = cached.sections) }
+            updateSuccessState { it.copySuccess(suggestionSections = cached.sections, isSuggestionsLoading = false) }
             return
         }
+        updateSuccessState { it.copySuccess(isSuggestionsLoading = true) }
 
         screenModelScope.launchIO {
-            // Update affinity vector in background if needed
-            calculateUserAffinity.await()
-            
-            val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
-            val library = getLibraryAnime.await()
+            try {
+                // Update affinity vector in background if needed
+                calculateUserAffinity.await()
+                
+                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@try
+                val library = getLibraryAnime.await()
             
             val affinityMap = try {
                 val json = Json.parseToJsonElement(libraryPreferences.userAffinityMap().get()).jsonObject
@@ -828,6 +830,7 @@ class AnimeScreenModel(
                     } ?: updateSection(SuggestionSection.Type.Tag, emptyList())
                 }
             }
+        } finally {
             updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
         }
         }
