@@ -65,16 +65,26 @@ class NavigationGalleryScreen : Screen() {
                 if (NavLearningBrain.hasEnoughData(context)) {
                     item {
                         PreferenceGroupHeader(title = "Personalized for You")
+                    }
+                    
+                    val strategies = listOf(
+                        Triple(NavLearningBrain.BrainStrategy.CLASSIC, "Daily Driver", "Your overall habits and most used tabs over time."),
+                        Triple(NavLearningBrain.BrainStrategy.TRENDING, "Trending Now", "What you've been focused on in the last 24 hours."),
+                        Triple(NavLearningBrain.BrainStrategy.FOCUS, "Laser Focus", "The absolute most essential tab for your current usage.")
+                    )
+
+                    items(strategies) { (strategy, name, desc) ->
+                        val config = NavLearningBrain.recommendLayout(context, strategy)
                         LayoutPackCard(
                             pack = NavLayoutPack(
-                                id = "recommended",
-                                name = "The Brain Choice",
-                                description = "Automatically generated based on your recent activity and tab interactions.",
-                                config = NavLearningBrain.recommendLayout(context),
+                                id = "recommended_${strategy.name.lowercase()}",
+                                name = name,
+                                description = desc,
+                                config = config,
                                 author = "AniZen AI"
                             ),
                             onApply = {
-                                uiPreferences.updateNavConfig(NavLearningBrain.recommendLayout(context))
+                                uiPreferences.updateNavConfig(config)
                                 backPress?.invoke()
                             }
                         )
