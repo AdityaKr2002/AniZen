@@ -33,6 +33,7 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
+import eu.kanade.tachiyomi.ui.home.BrainStrategy
 import eu.kanade.tachiyomi.ui.home.NavLearningBrain
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.util.plus
@@ -68,12 +69,13 @@ class NavigationGalleryScreen : Screen() {
                     }
                     
                     val strategies = listOf(
-                        Triple(NavLearningBrain.BrainStrategy.CLASSIC, "Daily Driver", "Your overall habits and most used tabs over time."),
-                        Triple(NavLearningBrain.BrainStrategy.TRENDING, "Trending Now", "What you've been focused on in the last 24 hours."),
-                        Triple(NavLearningBrain.BrainStrategy.FOCUS, "Laser Focus", "The absolute most essential tab for your current usage.")
+                        BrainStrategy.CLASSIC to ("Daily Driver" to "Your overall habits and most used tabs over time."),
+                        BrainStrategy.TRENDING to ("Trending Now" to "What you've been focused on in the last 24 hours."),
+                        BrainStrategy.FOCUS to ("Laser Focus" to "The absolute most essential tab for your current usage.")
                     )
 
-                    items(strategies) { (strategy, name, desc) ->
+                    items(strategies) { (strategy, details) ->
+                        val (name, desc) = details
                         val config = NavLearningBrain.recommendLayout(context, strategy)
                         LayoutPackCard(
                             pack = NavLayoutPack(

@@ -60,7 +60,7 @@ class NavActionExecutor(
 
         scope.launch {
             try {
-                val currentHistory = getHistory(context).toMutableList()
+                val currentHistory = getHistory().toMutableList()
                 currentHistory.add(0, trace)
                 if (currentHistory.size > MAX_HISTORY) currentHistory.removeAt(currentHistory.size - 1)
                 
