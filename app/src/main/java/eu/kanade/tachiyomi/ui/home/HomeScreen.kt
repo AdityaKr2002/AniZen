@@ -346,11 +346,7 @@ object HomeScreen : Screen() {
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
-        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-            adaptiveDecision.reason
-        } else {
-            stringResource(navItem.titleRes)
-        }
+        val title = stringResource(navItem.titleRes)
 
         with(rowScope) {
             NavigationBarItem(
@@ -420,11 +416,7 @@ object HomeScreen : Screen() {
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
 
-        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-            adaptiveDecision.reason
-        } else {
-            stringResource(navItem.titleRes)
-        }
+        val title = stringResource(navItem.titleRes)
 
         NavigationRailItem(
             selected = selected,
@@ -539,15 +531,8 @@ object HomeScreen : Screen() {
                     }
                 }
             },
-        ) {
             val iconPainter = when {
                 navItem.iconVector != null -> null
-                navItem == NavItem.ADAPTIVE && adaptiveDecision != null -> {
-                    rememberAnimatedVectorPainter(
-                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter), // Placeholder
-                        selected
-                    )
-                }
                 LibraryTab::class.isInstance(tab) -> {
                     rememberAnimatedVectorPainter(
                         AnimatedImageVector.animatedVectorResource(R.drawable.anim_library_enter),

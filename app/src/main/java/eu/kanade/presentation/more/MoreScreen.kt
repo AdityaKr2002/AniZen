@@ -204,7 +204,7 @@ fun MoreScreen(
                     MoreItem(
                         title = "Extension Health",
                         subtitle = "Real-time telemetry and source status",
-                        icon = Icons.Outlined.DynamicForm,
+                        icon = Icons.Outlined.QueryStats,
                         onClick = { navigator.push(InfrastructureScreen) }
                     )
 
