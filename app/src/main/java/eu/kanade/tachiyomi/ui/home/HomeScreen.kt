@@ -88,7 +88,8 @@ import eu.kanade.domain.ui.model.NavBehavior
 import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.domain.ui.model.NavAction
-import eu.kanade.presentation.util.Screen
+import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
+import eu.kanade.presentation.util.Tab
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
@@ -355,6 +356,10 @@ object HomeScreen : Screen() {
             NavigationBarItem(
                 selected = selected,
                 onClick = {
+                    if (navItem == NavItem.ADAPTIVE) {
+                        navigator.push(NavigationSettingsScreen(null))
+                        return@NavigationBarItem
+                    }
                     if (!selected) {
                         executor.logClick(navItem.id)
                         tabNavigator.current = tab
@@ -376,7 +381,12 @@ object HomeScreen : Screen() {
                         }
                     },
                     onClick = {
+                        if (navItem == NavItem.ADAPTIVE) {
+                            navigator.push(NavigationSettingsScreen(null))
+                            return@combinedClickable
+                        }
                         if (!selected) {
+                            executor.logClick(navItem.id)
                             tabNavigator.current = tab
                         } else {
                             scope.launch { tab.onReselect(navigator) }
@@ -427,6 +437,10 @@ object HomeScreen : Screen() {
         NavigationRailItem(
             selected = selected,
             onClick = {
+                if (navItem == NavItem.ADAPTIVE) {
+                    navigator.push(NavigationSettingsScreen(null))
+                    return@NavigationRailItem
+                }
                 if (!selected) {
                     tabNavigator.current = tab
                 } else {
@@ -447,6 +461,10 @@ object HomeScreen : Screen() {
                     }
                 },
                 onClick = {
+                    if (navItem == NavItem.ADAPTIVE) {
+                        navigator.push(NavigationSettingsScreen(null))
+                        return@combinedClickable
+                    }
                     if (!selected) {
                         executor.logClick(navItem.id)
                         tabNavigator.current = tab

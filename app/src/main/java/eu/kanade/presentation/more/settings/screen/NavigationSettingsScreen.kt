@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -501,14 +502,22 @@ class NavigationSettingsScreen(
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Safely get icon without potentially triggering TabNavigator crash
-                val iconPainter = rememberTabIcon(item)
-                Icon(
-                    painter = iconPainter,
-                    contentDescription = null,
-                    modifier = Modifier.padding(start = 8.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                if (item.iconVector != null) {
+                    Icon(
+                        imageVector = item.iconVector!!,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = 8.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    val iconPainter = rememberTabIcon(item)
+                    Icon(
+                        painter = iconPainter,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = 8.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
                     text = stringResource(item.titleRes),
                     modifier = Modifier
