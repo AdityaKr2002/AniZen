@@ -99,11 +99,6 @@ object SettingsMainScreen : Screen() {
                         icon = Icons.Outlined.CollectionsBookmark,
                         screen = SettingsLibraryScreen,
                     ),
-                    Item(
-                        titleRes = MR.strings.pref_bottom_nav_settings,
-                        icon = Icons.Outlined.CallToAction,
-                        screen = NavigationSettingsScreen(null),
-                    ),
                 ),
                 "Core Features" to listOf(
                     Item(

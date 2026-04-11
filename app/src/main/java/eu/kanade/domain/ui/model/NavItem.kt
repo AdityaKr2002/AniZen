@@ -247,7 +247,7 @@ enum class NavItem(
     HISTORY("history", MR.strings.history, HistoryTab, R.drawable.anim_history_enter, R.drawable.ic_progress_clock_24dp),
     BROWSE("browse", MR.strings.browse, BrowseTab, R.drawable.anim_browse_enter, R.drawable.ic_browse_filled_24dp),
     MORE("more", MR.strings.label_more, MoreTab, R.drawable.anim_more_enter, R.drawable.ic_overflow_24dp),
-    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab, R.drawable.anim_more_enter, R.drawable.ic_overflow_24dp);
+    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab, R.drawable.anim_browse_enter, R.drawable.ic_browse_filled_24dp);
 
     companion object {
         fun fromId(id: String): NavItem? = entries.find { it.id == id }
