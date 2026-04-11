@@ -130,7 +130,7 @@ class NavigationGalleryScreen : Screen() {
                             if (item != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     val icon = if (item == NavItem.FEED) {
-                                        painterResource(item.iconRes)
+                                        painterResource(item.staticIconRes)
                                     } else {
                                         rememberAnimatedVectorPainter(
                                             AnimatedImageVector.animatedVectorResource(item.iconRes),
