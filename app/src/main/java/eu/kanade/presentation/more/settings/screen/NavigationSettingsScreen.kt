@@ -83,7 +83,9 @@ import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class NavigationSettingsScreen : Screen() {
+class NavigationSettingsScreen(
+    private val initialLayoutData: String? = null,
+) : Screen() {
 
     @Composable
     override fun Content() {
@@ -100,8 +102,8 @@ class NavigationSettingsScreen : Screen() {
         val haptic = LocalHapticFeedback.current
         val context = LocalContext.current
         
-        var showImportDialog by remember { mutableStateOf(false) }
-        var importInput by remember { mutableStateOf("") }
+        var showImportDialog by remember { mutableStateOf(initialLayoutData != null) }
+        var importInput by remember { mutableStateOf(initialLayoutData ?: "") }
 
         if (showImportDialog) {
             AlertDialog(

@@ -95,6 +95,18 @@
                 <data android:host="add-repo" />
             </intent-filter>
 
+            <!-- Deep link to import navigation layout -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="anizen" />
+                <data android:host="nav" />
+                <data android:path="/import" />
+            </intent-filter>
+
             <!-- Open backup files -->
             <intent-filter android:label="@string/pref_restore_backup">
                 <action android:name="android.intent.action.VIEW" />
