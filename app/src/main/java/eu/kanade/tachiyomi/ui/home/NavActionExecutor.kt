@@ -87,6 +87,15 @@ class NavActionExecutor(
         }
     }
 
+    fun logClick(tabId: String) {
+        if (!uiPreferences.adaptiveTelemetryEnabled().get()) return
+        logTrace(ActionTrace(
+            actionName = "TabClick",
+            tabId = tabId,
+            result = "Success"
+        ))
+    }
+
     fun execute(action: NavAction, tabId: String? = null) {
         if (action is NavAction.Default) return
         

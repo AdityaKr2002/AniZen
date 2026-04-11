@@ -355,6 +355,7 @@ object HomeScreen : Screen() {
                 selected = selected,
                 onClick = {
                     if (!selected) {
+                        navItem?.let { executor.logClick(it.id) }
                         tabNavigator.current = tab
                     } else {
                         scope.launch { tab.onReselect(navigator) }
@@ -446,6 +447,7 @@ object HomeScreen : Screen() {
                 },
                 onClick = {
                     if (!selected) {
+                        navItem?.let { executor.logClick(it.id) }
                         tabNavigator.current = tab
                     } else {
                         scope.launch { tab.onReselect(navigator) }
