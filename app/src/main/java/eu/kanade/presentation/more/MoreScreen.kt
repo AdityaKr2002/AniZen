@@ -223,7 +223,7 @@ fun MoreScreen(
                     hiddenTabs.forEach { navItem ->
                         MoreItem(
                             title = stringResource(navItem.titleRes),
-                            iconPainter = navItem.tab.options.icon,
+                            iconPainter = painterResource(navItem.iconRes),
                             onClick = {
                                 scope.launch {
                                     val homeTab = when (navItem) {
