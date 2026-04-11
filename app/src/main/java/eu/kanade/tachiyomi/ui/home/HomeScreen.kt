@@ -531,6 +531,7 @@ object HomeScreen : Screen() {
                     }
                 }
             },
+        ) {
             val iconPainter = when {
                 navItem.iconVector != null -> null
                 LibraryTab::class.isInstance(tab) -> {
