@@ -467,7 +467,7 @@ class NavigationSettingsScreen(
                     key = { t: ActionTrace -> t.timestamp }
                 ) { trace: ActionTrace ->
                     Text(
-                        text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
+                        text = "[${trace.timestamp % 10000}] ${trace.tabId ?: "Global"} -> ${trace.actionName} (${trace.result})",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                     )

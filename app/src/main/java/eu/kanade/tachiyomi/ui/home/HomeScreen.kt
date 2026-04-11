@@ -364,13 +364,13 @@ object HomeScreen : Screen() {
                     onLongClick = {
                         if (behavior.onLongClick != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onLongClick)
+                            executor.execute(behavior.onLongClick, navItem?.id)
                         }
                     },
                     onDoubleClick = {
                         if (behavior.onDoubleTap != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onDoubleTap)
+                            executor.execute(behavior.onDoubleTap, navItem?.id)
                         }
                     },
                     onClick = {
@@ -435,13 +435,13 @@ object HomeScreen : Screen() {
                 onLongClick = {
                     if (behavior.onLongClick != NavAction.Default) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onLongClick)
+                        executor.execute(behavior.onLongClick, navItem?.id)
                     }
                 },
                 onDoubleClick = {
                     if (behavior.onDoubleTap != NavAction.Default) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onDoubleTap)
+                        executor.execute(behavior.onDoubleTap, navItem?.id)
                     }
                 },
                 onClick = {

@@ -12,36 +12,65 @@ import kotlinx.coroutines.launch
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import android.util.Log
+import eu.kanade.domain.ui.UiPreferences
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 sealed interface ActionResult {
+    @Serializable
     data object Success : ActionResult
+    @Serializable
     data class Blocked(val reason: String) : ActionResult
+    @Serializable
     data class Cooldown(val remainingMs: Long) : ActionResult
 }
 
+@Serializable
 data class ActionTrace(
     val actionName: String,
+    val tabId: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
-    val result: ActionResult
+    val result: String // Simplification for easier storage
 )
 
 class NavActionExecutor(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val navigator: Navigator
+    private val navigator: Navigator,
+    private val uiPreferences: UiPreferences = Injekt.get()
 ) {
     companion object {
         private val lastExecutionMap = mutableMapOf<String, Long>()
         private val actionHistory = mutableListOf<ActionTrace>()
-        private const val MAX_HISTORY = 50
+        private const val MAX_HISTORY = 200
 
-        fun getHistory(): List<ActionTrace> = actionHistory.toList()
+        fun getHistory(): List<ActionTrace> {
+            val uiPreferences = Injekt.get<UiPreferences>()
+            return try {
+                Json.decodeFromString<List<ActionTrace>>(uiPreferences.navActionHistory().get())
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
     }
 
     private fun logTrace(trace: ActionTrace) {
-        actionHistory.add(0, trace)
-        if (actionHistory.size > MAX_HISTORY) actionHistory.removeAt(actionHistory.size - 1)
-        Log.d("NavTelemetry", "Action: ${trace.actionName} | Result: ${trace.result}")
+        if (!uiPreferences.adaptiveTelemetryEnabled().get()) return
+
+        scope.launch {
+            try {
+                val currentHistory = getHistory(context).toMutableList()
+                currentHistory.add(0, trace)
+                if (currentHistory.size > MAX_HISTORY) currentHistory.removeAt(currentHistory.size - 1)
+                
+                val serialized = Json.encodeToString(currentHistory)
+                uiPreferences.navActionHistory().set(serialized)
+                Log.d("NavTelemetry", "Action: ${trace.actionName} | Tab: ${trace.tabId} | Persisted")
+            } catch (e: Exception) {
+                Log.e("NavTelemetry", "Failed to persist trace", e)
+            }
+        }
     }
 
     private fun checkCooldown(action: NavAction): ActionResult {
@@ -58,11 +87,15 @@ class NavActionExecutor(
         }
     }
 
-    fun execute(action: NavAction) {
+    fun execute(action: NavAction, tabId: String? = null) {
         if (action is NavAction.Default) return
         
         val result = checkCooldown(action)
-        logTrace(ActionTrace(action.javaClass.simpleName, result = result))
+        logTrace(ActionTrace(
+            actionName = action.javaClass.simpleName,
+            tabId = tabId,
+            result = result.javaClass.simpleName
+        ))
 
         if (result is ActionResult.Cooldown) {
             context.toast("Please wait ${result.remainingMs / 1000 + 1}s")

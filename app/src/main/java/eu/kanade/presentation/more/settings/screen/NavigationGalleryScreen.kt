@@ -32,8 +32,11 @@ import eu.kanade.domain.ui.model.NavLayoutPack
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
+import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
+import eu.kanade.tachiyomi.ui.home.NavLearningBrain
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.util.plus
+import androidx.compose.ui.platform.LocalContext
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -53,17 +56,33 @@ class NavigationGalleryScreen : Screen() {
                 )
             },
         ) { paddingValues ->
+            val context = LocalContext.current
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = paddingValues + PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (NavLearningBrain.hasEnoughData(context)) {
+                    item {
+                        PreferenceGroupHeader(title = "Personalized for You")
+                        LayoutPackCard(
+                            pack = NavLayoutPack(
+                                id = "recommended",
+                                name = "The Brain Choice",
+                                description = "Automatically generated based on your recent activity and tab interactions.",
+                                config = NavLearningBrain.recommendLayout(context),
+                                author = "AniZen AI"
+                            ),
+                            onApply = {
+                                uiPreferences.updateNavConfig(NavLearningBrain.recommendLayout(context))
+                                backPress?.invoke()
+                            }
+                        )
+                    }
+                }
+
                 item {
-                    Text(
-                        text = "Discover community-curated navigation layouts.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    PreferenceGroupHeader(title = "Community Presets")
                 }
 
                 items(NavCommunityRegistry.OFFICIAL_PACKS) { pack ->
