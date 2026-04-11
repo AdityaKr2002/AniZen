@@ -518,13 +518,6 @@ class MainActivity : BaseActivity() {
                         navigator.push(ExtensionReposScreen(repoUrl))
                     }
                 }
-                // Deep link to import navigation layout
-                else if (intent.scheme == "anizen" && intent.data?.host == "nav" && intent.data?.path == "/import") {
-                    intent.data?.getQueryParameter("data")?.let { layoutData ->
-                        navigator.popUntilRoot()
-                        navigator.push(NavigationSettingsScreen(layoutData))
-                    }
-                }
                 null
             }
             else -> null

@@ -165,7 +165,7 @@ class NavigationSettingsScreen(
                                     onClick = { navigator.push(NavigationGalleryScreen()) },
                                 ),
                                 AppBar.OverflowAction(
-                                    title = "Copy Layout Link (Deep Link)",
+                                    title = "Copy Layout String",
                                     onClick = {
                                         val config = NavConfig(
                                             visibleTabs = bottomNavTabs.toImmutableList(),
@@ -173,9 +173,8 @@ class NavigationSettingsScreen(
                                             behaviorMap = behaviorMap
                                         )
                                         val serialized = NavConfigSerializer.serialize(config)
-                                        val deepLink = "anizen://nav/import?data=$serialized"
-                                        context.copyToClipboard("AniZen Layout", deepLink)
-                                        context.toast("Deep link copied to clipboard")
+                                        context.copyToClipboard("AniZen Layout", serialized)
+                                        context.toast("Layout string copied to clipboard")
                                     }
                                 ),
                                 AppBar.OverflowAction(
