@@ -23,8 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.outlined.CallToAction
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.DynamicForm
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalLibrary
@@ -228,10 +229,6 @@ fun MoreScreen(
                             icon = navItem.iconVector,
                             iconPainter = if (navItem.iconVector == null) painterResource(navItem.staticIconRes) else null,
                             onClick = {
-                                if (navItem == NavItem.ADAPTIVE) {
-                                    navigator.push(NavigationSettingsScreen(null))
-                                    return@MoreItem
-                                }
                                 scope.launch {
                                     val homeTab = when (navItem) {
                                         NavItem.LIBRARY -> HomeScreen.HomeTab.AnimeLib()
@@ -247,6 +244,11 @@ fun MoreScreen(
                             }
                         )
                     }
+                    MoreItem(
+                        title = stringResource(MR.strings.pref_bottom_nav_settings),
+                        icon = Icons.Outlined.CallToAction,
+                        onClick = { navigator.push(NavigationSettingsScreen(null)) }
+                    )
                     MoreItem(
                         title = stringResource(MR.strings.label_data_storage),
                         icon = Icons.Outlined.Storage,
