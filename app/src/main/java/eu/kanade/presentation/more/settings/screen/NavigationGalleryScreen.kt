@@ -83,21 +83,24 @@ class NavigationGalleryScreen : Screen() {
                     }
                     
                     val strategies = remember(context) {
+                        val configClassic = NavLearningBrain.recommendLayout(context, BrainStrategy.CLASSIC)
+                        val configTrending = NavLearningBrain.recommendLayout(context, BrainStrategy.TRENDING)
+                        val configFocus = NavLearningBrain.recommendLayout(context, BrainStrategy.FOCUS)
+
                         buildList {
-                            add(BrainStrategy.CLASSIC to ("Daily Driver" to "Your overall habits and most used tabs over time."))
+                            add(Triple(BrainStrategy.CLASSIC, "Daily Driver" to "Your overall habits and most used tabs over time.", configClassic))
                             
-                            // Only show Trending if there is recent activity to avoid redundancy
-                            if (NavLearningBrain.hasTrendingData()) {
-                                add(BrainStrategy.TRENDING to ("Trending Now" to "What you've been focused on in the last 24 hours."))
+                            // Only show Trending if there is recent activity AND it differs from the classic layout
+                            if (NavLearningBrain.hasTrendingData() && configTrending.visibleTabs != configClassic.visibleTabs) {
+                                add(Triple(BrainStrategy.TRENDING, "Trending Now" to "What you've been focused on in the last 24 hours.", configTrending))
                             }
                             
-                            add(BrainStrategy.FOCUS to ("Laser Focus" to "The absolute most essential tab for your current usage."))
+                            add(Triple(BrainStrategy.FOCUS, "Laser Focus" to "The absolute most essential tab for your current usage.", configFocus))
                         }
                     }
 
-                    items(strategies) { (strategy, details) ->
+                    items(strategies) { (strategy, details, config) ->
                         val (name, desc) = details
-                        val config = NavLearningBrain.recommendLayout(context, strategy)
                         LayoutPackCard(
                             pack = NavLayoutPack(
                                 id = "recommended_${strategy.name.lowercase()}",
