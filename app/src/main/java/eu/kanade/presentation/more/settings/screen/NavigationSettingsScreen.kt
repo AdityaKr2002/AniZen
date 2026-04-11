@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Visibility
@@ -161,10 +162,9 @@ class NavigationSettingsScreen(
                             actions = persistentListOf<AppBar.AppBarAction>(
                                 AppBar.Action(
                                     title = "Browse Gallery",
-                                    icon = Icons.Outlined.AutoAwesome,
+                                    icon = Icons.Outlined.Dashboard,
                                     onClick = { navigator.push(NavigationGalleryScreen()) },
-                                ),
-                                AppBar.OverflowAction(
+                                ),                                AppBar.OverflowAction(
                                     title = "Copy Layout String",
                                     onClick = {
                                         val config = NavConfig(

@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -173,20 +174,29 @@ class NavigationGalleryScreen : Screen() {
                             val item = NavItem.fromId(id)
                             if (item != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    val icon = if (item == NavItem.FEED) {
-                                        painterResource(item.staticIconRes)
+                                    if (item.iconVector != null) {
+                                        Icon(
+                                            imageVector = item.iconVector!!,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(4.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     } else {
-                                        rememberAnimatedVectorPainter(
-                                            AnimatedImageVector.animatedVectorResource(item.iconRes),
-                                            false
+                                        val icon = if (item == NavItem.FEED) {
+                                            painterResource(item.staticIconRes)
+                                        } else {
+                                            rememberAnimatedVectorPainter(
+                                                AnimatedImageVector.animatedVectorResource(item.iconRes),
+                                                false
+                                            )
+                                        }
+                                        Icon(
+                                            painter = icon,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(4.dp),
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                    Icon(
-                                        painter = icon,
-                                        contentDescription = null,
-                                        modifier = Modifier.padding(4.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
                                     Text(text = item.id.take(3).uppercase(), style = MaterialTheme.typography.labelSmall)
                                 }
                             }
