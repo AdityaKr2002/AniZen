@@ -225,7 +225,8 @@ fun MoreScreen(
                     hiddenTabs.forEach { navItem ->
                         MoreItem(
                             title = stringResource(navItem.titleRes),
-                            iconPainter = painterResource(navItem.staticIconRes),
+                            icon = navItem.iconVector,
+                            iconPainter = if (navItem.iconVector == null) painterResource(navItem.staticIconRes) else null,
                             onClick = {
                                 if (navItem == NavItem.ADAPTIVE) {
                                     navigator.push(NavigationSettingsScreen(null))

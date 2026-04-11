@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -539,6 +540,7 @@ object HomeScreen : Screen() {
             val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
             
             val iconPainter = when {
+                navItem?.iconVector != null -> null
                 navItem == NavItem.ADAPTIVE && adaptiveDecision != null -> {
                     rememberAnimatedVectorPainter(
                         AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter), // Placeholder
@@ -581,11 +583,19 @@ object HomeScreen : Screen() {
                 else -> painterResource(R.drawable.ic_browse_filled_24dp)
             }
 
-            Icon(
-                painter = iconPainter,
-                contentDescription = tab.options.title,
-                tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
-            )
+            if (navItem?.iconVector != null) {
+                Icon(
+                    imageVector = navItem.iconVector!!,
+                    contentDescription = tab.options.title,
+                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+                )
+            } else {
+                Icon(
+                    painter = iconPainter!!,
+                    contentDescription = tab.options.title,
+                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+                )
+            }
         }
     }
 
