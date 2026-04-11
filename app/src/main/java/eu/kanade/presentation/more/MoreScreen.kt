@@ -59,6 +59,7 @@ import coil3.compose.AsyncImage
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.more.settings.screen.ai.AiAssistantScreen
+import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.tachiyomi.R
@@ -226,6 +227,10 @@ fun MoreScreen(
                             title = stringResource(navItem.titleRes),
                             iconPainter = painterResource(navItem.staticIconRes),
                             onClick = {
+                                if (navItem == NavItem.ADAPTIVE) {
+                                    navigator.push(NavigationSettingsScreen(null))
+                                    return@MoreItem
+                                }
                                 scope.launch {
                                     val homeTab = when (navItem) {
                                         NavItem.LIBRARY -> HomeScreen.HomeTab.AnimeLib()
@@ -234,7 +239,7 @@ fun MoreScreen(
                                         NavItem.HISTORY -> HomeScreen.HomeTab.History
                                         NavItem.BROWSE -> HomeScreen.HomeTab.Browse()
                                         NavItem.MORE -> HomeScreen.HomeTab.More(false)
-                                        NavItem.ADAPTIVE -> HomeScreen.HomeTab.More(false)
+                                        else -> HomeScreen.HomeTab.More(false)
                                     }
                                     HomeScreen.openTab(homeTab)
                                 }

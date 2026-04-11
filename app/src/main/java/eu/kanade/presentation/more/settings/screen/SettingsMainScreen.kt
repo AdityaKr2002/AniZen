@@ -41,6 +41,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.more.components.MoreItem
 import eu.kanade.presentation.more.components.MoreSection
 import eu.kanade.presentation.more.settings.screen.about.AboutScreen
+import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import kotlinx.collections.immutable.persistentListOf
@@ -96,6 +97,11 @@ object SettingsMainScreen : Screen() {
                         subtitleRes = MR.strings.pref_library_summary,
                         icon = Icons.Outlined.CollectionsBookmark,
                         screen = SettingsLibraryScreen,
+                    ),
+                    Item(
+                        titleRes = MR.strings.pref_bottom_nav_settings,
+                        icon = Icons.Outlined.Explore,
+                        screen = NavigationSettingsScreen(null),
                     ),
                 ),
                 "Core Features" to listOf(
