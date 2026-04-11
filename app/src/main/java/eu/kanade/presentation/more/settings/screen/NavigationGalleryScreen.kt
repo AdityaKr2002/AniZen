@@ -63,6 +63,20 @@ class NavigationGalleryScreen : Screen() {
                 contentPadding = paddingValues + PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item {
+                    PreferenceGroupHeader(title = "Community Presets")
+                }
+
+                items(NavCommunityRegistry.OFFICIAL_PACKS) { pack ->
+                    LayoutPackCard(
+                        pack = pack,
+                        onApply = {
+                            uiPreferences.updateNavConfig(pack.config)
+                            backPress?.invoke()
+                        }
+                    )
+                }
+
                 if (NavLearningBrain.hasEnoughData(context)) {
                     item {
                         PreferenceGroupHeader(title = "Personalized for You")
@@ -83,7 +97,7 @@ class NavigationGalleryScreen : Screen() {
                                 name = name,
                                 description = desc,
                                 config = config,
-                                author = "AniZen AI"
+                                author = "AniZen System"
                             ),
                             onApply = {
                                 uiPreferences.updateNavConfig(config)
@@ -91,20 +105,6 @@ class NavigationGalleryScreen : Screen() {
                             }
                         )
                     }
-                }
-
-                item {
-                    PreferenceGroupHeader(title = "Community Presets")
-                }
-
-                items(NavCommunityRegistry.OFFICIAL_PACKS) { pack ->
-                    LayoutPackCard(
-                        pack = pack,
-                        onApply = {
-                            uiPreferences.updateNavConfig(pack.config)
-                            backPress?.invoke()
-                        }
-                    )
                 }
             }
         }

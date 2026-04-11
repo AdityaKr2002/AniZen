@@ -41,10 +41,17 @@ object NavLearningBrain {
         val scores = mutableMapOf<String, Float>()
         history.forEach { trace ->
             val tabId = trace.tabId ?: return@forEach
-            val ageDays = (now - trace.timestamp).coerceAtLeast(0L).toFloat() / dayMs
+            val ageMs = (now - trace.timestamp).coerceAtLeast(0L)
+            val ageDays = ageMs.toFloat() / dayMs
             
             // Recency weighting
-            val weight = (1.0f / (1.0f + ageDays)).coerceAtLeast(0.1f)
+            var weight = (1.0f / (1.0f + ageDays)).coerceAtLeast(0.1f)
+            
+            // Boost very recent actions for Trending
+            if (strategy == BrainStrategy.TRENDING && ageMs <= dayMs) {
+                weight *= 5.0f // Heavy focus on the last 24 hours
+            }
+            
             scores[tabId] = (scores[tabId] ?: 0f) + weight
         }
 
