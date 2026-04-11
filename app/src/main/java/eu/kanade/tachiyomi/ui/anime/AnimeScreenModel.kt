@@ -58,6 +58,8 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -136,6 +138,7 @@ import java.util.Calendar
 import kotlin.math.floor
 
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.domain.episode.model.applyFilters
@@ -231,6 +234,7 @@ class AnimeScreenModel(
         episodes: List<EpisodeList.Item> = this.episodes,
         trackItems: List<TrackItem> = this.trackItems,
         suggestionSections: ImmutableList<SuggestionSection> = this.suggestionSections,
+        isSuggestionsLoading: Boolean = this.isSuggestionsLoading,
         dialog: Dialog? = this.dialog,
         isRefreshingData: Boolean = this.isRefreshingData,
         discoveryExpanded: Boolean = this.discoveryExpanded,
@@ -260,8 +264,9 @@ class AnimeScreenModel(
         val availableSeasonsList = mutableListOf<String>()
         val episodeToSeason = mutableMapOf<Long, String>()
         
+        val groupingMode = anime.seasonGroupingMode
         // Handle Seasons
-        if (anime.groupEpisodesBySeason) {
+        if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
             // Step 1: Detect if source provides episodes in descending order (newest first)
             val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
             
@@ -441,9 +446,9 @@ class AnimeScreenModel(
             }
         }
 
-        // Default to first season if none selected and grouping is on
+        // Default to first season if none selected and grouping is in Tabs mode
         val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-        val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+        val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             sortedSeasons.firstOrNull()
         } else {
             selectedSeason
@@ -465,6 +470,7 @@ class AnimeScreenModel(
             hasLoggedInTrackers = hasLoggedInTrackers,
             hasPromptedToAddBefore = hasPromptedToAddBefore,
             suggestions = suggestions,
+            isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = sortedSeasons.toImmutableList(),
@@ -590,15 +596,18 @@ class AnimeScreenModel(
         }
     }
 
-    private data class CachedSuggestions(
+    internal data class CachedSuggestions(
         val sections: ImmutableList<SuggestionSection>,
         val timestamp: Long,
     )
 
-    private companion object {
+    internal companion object {
         // Limit to 50 anime to prevent OOM, LruCache is thread-safe
-        private val suggestionsCache = android.util.LruCache<Long, CachedSuggestions>(50)
+        val suggestionsCache = android.util.LruCache<Long, CachedSuggestions>(50)
         private const val CACHE_TTL = 60 * 60 * 1000L // 1 hour
+
+        private val _suggestionsUpdateFlow = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 1)
+        val suggestionsUpdateFlow = _suggestionsUpdateFlow.asSharedFlow()
     }
 
     private suspend fun fetchSuggestions(anime: Anime) {
@@ -689,17 +698,19 @@ class AnimeScreenModel(
                         }
                     }
                     val finalSections = initialSections
-                        .filter { it.items.isNotEmpty() }
                         .sortedBy { it.type }
                         .toImmutableList()
                     suggestionsCache.put(anime.id, CachedSuggestions(finalSections, System.currentTimeMillis()))
+                    _suggestionsUpdateFlow.tryEmit(anime.id)
                     state.copySuccess(suggestionSections = finalSections)
                 }
             }
 
-            // 0. Franchise & Sequels (Strict Verification)
-            launchIO {
-                kotlinx.coroutines.coroutineScope {
+        // Initial Discovery Load
+        screenModelScope.launchIO {
+            kotlinx.coroutines.coroutineScope {
+                // 0. Franchise & Sequels (Strict Verification)
+                launch {
                     try {
                         val rawVirtualSeasons = discoverSeasons.await(anime)
                         if (rawVirtualSeasons.isNotEmpty()) {
@@ -707,18 +718,16 @@ class AnimeScreenModel(
                                 .map { async { networkToLocalAnime.await(it) } }
                                 .awaitAll()
                                 .mapNotNull { getAnime.await(it.id) }
-                            
+
                             if (validSeasons.isNotEmpty()) {
                                 updateSection(SuggestionSection.Type.Franchise, validSeasons)
                             }
                         }
                     } catch (_: Exception) {}
                 }
-            }
 
-            // 1. Similar Media (Broad Search Probe)
-            launchIO {
-                kotlinx.coroutines.coroutineScope {
+                // 1. Similar Media (Broad Search Probe)
+                launch {
                     val keywords = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
                     try {
                         val searchResult = source.getSearchAnime(1, keywords, source.getFilterList())
@@ -729,11 +738,9 @@ class AnimeScreenModel(
                         if (domainAnimes.isNotEmpty()) updateSection(SuggestionSection.Type.Similarity, domainAnimes)
                     } catch (_: Exception) {}
                 }
-            }
 
-            // 2. Author/Studio (Parallel Split Search)
-            launchIO {
-                kotlinx.coroutines.coroutineScope {
+                // 2. Author/Studio (Parallel Split Search)
+                launch {
                     val authors = anime.author?.split(",")?.map { it.trim() }?.filter { it.length > 2 && it != "Unknown" } ?: emptyList()
                     val results = authors.take(2).map { author ->
                         async {
@@ -751,44 +758,78 @@ class AnimeScreenModel(
                     
                     if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Author, results)
                 }
-            }
 
-            // 3. Official Related (Source Provided)
-            launchIO {
-                getRelatedAnime.subscribe(anime).collect { (_, animes) ->
-                    if (animes.isNotEmpty()) {
-                        kotlinx.coroutines.coroutineScope {
-                            val domainAnimes = animes
-                                .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                .awaitAll()
-                                .mapNotNull { getAnime.await(it.id) }
-                            updateSection(SuggestionSection.Type.Source, domainAnimes)
-                        }
-                    }
-                }
-            }
-
-            // 4. Smart Recommendations (Parallel Tag Search)
-            launchIO {
-                kotlinx.coroutines.coroutineScope {
-                    val tags = anime.genre?.take(3) ?: emptyList()
-                    val results = tags.map { tag ->
-                        async {
-                            try {
-                                val searchResult = source.getSearchAnime(1, tag, source.getFilterList())
-                                searchResult.animes
+                // 3. Official Related (Source Provided)
+                launch {
+                    getRelatedAnime.subscribe(anime).collect { (_, animes) ->
+                        if (animes.isNotEmpty()) {
+                            kotlinx.coroutines.coroutineScope {
+                                val domainAnimes = animes
                                     .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                     .awaitAll()
                                     .mapNotNull { getAnime.await(it.id) }
-                            } catch (_: Exception) {
-                                emptyList()
+                                updateSection(SuggestionSection.Type.Source, domainAnimes)
                             }
                         }
-                    }.awaitAll().flatten()
-                    
-                    if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Tag, results)
+                    }
+                }
+
+                // 4. Smart Recommendations (Parallel Tag Search)
+                launch {
+                    kotlinx.coroutines.withTimeoutOrNull(15000L) {
+                        kotlinx.coroutines.coroutineScope {
+                            val tags = anime.genre?.take(3) ?: emptyList()
+                            val results = tags.map { tag ->
+                                async {
+                                    try {
+                                        val filterList = source.getFilterList()
+                                        var query = tag
+                                        
+                                        // Pro-Level: Try to find and apply the actual Genre/Tag filter from the extension
+                                        val genreFilter = filterList.find { it.name.contains("Genre", true) || it.name.contains("Tag", true) }
+                                        if (genreFilter != null) {
+                                            when (genreFilter) {
+                                                is AnimeFilter.Select<*> -> {
+                                                    val select = genreFilter as AnimeFilter.Select<Any>
+                                                    val index = select.values.indexOfFirst { it.toString().contains(tag, true) }
+                                                    if (index != -1) {
+                                                        select.state = index
+                                                        query = "" // Clear query to use filter search
+                                                    }
+                                                }
+                                                is AnimeFilter.Group<*> -> {
+                                                    val subFilters = genreFilter.state as? List<*>
+                                                    val subFilter = subFilters?.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
+                                                    if (subFilter is AnimeFilter.CheckBox) {
+                                                        subFilter.state = true
+                                                        query = "" // Clear query to use filter search
+                                                    } else if (subFilter is AnimeFilter.TriState) {
+                                                        subFilter.state = AnimeFilter.TriState.STATE_INCLUDE
+                                                        query = "" // Clear query to use filter search
+                                                    }
+                                                }
+                                                else -> {}
+                                            }
+                                        }
+
+                                        val searchResult = source.getSearchAnime(1, query, filterList)
+                                        searchResult.animes
+                                            .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
+                                            .awaitAll()
+                                            .mapNotNull { getAnime.await(it.id) }
+                                    } catch (_: Exception) {
+                                        emptyList()
+                                    }
+                                }
+                            }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
+                            
+                            updateSection(SuggestionSection.Type.Tag, results)
+                        }
+                    } ?: updateSection(SuggestionSection.Type.Tag, emptyList())
                 }
             }
+            updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
+        }
         }
     }
 
@@ -1125,7 +1166,7 @@ class AnimeScreenModel(
         val successState = successState ?: return null
         return successState.episodes.getNextUnseen(
             anime = successState.anime,
-            seasonName = successState.selectedSeason.takeIf { successState.anime.groupEpisodesBySeason },
+            seasonName = successState.selectedSeason.takeIf { successState.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs },
             episodeToSeason = successState.episodeToSeason,
         )
     }
@@ -1319,9 +1360,10 @@ class AnimeScreenModel(
 
     fun setDisplayMode(mode: Long) {
         val anime = successState?.anime ?: return
-        if (mode == Anime.EPISODE_SHOW_SEASON_GROUP) {
+        if (mode and 0x10000000L != 0L) {
+            val flag = mode and 0x10000000L.inv()
             screenModelScope.launchNonCancellable {
-                setAnimeEpisodeFlags.awaitSetSeasonGrouping(anime, !anime.groupEpisodesBySeason)
+                setAnimeEpisodeFlags.awaitSetSeasonGroupingRaw(anime, flag)
             }
             return
         }
@@ -1337,7 +1379,18 @@ class AnimeScreenModel(
         val anime = successState?.anime ?: return
         screenModelScope.launchNonCancellable {
             libraryPreferences.setEpisodeSettingsDefault(anime)
-            if (applyToExisting) setAnimeDefaultEpisodeFlags.awaitAll()
+            if (applyToExisting) {
+                setAnimeEpisodeFlags.awaitSetAllAnimeFlags(
+                    unseenFilter = anime.unseenFilterRaw,
+                    downloadedFilter = anime.downloadedFilterRaw,
+                    bookmarkedFilter = anime.bookmarkedFilterRaw,
+                    fillermarkedFilter = anime.fillermarkedFilterRaw,
+                    sortingMode = anime.sorting,
+                    displayMode = anime.displayMode,
+                    sortingDirection = if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
+                    seasonGrouping = anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK,
+                )
+            }
             snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.episode_settings_updated))
         }
     }
@@ -1598,6 +1651,7 @@ class AnimeScreenModel(
             val trackItems: ImmutableList<TrackItem> = persistentListOf(),
             val nextAiringEpisode: Pair<Int, Long> = Pair(anime.nextEpisodeToAir, anime.nextEpisodeAiringAt),
             val suggestions: ImmutableList<Anime> = persistentListOf(),
+            val isSuggestionsLoading: Boolean = true,
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
             val availableSeasons: ImmutableList<String> = persistentListOf(),
@@ -1623,8 +1677,9 @@ class AnimeScreenModel(
                     val availableSeasonsList = mutableListOf<String>()
                     val episodeToSeason = mutableMapOf<Long, String>()
                     
+                    val groupingMode = anime.seasonGroupingMode
                     // Handle Seasons
-                    if (anime.groupEpisodesBySeason) {
+                    if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                         // Step 1: Detect if source provides episodes in descending order (newest first)
                         val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
                         
@@ -1803,9 +1858,9 @@ class AnimeScreenModel(
                         }
                     }
 
-                    // Default to first season if none selected and grouping is on
+                    // Default to first season if none selected and grouping is in Tabs mode
                     val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-                    val finalSelectedSeason = if (selectedSeason == null && anime.groupEpisodesBySeason) {
+                    val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
                         sortedSeasons.firstOrNull()
                     } else {
                         selectedSeason

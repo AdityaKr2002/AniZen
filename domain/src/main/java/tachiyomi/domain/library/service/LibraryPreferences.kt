@@ -211,6 +211,12 @@ class LibraryPreferences(
         Anime.EPISODE_DISPLAY_NAME,
     )
 
+    fun seasonGroupingMode() = preferenceStore.getEnum(
+        "default_chapter_group_by_season_v2",
+        SeasonGrouping.Tabs,
+    )
+
+    @Deprecated("Use seasonGroupingMode")
     fun groupEpisodeBySeason() = preferenceStore.getBoolean(
         "default_chapter_group_by_season",
         true,
@@ -230,7 +236,10 @@ class LibraryPreferences(
         // <-- AM (FILLERMARK)
         sortEpisodeBySourceOrNumber().set(anime.sorting)
         displayEpisodeByNameOrNumber().set(anime.displayMode)
-        groupEpisodeBySeason().set(anime.groupEpisodesBySeason)
+        val seasonGroupRaw = anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK
+        if (seasonGroupRaw != Anime.EPISODE_SEASON_GROUP_DEFAULT) {
+            seasonGroupingMode().set(anime.seasonGroupingMode)
+        }
         sortEpisodeByAscendingOrDescending().set(
             if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
         )
@@ -262,6 +271,12 @@ class LibraryPreferences(
 
         Download,
         Disabled,
+    }
+
+    enum class SeasonGrouping {
+        Disabled,
+        Headers,
+        Tabs,
     }
 
     // SY -->

@@ -42,6 +42,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.Compare
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Label
@@ -369,8 +370,8 @@ private fun AnimeScreenSmallImpl(
 ) {
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
-        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false
@@ -389,8 +390,12 @@ private fun AnimeScreenSmallImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem) {
-        listItem.count { it is EpisodeList.Item }
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            listItem.count { it is EpisodeList.Item }
+        } else {
+            state.processedEpisodes.size
+        }
     }
 
             val isFirstItemVisible by remember {
@@ -426,13 +431,13 @@ private fun AnimeScreenSmallImpl(
                         .background(MaterialTheme.colorScheme.background),
                 ) {
                     val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                    val isFABVisible = remember(episodes, isAnySelected) {
+                        episodes.fastAny { !it.episode.seen } && !isAnySelected
+                    }
                     Scaffold(
                         hazeEnabled = false,
                         contentWindowInsets = scaffoldInsets,
                         floatingActionButton = {
-                    val isFABVisible = remember(episodes) {
-                        episodes.fastAny { !it.episode.seen } && !isAnySelected
-                    }
                     AnimatedVisibility(
                         visible = isFABVisible,
                         enter = fadeIn(),
@@ -521,17 +526,18 @@ private fun AnimeScreenSmallImpl(
                     indicatorPadding = PaddingValues(top = topPadding),
                 ) {
                     val layoutDirection = LocalLayoutDirection.current
+
                     VerticalFastScroller(
                         listState = episodeListState,
                         topContentPadding = topPadding,
-                        endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
+                        endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxHeight(),
                             state = episodeListState,
                             contentPadding = PaddingValues(
                                 start = contentPadding.calculateStartPadding(layoutDirection),
-                                end = contentPadding.calculateEndPadding(layoutDirection),
+                                end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                                 bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
@@ -592,7 +598,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
 
-                            if (showSuggestions && state.suggestionSections.isNotEmpty()) {
+                            if (showSuggestions) {
                                 item(key = "discovery-section-container", contentType = "discovery") {
                                     val navigator = LocalNavigator.currentOrThrow
                                     Surface(
@@ -605,76 +611,41 @@ private fun AnimeScreenSmallImpl(
                                     ) {
                                         Column(modifier = Modifier.padding(vertical = 12.dp)) {
                                             DiscoveryHeader(
-                                                expanded = state.discoveryExpanded,
-                                                onToggle = onToggleDiscoveryExpansion
+                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (!state.discoveryExpanded) {
+                                            if (!state.isSuggestionsLoading && state.suggestionSections.all { it.items.isEmpty() }) {
+                                                Text(
+                                                    text = "No suggestions found for this entry",
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            } else if (!state.isSuggestionsLoading) {
                                                 val combinedItems = remember(state.suggestionSections) {
                                                     state.suggestionSections.flatMap { it.items.take(3) }
                                                         .distinctBy { it.id }.take(15)
                                                 }
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(
-                                                            anime = anime,
-                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                        )
-                                                    }
-                                                }
-                                            } else {
-                                                state.suggestionSections.forEach { section ->
-                                                    Column(modifier = Modifier.padding(bottom = 12.dp)) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                        ) {
-                                                            val icon = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> androidx.compose.material.icons.Icons.Filled.AutoAwesome
-                                                                SuggestionSection.Type.Similarity -> androidx.compose.material.icons.Icons.Outlined.Compare
-                                                                SuggestionSection.Type.Author -> androidx.compose.material.icons.Icons.Outlined.Person
-                                                                SuggestionSection.Type.Source -> androidx.compose.material.icons.Icons.Outlined.Language
-                                                                SuggestionSection.Type.Tag -> androidx.compose.material.icons.Icons.Outlined.Label
-                                                            }
-                                                            val label = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> stringResource(KMR.strings.related_mangas_website_suggestions)
-                                                                SuggestionSection.Type.Similarity -> stringResource(SYMR.strings.relation_similar)
-                                                                SuggestionSection.Type.Author -> section.title
-                                                                SuggestionSection.Type.Source -> section.title
-                                                                SuggestionSection.Type.Tag -> stringResource(SYMR.strings.az_recommends)
-                                                            }
-                                                            Icon(
-                                                                imageVector = icon,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = MaterialTheme.colorScheme.secondary
+                                                if (combinedItems.isEmpty()) {
+                                                     Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
+                                                        ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
                                                             )
-                                                            Text(
-                                                                text = label,
-                                                                style = MaterialTheme.typography.labelSmall,
-                                                                color = MaterialTheme.colorScheme.secondary
-                                                            )
-                                                        }
-                                                        androidx.compose.foundation.lazy.LazyRow(
-                                                            contentPadding = PaddingValues(horizontal = 12.dp),
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        ) {
-                                                            itemsIndexed(
-                                                                items = section.items,
-                                                                key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-${section.type}-${anime.id}-$index" },
-                                                            ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                                SuggestionItem(
-                                                                    anime = anime,
-                                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                                )
-                                                            }
                                                         }
                                                     }
                                                 }
@@ -685,7 +656,7 @@ private fun AnimeScreenSmallImpl(
                             }
 
                             
-                            if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                            if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
                                 item(key = "season-selector", contentType = "season-selector") {
                                     SeasonSelector(
                                         seasons = state.availableSeasons,
@@ -698,7 +669,7 @@ private fun AnimeScreenSmallImpl(
                             item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                 EpisodeHeader(
                                     enabled = !isAnySelected,
-                                    episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
+                                    episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
                                     missingEpisodeCount = state.missingEpisodeCount,
                                     onClick = onFilterClicked,
                                 )
@@ -798,8 +769,8 @@ fun AnimeScreenLargeImpl(
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.groupEpisodesBySeason) {
-        if (!state.anime.groupEpisodesBySeason || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false
@@ -818,8 +789,12 @@ fun AnimeScreenLargeImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem) {
-        listItem.count { it is EpisodeList.Item }
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
+        if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            listItem.count { it is EpisodeList.Item }
+        } else {
+            state.processedEpisodes.size
+        }
     }
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value
@@ -859,13 +834,13 @@ fun AnimeScreenLargeImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+            val isFABVisible = remember(episodes, isAnySelected) {
+                episodes.fastAny { !it.episode.seen } && !isAnySelected
+            }
             Scaffold(
                 hazeEnabled = false,
                 contentWindowInsets = scaffoldInsets,
                 floatingActionButton = {
-                    val isFABVisible = remember(episodes) {
-                        episodes.fastAny { !it.episode.seen } && !isAnySelected
-                    }
                     AnimatedVisibility(
                         visible = isFABVisible,
                         enter = fadeIn(),
@@ -1021,73 +996,53 @@ fun AnimeScreenLargeImpl(
                                     onCopyTagToClipboard = onCopyTagToClipboard,
                                 )
 
-                                if (showSuggestions && state.suggestionSections.isNotEmpty()) {
+                                if (showSuggestions) {
                                     val navigator = LocalNavigator.currentOrThrow
-                                    if (!state.discoveryExpanded) {
-                                        OutlinedButtonWithArrow(
-                                            text = stringResource(SYMR.strings.az_recommends).uppercase(),
-                                            onClick = onToggleDiscoveryExpansion,
-                                        )
-                                    } else {
-                                        Surface(
-                                            modifier = Modifier
-                                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                                .fillMaxWidth(),
-                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                                            tonalElevation = 2.dp,
-                                        ) {
-                                            Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                                                DiscoveryHeader(
-                                                    expanded = state.discoveryExpanded,
-                                                    onToggle = onToggleDiscoveryExpansion
+                                    Surface(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                            .fillMaxWidth(),
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                        tonalElevation = 2.dp,
+                                    ) {
+                                        Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                                            DiscoveryHeader(
+                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
+                                            )
+
+                                            if (!state.isSuggestionsLoading && state.suggestionSections.all { it.items.isEmpty() }) {
+                                                Text(
+                                                    text = "No suggestions found for this entry",
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
-                                                state.suggestionSections.forEach { section ->
-                                                    Column(modifier = Modifier.padding(bottom = 12.dp)) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                                            verticalAlignment = Alignment.CenterVertically,
-                                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                        ) {
-                                                            val icon = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> androidx.compose.material.icons.Icons.Filled.AutoAwesome
-                                                                SuggestionSection.Type.Similarity -> androidx.compose.material.icons.Icons.Outlined.Compare
-                                                                SuggestionSection.Type.Author -> androidx.compose.material.icons.Icons.Outlined.Person
-                                                                SuggestionSection.Type.Source -> androidx.compose.material.icons.Icons.Outlined.Language
-                                                                SuggestionSection.Type.Tag -> androidx.compose.material.icons.Icons.Outlined.Label
-                                                            }
-                                                            val label = when (section.type) {
-                                                                SuggestionSection.Type.Franchise -> stringResource(KMR.strings.related_mangas_website_suggestions)
-                                                                SuggestionSection.Type.Similarity -> stringResource(SYMR.strings.relation_similar)
-                                                                SuggestionSection.Type.Author -> section.title
-                                                                SuggestionSection.Type.Source -> section.title
-                                                                SuggestionSection.Type.Tag -> stringResource(SYMR.strings.az_recommends)
-                                                            }
-                                                            Icon(
-                                                                imageVector = icon,
-                                                                contentDescription = null,
-                                                                modifier = Modifier.size(14.dp),
-                                                                tint = MaterialTheme.colorScheme.secondary
+                                            } else if (!state.isSuggestionsLoading) {
+                                                val combinedItems = remember(state.suggestionSections) {
+                                                    state.suggestionSections.flatMap { it.items.take(3) }
+                                                        .distinctBy { it.id }.take(15)
+                                                }
+                                                if (combinedItems.isEmpty()) {
+                                                     Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
+                                                        ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
                                                             )
-                                                            Text(
-                                                                text = label,
-                                                                style = MaterialTheme.typography.labelSmall,
-                                                                color = MaterialTheme.colorScheme.secondary
-                                                            )
-                                                        }
-                                                        androidx.compose.foundation.lazy.LazyRow(
-                                                            contentPadding = PaddingValues(horizontal = 12.dp),
-                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        ) {
-                                                            itemsIndexed(
-                                                                items = section.items,
-                                                                key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-${section.type}-${anime.id}-$index" },
-                                                            ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
-                                                                SuggestionItem(
-                                                                    anime = anime,
-                                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                                )
-                                                            }
                                                         }
                                                     }
                                                 }
@@ -1103,16 +1058,18 @@ fun AnimeScreenLargeImpl(
                             VerticalFastScroller(
                                 listState = episodeListState,
                                 topContentPadding = contentPadding.calculateTopPadding(),
+                                endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
                             ) {
                                 LazyColumn(
                                     modifier = Modifier.fillMaxHeight(),
                                     state = episodeListState,
                                     contentPadding = PaddingValues(
                                         top = contentPadding.calculateTopPadding(),
+                                        end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                                         bottom = contentPadding.calculateBottomPadding(),
                                     ),
                                 ) {
-                                    if (state.anime.groupEpisodesBySeason && state.availableSeasons.size > 1) {
+                                    if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
                                         item(key = "season-selector", contentType = "season-selector") {
                                             SeasonSelector(
                                                 seasons = state.availableSeasons,
@@ -1125,7 +1082,7 @@ fun AnimeScreenLargeImpl(
                                     item(key = "episode-header", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
-                                            episodeCount = if (state.anime.groupEpisodesBySeason) currentSeasonCount else episodes.size,
+                                            episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
                                             missingEpisodeCount = state.missingEpisodeCount,
                                             onClick = onFilterButtonClicked,
                                         )
@@ -1381,7 +1338,7 @@ private fun SuggestionItem(
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
     val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id, usePanoramaOverride = globalPanorama)
-    val width = if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp
+    val width = remember(entry) { if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp }
 
     Column(
         modifier = Modifier.width(width),
@@ -1404,7 +1361,7 @@ private fun SuggestionItem(
             }
 
             if (anime.score != null && anime.score!! > 0) {
-                val scoreText = String.format("%.1f", anime.score)
+                val scoreText = remember(anime.score) { String.format("%.1f", anime.score) }
                 tachiyomi.presentation.core.components.BadgeGroup(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -1431,8 +1388,7 @@ private fun SuggestionItem(
 @Composable
 private fun DiscoveryHeader(
     modifier: Modifier = Modifier,
-    expanded: Boolean,
-    onToggle: () -> Unit,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -1450,19 +1406,19 @@ private fun DiscoveryHeader(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = "Recommended for you",
+                text = stringResource(tachiyomi.i18n.sy.SYMR.strings.az_recommends),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
-        TextButton(
-            onClick = onToggle,
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-            modifier = Modifier.height(28.dp).alignByBaseline()
+        androidx.compose.material3.IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(32.dp)
         ) {
-            Text(
-                text = if (expanded) "Collapse" else stringResource(tachiyomi.i18n.MR.strings.label_more),
-                style = MaterialTheme.typography.labelMedium
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = stringResource(tachiyomi.i18n.MR.strings.label_more),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

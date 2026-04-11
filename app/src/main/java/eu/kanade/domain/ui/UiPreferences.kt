@@ -176,7 +176,7 @@ class UiPreferences(
 
     fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", true)
 
-    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 24)
+    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 15)
 
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
@@ -203,7 +203,17 @@ class UiPreferences(
         return pref
     }
 
-    fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
+    fun containerStyles() = preferenceStore.getStringSet(
+        "pref_ui_container_styles",
+        setOf(
+            ContainerStyle.LIBRARY,
+            ContainerStyle.UPDATES,
+            ContainerStyle.HISTORY,
+            ContainerStyle.DETAILS,
+            ContainerStyle.SETTINGS,
+            ContainerStyle.BROWSE,
+        ),
+    )
 
     fun animatedTransitions() = preferenceStore.getBoolean("pref_animated_transitions_key", true)
 
