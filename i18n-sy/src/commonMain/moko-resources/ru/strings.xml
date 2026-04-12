@@ -690,4 +690,13 @@
     <string name="rec_initializing">Идёт подготовка</string>
     <string name="rec_common_recommendations">Общие рекомендации</string>
     <string name="scan_qr_code">Сканировать QR-код</string>
+    <string name="sync_on_library_update">Синхронизация при обновлении библиотеки</string>
+    <string name="migrating">Перенос</string>
+    <string name="mangadex_similar">Аналоги MangaDex</string>
+    <string name="label_library_update_errors">Ошибки обновления библиотеки (%1$d)</string>
+    <string name="info_empty_library_update_errors">Нет ошибок обновления библиотеки</string>
+    <string name="action_scroll_to_top">Прокрутить вверх</string>
+    <string name="action_scroll_to_previous">Прокрутить к предыдущему</string>
+    <string name="action_scroll_to_next">Прокрутить к следующему</string>
+    <string name="action_scroll_to_bottom">Прокрутить вниз</string>
 </resources>

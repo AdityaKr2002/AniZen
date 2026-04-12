@@ -235,4 +235,7 @@
     <string name="show_episodes_titles_subtitle">Показывает название текущего эпизода</string>
     <string name="pref_discord_show_progress_summary_episode">Показывать прогресс текущего эпизода</string>
     <string name="pref_discord_show_timestamp_summary_episode">Показывает прошедшее/оставшиеся время</string>
+    <string name="pref_display_images_description_anime">Отображать изображения в описаниях аниме</string>
+    <string name="pref_auto_track_when_watching">Автоотслеживание при просмотре</string>
+    <string name="pref_auto_track_when_watching_summary">Автоматически отслеживать аниме в локальном трекере при просмотре, даже если его нет в библиотеке</string>
 </resources>
