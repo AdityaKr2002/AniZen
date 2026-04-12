@@ -54,8 +54,11 @@ import exh.util.nullIfEmpty
 import exh.util.trimOrNull
 import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.asSharedFlow
@@ -93,17 +96,6 @@ import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
 import tachiyomi.domain.anime.interactor.SetCustomAnimeInfo
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
-import tachiyomi.domain.anime.model.Anime
-import tachiyomi.domain.anime.model.AnimeUpdate
-import tachiyomi.domain.anime.model.CustomAnimeInfo
-import tachiyomi.domain.anime.model.MergedAnimeReference
-import tachiyomi.domain.anime.model.Season
-import tachiyomi.domain.anime.model.applyFilter
-import tachiyomi.domain.anime.model.toAnimeUpdate
-import tachiyomi.domain.anime.repository.AnimeRepository
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.category.interactor.SetAnimeCategories
-import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.anime.interactor.FetchInterval
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.episode.interactor.SetAnimeDefaultEpisodeFlags
@@ -142,6 +134,13 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.domain.episode.model.applyFilters
+import tachiyomi.domain.anime.model.Anime
+import tachiyomi.domain.anime.model.AnimeUpdate
+import tachiyomi.domain.anime.model.CustomAnimeInfo
+import tachiyomi.domain.anime.model.MergedAnimeReference
+import tachiyomi.domain.anime.model.Season
+import tachiyomi.domain.anime.model.applyFilter
+import tachiyomi.domain.anime.model.toAnimeUpdate
 
 class AnimeScreenModel(
     private val context: Context,
@@ -229,6 +228,9 @@ class AnimeScreenModel(
 
     val showFileSize = storagePreferences.showEpisodeFileSize().get()
 
+    private var fetchSuggestionsJob: kotlinx.coroutines.Job? = null
+    private val suggestionsDispatcher = kotlinx.coroutines.Dispatchers.IO.limitedParallelism(3)
+
     private fun State.Success.copySuccess(
         anime: Anime = this.anime,
         episodes: List<EpisodeList.Item> = this.episodes,
@@ -262,7 +264,7 @@ class AnimeScreenModel(
 
         val episodeListItems = mutableListOf<EpisodeList>()
         val availableSeasonsList = mutableListOf<String>()
-        val episodeToSeason = mutableMapOf<Long, String>()
+        val episodeToSeason_ = mutableMapOf<Long, String>()
         
         val groupingMode = anime.seasonGroupingMode
         // Handle Seasons
@@ -377,7 +379,7 @@ class AnimeScreenModel(
                 }
                 
                 block.episodes.forEach { item ->
-                    episodeToSeason[item.episode.id] = seasonName
+                    episodeToSeason_[item.episode.id] = seasonName
                 }
             }
 
@@ -387,7 +389,7 @@ class AnimeScreenModel(
                 val item = processedEpisodes[i]
                 
                 // 1. Season Header (Must be BEFORE the item)
-                val seasonName = episodeToSeason[item.episode.id]
+                val seasonName = episodeToSeason_[item.episode.id]
                 if (seasonName != null && seasonName != lastSeasonHeader) {
                     episodeListItems.add(EpisodeList.Season(seasonName))
                     if (!availableSeasonsList.contains(seasonName)) {
@@ -475,7 +477,7 @@ class AnimeScreenModel(
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = sortedSeasons.toImmutableList(),
             selectedSeason = finalSelectedSeason,
-            episodeToSeason = episodeToSeason,
+            episodeToSeason = episodeToSeason_.toImmutableMap(),
         )
     }
 
@@ -610,21 +612,31 @@ class AnimeScreenModel(
         val suggestionsUpdateFlow = _suggestionsUpdateFlow.asSharedFlow()
     }
 
-    private suspend fun fetchSuggestions(anime: Anime) {
+    private fun fetchSuggestions(anime: Anime) {
+        if (anime.isLocal() || !libraryPreferences.relatedAnimeShowSource().get()) {
+            updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
+            return
+        }
+
         val now = System.currentTimeMillis()
         val cached = suggestionsCache.get(anime.id)
         if (cached != null && (now - cached.timestamp) < CACHE_TTL) {
             updateSuccessState { it.copySuccess(suggestionSections = cached.sections, isSuggestionsLoading = false) }
             return
         }
-        updateSuccessState { it.copySuccess(isSuggestionsLoading = true) }
 
-        screenModelScope.launchIO {
+        fetchSuggestionsJob?.cancel()
+        fetchSuggestionsJob = screenModelScope.launch(suggestionsDispatcher) {
             try {
+                updateSuccessState { it.copySuccess(isSuggestionsLoading = true) }
+                
                 // Update affinity vector in background if needed
                 calculateUserAffinity.await()
 
-                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
+                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: run {
+                    updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
+                    return@launch
+                }
                 val library = getLibraryAnime.await()
 
                 val affinityMap = try {
@@ -798,7 +810,7 @@ class AnimeScreenModel(
                                                 emptyList()
                                             }
                                         }
-                                    }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
+                                    }.awaitAll().flatten().distinctBy { it.id to it.url }.filter { it.id != anime.id }
 
                                     updateSection(SuggestionSection.Type.Tag, results)
                                 }
@@ -813,6 +825,7 @@ class AnimeScreenModel(
             }
         }
     }
+
     fun setLocalTrack(score: Double, status: Long) {
         val state = successState ?: return
         val anime = state.anime
@@ -1173,7 +1186,7 @@ class AnimeScreenModel(
             if (!isFavorited && !successState.hasPromptedToAddBefore) {
                 updateSuccessState { it.copySuccess(hasPromptedToAddBefore = true) }
                 val result = snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.snack_add_to_anime_library), actionLabel = context.stringResource(MR.strings.action_add), withDismissAction = true)
-                if (result == SnackbarResult.ActionPerformed && !isFavorited) toggleFavorite()
+                if (result == SnackbarResult.ActionPerformed) toggleFavorite()
             }
         }
     }
@@ -1638,7 +1651,7 @@ class AnimeScreenModel(
             val selectedSeason: String? = null,
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
-            val episodeToSeason: Map<Long, String> = emptyMap(),
+            val episodeToSeason: ImmutableMap<Long, String> = persistentMapOf(),
         ) : State {
             companion object {
                 fun create(
@@ -1858,7 +1871,7 @@ class AnimeScreenModel(
                         dialog = dialog,
                         availableSeasons = sortedSeasons.toImmutableList(),
                         selectedSeason = finalSelectedSeason,
-                        episodeToSeason = episodeToSeason,
+                        episodeToSeason = episodeToSeason.toImmutableMap(),
                     )
                 }
             }
