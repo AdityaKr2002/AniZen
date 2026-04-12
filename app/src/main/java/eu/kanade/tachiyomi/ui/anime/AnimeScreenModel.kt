@@ -638,7 +638,6 @@ class AnimeScreenModel(
                         title = when (type) {
                             SuggestionSection.Type.Franchise -> "Series & Sequels"
                             SuggestionSection.Type.Similarity -> "Similar Media"
-                            SuggestionSection.Type.Author -> "More by Studio"
                             SuggestionSection.Type.Source -> "Recommended"
                             SuggestionSection.Type.Tag -> "You Might Like"
                             else -> "Other"
@@ -740,26 +739,6 @@ class AnimeScreenModel(
                                     .mapNotNull { getAnime.await(it.id) }
                                 if (domainAnimes.isNotEmpty()) updateSection(SuggestionSection.Type.Similarity, domainAnimes)
                             } catch (_: Exception) {}
-                        }
-
-                        // 2. Author/Studio (Parallel Split Search)
-                        launch {
-                            val authors = anime.author?.split(",")?.map { it.trim() }?.filter { it.length > 2 && it != "Unknown" } ?: emptyList()
-                            val results = authors.take(2).map { author ->
-                                async {
-                                    try {
-                                        val searchResult = source.getSearchAnime(1, author, source.getFilterList())
-                                        searchResult.animes
-                                            .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                            .awaitAll()
-                                            .mapNotNull { getAnime.await(it.id) }
-                                    } catch (_: Exception) {
-                                        emptyList()
-                                    }
-                                }
-                            }.awaitAll().flatten()
-
-                            if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Author, results)
                         }
 
                         // 3. Official Related (Source Provided)

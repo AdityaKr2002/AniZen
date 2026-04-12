@@ -381,10 +381,10 @@ fun ExpandableAnimeDescription(
                         contentPadding = PaddingValues(horizontal = MaterialTheme.padding.medium),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                     ) {
-                        items(
+                        itemsIndexed(
                             items = tags.distinct(),
-                            key = { "tag-" + it },
-                        ) {
+                            key = { index, tag -> "tag-$tag-$index" },
+                        ) { _, it ->
                             TagsChip(
                                 modifier = DefaultTagChipModifier,
                                 text = it,
