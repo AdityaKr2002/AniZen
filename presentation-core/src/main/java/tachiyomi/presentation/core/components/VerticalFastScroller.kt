@@ -85,6 +85,9 @@ fun VerticalFastScroller(
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
 
+            // 2025 Height Cache for fluid, non-jumpy scrolling
+            val heightCache = remember { mutableMapOf<Int, Int>() }
+
             val dragInteractionSource = remember { MutableInteractionSource() }
             val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
             val scrolled = remember {
@@ -119,13 +122,34 @@ fun VerticalFastScroller(
                 if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 
                 val layoutInfo = listState.layoutInfo
-                val firstItem = layoutInfo.visibleItemsInfo.fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true }
                 
-                val proportion = if (firstItem != null) {
-                    (firstItem.index.toFloat() + (-firstItem.offset).toFloat() / firstItem.size) / layoutInfo.totalItemsCount
-                } else {
-                    0f
+                // Update height cache with real measurements
+                layoutInfo.visibleItemsInfo.forEach { item ->
+                    if ((it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true) {
+                        heightCache[item.index] = item.size
+                    }
                 }
+
+                val totalItems = layoutInfo.totalItemsCount
+                val avgHeight = if (heightCache.isNotEmpty()) heightCache.values.average().toFloat() else 100f
+                
+                // Estimate current scroll position using cache
+                val firstVisibleIndex = listState.firstVisibleItemIndex
+                val firstVisibleOffset = listState.firstVisibleItemScrollOffset
+                
+                var currentScrollPx = 0f
+                for (i in 0 until firstVisibleIndex) {
+                    currentScrollPx += heightCache[i] ?: avgHeight
+                }
+                currentScrollPx += firstVisibleOffset
+
+                // Estimate total height
+                var estimatedTotalHeight = 0f
+                for (i in 0 until totalItems) {
+                    estimatedTotalHeight += heightCache[i] ?: avgHeight
+                }
+
+                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
                 
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
@@ -262,6 +286,9 @@ fun VerticalGridFastScroller(
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
 
+            // 2025 Row Height Cache for grids
+            val rowHeightCache = remember { mutableMapOf<Int, Int>() }
+
             val dragInteractionSource = remember { MutableInteractionSource() }
             val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
             val scrolled = remember {
@@ -313,15 +340,33 @@ fun VerticalGridFastScroller(
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 
                 val layoutInfo = state.layoutInfo
-                val firstItem = layoutInfo.visibleItemsInfo.firstOrNull()
                 
-                val proportion = if (firstItem != null) {
-                    val row = firstItem.index / columnCount
-                    val totalRows = (layoutInfo.totalItemsCount + columnCount - 1) / columnCount
-                    (row.toFloat() + (-firstItem.offset.y).toFloat() / firstItem.size.height) / totalRows
-                } else {
-                    0f
+                // Update row height cache
+                layoutInfo.visibleItemsInfo.forEach { item ->
+                    val row = item.index / columnCount
+                    rowHeightCache[row] = item.size.height
                 }
+
+                val totalItems = layoutInfo.totalItemsCount
+                val totalRows = (totalItems + columnCount - 1) / columnCount
+                val avgRowHeight = if (rowHeightCache.isNotEmpty()) rowHeightCache.values.average().toFloat() else 200f
+                
+                val firstVisibleIndex = state.firstVisibleItemIndex
+                val firstVisibleRow = firstVisibleIndex / columnCount
+                val firstVisibleOffset = state.firstVisibleItemScrollOffset
+                
+                var currentScrollPx = 0f
+                for (i in 0 until firstVisibleRow) {
+                    currentScrollPx += rowHeightCache[i] ?: avgRowHeight
+                }
+                currentScrollPx += firstVisibleOffset
+
+                var estimatedTotalHeight = 0f
+                for (i in 0 until totalRows) {
+                    estimatedTotalHeight += rowHeightCache[i] ?: avgRowHeight
+                }
+
+                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
                 
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
