@@ -199,6 +199,7 @@ fun BrowseSourceContent(
                             entries = entries,
                         )
                     }
+                    else -> {}
                 }
             }
         }
