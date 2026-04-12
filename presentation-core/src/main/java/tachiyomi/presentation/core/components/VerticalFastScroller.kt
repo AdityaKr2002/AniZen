@@ -125,7 +125,7 @@ fun VerticalFastScroller(
                 
                 // Update height cache with real measurements
                 layoutInfo.visibleItemsInfo.forEach { item ->
-                    if ((it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true) {
+                    if ((item.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true) {
                         heightCache[item.index] = item.size
                     }
                 }
@@ -139,14 +139,14 @@ fun VerticalFastScroller(
                 
                 var currentScrollPx = 0f
                 for (i in 0 until firstVisibleIndex) {
-                    currentScrollPx += heightCache[i] ?: avgHeight
+                    currentScrollPx += heightCache[i]?.toFloat() ?: avgHeight
                 }
                 currentScrollPx += firstVisibleOffset
 
                 // Estimate total height
                 var estimatedTotalHeight = 0f
                 for (i in 0 until totalItems) {
-                    estimatedTotalHeight += heightCache[i] ?: avgHeight
+                    estimatedTotalHeight += heightCache[i]?.toFloat() ?: avgHeight
                 }
 
                 val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
@@ -357,13 +357,13 @@ fun VerticalGridFastScroller(
                 
                 var currentScrollPx = 0f
                 for (i in 0 until firstVisibleRow) {
-                    currentScrollPx += rowHeightCache[i] ?: avgRowHeight
+                    currentScrollPx += rowHeightCache[i]?.toFloat() ?: avgRowHeight
                 }
                 currentScrollPx += firstVisibleOffset
 
                 var estimatedTotalHeight = 0f
                 for (i in 0 until totalRows) {
-                    estimatedTotalHeight += rowHeightCache[i] ?: avgRowHeight
+                    estimatedTotalHeight += rowHeightCache[i]?.toFloat() ?: avgRowHeight
                 }
 
                 val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
