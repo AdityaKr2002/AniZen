@@ -263,6 +263,7 @@ class RelatedAnimeScreen(val animeId: Long) : Screen() {
                                 usePanorama = usePanorama,
                             )
                         }
+                        else -> {}
                     }
                 }
             }

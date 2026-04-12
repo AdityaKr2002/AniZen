@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -381,10 +382,10 @@ fun ExpandableAnimeDescription(
                         contentPadding = PaddingValues(horizontal = MaterialTheme.padding.medium),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                     ) {
-                        items(
+                        itemsIndexed(
                             items = tags.distinct(),
-                            key = { "tag-" + it },
-                        ) {
+                            key = { index, tag -> "tag-$tag-$index" },
+                        ) { _, it ->
                             TagsChip(
                                 modifier = DefaultTagChipModifier,
                                 text = it,

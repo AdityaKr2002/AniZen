@@ -229,6 +229,9 @@ class AnimeScreenModel(
 
     val showFileSize = storagePreferences.showEpisodeFileSize().get()
 
+    private var fetchSuggestionsJob: kotlinx.coroutines.Job? = null
+    private val suggestionsDispatcher = kotlinx.coroutines.Dispatchers.IO.limitedParallelism(3)
+
     private fun State.Success.copySuccess(
         anime: Anime = this.anime,
         episodes: List<EpisodeList.Item> = this.episodes,
@@ -610,7 +613,7 @@ class AnimeScreenModel(
         val suggestionsUpdateFlow = _suggestionsUpdateFlow.asSharedFlow()
     }
 
-    private suspend fun fetchSuggestions(anime: Anime) {
+    private fun fetchSuggestions(anime: Anime) {
         val now = System.currentTimeMillis()
         val cached = suggestionsCache.get(anime.id)
         if (cached != null && (now - cached.timestamp) < CACHE_TTL) {
@@ -619,12 +622,16 @@ class AnimeScreenModel(
         }
         updateSuccessState { it.copySuccess(isSuggestionsLoading = true) }
 
-        screenModelScope.launchIO {
+        fetchSuggestionsJob?.cancel()
+        fetchSuggestionsJob = screenModelScope.launch(suggestionsDispatcher) {
             try {
                 // Update affinity vector in background if needed
                 calculateUserAffinity.await()
 
-                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
+                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: run {
+                    updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
+                    return@launch
+                }
                 val library = getLibraryAnime.await()
 
                 val affinityMap = try {
@@ -638,9 +645,9 @@ class AnimeScreenModel(
                         title = when (type) {
                             SuggestionSection.Type.Franchise -> "Series & Sequels"
                             SuggestionSection.Type.Similarity -> "Similar Media"
-                            SuggestionSection.Type.Author -> "More by Studio"
                             SuggestionSection.Type.Source -> "Recommended"
                             SuggestionSection.Type.Tag -> "You Might Like"
+                            else -> "Other"
                         },
                         items = persistentListOf(),
                         type = type
@@ -649,8 +656,8 @@ class AnimeScreenModel(
 
                 fun rankAndSortItems(items: List<Anime>, currentAnime: Anime, type: SuggestionSection.Type): List<Anime> {
                     val currentClean = eu.kanade.tachiyomi.util.lang.StringSimilarity.cleanTitle(currentAnime.title)
-                    return items.distinctBy { it.id }
-                        .filter { it.id != currentAnime.id }
+                    return items.distinctBy { it.id to it.url }
+                        .filter { it.id != currentAnime.id && it.url != currentAnime.url }
                         .map { candidate ->
                             val candClean = eu.kanade.tachiyomi.util.lang.StringSimilarity.cleanTitle(candidate.title)
 
@@ -661,13 +668,6 @@ class AnimeScreenModel(
                             var affinityScore = 0f
                             candidate.genre?.forEach { tag ->
                                 affinityScore += affinityMap[tag.trim().lowercase()] ?: 0f
-                            }
-
-                            // Author/Studio Match Boost
-                            val candAuthor = candidate.author?.lowercase() ?: ""
-                            val curAuthor = currentAnime.author?.lowercase() ?: ""
-                            if (candAuthor.isNotEmpty() && candAuthor == curAuthor) {
-                                affinityScore += 2.0f
                             }
 
                             // 3. Franchise Context
@@ -709,126 +709,110 @@ class AnimeScreenModel(
                 }
 
                 // Discovery Load
-                kotlinx.coroutines.coroutineScope {
-                    // 0. Franchise & Sequels (Strict Verification)
-                    launch {
-                        try {
-                            val rawVirtualSeasons = discoverSeasons.await(anime)
-                            if (rawVirtualSeasons.isNotEmpty()) {
-                                val validSeasons = rawVirtualSeasons
-                                    .map { async { networkToLocalAnime.await(it) } }
+                kotlinx.coroutines.withTimeoutOrNull(20000L) {
+                    kotlinx.coroutines.coroutineScope {
+                        // 0. Franchise & Sequels (Strict Verification)
+                        launch {
+                            try {
+                                val rawVirtualSeasons = discoverSeasons.await(anime)
+                                if (rawVirtualSeasons.isNotEmpty()) {
+                                    val validSeasons = rawVirtualSeasons
+                                        .map { async { networkToLocalAnime.await(it) } }
+                                        .awaitAll()
+                                        .mapNotNull { getAnime.await(it.id) }
+
+                                    if (validSeasons.isNotEmpty()) {
+                                        updateSection(SuggestionSection.Type.Franchise, validSeasons)
+                                    }
+                                }
+                            } catch (_: Exception) {}
+                        }
+
+                        // 1. Similar Media (Broad Search Probe)
+                        launch {
+                            val keywords = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
+                            try {
+                                val searchResult = source.getSearchAnime(1, keywords, source.getFilterList())
+                                val domainAnimes = searchResult.animes
+                                    .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                     .awaitAll()
                                     .mapNotNull { getAnime.await(it.id) }
-
-                                if (validSeasons.isNotEmpty()) {
-                                    updateSection(SuggestionSection.Type.Franchise, validSeasons)
-                                }
-                            }
-                        } catch (_: Exception) {}
-                    }
-
-                    // 1. Similar Media (Broad Search Probe)
-                    launch {
-                        val keywords = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
-                        try {
-                            val searchResult = source.getSearchAnime(1, keywords, source.getFilterList())
-                            val domainAnimes = searchResult.animes
-                                .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                .awaitAll()
-                                .mapNotNull { getAnime.await(it.id) }
-                            if (domainAnimes.isNotEmpty()) updateSection(SuggestionSection.Type.Similarity, domainAnimes)
-                        } catch (_: Exception) {}
-                    }
-
-                    // 2. Author/Studio (Parallel Split Search)
-                    launch {
-                        val authors = anime.author?.split(",")?.map { it.trim() }?.filter { it.length > 2 && it != "Unknown" } ?: emptyList()
-                        val results = authors.take(2).map { author ->
-                            async {
-                                try {
-                                    val searchResult = source.getSearchAnime(1, author, source.getFilterList())
-                                    searchResult.animes
-                                        .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                        .awaitAll()
-                                        .mapNotNull { getAnime.await(it.id) }
-                                } catch (_: Exception) {
-                                    emptyList()
-                                }
-                            }
-                        }.awaitAll().flatten()
-
-                        if (results.isNotEmpty()) updateSection(SuggestionSection.Type.Author, results)
-                    }
-
-                    // 3. Official Related (Source Provided)
-                    launch {
-                        getRelatedAnime.subscribe(anime).collect { (_, animes) ->
-                            if (animes.isNotEmpty()) {
-                                kotlinx.coroutines.coroutineScope {
-                                    val domainAnimes = animes
-                                        .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
-                                        .awaitAll()
-                                        .mapNotNull { getAnime.await(it.id) }
-                                    updateSection(SuggestionSection.Type.Source, domainAnimes)
-                                }
-                            }
+                                if (domainAnimes.isNotEmpty()) updateSection(SuggestionSection.Type.Similarity, domainAnimes)
+                            } catch (_: Exception) {}
                         }
-                    }
 
-                    // 4. Smart Recommendations (Parallel Tag Search)
-                    launch {
-                        kotlinx.coroutines.withTimeoutOrNull(15000L) {
-                            kotlinx.coroutines.coroutineScope {
-                                val tags = anime.genre?.take(3) ?: emptyList()
-                                val results = tags.map { tag ->
-                                    async {
-                                        try {
-                                            val filterList = source.getFilterList()
-                                            var query = tag
-
-                                            // Pro-Level: Try to find and apply the actual Genre/Tag filter from the extension
-                                            val genreFilter = filterList.find { it.name.contains("Genre", true) || it.name.contains("Tag", true) }
-                                            if (genreFilter != null) {
-                                                when (genreFilter) {
-                                                    is AnimeFilter.Select<*> -> {
-                                                        val select = genreFilter as AnimeFilter.Select<Any>
-                                                        val index = select.values.indexOfFirst { it.toString().contains(tag, true) }
-                                                        if (index != -1) {
-                                                            select.state = index
-                                                            query = "" // Clear query to use filter search
-                                                        }
-                                                    }
-                                                    is AnimeFilter.Group<*> -> {
-                                                        val subFilters = genreFilter.state as? List<*>
-                                                        val subFilter = subFilters?.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
-                                                        if (subFilter is AnimeFilter.CheckBox) {
-                                                            subFilter.state = true
-                                                            query = "" // Clear query to use filter search
-                                                        } else if (subFilter is AnimeFilter.TriState) {
-                                                            subFilter.state = AnimeFilter.TriState.STATE_INCLUDE
-                                                            query = "" // Clear query to use filter search
-                                                        }
-                                                    }
-                                                    else -> {}
-                                                }
-                                            }
-
-                                            val searchResult = source.getSearchAnime(1, query, filterList)
-                                            searchResult.animes
+                        // 3. Official Related (Source Provided)
+                        launch {
+                            try {
+                                getRelatedAnime.subscribe(anime).collect { (_, animes) ->
+                                    if (animes.isNotEmpty()) {
+                                        kotlinx.coroutines.coroutineScope {
+                                            val domainAnimes = animes
                                                 .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                                 .awaitAll()
                                                 .mapNotNull { getAnime.await(it.id) }
-                                        } catch (_: Exception) {
-                                            emptyList()
+                                            updateSection(SuggestionSection.Type.Source, domainAnimes)
                                         }
                                     }
-                                }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
+                                }
+                            } catch (_: Exception) {}
+                        }
 
-                                updateSection(SuggestionSection.Type.Tag, results)
-                            }
-                        } ?: updateSection(SuggestionSection.Type.Tag, emptyList())
+                        // 4. Smart Recommendations (Parallel Tag Search)
+                        launch {
+                            kotlinx.coroutines.withTimeoutOrNull(15000L) {
+                                kotlinx.coroutines.coroutineScope {
+                                    val tags = anime.genre?.take(3) ?: emptyList()
+                                    val results = tags.map { tag ->
+                                        async {
+                                            try {
+                                                val filterList = source.getFilterList()
+                                                var query = tag
+
+                                                // Pro-Level: Try to find and apply the actual Genre/Tag filter from the extension
+                                                val genreFilter = filterList.find { it.name.contains("Genre", true) || it.name.contains("Tag", true) }
+                                                if (genreFilter != null) {
+                                                    when (genreFilter) {
+                                                        is AnimeFilter.Select<*> -> {
+                                                            val select = genreFilter as AnimeFilter.Select<Any>
+                                                            val index = select.values.indexOfFirst { it.toString().contains(tag, true) }
+                                                            if (index != -1) {
+                                                                select.state = index
+                                                                query = "" // Clear query to use filter search
+                                                            }
+                                                        }
+                                                        is AnimeFilter.Group<*> -> {
+                                                            val subFilters = genreFilter.state as? List<*>
+                                                            val subFilter = subFilters?.find { (it as? AnimeFilter<*>)?.name?.contains(tag, true) == true }
+                                                            if (subFilter is AnimeFilter.CheckBox) {
+                                                                subFilter.state = true
+                                                                query = "" // Clear query to use filter search
+                                                            } else if (subFilter is AnimeFilter.TriState) {
+                                                                subFilter.state = AnimeFilter.TriState.STATE_INCLUDE
+                                                                query = "" // Clear query to use filter search
+                                                            }
+                                                        }
+                                                        else -> {}
+                                                    }
+                                                }
+
+                                                val searchResult = source.getSearchAnime(1, query, filterList)
+                                                searchResult.animes
+                                                    .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
+                                                    .awaitAll()
+                                                    .mapNotNull { getAnime.await(it.id) }
+                                            } catch (_: Exception) {
+                                                emptyList()
+                                            }
+                                        }
+                                    }.awaitAll().flatten().distinctBy { it.id }.filter { it.id != anime.id }
+
+                                    updateSection(SuggestionSection.Type.Tag, results)
+                                }
+                            } ?: updateSection(SuggestionSection.Type.Tag, emptyList())
+                        }
                     }
-                }
+                } ?: updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
             } catch (e: Exception) {
                 // Log error if needed
             } finally {
