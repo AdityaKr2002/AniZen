@@ -649,8 +649,8 @@ class AnimeScreenModel(
 
                 fun rankAndSortItems(items: List<Anime>, currentAnime: Anime, type: SuggestionSection.Type): List<Anime> {
                     val currentClean = eu.kanade.tachiyomi.util.lang.StringSimilarity.cleanTitle(currentAnime.title)
-                    return items.distinctBy { it.id }
-                        .filter { it.id != currentAnime.id }
+                    return items.distinctBy { it.id to it.url }
+                        .filter { it.id != currentAnime.id && it.url != currentAnime.url }
                         .map { candidate ->
                             val candClean = eu.kanade.tachiyomi.util.lang.StringSimilarity.cleanTitle(candidate.title)
 
@@ -661,13 +661,6 @@ class AnimeScreenModel(
                             var affinityScore = 0f
                             candidate.genre?.forEach { tag ->
                                 affinityScore += affinityMap[tag.trim().lowercase()] ?: 0f
-                            }
-
-                            // Author/Studio Match Boost
-                            val candAuthor = candidate.author?.lowercase() ?: ""
-                            val curAuthor = currentAnime.author?.lowercase() ?: ""
-                            if (candAuthor.isNotEmpty() && candAuthor == curAuthor) {
-                                affinityScore += 2.0f
                             }
 
                             // 3. Franchise Context

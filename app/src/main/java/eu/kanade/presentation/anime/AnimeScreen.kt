@@ -617,7 +617,7 @@ private fun AnimeScreenSmallImpl(
 
                                             val combinedItems = remember(state.suggestionSections) {
                                                 state.suggestionSections.flatMap { it.items.take(3) }
-                                                    .distinctBy { it.id }.take(15)
+                                                    .distinctBy { it.id to it.url }.take(15)
                                             }
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
@@ -626,7 +626,7 @@ private fun AnimeScreenSmallImpl(
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
                                                 ) {
-                                                    items(5) {
+                                                    items(5, key = { "skeleton-$it" }) {
                                                         SkeletonAnimeCard()
                                                     }
                                                 }
@@ -645,7 +645,7 @@ private fun AnimeScreenSmallImpl(
                                                     itemsIndexed(
                                                         items = combinedItems,
                                                         key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                    ) { index: Int, anime: tachiyomi.domain.anime.model.Anime ->
                                                         SuggestionItem(
                                                             anime = anime,
                                                             onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
@@ -1016,7 +1016,7 @@ fun AnimeScreenLargeImpl(
 
                                             val combinedItems = remember(state.suggestionSections) {
                                                 state.suggestionSections.flatMap { it.items.take(3) }
-                                                    .distinctBy { it.id }.take(15)
+                                                    .distinctBy { it.id to it.url }.take(15)
                                             }
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
@@ -1025,7 +1025,7 @@ fun AnimeScreenLargeImpl(
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
                                                 ) {
-                                                    items(5) {
+                                                    items(5, key = { "skeleton-$it" }) {
                                                         SkeletonAnimeCard()
                                                     }
                                                 }
@@ -1044,7 +1044,7 @@ fun AnimeScreenLargeImpl(
                                                     itemsIndexed(
                                                         items = combinedItems,
                                                         key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-combined-${anime.id}-$index" },
-                                                    ) { _: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                    ) { index: Int, anime: tachiyomi.domain.anime.model.Anime ->
                                                         SuggestionItem(
                                                             anime = anime,
                                                             onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
