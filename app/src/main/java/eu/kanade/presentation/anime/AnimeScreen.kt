@@ -98,6 +98,7 @@ import eu.kanade.tachiyomi.ui.anime.AnimeScreenModel
 import eu.kanade.tachiyomi.ui.anime.EpisodeList
 import eu.kanade.tachiyomi.ui.browse.extension.details.SourcePreferencesScreen
 import eu.kanade.tachiyomi.util.system.CoverColorObserver
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
