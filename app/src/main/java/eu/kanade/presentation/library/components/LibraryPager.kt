@@ -34,6 +34,7 @@ import tachiyomi.presentation.core.util.plus
 @Composable
 fun LibraryPager(
     state: PagerState,
+    categories: ImmutableList<tachiyomi.domain.category.model.Category>,
     contentPadding: PaddingValues,
     hasActiveFilters: Boolean,
     selectedAnime: ImmutableList<LibraryAnime>,
@@ -59,6 +60,7 @@ fun LibraryPager(
         HorizontalPager(
             modifier = Modifier.fillMaxSize(),
             state = state,
+            key = { categories[it].id },
             verticalAlignment = Alignment.Top,
             beyondViewportPageCount = 1,
         ) { page ->

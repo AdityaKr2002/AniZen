@@ -123,6 +123,7 @@ fun LibraryContent(
             val pagerContent = @Composable {
                 LibraryPager(
                     state = pagerState,
+                    categories = categories,
                     contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
                     hasActiveFilters = hasActiveFilters,
                     selectedAnime = selection,
