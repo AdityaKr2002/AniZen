@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,8 +33,12 @@ import eu.kanade.domain.ui.model.NavLayoutPack
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
+import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
+import eu.kanade.tachiyomi.ui.home.BrainStrategy
+import eu.kanade.tachiyomi.ui.home.NavLearningBrain
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.util.plus
+import androidx.compose.ui.platform.LocalContext
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -53,17 +58,34 @@ class NavigationGalleryScreen : Screen() {
                 )
             },
         ) { paddingValues ->
+            val context = LocalContext.current
+            
+            val strategies = remember(context) {
+                if (!NavLearningBrain.hasEnoughData(context)) return@remember emptyList()
+                
+                val configClassic = NavLearningBrain.recommendLayout(context, BrainStrategy.CLASSIC)
+                val configTrending = NavLearningBrain.recommendLayout(context, BrainStrategy.TRENDING)
+                val configFocus = NavLearningBrain.recommendLayout(context, BrainStrategy.FOCUS)
+
+                buildList {
+                    add(Triple(BrainStrategy.CLASSIC, "Daily Driver" to "Your overall habits and most used tabs over time.", configClassic))
+                    
+                    // Only show Trending if there is recent activity AND it differs from the classic layout
+                    if (NavLearningBrain.hasTrendingData() && configTrending.visibleTabs != configClassic.visibleTabs) {
+                        add(Triple(BrainStrategy.TRENDING, "Trending Now" to "What you've been focused on in the last 24 hours.", configTrending))
+                    }
+                    
+                    add(Triple(BrainStrategy.FOCUS, "Laser Focus" to "The absolute most essential tab for your current usage.", configFocus))
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = paddingValues + PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    Text(
-                        text = "Discover community-curated navigation layouts.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    PreferenceGroupHeader(title = "Community Presets")
                 }
 
                 items(NavCommunityRegistry.OFFICIAL_PACKS) { pack ->
@@ -74,6 +96,29 @@ class NavigationGalleryScreen : Screen() {
                             backPress?.invoke()
                         }
                     )
+                }
+
+                if (strategies.isNotEmpty()) {
+                    item {
+                        PreferenceGroupHeader(title = "Personalized for You")
+                    }
+
+                    items(strategies) { (strategy, details, config) ->
+                        val (name, desc) = details
+                        LayoutPackCard(
+                            pack = NavLayoutPack(
+                                id = "recommended_${strategy.name.lowercase()}",
+                                name = name,
+                                description = desc,
+                                config = config,
+                                author = "AniZen System"
+                            ),
+                            onApply = {
+                                uiPreferences.updateNavConfig(config)
+                                backPress?.invoke()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -129,20 +174,29 @@ class NavigationGalleryScreen : Screen() {
                             val item = NavItem.fromId(id)
                             if (item != null) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    val icon = if (item == NavItem.FEED) {
-                                        painterResource(item.staticIconRes)
+                                    if (item.iconVector != null) {
+                                        Icon(
+                                            imageVector = item.iconVector!!,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(4.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     } else {
-                                        rememberAnimatedVectorPainter(
-                                            AnimatedImageVector.animatedVectorResource(item.iconRes),
-                                            false
+                                        val icon = if (item == NavItem.FEED) {
+                                            painterResource(item.staticIconRes)
+                                        } else {
+                                            rememberAnimatedVectorPainter(
+                                                AnimatedImageVector.animatedVectorResource(item.iconRes),
+                                                false
+                                            )
+                                        }
+                                        Icon(
+                                            painter = icon,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(4.dp),
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                    Icon(
-                                        painter = icon,
-                                        contentDescription = null,
-                                        modifier = Modifier.padding(4.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
                                     Text(text = item.id.take(3).uppercase(), style = MaterialTheme.typography.labelSmall)
                                 }
                             }

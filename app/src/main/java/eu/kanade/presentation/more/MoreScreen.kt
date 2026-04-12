@@ -23,8 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.outlined.CallToAction
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.DynamicForm
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalLibrary
@@ -59,6 +60,7 @@ import coil3.compose.AsyncImage
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.more.settings.screen.ai.AiAssistantScreen
+import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
 import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.tachiyomi.R
@@ -202,7 +204,7 @@ fun MoreScreen(
                     MoreItem(
                         title = "Extension Health",
                         subtitle = "Real-time telemetry and source status",
-                        icon = Icons.Outlined.DynamicForm,
+                        icon = Icons.Outlined.QueryStats,
                         onClick = { navigator.push(InfrastructureScreen) }
                     )
 
@@ -224,7 +226,8 @@ fun MoreScreen(
                     hiddenTabs.forEach { navItem ->
                         MoreItem(
                             title = stringResource(navItem.titleRes),
-                            iconPainter = painterResource(navItem.staticIconRes),
+                            icon = navItem.iconVector,
+                            iconPainter = if (navItem.iconVector == null) painterResource(navItem.staticIconRes) else null,
                             onClick = {
                                 scope.launch {
                                     val homeTab = when (navItem) {
@@ -234,13 +237,18 @@ fun MoreScreen(
                                         NavItem.HISTORY -> HomeScreen.HomeTab.History
                                         NavItem.BROWSE -> HomeScreen.HomeTab.Browse()
                                         NavItem.MORE -> HomeScreen.HomeTab.More(false)
-                                        NavItem.ADAPTIVE -> HomeScreen.HomeTab.More(false)
+                                        else -> HomeScreen.HomeTab.More(false)
                                     }
                                     HomeScreen.openTab(homeTab)
                                 }
                             }
                         )
                     }
+                    MoreItem(
+                        title = stringResource(MR.strings.pref_bottom_nav_settings),
+                        icon = Icons.Outlined.CallToAction,
+                        onClick = { navigator.push(NavigationSettingsScreen(null)) }
+                    )
                     MoreItem(
                         title = stringResource(MR.strings.label_data_storage),
                         icon = Icons.Outlined.Storage,

@@ -156,15 +156,15 @@ class ShikimoriApi(
     )
 
     companion object {
-        const val BASE_URL = "https://shikimori.one"
+        const val BASE_URL = "https://shikimori.io"
         private const val API_URL = "$BASE_URL/api"
         private const val OAUTH_URL = "$BASE_URL/oauth/token"
         private const val LOGIN_URL = "$BASE_URL/oauth/authorize"
 
         private const val REDIRECT_URL = "anizen://shikimori-auth"
 
-        private const val CLIENT_ID = "aOAYRqOLwxpA8skpcQIXetNy4cw2rn2fRzScawlcQ5U"
-        private const val CLIENT_SECRET = "jqjmORn6bh2046ulkm4lHEwJ3OA1RmO3FD2sR9f6Clw"
+        private const val CLIENT_ID = "4ANcy0ijWh0GjgeSzEwoXqF00ioZpqB_qnGXaTRpilU"
+        private const val CLIENT_SECRET = "2-CbjKSBPMxm16AMhFQeTFz1eapfDvvLXjGBc3XCch8"
 
         fun authUrl(): Uri = LOGIN_URL.toUri().buildUpon()
             .appendQueryParameter("client_id", CLIENT_ID)

@@ -1,5 +1,8 @@
 package eu.kanade.domain.ui.model
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CallToAction
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
@@ -239,6 +242,7 @@ enum class NavItem(
     val tab: Tab,
     val iconRes: Int,
     val staticIconRes: Int,
+    val iconVector: ImageVector? = null,
     val behavior: NavBehavior = NavBehavior()
 ) {
     LIBRARY("library", MR.strings.label_library, LibraryTab, R.drawable.anim_library_enter, R.drawable.ic_animelibrary_outline_24dp),
@@ -246,8 +250,7 @@ enum class NavItem(
     UPDATES("updates", MR.strings.label_recent_updates, UpdatesTab, R.drawable.anim_updates_enter, R.drawable.ic_updates_outline_24dp),
     HISTORY("history", MR.strings.history, HistoryTab, R.drawable.anim_history_enter, R.drawable.ic_progress_clock_24dp),
     BROWSE("browse", MR.strings.browse, BrowseTab, R.drawable.anim_browse_enter, R.drawable.ic_browse_filled_24dp),
-    MORE("more", MR.strings.label_more, MoreTab, R.drawable.anim_more_enter, R.drawable.ic_overflow_24dp),
-    ADAPTIVE("adaptive", MR.strings.pref_bottom_nav_settings, MoreTab, R.drawable.anim_more_enter, R.drawable.ic_overflow_24dp);
+    MORE("more", MR.strings.label_more, MoreTab, R.drawable.anim_more_enter, R.drawable.ic_overflow_24dp);
 
     companion object {
         fun fromId(id: String): NavItem? = entries.find { it.id == id }

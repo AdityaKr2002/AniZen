@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.CallToAction
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Explore
@@ -41,6 +42,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.more.components.MoreItem
 import eu.kanade.presentation.more.components.MoreSection
 import eu.kanade.presentation.more.settings.screen.about.AboutScreen
+import eu.kanade.presentation.more.settings.screen.NavigationSettingsScreen
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import kotlinx.collections.immutable.persistentListOf
