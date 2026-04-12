@@ -288,13 +288,11 @@ fun NextEpisodeAiringListItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                var textHeight by remember { mutableIntStateOf(0) }
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    onTextLayout = { textHeight = it.size.height },
                     modifier = Modifier.alpha(SECONDARY_ALPHA),
                     color = MaterialTheme.colorScheme.primary,
                 )

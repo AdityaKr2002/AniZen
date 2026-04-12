@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Visibility
@@ -42,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -83,7 +85,9 @@ import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class NavigationSettingsScreen : Screen() {
+class NavigationSettingsScreen(
+    private val initialLayoutData: String? = null,
+) : Screen() {
 
     @Composable
     override fun Content() {
@@ -100,8 +104,8 @@ class NavigationSettingsScreen : Screen() {
         val haptic = LocalHapticFeedback.current
         val context = LocalContext.current
         
-        var showImportDialog by remember { mutableStateOf(false) }
-        var importInput by remember { mutableStateOf("") }
+        var showImportDialog by remember { mutableStateOf(initialLayoutData != null) }
+        var importInput by remember { mutableStateOf(initialLayoutData ?: "") }
 
         if (showImportDialog) {
             AlertDialog(
@@ -159,11 +163,10 @@ class NavigationSettingsScreen : Screen() {
                             actions = persistentListOf<AppBar.AppBarAction>(
                                 AppBar.Action(
                                     title = "Browse Gallery",
-                                    icon = Icons.Outlined.AutoAwesome,
+                                    icon = Icons.Outlined.Dashboard,
                                     onClick = { navigator.push(NavigationGalleryScreen()) },
-                                ),
-                                AppBar.OverflowAction(
-                                    title = "Copy Layout Link (Deep Link)",
+                                ),                                AppBar.OverflowAction(
+                                    title = "Copy Layout String",
                                     onClick = {
                                         val config = NavConfig(
                                             visibleTabs = bottomNavTabs.toImmutableList(),
@@ -171,9 +174,8 @@ class NavigationSettingsScreen : Screen() {
                                             behaviorMap = behaviorMap
                                         )
                                         val serialized = NavConfigSerializer.serialize(config)
-                                        val deepLink = "anizen://nav/import?data=$serialized"
-                                        context.copyToClipboard("AniZen Layout", deepLink)
-                                        context.toast("Deep link copied to clipboard")
+                                        context.copyToClipboard("AniZen Layout", serialized)
+                                        context.toast("Layout string copied to clipboard")
                                     }
                                 ),
                                 AppBar.OverflowAction(
@@ -463,10 +465,9 @@ class NavigationSettingsScreen : Screen() {
                 
                 items(
                     items = NavActionExecutor.getHistory(),
-                    key = { t: ActionTrace -> t.timestamp }
                 ) { trace: ActionTrace ->
                     Text(
-                        text = "[${trace.timestamp % 100000}] ${trace.actionName} -> ${trace.result}",
+                        text = "[${trace.timestamp % 10000}] ${trace.tabId ?: "Global"} -> ${trace.actionName} (${trace.result})",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                     )
@@ -501,14 +502,22 @@ class NavigationSettingsScreen : Screen() {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Safely get icon without potentially triggering TabNavigator crash
-                val iconPainter = rememberTabIcon(item)
-                Icon(
-                    painter = iconPainter,
-                    contentDescription = null,
-                    modifier = Modifier.padding(start = 8.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                if (item.iconVector != null) {
+                    Icon(
+                        imageVector = item.iconVector!!,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = 8.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    val iconPainter = rememberTabIcon(item)
+                    Icon(
+                        painter = iconPainter,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = 8.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
                     text = stringResource(item.titleRes),
                     modifier = Modifier
@@ -551,7 +560,7 @@ class NavigationSettingsScreen : Screen() {
     @Composable
     private fun rememberTabIcon(item: NavItem): androidx.compose.ui.graphics.painter.Painter {
         return if (item == NavItem.FEED) {
-            painterResource(item.iconRes)
+            painterResource(item.staticIconRes)
         } else {
             rememberAnimatedVectorPainter(
                 AnimatedImageVector.animatedVectorResource(item.iconRes),

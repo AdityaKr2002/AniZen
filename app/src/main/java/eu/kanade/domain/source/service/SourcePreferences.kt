@@ -119,6 +119,12 @@ class SourcePreferences(
     fun relatedAnimeShowSource() = preferenceStore.getBoolean("pref_source_related_mangas", true)
     fun relatedAnimeShowHome() = preferenceStore.getBoolean("pref_show_home_on_related_mangas", false)
     fun relatedAnimeInOverflow() = preferenceStore.getBoolean("put_related_mangas_in_overflow", false)
+    fun relatedAnimeDisplayMode() = preferenceStore.getObject(
+        "pref_related_mangas_display_mode",
+        LibraryDisplayMode.default,
+        LibraryDisplayMode.Serializer::serialize,
+        LibraryDisplayMode.Serializer::deserialize,
+    )
 
     enum class DataSaver {
         NONE,

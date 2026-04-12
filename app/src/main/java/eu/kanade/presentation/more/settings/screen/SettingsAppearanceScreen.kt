@@ -166,7 +166,7 @@ object SettingsAppearanceScreen : SearchableSettings {
                 ),
                 Preference.PreferenceItem.TextPreference(
                     title = stringResource(MR.strings.pref_bottom_nav_settings),
-                    onClick = { navigator.push(NavigationSettingsScreen()) },
+                    onClick = { navigator.push(NavigationSettingsScreen(null)) },
                 ),
                 Preference.PreferenceItem.ListPreference(
                     pref = uiPreferences.dateFormat(),

@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -88,6 +89,7 @@ import eu.kanade.domain.ui.model.NavLabelVisibility
 import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.domain.ui.model.NavAction
 import eu.kanade.presentation.util.Screen
+import eu.kanade.presentation.util.Tab
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
@@ -171,10 +173,10 @@ object HomeScreen : Screen() {
             tab = defaultTab,
             key = TAB_NAVIGATOR_KEY,
         ) { tabNavigator ->
-            val visibleTabs: List<eu.kanade.presentation.util.Tab> = remember(bottomNavTabs) {
-                bottomNavTabs.mapNotNull { id -> NavItem.fromId(id)?.tab }.filter { it.isEnabled() }
+            val visibleNavItems: List<NavItem> = remember(bottomNavTabs) {
+                bottomNavTabs.mapNotNull { id -> NavItem.fromId(id) }.filter { it.tab.isEnabled() }
             }
-            val isCurrentTabVisible = visibleTabs.any { it::class == tabNavigator.current::class }
+            val isCurrentTabVisible = visibleNavItems.any { it.tab::class == tabNavigator.current::class }
 
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
@@ -186,8 +188,8 @@ object HomeScreen : Screen() {
                             NavigationRail(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
-                                for (tabItem in visibleTabs) {
-                                    HomeNavigationRailItem(tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
+                                for (navItem in visibleNavItems) {
+                                    HomeNavigationRailItem(tabNavigator, navItem, navLabelVisibility, adaptiveDecision)
                                 }
                             }
                         }
@@ -206,9 +208,9 @@ object HomeScreen : Screen() {
                                 NavigationBar(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                 ) {
-                                    for (tabItem in visibleTabs) {
-                                        key(tabItem.key) {
-                                            HomeNavigationBarItem(this, tabNavigator, tabItem, navLabelVisibility, adaptiveDecision)
+                                    for (navItem in visibleNavItems) {
+                                        key(navItem.id) {
+                                            HomeNavigationBarItem(this, tabNavigator, navItem, navLabelVisibility, adaptiveDecision)
                                         }
                                     }
                                 }
@@ -329,32 +331,29 @@ object HomeScreen : Screen() {
     private fun RowScope.HomeNavigationBarItem(
         rowScope: RowScope,
         tabNavigator: TabNavigator,
-        tab: eu.kanade.presentation.util.Tab,
+        navItem: NavItem,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
     ) {
+        val tab = navItem.tab
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
-        val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
+        val behavior = behaviorMap[navItem.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
         
-        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-            adaptiveDecision.reason
-        } else {
-            navItem?.let { stringResource(it.titleRes) } ?: tab.options.title
-        }
+        val title = stringResource(navItem.titleRes)
 
         with(rowScope) {
             NavigationBarItem(
                 selected = selected,
                 onClick = {
                     if (!selected) {
+                        executor.logClick(navItem.id)
                         tabNavigator.current = tab
                     } else {
                         scope.launch { tab.onReselect(navigator) }
@@ -364,24 +363,25 @@ object HomeScreen : Screen() {
                     onLongClick = {
                         if (behavior.onLongClick != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onLongClick)
+                            executor.execute(behavior.onLongClick, navItem.id)
                         }
                     },
                     onDoubleClick = {
                         if (behavior.onDoubleTap != NavAction.Default) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onDoubleTap)
+                            executor.execute(behavior.onDoubleTap, navItem.id)
                         }
                     },
                     onClick = {
                         if (!selected) {
+                            executor.logClick(navItem.id)
                             tabNavigator.current = tab
                         } else {
                             scope.launch { tab.onReselect(navigator) }
                         }
                     }
                 ),
-                icon = { NavigationIconItem(tab, adaptiveDecision) },
+                icon = { NavigationIconItem(navItem, adaptiveDecision) },
                 label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                     {
                         Text(
@@ -400,27 +400,23 @@ object HomeScreen : Screen() {
     @Composable
     private fun HomeNavigationRailItem(
         tabNavigator: TabNavigator,
-        tab: eu.kanade.presentation.util.Tab,
+        navItem: NavItem,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
     ) {
+        val tab = navItem.tab
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val navItem = remember(tab) { NavItem.fromId(NavItem.entries.find { it.tab == tab }?.id ?: "") }
-        val behavior = behaviorMap[navItem?.id] ?: NavBehavior()
+        val behavior = behaviorMap[navItem.id] ?: NavBehavior()
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
         val executor = remember { NavActionExecutor(context, scope, navigator) }
 
-        val title = if (navItem == NavItem.ADAPTIVE && adaptiveDecision != null) {
-            adaptiveDecision.reason
-        } else {
-            navItem?.let { stringResource(it.titleRes) } ?: tab.options.title
-        }
+        val title = stringResource(navItem.titleRes)
 
         NavigationRailItem(
             selected = selected,
@@ -435,24 +431,25 @@ object HomeScreen : Screen() {
                 onLongClick = {
                     if (behavior.onLongClick != NavAction.Default) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onLongClick)
+                        executor.execute(behavior.onLongClick, navItem.id)
                     }
                 },
                 onDoubleClick = {
                     if (behavior.onDoubleTap != NavAction.Default) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onDoubleTap)
+                        executor.execute(behavior.onDoubleTap, navItem.id)
                     }
                 },
                 onClick = {
                     if (!selected) {
+                        executor.logClick(navItem.id)
                         tabNavigator.current = tab
                     } else {
                         scope.launch { tab.onReselect(navigator) }
                     }
                 }
             ),
-            icon = { NavigationIconItem(tab, adaptiveDecision) },
+            icon = { NavigationIconItem(navItem, adaptiveDecision) },
             label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
                     Text(
@@ -470,9 +467,10 @@ object HomeScreen : Screen() {
     @OptIn(ExperimentalAnimationGraphicsApi::class)
     @Composable
     private fun NavigationIconItem(
-        tab: eu.kanade.presentation.util.Tab,
+        navItem: NavItem,
         adaptiveDecision: AdaptiveDecision?,
     ) {
+        val tab = navItem.tab
         val tabNavigator = LocalTabNavigator.current
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         val selected = tabNavigator.current.key == tab.key
@@ -534,15 +532,8 @@ object HomeScreen : Screen() {
                 }
             },
         ) {
-            val navItem = remember(tab) { NavItem.entries.find { it.tab == tab } }
-            
             val iconPainter = when {
-                navItem == NavItem.ADAPTIVE && adaptiveDecision != null -> {
-                    rememberAnimatedVectorPainter(
-                        AnimatedImageVector.animatedVectorResource(R.drawable.anim_more_enter), // Placeholder
-                        selected
-                    )
-                }
+                navItem.iconVector != null -> null
                 LibraryTab::class.isInstance(tab) -> {
                     rememberAnimatedVectorPainter(
                         AnimatedImageVector.animatedVectorResource(R.drawable.anim_library_enter),
@@ -579,11 +570,19 @@ object HomeScreen : Screen() {
                 else -> painterResource(R.drawable.ic_browse_filled_24dp)
             }
 
-            Icon(
-                painter = iconPainter,
-                contentDescription = tab.options.title,
-                tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
-            )
+            if (navItem.iconVector != null) {
+                Icon(
+                    imageVector = navItem.iconVector!!,
+                    contentDescription = stringResource(navItem.titleRes),
+                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+                )
+            } else {
+                Icon(
+                    painter = iconPainter!!,
+                    contentDescription = stringResource(navItem.titleRes),
+                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+                )
+            }
         }
     }
 

@@ -85,6 +85,9 @@ fun VerticalFastScroller(
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
 
+            // 2025 Height Cache for fluid, non-jumpy scrolling
+            val heightCache = remember { mutableMapOf<Int, Int>() }
+
             val dragInteractionSource = remember { MutableInteractionSource() }
             val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
             val scrolled = remember {
@@ -117,9 +120,37 @@ fun VerticalFastScroller(
             // When list scrolled
             LaunchedEffect(listState.firstVisibleItemScrollOffset, listState.firstVisibleItemIndex) {
                 if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = listState)
-                val scrollRange = computeScrollRange(state = listState)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                
+                val layoutInfo = listState.layoutInfo
+                
+                // Update height cache with real measurements
+                layoutInfo.visibleItemsInfo.forEach { item ->
+                    if ((item.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true) {
+                        heightCache[item.index] = item.size
+                    }
+                }
+
+                val totalItems = layoutInfo.totalItemsCount
+                val avgHeight = if (heightCache.isNotEmpty()) heightCache.values.average().toFloat() else 100f
+                
+                // Estimate current scroll position using cache
+                val firstVisibleIndex = listState.firstVisibleItemIndex
+                val firstVisibleOffset = listState.firstVisibleItemScrollOffset
+                
+                var currentScrollPx = 0f
+                for (i in 0 until firstVisibleIndex) {
+                    currentScrollPx += heightCache[i]?.toFloat() ?: avgHeight
+                }
+                currentScrollPx += firstVisibleOffset
+
+                // Estimate total height
+                var estimatedTotalHeight = 0f
+                for (i in 0 until totalItems) {
+                    estimatedTotalHeight += heightCache[i]?.toFloat() ?: avgHeight
+                }
+
+                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
@@ -255,6 +286,9 @@ fun VerticalGridFastScroller(
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
 
+            // 2025 Row Height Cache for grids
+            val rowHeightCache = remember { mutableMapOf<Int, Int>() }
+
             val dragInteractionSource = remember { MutableInteractionSource() }
             val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
             val scrolled = remember {
@@ -304,9 +338,36 @@ fun VerticalGridFastScroller(
             // When list scrolled
             LaunchedEffect(state.firstVisibleItemScrollOffset, state.firstVisibleItemIndex) {
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = state)
-                val scrollRange = computeScrollRange(state = state)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                
+                val layoutInfo = state.layoutInfo
+                
+                // Update row height cache
+                layoutInfo.visibleItemsInfo.forEach { item ->
+                    val row = item.index / columnCount
+                    rowHeightCache[row] = item.size.height
+                }
+
+                val totalItems = layoutInfo.totalItemsCount
+                val totalRows = (totalItems + columnCount - 1) / columnCount
+                val avgRowHeight = if (rowHeightCache.isNotEmpty()) rowHeightCache.values.average().toFloat() else 200f
+                
+                val firstVisibleIndex = state.firstVisibleItemIndex
+                val firstVisibleRow = firstVisibleIndex / columnCount
+                val firstVisibleOffset = state.firstVisibleItemScrollOffset
+                
+                var currentScrollPx = 0f
+                for (i in 0 until firstVisibleRow) {
+                    currentScrollPx += rowHeightCache[i]?.toFloat() ?: avgRowHeight
+                }
+                currentScrollPx += firstVisibleOffset
+
+                var estimatedTotalHeight = 0f
+                for (i in 0 until totalRows) {
+                    estimatedTotalHeight += rowHeightCache[i]?.toFloat() ?: avgRowHeight
+                }
+
+                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
@@ -376,58 +437,6 @@ fun VerticalGridFastScroller(
             }
         }
     }
-}
-
-private fun computeScrollOffset(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems.first()
-    val endChild = visibleItems.last()
-    val minPosition = min(startChild.index, endChild.index)
-    val maxPosition = max(startChild.index, endChild.index)
-    val itemsBefore = minPosition.coerceAtLeast(0)
-    val startDecoratedTop = startChild.offset.y
-    val laidOutArea = abs((endChild.offset.y + endChild.size.height) - startDecoratedTop)
-    val itemRange = abs(minPosition - maxPosition) + 1
-    val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
-}
-
-private fun computeScrollRange(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems.first()
-    val endChild = visibleItems.last()
-    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
-    val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
-}
-
-private fun computeScrollOffset(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems
-        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true } ?: visibleItems.first()
-    val endChild = visibleItems.last()
-    val minPosition = min(startChild.index, endChild.index)
-    val maxPosition = max(startChild.index, endChild.index)
-    val itemsBefore = minPosition.coerceAtLeast(0)
-    val startDecoratedTop = startChild.top
-    val laidOutArea = abs(endChild.bottom - startDecoratedTop)
-    val itemRange = abs(minPosition - maxPosition) + 1
-    val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
-}
-
-private fun computeScrollRange(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0 || state.layoutInfo.visibleItemsInfo.isEmpty()) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems
-        .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true } ?: visibleItems.first()
-    val endChild = visibleItems.last()
-    val laidOutArea = endChild.bottom - startChild.top
-    val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
 }
 
 object Scroller {

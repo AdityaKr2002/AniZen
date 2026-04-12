@@ -1,117 +1,160 @@
 package eu.kanade.tachiyomi.ui.browse.source.browse
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
-import tachiyomi.domain.source.service.SourceManager
+import eu.kanade.core.preference.asState
+import eu.kanade.domain.anime.interactor.UpdateAnime
+import eu.kanade.domain.source.service.SourcePreferences
+import eu.kanade.presentation.util.ioCoroutineScope
+import eu.kanade.tachiyomi.ui.anime.AnimeScreenModel
+import eu.kanade.tachiyomi.ui.anime.SuggestionSection
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
-import logcat.LogPriority
+import kotlinx.coroutines.launch
 import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.anime.interactor.GetAnime
-import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
+import tachiyomi.domain.anime.interactor.GetLibraryAnime
 import tachiyomi.domain.anime.model.Anime
-import tachiyomi.domain.anime.model.toDomainAnime
-import tachiyomi.domain.source.interactor.GetRelatedAnime
+import tachiyomi.domain.anime.model.toAnimeUpdate
+import tachiyomi.domain.category.interactor.GetCategories
+import tachiyomi.domain.category.interactor.SetAnimeCategories
+import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.library.model.LibraryDisplayMode
+import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.time.Instant
 
 class RelatedAnimeScreenModel(
     private val animeId: Long,
-    private val getRelatedAnime: GetRelatedAnime = Injekt.get(),
     private val getAnime: GetAnime = Injekt.get(),
-    private val networkToLocalAnime: NetworkToLocalAnime = Injekt.get(),
-    private val sourceManager: SourceManager = Injekt.get(),
+    private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
+    private val getCategories: GetCategories = Injekt.get(),
+    private val setAnimeCategories: SetAnimeCategories = Injekt.get(),
+    private val updateAnime: UpdateAnime = Injekt.get(),
+    private val sourcePreferences: SourcePreferences = Injekt.get(),
+    private val libraryPreferences: LibraryPreferences = Injekt.get(),
 ) : StateScreenModel<RelatedAnimeScreenModel.State>(State()) {
+
+    var displayMode by sourcePreferences.relatedAnimeDisplayMode().asState(screenModelScope)
 
     init {
         screenModelScope.launchIO {
             val anime = getAnime.await(animeId) ?: return@launchIO
             mutableState.update { it.copy(title = anime.title) }
 
-            // 1. Source-provided related anime (Flow)
-            val sourceJob = launchIO {
-                getRelatedAnime.subscribe(anime).collect { (keyword, animes) ->
-                    if (animes.isNotEmpty()) {
-                        val domainAnimes = coroutineScope {
-                            animes.map {
-                                async {
-                                    val localAnime = networkToLocalAnime.await(it.toDomainAnime(anime.source))
-                                    getAnime.await(localAnime.id)
-                                }
-                            }.awaitAll().filterNotNull()
-                        }
-                        
-                        mutableState.update { state ->
-                            state.copy(
-                                items = state.items.put(keyword, domainAnimes.toImmutableList()),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 2. Hybrid Intelligence Fallback (Calculated)
-            launchIO {
-                // Wait a bit for source to provide results first to avoid UI jump
-                kotlinx.coroutines.delay(1000)
-                
-                val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return@launchIO
-                val query = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
-                if (query.isBlank()) return@launchIO
-
-                try {
-                    val searchResult = source.getSearchAnime(1, query, source.getFilterList())
-                    val domainAnimes = coroutineScope {
-                        searchResult.animes
-                            .filter { it.url != anime.url }
-                            .map { sAnime ->
-                                async {
-                                    val localAnime = networkToLocalAnime.await(sAnime.toDomainAnime(anime.source))
-                                    val fullAnime = getAnime.await(localAnime.id) ?: return@async null
-                                    
-                                    val titleSim = eu.kanade.tachiyomi.util.lang.StringSimilarity.tokenSortRatio(anime.title, fullAnime.title)
-                                    val genreOverlap = if (!anime.genre.isNullOrEmpty() && !fullAnime.genre.isNullOrEmpty()) {
-                                        val intersect = anime.genre!!.intersect(fullAnime.genre!!.toSet()).size
-                                        intersect.toDouble() / anime.genre!!.size.coerceAtLeast(1)
-                                    } else 0.0
-                                    
-                                    val totalScore = eu.kanade.tachiyomi.util.lang.StringSimilarity.adaptiveScore(titleSim, genreOverlap)
-                                    
-                                    if (totalScore < 0.25) return@async null
-                                    fullAnime to totalScore
-                                }
-                            }.awaitAll().filterNotNull()
-                            .sortedByDescending { it.second }
-                            .map { it.first }
-                            .take(24)
-                    }
-                    
-                    if (domainAnimes.isNotEmpty()) {
-                        mutableState.update { state ->
-                            // Only add if not already present or if we want to augment
-                            if (!state.items.containsKey("Recommended Intelligence")) {
-                                state.copy(
-                                    items = state.items.put("Recommended Intelligence", domainAnimes.toImmutableList()),
-                                )
-                            } else {
-                                state
+            // Reactive update: Listen for cache changes
+            AnimeScreenModel.suggestionsUpdateFlow
+                .filter { it == animeId }
+                .onStart { emit(animeId) }
+                .collect { _ ->
+                    val cached = AnimeScreenModel.suggestionsCache.get(animeId)
+                    if (cached != null) {
+                        var newItems = persistentMapOf<String, ImmutableList<Anime>>()
+                        cached.sections.forEach { section ->
+                            if (section.items.isEmpty()) return@forEach
+                            val title = when (section.type) {
+                                SuggestionSection.Type.Franchise -> "Franchise"
+                                SuggestionSection.Type.Similarity -> "Similar"
+                                SuggestionSection.Type.Source -> section.title
+                                SuggestionSection.Type.Tag -> "Tags"
+                                else -> section.title
                             }
+                            newItems = newItems.put(title, section.items)
                         }
+                        mutableState.update { it.copy(items = newItems) }
                     }
-                } catch (e: Exception) {
-                    logcat(LogPriority.ERROR, e)
                 }
+        }
+
+        screenModelScope.launchIO {
+            getLibraryAnime.subscribe()
+                .collect { libraryAnime ->
+                    val favoriteIds = libraryAnime.map { it.id }.toImmutableSet()
+                    mutableState.update { it.copy(favoriteIds = favoriteIds) }
+                }
+        }
+    }
+
+    fun toggleSelection(anime: Anime) {
+        mutableState.update { state ->
+            val isSelected = state.selection.any { it.id == anime.id }
+            val newSelection = if (isSelected) {
+                state.selection.filterNot { it.id == anime.id }
+            } else {
+                state.selection + anime
             }
+            state.copy(selection = newSelection.toImmutableList())
+        }
+    }
+
+    fun clearSelection() {
+        mutableState.update { it.copy(selection = persistentListOf()) }
+    }
+
+    fun selectAll() {
+        mutableState.update { state ->
+            val allItems = state.items.values.flatten().distinctBy { it.id }.toImmutableList()
+            state.copy(selection = allItems)
+        }
+    }
+
+    fun invertSelection() {
+        mutableState.update { state ->
+            val allItems = state.items.values.flatten().distinctBy { it.id }
+            val newSelection = allItems.filterNot { anime -> state.selection.any { it.id == anime.id } }
+            state.copy(selection = newSelection.toImmutableList())
+        }
+    }
+
+    fun addSelectionToLibrary() {
+        val selection = state.value.selection
+        val favoriteIds = state.value.favoriteIds
+        screenModelScope.launchIO {
+            val categories = getCategories.await()
+            val defaultCategoryId = libraryPreferences.defaultCategory().get()
+            val defaultCategory = categories.find { it.id == defaultCategoryId.toLong() }
+
+            selection.filter { it.id !in favoriteIds }.forEach { anime ->
+                val categoryIds = listOfNotNull(defaultCategory?.id ?: if (categories.isEmpty()) null else categories.first().id)
+                setAnimeCategories.await(anime.id, categoryIds)
+                updateAnime.await(
+                    anime.copy(
+                        favorite = true,
+                        dateAdded = Instant.now().toEpochMilli(),
+                    ).toAnimeUpdate(),
+                )
+            }
+            clearSelection()
+        }
+    }
+
+    fun removeSelectionFromLibrary() {
+        val selection = state.value.selection
+        val favoriteIds = state.value.favoriteIds
+        screenModelScope.launchIO {
+            selection.filter { it.id in favoriteIds }.forEach { anime ->
+                updateAnime.await(
+                    anime.copy(
+                        favorite = false,
+                        dateAdded = 0,
+                    ).toAnimeUpdate(),
+                )
+            }
+            clearSelection()
         }
     }
 
@@ -119,5 +162,9 @@ class RelatedAnimeScreenModel(
     data class State(
         val title: String = "",
         val items: PersistentMap<String, ImmutableList<Anime>> = persistentMapOf(),
-    )
+        val selection: ImmutableList<Anime> = persistentListOf(),
+        val favoriteIds: ImmutableSet<Long> = persistentSetOf(),
+    ) {
+        val selectionMode: Boolean get() = selection.isNotEmpty()
+    }
 }

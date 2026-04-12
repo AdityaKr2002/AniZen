@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -80,6 +81,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -148,27 +150,38 @@ fun AnimeInfoBox(
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.05f)),
     ) {
         // Backdrop
-        val backdropGradientColors = listOf(
-            Color.Transparent,
-            MaterialTheme.colorScheme.background,
-        )
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
+        val backgroundColor = MaterialTheme.colorScheme.background
+        val backdropGradientColors = remember(backgroundColor) {
+            listOf(
+                Color.Transparent,
+                backgroundColor,
+            )
+        }
+        val backdropBrush = remember(backdropGradientColors) {
+            Brush.verticalGradient(colors = backdropGradientColors)
+        }
+        val context = LocalContext.current
+        val backdropImageRequest = remember(anime) {
+            ImageRequest.Builder(context)
                 .data(anime)
                 .crossfade(true)
-                .build(),
+                .build()
+        }
+        AsyncImage(
+            model = backdropImageRequest,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .matchParentSize()
+                .clipToBounds()
                 .drawWithContent {
                     drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(colors = backdropGradientColors),
-                    )
+                    drawRect(brush = backdropBrush)
                 }
                 .blur(4.dp)
-                .alpha(0.25f),
+                .graphicsLayer {
+                    alpha = 0.25f
+                },
         )
 
         // Anime & source info
@@ -220,7 +233,7 @@ fun AnimeActionRow(
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
-    val uiPreferences: eu.kanade.domain.ui.UiPreferences = Injekt.get()
+    val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val topPadding by uiPreferences.animeItemSpacing().collectAsState()
 
     Column(
@@ -369,10 +382,10 @@ fun ExpandableAnimeDescription(
                         contentPadding = PaddingValues(horizontal = MaterialTheme.padding.medium),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                     ) {
-                        items(
+                        itemsIndexed(
                             items = tags.distinct(),
-                            key = { "tag-" + it },
-                        ) {
+                            key = { index, tag -> "tag-$tag-$index" },
+                        ) { _, it ->
                             TagsChip(
                                 modifier = DefaultTagChipModifier,
                                 text = it,

@@ -108,7 +108,9 @@ class UiPreferences(
     fun adaptiveTimeRule() = preferenceStore.getBoolean("adaptive_rule_time", true)
     fun adaptiveTimeRuleStart() = preferenceStore.getInt("adaptive_rule_time_start", 1) // 1 AM
     fun adaptiveTimeRuleEnd() = preferenceStore.getInt("adaptive_rule_time_end", 5) // 5 AM
-    fun adaptiveTelemetryEnabled() = preferenceStore.getBoolean("adaptive_telemetry_enabled", true)
+    fun adaptiveTelemetryEnabled() = preferenceStore.getBoolean("adaptive_telemetry_enabled", false)
+
+    fun navActionHistory() = preferenceStore.getString("nav_action_history_v1", "[]")
 
     fun lastOnlineNavConfig() = preferenceStore.getString("last_online_nav_config", "")
 
@@ -176,7 +178,7 @@ class UiPreferences(
 
     fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", true)
 
-    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 24)
+    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 15)
 
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
@@ -203,7 +205,17 @@ class UiPreferences(
         return pref
     }
 
-    fun containerStyles() = preferenceStore.getStringSet("pref_ui_container_styles", emptySet())
+    fun containerStyles() = preferenceStore.getStringSet(
+        "pref_ui_container_styles",
+        setOf(
+            ContainerStyle.LIBRARY,
+            ContainerStyle.UPDATES,
+            ContainerStyle.HISTORY,
+            ContainerStyle.DETAILS,
+            ContainerStyle.SETTINGS,
+            ContainerStyle.BROWSE,
+        ),
+    )
 
     fun animatedTransitions() = preferenceStore.getBoolean("pref_animated_transitions_key", true)
 

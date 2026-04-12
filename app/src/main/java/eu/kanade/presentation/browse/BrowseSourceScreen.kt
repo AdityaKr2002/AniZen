@@ -199,6 +199,7 @@ fun BrowseSourceContent(
                             entries = entries,
                         )
                     }
+                    else -> {}
                 }
             }
         }
@@ -281,7 +282,7 @@ private fun BrowseSourceSkeleton(
         horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
         userScrollEnabled = false,
     ) {
-        items(24) {
+        items(24, key = { "skeleton-$it" }) {
             SkeletonAnimeCard(
                 modifier = Modifier.fillMaxWidth(),
                 ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio,
