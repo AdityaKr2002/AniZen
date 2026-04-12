@@ -69,9 +69,9 @@ class RelatedAnimeScreenModel(
                             val title = when (section.type) {
                                 SuggestionSection.Type.Franchise -> "Franchise"
                                 SuggestionSection.Type.Similarity -> "Similar"
-                                SuggestionSection.Type.Author -> section.title
                                 SuggestionSection.Type.Source -> section.title
                                 SuggestionSection.Type.Tag -> "Tags"
+                                else -> section.title
                             }
                             newItems = newItems.put(title, section.items)
                         }
