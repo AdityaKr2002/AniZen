@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -113,10 +114,10 @@ fun InfrastructureScreen(
                             if (report.systemLogs.isEmpty()) {
                                 item { EmptyState("System is nominal. No alerts generated.") }
                             }
-                            items(
+                            itemsIndexed(
                                 items = report.systemLogs,
                                 key = { index, log -> "log-${log.timestamp}-$index" }
-                            ) { log ->
+                            ) { _, log ->
                                 LogEntryRow(log)
                             }
                         }
