@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import tachiyomi.data.DatabaseHandler
+import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.model.SourceWithCount
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.repository.SourcePagingSourceType
@@ -77,17 +78,17 @@ class SourceRepositoryImpl(
         query: String,
         filterList: FilterList,
     ): SourcePagingSourceType {
-        val source = sourceManager.get(sourceId) as CatalogueSource
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: throw SourceNotInstalledException()
         return SourceSearchPagingSource(source, query, filterList)
     }
 
     override fun getPopular(sourceId: Long): SourcePagingSourceType {
-        val source = sourceManager.get(sourceId) as CatalogueSource
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: throw SourceNotInstalledException()
         return SourcePopularPagingSource(source)
     }
 
     override fun getLatest(sourceId: Long): SourcePagingSourceType {
-        val source = sourceManager.get(sourceId) as CatalogueSource
+        val source = sourceManager.get(sourceId) as? CatalogueSource ?: throw SourceNotInstalledException()
         return SourceLatestPagingSource(source)
     }
 
