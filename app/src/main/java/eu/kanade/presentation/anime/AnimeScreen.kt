@@ -348,7 +348,7 @@ private fun AnimeScreenSmallImpl(
     onLocalScoreClicked: () -> Unit,
     onToggleDiscoveryExpansion: () -> Unit,
     onSeasonSelected: (String?) -> Unit,
-    combinedItems: ImmutableList<tachiyomi.domain.anime.model.Anime>,
+    combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
@@ -739,7 +739,7 @@ fun AnimeScreenLargeImpl(
     onLocalScoreClicked: () -> Unit,
     onToggleDiscoveryExpansion: () -> Unit,
     onSeasonSelected: (String?) -> Unit,
-    combinedItems: ImmutableList<tachiyomi.domain.anime.model.Anime>,
+    combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
