@@ -113,7 +113,10 @@ fun InfrastructureScreen(
                             if (report.systemLogs.isEmpty()) {
                                 item { EmptyState("System is nominal. No alerts generated.") }
                             }
-                            items(report.systemLogs) { log ->
+                            items(
+                                items = report.systemLogs,
+                                key = { index, log -> "log-${log.timestamp}-$index" }
+                            ) { log ->
                                 LogEntryRow(log)
                             }
                         }
