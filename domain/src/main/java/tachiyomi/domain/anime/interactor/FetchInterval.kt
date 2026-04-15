@@ -19,7 +19,7 @@ class FetchInterval(
         dateTime: ZonedDateTime,
         window: Pair<Long, Long>,
     ): AnimeUpdate {
-        val interval = anime.fetchInterval.takeIf { it < 0 } ?: calculateInterval(
+        val interval = anime.fetchInterval.takeIf { it < 0 || it == MANUAL_DISABLE } ?: calculateInterval(
             episodes = getEpisodesByAnimeId.await(anime.id, applyScanlatorFilter = true),
             zone = dateTime.zone,
         )

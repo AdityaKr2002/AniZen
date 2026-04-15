@@ -278,7 +278,7 @@ fun AnimeActionRow(
                             nextUpdateDays
                         )
                     },
-                    icon = if (fetchInterval == -tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
+                    icon = if (fetchInterval == tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
                         Icons.Outlined.HourglassDisabled
                     } else {
                         Icons.Default.HourglassEmpty

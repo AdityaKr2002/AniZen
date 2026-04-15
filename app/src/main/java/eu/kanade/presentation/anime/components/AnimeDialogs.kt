@@ -83,14 +83,14 @@ fun SetIntervalDialog(
     onValueChanged: ((Int) -> Unit)? = null,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100 && interval != -FetchInterval.MANUAL_DISABLE) }
+    var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100 && interval != FetchInterval.MANUAL_DISABLE) }
     
     // Standard Interval State
     // Index mapping: 0 -> Disabled (99999), 1 -> Default (0), 2+ -> Days (1+)
     var selectedIntervalIndex by rememberSaveable { 
         mutableIntStateOf(
             when {
-                interval == -FetchInterval.MANUAL_DISABLE -> 0
+                interval == FetchInterval.MANUAL_DISABLE -> 0
                 interval < 0 && interval >= -100 -> -interval + 1
                 else -> 1
             }
@@ -99,7 +99,7 @@ fun SetIntervalDialog(
 
     // Scheduled State
     // fetchInterval = -(10000 + D*1000 + H*60 + M)
-    val initialEncoded = if (interval < -100 && interval != -FetchInterval.MANUAL_DISABLE) -interval - 10000 else 0
+    val initialEncoded = if (interval < -100 && interval != FetchInterval.MANUAL_DISABLE) -interval - 10000 else 0
     var selectedDayIndex by rememberSaveable { 
         mutableIntStateOf(if (initialEncoded > 0) {
             val d = initialEncoded / 1000 // 1-7
@@ -139,7 +139,7 @@ fun SetIntervalDialog(
         title = { Text(stringResource(MR.strings.pref_library_update_smart_update)) },
         text = {
             Column {
-                if (nextUpdateDays != null && nextUpdateDays >= 0 && interval != -FetchInterval.MANUAL_DISABLE) {
+                if (nextUpdateDays != null && nextUpdateDays >= 0 && interval != FetchInterval.MANUAL_DISABLE) {
                     Text(
                         stringResource(
                             MR.strings.anime_interval_expected_update,
@@ -265,7 +265,7 @@ fun SetIntervalDialog(
             TextButton(onClick = {
                 val newValue = if (!isScheduledMode) {
                     when (selectedIntervalIndex) {
-                        0 -> -FetchInterval.MANUAL_DISABLE
+                        0 -> FetchInterval.MANUAL_DISABLE
                         1 -> 0
                         else -> -(selectedIntervalIndex - 1)
                     }
