@@ -4,16 +4,13 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import eu.kanade.domain.ui.UiPreferences
-import eu.kanade.domain.ui.model.NavItem
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
@@ -23,7 +20,10 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.base.BasePreferences
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavItem
 import eu.kanade.presentation.more.MoreScreen
+import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
@@ -31,11 +31,11 @@ import eu.kanade.tachiyomi.data.connections.discord.DiscordScreen
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
+import eu.kanade.tachiyomi.ui.libraryUpdateError.LibraryUpdateErrorScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.setting.PlayerSettingsScreen
 import eu.kanade.tachiyomi.ui.setting.SettingsScreen
 import eu.kanade.tachiyomi.ui.stats.StatsScreen
-import eu.kanade.tachiyomi.ui.libraryUpdateError.LibraryUpdateErrorScreen
 import eu.kanade.tachiyomi.util.system.isInstalledFromFDroid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.combine
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -81,23 +82,25 @@ data object MoreTab : Tab {
             }
         }
 
-        MoreScreen(
-            downloadQueueStateProvider = { downloadQueueState },
-            downloadedOnly = screenModel.downloadedOnly,
-            onDownloadedOnlyChange = { screenModel.downloadedOnly = it },
-            incognitoMode = screenModel.incognitoMode,
-            onIncognitoModeChange = { screenModel.incognitoMode = it },
-            isFDroid = context.isInstalledFromFDroid(),
-            hiddenTabs = hiddenTabs,
-            onClickDownloadQueue = { navigator.push(DownloadQueueScreen) },
-            onClickCategories = { navigator.push(CategoryScreen) },
-            onClickStats = { navigator.push(StatsScreen) },
-            onClickLibraryUpdateErrors = { navigator.push(LibraryUpdateErrorScreen()) },
-            onClickDataAndStorage = { navigator.push(SettingsScreen(SettingsScreen.Destination.DataAndStorage)) },
-            onClickPlayerSettings = { navigator.push(PlayerSettingsScreen) },
-            onClickSettings = { navigator.push(SettingsScreen()) },
-            onClickAbout = { navigator.push(SettingsScreen(SettingsScreen.Destination.About)) },
-        )
+        CompositionLocalProvider(LocalBackPress provides navigator::pop) {
+            MoreScreen(
+                downloadQueueStateProvider = { downloadQueueState },
+                downloadedOnly = screenModel.downloadedOnly,
+                onDownloadedOnlyChange = { screenModel.downloadedOnly = it },
+                incognitoMode = screenModel.incognitoMode,
+                onIncognitoModeChange = { screenModel.incognitoMode = it },
+                isFDroid = context.isInstalledFromFDroid(),
+                hiddenTabs = hiddenTabs,
+                onClickDownloadQueue = { navigator.push(DownloadQueueScreen) },
+                onClickCategories = { navigator.push(CategoryScreen) },
+                onClickStats = { navigator.push(StatsScreen) },
+                onClickLibraryUpdateErrors = { navigator.push(LibraryUpdateErrorScreen()) },
+                onClickDataAndStorage = { navigator.push(SettingsScreen(SettingsScreen.Destination.DataAndStorage)) },
+                onClickPlayerSettings = { navigator.push(PlayerSettingsScreen) },
+                onClickSettings = { navigator.push(SettingsScreen()) },
+                onClickAbout = { navigator.push(SettingsScreen(SettingsScreen.Destination.About)) },
+            )
+        }
 
         LaunchedEffect(Unit) {
             (context as? MainActivity)?.ready = true
