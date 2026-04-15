@@ -36,6 +36,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.WheelTextPicker
 import tachiyomi.presentation.core.components.material.padding
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.i18n.stringResource
 import java.time.Instant
