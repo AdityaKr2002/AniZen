@@ -19,7 +19,10 @@ class FetchInterval(
         dateTime: ZonedDateTime,
         window: Pair<Long, Long>,
     ): AnimeUpdate {
-        val interval = anime.fetchInterval.takeIf { it < 0 || it == MANUAL_DISABLE } ?: calculateInterval(
+        if (anime.fetchInterval == MANUAL_DISABLE) {
+            return AnimeUpdate(id = anime.id, nextUpdate = 0L, fetchInterval = MANUAL_DISABLE)
+        }
+        val interval = anime.fetchInterval.takeIf { it < 0 } ?: calculateInterval(
             episodes = getEpisodesByAnimeId.await(anime.id, applyScanlatorFilter = true),
             zone = dateTime.zone,
         )
@@ -92,6 +95,7 @@ class FetchInterval(
         dateTime: ZonedDateTime,
         window: Pair<Long, Long>,
     ): Long {
+        if (manga.fetchInterval == MANUAL_DISABLE) return 0L
         if (manga.nextUpdate in window.first.rangeTo(window.second + 1)) {
             return manga.nextUpdate
         }
@@ -144,7 +148,6 @@ class FetchInterval(
         private const val GRACE_PERIOD = 1L
 
         // KMK -->
-        const val MANUAL_DISABLE = 99999 // 274 years in future
-        // KMK <--
+        const val MANUAL_DISABLE = -1 // KMK <--
     }
 }

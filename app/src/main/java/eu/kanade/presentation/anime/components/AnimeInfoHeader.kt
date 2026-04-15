@@ -269,14 +269,18 @@ fun AnimeActionRow(
                     onLongClick = onEditCategory,
                 )
                 AnimeActionButton(
-                    title = when (nextUpdateDays) {
-                        null -> stringResource(MR.strings.not_applicable)
-                        0 -> stringResource(MR.strings.manga_interval_expected_update_soon)
-                        else -> pluralStringResource(
-                            MR.plurals.day,
-                            count = nextUpdateDays,
-                            nextUpdateDays
-                        )
+                    title = if (fetchInterval == tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
+                        stringResource(MR.strings.disabled)
+                    } else {
+                        when (nextUpdateDays) {
+                            null -> stringResource(MR.strings.not_applicable)
+                            0 -> stringResource(MR.strings.manga_interval_expected_update_soon)
+                            else -> pluralStringResource(
+                                MR.plurals.day,
+                                count = nextUpdateDays,
+                                nextUpdateDays
+                            )
+                        }
                     },
                     icon = if (fetchInterval == tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
                         Icons.Outlined.HourglassDisabled
