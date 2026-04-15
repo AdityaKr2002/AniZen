@@ -84,44 +84,48 @@ fun SetIntervalDialog(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100) }
-    
+
     // Standard Interval State
     // Index mapping: 0 -> Disabled (-1), 1 -> Default (0), 2+ -> Days (1+)
-    var selectedIntervalIndex by rememberSaveable { 
+    var selectedIntervalIndex by rememberSaveable {
         mutableIntStateOf(
             when {
                 interval == FetchInterval.MANUAL_DISABLE -> 0
                 interval == 0 -> 1
-                interval < 0 -> absoluteValue + 1
+                interval < 0 -> interval.absoluteValue
                 else -> 1
-            }
-        ) 
+            },
+        )
     }
 
     // Scheduled State
     // fetchInterval = -(10000 + D*1000 + H*60 + M)
     val initialEncoded = if (interval < -100) -interval - 10000 else 0
-    var selectedDayIndex by rememberSaveable { 
-        mutableIntStateOf(if (initialEncoded > 0) {
-            val d = initialEncoded / 1000 // 1-7
-            // Map 1-7 (Mon-Sun) to 0-6 (Sat-Fri)
-            // Sat=6, Sun=7, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5
-            when (d) {
-                6 -> 0 // Sat
-                7 -> 1 // Sun
-                1 -> 2 // Mon
-                2 -> 3 // Tue
-                3 -> 4 // Wed
-                4 -> 5 // Thu
-                5 -> 6 // Fri
-                else -> 0
-            }
-        } else 0) 
+    var selectedDayIndex by rememberSaveable {
+        mutableIntStateOf(
+            if (initialEncoded > 0) {
+                val d = initialEncoded / 1000 // 1-7
+                // Map 1-7 (Mon-Sun) to 0-6 (Sat-Fri)
+                // Sat=6, Sun=7, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5
+                when (d) {
+                    6 -> 0 // Sat
+                    7 -> 1 // Sun
+                    1 -> 2 // Mon
+                    2 -> 3 // Tue
+                    3 -> 4 // Wed
+                    4 -> 5 // Thu
+                    5 -> 6 // Fri
+                    else -> 0
+                }
+            } else {
+                0
+            },
+        )
     }
-    
+
     val initialHour24 = if (initialEncoded > 0) (initialEncoded % 1000) / 60 else 0
     val initialMinute = if (initialEncoded > 0) initialEncoded % 60 else 0
-    
+
     var selectedHour12 by rememberSaveable { mutableIntStateOf(if (initialHour24 % 12 == 0) 12 else initialHour24 % 12) }
     var selectedMinute by rememberSaveable { mutableIntStateOf(initialMinute) }
     var selectedAmPm by rememberSaveable { mutableIntStateOf(if (initialHour24 < 12) 0 else 1) }
@@ -151,28 +155,19 @@ fun SetIntervalDialog(
                                 count = nextUpdateDays,
                                 nextUpdateDays,
                             ),
-                            if (isScheduledMode) "weekly" else {
+                            if (isScheduledMode) {
+                                "weekly"
+                            } else {
                                 val days = if (selectedIntervalIndex > 1) selectedIntervalIndex - 1 else 0
-                                if (days == 0) stringResource(MR.strings.label_default) else pluralStringResource(
-                                    MR.plurals.day,
-                                    count = days,
-                                    days,
-                                )
-                            },
-                        ),
-                    )
-                } else {
-                    Text(
-                        stringResource(MR.strings.anime_interval_expected_update_null),
-                    )
-                }
-                            if (isScheduledMode) "weekly" else {
-                                val days = if (selectedIntervalIndex > 1) selectedIntervalIndex - 1 else 0
-                                if (days == 0) stringResource(MR.strings.label_default) else pluralStringResource(
-                                    MR.plurals.day,
-                                    count = days,
-                                    days,
-                                )
+                                if (days == 0) {
+                                    stringResource(MR.strings.label_default)
+                                } else {
+                                    pluralStringResource(
+                                        MR.plurals.day,
+                                        count = days,
+                                        days,
+                                    )
+                                }
                             },
                         ),
                     )
@@ -233,20 +228,20 @@ fun SetIntervalDialog(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Select Day and Time (12h)", style = MaterialTheme.typography.labelMedium)
                             Spacer(Modifier.height(8.dp))
-                            
+
                             WheelTextPicker(
                                 items = dayOptions,
                                 size = DpSize(width = 150.dp, height = 90.dp),
                                 startIndex = selectedDayIndex,
                                 onSelectionChanged = { selectedDayIndex = it },
                             )
-                            
+
                             Spacer(Modifier.height(8.dp))
-                            
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 WheelTextPicker(
                                     items = hourOptions,
@@ -280,36 +275,38 @@ fun SetIntervalDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                val newValue = if (!isScheduledMode) {
-                    when (selectedIntervalIndex) {
-                        0 -> FetchInterval.MANUAL_DISABLE
-                        1 -> 0
-                        else -> -(selectedIntervalIndex - 1)
+            TextButton(
+                onClick = {
+                    val newValue = if (!isScheduledMode) {
+                        when (selectedIntervalIndex) {
+                            0 -> FetchInterval.MANUAL_DISABLE
+                            1 -> 0
+                            else -> -selectedIntervalIndex
+                        }
+                    } else {
+                        // Map 0-6 (Sat-Fri) back to 1-7 (Mon-Sun)
+                        val d = when (selectedDayIndex) {
+                            0 -> 6 // Sat
+                            1 -> 7 // Sun
+                            2 -> 1 // Mon
+                            3 -> 2 // Tue
+                            4 -> 3 // Wed
+                            5 -> 4 // Thu
+                            6 -> 5 // Fri
+                            else -> 1
+                        }
+                        val h24 = when {
+                            selectedAmPm == 0 && selectedHour12 == 12 -> 0
+                            selectedAmPm == 0 -> selectedHour12
+                            selectedAmPm == 1 && selectedHour12 == 12 -> 12
+                            else -> selectedHour12 + 12
+                        }
+                        -(10000 + d * 1000 + h24 * 60 + selectedMinute)
                     }
-                } else {
-                    // Map 0-6 (Sat-Fri) back to 1-7 (Mon-Sun)
-                    val d = when (selectedDayIndex) {
-                        0 -> 6 // Sat
-                        1 -> 7 // Sun
-                        2 -> 1 // Mon
-                        3 -> 2 // Tue
-                        4 -> 3 // Wed
-                        5 -> 4 // Thu
-                        6 -> 5 // Fri
-                        else -> 1
-                    }
-                    val h24 = when {
-                        selectedAmPm == 0 && selectedHour12 == 12 -> 0
-                        selectedAmPm == 0 -> selectedHour12
-                        selectedAmPm == 1 && selectedHour12 == 12 -> 12
-                        else -> selectedHour12 + 12
-                    }
-                    -(10000 + d * 1000 + h24 * 60 + selectedMinute)
-                }
-                onValueChanged?.invoke(newValue)
-                onDismissRequest()
-            }) {
+                    onValueChanged?.invoke(newValue)
+                    onDismissRequest()
+                },
+            ) {
                 Text(text = stringResource(MR.strings.action_ok))
             }
         },
