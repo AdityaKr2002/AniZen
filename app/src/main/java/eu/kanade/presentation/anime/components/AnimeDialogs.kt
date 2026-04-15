@@ -265,9 +265,9 @@ fun SetIntervalDialog(
             TextButton(onClick = {
                 val newValue = if (!isScheduledMode) {
                     when (selectedIntervalIndex) {
-                        0 -> FetchInterval.MANUAL_DISABLE
+                        0 -> -FetchInterval.MANUAL_DISABLE
                         1 -> 0
-                        else -> selectedIntervalIndex - 1
+                        else -> -(selectedIntervalIndex - 1)
                     }
                 } else {
                     // Map 0-6 (Sat-Fri) back to 1-7 (Mon-Sun)
@@ -287,9 +287,7 @@ fun SetIntervalDialog(
                         selectedAmPm == 1 && selectedHour12 == 12 -> 12
                         else -> selectedHour12 + 12
                     }
-                    10000 + d * 100 + h24 * 60 + selectedMinute // Wait, there was a typo in previous encoding (1000 instead of 100? No, let's keep it consistent)
-                    // Let's re-verify previous encoding: 10000 + d * 1000 + h24 * 60 + selectedMinute
-                    10000 + d * 1000 + h24 * 60 + selectedMinute
+                    -(10000 + d * 1000 + h24 * 60 + selectedMinute)
                 }
                 onValueChanged?.invoke(newValue)
                 onDismissRequest()
