@@ -218,10 +218,12 @@ fun AnimeActionRow(
     favorite: Boolean,
     trackingCount: Int,
     nextUpdate: Instant?,
+    isUserIntervalMode: Boolean,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
+    onEditIntervalClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onEditCategory: (() -> Unit)?,
     onContinueWatching: () -> Unit,
@@ -235,6 +237,15 @@ fun AnimeActionRow(
 
     val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val topPadding by uiPreferences.animeItemSpacing().collectAsState()
+
+    val nextUpdateDays = remember(nextUpdate) {
+        return@remember if (nextUpdate != null) {
+            val now = Instant.now()
+            now.until(nextUpdate, ChronoUnit.DAYS).toInt().coerceAtLeast(0)
+        } else {
+            null
+        }
+    }
 
     Column(
         modifier = modifier.padding(start = 16.dp, top = topPadding.dp, end = 16.dp, bottom = 4.dp),
@@ -254,6 +265,16 @@ fun AnimeActionRow(
                     color = if (favorite) MaterialTheme.colorScheme.primary else defaultActionButtonColor,
                     onClick = onAddToLibraryClicked,
                     onLongClick = onEditCategory,
+                )
+                AnimeActionButton(
+                    title = when (nextUpdateDays) {
+                        null -> stringResource(MR.strings.not_applicable)
+                        0 -> stringResource(MR.strings.manga_interval_expected_update_soon)
+                        else -> pluralStringResource(MR.plurals.day, count = nextUpdateDays, nextUpdateDays)
+                    },
+                    icon = Icons.Default.HourglassEmpty,
+                    color = if (isUserIntervalMode) MaterialTheme.colorScheme.primary else defaultActionButtonColor,
+                    onClick = { onEditIntervalClicked?.invoke() },
                 )
                 AnimeActionButton(
                     title = run {

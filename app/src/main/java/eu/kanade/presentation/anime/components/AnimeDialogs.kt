@@ -1,12 +1,19 @@
 package eu.kanade.presentation.anime.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.resources.StringResource
-import eu.kanade.tachiyomi.util.system.isReleaseBuildType
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.domain.anime.interactor.FetchInterval
@@ -66,6 +73,7 @@ fun DeleteEpisodesDialog(
     )
 }
 
+@androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
 fun SetIntervalDialog(
     interval: Int,
@@ -73,7 +81,38 @@ fun SetIntervalDialog(
     onDismissRequest: () -> Unit,
     onValueChanged: ((Int) -> Unit)? = null,
 ) {
-    var selectedInterval by rememberSaveable { mutableIntStateOf(if (interval < 0) -interval else 0) }
+    var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100) }
+    
+    // Standard Interval State
+    var selectedInterval by rememberSaveable { mutableIntStateOf(if (interval < 0 && interval >= -100) -interval else 0) }
+
+    // Scheduled State
+    // fetchInterval = -(10000 + D*1000 + H*60 + M)
+    val initialEncoded = if (interval < -100) -interval - 10000 else 0
+    var selectedDayIndex by rememberSaveable { 
+        mutableIntStateOf(if (initialEncoded > 0) {
+            val d = initialEncoded / 1000 // 1-7
+            // Map 1-7 (Mon-Sun) to 0-6 (Sat-Fri)
+            // Sat=6, Sun=7, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5
+            when (d) {
+                6 -> 0 // Sat
+                7 -> 1 // Sun
+                1 -> 2 // Mon
+                2 -> 3 // Tue
+                3 -> 4 // Wed
+                4 -> 5 // Thu
+                5 -> 6 // Fri
+                else -> 0
+            }
+        } else 0) 
+    }
+    
+    val initialHour24 = if (initialEncoded > 0) (initialEncoded % 1000) / 60 else 0
+    val initialMinute = if (initialEncoded > 0) initialEncoded % 60 else 0
+    
+    var selectedHour12 by rememberSaveable { mutableIntStateOf(if (initialHour24 % 12 == 0) 12 else initialHour24 % 12) }
+    var selectedMinute by rememberSaveable { mutableIntStateOf(initialMinute) }
+    var selectedAmPm by rememberSaveable { mutableIntStateOf(if (initialHour24 < 12) 0 else 1) }
 
     val nextUpdateDays = remember(nextUpdate) {
         return@remember if (nextUpdate != null) {
@@ -89,7 +128,7 @@ fun SetIntervalDialog(
         title = { Text(stringResource(MR.strings.pref_library_update_smart_update)) },
         text = {
             Column {
-                if (nextUpdateDays != null && nextUpdateDays >= 0 && interval >= 0) {
+                if (nextUpdateDays != null && nextUpdateDays >= 0) {
                     Text(
                         stringResource(
                             MR.strings.anime_interval_expected_update,
@@ -98,10 +137,10 @@ fun SetIntervalDialog(
                                 count = nextUpdateDays,
                                 nextUpdateDays,
                             ),
-                            pluralStringResource(
+                            if (isScheduledMode) "weekly" else pluralStringResource(
                                 MR.plurals.day,
-                                count = interval.absoluteValue,
-                                interval.absoluteValue,
+                                count = selectedInterval.absoluteValue,
+                                selectedInterval.absoluteValue,
                             ),
                         ),
                     )
@@ -110,31 +149,97 @@ fun SetIntervalDialog(
                         stringResource(MR.strings.anime_interval_expected_update_null),
                     )
                 }
-                Spacer(Modifier.height(MaterialTheme.padding.small))
+                Spacer(Modifier.height(MaterialTheme.padding.medium))
 
-                if (onValueChanged != null && (!isReleaseBuildType)) {
-                    Text(stringResource(MR.strings.manga_interval_custom_amount))
-
-                    BoxWithConstraints(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
+                SegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    SegmentedButton(
+                        selected = !isScheduledMode,
+                        onClick = { isScheduledMode = false },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                     ) {
-                        val size = DpSize(width = maxWidth / 2, height = 128.dp)
-                        val items = (0..FetchInterval.MAX_INTERVAL)
-                            .map {
-                                if (it == 0) {
-                                    stringResource(MR.strings.label_default)
-                                } else {
-                                    it.toString()
+                        Text("Interval")
+                    }
+                    SegmentedButton(
+                        selected = isScheduledMode,
+                        onClick = { isScheduledMode = true },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    ) {
+                        Text("Scheduled")
+                    }
+                }
+
+                Spacer(Modifier.height(MaterialTheme.padding.medium))
+
+                if (onValueChanged != null) {
+                    if (!isScheduledMode) {
+                        Text(stringResource(MR.strings.manga_interval_custom_amount), style = MaterialTheme.typography.labelMedium)
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            val size = DpSize(width = maxWidth / 2, height = 128.dp)
+                            val items = (0..FetchInterval.MAX_INTERVAL)
+                                .map {
+                                    if (it == 0) {
+                                        stringResource(MR.strings.label_default)
+                                    } else {
+                                        it.toString()
+                                    }
                                 }
+                                .toImmutableList()
+                            WheelTextPicker(
+                                items = items,
+                                size = size,
+                                startIndex = selectedInterval,
+                                onSelectionChanged = { selectedInterval = it },
+                            )
+                        }
+                    } else {
+                        val dayOptions = persistentListOf("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+                        val hourOptions = (1..12).map { it.toString() }.toImmutableList()
+                        val minuteOptions = (0..59).map { it.toString().padStart(2, '0') }.toImmutableList()
+                        val amPmOptions = persistentListOf("AM", "PM")
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Select Day and Time (12h)", style = MaterialTheme.typography.labelMedium)
+                            Spacer(Modifier.height(8.dp))
+                            
+                            WheelTextPicker(
+                                items = dayOptions,
+                                size = DpSize(width = 150.dp, height = 90.dp),
+                                startIndex = selectedDayIndex,
+                                onSelectionChanged = { selectedDayIndex = it },
+                            )
+                            
+                            Spacer(Modifier.height(8.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                WheelTextPicker(
+                                    items = hourOptions,
+                                    size = DpSize(width = 60.dp, height = 90.dp),
+                                    startIndex = selectedHour12 - 1,
+                                    onSelectionChanged = { selectedHour12 = it + 1 },
+                                )
+                                Text(":", style = MaterialTheme.typography.titleLarge)
+                                WheelTextPicker(
+                                    items = minuteOptions,
+                                    size = DpSize(width = 60.dp, height = 90.dp),
+                                    startIndex = selectedMinute,
+                                    onSelectionChanged = { selectedMinute = it },
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                WheelTextPicker(
+                                    items = amPmOptions,
+                                    size = DpSize(width = 60.dp, height = 90.dp),
+                                    startIndex = selectedAmPm,
+                                    onSelectionChanged = { selectedAmPm = it },
+                                )
                             }
-                            .toImmutableList()
-                        WheelTextPicker(
-                            items = items,
-                            size = size,
-                            startIndex = selectedInterval,
-                            onSelectionChanged = { selectedInterval = it },
-                        )
+                        }
                     }
                 }
             }
@@ -146,7 +251,29 @@ fun SetIntervalDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                onValueChanged?.invoke(selectedInterval)
+                val newValue = if (!isScheduledMode) {
+                    selectedInterval
+                } else {
+                    // Map 0-6 (Sat-Fri) back to 1-7 (Mon-Sun)
+                    val d = when (selectedDayIndex) {
+                        0 -> 6 // Sat
+                        1 -> 7 // Sun
+                        2 -> 1 // Mon
+                        3 -> 2 // Tue
+                        4 -> 3 // Wed
+                        5 -> 4 // Thu
+                        6 -> 5 // Fri
+                        else -> 1
+                    }
+                    val h24 = when {
+                        selectedAmPm == 0 && selectedHour12 == 12 -> 0
+                        selectedAmPm == 0 -> selectedHour12
+                        selectedAmPm == 1 && selectedHour12 == 12 -> 12
+                        else -> selectedHour12 + 12
+                    }
+                    10000 + d * 1000 + h24 * 60 + selectedMinute
+                }
+                onValueChanged?.invoke(newValue)
                 onDismissRequest()
             }) {
                 Text(text = stringResource(MR.strings.action_ok))

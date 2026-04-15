@@ -225,10 +225,11 @@ class AnimeScreen(
             onEpisodeSelected = screenModel::toggleSelection,
             onAllEpisodeSelected = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
-            onLocalScoreClicked = screenModel::showLocalScoreDialog,
+            onLocalScoreClicked = screenModel::showLocalScorePicker,
+            onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog,
             onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
             onSeasonSelected = screenModel::onSeasonSelected,
-        )
+            )
 
         val onDismissRequest = {
             screenModel.dismissDialog()
