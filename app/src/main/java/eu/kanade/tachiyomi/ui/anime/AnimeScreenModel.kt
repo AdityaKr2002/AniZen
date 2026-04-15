@@ -553,10 +553,7 @@ class AnimeScreenModel(
                 val needRefreshInfo = !initialAnime.initialized
                 val needRefreshEpisode = initialEpisodes.isEmpty()
                 
-                // Refresh if not initialized or if it's been a while (smart auto-refresh)
-                val isStale = System.currentTimeMillis() - initialAnime.lastUpdate > 10 * 60 * 1000L // 10 minutes
-                
-                if (needRefreshInfo || needRefreshEpisode || isStale) {
+                if (needRefreshInfo || needRefreshEpisode) {
                     val fetchFromSourceTasks = listOf(
                         async { fetchAnimeFromSource() },
                         async { fetchEpisodesFromSource() },
@@ -1585,7 +1582,7 @@ class AnimeScreenModel(
 
     fun setFetchInterval(anime: Anime, interval: Int) {
         screenModelScope.launchIO {
-            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval))) {
+            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = interval, nextUpdate = 0L))) {
                 val updatedAnime = animeRepository.getAnimeById(anime.id)
                 updateSuccessState { it.copySuccess(anime = updatedAnime) }
             }

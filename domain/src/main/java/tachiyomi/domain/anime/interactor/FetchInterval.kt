@@ -19,6 +19,9 @@ class FetchInterval(
         dateTime: ZonedDateTime,
         window: Pair<Long, Long>,
     ): AnimeUpdate {
+        if (anime.fetchInterval == MANUAL_DISABLE) {
+            return AnimeUpdate(id = anime.id, nextUpdate = 0L, fetchInterval = MANUAL_DISABLE)
+        }
         val interval = anime.fetchInterval.takeIf { it < 0 } ?: calculateInterval(
             episodes = getEpisodesByAnimeId.await(anime.id, applyScanlatorFilter = true),
             zone = dateTime.zone,
@@ -92,8 +95,25 @@ class FetchInterval(
         dateTime: ZonedDateTime,
         window: Pair<Long, Long>,
     ): Long {
+        if (manga.fetchInterval == MANUAL_DISABLE) return 0L
         if (manga.nextUpdate in window.first.rangeTo(window.second + 1)) {
             return manga.nextUpdate
+        }
+
+        if (interval < -100) {
+            val encoded = -interval - 10000
+            val dayOfWeek = encoded / 1000 // 1 (Mon) to 7 (Sun)
+            val hour = (encoded % 1000) / 60
+            val minute = encoded % 60
+
+            var next = dateTime.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+            if (next.isBefore(dateTime) || next.isEqual(dateTime)) {
+                next = next.plusDays(1)
+            }
+            while (next.dayOfWeek.value != dayOfWeek) {
+                next = next.plusDays(1)
+            }
+            return next.toInstant().toEpochMilli()
         }
 
         val latestDate = ZonedDateTime.ofInstant(
@@ -128,7 +148,6 @@ class FetchInterval(
         private const val GRACE_PERIOD = 1L
 
         // KMK -->
-        const val MANUAL_DISABLE = 99999 // 274 years in future
-        // KMK <--
+        const val MANUAL_DISABLE = -1 // KMK <--
     }
 }

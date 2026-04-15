@@ -28,6 +28,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.connections.discord.DiscordRPCService
 import eu.kanade.tachiyomi.data.connections.discord.DiscordScreen
 import eu.kanade.tachiyomi.ui.anime.AnimeScreen
+import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
@@ -58,6 +59,10 @@ data object UpdatesTab : Tab {
                 icon = rememberAnimatedVectorPainter(AnimatedImageVector.animatedVectorResource(R.drawable.anim_updates_enter), false),
             )
         }
+
+    override suspend fun onReselect(navigator: Navigator) {
+        navigator.push(DownloadQueueScreen)
+    }
 
     @Composable
     override fun Content() {
