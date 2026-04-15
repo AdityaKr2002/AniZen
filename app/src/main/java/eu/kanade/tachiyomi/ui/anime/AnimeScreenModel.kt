@@ -1582,7 +1582,7 @@ class AnimeScreenModel(
 
     fun setFetchInterval(anime: Anime, interval: Int) {
         screenModelScope.launchIO {
-            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval))) {
+            if (updateAnime.awaitUpdateFetchInterval(anime.copy(fetchInterval = -interval, nextUpdate = 0L))) {
                 val updatedAnime = animeRepository.getAnimeById(anime.id)
                 updateSuccessState { it.copySuccess(anime = updatedAnime) }
             }
