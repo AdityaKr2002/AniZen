@@ -81,14 +81,24 @@ fun SetIntervalDialog(
     onDismissRequest: () -> Unit,
     onValueChanged: ((Int) -> Unit)? = null,
 ) {
-    var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var isScheduledMode by rememberSaveable { mutableStateOf(interval < -100 && interval != -FetchInterval.MANUAL_DISABLE) }
     
     // Standard Interval State
-    var selectedInterval by rememberSaveable { mutableIntStateOf(if (interval < 0 && interval >= -100) -interval else 0) }
+    // Index mapping: 0 -> Disabled (99999), 1 -> Default (0), 2+ -> Days (1+)
+    var selectedIntervalIndex by rememberSaveable { 
+        mutableIntStateOf(
+            when {
+                interval == -FetchInterval.MANUAL_DISABLE -> 0
+                interval < 0 && interval >= -100 -> -interval + 1
+                else -> 1
+            }
+        ) 
+    }
 
     // Scheduled State
     // fetchInterval = -(10000 + D*1000 + H*60 + M)
-    val initialEncoded = if (interval < -100) -interval - 10000 else 0
+    val initialEncoded = if (interval < -100 && interval != -FetchInterval.MANUAL_DISABLE) -interval - 10000 else 0
     var selectedDayIndex by rememberSaveable { 
         mutableIntStateOf(if (initialEncoded > 0) {
             val d = initialEncoded / 1000 // 1-7
@@ -128,7 +138,7 @@ fun SetIntervalDialog(
         title = { Text(stringResource(MR.strings.pref_library_update_smart_update)) },
         text = {
             Column {
-                if (nextUpdateDays != null && nextUpdateDays >= 0) {
+                if (nextUpdateDays != null && nextUpdateDays >= 0 && interval != -FetchInterval.MANUAL_DISABLE) {
                     Text(
                         stringResource(
                             MR.strings.anime_interval_expected_update,
@@ -137,11 +147,14 @@ fun SetIntervalDialog(
                                 count = nextUpdateDays,
                                 nextUpdateDays,
                             ),
-                            if (isScheduledMode) "weekly" else pluralStringResource(
-                                MR.plurals.day,
-                                count = selectedInterval.absoluteValue,
-                                selectedInterval.absoluteValue,
-                            ),
+                            if (isScheduledMode) "weekly" else {
+                                val days = if (selectedIntervalIndex > 1) selectedIntervalIndex - 1 else 0
+                                if (days == 0) stringResource(MR.strings.label_default) else pluralStringResource(
+                                    MR.plurals.day,
+                                    count = days,
+                                    days,
+                                )
+                            },
                         ),
                     )
                 } else {
@@ -178,20 +191,18 @@ fun SetIntervalDialog(
                             contentAlignment = Alignment.Center,
                         ) {
                             val size = DpSize(width = maxWidth / 2, height = 128.dp)
-                            val items = (0..FetchInterval.MAX_INTERVAL)
-                                .map {
-                                    if (it == 0) {
-                                        stringResource(MR.strings.label_default)
-                                    } else {
-                                        it.toString()
-                                    }
-                                }
-                                .toImmutableList()
+                            val items = remember {
+                                buildList {
+                                    add("Disabled")
+                                    add(context.stringResource(MR.strings.label_default))
+                                    addAll((1..FetchInterval.MAX_INTERVAL).map { it.toString() })
+                                }.toImmutableList()
+                            }
                             WheelTextPicker(
                                 items = items,
                                 size = size,
-                                startIndex = selectedInterval,
-                                onSelectionChanged = { selectedInterval = it },
+                                startIndex = selectedIntervalIndex,
+                                onSelectionChanged = { selectedIntervalIndex = it },
                             )
                         }
                     } else {
@@ -252,7 +263,11 @@ fun SetIntervalDialog(
         confirmButton = {
             TextButton(onClick = {
                 val newValue = if (!isScheduledMode) {
-                    selectedInterval
+                    when (selectedIntervalIndex) {
+                        0 -> FetchInterval.MANUAL_DISABLE
+                        1 -> 0
+                        else -> selectedIntervalIndex - 1
+                    }
                 } else {
                     // Map 0-6 (Sat-Fri) back to 1-7 (Mon-Sun)
                     val d = when (selectedDayIndex) {
@@ -271,6 +286,8 @@ fun SetIntervalDialog(
                         selectedAmPm == 1 && selectedHour12 == 12 -> 12
                         else -> selectedHour12 + 12
                     }
+                    10000 + d * 100 + h24 * 60 + selectedMinute // Wait, there was a typo in previous encoding (1000 instead of 100? No, let's keep it consistent)
+                    // Let's re-verify previous encoding: 10000 + d * 1000 + h24 * 60 + selectedMinute
                     10000 + d * 1000 + h24 * 60 + selectedMinute
                 }
                 onValueChanged?.invoke(newValue)
