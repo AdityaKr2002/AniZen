@@ -37,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
@@ -51,9 +52,8 @@ import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Schedule
-import eu.kanade.tachiyomi.source.getNameForAnimeInfo
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.HourglassDisabled
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -219,6 +219,7 @@ fun AnimeActionRow(
     trackingCount: Int,
     nextUpdate: Instant?,
     isUserIntervalMode: Boolean,
+    fetchInterval: Int,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -235,7 +236,7 @@ fun AnimeActionRow(
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
-    val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
+    val uiPreferences = remember { uy.kohesive.injekt.Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
     val topPadding by uiPreferences.animeItemSpacing().collectAsState()
 
     val nextUpdateDays = remember(nextUpdate) {
@@ -276,7 +277,11 @@ fun AnimeActionRow(
                             nextUpdateDays
                         )
                     },
-                    icon = Icons.Default.HourglassEmpty,
+                    icon = if (fetchInterval == -tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
+                        Icons.Outlined.HourglassDisabled
+                    } else {
+                        Icons.Default.HourglassEmpty
+                    },
                     color = if (isUserIntervalMode) MaterialTheme.colorScheme.primary else defaultActionButtonColor,
                     onClick = { if (favorite) onEditIntervalClicked?.invoke() },
                 )
