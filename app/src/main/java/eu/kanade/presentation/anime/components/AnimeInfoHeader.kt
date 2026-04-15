@@ -270,11 +270,15 @@ fun AnimeActionRow(
                     title = when (nextUpdateDays) {
                         null -> stringResource(MR.strings.not_applicable)
                         0 -> stringResource(MR.strings.manga_interval_expected_update_soon)
-                        else -> pluralStringResource(MR.plurals.day, count = nextUpdateDays, nextUpdateDays)
+                        else -> pluralStringResource(
+                            MR.plurals.day,
+                            count = nextUpdateDays,
+                            nextUpdateDays
+                        )
                     },
                     icon = Icons.Default.HourglassEmpty,
                     color = if (isUserIntervalMode) MaterialTheme.colorScheme.primary else defaultActionButtonColor,
-                    onClick = { onEditIntervalClicked?.invoke() },
+                    onClick = { if (favorite) onEditIntervalClicked?.invoke() },
                 )
                 AnimeActionButton(
                     title = run {
