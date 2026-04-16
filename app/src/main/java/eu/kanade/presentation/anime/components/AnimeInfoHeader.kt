@@ -221,6 +221,7 @@ fun AnimeActionRow(
     nextUpdate: Instant?,
     isUserIntervalMode: Boolean,
     fetchInterval: Int,
+    status: Long,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -269,7 +270,9 @@ fun AnimeActionRow(
                     onLongClick = onEditCategory,
                 )
                 AnimeActionButton(
-                    title = if (fetchInterval == tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
+                    title = if (status == SAnime.COMPLETED.toLong()) {
+                        stringResource(MR.strings.not_applicable)
+                    } else if (fetchInterval == tachiyomi.domain.anime.interactor.FetchInterval.MANUAL_DISABLE) {
                         stringResource(MR.strings.disabled)
                     } else {
                         when (nextUpdateDays) {
