@@ -28,6 +28,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.source.localanime.LocalAnimeSource
 import tachiyomi.source.localanime.io.Archive
 import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
