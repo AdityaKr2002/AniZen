@@ -301,6 +301,9 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _videoPanY = MutableStateFlow(0f)
     val videoPanY = _videoPanY.asStateFlow()
 
+    private val _videoAspectOverride = MutableStateFlow<Double?>(null)
+    val videoAspectOverride = _videoAspectOverride.asStateFlow()
+
     val isSeekingUI = MutableStateFlow(false)
 
     private var hasTriggeredWatching = false
@@ -797,8 +800,19 @@ class PlayerViewModel @JvmOverloads constructor(
         }
         MPVLib.setPropertyDouble("panscan", pan)
         MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        _videoAspectOverride.value = ratio
         playerPreferences.aspectState().set(aspect)
         playerUpdate.update { PlayerUpdates.AspectRatio }
+    }
+
+    fun setCustomVideoAspect(ratio: Double) {
+        _videoAspectOverride.value = ratio
+        MPVLib.setPropertyDouble("panscan", 0.0)
+        MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        // To indicate custom state or reset VideoAspect
+        // playerPreferences.aspectState().set(VideoAspect.Fit) 
+        // We'll leave it as is or show custom in UI if necessary
+        playerUpdate.update { PlayerUpdates.ShowText("Aspect Ratio: $ratio") }
     }
 
     fun cycleScreenRotations() {

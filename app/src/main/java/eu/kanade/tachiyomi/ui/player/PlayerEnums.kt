@@ -132,6 +132,7 @@ enum class Sheets {
     QualityTracks,
     Chapters,
     VideoZoom,
+    AspectRatios,
     More,
     Screenshot,
 }

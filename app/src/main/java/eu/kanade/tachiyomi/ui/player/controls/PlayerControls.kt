@@ -536,6 +536,10 @@ fun PlayerControls(
                                 },
                             )
                         },
+                        onAspectLongClick = { viewModel.showSheet(Sheets.AspectRatios) },
+                        currentZoom = videoZoom,
+                        onZoomClick = { viewModel.showSheet(Sheets.VideoZoom) },
+                        onZoomLongClick = { viewModel.resetVideoZoomAndPan() },
                     )
                 }
                 // Bottom left controls
