@@ -61,13 +61,13 @@ class LibraryPreferences(
     )
     // KMK <--
 
-    fun autoUpdateDeviceRestrictions() = preferenceStore.getStringSet(
+    val autoUpdateDeviceRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_restriction",
         setOf(
             DEVICE_ONLY_ON_WIFI,
         ),
     )
-    fun autoUpdateAnimeRestrictions() = preferenceStore.getStringSet(
+    val autoUpdateAnimeRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_manga_restriction",
         setOf(
             ANIME_HAS_UNSEEN,
@@ -77,7 +77,7 @@ class LibraryPreferences(
         ),
     )
 
-    fun autoUpdateMetadata() = preferenceStore.getBoolean("auto_update_metadata", false)
+    val autoUpdateMetadata: Preference<Boolean> = preferenceStore.getBoolean("auto_update_metadata", false)
 
     fun showContinueWatchingButton() = preferenceStore.getBoolean(
         "display_continue_reading_button",

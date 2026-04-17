@@ -54,7 +54,7 @@ class GetUpcomingAnime(
         val listToUpdate = includedManga
             .filterNot { it.anime.id in excludedMangaIds }
 
-        val restrictions = libraryPreferences.autoUpdateAnimeRestrictions().get()
+        val restrictions = libraryPreferences.autoUpdateAnimeRestrictions.get()
         val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toEpochSecond() * 1000
 
         return listToUpdate

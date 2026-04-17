@@ -105,7 +105,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     override suspend fun doWork(): Result {
         if (tags.contains(WORK_NAME_AUTO)) {
             val preferences = Injekt.get<LibraryPreferences>()
-            val restrictions = preferences.autoUpdateDeviceRestrictions().get()
+            val restrictions = preferences.autoUpdateDeviceRestrictions.get()
             if ((DEVICE_ONLY_ON_WIFI in restrictions) && !context.isConnectedToWifi()) {
                 return Result.failure()
             }
@@ -249,7 +249,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             // SY <--
         }
 
-        val restrictions = libraryPreferences.autoUpdateAnimeRestrictions().get()
+        val restrictions = libraryPreferences.autoUpdateAnimeRestrictions.get()
         val skippedUpdates = mutableListOf<Pair<Anime, String?>>()
         val (_, fetchWindowUpperBound) = fetchInterval.getWindow(ZonedDateTime.now())
 
@@ -441,7 +441,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val source = sourceManager.getOrStub(anime.source)
 
         // Update anime metadata if needed
-        if (libraryPreferences.autoUpdateMetadata().get()) {
+        if (libraryPreferences.autoUpdateMetadata.get()) {
             val networkAnime = source.getAnimeDetails(anime.toSAnime())
             updateAnime.awaitUpdateFromSource(anime, networkAnime, manualFetch = false, coverCache)
         }
@@ -557,7 +557,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             val preferences = Injekt.get<LibraryPreferences>()
             val interval = prefInterval ?: preferences.autoUpdateInterval().get()
             if (interval > 0) {
-                val restrictions = preferences.autoUpdateDeviceRestrictions().get()
+                val restrictions = preferences.autoUpdateDeviceRestrictions.get()
                 val constraints = Constraints(
                     requiredNetworkType = if (DEVICE_NETWORK_NOT_METERED in restrictions) {
                         NetworkType.UNMETERED
