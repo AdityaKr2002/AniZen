@@ -221,8 +221,8 @@ class DownloadManager(
         sourceId: Long,
         skipCache: Boolean = false,
     ): Boolean {
-        if (sourceId == LocalAnimeSource.ID) {
-            val source = sourceManager.getOrStub(sourceId)
+        val source = sourceManager.getOrStub(sourceId)
+        if (source.isLocal() || skipCache) {
             return provider.findEpisodeDir(episodeName, episodeScanlator, animeTitle, source) != null
         }
         return cache.isEpisodeDownloaded(
@@ -247,7 +247,7 @@ class DownloadManager(
      * @param anime the anime to check.
      */
     fun getDownloadCount(anime: Anime): Int {
-        return if (anime.source == LocalAnimeSource.ID) {
+        return if (anime.isLocal()) {
             LocalAnimeSourceFileSystem(storageManager).getFilesInAnimeDirectory(anime.url)
                 .count { Archive.isSupported(it) }
         } else {
@@ -268,7 +268,7 @@ class DownloadManager(
      * @param anime the anime to check.
      */
     fun getDownloadSize(anime: Anime): Long {
-        return if (anime.source == LocalAnimeSource.ID) {
+        return if (anime.isLocal()) {
             LocalAnimeSourceFileSystem(storageManager).getAnimeDirectory(anime.url)
                 ?.size() ?: 0L
         } else {
@@ -291,9 +291,9 @@ class DownloadManager(
      * @param anime the anime of the episodes.
      * @param source the source of the episodes.
      */
-    fun deleteEpisodes(episodes: List<Episode>, anime: Anime, source: Source) {
+    fun deleteEpisodes(episodes: List<Episode>, anime: Anime, source: Source, isManual: Boolean = false) {
         launchIO {
-            val filteredEpisodes = getEpisodesToDelete(episodes, anime)
+            val filteredEpisodes = if (isManual) episodes else getEpisodesToDelete(episodes, anime)
             if (filteredEpisodes.isEmpty()) {
                 return@launchIO
             }

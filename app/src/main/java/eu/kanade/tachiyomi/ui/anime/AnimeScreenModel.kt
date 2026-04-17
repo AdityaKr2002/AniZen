@@ -1289,7 +1289,7 @@ class AnimeScreenModel(
     fun deleteEpisodes(episodes: List<Episode>) {
         screenModelScope.launchNonCancellable {
             try {
-                successState?.let { state -> downloadManager.deleteEpisodes(episodes, state.anime, state.source) }
+                successState?.let { state -> downloadManager.deleteEpisodes(episodes, state.anime, state.source, isManual = true) }
             } catch (e: Throwable) { logcat(LogPriority.ERROR, e) }
         }
     }

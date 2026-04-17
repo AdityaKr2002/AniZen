@@ -305,7 +305,7 @@ class UpdatesScreenModel(
                     val anime = getAnime.await(animeId) ?: return@forEach
                     val source = sourceManager.get(anime.source) ?: return@forEach
                     val episodes = updates.mapNotNull { getEpisode.await(it.update.episodeId) }
-                    downloadManager.deleteEpisodes(episodes, anime, source)
+                    downloadManager.deleteEpisodes(episodes, anime, source, isManual = true)
                 }
         }
         toggleAllSelection(false)
