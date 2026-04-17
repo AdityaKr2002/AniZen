@@ -812,8 +812,7 @@ class PlayerViewModel @JvmOverloads constructor(
         // To indicate custom state or reset VideoAspect
         // playerPreferences.aspectState().set(VideoAspect.Fit) 
         // We'll leave it as is or show custom in UI if necessary
-        val text = if (ratio == -1.0) "Aspect Ratio: Default" else "Aspect Ratio: $label"
-        playerUpdate.update { PlayerUpdates.ShowText(text) }
+        playerUpdate.update { PlayerUpdates.ShowText(if (ratio == -1.0) "Aspect Ratio: Default" else label) }
     }
 
     fun cycleScreenRotations() {
