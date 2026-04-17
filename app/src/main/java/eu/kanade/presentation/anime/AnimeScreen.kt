@@ -1176,7 +1176,7 @@ private fun EpisodeItemWrapper(
                 bookmark = item.episode.bookmark,
                 fillermark = item.episode.fillermark,
                 selected = item.selected,
-                downloadIndicatorEnabled = !isAnyEpisodeSelected,
+                downloadIndicatorEnabled = !isAnyEpisodeSelected && !anime.isLocal(),
                 downloadStateProvider = { item.downloadState },
                 downloadProgressProvider = { item.downloadProgress },
                 episodeSwipeStartAction = episodeSwipeStartAction,
@@ -1192,12 +1192,10 @@ private fun EpisodeItemWrapper(
                         onEpisodeClicked = onEpisodeClicked,
                     )
                 },
-                onDownloadClick = {
-                    if (onDownloadEpisode != null) {
-                        onDownloadEpisode(listOf(item), it)
-                    } else if (it == EpisodeDownloadAction.DELETE) {
-                        onMultiDeleteClicked(listOf(item.episode))
-                    }
+                onDownloadClick = if (onDownloadEpisode != null) {
+                    { onDownloadEpisode(listOf(item), it) }
+                } else {
+                    null
                 },
                 onEpisodeSwipe = {
                     onEpisodeSwipe(item, it)
