@@ -528,6 +528,7 @@ fun PlayerControls(
                                 activity.enterPictureInPictureMode(activity.createPipParams())
                             }
                         },
+                        aspectRatio = aspectRatio,
                         onAspectClick = {
                             viewModel.changeVideoAspect(
                                 when (aspectRatio) {

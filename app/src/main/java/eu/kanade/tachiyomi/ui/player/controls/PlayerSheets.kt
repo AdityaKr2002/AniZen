@@ -21,6 +21,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState as composeCollectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import dev.vivvvek.seeker.Segment
@@ -180,7 +181,7 @@ fun PlayerSheets(
                 } else null
             }
             
-            val currentRatio = viewModel.videoAspectOverride.collectAsState().value
+            val currentRatio = viewModel.videoAspectOverride.composeCollectAsState().value
 
             AspectRatioSheet(
                 currentRatio = currentRatio,
