@@ -516,6 +516,7 @@ fun PlayerControls(
                     },
                 ) {
                     val activity = LocalContext.current as PlayerActivity
+                    val videoZoom by viewModel.videoZoom.collectAsState()
                     BottomRightPlayerControls(
                         customButton = customButton,
                         customButtonTitle = customButtonTitle,
