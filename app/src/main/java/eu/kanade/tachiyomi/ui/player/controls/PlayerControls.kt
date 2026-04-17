@@ -594,6 +594,7 @@ fun PlayerControls(
 
         PlayerSheets(
             sheetShown = sheetShown,
+            viewModel = viewModel,
             subtitles = subtitles.toImmutableList(),
             selectedSubtitles = selectedSubtitles.toList().toImmutableList(),
             onAddSubtitle = viewModel::addSubtitle,

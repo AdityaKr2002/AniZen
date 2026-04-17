@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.kanade.presentation.player.components.PlayerSheet
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
@@ -33,7 +34,7 @@ fun VideoZoomSheet(
 ) {
     val zoom by viewModel.videoZoom.collectAsState()
 
-    GenericSetupSheet(
+    PlayerSheet(
         onDismissRequest = onDismissRequest,
     ) {
         Column(modifier = Modifier.padding(MaterialTheme.padding.medium)) {

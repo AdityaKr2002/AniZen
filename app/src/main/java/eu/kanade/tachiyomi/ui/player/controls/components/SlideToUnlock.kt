@@ -88,7 +88,7 @@ fun SlideToUnlock(
             // Background Text
             val textAlpha = 1f - (animatedOffsetX / (maxOffset.coerceAtLeast(1f)))
             Text(
-                text = stringResource(MR.strings.action_slide_to_unlock),
+                text = "Slide to Unlock",
                 color = Color.White.copy(alpha = textAlpha.coerceIn(0f, 1f)),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.align(Alignment.Center)
