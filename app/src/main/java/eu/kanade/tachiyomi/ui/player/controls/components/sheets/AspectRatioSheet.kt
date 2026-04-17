@@ -46,7 +46,7 @@ data class AspectRatioItem(
 fun AspectRatioSheet(
     currentRatio: Double?,
     customRatios: List<AspectRatioItem>,
-    onSelectRatio: (Double) -> Unit,
+    onSelectRatio: (AspectRatioItem) -> Unit,
     onAddCustomRatio: (String, Double) -> Unit,
     onDeleteCustomRatio: (AspectRatioItem) -> Unit,
     onDismissRequest: () -> Unit,
@@ -98,7 +98,7 @@ fun AspectRatioSheet(
                 items(presetRatios, key = { it.label }) { ratio ->
                     InputChip(
                         selected = currentRatio?.let { abs(it - ratio.ratio) < 0.01 } ?: (ratio.ratio == -1.0),
-                        onClick = { onSelectRatio(ratio.ratio) },
+                        onClick = { onSelectRatio(ratio) },
                         label = { Text(ratio.label) },
                         modifier = Modifier.animateItem(),
                         leadingIcon = null,
@@ -124,7 +124,7 @@ fun AspectRatioSheet(
                     items(customRatios, key = { it.label }) { ratio ->
                         InputChip(
                             selected = currentRatio?.let { abs(it - ratio.ratio) < 0.01 } ?: false,
-                            onClick = { onSelectRatio(ratio.ratio) },
+                            onClick = { onSelectRatio(ratio) },
                             label = { Text(ratio.label) },
                             leadingIcon = null,
                             trailingIcon = {

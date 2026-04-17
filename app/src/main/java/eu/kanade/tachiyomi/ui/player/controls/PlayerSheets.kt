@@ -187,8 +187,7 @@ fun PlayerSheets(
                 currentRatio = currentRatio,
                 customRatios = customRatios,
                 onSelectRatio = { ratio ->
-                    viewModel.setCustomVideoAspect(ratio)
-                    onDismissRequest()
+                    viewModel.setCustomVideoAspect(ratio.ratio, ratio.label)
                 },
                 onAddCustomRatio = { label, ratio ->
                     playerPreferences.customAspectRatios().set(customRatiosSet + "$label|$ratio")

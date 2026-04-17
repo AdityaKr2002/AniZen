@@ -805,14 +805,15 @@ class PlayerViewModel @JvmOverloads constructor(
         playerUpdate.update { PlayerUpdates.AspectRatio }
     }
 
-    fun setCustomVideoAspect(ratio: Double) {
+    fun setCustomVideoAspect(ratio: Double, label: String) {
         _videoAspectOverride.value = ratio
         MPVLib.setPropertyDouble("panscan", 0.0)
         MPVLib.setPropertyDouble("video-aspect-override", ratio)
         // To indicate custom state or reset VideoAspect
         // playerPreferences.aspectState().set(VideoAspect.Fit) 
         // We'll leave it as is or show custom in UI if necessary
-        playerUpdate.update { PlayerUpdates.ShowText("Aspect Ratio: $ratio") }
+        val text = if (ratio == -1.0) "Aspect Ratio: Default" else "Aspect Ratio: $label"
+        playerUpdate.update { PlayerUpdates.ShowText(text) }
     }
 
     fun cycleScreenRotations() {
