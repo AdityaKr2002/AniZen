@@ -812,19 +812,20 @@ class LibraryScreenModel(
      * Selects all nimes between and including the given anime and the last pressed anime from the
      * same category as the given anime
      */
-    fun toggleRangeSelection(anime: LibraryAnime) {
+    fun toggleRangeSelection(anime: LibraryAnime, categoryId: Long) {
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
                 val lastSelected = list.lastOrNull()
-                if (lastSelected?.category != anime.category) {
+                val items = state.getAnimelibItemsByCategoryId(categoryId)
+                    ?.fastMap { it.libraryAnime }.orEmpty()
+
+                if (lastSelected == null || !items.fastAny { it.id == lastSelected.id }) {
                     list.add(anime)
                     return@mutate
                 }
 
-                val items = state.getAnimelibItemsByCategoryId(anime.category)
-                    ?.fastMap { it.libraryAnime }.orEmpty()
-                val lastAnimeIndex = items.indexOf(lastSelected)
-                val curAnimeIndex = items.indexOf(anime)
+                val lastAnimeIndex = items.indexOfFirst { it.id == lastSelected.id }
+                val curAnimeIndex = items.indexOfFirst { it.id == anime.id }
 
                 val selectedIds = list.fastMap { it.id }
                 val selectionRange = when {

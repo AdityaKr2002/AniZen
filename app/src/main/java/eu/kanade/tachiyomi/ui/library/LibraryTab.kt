@@ -250,8 +250,8 @@ data object LibraryTab : Tab {
                             Unit
                         }.takeIf { state.showAnimeContinueButton },
                         onToggleSelection = screenModel::toggleSelection,
-                        onToggleRangeSelection = {
-                            screenModel.toggleRangeSelection(it)
+                        onToggleRangeSelection = { anime, categoryId ->
+                            screenModel.toggleRangeSelection(anime, categoryId)
                         },
                         onRefresh = onClickRefresh,
                         onGlobalSearchClicked = {
