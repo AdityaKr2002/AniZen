@@ -133,6 +133,23 @@ actual class LocalAnimeSource(
                         // Try to find the cover
                         coverManager.find(animeDir.name.orEmpty())?.let {
                             thumbnail_url = it.uri.toString()
+                        } ?: run {
+                            // Discover and generate cover from video if not found
+                            try {
+                                val episodes = fileSystem.getFilesInAnimeDirectory(url)
+                                    .filter { Archive.isSupported(it) }
+                                    .sortedWith(compareByDescending(UniFile::lastModified))
+
+                                episodes.firstOrNull()?.let { episodeFile ->
+                                    val se = SEpisode.create().apply {
+                                        this.url = "${this@apply.url}/${episodeFile.name}"
+                                        this.name = episodeFile.nameWithoutExtension.orEmpty()
+                                    }
+                                    updateCoverFromVideo(se, this)
+                                }
+                            } catch (e: Exception) {
+                                logcat(LogPriority.ERROR) { "Discovery: Couldn't extract thumbnail for $title: $e" }
+                            }
                         }
                     }
                 }
