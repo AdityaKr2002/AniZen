@@ -1,10 +1,10 @@
-package tachiyomi.source.local.image
+package tachiyomi.source.localanime.image
 
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.source.model.SAnime
 import java.io.InputStream
 
-expect class LocalCoverManager {
+expect class LocalAnimeSourceCoverManager {
 
     fun find(animeUrl: String): UniFile?
 

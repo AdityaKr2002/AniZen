@@ -15,8 +15,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.episode.model.Episode
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.io.LocalSourceFileSystem
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -40,7 +40,7 @@ class EpisodeLoader {
             return when {
                 isDownloaded -> getHostersOnDownloaded(episode, anime, source)
                 source is AnimeHttpSource -> getHostersOnHttp(episode, source)
-                source is LocalSource -> getHostersOnLocal(episode)
+                source is LocalAnimeSource -> getHostersOnLocal(episode)
                 else -> error("source not supported")
             }
         }
@@ -131,7 +131,7 @@ class EpisodeLoader {
         ): List<Hoster> {
             return try {
                 val (animeDirName, episodeName) = episode.url.split('/', limit = 2)
-                val fileSystem: LocalSourceFileSystem = Injekt.get()
+                val fileSystem: LocalAnimeSourceFileSystem = Injekt.get()
                 val videoFile = fileSystem.getBaseDirectory()
                     ?.findFile(animeDirName)
                     ?.findFile(episodeName)

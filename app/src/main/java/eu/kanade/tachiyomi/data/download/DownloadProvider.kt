@@ -13,8 +13,8 @@ import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.episode.model.Episode
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.io.LocalSourceFileSystem
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -31,7 +31,7 @@ class DownloadProvider(
     private val context: Context,
     private val storageManager: StorageManager = Injekt.get(),
     // AM (FILE_SIZE) -->
-    private val localFileSystem: LocalSourceFileSystem = Injekt.get(),
+    private val localFileSystem: LocalAnimeSourceFileSystem = Injekt.get(),
     // <-- AM (FILE_SIZE)
 ) {
 
@@ -78,6 +78,9 @@ class DownloadProvider(
      * @param source the source to query.
      */
     fun findSourceDir(source: Source): UniFile? {
+        if (source.isLocal()) {
+            return localFileSystem.getBaseDirectory()
+        }
         return downloadsDir?.findFile(getSourceDirName(source))
     }
 
@@ -89,12 +92,17 @@ class DownloadProvider(
      */
     fun findAnimeDir(animeTitle: String, source: Source): UniFile? {
         val cacheKey = "${source.id}_$animeTitle"
-        animeDirCache.get(cacheKey)?.let { 
-            if (it.exists()) return it else animeDirCache.remove(cacheKey) 
+        animeDirCache.get(cacheKey)?.let {
+            if (it.exists()) return it else animeDirCache.remove(cacheKey)
         }
-        
-        val sourceDir = findSourceDir(source)
-        val dir = sourceDir?.findFile(getAnimeDirName(animeTitle))
+
+        val dir = if (source.isLocal()) {
+            localFileSystem.getAnimeDirectory(animeTitle)
+        } else {
+            val sourceDir = findSourceDir(source)
+            sourceDir?.findFile(getAnimeDirName(animeTitle))
+        }
+
         if (dir != null) {
             animeDirCache.put(cacheKey, dir)
         }
@@ -129,6 +137,14 @@ class DownloadProvider(
      * @param source the source of the episode.
      */
     fun findEpisodeDirs(episodes: List<Episode>, anime: Anime, source: Source): Pair<UniFile?, List<UniFile>> {
+        if (source.isLocal()) {
+            val animeDir = findAnimeDir(anime.url, source)
+            return animeDir to episodes.mapNotNull { episode ->
+                episode.url.split('/', limit = 2).lastOrNull()?.let {
+                    animeDir?.findFile(it)
+                }
+            }
+        }
         val animeDir = findAnimeDir(anime.title, source) ?: return null to emptyList()
         return animeDir to episodes.mapNotNull { episode ->
             getValidEpisodeDirNames(episode.name, episode.scanlator).asSequence()

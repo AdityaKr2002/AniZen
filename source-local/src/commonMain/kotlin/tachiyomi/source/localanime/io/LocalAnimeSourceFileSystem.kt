@@ -1,8 +1,8 @@
-package tachiyomi.source.local.io
+package tachiyomi.source.localanime.io
 
 import com.hippo.unifile.UniFile
 
-expect class LocalSourceFileSystem {
+expect class LocalAnimeSourceFileSystem {
 
     fun getBaseDirectory(): UniFile?
 

@@ -129,8 +129,8 @@ import tachiyomi.domain.track.interactor.DeleteTrack
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.Serializable
@@ -866,7 +866,7 @@ class AnimeScreenModel(
                 ogStatus = status ?: 0,
                 lastUpdate = anime.lastUpdate + 1,
             )
-            (sourceManager.get(LocalSource.ID) as LocalSource).updateAnimeInfo(anime.toSAnime())
+            (sourceManager.get(LocalAnimeSource.ID) as LocalAnimeSource).updateAnimeInfo(anime.toSAnime())
             screenModelScope.launchNonCancellable {
                 updateAnime.await(
                     AnimeUpdate(

@@ -1,4 +1,4 @@
-package tachiyomi.source.local
+package tachiyomi.source.localanime
 
 import android.content.Context
 import com.hippo.unifile.UniFile
@@ -30,10 +30,10 @@ import tachiyomi.core.metadata.tachiyomi.EpisodeDetails
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.episode.service.EpisodeRecognition
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.filter.OrderBy
-import tachiyomi.source.local.image.LocalCoverManager
-import tachiyomi.source.local.io.Archive
-import tachiyomi.source.local.io.LocalSourceFileSystem
+import tachiyomi.source.localanime.filter.OrderBy
+import tachiyomi.source.localanime.image.LocalAnimeSourceCoverManager
+import tachiyomi.source.localanime.io.Archive
+import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
 import uy.kohesive.injekt.injectLazy
 import java.io.File
 import java.text.SimpleDateFormat
@@ -42,10 +42,10 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import tachiyomi.domain.source.model.Source as DomainSource
 
-actual class LocalSource(
+actual class LocalAnimeSource(
     private val context: Context,
-    private val fileSystem: LocalSourceFileSystem,
-    private val coverManager: LocalCoverManager,
+    private val fileSystem: LocalAnimeSourceFileSystem,
+    private val coverManager: LocalAnimeSourceCoverManager,
 ) : CatalogueSource, UnmeteredSource {
 
     private val json: Json by injectLazy()
@@ -307,8 +307,8 @@ actual class LocalSource(
     }
 }
 
-fun Anime.isLocal(): Boolean = source == LocalSource.ID
+fun Anime.isLocal(): Boolean = source == LocalAnimeSource.ID
 
-fun Source.isLocal(): Boolean = id == LocalSource.ID
+fun Source.isLocal(): Boolean = id == LocalAnimeSource.ID
 
-fun DomainSource.isLocal(): Boolean = id == LocalSource.ID
+fun DomainSource.isLocal(): Boolean = id == LocalAnimeSource.ID

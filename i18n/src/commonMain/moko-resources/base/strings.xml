@@ -1383,7 +1383,7 @@
     <string name="anime_from_library">Anime from library</string>
     <string name="downloaded_episodes">Downloaded episodes</string>
     <string name="local_manga_source">Local manga source</string>
-    <string name="local_anime_source">Local anime source</string>
+    <string name="local_anime_source">Local source</string>
     <string name="episode_not_found">Episode not found</string>
     <string name="local_invalid_episode_format">Invalid episode format</string>
     <string name="unknown_studio">Unknown studio</string>

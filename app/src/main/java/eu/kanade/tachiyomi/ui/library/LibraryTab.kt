@@ -70,7 +70,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.injectLazy
 
 data object LibraryTab : Tab {
@@ -104,17 +104,21 @@ data object LibraryTab : Tab {
 
         val snackbarHostState = remember { SnackbarHostState() }
 
-        val onClickRefresh: (Category?) -> Boolean = {
+        val onClickRefresh: (Category?) -> Boolean = { category ->
             // SY -->
             val started = LibraryUpdateJob.startNow(
                 context = context,
-                category = null,
+                category = category,
                 group = state.groupType,
                 groupExtra = null,
             )
             // SY <--
             scope.launch {
-                val msgRes = if (started) MR.strings.updating_library else MR.strings.update_already_running
+                val msgRes = if (started) {
+                    if (category == null) MR.strings.updating_library else MR.strings.updating_category
+                } else {
+                    MR.strings.update_already_running
+                }
                 snackbarHostState.showSnackbar(context.stringResourceCommon(msgRes))
             }
             started

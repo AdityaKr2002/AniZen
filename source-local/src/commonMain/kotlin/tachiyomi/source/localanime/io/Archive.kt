@@ -1,4 +1,4 @@
-package tachiyomi.source.local.io
+package tachiyomi.source.localanime.io
 
 import com.hippo.unifile.UniFile
 import tachiyomi.core.common.storage.extension

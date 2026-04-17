@@ -45,8 +45,8 @@ import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
-import tachiyomi.source.local.image.LocalCoverManager
-import tachiyomi.source.local.io.LocalSourceFileSystem
+import tachiyomi.source.localanime.image.LocalAnimeSourceCoverManager
+import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingleton
@@ -151,8 +151,8 @@ class AppModule(val app: Application) : InjektModule {
 
         addSingletonFactory { AndroidStorageFolderProvider(app) }
 
-        addSingletonFactory { LocalSourceFileSystem(get()) }
-        addSingletonFactory { LocalCoverManager(app, get()) }
+        addSingletonFactory { LocalAnimeSourceFileSystem(get()) }
+        addSingletonFactory { LocalAnimeSourceCoverManager(app, get()) }
 
         addSingletonFactory { StorageManager(app, get()) }
 

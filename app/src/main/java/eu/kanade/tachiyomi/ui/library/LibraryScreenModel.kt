@@ -86,8 +86,8 @@ import tachiyomi.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.i18n.sy.SYMR
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.random.Random
@@ -983,7 +983,7 @@ class LibraryScreenModel(
                 }.mapKeys {
                     Category(
                         id = it.key,
-                        name = if (it.key == LocalSource.ID) {
+                        name = if (it.key == LocalAnimeSource.ID) {
                             context.getString(R.string.local_source)
                         } else {
                             val source = sourceManager.getOrStub(it.key)

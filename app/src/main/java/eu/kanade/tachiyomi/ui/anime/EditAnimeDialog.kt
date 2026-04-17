@@ -38,7 +38,7 @@ import exh.util.dropBlank
 import exh.util.trimOrNull
 import kotlinx.coroutines.CoroutineScope
 import tachiyomi.domain.anime.model.Anime
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 
 @Composable
 @Suppress("MagicNumber", "LongMethod")
