@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocalLibrary
+import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
@@ -204,7 +205,7 @@ fun MoreScreen(
                     MoreItem(
                         title = "Extension Health",
                         subtitle = "Real-time telemetry and source status",
-                        icon = Icons.Outlined.QueryStats,
+                        icon = Icons.Outlined.MonitorHeart,
                         onClick = { navigator.push(InfrastructureScreen) }
                     )
 
