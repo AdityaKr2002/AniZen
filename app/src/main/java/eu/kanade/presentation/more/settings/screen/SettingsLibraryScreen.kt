@@ -179,7 +179,7 @@ object SettingsLibraryScreen : SearchableSettings {
                     },
                 ),
                 Preference.PreferenceItem.MultiSelectListPreference(
-                    pref = libraryPreferences.autoUpdateDeviceRestrictions(),
+                    pref = libraryPreferences.autoUpdateDeviceRestrictions,
                     enabled = autoUpdateInterval > 0,
                     title = stringResource(MR.strings.pref_library_update_restriction),
                     subtitle = stringResource(MR.strings.restrictions),
@@ -223,12 +223,12 @@ object SettingsLibraryScreen : SearchableSettings {
                 ),
                 // SY <--
                 Preference.PreferenceItem.SwitchPreference(
-                    pref = libraryPreferences.autoUpdateMetadata(),
+                    pref = libraryPreferences.autoUpdateMetadata,
                     title = stringResource(MR.strings.pref_library_update_refresh_metadata),
                     subtitle = stringResource(MR.strings.pref_library_update_refresh_metadata_summary),
                 ),
                 Preference.PreferenceItem.MultiSelectListPreference(
-                    pref = libraryPreferences.autoUpdateAnimeRestrictions(),
+                    pref = libraryPreferences.autoUpdateAnimeRestrictions,
                     title = stringResource(MR.strings.pref_library_update_smart_update),
                     entries = persistentMapOf(
                         ANIME_HAS_UNSEEN to stringResource(MR.strings.pref_update_only_completely_read),

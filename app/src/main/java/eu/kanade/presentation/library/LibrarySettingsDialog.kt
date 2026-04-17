@@ -124,7 +124,7 @@ private fun ColumnScope.FilterPage(
 ) {
     val filterDownloaded by screenModel.libraryPreferences.filterDownloaded().collectAsStatePref()
     val downloadedOnly by screenModel.preferences.downloadedOnly().collectAsStatePref()
-    val autoUpdateAnimeRestrictions by screenModel.libraryPreferences.autoUpdateAnimeRestrictions().collectAsStatePref()
+    val autoUpdateAnimeRestrictions by screenModel.libraryPreferences.autoUpdateAnimeRestrictions.collectAsStatePref()
 
     TriStateItem(
         label = stringResource(MR.strings.label_downloaded),

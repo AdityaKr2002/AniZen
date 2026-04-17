@@ -422,7 +422,7 @@ class LibraryScreenModel(
             libraryPreferences.downloadBadge().changes(),
             libraryPreferences.localBadge().changes(),
             libraryPreferences.languageBadge().changes(),
-            libraryPreferences.autoUpdateAnimeRestrictions().changes(),
+            libraryPreferences.autoUpdateAnimeRestrictions.changes(),
 
             preferences.downloadedOnly().changes(),
             libraryPreferences.filterDownloaded().changes(),
