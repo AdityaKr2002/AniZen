@@ -129,7 +129,7 @@ import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -293,6 +293,16 @@ class PlayerViewModel @JvmOverloads constructor(
     val doubleTapSeekAmount = _doubleTapSeekAmount.asStateFlow()
     private val _isSeekingForwards = MutableStateFlow(false)
     val isSeekingForwards = _isSeekingForwards.asStateFlow()
+
+    private val _videoZoom = MutableStateFlow(0f)
+    val videoZoom = _videoZoom.asStateFlow()
+    private val _videoPanX = MutableStateFlow(0f)
+    val videoPanX = _videoPanX.asStateFlow()
+    private val _videoPanY = MutableStateFlow(0f)
+    val videoPanY = _videoPanY.asStateFlow()
+
+    private val _videoAspectOverride = MutableStateFlow<Double?>(null)
+    val videoAspectOverride = _videoAspectOverride.asStateFlow()
 
     val isSeekingUI = MutableStateFlow(false)
 
@@ -790,8 +800,19 @@ class PlayerViewModel @JvmOverloads constructor(
         }
         MPVLib.setPropertyDouble("panscan", pan)
         MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        _videoAspectOverride.value = ratio
         playerPreferences.aspectState().set(aspect)
         playerUpdate.update { PlayerUpdates.AspectRatio }
+    }
+
+    fun setCustomVideoAspect(ratio: Double) {
+        _videoAspectOverride.value = ratio
+        MPVLib.setPropertyDouble("panscan", 0.0)
+        MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        // To indicate custom state or reset VideoAspect
+        // playerPreferences.aspectState().set(VideoAspect.Fit) 
+        // We'll leave it as is or show custom in UI if necessary
+        playerUpdate.update { PlayerUpdates.ShowText("Aspect Ratio: $ratio") }
     }
 
     fun cycleScreenRotations() {
@@ -981,6 +1002,23 @@ class PlayerViewModel @JvmOverloads constructor(
         _hosterList.update { _ -> emptyList() }
         _hosterExpandedList.update { _ -> emptyList() }
         _selectedHosterVideoIndex.update { _ -> Pair(-1, -1) }
+    }
+
+    fun setVideoZoom(zoom: Float) {
+        _videoZoom.value = zoom
+        MPVLib.setPropertyDouble("video-zoom", zoom.toDouble())
+    }
+
+    fun setVideoPan(x: Float, y: Float) {
+        _videoPanX.value = x
+        _videoPanY.value = y
+        MPVLib.setPropertyDouble("video-pan-x", x.toDouble())
+        MPVLib.setPropertyDouble("video-pan-y", y.toDouble())
+    }
+
+    fun resetVideoZoomAndPan() {
+        setVideoZoom(0f)
+        setVideoPan(0f, 0f)
     }
 
     fun changeEpisode(previous: Boolean, autoPlay: Boolean = false) {

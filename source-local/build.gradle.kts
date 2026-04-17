@@ -40,7 +40,7 @@ kotlin {
 }
 
 android {
-    namespace = "tachiyomi.source.local"
+    namespace = "tachiyomi.source.localanime"
 
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

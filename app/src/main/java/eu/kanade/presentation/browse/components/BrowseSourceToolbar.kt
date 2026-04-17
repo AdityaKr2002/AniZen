@@ -29,7 +29,7 @@ import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import tachiyomi.source.local.LocalSource
+import tachiyomi.source.localanime.LocalAnimeSource
 
 @Composable
 fun BrowseSourceToolbar(
@@ -54,7 +54,7 @@ fun BrowseSourceToolbar(
 ) {
     // Avoid capturing unstable source in actions lambda
     val title = source?.name
-    val isLocalSource = source is LocalSource
+    val isLocalSource = source is LocalAnimeSource
     val isConfigurableSource = source is ConfigurableSource
 
     val mode = displayMode ?: LibraryDisplayMode.default

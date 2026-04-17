@@ -129,8 +129,8 @@ import tachiyomi.domain.track.interactor.DeleteTrack
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.Serializable
@@ -866,7 +866,7 @@ class AnimeScreenModel(
                 ogStatus = status ?: 0,
                 lastUpdate = anime.lastUpdate + 1,
             )
-            (sourceManager.get(LocalSource.ID) as LocalSource).updateAnimeInfo(anime.toSAnime())
+            (sourceManager.get(LocalAnimeSource.ID) as LocalAnimeSource).updateAnimeInfo(anime.toSAnime())
             screenModelScope.launchNonCancellable {
                 updateAnime.await(
                     AnimeUpdate(
@@ -1093,7 +1093,9 @@ class AnimeScreenModel(
         val downloadedEpisodeDirs = if (isLocal) emptySet() else downloadManager.getDownloadedEpisodeDirs(anime)
         return map { episode ->
             val activeDownload = if (isLocal) null else downloadManager.getQueuedDownloadOrNull(episode.id)
-            val downloaded = if (isLocal) true else if (downloadedEpisodeDirs.isNotEmpty()) {
+            val downloaded = if (isLocal) {
+                downloadManager.isEpisodeDownloaded(episode.name, episode.scanlator, anime.url, anime.source)
+            } else if (downloadedEpisodeDirs.isNotEmpty()) {
                 downloadProvider.getValidEpisodeDirNames(episode.name, episode.scanlator).any { it in downloadedEpisodeDirs }
             } else false
             val downloadState = when {
@@ -1289,7 +1291,7 @@ class AnimeScreenModel(
     fun deleteEpisodes(episodes: List<Episode>) {
         screenModelScope.launchNonCancellable {
             try {
-                successState?.let { state -> downloadManager.deleteEpisodes(episodes, state.anime, state.source) }
+                successState?.let { state -> downloadManager.deleteEpisodes(episodes, state.anime, state.source, isManual = true) }
             } catch (e: Throwable) { logcat(LogPriority.ERROR, e) }
         }
     }

@@ -86,8 +86,8 @@ import tachiyomi.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.i18n.sy.SYMR
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.random.Random
@@ -812,19 +812,20 @@ class LibraryScreenModel(
      * Selects all nimes between and including the given anime and the last pressed anime from the
      * same category as the given anime
      */
-    fun toggleRangeSelection(anime: LibraryAnime) {
+    fun toggleRangeSelection(anime: LibraryAnime, categoryId: Long) {
         mutableState.update { state ->
             val newSelection = state.selection.mutate { list ->
                 val lastSelected = list.lastOrNull()
-                if (lastSelected?.category != anime.category) {
+                val items = state.getAnimelibItemsByCategoryId(categoryId)
+                    ?.fastMap { it.libraryAnime }.orEmpty()
+
+                if (lastSelected == null || !items.fastAny { it.id == lastSelected.id }) {
                     list.add(anime)
                     return@mutate
                 }
 
-                val items = state.getAnimelibItemsByCategoryId(anime.category)
-                    ?.fastMap { it.libraryAnime }.orEmpty()
-                val lastAnimeIndex = items.indexOf(lastSelected)
-                val curAnimeIndex = items.indexOf(anime)
+                val lastAnimeIndex = items.indexOfFirst { it.id == lastSelected.id }
+                val curAnimeIndex = items.indexOfFirst { it.id == anime.id }
 
                 val selectedIds = list.fastMap { it.id }
                 val selectionRange = when {
@@ -983,7 +984,7 @@ class LibraryScreenModel(
                 }.mapKeys {
                     Category(
                         id = it.key,
-                        name = if (it.key == LocalSource.ID) {
+                        name = if (it.key == LocalAnimeSource.ID) {
                             context.getString(R.string.local_source)
                         } else {
                             val source = sourceManager.getOrStub(it.key)

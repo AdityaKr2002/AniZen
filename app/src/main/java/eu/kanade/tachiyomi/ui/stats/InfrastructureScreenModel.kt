@@ -24,7 +24,7 @@ import okhttp3.Request
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.source.service.SourceHealthCache
 import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.InetAddress

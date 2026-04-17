@@ -44,9 +44,9 @@ fun LibraryPager(
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
     getLibraryForPage: (Int) -> ImmutableList<LibraryItem>,
     onClickAnime: (LibraryAnime) -> Unit,
-    onLongClickAnime: (LibraryAnime) -> Unit,
+    onLongClickAnime: (LibraryAnime, Long) -> Unit,
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
-) {
+    ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns by remember(isLandscape) { getColumnsForOrientation(isLandscape) }
@@ -60,10 +60,11 @@ fun LibraryPager(
         HorizontalPager(
             modifier = Modifier.fillMaxSize(),
             state = state,
-            key = { categories[it].id },
+            key = { categories.getOrNull(it)?.id ?: it.toLong() },
             verticalAlignment = Alignment.Top,
             beyondViewportPageCount = 1,
         ) { page ->
+            val category = categories.getOrNull(page) ?: return@HorizontalPager
             val library = getLibraryForPage(page)
 
             if (library.isEmpty()) {
@@ -88,7 +89,7 @@ fun LibraryPager(
                         selection = selectedAnime,
                         onClick = onClickAnime,
                         onClickContinueWatching = onClickContinueWatching,
-                        onLongClick = onLongClickAnime,
+                        onLongClick = { onLongClickAnime(it, category.id) },
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
                         usePanorama = effectivePanorama,
@@ -103,7 +104,7 @@ fun LibraryPager(
                         selection = selectedAnime,
                         onClick = onClickAnime,
                         onClickContinueWatching = onClickContinueWatching,
-                        onLongClick = onLongClickAnime,
+                        onLongClick = { onLongClickAnime(it, category.id) },
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
                         usePanorama = effectivePanorama,
@@ -116,7 +117,7 @@ fun LibraryPager(
                         contentPadding = contentPadding,
                         selection = selectedAnime,
                         onClick = onClickAnime,
-                        onLongClick = onLongClickAnime,
+                        onLongClick = { onLongClickAnime(it, category.id) },
                         onClickContinueWatching = onClickContinueWatching,
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,

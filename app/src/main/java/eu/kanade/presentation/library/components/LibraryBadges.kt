@@ -24,7 +24,7 @@ import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import tachiyomi.domain.source.model.Source
 import tachiyomi.presentation.core.components.Badge
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 
 @Composable
 internal fun SourceIconBadge(

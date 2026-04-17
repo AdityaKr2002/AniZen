@@ -1,4 +1,4 @@
-package tachiyomi.source.local.filter
+package tachiyomi.source.localanime.filter
 
 import android.content.Context
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter

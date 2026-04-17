@@ -120,7 +120,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.util.shouldExpandFAB
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -486,6 +486,7 @@ private fun AnimeScreenSmallImpl(
                     }
                     SharedAnimeBottomActionMenu(
                         selected = selectedEpisodes,
+                        anime = state.anime,
                         onEpisodeClicked = onEpisodeClicked,
                         onMultiBookmarkClicked = onMultiBookmarkClicked,
                         onMultiFillermarkClicked = onMultiFillermarkClicked,
@@ -892,6 +893,7 @@ fun AnimeScreenLargeImpl(
                         }
                         SharedAnimeBottomActionMenu(
                             selected = selectedEpisodes,
+                            anime = state.anime,
                             onEpisodeClicked = onEpisodeClicked,
                             onMultiBookmarkClicked = onMultiBookmarkClicked,
                             onMultiFillermarkClicked = onMultiFillermarkClicked,
@@ -1209,6 +1211,7 @@ private fun EpisodeItemWrapper(
 @Composable
 private fun SharedAnimeBottomActionMenu(
     selected: List<EpisodeList.Item>,
+    anime: Anime,
     onEpisodeClicked: (Episode, Boolean) -> Unit,
     onMultiBookmarkClicked: (List<Episode>, bookmarked: Boolean) -> Unit,
     onMultiFillermarkClicked: (List<Episode>, fillermarked: Boolean) -> Unit,
@@ -1253,7 +1256,7 @@ private fun SharedAnimeBottomActionMenu(
         onDeleteClicked = {
             onMultiDeleteClicked(selected.fastMap { it.episode })
         }.takeIf {
-            onDownloadEpisode != null && selected.fastAny { it.downloadState == Download.State.DOWNLOADED }
+            (onDownloadEpisode != null || anime.isLocal()) && selected.fastAny { it.downloadState == Download.State.DOWNLOADED }
         },
         onExternalClicked = {
             onEpisodeClicked(selected.fastMap { it.episode }.first(), true)

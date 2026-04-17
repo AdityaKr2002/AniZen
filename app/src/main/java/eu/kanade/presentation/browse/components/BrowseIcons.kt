@@ -33,7 +33,7 @@ import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.util.ExtensionLoader
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.source.model.Source
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 
 private val defaultModifier = Modifier
     .height(40.dp)

@@ -1,9 +1,9 @@
-package tachiyomi.source.local.io
+package tachiyomi.source.localanime.io
 
 import com.hippo.unifile.UniFile
 import tachiyomi.domain.storage.service.StorageManager
 
-actual class LocalSourceFileSystem(
+actual class LocalAnimeSourceFileSystem(
     private val storageManager: StorageManager,
 ) {
 

@@ -36,7 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import tachiyomi.domain.source.model.Pin
-import tachiyomi.source.local.isLocal
+import tachiyomi.source.localanime.isLocal
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

@@ -25,9 +25,10 @@ import tachiyomi.domain.episode.model.Episode
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.LocalSource
-import tachiyomi.source.local.io.Archive
-import tachiyomi.source.local.io.LocalSourceFileSystem
+import tachiyomi.source.localanime.LocalAnimeSource
+import tachiyomi.source.localanime.io.Archive
+import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
+import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -180,16 +181,20 @@ class DownloadManager(
      */
     fun buildVideo(source: Source, anime: Anime, episode: Episode): Video {
         val episodeDir =
-            provider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
-        val files = episodeDir?.listFiles().orEmpty()
-            .filter { 
-                val type = it.type.orEmpty().lowercase()
-                val name = it.name.orEmpty().lowercase()
-                "video" in type || name.endsWith(".mp4") || name.endsWith(".mkv") 
-            }
+            provider.findEpisodeDir(episode.name, episode.scanlator, if (source.isLocal()) anime.url else anime.title, source)
 
-        if (files.isEmpty()) {
-            throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+        val files = if (source.isLocal() && episodeDir?.isFile == true) {
+            listOf(episodeDir)
+        } else {
+            episodeDir?.listFiles().orEmpty()
+                .filter {
+                    val type = it.type.orEmpty().lowercase()
+                    val name = it.name.orEmpty().lowercase()
+                    "video" in type || name.endsWith(".mp4") || name.endsWith(".mkv")
+                }
+        }
+
+        if (files.isEmpty()) {            throw Exception(context.stringResource(MR.strings.video_list_empty_error))
         }
 
         val file = files[0]
@@ -221,6 +226,10 @@ class DownloadManager(
         sourceId: Long,
         skipCache: Boolean = false,
     ): Boolean {
+        val source = sourceManager.getOrStub(sourceId)
+        if (source.isLocal() || skipCache) {
+            return provider.findEpisodeDir(episodeName, episodeScanlator, animeTitle, source) != null
+        }
         return cache.isEpisodeDownloaded(
             episodeName,
             episodeScanlator,
@@ -243,8 +252,8 @@ class DownloadManager(
      * @param anime the anime to check.
      */
     fun getDownloadCount(anime: Anime): Int {
-        return if (anime.source == LocalSource.ID) {
-            LocalSourceFileSystem(storageManager).getFilesInAnimeDirectory(anime.url)
+        return if (anime.isLocal()) {
+            LocalAnimeSourceFileSystem(storageManager).getFilesInAnimeDirectory(anime.url)
                 .count { Archive.isSupported(it) }
         } else {
             cache.getDownloadCount(anime)
@@ -264,8 +273,8 @@ class DownloadManager(
      * @param anime the anime to check.
      */
     fun getDownloadSize(anime: Anime): Long {
-        return if (anime.source == LocalSource.ID) {
-            LocalSourceFileSystem(storageManager).getAnimeDirectory(anime.url)
+        return if (anime.isLocal()) {
+            LocalAnimeSourceFileSystem(storageManager).getAnimeDirectory(anime.url)
                 ?.size() ?: 0L
         } else {
             cache.getDownloadSize(anime)
@@ -287,9 +296,9 @@ class DownloadManager(
      * @param anime the anime of the episodes.
      * @param source the source of the episodes.
      */
-    fun deleteEpisodes(episodes: List<Episode>, anime: Anime, source: Source) {
+    fun deleteEpisodes(episodes: List<Episode>, anime: Anime, source: Source, isManual: Boolean = false) {
         launchIO {
-            val filteredEpisodes = getEpisodesToDelete(episodes, anime)
+            val filteredEpisodes = if (isManual) episodes else getEpisodesToDelete(episodes, anime)
             if (filteredEpisodes.isEmpty()) {
                 return@launchIO
             }

@@ -232,7 +232,7 @@ class NotificationReceiver : BroadcastReceiver() {
                         if (anime != null) {
                             val source = sourceManager.get(anime.source)
                             if (source != null) {
-                                downloadManager.deleteEpisodes(listOf(it), anime, source)
+                                downloadManager.deleteEpisodes(listOf(it), anime, source, isManual = true)
                             }
                         }
                     }
