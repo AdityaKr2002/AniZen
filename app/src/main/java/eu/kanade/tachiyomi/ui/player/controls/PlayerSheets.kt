@@ -34,6 +34,8 @@ import eu.kanade.tachiyomi.ui.player.controls.components.sheets.PlaybackSpeedShe
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.QualitySheet
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.ScreenshotSheet
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.SubtitlesSheet
+import eu.kanade.tachiyomi.ui.player.controls.components.sheets.VideoZoomSheet
+import eu.kanade.tachiyomi.ui.player.PlayerViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.domain.custombuttons.model.CustomButton
@@ -42,6 +44,7 @@ import java.io.InputStream
 @Composable
 fun PlayerSheets(
     sheetShown: Sheets,
+    viewModel: PlayerViewModel,
 
     // subtitles sheet
     subtitles: ImmutableList<VideoTrack>,
@@ -155,6 +158,13 @@ fun PlayerSheets(
                 onClick = { onSeekToChapter(chapters.indexOf(it)) },
                 onDismissRequest = onDismissRequest,
                 dismissSheet = dismissSheet,
+            )
+        }
+
+        Sheets.VideoZoom -> {
+            VideoZoomSheet(
+                viewModel = viewModel,
+                onDismissRequest = onDismissRequest,
             )
         }
 

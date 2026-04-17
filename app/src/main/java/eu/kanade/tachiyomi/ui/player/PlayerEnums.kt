@@ -131,6 +131,7 @@ enum class Sheets {
     AudioTracks,
     QualityTracks,
     Chapters,
+    VideoZoom,
     More,
     Screenshot,
 }
@@ -164,6 +165,7 @@ sealed class PlayerUpdates {
     data object AspectRatio : PlayerUpdates()
     data class ShowText(val value: String) : PlayerUpdates()
     data class ShowTextResource(val textResource: StringResource) : PlayerUpdates()
+    data class VideoZoom(val zoom: Float) : PlayerUpdates()
 }
 
 enum class DebandSettings(

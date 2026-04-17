@@ -169,7 +169,8 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeGestures)
-            .pointerInput(Unit) {
+            .pointerInput(areControlsLocked) {
+                if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     var zoom = viewModel.videoZoom.value
                     var panX = viewModel.videoPanX.value
@@ -195,6 +196,7 @@ fun GestureHandler(
                                 val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
                                 zoom = (zoom + zoomDelta).coerceIn(-1f, 3f)
                                 viewModel.setVideoZoom(zoom)
+                                viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(zoom) }
                             }
 
                             // 2. Multi-finger Panning
@@ -376,7 +378,9 @@ fun GestureHandler(
                         if (secondDown == null) { // Single tap
                             if (controlsShown) viewModel.hideControls() else viewModel.showControls()
                         } else { // Double tap
-                            if (secondDown.position.x > size.width * 3 / 5) {
+                            if (viewModel.videoZoom.value != 0f) {
+                                viewModel.resetVideoZoomAndPan()
+                            } else if (secondDown.position.x > size.width * 3 / 5) {
                                 if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                                 viewModel.handleRightDoubleTap()
                                 isDoubleTapSeeking = true

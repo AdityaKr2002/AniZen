@@ -181,16 +181,20 @@ class DownloadManager(
      */
     fun buildVideo(source: Source, anime: Anime, episode: Episode): Video {
         val episodeDir =
-            provider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
-        val files = episodeDir?.listFiles().orEmpty()
-            .filter { 
-                val type = it.type.orEmpty().lowercase()
-                val name = it.name.orEmpty().lowercase()
-                "video" in type || name.endsWith(".mp4") || name.endsWith(".mkv") 
-            }
+            provider.findEpisodeDir(episode.name, episode.scanlator, if (source.isLocal()) anime.url else anime.title, source)
 
-        if (files.isEmpty()) {
-            throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+        val files = if (source.isLocal() && episodeDir?.isFile == true) {
+            listOf(episodeDir)
+        } else {
+            episodeDir?.listFiles().orEmpty()
+                .filter {
+                    val type = it.type.orEmpty().lowercase()
+                    val name = it.name.orEmpty().lowercase()
+                    "video" in type || name.endsWith(".mp4") || name.endsWith(".mkv")
+                }
+        }
+
+        if (files.isEmpty()) {            throw Exception(context.stringResource(MR.strings.video_list_empty_error))
         }
 
         val file = files[0]

@@ -319,6 +319,9 @@ fun PlayerControls(
                         is PlayerUpdates.ShowTextResource -> TextPlayerUpdate(
                             stringResource((currentPlayerUpdate as PlayerUpdates.ShowTextResource).textResource),
                         )
+                        is PlayerUpdates.VideoZoom -> TextPlayerUpdate(
+                            "Zoom: ${((currentPlayerUpdate as PlayerUpdates.VideoZoom).zoom * 100).toInt()}%"
+                        )
                         else -> {}
                     }
                 }
@@ -328,13 +331,13 @@ fun PlayerControls(
                     enter = fadeIn(),
                     exit = fadeOut(),
                     modifier = Modifier.constrainAs(unlockControlsButton) {
-                        top.linkTo(parent.top, spacing.medium)
-                        start.linkTo(parent.start, spacing.medium)
+                        bottom.linkTo(parent.bottom, spacing.extraLarge)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
                     },
                 ) {
-                    ControlsButton(
-                        Icons.Filled.Lock,
-                        onClick = { viewModel.unlockControls() },
+                    eu.kanade.tachiyomi.ui.player.controls.components.SlideToUnlock(
+                        onUnlock = { viewModel.unlockControls() },
                     )
                 }
                 AnimatedVisibility(
