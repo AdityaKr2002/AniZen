@@ -294,6 +294,13 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _isSeekingForwards = MutableStateFlow(false)
     val isSeekingForwards = _isSeekingForwards.asStateFlow()
 
+    private val _videoZoom = MutableStateFlow(0f)
+    val videoZoom = _videoZoom.asStateFlow()
+    private val _videoPanX = MutableStateFlow(0f)
+    val videoPanX = _videoPanX.asStateFlow()
+    private val _videoPanY = MutableStateFlow(0f)
+    val videoPanY = _videoPanY.asStateFlow()
+
     val isSeekingUI = MutableStateFlow(false)
 
     private var hasTriggeredWatching = false
@@ -981,6 +988,23 @@ class PlayerViewModel @JvmOverloads constructor(
         _hosterList.update { _ -> emptyList() }
         _hosterExpandedList.update { _ -> emptyList() }
         _selectedHosterVideoIndex.update { _ -> Pair(-1, -1) }
+    }
+
+    fun setVideoZoom(zoom: Float) {
+        _videoZoom.value = zoom
+        MPVLib.setPropertyDouble("video-zoom", zoom.toDouble())
+    }
+
+    fun setVideoPan(x: Float, y: Float) {
+        _videoPanX.value = x
+        _videoPanY.value = y
+        MPVLib.setPropertyDouble("video-pan-x", x.toDouble())
+        MPVLib.setPropertyDouble("video-pan-y", y.toDouble())
+    }
+
+    fun resetVideoZoomAndPan() {
+        setVideoZoom(0f)
+        setVideoPan(0f, 0f)
     }
 
     fun changeEpisode(previous: Boolean, autoPlay: Boolean = false) {
