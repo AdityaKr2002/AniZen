@@ -1176,7 +1176,7 @@ private fun EpisodeItemWrapper(
                 bookmark = item.episode.bookmark,
                 fillermark = item.episode.fillermark,
                 selected = item.selected,
-                downloadIndicatorEnabled = !isAnyEpisodeSelected && !anime.isLocal(),
+                downloadIndicatorEnabled = !isAnyEpisodeSelected,
                 downloadStateProvider = { item.downloadState },
                 downloadProgressProvider = { item.downloadProgress },
                 episodeSwipeStartAction = episodeSwipeStartAction,
@@ -1192,10 +1192,12 @@ private fun EpisodeItemWrapper(
                         onEpisodeClicked = onEpisodeClicked,
                     )
                 },
-                onDownloadClick = if (onDownloadEpisode != null) {
-                    { onDownloadEpisode(listOf(item), it) }
-                } else {
-                    null
+                onDownloadClick = {
+                    if (onDownloadEpisode != null) {
+                        onDownloadEpisode(listOf(item), it)
+                    } else if (it == EpisodeDownloadAction.DELETE) {
+                        onMultiDeleteClicked(listOf(item.episode))
+                    }
                 },
                 onEpisodeSwipe = {
                     onEpisodeSwipe(item, it)
@@ -1253,7 +1255,7 @@ private fun SharedAnimeBottomActionMenu(
         onDeleteClicked = {
             onMultiDeleteClicked(selected.fastMap { it.episode })
         }.takeIf {
-            onDownloadEpisode != null && selected.fastAny { it.downloadState == Download.State.DOWNLOADED }
+            (onDownloadEpisode != null || state.anime.isLocal()) && selected.fastAny { it.downloadState == Download.State.DOWNLOADED }
         },
         onExternalClicked = {
             onEpisodeClicked(selected.fastMap { it.episode }.first(), true)
