@@ -415,7 +415,7 @@ fun GestureHandler(
                     var initialVolumePercent = 0f
                     var originalBrightness = viewModel.currentBrightness.value
                     val brightnessGestureSens = 0.001f
-                    val volumeGestureSens = 0.15f // Unified sensitivity for percentage range
+                    val volumeGestureSens = 0.08f // Unified sensitivity for percentage range
                     
                     while (true) {
                         val event = awaitPointerEvent()

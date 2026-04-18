@@ -738,12 +738,12 @@ class PlayerViewModel @JvmOverloads constructor(
             if (sysVol < maxVolume) {
                 changeVolumeTo(sysVol + change)
             } else if (volumeBoostCap > 0) {
-                val newBoost = (mpvVol + change).coerceAtMost(100 + volumeBoostCap)
+                val newBoost = (mpvVol + (change * 5)).coerceAtMost(100 + volumeBoostCap)
                 changeMPVVolumeTo(newBoost)
             }
         } else if (change < 0) { // Decreasing
             if (mpvVol > 100) {
-                val newBoost = (mpvVol + change).coerceAtLeast(100)
+                val newBoost = (mpvVol + (change * 5)).coerceAtLeast(100)
                 changeMPVVolumeTo(newBoost)
             } else {
                 changeVolumeTo(sysVol + change)
