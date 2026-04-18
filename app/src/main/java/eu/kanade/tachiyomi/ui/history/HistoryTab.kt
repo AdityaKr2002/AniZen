@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.history
 
+import androidx.activity.compose.BackHandler
 import android.content.Context
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
@@ -105,6 +106,7 @@ data object HistoryTab : Tab {
 
         HistoryScreen(
             state = state,
+            searchQuery = state.searchQuery,
             snackbarHostState = snackbarHostState,
             onSearchQueryChange = screenModel::search,
             onClickCover = { navigator.push(AnimeScreen(it)) },
@@ -112,6 +114,10 @@ data object HistoryTab : Tab {
             onDialogChange = screenModel::setDialog,
             navigateUp = navigateUp,
         )
+
+        BackHandler(enabled = state.searchQuery != null) {
+            screenModel.search(null)
+        }
 
         state.dialog?.let { dialog ->
             when (dialog) {
