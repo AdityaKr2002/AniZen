@@ -731,16 +731,45 @@ class PlayerViewModel @JvmOverloads constructor(
 
     val maxVolume = activity.audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
     fun changeVolumeBy(change: Int) {
-        val mpvVolume = MPVLib.getPropertyInt("volume")
-        if (volumeBoostCap > 0 && currentVolume.value == maxVolume) {
-            if (mpvVolume == 100 && change < 0) changeVolumeTo(currentVolume.value + change)
-            val finalMPVVolume = (mpvVolume + change).coerceAtLeast(100)
-            if (finalMPVVolume in 100..volumeBoostCap + 100) {
-                changeMPVVolumeTo(finalMPVVolume)
-                return
+        val mpvVol = MPVLib.getPropertyInt("volume")
+        val sysVol = currentVolume.value
+
+        if (change > 0) { // Increasing
+            if (sysVol < maxVolume) {
+                changeVolumeTo(sysVol + change)
+            } else if (volumeBoostCap > 0) {
+                val newBoost = (mpvVol + change).coerceAtMost(100 + volumeBoostCap)
+                changeMPVVolumeTo(newBoost)
+            }
+        } else if (change < 0) { // Decreasing
+            if (mpvVol > 100) {
+                val newBoost = (mpvVol + change).coerceAtLeast(100)
+                changeMPVVolumeTo(newBoost)
+            } else {
+                changeVolumeTo(sysVol + change)
             }
         }
-        changeVolumeTo(currentVolume.value + change)
+    }
+
+    /**
+     * Unified volume control for both system volume and MPV boost.
+     * @param percent 0 to 100 for system volume, 100 to 100 + volumeBoostCap for boost.
+     */
+    fun setVolume(percent: Float) {
+        val totalMax = 100f + volumeBoostCap
+        val clamped = percent.coerceIn(0f, totalMax)
+        if (clamped <= 100f) {
+            val systemVol = Math.round(clamped / 100f * maxVolume)
+            changeVolumeTo(systemVol)
+            if (currentMPVVolume.value != 100) {
+                changeMPVVolumeTo(100)
+            }
+        } else {
+            if (currentVolume.value != maxVolume) {
+                changeVolumeTo(maxVolume)
+            }
+            changeMPVVolumeTo(clamped.toInt())
+        }
     }
 
     fun changeVolumeTo(volume: Int) {
