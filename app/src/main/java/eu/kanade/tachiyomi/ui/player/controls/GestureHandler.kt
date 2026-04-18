@@ -415,11 +415,7 @@ fun GestureHandler(
                                 viewModel.handleLeftDoubleTap()
                                 isDoubleTapSeeking = true
                             } else {
-                                if (viewModel.videoZoom.value != 0f) {
-                                    viewModel.resetVideoZoomAndPan()
-                                } else {
-                                    viewModel.handleCenterDoubleTap()
-                                }
+                                viewModel.handleCenterDoubleTap()
                             }
                         }
                     }
