@@ -129,7 +129,7 @@ fun GestureHandler(
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsStatePref()
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsStatePref()
 
-    var isLongPressing by remember { mutableStateOf(false) }
+    val isLongPressing by viewModel.isLongPressing.collectAsState()
     var wasPaused by remember { mutableStateOf(false) }
     var isSpeedLongPress by remember { mutableStateOf(false) }
     val currentVolume by viewModel.currentVolume.collectAsState()
@@ -287,7 +287,7 @@ fun GestureHandler(
                                         viewModel.sheetShown.update { Sheets.Screenshot }
                                     }
                                     PausedLongPressAction.Play2x -> {
-                                        isLongPressing = true
+                                        viewModel.isLongPressing.update { true }
                                         isSpeedLongPress = true
                                         viewModel.unpause()
                                         val targetSpeed = playerPreferences.playerSpeedLongPress().get()
@@ -298,7 +298,7 @@ fun GestureHandler(
                                 }
                             } else {
                                 if (longPressAction == LongPressAction.Speed) {
-                                    isLongPressing = true
+                                    viewModel.isLongPressing.update { true }
                                     isSpeedLongPress = true
                                     val targetSpeed = playerPreferences.playerSpeedLongPress().get()
                                     originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
@@ -376,7 +376,7 @@ fun GestureHandler(
 
                         if (isLongPressing) {
                             val wasPausedOriginally = wasPaused
-                            isLongPressing = false
+                            viewModel.isLongPressing.update { false }
                             isSpeedLongPress = false
                             rampSpeed(originalSpeed) {
                                 if (wasPausedOriginally) {
@@ -408,7 +408,7 @@ fun GestureHandler(
                     } catch (e: Exception) {
                         longPressJob?.cancel()
                         if (isLongPressing) {
-                            isLongPressing = false
+                            viewModel.isLongPressing.update { false }
                             isSpeedLongPress = false
                             rampSpeed(originalSpeed)
                         }

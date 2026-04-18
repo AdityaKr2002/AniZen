@@ -208,6 +208,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
     val isLoading = MutableStateFlow(true)
     val playbackSpeed = MutableStateFlow(playerPreferences.playerSpeed().get())
+    val isLongPressing = MutableStateFlow(false)
 
     private val _subtitleTracks = MutableStateFlow<List<VideoTrack>>(emptyList())
     val subtitleTracks = _subtitleTracks.asStateFlow()

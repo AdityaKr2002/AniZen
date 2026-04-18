@@ -340,11 +340,13 @@ fun PlayerControls(
                         onUnlock = { viewModel.unlockControls() },
                     )
                 }
+                val isLongPressing by viewModel.isLongPressing.collectAsState()
                 AnimatedVisibility(
-                    visible =
-                    (controlsShown && !areControlsLocked || gestureSeekAmount != null) ||
-                        isLoading ||
-                        isLoadingEpisode,
+                    visible = (
+                        (controlsShown && !areControlsLocked || gestureSeekAmount != null) ||
+                            isLoading ||
+                            isLoadingEpisode
+                        ) && !isLongPressing,
                     enter = fadeIn(playerControlsEnterAnimationSpec()),
                     exit = fadeOut(playerControlsExitAnimationSpec()),
                     modifier = Modifier.constrainAs(centerControls) {
@@ -373,7 +375,7 @@ fun PlayerControls(
                     )
                 }
                 AnimatedVisibility(
-                    visible = (controlsShown || seekBarShown) && !areControlsLocked,
+                    visible = (controlsShown || seekBarShown) && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
                         slideInVertically(playerControlsEnterAnimationSpec()) { it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -428,7 +430,7 @@ fun PlayerControls(
                 val mediaTitle by viewModel.mediaTitle.collectAsState()
                 val animeTitle by viewModel.animeTitle.collectAsState()
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked,
+                    controlsShown && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { -it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -459,7 +461,7 @@ fun PlayerControls(
                 val autoPlayEnabled by playerPreferences.autoplayEnabled().collectAsState()
                 val isEpisodeOnline by viewModel.isEpisodeOnline.collectAsState()
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked,
+                    controlsShown && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -497,7 +499,7 @@ fun PlayerControls(
                 val skipIntroButton by viewModel.skipIntroText.collectAsState()
                 val customButtonTitle by viewModel.primaryButtonTitle.collectAsState()
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked,
+                    controlsShown && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -547,7 +549,7 @@ fun PlayerControls(
                 // Bottom left controls
                 val playbackSpeed by viewModel.playbackSpeed.collectAsState()
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked,
+                    controlsShown && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { -it } +
                             fadeIn(playerControlsEnterAnimationSpec())
