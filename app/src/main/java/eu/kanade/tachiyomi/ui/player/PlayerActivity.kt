@@ -869,6 +869,9 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting || !player.initialized) return
         when (property) {
             "speed" -> viewModel.playbackSpeed.update { value.toFloat() }
+            "video-zoom" -> viewModel.videoZoom.update { value.toFloat() }
+            "video-pan-x" -> viewModel.videoPanX.update { value.toFloat() }
+            "video-pan-y" -> viewModel.videoPanY.update { value.toFloat() }
             "estimated-vf-fps" -> PlayerStats.estimatedVfFps.value = value
             "video-params/fps" -> PlayerStats.videoParamsFps.value = value
             "fps" -> if (PlayerStats.videoParamsFps.value == 0.0) PlayerStats.videoParamsFps.value = value

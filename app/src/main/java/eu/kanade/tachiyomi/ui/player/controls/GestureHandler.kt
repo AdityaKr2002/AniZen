@@ -179,6 +179,10 @@ fun GestureHandler(
                     var smoothPanX = panX
                     var smoothPanY = panY
 
+                    var prevDist = 0f
+                    var prevMidX = 0f
+                    var prevMidY = 0f
+
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.changes.fastAny { it.isConsumed }) {
@@ -186,67 +190,64 @@ fun GestureHandler(
                             break
                         }
 
+                        val currentZoom = viewModel.videoZoom.value
+                        if (kotlin.math.abs(zoom - currentZoom) > 0.001f && event.changes.size <= 1) {
+                            zoom = currentZoom
+                            panX = viewModel.videoPanX.value
+                            panY = viewModel.videoPanY.value
+                            smoothPanX = panX
+                            smoothPanY = panY
+                            prevDist = 0f
+                        }
+
                         if (event.changes.size > 1) {
                             // 1. Zoom Calculation
                             val zoomChanges = event.changes
-                            val prevDist = (zoomChanges[0].previousPosition - zoomChanges[1].previousPosition).getDistance()
-                            val dist = (zoomChanges[0].position - zoomChanges[1].position).getDistance()
+                            val p1 = zoomChanges[0].position
+                            val p2 = zoomChanges[1].position
+                            val dx = p2.x - p1.x
+                            val dy = p2.y - p1.y
+                            val dist = kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+                            val midX = (p1.x + p2.x) / 2f
+                            val midY = (p1.y + p2.y) / 2f
 
-                            if (prevDist > 0f && dist > 0f) {
-                                val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
-                                zoom = (zoom + zoomDelta).coerceIn(-1f, 3f)
-                                viewModel.setVideoZoom(zoom)
-                                viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(zoom) }
+                            if (prevDist == 0f) {
+                                prevDist = dist
+                                prevMidX = midX
+                                prevMidY = midY
+                            } else {
+                                if (prevDist > 0f && dist > 0f) {
+                                    val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
+                                    zoom = (zoom + zoomDelta).coerceIn(-1f, 3f)
+                                    viewModel.setVideoZoom(zoom)
+                                    viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(zoom) }
+
+                                    // 2. Multi-finger Panning
+                                    val scale = 2f.pow(zoom)
+                                    val (bw, bh) = videoDisplaySize(size)
+                                    
+                                    val panDX = midX - prevMidX
+                                    val panDY = midY - prevMidY
+                                    
+                                    val targetPanX = panX + panDX / (bw * scale)
+                                    val targetPanY = panY + panDY / (bh * scale)
+
+                                    smoothPanX += (targetPanX - smoothPanX) * 0.5f
+                                    smoothPanY += (targetPanY - smoothPanY) * 0.5f
+
+                                    val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
+                                    panX = smoothPanX.coerceIn(-maxPan, maxPan)
+                                    panY = smoothPanY.coerceIn(-maxPan, maxPan)
+
+                                    viewModel.setVideoPan(panX, panY)
+                                }
+                                prevDist = dist
+                                prevMidX = midX
+                                prevMidY = midY
                             }
-
-                            // 2. Multi-finger Panning
-                            val scale = 2f.pow(zoom)
-                            val (bw, bh) = videoDisplaySize(size)
-
-                            val prevCentroid = event.changes.fold(androidx.compose.ui.geometry.Offset.Zero) { acc, change ->
-                                acc + change.previousPosition
-                            } / event.changes.size.toFloat()
-                            val centroid = event.changes.fold(androidx.compose.ui.geometry.Offset.Zero) { acc, change ->
-                                acc + change.position
-                            } / event.changes.size.toFloat()
-
-                            val movement = centroid - prevCentroid
-
-                            val targetPanX = panX + movement.x / (bw * scale)
-                            val targetPanY = panY + movement.y / (bh * scale)
-
-                            val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
-
-                            // EMA Smoothing
-                            smoothPanX += (targetPanX - smoothPanX) * 0.5f
-                            smoothPanY += (targetPanY - smoothPanY) * 0.5f
-
-                            panX = smoothPanX.coerceIn(-maxPan, maxPan)
-                            panY = smoothPanY.coerceIn(-maxPan, maxPan)
-
-                            viewModel.setVideoPan(panX, panY)
-
                             event.changes.fastForEach { it.consume() }
-                        } else if (zoom > 0f && event.changes.size == 1) {
-                            // 3. Single-finger Panning (only when zoomed in)
-                            val scale = 2f.pow(zoom)
-                            val (bw, bh) = videoDisplaySize(size)
-                            val change = event.changes[0]
-                            val movement = change.position - change.previousPosition
-
-                            val targetPanX = panX + movement.x / (bw * scale)
-                            val targetPanY = panY + movement.y / (bh * scale)
-
-                            val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
-
-                            smoothPanX += (targetPanX - smoothPanX) * 0.5f
-                            smoothPanY += (targetPanY - smoothPanY) * 0.5f
-
-                            panX = smoothPanX.coerceIn(-maxPan, maxPan)
-                            panY = smoothPanY.coerceIn(-maxPan, maxPan)
-
-                            viewModel.setVideoPan(panX, panY)
-                            change.consume()
+                        } else {
+                            prevDist = 0f
                         }
 
                         if (event.changes.fastAll { it.changedToUp() }) {
@@ -314,6 +315,12 @@ fun GestureHandler(
                     
                     while (true) {
                         val event = awaitPointerEvent()
+                        
+                        if (event.changes.size > 1) {
+                            longPressJob?.cancel()
+                            break
+                        }
+                        
                         val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
                         
                         if (pointer.changedToUp()) {
@@ -378,9 +385,7 @@ fun GestureHandler(
                         if (secondDown == null) { // Single tap
                             if (controlsShown) viewModel.hideControls() else viewModel.showControls()
                         } else { // Double tap
-                            if (viewModel.videoZoom.value != 0f) {
-                                viewModel.resetVideoZoomAndPan()
-                            } else if (secondDown.position.x > size.width * 3 / 5) {
+                            if (secondDown.position.x > size.width * 3 / 5) {
                                 if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                                 viewModel.handleRightDoubleTap()
                                 isDoubleTapSeeking = true
@@ -396,122 +401,157 @@ fun GestureHandler(
                     scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
                 }
             }
-            .pointerInput(areControlsLocked) {
-                if (!seekGesture || areControlsLocked) return@pointerInput
-                var startingPosition = position.toInt()
-                var startingX = 0f
-                var wasPlayerAlreadyPause = false
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        startingPosition = position.toInt()
-                        startingX = it.x
-                        wasPlayerAlreadyPause = viewModel.paused.value
-                        viewModel.pause()
-                    },
-                    onDragEnd = {
-                        viewModel.gestureSeekAmount.update { null }
-                        viewModel.hideSeekBar()
-                        if (!wasPlayerAlreadyPause) viewModel.unpause()
-                    },
-                ) { change, dragAmount ->
-                    if (position <= 0f && dragAmount < 0) return@detectHorizontalDragGestures
-                    if (position >= duration && dragAmount > 0) return@detectHorizontalDragGestures
-                    calculateNewHorizontalGestureValue(startingPosition, startingX, change.position.x, 0.15f).let {
-                        viewModel.gestureSeekAmount.update { _ ->
-                            Pair(
-                                startingPosition,
-                                (it - startingPosition)
-                                    .coerceIn(0 - startingPosition, (duration - startingPosition).toInt()),
-                            )
-                        }
-                        viewModel.seekTo(it.coerceIn(0, duration.toInt()), preciseSeeking)
+            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture) {
+                if (areControlsLocked) return@pointerInput
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var startingPosition = position.toInt()
+                    var startingX = down.position.x
+                    var startingY = down.position.y
+                    var wasPlayerAlreadyPause = false
+                    var hasStartedDragging = false
+                    var dragDirection: Int = 0 // 0: None, 1: Horizontal, 2: Vertical
+                    
+                    var mpvVolumeStartingY = 0f
+                    var originalVolume = currentVolume
+                    var originalMPVVolume = currentMPVVolume
+                    var originalBrightness = currentBrightness
+                    val brightnessGestureSens = 0.001f
+                    val volumeGestureSens = 0.03f
+                    val mpvVolumeGestureSens = 0.02f
+                    
+                    val isIncreasingVolumeBoost: (Float) -> Boolean = {
+                        volumeBoostingCap > 0 &&
+                            currentVolume == viewModel.maxVolume &&
+                            currentMPVVolume - 100 < volumeBoostingCap &&
+                            it < 0
+                    }
+                    val isDecreasingVolumeBoost: (Float) -> Boolean = {
+                        volumeBoostingCap > 0 &&
+                            currentVolume == viewModel.maxVolume &&
+                            currentMPVVolume - 100 in 1..volumeBoostingCap &&
+                            it > 0
                     }
 
-                    if (showSeekbar) viewModel.showSeekBar()
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.changes.size > 1) {
+                            if (dragDirection == 1) {
+                                viewModel.gestureSeekAmount.update { null }
+                                viewModel.hideSeekBar()
+                                if (!wasPlayerAlreadyPause) viewModel.unpause()
+                            }
+                            break
+                        }
+                        
+                        val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (pointer.changedToUp()) {
+                            if (dragDirection == 1) {
+                                viewModel.gestureSeekAmount.update { null }
+                                viewModel.hideSeekBar()
+                                if (!wasPlayerAlreadyPause) viewModel.unpause()
+                            }
+                            break
+                        }
+                        
+                        if (dragDirection == 0) {
+                            val diffX = kotlin.math.abs(pointer.position.x - down.position.x)
+                            val diffY = kotlin.math.abs(pointer.position.y - down.position.y)
+                            
+                            if (diffX > viewConfiguration.touchSlop || diffY > viewConfiguration.touchSlop) {
+                                if (diffX > diffY && seekGesture) {
+                                    dragDirection = 1
+                                    startingPosition = position.toInt()
+                                    startingX = pointer.position.x
+                                    wasPlayerAlreadyPause = viewModel.paused.value
+                                    viewModel.pause()
+                                } else if (diffY > diffX && gestureVolumeBrightness) {
+                                    dragDirection = 2
+                                    startingY = pointer.position.y
+                                    mpvVolumeStartingY = 0f
+                                    originalVolume = currentVolume
+                                    originalMPVVolume = currentMPVVolume
+                                    originalBrightness = currentBrightness
+                                } else {
+                                    // If neither is enabled or it's perfectly diagonal (rare), just break
+                                    break
+                                }
+                                hasStartedDragging = true
+                            }
+                        } else if (dragDirection == 1) {
+                            // Horizontal Seek
+                            if (position <= 0f && (pointer.position.x - startingX) < 0) { /* continue */ }
+                            else if (position >= duration && (pointer.position.x - startingX) > 0) { /* continue */ }
+                            else {
+                                calculateNewHorizontalGestureValue(startingPosition, startingX, pointer.position.x, 0.15f).let {
+                                    viewModel.gestureSeekAmount.update { _ ->
+                                        Pair(
+                                            startingPosition,
+                                            (it - startingPosition)
+                                                .coerceIn(0 - startingPosition, (duration - startingPosition).toInt()),
+                                        )
+                                    }
+                                    viewModel.seekTo(it.coerceIn(0, duration.toInt()), preciseSeeking)
+                                }
+                                if (showSeekbar) viewModel.showSeekBar()
+                            }
+                            pointer.consume()
+                        } else if (dragDirection == 2) {
+                            // Vertical (Volume/Brightness)
+                            val amount = pointer.position.y - startingY
+                            val changeVolume: () -> Unit = {
+                                if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
+                                    if (mpvVolumeStartingY == 0f) {
+                                        startingY = 0f
+                                        originalVolume = currentVolume
+                                        mpvVolumeStartingY = pointer.position.y
+                                    }
+                                    viewModel.changeMPVVolumeTo(
+                                        calculateNewVerticalGestureValue(
+                                            originalMPVVolume,
+                                            mpvVolumeStartingY,
+                                            pointer.position.y,
+                                            mpvVolumeGestureSens,
+                                        )
+                                            .coerceIn(100..volumeBoostingCap + 100),
+                                    )
+                                } else {
+                                    if (startingY == 0f) {
+                                        mpvVolumeStartingY = 0f
+                                        originalMPVVolume = currentMPVVolume
+                                        startingY = pointer.position.y
+                                    }
+                                    val newVal = calculateNewVerticalGestureValue(
+                                            originalVolume,
+                                            startingY,
+                                            pointer.position.y,
+                                            volumeGestureSens,
+                                        )
+                                    viewModel.changeVolumeTo(newVal)
+                                }
+                                viewModel.displayVolumeSlider()
+                            }
+                            val changeBrightness: () -> Unit = {
+                                if (startingY == 0f) startingY = pointer.position.y
+                                val newVal = calculateNewVerticalGestureValue(
+                                        originalBrightness,
+                                        startingY,
+                                        pointer.position.y,
+                                        brightnessGestureSens,
+                                    )
+                                viewModel.changeBrightnessTo(newVal)
+                                viewModel.displayBrightnessSlider()
+                            }
+                            if (swapVolumeBrightness) {
+                                if (pointer.position.x > size.width / 2) changeBrightness() else changeVolume()
+                            } else {
+                                if (pointer.position.x < size.width / 2) changeBrightness() else changeVolume()
+                            }
+                            pointer.consume()
+                        }
+                    }
                 }
             }
-            .pointerInput(areControlsLocked) {
-                if (!gestureVolumeBrightness || areControlsLocked) return@pointerInput
-                var startingY = 0f
-                var mpvVolumeStartingY = 0f
-                var originalVolume = currentVolume
-                var originalMPVVolume = currentMPVVolume
-                var originalBrightness = currentBrightness
-                val brightnessGestureSens = 0.001f
-                val volumeGestureSens = 0.03f
-                val mpvVolumeGestureSens = 0.02f
-                val isIncreasingVolumeBoost: (Float) -> Boolean = {
-                    volumeBoostingCap > 0 &&
-                        currentVolume == viewModel.maxVolume &&
-                        currentMPVVolume - 100 < volumeBoostingCap &&
-                        it < 0
-                }
-                val isDecreasingVolumeBoost: (Float) -> Boolean = {
-                    volumeBoostingCap > 0 &&
-                        currentVolume == viewModel.maxVolume &&
-                        currentMPVVolume - 100 in 1..volumeBoostingCap &&
-                        it > 0
-                }
-                detectVerticalDragGestures(
-                    onDragEnd = { startingY = 0f },
-                    onDragStart = {
-                        startingY = 0f
-                        mpvVolumeStartingY = 0f
-                        originalVolume = currentVolume
-                        originalMPVVolume = currentMPVVolume
-                        originalBrightness = currentBrightness
-                    },
-                ) { change, amount ->
-                    val changeVolume: () -> Unit = {
-                        if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
-                            if (mpvVolumeStartingY == 0f) {
-                                startingY = 0f
-                                originalVolume = currentVolume
-                                mpvVolumeStartingY = change.position.y
-                            }
-                            viewModel.changeMPVVolumeTo(
-                                calculateNewVerticalGestureValue(
-                                    originalMPVVolume,
-                                    mpvVolumeStartingY,
-                                    change.position.y,
-                                    mpvVolumeGestureSens,
-                                )
-                                    .coerceIn(100..volumeBoostingCap + 100),
-                            )
-                        } else {
-                            if (startingY == 0f) {
-                                mpvVolumeStartingY = 0f
-                                originalMPVVolume = currentMPVVolume
-                                startingY = change.position.y
-                            }
-                            val newVal = calculateNewVerticalGestureValue(
-                                    originalVolume,
-                                    startingY,
-                                    change.position.y,
-                                    volumeGestureSens,
-                                )
-                            viewModel.changeVolumeTo(newVal)
-                        }
-                        viewModel.displayVolumeSlider()
-                    }
-                    val changeBrightness: () -> Unit = {
-                        if (startingY == 0f) startingY = change.position.y
-                        val newVal = calculateNewVerticalGestureValue(
-                                originalBrightness,
-                                startingY,
-                                change.position.y,
-                                brightnessGestureSens,
-                            )
-                        viewModel.changeBrightnessTo(newVal)
-                        viewModel.displayBrightnessSlider()
-                    }
-                    if (swapVolumeBrightness) {
-                        if (change.position.x > size.width / 2) changeBrightness() else changeVolume()
-                    } else {
-                        if (change.position.x < size.width / 2) changeBrightness() else changeVolume()
-                    }
-                }
-            },
     ) {}
 }
 

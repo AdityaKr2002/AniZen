@@ -294,12 +294,9 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _isSeekingForwards = MutableStateFlow(false)
     val isSeekingForwards = _isSeekingForwards.asStateFlow()
 
-    private val _videoZoom = MutableStateFlow(0f)
-    val videoZoom = _videoZoom.asStateFlow()
-    private val _videoPanX = MutableStateFlow(0f)
-    val videoPanX = _videoPanX.asStateFlow()
-    private val _videoPanY = MutableStateFlow(0f)
-    val videoPanY = _videoPanY.asStateFlow()
+    val videoZoom = MutableStateFlow(0f)
+    val videoPanX = MutableStateFlow(0f)
+    val videoPanY = MutableStateFlow(0f)
 
     private val _videoAspectOverride = MutableStateFlow<Double?>(null)
     val videoAspectOverride = _videoAspectOverride.asStateFlow()
@@ -1011,13 +1008,13 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun setVideoZoom(zoom: Float) {
-        _videoZoom.value = zoom
+        videoZoom.value = zoom
         MPVLib.setPropertyDouble("video-zoom", zoom.toDouble())
     }
 
     fun setVideoPan(x: Float, y: Float) {
-        _videoPanX.value = x
-        _videoPanY.value = y
+        videoPanX.value = x
+        videoPanY.value = y
         MPVLib.setPropertyDouble("video-pan-x", x.toDouble())
         MPVLib.setPropertyDouble("video-pan-y", y.toDouble())
     }
