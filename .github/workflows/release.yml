@@ -163,3 +163,39 @@ jobs:
             
             ---
             **📥 Download:** Choose the `arm64-v8a` version for your phone.
+
+      - name: Send Announcement to Discord
+        if: success()
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          # Define clean links for Markdown
+          RELEASE_URL="https://github.com/salmanbappi/AniZen/releases/tag/v${{ env.NEW_VN }}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          
+          EMBED_TITLE="🚀 AniZen Official Release (v${{ env.NEW_VN }})"
+          EMBED_DESC=$(cat <<EOF
+          ${{ env.CHANGELOG }}
+
+          ---
+          **📥 [Download Release APK]($RELEASE_URL)**
+          **🔗 [View Release Details]($RELEASE_URL)**
+          EOF
+          )
+
+          # Encode using jq for a clean Discord Embed payload
+          PAYLOAD=$(jq -n \
+            --arg title "$EMBED_TITLE" \
+            --arg desc "$EMBED_DESC" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                color: 16763904
+              }]
+            }')
+          
+          curl -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               https://discord.com/api/v10/channels/1482254131417845821/messages

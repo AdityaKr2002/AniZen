@@ -412,27 +412,11 @@ fun GestureHandler(
                     var hasStartedDragging = false
                     var dragDirection: Int = 0 // 0: None, 1: Horizontal, 2: Vertical
                     
-                    var mpvVolumeStartingY = 0f
-                    var originalVolume = currentVolume
-                    var originalMPVVolume = currentMPVVolume
-                    var originalBrightness = currentBrightness
+                    var initialVolumePercent = 0f
+                    var originalBrightness = viewModel.currentBrightness.value
                     val brightnessGestureSens = 0.001f
-                    val volumeGestureSens = 0.03f
-                    val mpvVolumeGestureSens = 0.02f
+                    val volumeGestureSens = 0.08f // Unified sensitivity for percentage range
                     
-                    val isIncreasingVolumeBoost: (Float) -> Boolean = {
-                        volumeBoostingCap > 0 &&
-                            currentVolume == viewModel.maxVolume &&
-                            currentMPVVolume - 100 < volumeBoostingCap &&
-                            it < 0
-                    }
-                    val isDecreasingVolumeBoost: (Float) -> Boolean = {
-                        volumeBoostingCap > 0 &&
-                            currentVolume == viewModel.maxVolume &&
-                            currentMPVVolume - 100 in 1..volumeBoostingCap &&
-                            it > 0
-                    }
-
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.changes.size > 1) {
@@ -468,10 +452,12 @@ fun GestureHandler(
                                 } else if (diffY > diffX && gestureVolumeBrightness) {
                                     dragDirection = 2
                                     startingY = pointer.position.y
-                                    mpvVolumeStartingY = 0f
-                                    originalVolume = currentVolume
-                                    originalMPVVolume = currentMPVVolume
-                                    originalBrightness = currentBrightness
+                                    initialVolumePercent = if (viewModel.currentMPVVolume.value > 100) {
+                                        viewModel.currentMPVVolume.value.toFloat()
+                                    } else {
+                                        viewModel.currentVolume.value.toFloat() / viewModel.maxVolume * 100f
+                                    }
+                                    originalBrightness = viewModel.currentBrightness.value
                                 } else {
                                     // If neither is enabled or it's perfectly diagonal (rare), just break
                                     break
@@ -479,7 +465,7 @@ fun GestureHandler(
                                 hasStartedDragging = true
                             }
                         } else if (dragDirection == 1) {
-                            // Horizontal Seek
+                            // Horizontal Seek (unchanged)
                             if (position <= 0f && (pointer.position.x - startingX) < 0) { /* continue */ }
                             else if (position >= duration && (pointer.position.x - startingX) > 0) { /* continue */ }
                             else {
@@ -498,54 +484,30 @@ fun GestureHandler(
                             pointer.consume()
                         } else if (dragDirection == 2) {
                             // Vertical (Volume/Brightness)
-                            val amount = pointer.position.y - startingY
-                            val changeVolume: () -> Unit = {
-                                if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
-                                    if (mpvVolumeStartingY == 0f) {
-                                        startingY = 0f
-                                        originalVolume = currentVolume
-                                        mpvVolumeStartingY = pointer.position.y
-                                    }
-                                    viewModel.changeMPVVolumeTo(
-                                        calculateNewVerticalGestureValue(
-                                            originalMPVVolume,
-                                            mpvVolumeStartingY,
-                                            pointer.position.y,
-                                            mpvVolumeGestureSens,
-                                        )
-                                            .coerceIn(100..volumeBoostingCap + 100),
-                                    )
-                                } else {
-                                    if (startingY == 0f) {
-                                        mpvVolumeStartingY = 0f
-                                        originalMPVVolume = currentMPVVolume
-                                        startingY = pointer.position.y
-                                    }
-                                    val newVal = calculateNewVerticalGestureValue(
-                                            originalVolume,
-                                            startingY,
-                                            pointer.position.y,
-                                            volumeGestureSens,
-                                        )
-                                    viewModel.changeVolumeTo(newVal)
-                                }
-                                viewModel.displayVolumeSlider()
-                            }
-                            val changeBrightness: () -> Unit = {
-                                if (startingY == 0f) startingY = pointer.position.y
-                                val newVal = calculateNewVerticalGestureValue(
-                                        originalBrightness,
-                                        startingY,
-                                        pointer.position.y,
-                                        brightnessGestureSens,
-                                    )
-                                viewModel.changeBrightnessTo(newVal)
-                                viewModel.displayBrightnessSlider()
-                            }
                             if (swapVolumeBrightness) {
-                                if (pointer.position.x > size.width / 2) changeBrightness() else changeVolume()
+                                if (pointer.position.x > size.width / 2) {
+                                    // Brightness
+                                    val newVal = calculateNewVerticalGestureValue(originalBrightness, startingY, pointer.position.y, brightnessGestureSens)
+                                    viewModel.changeBrightnessTo(newVal)
+                                    viewModel.displayBrightnessSlider()
+                                } else {
+                                    // Volume
+                                    val delta = (startingY - pointer.position.y) * volumeGestureSens
+                                    viewModel.setVolume(initialVolumePercent + delta)
+                                    viewModel.displayVolumeSlider()
+                                }
                             } else {
-                                if (pointer.position.x < size.width / 2) changeBrightness() else changeVolume()
+                                if (pointer.position.x < size.width / 2) {
+                                    // Brightness
+                                    val newVal = calculateNewVerticalGestureValue(originalBrightness, startingY, pointer.position.y, brightnessGestureSens)
+                                    viewModel.changeBrightnessTo(newVal)
+                                    viewModel.displayBrightnessSlider()
+                                } else {
+                                    // Volume
+                                    val delta = (startingY - pointer.position.y) * volumeGestureSens
+                                    viewModel.setVolume(initialVolumePercent + delta)
+                                    viewModel.displayVolumeSlider()
+                                }
                             }
                             pointer.consume()
                         }
