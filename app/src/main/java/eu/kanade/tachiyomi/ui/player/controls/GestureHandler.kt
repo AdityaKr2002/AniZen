@@ -187,7 +187,7 @@ fun GestureHandler(
                         }
 
                         val currentZoom = viewModel.videoZoom.value
-                        if (zoom != currentZoom || event.changes.isEmpty()) {
+                        if (kotlin.math.abs(zoom - currentZoom) > 0.001f) {
                             zoom = currentZoom
                             panX = viewModel.videoPanX.value
                             panY = viewModel.videoPanY.value
