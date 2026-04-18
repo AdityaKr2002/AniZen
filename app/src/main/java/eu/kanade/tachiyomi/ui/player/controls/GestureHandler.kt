@@ -169,7 +169,7 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeGestures)
-            .pointerInput(areControlsLocked) {
+            .pointerInput(areControlsLocked, isLongPressing) {
                 if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     var zoom = viewModel.videoZoom.value
@@ -185,7 +185,7 @@ fun GestureHandler(
 
                     while (true) {
                         val event = awaitPointerEvent()
-                        if (event.changes.fastAny { it.isConsumed } || isLongPressing) {
+                        if (event.changes.fastAny { it.isConsumed } || viewModel.isLongPressing.value) {
                             // If something else (like seeking) consumed the event, stop
                             break
                         }
@@ -256,7 +256,7 @@ fun GestureHandler(
                     }
                 }
             }
-            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding) {
+            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding, isLongPressing) {
                 if (areControlsLocked || isTv) {
                     detectTapGestures(
                         onTap = { if (controlsShown) viewModel.hideControls() else viewModel.showControls() }
@@ -317,7 +317,7 @@ fun GestureHandler(
                         while (true) {
                             val event = awaitPointerEvent()
                             
-                            if (event.changes.fastAny { it.isConsumed } && !isLongPressing) {
+                            if (event.changes.fastAny { it.isConsumed } && !viewModel.isLongPressing.value) {
                                 longPressJob?.cancel()
                                 break
                             }
@@ -335,7 +335,7 @@ fun GestureHandler(
                             }
                             
                             val distance = (pointer.position - startPosition).getDistance()
-                            if (!isLongPressing) {
+                            if (!viewModel.isLongPressing.value) {
                                 if (distance > viewConfiguration.touchSlop) {
                                     longPressJob?.cancel()
                                     // If it's a drag, let other pointerInputs handle it
@@ -374,7 +374,7 @@ fun GestureHandler(
 
                         longPressJob?.cancel()
 
-                        if (isLongPressing) {
+                        if (viewModel.isLongPressing.value) {
                             val wasPausedOriginally = wasPaused
                             viewModel.isLongPressing.update { false }
                             isSpeedLongPress = false
@@ -407,7 +407,7 @@ fun GestureHandler(
                         scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
                     } catch (e: Exception) {
                         longPressJob?.cancel()
-                        if (isLongPressing) {
+                        if (viewModel.isLongPressing.value) {
                             viewModel.isLongPressing.update { false }
                             isSpeedLongPress = false
                             rampSpeed(originalSpeed)
@@ -416,7 +416,7 @@ fun GestureHandler(
                     }
                 }
             }
-            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture) {
+            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture, isLongPressing) {
                 if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = true)
@@ -435,7 +435,7 @@ fun GestureHandler(
                     while (true) {
                         val event = awaitPointerEvent()
                         
-                        if ((event.changes.fastAny { it.isConsumed } || isLongPressing) && dragDirection == 0) {
+                        if ((event.changes.fastAny { it.isConsumed } || viewModel.isLongPressing.value) && dragDirection == 0) {
                             break
                         }
 
