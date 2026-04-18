@@ -169,7 +169,7 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeGestures)
-            .pointerInput(areControlsLocked, isLongPressing) {
+            .pointerInput(areControlsLocked) {
                 if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     var zoom = viewModel.videoZoom.value
@@ -256,7 +256,7 @@ fun GestureHandler(
                     }
                 }
             }
-            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding, isLongPressing) {
+            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding) {
                 if (areControlsLocked || isTv) {
                     detectTapGestures(
                         onTap = { if (controlsShown) viewModel.hideControls() else viewModel.showControls() }
@@ -416,7 +416,7 @@ fun GestureHandler(
                     }
                 }
             }
-            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture, isLongPressing) {
+            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture) {
                 if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = true)
