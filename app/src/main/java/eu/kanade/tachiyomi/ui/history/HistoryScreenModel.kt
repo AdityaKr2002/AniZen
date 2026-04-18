@@ -47,6 +47,7 @@ class HistoryScreenModel(
     init {
         screenModelScope.launch {
             _query.collectLatest { query ->
+                mutableState.update { it.copy(searchQuery = query) }
                 getHistory.subscribe(query ?: "")
                     .distinctUntilChanged()
                     .catch { error ->
