@@ -179,6 +179,10 @@ fun GestureHandler(
                     var smoothPanX = panX
                     var smoothPanY = panY
 
+                    var prevDist = 0f
+                    var prevMidX = 0f
+                    var prevMidY = 0f
+
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.changes.fastAny { it.isConsumed }) {
@@ -193,69 +197,78 @@ fun GestureHandler(
                             panY = viewModel.videoPanY.value
                             smoothPanX = panX
                             smoothPanY = panY
+                            prevDist = 0f
                         }
 
                         if (event.changes.size > 1) {
                             // 1. Zoom Calculation
                             val zoomChanges = event.changes
-                            val prevDist = (zoomChanges[0].previousPosition - zoomChanges[1].previousPosition).getDistance()
-                            val dist = (zoomChanges[0].position - zoomChanges[1].position).getDistance()
+                            val p1 = zoomChanges[0].position
+                            val p2 = zoomChanges[1].position
+                            val dx = p2.x - p1.x
+                            val dy = p2.y - p1.y
+                            val dist = kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+                            val midX = (p1.x + p2.x) / 2f
+                            val midY = (p1.y + p2.y) / 2f
 
-                            if (prevDist > 0f && dist > 0f) {
-                                val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
-                                zoom = (zoom + zoomDelta).coerceIn(-1f, 3f)
-                                viewModel.setVideoZoom(zoom)
-                                viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(zoom) }
+                            if (prevDist == 0f) {
+                                prevDist = dist
+                                prevMidX = midX
+                                prevMidY = midY
+                            } else {
+                                if (prevDist > 0f && dist > 0f) {
+                                    val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
+                                    zoom = (zoom + zoomDelta).coerceIn(-1f, 3f)
+                                    viewModel.setVideoZoom(zoom)
+                                    viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(zoom) }
+
+                                    // 2. Multi-finger Panning
+                                    val scale = 2f.pow(zoom)
+                                    val (bw, bh) = videoDisplaySize(size)
+                                    
+                                    val panDX = midX - prevMidX
+                                    val panDY = midY - prevMidY
+                                    
+                                    val targetPanX = panX + panDX / (bw * scale)
+                                    val targetPanY = panY + panDY / (bh * scale)
+
+                                    smoothPanX += (targetPanX - smoothPanX) * 0.5f
+                                    smoothPanY += (targetPanY - smoothPanY) * 0.5f
+
+                                    val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
+                                    panX = smoothPanX.coerceIn(-maxPan, maxPan)
+                                    panY = smoothPanY.coerceIn(-maxPan, maxPan)
+
+                                    viewModel.setVideoPan(panX, panY)
+                                }
+                                prevDist = dist
+                                prevMidX = midX
+                                prevMidY = midY
                             }
-
-                            // 2. Multi-finger Panning
-                            val scale = 2f.pow(zoom)
-                            val (bw, bh) = videoDisplaySize(size)
-
-                            val prevCentroid = event.changes.fold(androidx.compose.ui.geometry.Offset.Zero) { acc, change ->
-                                acc + change.previousPosition
-                            } / event.changes.size.toFloat()
-                            val centroid = event.changes.fold(androidx.compose.ui.geometry.Offset.Zero) { acc, change ->
-                                acc + change.position
-                            } / event.changes.size.toFloat()
-
-                            val movement = centroid - prevCentroid
-
-                            val targetPanX = panX + movement.x / (bw * scale)
-                            val targetPanY = panY + movement.y / (bh * scale)
-
-                            val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
-
-                            // EMA Smoothing
-                            smoothPanX += (targetPanX - smoothPanX) * 0.5f
-                            smoothPanY += (targetPanY - smoothPanY) * 0.5f
-
-                            panX = smoothPanX.coerceIn(-maxPan, maxPan)
-                            panY = smoothPanY.coerceIn(-maxPan, maxPan)
-
-                            viewModel.setVideoPan(panX, panY)
-
                             event.changes.fastForEach { it.consume() }
-                        } else if (zoom > 0f && event.changes.size == 1) {
-                            // 3. Single-finger Panning (only when zoomed in)
-                            val scale = 2f.pow(zoom)
-                            val (bw, bh) = videoDisplaySize(size)
-                            val change = event.changes[0]
-                            val movement = change.position - change.previousPosition
+                        } else {
+                            prevDist = 0f
+                            if (zoom > 0f && event.changes.size == 1) {
+                                // 3. Single-finger Panning (only when zoomed in)
+                                val scale = 2f.pow(zoom)
+                                val (bw, bh) = videoDisplaySize(size)
+                                val change = event.changes[0]
+                                val movement = change.position - change.previousPosition
 
-                            val targetPanX = panX + movement.x / (bw * scale)
-                            val targetPanY = panY + movement.y / (bh * scale)
+                                val targetPanX = panX + movement.x / (bw * scale)
+                                val targetPanY = panY + movement.y / (bh * scale)
 
-                            val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
+                                val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
 
-                            smoothPanX += (targetPanX - smoothPanX) * 0.5f
-                            smoothPanY += (targetPanY - smoothPanY) * 0.5f
+                                smoothPanX += (targetPanX - smoothPanX) * 0.5f
+                                smoothPanY += (targetPanY - smoothPanY) * 0.5f
 
-                            panX = smoothPanX.coerceIn(-maxPan, maxPan)
-                            panY = smoothPanY.coerceIn(-maxPan, maxPan)
+                                panX = smoothPanX.coerceIn(-maxPan, maxPan)
+                                panY = smoothPanY.coerceIn(-maxPan, maxPan)
 
-                            viewModel.setVideoPan(panX, panY)
-                            change.consume()
+                                viewModel.setVideoPan(panX, panY)
+                                change.consume()
+                            }
                         }
 
                         if (event.changes.fastAll { it.changedToUp() }) {
@@ -387,9 +400,7 @@ fun GestureHandler(
                         if (secondDown == null) { // Single tap
                             if (controlsShown) viewModel.hideControls() else viewModel.showControls()
                         } else { // Double tap
-                            if (viewModel.videoZoom.value != 0f) {
-                                viewModel.resetVideoZoomAndPan()
-                            } else if (secondDown.position.x > size.width * 3 / 5) {
+                            if (secondDown.position.x > size.width * 3 / 5) {
                                 if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                                 viewModel.handleRightDoubleTap()
                                 isDoubleTapSeeking = true
@@ -398,7 +409,11 @@ fun GestureHandler(
                                 viewModel.handleLeftDoubleTap()
                                 isDoubleTapSeeking = true
                             } else {
-                                viewModel.handleCenterDoubleTap()
+                                if (viewModel.videoZoom.value != 0f) {
+                                    viewModel.resetVideoZoomAndPan()
+                                } else {
+                                    viewModel.handleCenterDoubleTap()
+                                }
                             }
                         }
                     }
