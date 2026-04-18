@@ -401,76 +401,21 @@ fun GestureHandler(
                     scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
                 }
             }
-            .pointerInput(areControlsLocked) {
-                if (!seekGesture || areControlsLocked) return@pointerInput
+            .pointerInput(areControlsLocked, gestureVolumeBrightness, seekGesture) {
+                if (areControlsLocked) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     var startingPosition = position.toInt()
                     var startingX = down.position.x
+                    var startingY = down.position.y
                     var wasPlayerAlreadyPause = false
                     var hasStartedDragging = false
+                    var dragDirection: Int = 0 // 0: None, 1: Horizontal, 2: Vertical
                     
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        if (event.changes.size > 1) {
-                            if (hasStartedDragging) {
-                                viewModel.gestureSeekAmount.update { null }
-                                viewModel.hideSeekBar()
-                                if (!wasPlayerAlreadyPause) viewModel.unpause()
-                            }
-                            break
-                        }
-                        
-                        val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (pointer.changedToUp()) {
-                            if (hasStartedDragging) {
-                                viewModel.gestureSeekAmount.update { null }
-                                viewModel.hideSeekBar()
-                                if (!wasPlayerAlreadyPause) viewModel.unpause()
-                            }
-                            break
-                        }
-                        
-                        val distance = kotlin.math.abs(pointer.position.x - startingX)
-                        if (!hasStartedDragging) {
-                            if (distance > viewConfiguration.touchSlop) {
-                                hasStartedDragging = true
-                                startingPosition = position.toInt()
-                                startingX = pointer.position.x
-                                wasPlayerAlreadyPause = viewModel.paused.value
-                                viewModel.pause()
-                            }
-                        } else {
-                            if (position <= 0f && (pointer.position.x - startingX) < 0) { /* continue */ }
-                            else if (position >= duration && (pointer.position.x - startingX) > 0) { /* continue */ }
-                            else {
-                                calculateNewHorizontalGestureValue(startingPosition, startingX, pointer.position.x, 0.15f).let {
-                                    viewModel.gestureSeekAmount.update { _ ->
-                                        Pair(
-                                            startingPosition,
-                                            (it - startingPosition)
-                                                .coerceIn(0 - startingPosition, (duration - startingPosition).toInt()),
-                                        )
-                                    }
-                                    viewModel.seekTo(it.coerceIn(0, duration.toInt()), preciseSeeking)
-                                }
-                                if (showSeekbar) viewModel.showSeekBar()
-                            }
-                            pointer.consume()
-                        }
-                    }
-                }
-            }
-            .pointerInput(areControlsLocked) {
-                if (!gestureVolumeBrightness || areControlsLocked) return@pointerInput
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    var startingY = down.position.y
                     var mpvVolumeStartingY = 0f
                     var originalVolume = currentVolume
                     var originalMPVVolume = currentMPVVolume
                     var originalBrightness = currentBrightness
-                    var hasStartedDragging = false
                     val brightnessGestureSens = 0.001f
                     val volumeGestureSens = 0.03f
                     val mpvVolumeGestureSens = 0.02f
@@ -490,22 +435,69 @@ fun GestureHandler(
 
                     while (true) {
                         val event = awaitPointerEvent()
-                        if (event.changes.size > 1) break
+                        if (event.changes.size > 1) {
+                            if (dragDirection == 1) {
+                                viewModel.gestureSeekAmount.update { null }
+                                viewModel.hideSeekBar()
+                                if (!wasPlayerAlreadyPause) viewModel.unpause()
+                            }
+                            break
+                        }
                         
                         val pointer = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (pointer.changedToUp()) break
-                        
-                        val distance = kotlin.math.abs(pointer.position.y - startingY)
-                        if (!hasStartedDragging) {
-                            if (distance > viewConfiguration.touchSlop) {
-                                hasStartedDragging = true
-                                startingY = pointer.position.y
-                                mpvVolumeStartingY = 0f
-                                originalVolume = currentVolume
-                                originalMPVVolume = currentMPVVolume
-                                originalBrightness = currentBrightness
+                        if (pointer.changedToUp()) {
+                            if (dragDirection == 1) {
+                                viewModel.gestureSeekAmount.update { null }
+                                viewModel.hideSeekBar()
+                                if (!wasPlayerAlreadyPause) viewModel.unpause()
                             }
-                        } else {
+                            break
+                        }
+                        
+                        if (dragDirection == 0) {
+                            val diffX = kotlin.math.abs(pointer.position.x - down.position.x)
+                            val diffY = kotlin.math.abs(pointer.position.y - down.position.y)
+                            
+                            if (diffX > viewConfiguration.touchSlop || diffY > viewConfiguration.touchSlop) {
+                                if (diffX > diffY && seekGesture) {
+                                    dragDirection = 1
+                                    startingPosition = position.toInt()
+                                    startingX = pointer.position.x
+                                    wasPlayerAlreadyPause = viewModel.paused.value
+                                    viewModel.pause()
+                                } else if (diffY > diffX && gestureVolumeBrightness) {
+                                    dragDirection = 2
+                                    startingY = pointer.position.y
+                                    mpvVolumeStartingY = 0f
+                                    originalVolume = currentVolume
+                                    originalMPVVolume = currentMPVVolume
+                                    originalBrightness = currentBrightness
+                                } else {
+                                    // If neither is enabled or it's perfectly diagonal (rare), just break
+                                    break
+                                }
+                                hasStartedDragging = true
+                            }
+                        } else if (dragDirection == 1) {
+                            // Horizontal Seek
+                            if (position <= 0f && (pointer.position.x - startingX) < 0) { /* continue */ }
+                            else if (position >= duration && (pointer.position.x - startingX) > 0) { /* continue */ }
+                            else {
+                                calculateNewHorizontalGestureValue(startingPosition, startingX, pointer.position.x, 0.15f).let {
+                                    viewModel.gestureSeekAmount.update { _ ->
+                                        Pair(
+                                            startingPosition,
+                                            (it - startingPosition)
+                                                .coerceIn(0 - startingPosition, (duration - startingPosition).toInt()),
+                                        )
+                                    }
+                                    viewModel.seekTo(it.coerceIn(0, duration.toInt()), preciseSeeking)
+                                }
+                                if (showSeekbar) viewModel.showSeekBar()
+                            }
+                            pointer.consume()
+                        } else if (dragDirection == 2) {
+                            // Vertical (Volume/Brightness)
                             val amount = pointer.position.y - startingY
                             val changeVolume: () -> Unit = {
                                 if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
@@ -559,7 +551,7 @@ fun GestureHandler(
                         }
                     }
                 }
-            },
+            },,
     ) {}
 }
 
