@@ -248,27 +248,6 @@ fun GestureHandler(
                             event.changes.fastForEach { it.consume() }
                         } else {
                             prevDist = 0f
-                            if (zoom > 0f && event.changes.size == 1) {
-                                // 3. Single-finger Panning (only when zoomed in)
-                                val scale = 2f.pow(zoom)
-                                val (bw, bh) = videoDisplaySize(size)
-                                val change = event.changes[0]
-                                val movement = change.position - change.previousPosition
-
-                                val targetPanX = panX + movement.x / (bw * scale)
-                                val targetPanY = panY + movement.y / (bh * scale)
-
-                                val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
-
-                                smoothPanX += (targetPanX - smoothPanX) * 0.5f
-                                smoothPanY += (targetPanY - smoothPanY) * 0.5f
-
-                                panX = smoothPanX.coerceIn(-maxPan, maxPan)
-                                panY = smoothPanY.coerceIn(-maxPan, maxPan)
-
-                                viewModel.setVideoPan(panX, panY)
-                                change.consume()
-                            }
                         }
 
                         if (event.changes.fastAll { it.changedToUp() }) {
