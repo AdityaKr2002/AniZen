@@ -421,15 +421,15 @@ fun GestureHandler(
                     val mpvVolumeGestureSens = 0.02f
                     
                     val isIncreasingVolumeBoost: (Float) -> Boolean = {
-                        volumeBoostingCap > 0 &&
-                            currentVolume == viewModel.maxVolume &&
-                            currentMPVVolume - 100 < volumeBoostingCap &&
+                        viewModel.volumeBoostCap > 0 &&
+                            viewModel.currentVolume.value == viewModel.maxVolume &&
+                            viewModel.currentMPVVolume.value - 100 < viewModel.volumeBoostCap &&
                             it < 0
                     }
                     val isDecreasingVolumeBoost: (Float) -> Boolean = {
-                        volumeBoostingCap > 0 &&
-                            currentVolume == viewModel.maxVolume &&
-                            currentMPVVolume - 100 in 1..volumeBoostingCap &&
+                        viewModel.volumeBoostCap > 0 &&
+                            viewModel.currentVolume.value == viewModel.maxVolume &&
+                            viewModel.currentMPVVolume.value - 100 in 1..viewModel.volumeBoostCap &&
                             it > 0
                     }
 
@@ -469,9 +469,9 @@ fun GestureHandler(
                                     dragDirection = 2
                                     startingY = pointer.position.y
                                     mpvVolumeStartingY = 0f
-                                    originalVolume = currentVolume
-                                    originalMPVVolume = currentMPVVolume
-                                    originalBrightness = currentBrightness
+                                    originalVolume = viewModel.currentVolume.value
+                                    originalMPVVolume = viewModel.currentMPVVolume.value
+                                    originalBrightness = viewModel.currentBrightness.value
                                 } else {
                                     // If neither is enabled or it's perfectly diagonal (rare), just break
                                     break
@@ -503,7 +503,7 @@ fun GestureHandler(
                                 if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
                                     if (mpvVolumeStartingY == 0f) {
                                         startingY = 0f
-                                        originalVolume = currentVolume
+                                        originalVolume = viewModel.currentVolume.value
                                         mpvVolumeStartingY = pointer.position.y
                                     }
                                     viewModel.changeMPVVolumeTo(
@@ -513,12 +513,12 @@ fun GestureHandler(
                                             pointer.position.y,
                                             mpvVolumeGestureSens,
                                         )
-                                            .coerceIn(100..volumeBoostingCap + 100),
+                                            .coerceIn(100..viewModel.volumeBoostCap + 100),
                                     )
                                 } else {
                                     if (startingY == 0f) {
                                         mpvVolumeStartingY = 0f
-                                        originalMPVVolume = currentMPVVolume
+                                        originalMPVVolume = viewModel.currentMPVVolume.value
                                         startingY = pointer.position.y
                                     }
                                     val newVal = calculateNewVerticalGestureValue(
