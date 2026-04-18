@@ -551,7 +551,7 @@ fun GestureHandler(
                         }
                     }
                 }
-            },,
+            }
     ) {}
 }
 
