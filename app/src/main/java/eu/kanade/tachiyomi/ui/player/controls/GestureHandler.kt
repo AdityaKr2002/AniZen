@@ -186,6 +186,15 @@ fun GestureHandler(
                             break
                         }
 
+                        val currentZoom = viewModel.videoZoom.value
+                        if (zoom != currentZoom || event.changes.isEmpty()) {
+                            zoom = currentZoom
+                            panX = viewModel.videoPanX.value
+                            panY = viewModel.videoPanY.value
+                            smoothPanX = panX
+                            smoothPanY = panY
+                        }
+
                         if (event.changes.size > 1) {
                             // 1. Zoom Calculation
                             val zoomChanges = event.changes
