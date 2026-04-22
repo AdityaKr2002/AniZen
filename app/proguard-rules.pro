@@ -1,8 +1,10 @@
 # R8 Optimization Flags
 -optimizationpasses 5
 -allowaccessmodification
--mergeinterfacesaggressively
 -repackageclasses ''
+
+# Protect extension compatibility classes
+-keep class **$DefaultImpls { *; }
 
 #-dontobfuscate
 
