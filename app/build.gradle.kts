@@ -39,9 +39,9 @@ android {
             keyAlias = props.getProperty("keyAlias") ?: System.getenv("SIGNING_KEY_ALIAS") ?: ""
             keyPassword = props.getProperty("keyPassword") ?: System.getenv("SIGNING_KEY_PASSWORD") ?: ""
 
-            v1SigningEnabled = true
-            v2SigningEnabled = true
-            v3SigningEnabled = true
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 
