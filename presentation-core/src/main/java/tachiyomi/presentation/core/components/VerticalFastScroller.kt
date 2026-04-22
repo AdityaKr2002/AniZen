@@ -72,12 +72,12 @@ fun VerticalFastScroller(
     content: @Composable () -> Unit,
 ) {
     SubcomposeLayout(modifier = modifier) { constraints ->
-        val contentPlaceable = subcompose("content", content).map { it.measure(constraints) }
+        val contentPlaceable = subcompose(\"content\", content).map { it.measure(constraints) }
         val contentHeight = contentPlaceable.fastMaxBy { it.height }?.height ?: 0
         val contentWidth = contentPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         val scrollerConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val scrollerPlaceable = subcompose("scroller") {
+        val scrollerPlaceables = subcompose(\"scroller\") {
             val layoutInfo = listState.layoutInfo
             val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
             if (!showScroller) return@subcompose
@@ -100,13 +100,13 @@ fun VerticalFastScroller(
                 thumbBottomPadding -
                 listState.layoutInfo.afterContentPadding
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
                 val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 val scrollItemRounded = scrollItem.roundToInt()
                 val scrollItemSize = layoutInfo.visibleItemsInfo.find { it.index == scrollItemRounded }?.size ?: 0
                 val scrollItemOffset = scrollItemSize * (scrollItem - scrollItemRounded)
@@ -179,7 +179,8 @@ fun VerticalFastScroller(
                     .alpha(alpha.value)
                     .background(color = thumbColor, shape = ThumbShape),
             )
-        }.map { it.measure(scrollerConstraints) }
+        }
+        val scrollerPlaceable = scrollerPlaceables.map { it.measure(scrollerConstraints) }
         val scrollerWidth = scrollerPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         layout(contentWidth, contentHeight) {
@@ -249,7 +250,7 @@ fun VerticalGridFastScroller(
         val contentWidth = contentPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         val scrollerConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val scrollerPlaceable = subcompose(\"scroller\") {
+        val scrollerPlaceables = subcompose(\"scroller\") {
             val layoutInfo = state.layoutInfo
             val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
             if (!showScroller) return@subcompose
@@ -271,7 +272,7 @@ fun VerticalGridFastScroller(
                 thumbBottomPadding -
                 state.layoutInfo.afterContentPadding
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
 
             val columnCount = remember { slotSizesSums(constraints).size }
 
@@ -279,7 +280,7 @@ fun VerticalGridFastScroller(
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
                 val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 // I can't think of anything else rn but this'll do
                 val scrollItemWhole = scrollItem.toInt()
                 val columnNum = ((scrollItemWhole + 1) % columnCount).takeIf { it != 0 } ?: columnCount
@@ -367,7 +368,8 @@ fun VerticalGridFastScroller(
                     .alpha(alpha.value)
                     .background(color = thumbColor, shape = ThumbShape),
             )
-        }.map { it.measure(scrollerConstraints) }
+        }
+        val scrollerPlaceable = scrollerPlaceables.map { it.measure(scrollerConstraints) }
         val scrollerWidth = scrollerPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         layout(contentWidth, contentHeight) {
