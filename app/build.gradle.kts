@@ -38,6 +38,10 @@ android {
             storePassword = props.getProperty("storePassword") ?: System.getenv("SIGNING_STORE_PASSWORD") ?: ""
             keyAlias = props.getProperty("keyAlias") ?: System.getenv("SIGNING_KEY_ALIAS") ?: ""
             keyPassword = props.getProperty("keyPassword") ?: System.getenv("SIGNING_KEY_PASSWORD") ?: ""
+
+            v1SigningEnabled = true
+            v2SigningEnabled = true
+            v3SigningEnabled = true
         }
     }
 
