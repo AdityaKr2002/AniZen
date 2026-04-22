@@ -550,9 +550,10 @@ class AnimeScreenModel(
             observeMergedAnime()
 
             if (isActive) {
+                val isLocal = initialAnime.isLocal()
                 val needRefreshInfo = !initialAnime.initialized
-                val needRefreshEpisode = initialEpisodes.isEmpty()
-                
+                val needRefreshEpisode = initialEpisodes.isEmpty() || isLocal
+
                 if (needRefreshInfo || needRefreshEpisode) {
                     val fetchFromSourceTasks = listOf(
                         async { fetchAnimeFromSource() },
@@ -561,7 +562,6 @@ class AnimeScreenModel(
                     fetchFromSourceTasks.awaitAll()
                 }
             }
-
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
             fetchSuggestions(initialAnime)
         }

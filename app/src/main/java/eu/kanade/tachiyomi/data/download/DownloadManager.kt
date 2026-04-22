@@ -46,6 +46,7 @@ class DownloadManager(
     private val getCategories: GetCategories = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
+    private val deleteEpisodes: tachiyomi.domain.episode.interactor.DeleteEpisodes = Injekt.get(),
 ) {
 
     /**
@@ -311,6 +312,10 @@ class DownloadManager(
             )
             episodeDirs.forEach { it.delete() }
             cache.removeEpisodes(filteredEpisodes, anime)
+
+            if (source.isLocal()) {
+                deleteEpisodes.await(filteredEpisodes.map { it.id })
+            }
 
             // KMK -->
             // Clean up sandbox

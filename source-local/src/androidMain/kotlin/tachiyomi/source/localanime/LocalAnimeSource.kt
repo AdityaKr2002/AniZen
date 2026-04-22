@@ -125,36 +125,16 @@ actual class LocalAnimeSource(
         // Transform animeDirs to list of SAnime
         val animes = animeDirs
             .map { animeDir ->
-                async {
-                    SAnime.create().apply {
-                        title = animeDir.name.orEmpty()
-                        url = animeDir.name.orEmpty()
+                SAnime.create().apply {
+                    title = animeDir.name.orEmpty()
+                    url = animeDir.name.orEmpty()
 
-                        // Try to find the cover
-                        coverManager.find(animeDir.name.orEmpty())?.let {
-                            thumbnail_url = it.uri.toString()
-                        } ?: run {
-                            // Discover and generate cover from video if not found
-                            try {
-                                val episodes = fileSystem.getFilesInAnimeDirectory(url)
-                                    .filter { Archive.isSupported(it) }
-                                    .sortedWith(compareByDescending(UniFile::lastModified))
-
-                                episodes.firstOrNull()?.let { episodeFile ->
-                                    val se = SEpisode.create().apply {
-                                        this.url = "${this@apply.url}/${episodeFile.name}"
-                                        this.name = episodeFile.nameWithoutExtension.orEmpty()
-                                    }
-                                    updateCoverFromVideo(se, this)
-                                }
-                            } catch (e: Exception) {
-                                logcat(LogPriority.ERROR) { "Discovery: Couldn't extract thumbnail for $title: $e" }
-                            }
-                        }
+                    // Try to find the cover
+                    coverManager.find(animeDir.name.orEmpty())?.let {
+                        thumbnail_url = it.uri.toString()
                     }
                 }
             }
-            .awaitAll()
 
         AnimesPage(animes.toList(), false)
     }
@@ -199,7 +179,8 @@ actual class LocalAnimeSource(
             anime.thumbnail_url = it.uri.toString()
         }
 
-        val animeDirFiles = fileSystem.getFilesInAnimeDirectory(anime.url)
+        val animeDir = fileSystem.getAnimeDirectory(anime.url)
+        val animeDirFiles = animeDir?.listFiles().orEmpty()
 
         animeDirFiles
             .firstOrNull { it.extension == "json" && it.nameWithoutExtension == "details" }
@@ -219,7 +200,10 @@ actual class LocalAnimeSource(
 
     // Episodes
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> = withIOContext {
-        val episodesData = fileSystem.getFilesInAnimeDirectory(anime.url)
+        val animeDir = fileSystem.getAnimeDirectory(anime.url)
+        val animeDirFiles = animeDir?.listFiles().orEmpty()
+
+        val episodesData = animeDirFiles
             .firstOrNull {
                 it.extension == "json" && it.nameWithoutExtension == "episodes"
             }?.let { file ->
@@ -228,7 +212,7 @@ actual class LocalAnimeSource(
                 }.getOrNull()
             }
 
-        val episodes = fileSystem.getFilesInAnimeDirectory(anime.url)
+        val episodes = animeDirFiles
             // Only keep supported formats
             .filter { Archive.isSupported(it) }
             .map { episodeFile ->
