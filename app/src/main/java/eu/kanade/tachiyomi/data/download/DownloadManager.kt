@@ -317,6 +317,11 @@ class DownloadManager(
                 deleteEpisodes.await(filteredEpisodes.map { it.id })
             }
 
+            // Delete anime directory if empty
+            if (animeDir?.listFiles()?.isEmpty() == true) {
+                deleteAnime(anime, source, removeQueued = false)
+            }
+
             // KMK -->
             // Clean up sandbox
             val sandboxRoot = context.getExternalFilesDir("downloads")
