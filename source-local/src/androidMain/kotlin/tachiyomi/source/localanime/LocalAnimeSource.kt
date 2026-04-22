@@ -12,8 +12,12 @@ import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import eu.kanade.tachiyomi.util.storage.toFFmpegString
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -49,6 +53,8 @@ actual class LocalAnimeSource(
 ) : CatalogueSource, UnmeteredSource {
 
     private val json: Json by injectLazy()
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     @Suppress("PrivatePropertyName")
     private val PopularFilters = FilterList(OrderBy.Popular(context))

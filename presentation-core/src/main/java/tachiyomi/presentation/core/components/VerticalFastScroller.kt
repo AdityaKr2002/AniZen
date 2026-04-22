@@ -27,6 +27,7 @@ import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -95,9 +96,8 @@ fun VerticalFastScroller(
             }
 
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
-            val heightPx = contentHeight.toFloat()
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = (heightPx - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
+            val trackHeightPx = (contentHeight.toFloat() - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
@@ -112,12 +112,18 @@ fun VerticalFastScroller(
             }
 
             // When list scrolled
-            LaunchedEffect(listState.firstVisibleItemScrollOffset, listState.firstVisibleItemIndex) {
-                if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = listState)
-                val scrollRange = computeScrollRange(state = listState)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - layoutInfo.viewportSize.height).coerceAtLeast(1f)
-                thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
+            val scrollPosition by remember {
+                derivedStateOf {
+                    if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@derivedStateOf null
+                    val scrollOffset = computeScrollOffset(state = listState)
+                    val scrollRange = computeScrollRange(state = listState)
+                    val viewportHeight = layoutInfo.viewportSize.height.toFloat()
+                    scrollOffset.toFloat() / (scrollRange.toFloat() - viewportHeight).coerceAtLeast(1f)
+                }
+            }
+            LaunchedEffect(scrollPosition) {
+                val position = scrollPosition ?: return@LaunchedEffect
+                thumbOffsetY = (trackHeightPx * position + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
                 )
@@ -264,9 +270,8 @@ fun VerticalGridFastScroller(
             }
 
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
-            val heightPx = contentHeight.toFloat()
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = (heightPx - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
+            val trackHeightPx = (contentHeight.toFloat() - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
 
             val columnCount = remember { slotSizesSums(constraints).size }
 
@@ -298,12 +303,18 @@ fun VerticalGridFastScroller(
             }
 
             // When list scrolled
-            LaunchedEffect(state.firstVisibleItemScrollOffset, state.firstVisibleItemIndex) {
-                if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(state = state)
-                val scrollRange = computeScrollRange(state = state)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - layoutInfo.viewportSize.height).coerceAtLeast(1f)
-                thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
+            val scrollPosition by remember {
+                derivedStateOf {
+                    if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@derivedStateOf null
+                    val scrollOffset = computeScrollOffset(state = state)
+                    val scrollRange = computeScrollRange(state = state)
+                    val viewportHeight = layoutInfo.viewportSize.height.toFloat()
+                    scrollOffset.toFloat() / (scrollRange.toFloat() - viewportHeight).coerceAtLeast(1f)
+                }
+            }
+            LaunchedEffect(scrollPosition) {
+                val position = scrollPosition ?: return@LaunchedEffect
+                thumbOffsetY = (trackHeightPx * position + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
                 )
@@ -378,8 +389,9 @@ fun VerticalGridFastScroller(
 }
 
 private fun computeScrollOffset(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
+    val layoutInfo = state.layoutInfo
+    if (layoutInfo.totalItemsCount == 0) return 0
+    val visibleItems = layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
     val endChild = visibleItems.last()
     val minPosition = min(startChild.index, endChild.index)
@@ -389,22 +401,24 @@ private fun computeScrollOffset(state: LazyGridState): Int {
     val laidOutArea = abs((endChild.offset.y + endChild.size.height) - startDecoratedTop)
     val itemRange = abs(minPosition - maxPosition) + 1
     val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
+    return (itemsBefore * avgSizePerRow + (layoutInfo.beforeContentPadding - startDecoratedTop)).roundToInt()
 }
 
 private fun computeScrollRange(state: LazyGridState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
+    val layoutInfo = state.layoutInfo
+    if (layoutInfo.totalItemsCount == 0) return 0
+    val visibleItems = layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
     val endChild = visibleItems.last()
     val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
     val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
+    return (laidOutArea.toFloat() / laidOutRange * layoutInfo.totalItemsCount + layoutInfo.beforeContentPadding + layoutInfo.afterContentPadding).roundToInt()
 }
 
 private fun computeScrollOffset(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
+    val layoutInfo = state.layoutInfo
+    if (layoutInfo.totalItemsCount == 0) return 0
+    val visibleItems = layoutInfo.visibleItemsInfo
     val startChild = visibleItems
         .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true }!!
     val endChild = visibleItems.last()
@@ -415,18 +429,19 @@ private fun computeScrollOffset(state: LazyListState): Int {
     val laidOutArea = abs(endChild.bottom - startDecoratedTop)
     val itemRange = abs(minPosition - maxPosition) + 1
     val avgSizePerRow = laidOutArea.toFloat() / itemRange
-    return (itemsBefore * avgSizePerRow + (0 - startDecoratedTop)).roundToInt()
+    return (itemsBefore * avgSizePerRow + (layoutInfo.beforeContentPadding - startDecoratedTop)).roundToInt()
 }
 
 private fun computeScrollRange(state: LazyListState): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
+    val layoutInfo = state.layoutInfo
+    if (layoutInfo.totalItemsCount == 0) return 0
+    val visibleItems = layoutInfo.visibleItemsInfo
     val startChild = visibleItems
         .fastFirstOrNull { (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true }!!
     val endChild = visibleItems.last()
     val laidOutArea = endChild.bottom - startChild.top
     val laidOutRange = abs(startChild.index - endChild.index) + 1
-    return (laidOutArea.toFloat() / laidOutRange * state.layoutInfo.totalItemsCount).roundToInt()
+    return (laidOutArea.toFloat() / laidOutRange * layoutInfo.totalItemsCount + layoutInfo.beforeContentPadding + layoutInfo.afterContentPadding).roundToInt()
 }
 
 object Scroller {
