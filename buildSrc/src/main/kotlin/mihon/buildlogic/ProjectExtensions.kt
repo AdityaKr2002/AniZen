@@ -64,10 +64,6 @@ internal fun Project.configureAndroid(commonExtension: CommonExtension<*, *, *, 
                 "-Xcontext-receivers",
                 "-opt-in=kotlin.RequiresOptIn",
                 "-Xjvm-default=all-compatibility",
-                "-Xtype-enhancement-improvements-strict-mode",
-                "-Xbackend-threads=0",
-                "-Xemit-jvm-type-annotations",
-                "-Xlambdas=indy",
             )
 
             // Treat all Kotlin warnings as errors (disabled by default)
