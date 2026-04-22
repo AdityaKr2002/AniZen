@@ -424,6 +424,7 @@ fun VerticalGridFastScroller(
                         },
                     )
                     .height(ThumbLength)
+                    .padding(horizontal = 8.dp)
                     .padding(end = endContentPadding)
                     .width(ThumbThickness)
                     .alpha(alpha.value)
