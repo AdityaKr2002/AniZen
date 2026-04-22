@@ -246,12 +246,14 @@ actual class LocalAnimeSource(
 
         // Generate the cover from the first episode found if not available
         if (anime.thumbnail_url == null) {
-            try {
-                episodes.lastOrNull()?.let { episode ->
-                    updateCoverFromVideo(episode, anime)
+            scope.launch {
+                try {
+                    episodes.lastOrNull()?.let { episode ->
+                        updateCoverFromVideo(episode, anime)
+                    }
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Couldn't extract thumbnail from video: $e" }
                 }
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR) { "Couldn't extract thumbnail from video: $e" }
             }
         }
 

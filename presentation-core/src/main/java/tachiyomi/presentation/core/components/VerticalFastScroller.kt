@@ -95,17 +95,14 @@ fun VerticalFastScroller(
             }
 
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
-            val heightPx = contentHeight.toFloat() -
-                thumbTopPadding -
-                thumbBottomPadding -
-                listState.layoutInfo.afterContentPadding
+            val heightPx = contentHeight.toFloat()
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
+            val trackHeightPx = (heightPx - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
-                val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
+                val scrollRatio = ((thumbOffsetY - thumbTopPadding) / trackHeightPx).coerceIn(0f, 1f)
                 val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 val scrollItemRounded = scrollItem.roundToInt()
                 val scrollItemSize = layoutInfo.visibleItemsInfo.find { it.index == scrollItemRounded }?.size ?: 0
@@ -119,7 +116,7 @@ fun VerticalFastScroller(
                 if (listState.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 val scrollOffset = computeScrollOffset(state = listState)
                 val scrollRange = computeScrollRange(state = listState)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - layoutInfo.viewportSize.height).coerceAtLeast(1f)
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
@@ -267,19 +264,16 @@ fun VerticalGridFastScroller(
             }
 
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
-            val heightPx = contentHeight.toFloat() -
-                thumbTopPadding -
-                thumbBottomPadding -
-                state.layoutInfo.afterContentPadding
+            val heightPx = contentHeight.toFloat()
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
+            val trackHeightPx = (heightPx - thumbTopPadding - thumbBottomPadding - thumbHeightPx).coerceAtLeast(1f)
 
             val columnCount = remember { slotSizesSums(constraints).size }
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
-                val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
+                val scrollRatio = ((thumbOffsetY - thumbTopPadding) / trackHeightPx).coerceIn(0f, 1f)
                 val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 // I can't think of anything else rn but this'll do
                 val scrollItemWhole = scrollItem.toInt()
@@ -308,7 +302,7 @@ fun VerticalGridFastScroller(
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 val scrollOffset = computeScrollOffset(state = state)
                 val scrollRange = computeScrollRange(state = state)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - layoutInfo.viewportSize.height).coerceAtLeast(1f)
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
                     thumbTopPadding + trackHeightPx,
