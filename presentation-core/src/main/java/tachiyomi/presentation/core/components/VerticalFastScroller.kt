@@ -100,16 +100,15 @@ fun VerticalFastScroller(
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
             val heightPx = contentHeight.toFloat() -
                 thumbTopPadding -
-                thumbBottomPadding -
-                listState.layoutInfo.afterContentPadding
+                thumbBottomPadding
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
-                val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
+                val scrollRatio = ((thumbOffsetY - thumbTopPadding) / trackHeightPx).coerceIn(0f, 1f)
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 val scrollItemRounded = scrollItem.roundToInt()
                 val scrollItemSize = layoutInfo.visibleItemsInfo.find { it.index == scrollItemRounded }?.size ?: 0
                 val scrollItemOffset = scrollItemSize * (scrollItem - scrollItemRounded)
@@ -148,8 +147,11 @@ fun VerticalFastScroller(
                 for (i in 0 until totalItems) {
                     estimatedTotalHeight += heightCache[i]?.toFloat() ?: avgHeight
                 }
+                
+                // Add content padding to estimated total height
+                val totalScrollableHeight = estimatedTotalHeight - layoutInfo.viewportSize.height + layoutInfo.afterContentPadding + layoutInfo.beforeContentPadding
 
-                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                val proportion = (currentScrollPx / totalScrollableHeight.coerceAtLeast(1f)).coerceIn(0f, 1f)
                 
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
@@ -301,18 +303,17 @@ fun VerticalGridFastScroller(
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
             val heightPx = contentHeight.toFloat() -
                 thumbTopPadding -
-                thumbBottomPadding -
-                state.layoutInfo.afterContentPadding
+                thumbBottomPadding
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(1f)
 
             val columnCount = remember { slotSizesSums(constraints).size }
 
             // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
-                val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val scrollItem = layoutInfo.totalItemsCount * scrollRatio
+                val scrollRatio = ((thumbOffsetY - thumbTopPadding) / trackHeightPx).coerceIn(0f, 1f)
+                val scrollItem = (layoutInfo.totalItemsCount - 1) * scrollRatio
                 // I can't think of anything else rn but this'll do
                 val scrollItemWhole = scrollItem.toInt()
                 val columnNum = ((scrollItemWhole + 1) % columnCount).takeIf { it != 0 } ?: columnCount
@@ -366,7 +367,10 @@ fun VerticalGridFastScroller(
                     estimatedTotalHeight += rowHeightCache[i]?.toFloat() ?: avgRowHeight
                 }
 
-                val proportion = (currentScrollPx / (estimatedTotalHeight - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                // Add content padding to estimated total height
+                val totalScrollableHeight = estimatedTotalHeight - layoutInfo.viewportSize.height + layoutInfo.afterContentPadding + layoutInfo.beforeContentPadding
+
+                val proportion = (currentScrollPx / totalScrollableHeight.coerceAtLeast(1f)).coerceIn(0f, 1f)
                 
                 thumbOffsetY = (trackHeightPx * proportion + thumbTopPadding).coerceIn(
                     thumbTopPadding,
