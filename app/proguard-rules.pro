@@ -1,3 +1,9 @@
+# R8 Optimization Flags
+-optimizationpasses 5
+-allowaccessmodification
+-mergeinterfacesaggressively
+-repackageclasses ''
+
 #-dontobfuscate
 
 -keep,allowoptimization class eu.kanade.**
