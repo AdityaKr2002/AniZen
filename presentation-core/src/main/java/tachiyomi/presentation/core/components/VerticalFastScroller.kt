@@ -72,12 +72,12 @@ fun VerticalFastScroller(
     content: @Composable () -> Unit,
 ) {
     SubcomposeLayout(modifier = modifier) { constraints ->
-        val contentPlaceable = subcompose(\"content\", content).map { it.measure(constraints) }
+        val contentPlaceable = subcompose("content", content).map { it.measure(constraints) }
         val contentHeight = contentPlaceable.fastMaxBy { it.height }?.height ?: 0
         val contentWidth = contentPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         val scrollerConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val scrollerPlaceables = subcompose(\"scroller\") {
+        val scrollerPlaceables = subcompose("scroller") {
             val layoutInfo = listState.layoutInfo
             val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
             if (!showScroller) return@subcompose
@@ -206,7 +206,7 @@ private fun rememberColumnWidthSums(
 ) {
     { constraints ->
         require(constraints.maxWidth != Constraints.Infinity) {
-            \"LazyVerticalGrid's width should be bound by parent\"
+            "LazyVerticalGrid's width should be bound by parent"
         }
         val horizontalPadding = contentPadding.calculateStartPadding(LayoutDirection.Ltr) +
             contentPadding.calculateEndPadding(LayoutDirection.Ltr)
@@ -245,12 +245,12 @@ fun VerticalGridFastScroller(
     )
 
     SubcomposeLayout(modifier = modifier) { constraints ->
-        val contentPlaceable = subcompose(\"content\", content).map { it.measure(constraints) }
+        val contentPlaceable = subcompose("content", content).map { it.measure(constraints) }
         val contentHeight = contentPlaceable.fastMaxBy { it.height }?.height ?: 0
         val contentWidth = contentPlaceable.fastMaxBy { it.width }?.width ?: 0
 
         val scrollerConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val scrollerPlaceables = subcompose(\"scroller\") {
+        val scrollerPlaceables = subcompose("scroller") {
             val layoutInfo = state.layoutInfo
             val showScroller = layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
             if (!showScroller) return@subcompose
@@ -436,7 +436,7 @@ private fun computeScrollRange(state: LazyListState): Int {
 }
 
 object Scroller {
-    const val STICKY_HEADER_KEY_PREFIX = \"sticky:\"
+    const val STICKY_HEADER_KEY_PREFIX = "sticky:"
 }
 
 private val ThumbLength = 48.dp
