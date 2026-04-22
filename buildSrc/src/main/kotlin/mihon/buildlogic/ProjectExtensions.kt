@@ -63,6 +63,7 @@ internal fun Project.configureAndroid(commonExtension: CommonExtension<*, *, *, 
             freeCompilerArgs.addAll(
                 "-Xcontext-receivers",
                 "-opt-in=kotlin.RequiresOptIn",
+                "-Xjvm-default=all-compatibility",
             )
 
             // Treat all Kotlin warnings as errors (disabled by default)
