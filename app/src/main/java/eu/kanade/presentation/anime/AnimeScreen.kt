@@ -514,14 +514,14 @@ private fun AnimeScreenSmallImpl(
                         listState = episodeListState,
                         topContentPadding = topPadding,
                         bottomContentPadding = contentPadding.calculateBottomPadding(),
-                        endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
+                        endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxHeight(),
                             state = episodeListState,
                             contentPadding = PaddingValues(
                                 start = contentPadding.calculateStartPadding(layoutDirection),
-                                end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
+                                end = contentPadding.calculateEndPadding(layoutDirection),
                                 bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
@@ -1043,14 +1043,14 @@ fun AnimeScreenLargeImpl(
                                 listState = episodeListState,
                                 topContentPadding = contentPadding.calculateTopPadding(),
                                 bottomContentPadding = contentPadding.calculateBottomPadding(),
-                                endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
+                                endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
                             ) {
                                 LazyColumn(
                                     modifier = Modifier.fillMaxHeight(),
                                     state = episodeListState,
                                     contentPadding = PaddingValues(
                                         top = contentPadding.calculateTopPadding(),
-                                        end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
+                                        end = contentPadding.calculateEndPadding(layoutDirection),
                                         bottom = contentPadding.calculateBottomPadding(),
                                     ),
                                 ) {

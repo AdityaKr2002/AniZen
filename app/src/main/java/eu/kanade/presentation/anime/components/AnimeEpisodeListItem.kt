@@ -121,7 +121,7 @@ fun AnimeEpisodeListItem(
                         onLongClick()
                     },
                 )
-                .padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 12.dp),
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         ) {
             Column(
                 modifier = Modifier.weight(1f),
