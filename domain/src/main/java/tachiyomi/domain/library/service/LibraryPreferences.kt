@@ -227,6 +227,8 @@ class LibraryPreferences(
         Anime.EPISODE_SORT_DESC,
     )
 
+    fun lastSelectedSeason(animeId: Long) = preferenceStore.getString("last_selected_season_$animeId", "")
+
     fun setEpisodeSettingsDefault(anime: Anime) {
         filterEpisodeBySeen().set(anime.unseenFilterRaw)
         filterEpisodeByDownloaded().set(anime.downloadedFilterRaw)

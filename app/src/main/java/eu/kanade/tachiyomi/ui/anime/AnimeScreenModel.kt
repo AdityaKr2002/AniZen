@@ -451,10 +451,15 @@ class AnimeScreenModel(
 
         // Default to first season if none selected and grouping is in Tabs mode
         val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-        val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+        var finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             sortedSeasons.firstOrNull()
         } else {
             selectedSeason
+        }
+
+        // Ensure selected season actually exists in the current list
+        if (finalSelectedSeason != null && !availableSeasonsList.contains(finalSelectedSeason)) {
+            finalSelectedSeason = sortedSeasons.firstOrNull()
         }
 
         return this.copy(
@@ -484,6 +489,11 @@ class AnimeScreenModel(
 
     fun onSeasonSelected(season: String?) {
         updateSuccessState { it.copySuccess(selectedSeason = season) }
+        if (season == null) {
+            libraryPreferences.lastSelectedSeason(animeId).delete()
+        } else {
+            libraryPreferences.lastSelectedSeason(animeId).set(season)
+        }
     }
 
     private inline fun updateSuccessState(func: (State.Success) -> State.Success) {
@@ -512,6 +522,7 @@ class AnimeScreenModel(
             }
 
             // Set initial state from database
+            val savedSeason = libraryPreferences.lastSelectedSeason(animeId).get().takeIf { it.isNotEmpty() }
             mutableState.update {
                 State.Success.create(
                     anime = initialAnime,
@@ -520,6 +531,7 @@ class AnimeScreenModel(
                     episodes = initialEpisodes,
                     isRefreshingData = !initialAnime.initialized || initialEpisodes.isEmpty(),
                     dialog = null,
+                    selectedSeason = savedSeason,
                 )
             }
 
@@ -1349,6 +1361,7 @@ class AnimeScreenModel(
         if (mode and 0x10000000L != 0L) {
             val flag = mode and 0x10000000L.inv()
             screenModelScope.launchNonCancellable {
+                libraryPreferences.lastSelectedSeason(animeId).delete()
                 setAnimeEpisodeFlags.awaitSetSeasonGroupingRaw(anime, flag)
             }
             return
@@ -1846,10 +1859,15 @@ class AnimeScreenModel(
 
                     // Default to first season if none selected and grouping is in Tabs mode
                     val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
-                    val finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+                    var finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
                         sortedSeasons.firstOrNull()
                     } else {
                         selectedSeason
+                    }
+
+                    // Ensure selected season actually exists in the current list
+                    if (finalSelectedSeason != null && !availableSeasonsList.contains(finalSelectedSeason)) {
+                        finalSelectedSeason = sortedSeasons.firstOrNull()
                     }
 
                     return Success(
