@@ -173,6 +173,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val basePreferences: BasePreferences = Injekt.get(),
     private val getCustomButtons: GetCustomButtons = Injekt.get(),
     private val trackSelect: TrackSelect = Injekt.get(),
+    private val libraryPreferences: LibraryPreferences = Injekt.get(),
     uiPreferences: UiPreferences = Injekt.get(),
 ) : ViewModel() {
 
@@ -1188,7 +1189,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val selectedEpisode = episodes.find { it.id == episodeId }
             ?: error("Requested episode of id $episodeId not found in episode list")
 
-        val episodesForPlayer = episodes.filterNot {
+        var episodesForPlayer = episodes.filterNot {
             anime.unseenFilterRaw == Anime.EPISODE_SHOW_SEEN &&
                 !it.seen ||
                 anime.unseenFilterRaw == Anime.EPISODE_SHOW_UNSEEN &&
@@ -1217,13 +1218,27 @@ class PlayerViewModel @JvmOverloads constructor(
                 anime.fillermarkedFilterRaw == Anime.EPISODE_SHOW_NOT_FILLERMARKED &&
                 it.fillermark
             // <-- AM (FILLERMARK)
-        }.toMutableList()
-
-        if (episodesForPlayer.all { it.id != episodeId }) {
-            episodesForPlayer += listOf(selectedEpisode)
         }
 
-        return episodesForPlayer
+        // AM (SEASON_TABS) -->
+        if (anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            val savedSeason = libraryPreferences.lastSelectedSeason(anime.id).get()
+            if (savedSeason.isNotEmpty()) {
+                episodesForPlayer = episodesForPlayer.filter {
+                    EpisodeSeasonUtils.getSeasonName(it) == savedSeason ||
+                        (savedSeason == "Specials" && (EpisodeSeasonUtils.hasSpecialKeywords(it) || EpisodeSeasonUtils.isSeasonZero(it))) ||
+                        (savedSeason == "Extras" && EpisodeSeasonUtils.isSpecial(it))
+                }
+            }
+        }
+        // <-- AM (SEASON_TABS)
+
+        val result = episodesForPlayer.toMutableList()
+        if (result.all { it.id != episodeId }) {
+            result += listOf(selectedEpisode)
+        }
+
+        return result
     }
 
     fun getCurrentEpisodeIndex(): Int {
