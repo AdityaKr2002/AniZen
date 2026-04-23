@@ -513,6 +513,7 @@ private fun AnimeScreenSmallImpl(
                     VerticalFastScroller(
                         listState = episodeListState,
                         topContentPadding = topPadding,
+                        bottomContentPadding = contentPadding.calculateBottomPadding(),
                         endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
                     ) {
                         LazyColumn(
@@ -1041,6 +1042,7 @@ fun AnimeScreenLargeImpl(
                             VerticalFastScroller(
                                 listState = episodeListState,
                                 topContentPadding = contentPadding.calculateTopPadding(),
+                                bottomContentPadding = contentPadding.calculateBottomPadding(),
                                 endContentPadding = contentPadding.calculateEndPadding(layoutDirection) + 4.dp,
                             ) {
                                 LazyColumn(

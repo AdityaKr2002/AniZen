@@ -12,8 +12,12 @@ import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import eu.kanade.tachiyomi.util.storage.toFFmpegString
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -49,6 +53,8 @@ actual class LocalAnimeSource(
 ) : CatalogueSource, UnmeteredSource {
 
     private val json: Json by injectLazy()
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     @Suppress("PrivatePropertyName")
     private val PopularFilters = FilterList(OrderBy.Popular(context))
@@ -133,23 +139,6 @@ actual class LocalAnimeSource(
                         // Try to find the cover
                         coverManager.find(animeDir.name.orEmpty())?.let {
                             thumbnail_url = it.uri.toString()
-                        } ?: run {
-                            // Discover and generate cover from video if not found
-                            try {
-                                val episodes = fileSystem.getFilesInAnimeDirectory(url)
-                                    .filter { Archive.isSupported(it) }
-                                    .sortedWith(compareByDescending(UniFile::lastModified))
-
-                                episodes.firstOrNull()?.let { episodeFile ->
-                                    val se = SEpisode.create().apply {
-                                        this.url = "${this@apply.url}/${episodeFile.name}"
-                                        this.name = episodeFile.nameWithoutExtension.orEmpty()
-                                    }
-                                    updateCoverFromVideo(se, this)
-                                }
-                            } catch (e: Exception) {
-                                logcat(LogPriority.ERROR) { "Discovery: Couldn't extract thumbnail for $title: $e" }
-                            }
                         }
                     }
                 }
@@ -160,8 +149,6 @@ actual class LocalAnimeSource(
     }
 
     // Old fetch functions
-
-    // TODO: Should be replaced when Anime Extensions get to 1.15
 
     @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("getPopular"))
     override fun fetchPopularAnime(page: Int) = fetchSearchAnime(page, "", PopularFilters)
@@ -176,7 +163,6 @@ actual class LocalAnimeSource(
         }
     }
 
-    // SY -->
     fun updateAnimeInfo(anime: SAnime) {
         val directory = fileSystem.getFilesInBaseDirectory().map { File(it.filePath, anime.url) }.find {
             it.exists()
@@ -191,7 +177,6 @@ actual class LocalAnimeSource(
     private fun SAnime.toJson(): AnimeDetails {
         return AnimeDetails(title, author, artist, description, genre?.split(", "), status)
     }
-    // SY <--
 
     // Anime details related
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = withIOContext {
@@ -262,12 +247,14 @@ actual class LocalAnimeSource(
 
         // Generate the cover from the first episode found if not available
         if (anime.thumbnail_url == null) {
-            try {
-                episodes.lastOrNull()?.let { episode ->
-                    updateCoverFromVideo(episode, anime)
+            scope.launch {
+                try {
+                    episodes.lastOrNull()?.let { episode ->
+                        updateCoverFromVideo(episode, anime)
+                    }
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Couldn't extract thumbnail from video: $e" }
                 }
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR) { "Couldn't extract thumbnail from video: $e" }
             }
         }
 

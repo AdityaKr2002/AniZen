@@ -47,7 +47,6 @@ class HistoryScreenModel(
     init {
         screenModelScope.launch {
             _query.collectLatest { query ->
-                mutableState.update { it.copy(searchQuery = query) }
                 getHistory.subscribe(query ?: "")
                     .distinctUntilChanged()
                     .catch { error ->
@@ -62,9 +61,8 @@ class HistoryScreenModel(
     }
 
     fun search(query: String?) {
-        screenModelScope.launchIO {
-            _query.emit(query)
-        }
+        mutableState.update { it.copy(searchQuery = query) }
+        _query.value = query
     }
 
     private fun List<HistoryWithRelations>.toAnimeHistoryUiModels(): List<HistoryUiModel> {

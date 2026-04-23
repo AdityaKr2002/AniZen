@@ -17,11 +17,13 @@ actual class LocalAnimeSourceCoverManager(
 ) {
 
     actual fun find(animeUrl: String): UniFile? {
-        return fileSystem.getFilesInAnimeDirectory(animeUrl)
-            // Get all file whose names start with "cover"
-            .filter { it.isFile && it.nameWithoutExtension.equals("cover", ignoreCase = true) }
-            // Get the first actual image
-            .firstOrNull { ImageUtil.isImage(it.name) { it.openInputStream() } }
+        val animeDir = fileSystem.getAnimeDirectory(animeUrl) ?: return null
+        return animeDir.findFile("cover.jpg")
+            ?: animeDir.findFile("cover.png")
+            ?: animeDir.findFile("cover.jpeg")
+            ?: animeDir.findFile("Cover.jpg")
+            ?: animeDir.findFile("Cover.png")
+            ?: animeDir.findFile("Cover.jpeg")
     }
 
     actual fun update(anime: SAnime, inputStream: InputStream): UniFile? {

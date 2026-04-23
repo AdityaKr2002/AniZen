@@ -127,7 +127,9 @@ import tachiyomi.domain.history.interactor.LogActivity
 import tachiyomi.domain.history.interactor.UpsertHistory
 import tachiyomi.domain.history.model.ActivityLog
 import tachiyomi.domain.history.model.HistoryUpdate
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
+import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.i18n.MR
 import tachiyomi.source.localanime.isLocal
@@ -173,6 +175,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val basePreferences: BasePreferences = Injekt.get(),
     private val getCustomButtons: GetCustomButtons = Injekt.get(),
     private val trackSelect: TrackSelect = Injekt.get(),
+    private val libraryPreferences: LibraryPreferences = Injekt.get(),
     uiPreferences: UiPreferences = Injekt.get(),
 ) : ViewModel() {
 
@@ -1188,7 +1191,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val selectedEpisode = episodes.find { it.id == episodeId }
             ?: error("Requested episode of id $episodeId not found in episode list")
 
-        val episodesForPlayer = episodes.filterNot {
+        var episodesForPlayer = episodes.filterNot {
             anime.unseenFilterRaw == Anime.EPISODE_SHOW_SEEN &&
                 !it.seen ||
                 anime.unseenFilterRaw == Anime.EPISODE_SHOW_UNSEEN &&
@@ -1217,13 +1220,28 @@ class PlayerViewModel @JvmOverloads constructor(
                 anime.fillermarkedFilterRaw == Anime.EPISODE_SHOW_NOT_FILLERMARKED &&
                 it.fillermark
             // <-- AM (FILLERMARK)
-        }.toMutableList()
-
-        if (episodesForPlayer.all { it.id != episodeId }) {
-            episodesForPlayer += listOf(selectedEpisode)
         }
 
-        return episodesForPlayer
+        // AM (SEASON_TABS) -->
+        if (anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
+            val savedSeason = libraryPreferences.lastSelectedSeason(anime.id).get()
+            if (savedSeason.isNotEmpty()) {
+                episodesForPlayer = episodesForPlayer.filter {
+                    val domainEp = it.toDomainEpisode()!!
+                    EpisodeSeasonUtils.getSeasonName(domainEp) == savedSeason ||
+                        (savedSeason == "Specials" && (EpisodeSeasonUtils.hasSpecialKeywords(domainEp) || EpisodeSeasonUtils.isSeasonZero(domainEp))) ||
+                        (savedSeason == "Extras" && EpisodeSeasonUtils.isSpecial(domainEp))
+                }
+            }
+        }
+        // <-- AM (SEASON_TABS)
+
+        val result = episodesForPlayer.toMutableList()
+        if (result.all { it.id != episodeId }) {
+            result += listOf(selectedEpisode)
+        }
+
+        return result
     }
 
     fun getCurrentEpisodeIndex(): Int {

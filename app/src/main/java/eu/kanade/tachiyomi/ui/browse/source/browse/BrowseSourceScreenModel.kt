@@ -125,14 +125,17 @@ class BrowseSourceScreenModel(
         state.map { it.toolbarQuery }
             .distinctUntilChanged()
             .drop(1) // ignore initial state
-            .debounce(500)
             .onEach { query ->
-                val currentListing = state.value.listing
-                if (currentListing.query != query) {
-                    if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
-                        return@onEach
+                if (sourcePreferences.autoSearch().get()) {
+                    // Using delay instead of debounce to handle the conditional check
+                    kotlinx.coroutines.delay(500)
+                    val currentListing = state.value.listing
+                    if (currentListing.query != query) {
+                        if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
+                            return@onEach
+                        }
+                        search(query)
                     }
-                    search(query)
                 }
             }
             .launchIn(screenModelScope)

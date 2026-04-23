@@ -51,6 +51,11 @@ object SettingsBrowseScreen : SearchableSettings {
                         pref = sourcePreferences.hideLatest(),
                         title = stringResource(MR.strings.pref_hide_latest),
                     ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        pref = sourcePreferences.autoSearch(),
+                        title = stringResource(MR.strings.pref_auto_search),
+                        subtitle = stringResource(MR.strings.pref_auto_search_summary),
+                    ),
                     Preference.PreferenceItem.TextPreference(
                         title = stringResource(MR.strings.label_anime_extension_repos),
                         subtitle = pluralStringResource(
