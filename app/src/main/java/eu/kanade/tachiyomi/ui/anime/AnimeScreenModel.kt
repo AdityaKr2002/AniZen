@@ -1094,7 +1094,7 @@ class AnimeScreenModel(
         return map { episode ->
             val activeDownload = if (isLocal) null else downloadManager.getQueuedDownloadOrNull(episode.id)
             val downloaded = if (isLocal) {
-                downloadManager.isEpisodeDownloaded(episode.name, episode.scanlator, anime.title, anime.source)
+                true
             } else if (downloadedEpisodeDirs.isNotEmpty()) {
                 downloadProvider.getValidEpisodeDirNames(episode.name, episode.scanlator).any { it in downloadedEpisodeDirs }
             } else false

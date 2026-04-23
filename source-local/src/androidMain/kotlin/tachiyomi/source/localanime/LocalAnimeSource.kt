@@ -131,23 +131,24 @@ actual class LocalAnimeSource(
         // Transform animeDirs to list of SAnime
         val animes = animeDirs
             .map { animeDir ->
-                SAnime.create().apply {
-                    title = animeDir.name.orEmpty()
-                    url = animeDir.name.orEmpty()
+                async {
+                    SAnime.create().apply {
+                        title = animeDir.name.orEmpty()
+                        url = animeDir.name.orEmpty()
 
-                    // Try to find the cover
-                    coverManager.find(animeDir.name.orEmpty())?.let {
-                        thumbnail_url = it.uri.toString()
+                        // Try to find the cover
+                        coverManager.find(animeDir.name.orEmpty())?.let {
+                            thumbnail_url = it.uri.toString()
+                        }
                     }
                 }
             }
+            .awaitAll()
 
         AnimesPage(animes.toList(), false)
     }
 
     // Old fetch functions
-
-    // TODO: Should be replaced when Anime Extensions get to 1.15
 
     @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("getPopular"))
     override fun fetchPopularAnime(page: Int) = fetchSearchAnime(page, "", PopularFilters)
@@ -162,7 +163,6 @@ actual class LocalAnimeSource(
         }
     }
 
-    // SY -->
     fun updateAnimeInfo(anime: SAnime) {
         val directory = fileSystem.getFilesInBaseDirectory().map { File(it.filePath, anime.url) }.find {
             it.exists()
@@ -177,7 +177,6 @@ actual class LocalAnimeSource(
     private fun SAnime.toJson(): AnimeDetails {
         return AnimeDetails(title, author, artist, description, genre?.split(", "), status)
     }
-    // SY <--
 
     // Anime details related
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = withIOContext {
@@ -185,8 +184,7 @@ actual class LocalAnimeSource(
             anime.thumbnail_url = it.uri.toString()
         }
 
-        val animeDir = fileSystem.getAnimeDirectory(anime.url)
-        val animeDirFiles = animeDir?.listFiles().orEmpty()
+        val animeDirFiles = fileSystem.getFilesInAnimeDirectory(anime.url)
 
         animeDirFiles
             .firstOrNull { it.extension == "json" && it.nameWithoutExtension == "details" }
@@ -206,10 +204,7 @@ actual class LocalAnimeSource(
 
     // Episodes
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> = withIOContext {
-        val animeDir = fileSystem.getAnimeDirectory(anime.url)
-        val animeDirFiles = animeDir?.listFiles().orEmpty()
-
-        val episodesData = animeDirFiles
+        val episodesData = fileSystem.getFilesInAnimeDirectory(anime.url)
             .firstOrNull {
                 it.extension == "json" && it.nameWithoutExtension == "episodes"
             }?.let { file ->
@@ -218,12 +213,12 @@ actual class LocalAnimeSource(
                 }.getOrNull()
             }
 
-        val episodes = animeDirFiles
+        val episodes = fileSystem.getFilesInAnimeDirectory(anime.url)
             // Only keep supported formats
             .filter { Archive.isSupported(it) }
             .map { episodeFile ->
                 SEpisode.create().apply {
-                    url = "${anime.url}/${episodeFile.name}".removeSuffix("/")
+                    url = "${anime.url}/${episodeFile.name}"
                     name = episodeFile.nameWithoutExtension.orEmpty()
                     date_upload = episodeFile.lastModified()
 

@@ -192,14 +192,7 @@ class SyncEpisodesWithSource(
 
         if (removedEpisodes.isNotEmpty()) {
             val toDeleteIds = removedEpisodes.map { it.id }
-            if (source.isLocal()) {
-                episodeRepository.removeEpisodesWithIds(toDeleteIds)
-            } else {
-                // For online sources, we typically keep them to preserve history
-                // but this project seems to have been deleting them by default.
-                // I'll keep the current default behavior but ensure local is covered.
-                episodeRepository.removeEpisodesWithIds(toDeleteIds)
-            }
+            episodeRepository.removeEpisodesWithIds(toDeleteIds)
         }
 
         if (updatedToAdd.isNotEmpty()) {
