@@ -208,43 +208,48 @@ private fun DownloadedIndicator(
 ) {
     var isMenuExpanded by remember { mutableStateOf(false) }
 
-    // AM (FILE_SIZE) -->
-    if (fileSize != null) {
-        Text(
-            text = formatFileSize(fileSize),
-            maxLines = 1,
-            style = MaterialTheme.typography.bodyMedium
-                .copy(color = MaterialTheme.colorScheme.primary, fontSize = 12.sp),
-            modifier = Modifier.padding(all = 10.dp),
-        )
-    }
-    // <-- AM (FILE_SIZE)
-
-    Box(
-        modifier = modifier
-            .size(IconButtonTokens.StateLayerSize)
-            .commonClickable(
-                enabled = enabled,
-                hapticFeedback = LocalHapticFeedback.current,
-                onLongClick = { isMenuExpanded = true },
-                onClick = { isMenuExpanded = true },
-            ),
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.Filled.CheckCircle,
-            contentDescription = null,
-            modifier = Modifier.size(IndicatorSize),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(MR.strings.action_delete)) },
-                onClick = {
-                    onClick(EpisodeDownloadAction.DELETE)
-                    isMenuExpanded = false
-                },
+        // AM (FILE_SIZE) -->
+        if (fileSize != null) {
+            Text(
+                text = formatFileSize(fileSize),
+                maxLines = 1,
+                style = MaterialTheme.typography.bodyMedium
+                    .copy(color = MaterialTheme.colorScheme.primary, fontSize = 12.sp),
+                modifier = Modifier.padding(all = 10.dp),
             )
+        }
+        // <-- AM (FILE_SIZE)
+
+        Box(
+            modifier = Modifier
+                .size(IconButtonTokens.StateLayerSize)
+                .commonClickable(
+                    enabled = enabled,
+                    hapticFeedback = LocalHapticFeedback.current,
+                    onLongClick = { isMenuExpanded = true },
+                    onClick = { isMenuExpanded = true },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(IndicatorSize),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
+                DropdownMenuItem(
+                    text = { Text(text = stringResource(MR.strings.action_delete)) },
+                    onClick = {
+                        onClick(EpisodeDownloadAction.DELETE)
+                        isMenuExpanded = false
+                    },
+                )
+            }
         }
     }
 }
