@@ -1227,9 +1227,10 @@ class PlayerViewModel @JvmOverloads constructor(
             val savedSeason = libraryPreferences.lastSelectedSeason(anime.id).get()
             if (savedSeason.isNotEmpty()) {
                 episodesForPlayer = episodesForPlayer.filter {
-                    EpisodeSeasonUtils.getSeasonName(it) == savedSeason ||
-                        (savedSeason == "Specials" && (EpisodeSeasonUtils.hasSpecialKeywords(it) || EpisodeSeasonUtils.isSeasonZero(it))) ||
-                        (savedSeason == "Extras" && EpisodeSeasonUtils.isSpecial(it))
+                    val domainEp = it.toDomainEpisode()!!
+                    EpisodeSeasonUtils.getSeasonName(domainEp) == savedSeason ||
+                        (savedSeason == "Specials" && (EpisodeSeasonUtils.hasSpecialKeywords(domainEp) || EpisodeSeasonUtils.isSeasonZero(domainEp))) ||
+                        (savedSeason == "Extras" && EpisodeSeasonUtils.isSpecial(domainEp))
                 }
             }
         }
