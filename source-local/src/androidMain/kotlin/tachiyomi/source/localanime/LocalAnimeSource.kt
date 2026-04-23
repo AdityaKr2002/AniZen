@@ -223,7 +223,7 @@ actual class LocalAnimeSource(
             .filter { Archive.isSupported(it) }
             .map { episodeFile ->
                 SEpisode.create().apply {
-                    url = "${anime.url}/${episodeFile.name}"
+                    url = "${anime.url}/${episodeFile.name}".removeSuffix("/")
                     name = episodeFile.nameWithoutExtension.orEmpty()
                     date_upload = episodeFile.lastModified()
 
