@@ -604,6 +604,7 @@ private fun AnimeScreenSmallImpl(
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
@@ -615,12 +616,13 @@ private fun AnimeScreenSmallImpl(
                                             } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             } else {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 ) {
@@ -1000,6 +1002,7 @@ fun AnimeScreenLargeImpl(
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
@@ -1011,16 +1014,16 @@ fun AnimeScreenLargeImpl(
                                             } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             } else {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
+                                                ) {                                                    itemsIndexed(
                                                         items = combinedItems,
                                                         key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${anime.id}" },
                                                     ) { _, anime: tachiyomi.domain.anime.model.Anime ->

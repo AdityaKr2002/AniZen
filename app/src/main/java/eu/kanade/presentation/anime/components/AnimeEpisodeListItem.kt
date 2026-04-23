@@ -121,7 +121,8 @@ fun AnimeEpisodeListItem(
                         onLongClick()
                     },
                 )
-                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp)
+                .animateContentSize(),
         ) {
             Column(
                 modifier = Modifier.weight(1f),
@@ -131,7 +132,6 @@ fun AnimeEpisodeListItem(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    var textHeight by remember { mutableIntStateOf(0) }
                     if (!seen) {
                         Icon(
                             imageVector = Icons.Filled.Circle,
@@ -146,8 +146,7 @@ fun AnimeEpisodeListItem(
                         Icon(
                             imageVector = Icons.Filled.Bookmark,
                             contentDescription = stringResource(MR.strings.action_filter_bookmarked),
-                            modifier = Modifier
-                                .sizeIn(maxHeight = with(LocalDensity.current) { textHeight.toDp() - 2.dp }),
+                            modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -156,8 +155,7 @@ fun AnimeEpisodeListItem(
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_fillermark_24dp),
                             contentDescription = stringResource(AMR.strings.action_filter_fillermarked),
-                            modifier = Modifier
-                                .sizeIn(maxHeight = with(LocalDensity.current) { textHeight.toDp() - 2.dp }),
+                            modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.tertiary,
                         )
                         Spacer(modifier = Modifier.width(2.dp))
@@ -168,7 +166,6 @@ fun AnimeEpisodeListItem(
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { textHeight = it.size.height },
                         color = LocalContentColor.current.copy(alpha = if (seen) DISABLED_ALPHA else 1f),
                     )
                 }
@@ -210,7 +207,9 @@ fun AnimeEpisodeListItem(
 
             EpisodeDownloadIndicator(
                 enabled = downloadIndicatorEnabled,
-                modifier = Modifier.padding(start = 4.dp),
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .sizeIn(minWidth = 40.dp, minHeight = 40.dp),
                 downloadStateProvider = downloadStateProvider,
                 downloadProgressProvider = downloadProgressProvider,
                 onClick = { onDownloadClick?.invoke(it) },

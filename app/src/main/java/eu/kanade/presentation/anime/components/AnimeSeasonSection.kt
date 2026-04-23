@@ -102,7 +102,7 @@ fun AnimeSeasonSection(
             ) {
                 itemsIndexed(
                     items = sortedSeasons,
-                    key = { index, it -> "anime-season-${it.anime.id}-$index" }
+                    key = { _, it -> "anime-season-${it.anime.id}" }
                 ) { _, season ->
                     SeasonItem(
                         season = season,
