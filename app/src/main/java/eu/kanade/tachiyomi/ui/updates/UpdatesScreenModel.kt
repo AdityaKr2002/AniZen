@@ -404,7 +404,7 @@ class UpdatesScreenModel(
                 }
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel())
+            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedAnimeIds))
         }
     }
 
@@ -415,7 +415,7 @@ class UpdatesScreenModel(
                 it.copy(selected = selected)
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel())
+            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedAnimeIds))
         }
 
         selectedPositions[0] = -1
@@ -429,7 +429,7 @@ class UpdatesScreenModel(
                 it.copy(selected = !it.selected)
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel())
+            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedAnimeIds))
         }
         selectedPositions[0] = -1
         selectedPositions[1] = -1
