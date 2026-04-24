@@ -283,7 +283,7 @@ private fun UpdatesUiItem(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
             )
-            .height(56.dp)
+            .height(72.dp)
             .padding(horizontal = MaterialTheme.padding.medium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -291,7 +291,7 @@ private fun UpdatesUiItem(
             val (entry, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
             entry(
                 modifier = Modifier
-                    .padding(vertical = 6.dp)
+                    .padding(vertical = 8.dp)
                     .fillMaxHeight(),
                 data = update.coverData,
                 onClick = onClickCover,
@@ -301,9 +301,9 @@ private fun UpdatesUiItem(
             val (_, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
             Box(
                 modifier = Modifier
-                    .padding(vertical = 6.dp)
+                    .padding(vertical = 8.dp)
                     .fillMaxHeight()
-                    .width(48.dp * ratio), // Use consistent width based on ratio
+                    .width(56.dp * ratio), // Use consistent width based on ratio
             )
         }
 
