@@ -357,9 +357,8 @@ fun GestureHandler(
 
                                     val diffX = pointer.position.x - lastX
                                     if (Math.abs(diffX) > 1f) {
-                                        // Adjusted multiplier (0.007) for better balanced responsiveness
-                                        unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.007).coerceIn(0.25, 4.0)
-                                        
+                                        // Decreased sensitivity (from 0.007 to 0.0035) to prevent accidental jittery speed jumps
+                                        unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.0035).coerceIn(0.25, 4.0)                                        
                                         val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
                                         
                                         speedRampJob?.cancel() 
