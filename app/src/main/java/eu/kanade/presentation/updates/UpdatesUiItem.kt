@@ -119,20 +119,21 @@ internal fun LazyListScope.updatesUiItems(
                         exit = fadeOut() + shrinkVertically(),
                     ) {
                         if (useContainer) {
-                            val shape = when (model.position) {
-                                UpdatesUiModel.ItemPosition.SINGLE -> MaterialTheme.shapes.large
-                                UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
+                            val shape = when {
+                                model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
+                                model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
                                     bottomEnd = ZeroCornerSize,
                                     bottomStart = ZeroCornerSize,
                                 )
-                                UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
-                                UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
+                                model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                                model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
                                     topEnd = ZeroCornerSize,
                                     topStart = ZeroCornerSize,
                                 )
+                                else -> RectangleShape
                             }
-                            val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP) 4.dp else 0.dp
-                            val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM) 4.dp else 0.dp
+                            val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP || (isLeader && !isExpanded)) 4.dp else 0.dp
+                            val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM || (isLeader && !isExpanded)) 4.dp else 0.dp
 
                             Surface(
                                 modifier = Modifier
@@ -144,6 +145,7 @@ internal fun LazyListScope.updatesUiItems(
                                 tonalElevation = 2.dp,
                             ) {
                                 UpdatesUiItem(
+                                    modifier = Modifier.clip(shape),
                                     update = updatesItem.update,
                                     selected = updatesItem.selected,
                                     onClick = {
@@ -183,13 +185,26 @@ internal fun LazyListScope.updatesUiItems(
                                     onToggleExpand = { onToggleExpand(updatesItem.update.groupByDateAndAnime()) },
                                     usePanorama = usePanorama,
                                     updatesItem = updatesItem,
-                                )
-                            }
-                        } else {
-                            UpdatesUiItem(
-                                update = updatesItem.update,
-                                selected = updatesItem.selected,
-                                onClick = {
+                                    )
+                                    }
+                                    } else {
+                                    val shape = when {
+                                    model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
+                                    model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
+                                    bottomEnd = ZeroCornerSize,
+                                    bottomStart = ZeroCornerSize,
+                                    )
+                                    model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                                    model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
+                                    topEnd = ZeroCornerSize,
+                                    topStart = ZeroCornerSize,
+                                    )
+                                    else -> RectangleShape
+                                    }
+                                    UpdatesUiItem(
+                                    modifier = Modifier.clip(shape),
+                                    update = updatesItem.update,
+                                    selected = updatesItem.selected,                                onClick = {
                                     when {
                                         selectionMode -> onUpdateSelected(
                                             updatesItem,
