@@ -35,6 +35,7 @@ import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.buildVFChain
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.util.system.DeviceTierManager
+import eu.kanade.tachiyomi.util.system.findActivity
 import `is`.xyz.mpv.BaseMPVView
 import `is`.xyz.mpv.KeyMapping
 import `is`.xyz.mpv.MPVLib
@@ -213,6 +214,14 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             interpolationFPSLimit.toFloat()
         } else {
             displayRefreshRate
+        }
+
+        if (refreshRate != displayRefreshRate) {
+            context.findActivity()?.window?.let { window ->
+                val params = window.attributes
+                params.preferredRefreshRate = refreshRate
+                window.attributes = params
+            }
         }
 
         MPVLib.setOptionString("display-fps", refreshRate.toString())
