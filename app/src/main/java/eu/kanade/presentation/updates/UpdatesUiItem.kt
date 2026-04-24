@@ -1,19 +1,25 @@
 package eu.kanade.presentation.updates
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -73,6 +79,7 @@ internal fun LazyListScope.updatesUiItems(
     selectionMode: Boolean,
     onUpdateSelected: (UpdatesItem, Boolean, Boolean, Boolean) -> Unit,
     onClickCover: (UpdatesItem) -> Unit,
+    onToggleExpand: (Long) -> Unit,
     onClickUpdate: (UpdatesItem, altPlayer: Boolean) -> Unit,
     onDownloadEpisode: (List<UpdatesItem>, EpisodeDownloadAction) -> Unit,
     useContainer: Boolean,
@@ -85,6 +92,16 @@ internal fun LazyListScope.updatesUiItems(
                     ListGroupHeader(
                         modifier = Modifier,
                         text = relativeDateText(model.date),
+                    )
+                }
+            }
+            is UpdatesUiModel.Group -> {
+                item(key = "animeUpdatesGroup-${model.animeId}-${model.items.first().update.dateFetch}") {
+                    UpdatesUiGroup(
+                        title = model.animeTitle,
+                        count = model.items.size,
+                        expanded = model.expanded,
+                        onClick = { onToggleExpand(model.animeId) },
                     )
                 }
             }
@@ -264,3 +281,39 @@ private fun UpdatesUiItem(
 private val storagePreferences: StoragePreferences by injectLazy()
 private val downloadProvider: DownloadProvider by injectLazy()
 private val sourceManager: SourceManager by injectLazy()
+
+@Composable
+private fun UpdatesUiGroup(
+    title: String,
+    count: Int,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = MaterialTheme.padding.medium, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val icon = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(modifier = Modifier.width(MaterialTheme.padding.medium))
+        Text(
+            text = title,
+            maxLines = 1,
+            style = MaterialTheme.typography.bodyMedium,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Badge {
+            Text(text = count.toString())
+        }
+    }
+}

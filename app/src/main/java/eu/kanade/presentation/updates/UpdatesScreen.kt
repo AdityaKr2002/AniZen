@@ -68,6 +68,7 @@ fun UpdateScreen(
     onInvertSelection: () -> Unit,
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: () -> Boolean,
+    onToggleExpand: (Long) -> Unit,
     onDownloadEpisode: (List<UpdatesItem>, EpisodeDownloadAction) -> Unit,
     onMultiBookmarkClicked: (List<UpdatesItem>, bookmark: Boolean) -> Unit,
     // AM (FILLERMARK) -->
@@ -176,6 +177,7 @@ fun UpdateScreen(
                                 selectionMode = state.selectionMode,
                                 onUpdateSelected = onUpdateSelected,
                                 onClickCover = onClickCover,
+                                onToggleExpand = onToggleExpand,
                                 onClickUpdate = onOpenEpisode,
                                 onDownloadEpisode = onDownloadEpisode,
                                 useContainer = useContainer,
@@ -310,6 +312,13 @@ sealed interface UpdatesUiModel {
     data class Item(
         val item: UpdatesItem,
         val position: ItemPosition = ItemPosition.SINGLE,
+    ) : UpdatesUiModel
+
+    data class Group(
+        val animeId: Long,
+        val animeTitle: String,
+        val items: List<UpdatesItem>,
+        val expanded: Boolean,
     ) : UpdatesUiModel
 
     enum class ItemPosition {

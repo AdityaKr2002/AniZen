@@ -89,7 +89,7 @@ class UpdatesScreenModel(
                         it.copy(
                             isLoading = false,
                             items = items,
-                            uiModels = items.toUiModel(),
+                            uiModels = items.toUiModel(it.expandedAnimeIds),
                         )
                     }
                 }
@@ -130,7 +130,7 @@ class UpdatesScreenModel(
             .toPersistentList()
     }
 
-    private fun List<UpdatesItem>.toUiModel(): List<UpdatesUiModel> {
+    private fun List<UpdatesItem>.toUiModel(expandedAnimeIds: Set<Long>): List<UpdatesUiModel> {
         val uiModels = mutableListOf<UpdatesUiModel>()
         var i = 0
         while (i < this.size) {
@@ -138,20 +138,37 @@ class UpdatesScreenModel(
             val date = item.update.dateFetch.toLocalDate()
             uiModels.add(UpdatesUiModel.Header(date))
 
-            val group = mutableListOf<UpdatesItem>()
+            val dayItems = mutableListOf<UpdatesItem>()
             while (i < this.size && this[i].update.dateFetch.toLocalDate() == date) {
-                group.add(this[i])
+                dayItems.add(this[i])
                 i++
             }
 
-            group.forEachIndexed { index, updatesItem ->
-                val position = when {
-                    group.size == 1 -> UpdatesUiModel.ItemPosition.SINGLE
-                    index == 0 -> UpdatesUiModel.ItemPosition.TOP
-                    index == group.size - 1 -> UpdatesUiModel.ItemPosition.BOTTOM
-                    else -> UpdatesUiModel.ItemPosition.MIDDLE
+            val groupedByAnime = dayItems.groupBy { it.update.animeId }
+            groupedByAnime.forEach { (animeId, animeItems) ->
+                if (animeItems.size > 1) {
+                    val expanded = expandedAnimeIds.contains(animeId)
+                    uiModels.add(
+                        UpdatesUiModel.Group(
+                            animeId = animeId,
+                            animeTitle = animeItems.first().update.animeTitle,
+                            items = animeItems,
+                            expanded = expanded,
+                        ),
+                    )
+                    if (expanded) {
+                        animeItems.forEachIndexed { index, updatesItem ->
+                            val position = when {
+                                index == 0 -> UpdatesUiModel.ItemPosition.TOP
+                                index == animeItems.size - 1 -> UpdatesUiModel.ItemPosition.BOTTOM
+                                else -> UpdatesUiModel.ItemPosition.MIDDLE
+                            }
+                            uiModels.add(UpdatesUiModel.Item(updatesItem, position))
+                        }
+                    }
+                } else {
+                    uiModels.add(UpdatesUiModel.Item(animeItems.first(), UpdatesUiModel.ItemPosition.SINGLE))
                 }
-                uiModels.add(UpdatesUiModel.Item(updatesItem, position))
             }
         }
         return uiModels
@@ -182,7 +199,7 @@ class UpdatesScreenModel(
                     downloadProgressProvider = { download.progress },
                 )
             }
-            state.copy(items = newItems, uiModels = newItems.toUiModel())
+            state.copy(items = newItems, uiModels = newItems.toUiModel(state.expandedAnimeIds))
         }
     }
 
@@ -422,8 +439,23 @@ class UpdatesScreenModel(
         mutableState.update { it.copy(dialog = dialog) }
     }
 
+    fun toggleExpandAnime(animeId: Long) {
+        mutableState.update {
+            val newExpandedAnimeIds = if (it.expandedAnimeIds.contains(animeId)) {
+                it.expandedAnimeIds - animeId
+            } else {
+                it.expandedAnimeIds + animeId
+            }
+            it.copy(
+                expandedAnimeIds = newExpandedAnimeIds,
+                uiModels = it.items.toUiModel(newExpandedAnimeIds),
+            )
+        }
+    }
+
     fun resetNewUpdatesCount() {
         libraryPreferences.newUpdatesCount().set(0)
+        libraryPreferences.newMangaUpdatesCount().set(0)
     }
 
     @Immutable
@@ -431,6 +463,7 @@ class UpdatesScreenModel(
         val isLoading: Boolean = true,
         val items: PersistentList<UpdatesItem> = persistentListOf(),
         val uiModels: List<UpdatesUiModel> = emptyList(),
+        val expandedAnimeIds: Set<Long> = emptySet(),
         val dialog: Dialog? = null,
     ) {
         val selected = items.filter { it.selected }

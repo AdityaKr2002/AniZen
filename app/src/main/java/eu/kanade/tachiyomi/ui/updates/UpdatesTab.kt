@@ -98,6 +98,7 @@ data object UpdatesTab : Tab {
             onInvertSelection = { /* Not in model */ },
             onCalendarClicked = { navigator.push(UpcomingScreen()) },
             onUpdateLibrary = screenModel::updateLibrary,
+            onToggleExpand = screenModel::toggleExpandAnime,
             onDownloadEpisode = screenModel::downloadEpisodes,
             onMultiBookmarkClicked = { updates, bookmark -> /* Not in model? */ },
             onMultiFillermarkClicked = { updates, filler -> /* Not in model? */ },
