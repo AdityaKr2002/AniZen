@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -604,6 +605,7 @@ private fun AnimeScreenSmallImpl(
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
@@ -615,19 +617,20 @@ private fun AnimeScreenSmallImpl(
                                             } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             } else {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 ) {
                                                     itemsIndexed(
                                                         items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}-$index" },
-                                                    ) { index: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                        key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}" },
+                                                    ) { _, anime: tachiyomi.domain.anime.model.Anime ->
                                                         SuggestionItem(
                                                             anime = anime,
                                                             onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
@@ -1000,6 +1003,7 @@ fun AnimeScreenLargeImpl(
 
                                             if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                     userScrollEnabled = false,
@@ -1011,19 +1015,19 @@ fun AnimeScreenLargeImpl(
                                             } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
                                                 Text(
                                                     text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             } else {
                                                 androidx.compose.foundation.lazy.LazyRow(
+                                                    modifier = Modifier.heightIn(min = 180.dp),
                                                     contentPadding = PaddingValues(horizontal = 12.dp),
                                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
+                                                ) {                                                    itemsIndexed(
                                                         items = combinedItems,
-                                                        key = { index: Int, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${anime.id}-$index" },
-                                                    ) { index: Int, anime: tachiyomi.domain.anime.model.Anime ->
+                                                        key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${anime.id}" },
+                                                    ) { _, anime: tachiyomi.domain.anime.model.Anime ->
                                                         SuggestionItem(
                                                             anime = anime,
                                                             onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
@@ -1424,11 +1428,11 @@ private fun LazyListScope.sharedEpisodeItems(
 ) {
     itemsIndexed(
         items = episodes,
-        key = { index, item ->
+        key = { _, item ->
             when (item) {
-                is EpisodeList.Item -> "anime-ep-${item.episode.id}-$index"
-                is EpisodeList.MissingCount -> "anime-ms-${item.id}-$index"
-                is EpisodeList.Season -> "anime-sn-${item.name}-$index"
+                is EpisodeList.Item -> "anime-ep-${item.episode.id}"
+                is EpisodeList.MissingCount -> "anime-ms-${item.id}"
+                is EpisodeList.Season -> "anime-sn-${item.name}"
             }
         },
     ) { _, item ->
@@ -1461,7 +1465,7 @@ private fun SeasonSelector(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        itemsIndexed(seasons, key = { index, it -> "season-$it-$index" }) { _, season ->
+        itemsIndexed(seasons, key = { _, it -> "season-$it" }) { _, season ->
             androidx.compose.material3.FilterChip(
                 selected = season == selectedSeason,
                 onClick = { onSeasonSelected(season) },

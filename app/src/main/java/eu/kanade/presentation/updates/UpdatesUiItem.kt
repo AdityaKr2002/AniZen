@@ -1,27 +1,42 @@
 package eu.kanade.presentation.updates
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -35,8 +50,11 @@ import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeDownloadIndicator
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.util.relativeTimeSpanString
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
+import eu.kanade.tachiyomi.ui.updates.UpdatesScreenModel
+import eu.kanade.tachiyomi.ui.updates.groupByDateAndAnime
 import tachiyomi.domain.updates.model.UpdatesWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ListGroupHeader
@@ -70,8 +88,10 @@ internal fun LazyListScope.updatesLastUpdatedItem(
 
 internal fun LazyListScope.updatesUiItems(
     uiModels: List<UpdatesUiModel>,
+    expandedState: Set<String>,
+    onToggleExpand: (String) -> Unit,
     selectionMode: Boolean,
-    onUpdateSelected: (UpdatesItem, Boolean, Boolean, Boolean) -> Unit,
+    onUpdateSelected: (UpdatesItem, UpdatesScreenModel.UpdateSelectionOptions) -> Unit,
     onClickCover: (UpdatesItem) -> Unit,
     onClickUpdate: (UpdatesItem, altPlayer: Boolean) -> Unit,
     onDownloadEpisode: (List<UpdatesItem>, EpisodeDownloadAction) -> Unit,
@@ -90,71 +110,140 @@ internal fun LazyListScope.updatesUiItems(
             }
             is UpdatesUiModel.Item -> {
                 val updatesItem = model.item
-                item(key = "animeUpdate-${updatesItem.update.episodeId}") {
-                    if (useContainer) {
-                        val shape = when (model.position) {
-                            UpdatesUiModel.ItemPosition.SINGLE -> MaterialTheme.shapes.large
-                            UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
-                                bottomEnd = ZeroCornerSize,
-                                bottomStart = ZeroCornerSize,
-                            )
-                            UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
-                            UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
-                                topEnd = ZeroCornerSize,
-                                topStart = ZeroCornerSize,
-                            )
-                        }
-                        val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP) 4.dp else 0.dp
-                        val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM) 4.dp else 0.dp
+                val isLeader = model is UpdatesUiModel.Leader
+                val isExpanded = expandedState.contains(updatesItem.update.groupByDateAndAnime())
 
-                        Surface(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .padding(top = topPadding, bottom = bottomPadding)
-                                .fillMaxWidth(),
-                            shape = shape,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            tonalElevation = 2.dp,
-                        ) {
-                            UpdatesUiItem(
-                                update = updatesItem.update,
-                                selected = updatesItem.selected,
-                                onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
-                                onClick = {
-                                    if (selectionMode) {
-                                        onUpdateSelected(updatesItem, !updatesItem.selected, true, false)
-                                    } else {
-                                        onClickUpdate(updatesItem, false)
+                item(key = "animeUpdate-${updatesItem.update.episodeId}") {
+                    AnimatedVisibility(
+                        visible = isLeader || isExpanded,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
+                    ) {
+                        if (useContainer) {
+                            val shape = when {
+                                model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
+                                model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
+                                    bottomEnd = ZeroCornerSize,
+                                    bottomStart = ZeroCornerSize,
+                                )
+                                model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                                model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
+                                    topEnd = ZeroCornerSize,
+                                    topStart = ZeroCornerSize,
+                                )
+                                else -> RectangleShape
+                            }
+                            val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP || (isLeader && !isExpanded)) 4.dp else 0.dp
+                            val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM || (isLeader && !isExpanded)) 4.dp else 0.dp
+
+                            Surface(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                                    .padding(top = topPadding, bottom = bottomPadding)
+                                    .fillMaxWidth(),
+                                shape = shape,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                tonalElevation = 2.dp,
+                            ) {
+                                UpdatesUiItem(
+                                    modifier = Modifier.clip(shape),
+                                    update = updatesItem.update,
+                                    selected = updatesItem.selected,
+                                    onClick = {
+                                        when {
+                                            selectionMode -> onUpdateSelected(
+                                                updatesItem,
+                                                UpdatesScreenModel.UpdateSelectionOptions(
+                                                    selected = !updatesItem.selected,
+                                                    userSelected = true,
+                                                    fromLongPress = false,
+                                                    isGroup = isLeader && model.isExpandable,
+                                                    isExpanded = isExpanded,
+                                                ),
+                                            )
+                                            else -> onClickUpdate(updatesItem, false)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        onUpdateSelected(
+                                            updatesItem,
+                                            UpdatesScreenModel.UpdateSelectionOptions(
+                                                selected = !updatesItem.selected,
+                                                userSelected = true,
+                                                fromLongPress = true,
+                                                isGroup = isLeader && model.isExpandable,
+                                                isExpanded = isExpanded,
+                                            ),
+                                        )
+                                    },
+                                    onClickCover = { onClickCover(updatesItem) },
+                                    onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
+                                    downloadStateProvider = updatesItem.downloadStateProvider,
+                                    downloadProgressProvider = updatesItem.downloadProgressProvider,
+                                    isLeader = isLeader,
+                                    isExpandable = model.isExpandable,
+                                    expanded = isExpanded,
+                                    onToggleExpand = { onToggleExpand(updatesItem.update.groupByDateAndAnime()) },
+                                    usePanorama = usePanorama,
+                                    updatesItem = updatesItem,
+                                    )
                                     }
+                                    } else {
+                                    val shape = when {
+                                    model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
+                                    model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
+                                    bottomEnd = ZeroCornerSize,
+                                    bottomStart = ZeroCornerSize,
+                                    )
+                                    model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                                    model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
+                                    topEnd = ZeroCornerSize,
+                                    topStart = ZeroCornerSize,
+                                    )
+                                    else -> RectangleShape
+                                    }
+                                    UpdatesUiItem(
+                                    modifier = Modifier.clip(shape),
+                                    update = updatesItem.update,
+                                    selected = updatesItem.selected,                                onClick = {
+                                    when {
+                                        selectionMode -> onUpdateSelected(
+                                            updatesItem,
+                                            UpdatesScreenModel.UpdateSelectionOptions(
+                                                selected = !updatesItem.selected,
+                                                userSelected = true,
+                                                fromLongPress = false,
+                                                isGroup = isLeader && model.isExpandable,
+                                                isExpanded = isExpanded,
+                                            ),
+                                        )
+                                        else -> onClickUpdate(updatesItem, false)
+                                    }
+                                },
+                                onLongClick = {
+                                    onUpdateSelected(
+                                        updatesItem,
+                                        UpdatesScreenModel.UpdateSelectionOptions(
+                                            selected = !updatesItem.selected,
+                                            userSelected = true,
+                                            fromLongPress = true,
+                                            isGroup = isLeader && model.isExpandable,
+                                            isExpanded = isExpanded,
+                                        ),
+                                    )
                                 },
                                 onClickCover = { onClickCover(updatesItem) },
                                 onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
                                 downloadStateProvider = updatesItem.downloadStateProvider,
                                 downloadProgressProvider = updatesItem.downloadProgressProvider,
-                                updatesItem = updatesItem,
+                                isLeader = isLeader,
+                                isExpandable = model.isExpandable,
+                                expanded = isExpanded,
+                                onToggleExpand = { onToggleExpand(updatesItem.update.groupByDateAndAnime()) },
                                 usePanorama = usePanorama,
+                                updatesItem = updatesItem,
                             )
                         }
-                    } else {
-                        UpdatesUiItem(
-                            modifier = Modifier,
-                            update = updatesItem.update,
-                            selected = updatesItem.selected,
-                            onLongClick = { onUpdateSelected(updatesItem, !updatesItem.selected, true, true) },
-                            onClick = {
-                                if (selectionMode) {
-                                    onUpdateSelected(updatesItem, !updatesItem.selected, true, false)
-                                } else {
-                                    onClickUpdate(updatesItem, false)
-                                }
-                            },
-                            onClickCover = { onClickCover(updatesItem) },
-                            onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
-                            downloadStateProvider = updatesItem.downloadStateProvider,
-                            downloadProgressProvider = updatesItem.downloadProgressProvider,
-                            updatesItem = updatesItem,
-                            usePanorama = usePanorama,
-                        )
                     }
                 }
             }
@@ -168,16 +257,24 @@ private fun UpdatesUiItem(
     selected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onClickCover: () -> Unit,
-    onDownloadEpisode: (EpisodeDownloadAction) -> Unit,
+    onClickCover: (() -> Unit)?,
+    onDownloadEpisode: ((EpisodeDownloadAction) -> Unit)?,
+    // Download Indicator
     downloadStateProvider: () -> Download.State,
     downloadProgressProvider: () -> Int,
+    isLeader: Boolean,
+    isExpandable: Boolean,
+    expanded: Boolean,
+    onToggleExpand: () -> Unit,
+    usePanorama: Boolean,
     updatesItem: UpdatesItem,
     modifier: Modifier = Modifier,
-    usePanorama: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
     val textAlpha = if (update.seen) DISABLED_ALPHA else 1f
+
+    val itemHeight = if (isLeader) 96.dp else 48.dp
+    val verticalPadding = if (isLeader) MaterialTheme.padding.small else 0.dp
 
     Row(
         modifier = modifier
@@ -189,33 +286,45 @@ private fun UpdatesUiItem(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
             )
-            .height(56.dp)
-            .padding(horizontal = MaterialTheme.padding.medium),
+            .height(itemHeight)
+            .padding(horizontal = MaterialTheme.padding.medium, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val (entry, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
-        entry(
-            modifier = Modifier
-                .padding(vertical = 6.dp)
-                .fillMaxHeight(),
-            data = update.coverData,
-            onClick = onClickCover,
-            ratio = ratio,
-        )
+        if (isLeader) {
+            val (entry, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
+            entry(
+                modifier = Modifier.fillMaxHeight(),
+                data = update.coverData,
+                onClick = onClickCover,
+                ratio = ratio,
+            )
+        } else {
+            val (_, ratio) = AnimeCover.getEntry(update.animeId, usePanoramaOverride = usePanorama)
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(80.dp * ratio), // Maintain alignment with Leader's text
+            )
+        }
+
         Column(
             modifier = Modifier
-                .padding(horizontal = MaterialTheme.padding.medium)
+                .padding(start = MaterialTheme.padding.medium, end = MaterialTheme.padding.small)
                 .weight(1f),
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = update.animeTitle,
-                maxLines = 1,
-                style = MaterialTheme.typography.bodyMedium,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.graphicsLayer { alpha = textAlpha },
-            )
+            if (isLeader) {
+                Text(
+                    text = update.animeTitle,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
+                var textHeight by remember { mutableIntStateOf(0) }
                 if (update.bookmark) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
@@ -231,10 +340,11 @@ private fun UpdatesUiItem(
                     text = update.episodeName,
                     maxLines = 1,
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
                     overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { textHeight = it.size.height },
                     modifier = Modifier
-                        .graphicsLayer { alpha = textAlpha }
-                        .weight(1f, fill = false),
+                        .weight(weight = 1f, fill = false),
                 )
 
                 val fileSize = updatesItem.fileSize
@@ -250,17 +360,51 @@ private fun UpdatesUiItem(
             }
         }
 
+        if (isLeader && isExpandable) {
+            CollapseButton(
+                expanded = expanded,
+                onClick = onToggleExpand,
+            )
+        }
+
         EpisodeDownloadIndicator(
-            enabled = true,
+            enabled = onDownloadEpisode != null,
             modifier = Modifier.padding(start = 4.dp),
             downloadStateProvider = downloadStateProvider,
             downloadProgressProvider = downloadProgressProvider,
-            onClick = onDownloadEpisode,
+            onClick = { onDownloadEpisode?.invoke(it) },
             fileSize = updatesItem.fileSize,
         )
     }
 }
 
-private val storagePreferences: StoragePreferences by injectLazy()
-private val downloadProvider: DownloadProvider by injectLazy()
-private val sourceManager: SourceManager by injectLazy()
+@Composable
+private fun CollapseButton(
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val painter = rememberAnimatedVectorPainter(
+        AnimatedImageVector.animatedVectorResource(R.drawable.anim_caret_down),
+        !expanded,
+    )
+
+    Box(
+        modifier = modifier
+            .size(IndicatorSize + MaterialTheme.padding.extraSmall),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(IndicatorSize),
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+private val IndicatorSize = 24.dp
