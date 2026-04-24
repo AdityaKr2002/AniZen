@@ -145,7 +145,8 @@ class UpdatesScreenModel(
             }
 
             val groupedByAnime = dayItems.groupBy { it.update.animeId }
-            groupedByAnime.forEach { (animeId, animeItems) ->
+            groupedByAnime.forEach { (animeId, items) ->
+                val animeItems = items.reversed()
                 val isExpandable = animeItems.size > 1
                 animeItems.forEachIndexed { index, updatesItem ->
                     val position = when {
