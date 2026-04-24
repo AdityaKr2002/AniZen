@@ -68,15 +68,13 @@ fun UpdateScreen(
     onInvertSelection: () -> Unit,
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: () -> Boolean,
-    onToggleExpand: (Long) -> Unit,
+    onToggleExpand: (String) -> Unit,
     onDownloadEpisode: (List<UpdatesItem>, EpisodeDownloadAction) -> Unit,
     onMultiBookmarkClicked: (List<UpdatesItem>, bookmark: Boolean) -> Unit,
-    // AM (FILLERMARK) -->
     onMultiFillermarkClicked: (List<UpdatesItem>, fillermark: Boolean) -> Unit,
-    // <-- AM (FILLERMARK)
     onMultiMarkAsSeenClicked: (List<UpdatesItem>, seen: Boolean) -> Unit,
     onMultiDeleteClicked: (List<UpdatesItem>) -> Unit,
-    onUpdateSelected: (UpdatesItem, Boolean, Boolean, Boolean) -> Unit,
+    onUpdateSelected: (UpdatesItem, UpdatesScreenModel.UpdateSelectionOptions) -> Unit,
     onOpenEpisode: (UpdatesItem, altPlayer: Boolean) -> Unit,
     navigateUp: (() -> Unit)?,
 ) {
@@ -172,17 +170,18 @@ fun UpdateScreen(
                         ) {
                             updatesLastUpdatedItem(lastUpdated)
 
-                            updatesUiItems(
-                                uiModels = state.uiModels,
-                                selectionMode = state.selectionMode,
-                                onUpdateSelected = onUpdateSelected,
-                                onClickCover = onClickCover,
-                                onToggleExpand = onToggleExpand,
-                                onClickUpdate = onOpenEpisode,
-                                onDownloadEpisode = onDownloadEpisode,
-                                useContainer = useContainer,
-                                usePanorama = effectivePanorama,
-                            )
+                        updatesUiItems(
+                            uiModels = state.uiModels,
+                            expandedState = state.expandedState,
+                            onToggleExpand = onToggleExpand,
+                            selectionMode = state.selectionMode,
+                            onUpdateSelected = onUpdateSelected,
+                            onClickCover = onClickCover,
+                            onClickUpdate = onOpenEpisode,
+                            onDownloadEpisode = onDownloadEpisode,
+                            useContainer = useContainer,
+                            usePanorama = effectivePanorama,
+                        )
                         }
                     }
                 }
@@ -309,17 +308,17 @@ private fun UpdatesBottomBar(
 
 sealed interface UpdatesUiModel {
     data class Header(val date: LocalDate) : UpdatesUiModel
-    data class Item(
-        val item: UpdatesItem,
-        val position: ItemPosition = ItemPosition.SINGLE,
+    open class Item(
+        open val item: UpdatesItem,
+        open val position: ItemPosition = ItemPosition.SINGLE,
+        open val isExpandable: Boolean = false,
     ) : UpdatesUiModel
 
-    data class Group(
-        val animeId: Long,
-        val animeTitle: String,
-        val items: List<UpdatesItem>,
-        val expanded: Boolean,
-    ) : UpdatesUiModel
+    data class Leader(
+        override val item: UpdatesItem,
+        override val position: ItemPosition = ItemPosition.SINGLE,
+        override val isExpandable: Boolean,
+    ) : Item(item, position, isExpandable)
 
     enum class ItemPosition {
         SINGLE, TOP, MIDDLE, BOTTOM
