@@ -30,7 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -305,7 +308,7 @@ private fun UpdatesUiItem(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                var textHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+                var textHeight by remember { mutableIntStateOf(0) }
                 if (update.bookmark) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
