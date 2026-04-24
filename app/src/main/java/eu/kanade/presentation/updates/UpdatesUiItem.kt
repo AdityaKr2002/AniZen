@@ -273,6 +273,9 @@ private fun UpdatesUiItem(
     val haptic = LocalHapticFeedback.current
     val textAlpha = if (update.seen) DISABLED_ALPHA else 1f
 
+    val itemHeight = if (isLeader) 96.dp else 48.dp
+    val verticalPadding = if (isLeader) MaterialTheme.padding.small else 0.dp
+
     Row(
         modifier = modifier
             .selectedBackground(selected)
@@ -283,8 +286,8 @@ private fun UpdatesUiItem(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
             )
-            .height(96.dp)
-            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
+            .height(itemHeight)
+            .padding(horizontal = MaterialTheme.padding.medium, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isLeader) {
@@ -300,7 +303,7 @@ private fun UpdatesUiItem(
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(80.dp * ratio), // Match History height (96-16=80)
+                    .width(80.dp * ratio), // Maintain alignment with Leader's text
             )
         }
 
