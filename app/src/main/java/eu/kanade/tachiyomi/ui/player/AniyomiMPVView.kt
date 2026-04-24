@@ -201,9 +201,9 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             60f
         }
 
-        // Use display-resample by default for high-refresh displays to ensure smooth frame pacing,
-        // otherwise fallback to audio sync for power efficiency on standard 60Hz panels.
-        if (displayRefreshRate >= 90f || smoothMotionEnabled) {
+        // Use display-resample ONLY if smooth motion is enabled.
+        // For standard playback, fallback to audio sync for power efficiency and to respect native frame rates.
+        if (smoothMotionEnabled) {
             MPVLib.setOptionString("video-sync", "display-resample")
         } else {
             MPVLib.setOptionString("video-sync", "audio")
