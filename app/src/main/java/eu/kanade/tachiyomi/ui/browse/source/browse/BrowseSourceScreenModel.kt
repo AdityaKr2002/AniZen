@@ -125,12 +125,18 @@ class BrowseSourceScreenModel(
 
         // debounce search updates
         screenModelScope.launch {
+            var prevQuery: String? = state.value.toolbarQuery
             state.map { it.toolbarQuery }
                 .distinctUntilChanged()
                 .drop(1) // ignore initial state
                 .filter { sourcePreferences.autoSearch().get() }
-                .debounce(800)
                 .collectLatest { query ->
+                    val isDeletion = (query?.length ?: 0) < (prevQuery?.length ?: 0)
+                    prevQuery = query
+
+                    val delayMillis = if (isDeletion) 800L else 500L
+                    kotlinx.coroutines.delay(delayMillis)
+
                     val currentListing = state.value.listing
                     if (currentListing.query != query) {
                         if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
