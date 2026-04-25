@@ -845,12 +845,30 @@ class Downloader(
         val video = download.video!!
         val client = networkHelper.downloadClient
         val headers = getHeaders(video)
-        val playlistRes = client.newCall(Request.Builder().url(video.videoUrl).headers(headers).build()).execute()
-        
-        if (!playlistRes.isSuccessful) throw IOException("Failed to fetch playlist: ${playlistRes.code}")
-        val lines = playlistRes.body?.string()?.lines() ?: emptyList()
 
-        val baseUrl = video.videoUrl.substringBeforeLast("/") + "/"
+        var playlistUrl = video.videoUrl
+        var lines: List<String>
+
+        // RECURSIVE RESOLUTION: Handle Master Playlists by picking the first variant
+        while (true) {
+            val playlistRes = client.newCall(Request.Builder().url(playlistUrl).headers(headers).build()).execute()
+            if (!playlistRes.isSuccessful) throw IOException("Failed to fetch playlist: ${playlistRes.code}")
+            lines = playlistRes.body?.string()?.lines() ?: emptyList()
+
+            val isMaster = lines.any { it.startsWith("#EXT-X-STREAM-INF") }
+            if (isMaster) {
+                val baseUrl = playlistUrl.substringBeforeLast("/") + "/"
+                val subUrl = lines.firstOrNull { it.isNotBlank() && !it.startsWith("#") }
+                    ?: throw IOException("No variant playlist found in master playlist")
+
+                playlistUrl = if (subUrl.startsWith("http")) subUrl else baseUrl + subUrl
+                logcat(LogPriority.INFO) { "HLS Engine: Resolved master playlist to variant: $playlistUrl" }
+                continue
+            }
+            break
+        }
+
+        val baseUrl = playlistUrl.substringBeforeLast("/") + "/"
         val segments = mutableListOf<String>()
         var encryptionKeyUrl: String? = null
         var mediaSequence = 0

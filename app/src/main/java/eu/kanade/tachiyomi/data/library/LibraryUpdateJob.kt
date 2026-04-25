@@ -364,6 +364,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             val episodesToDownload = filterEpisodesForDownload.await(anime, newEpisodes)
 
                                             if (episodesToDownload.isNotEmpty()) {
+                                                downloadEpisodes(anime, episodesToDownload)
                                                 hasDownloads.set(true)
                                             }
 
