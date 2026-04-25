@@ -13,6 +13,9 @@ The format is a modified version of [Keep a Changelog](https://keepachangelog.co
 ## [Unreleased]
 ### Fixed
 
+- resolve 0MB downloads by adding support for HLS master playlists in native engine
+- ensure new episodes are enqueued for download when 'Auto download' is enabled
+- decrease long-press speed sliding sensitivity
 - Fix episode number parsing ([@Secozzi](https://github.com/Secozzi)) ([#2096](https://github.com/aniyomiorg/aniyomi/pull/2096))
 - Fix stop/continue anime download button ([@Secozzi](https://github.com/Secozzi)) ([#2099](https://github.com/aniyomiorg/aniyomi/pull/2099))
 
