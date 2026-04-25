@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
@@ -128,7 +129,7 @@ class BrowseSourceScreenModel(
         screenModelScope.launch {
             state.map { it.toolbarQuery }
                 .distinctUntilChanged()
-                .scan<Pair<String?, String?>>(null to null) { acc, new ->
+                .scan<String?, Pair<String?, String?>>(null to null) { acc, new ->
                     acc.second to new
                 }
                 .filter { sourcePreferences.autoSearch().get() }
