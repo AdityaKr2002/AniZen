@@ -36,6 +36,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -122,23 +123,24 @@ class BrowseSourceScreenModel(
         }
 
         // debounce search updates
-        state.map { it.toolbarQuery }
-            .distinctUntilChanged()
-            .drop(1) // ignore initial state
-            .onEach { query ->
-                if (sourcePreferences.autoSearch().get()) {
-                    // Using delay instead of debounce to handle the conditional check
-                    kotlinx.coroutines.delay(500)
-                    val currentListing = state.value.listing
-                    if (currentListing.query != query) {
-                        if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
-                            return@onEach
+        screenModelScope.launch {
+            state.map { it.toolbarQuery }
+                .distinctUntilChanged()
+                .drop(1) // ignore initial state
+                .collectLatest { query ->
+                    if (sourcePreferences.autoSearch().get()) {
+                        // Using delay instead of debounce to handle the conditional check
+                        kotlinx.coroutines.delay(500)
+                        val currentListing = state.value.listing
+                        if (currentListing.query != query) {
+                            if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
+                                return@collectLatest
+                            }
+                            search(query)
                         }
-                        search(query)
                     }
                 }
-            }
-            .launchIn(screenModelScope)
+        }
 
         if (!basePreferences.incognitoMode().get()) {
             sourcePreferences.lastUsedSource().set(source.id)
