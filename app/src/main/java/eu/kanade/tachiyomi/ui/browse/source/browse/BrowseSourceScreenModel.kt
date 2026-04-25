@@ -47,8 +47,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.preference.CheckboxState
@@ -125,18 +126,19 @@ class BrowseSourceScreenModel(
 
         // debounce search updates
         screenModelScope.launch {
-            var prevQuery: String? = state.value.toolbarQuery
             state.map { it.toolbarQuery }
                 .distinctUntilChanged()
-                .drop(1) // ignore initial state
+                .scan<Pair<String?, String?>>(null to null) { acc, new ->
+                    acc.second to new
+                }
+                .drop(2) // ignore initial state
                 .filter { sourcePreferences.autoSearch().get() }
+                .transformLatest { (prev, current) ->
+                    val isDeletion = (current?.length ?: 0) < (prev?.length ?: 0)
+                    kotlinx.coroutines.delay(if (isDeletion) 800L else 500L)
+                    emit(current)
+                }
                 .collectLatest { query ->
-                    val isDeletion = (query?.length ?: 0) < (prevQuery?.length ?: 0)
-                    prevQuery = query
-
-                    val delayMillis = if (isDeletion) 800L else 500L
-                    kotlinx.coroutines.delay(delayMillis)
-
                     val currentListing = state.value.listing
                     if (currentListing.query != query) {
                         if (query.isNullOrEmpty() && currentListing !is Listing.Search) {
