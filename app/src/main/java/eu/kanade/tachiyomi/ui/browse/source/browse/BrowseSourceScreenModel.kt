@@ -131,8 +131,8 @@ class BrowseSourceScreenModel(
                 .scan<Pair<String?, String?>>(null to null) { acc, new ->
                     acc.second to new
                 }
-                .drop(2) // ignore initial state
                 .filter { sourcePreferences.autoSearch().get() }
+                .drop(2) // ignore initial state
                 .transformLatest { (prev, current) ->
                     val isDeletion = (current?.length ?: 0) < (prev?.length ?: 0)
                     kotlinx.coroutines.delay(if (isDeletion) 800L else 500L)
