@@ -18,17 +18,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.components.AppBar
-import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.player.LayoutRegion
 import eu.kanade.tachiyomi.ui.player.PlayerButton
@@ -38,6 +35,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -141,13 +139,16 @@ object PlayerSettingsLayoutMainScreen : Screen() {
         playerPreferences: PlayerPreferences,
         onClick: () -> Unit
     ) {
-        val buttonsCsv by when (region) {
-            LayoutRegion.TopLeft -> playerPreferences.topLeftControls().collectAsState()
-            LayoutRegion.TopRight -> playerPreferences.topRightControls().collectAsState()
-            LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().collectAsState()
-            LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().collectAsState()
-            LayoutRegion.Portrait -> playerPreferences.portraitBottomControls().collectAsState()
+        val buttonsPref = remember(region) {
+            when (region) {
+                LayoutRegion.TopLeft -> playerPreferences.topLeftControls()
+                LayoutRegion.TopRight -> playerPreferences.topRightControls()
+                LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls()
+                LayoutRegion.BottomRight -> playerPreferences.bottomRightControls()
+                LayoutRegion.Portrait -> playerPreferences.portraitBottomControls()
+            }
         }
+        val buttonsCsv by buttonsPref.collectAsState()
         val buttons = remember(buttonsCsv) { parseButtons(buttonsCsv) }
         val isCastEnabled by playerPreferences.enableCast().collectAsState()
 
