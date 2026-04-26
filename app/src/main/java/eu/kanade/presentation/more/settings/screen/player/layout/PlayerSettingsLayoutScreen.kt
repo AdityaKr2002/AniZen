@@ -150,7 +150,7 @@ object PlayerSettingsLayoutScreen : Screen() {
                             key = { selectedButtons[it] },
                             span = { index ->
                                 val button = selectedButtons[index]
-                                if (button == PlayerButton.CURRENT_CHAPTER || button == PlayerButton.VIDEO_TITLE) {
+                                if (button == PlayerButton.CurrentChapter || button == PlayerButton.VideoTitle) {
                                     GridItemSpan(maxLineSpan)
                                 } else {
                                     GridItemSpan(1)
@@ -168,7 +168,7 @@ object PlayerSettingsLayoutScreen : Screen() {
                                     modifier = Modifier
                                         .draggableHandle()
                                         .then(
-                                            if (button == PlayerButton.CURRENT_CHAPTER || button == PlayerButton.VIDEO_TITLE) {
+                                            if (button == PlayerButton.CurrentChapter || button == PlayerButton.VideoTitle) {
                                                 Modifier.wrapContentWidth(Alignment.Start)
                                             } else {
                                                 Modifier

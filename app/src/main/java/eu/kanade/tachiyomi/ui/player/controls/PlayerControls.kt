@@ -451,15 +451,14 @@ fun PlayerControls(
                     },
                 ) {
                     TopLeftPlayerControls(
-                        animeTitle = animeTitle,
-                        mediaTitle = mediaTitle,
-                        onTitleClick = { viewModel.showEpisodeListDialog() },
-                        onBackClick = onBackPress,
+                        buttons = topLeftButtonsList,
+                        viewModel = viewModel,
+                        castManager = castManager,
+                        onBackPress = onBackPress,
+                        onCastClick = { showCastSheet = true },
                     )
                 }
                 // Top right controls
-                val autoPlayEnabled by playerPreferences.autoplayEnabled().collectAsState()
-                val isEpisodeOnline by viewModel.isEpisodeOnline.collectAsState()
                 AnimatedVisibility(
                     controlsShown && !areControlsLocked && !isLongPressing,
                     enter = if (!reduceMotion) {
@@ -480,26 +479,48 @@ fun PlayerControls(
                     },
                 ) {
                     TopRightPlayerControls(
-                        autoPlayEnabled = autoPlayEnabled,
-                        onToggleAutoPlay = { viewModel.setAutoPlay(it) },
-                        onSubtitlesClick = { viewModel.showSheet(Sheets.SubtitleTracks) },
-                        onSubtitlesLongClick = { viewModel.showPanel(Panels.SubtitleSettings) },
-                        onAudioClick = { viewModel.showSheet(Sheets.AudioTracks) },
-                        onAudioLongClick = { viewModel.showPanel(Panels.AudioDelay) },
-                        onQualityClick = { viewModel.showSheet(Sheets.QualityTracks) },
-                        isEpisodeOnline = isEpisodeOnline,
-                        onMoreClick = { viewModel.showSheet(Sheets.More) },
-                        onMoreLongClick = { viewModel.showPanel(Panels.VideoFilters) },
-                        castState = castState,
+                        buttons = topRightButtonsList,
+                        viewModel = viewModel,
+                        castManager = castManager,
+                        onBackPress = onBackPress,
                         onCastClick = { showCastSheet = true },
-                        isCastEnabled = { playerPreferences.enableCast().get() },
                     )
                 }
-                // Bottom right controls
-                val skipIntroButton by viewModel.skipIntroText.collectAsState()
-                val customButtonTitle by viewModel.primaryButtonTitle.collectAsState()
+
+                // Portrait bottom bar
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked && !isLongPressing,
+                    visible = controlsShown && !areControlsLocked && !isLongPressing && !isLandscape,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.constrainAs(portraitBottomBar) {
+                        bottom.linkTo(seekbar.top, spacing.medium)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                    },
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        portraitBottomButtonsList.forEach { button ->
+                            RenderPlayerButton(
+                                button = button,
+                                viewModel = viewModel,
+                                castManager = castManager,
+                                onBackPress = onBackPress,
+                                onCastClick = { showCastSheet = true }
+                            )
+                        }
+                    }
+                }
+
+                // Bottom right controls
+                AnimatedVisibility(
+                    controlsShown && !areControlsLocked && !isLongPressing && isLandscape,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -517,39 +538,17 @@ fun PlayerControls(
                         end.linkTo(seekbar.end)
                     },
                 ) {
-                    val activity = LocalContext.current as PlayerActivity
-                    val videoZoom by viewModel.videoZoom.collectAsState()
                     BottomRightPlayerControls(
-                        customButton = customButton,
-                        customButtonTitle = customButtonTitle,
-                        skipIntroButton = skipIntroButton,
-                        onPressSkipIntroButton = viewModel::onSkipIntro,
-                        isPipAvailable = activity.isPipSupportedAndEnabled,
-                        onPipClick = {
-                            if (!viewModel.isLoadingEpisode.value) {
-                                activity.enterPictureInPictureMode(activity.createPipParams())
-                            }
-                        },
-                        aspectRatio = aspectRatio,
-                        onAspectClick = {
-                            viewModel.changeVideoAspect(
-                                when (aspectRatio) {
-                                    VideoAspect.Fit -> VideoAspect.Stretch
-                                    VideoAspect.Stretch -> VideoAspect.Crop
-                                    VideoAspect.Crop -> VideoAspect.Fit
-                                },
-                            )
-                        },
-                        onAspectLongClick = { viewModel.showSheet(Sheets.AspectRatios) },
-                        currentZoom = videoZoom,
-                        onZoomClick = { viewModel.showSheet(Sheets.VideoZoom) },
-                        onZoomLongClick = { viewModel.resetVideoZoomAndPan() },
+                        buttons = bottomRightButtonsList,
+                        viewModel = viewModel,
+                        castManager = castManager,
+                        onBackPress = onBackPress,
+                        onCastClick = { showCastSheet = true },
                     )
                 }
                 // Bottom left controls
-                val playbackSpeed by viewModel.playbackSpeed.collectAsState()
                 AnimatedVisibility(
-                    controlsShown && !areControlsLocked && !isLongPressing,
+                    controlsShown && !areControlsLocked && !isLongPressing && isLandscape,
                     enter = if (!reduceMotion) {
                         slideInHorizontally(playerControlsEnterAnimationSpec()) { -it } +
                             fadeIn(playerControlsEnterAnimationSpec())
@@ -570,14 +569,11 @@ fun PlayerControls(
                     },
                 ) {
                     BottomLeftPlayerControls(
-                        playbackSpeed,
-                        currentChapter = currentChapter?.toSegment(),
-                        onLockControls = viewModel::lockControls,
-                        onCycleRotation = viewModel::cycleScreenRotations,
-                        onPlaybackSpeedChange = {
-                            MPVLib.setPropertyDouble("speed", it.toDouble())
-                        },
-                        onOpenSheet = viewModel::showSheet,
+                        buttons = bottomLeftButtonsList,
+                        viewModel = viewModel,
+                        castManager = castManager,
+                        onBackPress = onBackPress,
+                        onCastClick = { showCastSheet = true },
                     )
                 }
             }

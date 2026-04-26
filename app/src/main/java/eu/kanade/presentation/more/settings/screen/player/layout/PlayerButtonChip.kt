@@ -61,7 +61,7 @@ fun PlayerButtonChip(
                 contentAlignment = Alignment.Center,
             ) {
                 when (button) {
-                    PlayerButton.VIDEO_TITLE -> {
+                    PlayerButton.VideoTitle -> {
                         Text(
                             text = stringResource(button.titleRes),
                             fontSize = 15.sp,
@@ -69,7 +69,7 @@ fun PlayerButtonChip(
                             lineHeight = 14.sp,
                         )
                     }
-                    PlayerButton.CURRENT_CHAPTER -> {
+                    PlayerButton.CurrentChapter -> {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center,
