@@ -27,32 +27,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.FitScreen
-import androidx.compose.material.icons.filled.HighQuality
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PictureInPictureAlt
-import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material.icons.filled.ZoomOutMap
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
 import eu.kanade.tachiyomi.ui.player.CastManager
 import eu.kanade.tachiyomi.ui.player.Panels
 import eu.kanade.tachiyomi.ui.player.PlayerActivity
@@ -96,7 +89,7 @@ fun RenderPlayerButton(
     when (button) {
         PlayerButton.BackArrow -> {
             ControlsButton(
-                icon = Icons.AutoMirrored.Default.ArrowBack,
+                icon = button.getIcon(),
                 onClick = onBackPress,
             )
         }
@@ -147,7 +140,7 @@ fun RenderPlayerButton(
         }
         PlayerButton.SubtitleTracks -> {
             ControlsButton(
-                icon = Icons.Default.Subtitles,
+                icon = button.getIcon(),
                 onClick = { viewModel.showSheet(Sheets.SubtitleTracks) },
                 onLongClick = { viewModel.showPanel(Panels.SubtitleSettings) },
                 horizontalSpacing = MaterialTheme.padding.mediumSmall,
@@ -155,7 +148,7 @@ fun RenderPlayerButton(
         }
         PlayerButton.AudioTracks -> {
             ControlsButton(
-                icon = Icons.Default.Audiotrack,
+                icon = button.getIcon(),
                 onClick = { viewModel.showSheet(Sheets.AudioTracks) },
                 onLongClick = { viewModel.showPanel(Panels.AudioDelay) },
                 horizontalSpacing = MaterialTheme.padding.mediumSmall,
@@ -164,7 +157,7 @@ fun RenderPlayerButton(
         PlayerButton.QualityTracks -> {
             if (isEpisodeOnline == true) {
                 ControlsButton(
-                    icon = Icons.Default.HighQuality,
+                    icon = button.getIcon(),
                     onClick = { viewModel.showSheet(Sheets.QualityTracks) },
                     onLongClick = { viewModel.showSheet(Sheets.QualityTracks) },
                     horizontalSpacing = MaterialTheme.padding.mediumSmall,
@@ -173,7 +166,7 @@ fun RenderPlayerButton(
         }
         PlayerButton.MoreOptions -> {
             ControlsButton(
-                icon = Icons.Default.MoreVert,
+                icon = button.getIcon(),
                 onClick = { viewModel.showSheet(Sheets.More) },
                 onLongClick = { viewModel.showPanel(Panels.VideoFilters) },
                 horizontalSpacing = MaterialTheme.padding.mediumSmall,
@@ -204,13 +197,13 @@ fun RenderPlayerButton(
         }
         PlayerButton.LockControls -> {
             ControlsButton(
-                Icons.Default.LockOpen,
+                icon = button.getIcon(),
                 onClick = { viewModel.lockControls() },
             )
         }
         PlayerButton.ScreenRotation -> {
             ControlsButton(
-                icon = Icons.Default.ScreenRotation,
+                icon = button.getIcon(),
                 onClick = { viewModel.cycleScreenRotations() },
             )
         }
@@ -218,7 +211,7 @@ fun RenderPlayerButton(
             val activity = LocalContext.current as? PlayerActivity
             if (activity?.isPipSupportedAndEnabled == true) {
                 ControlsButton(
-                    icon = Icons.Default.PictureInPictureAlt,
+                    icon = button.getIcon(),
                     onClick = {
                         if (!viewModel.isLoadingEpisode.value) {
                             activity.enterPictureInPictureMode(activity.createPipParams())
@@ -231,9 +224,9 @@ fun RenderPlayerButton(
         PlayerButton.AspectRatio -> {
             ControlsButton(
                 icon = when (aspectRatio) {
-                    VideoAspect.Fit -> Icons.Default.AspectRatio
-                    VideoAspect.Stretch -> Icons.Default.ZoomOutMap
-                    VideoAspect.Crop -> Icons.Default.FitScreen
+                    VideoAspect.Fit -> button.getIcon()
+                    VideoAspect.Stretch -> androidx.compose.material.icons.Icons.Outlined.ZoomOutMap
+                    VideoAspect.Crop -> androidx.compose.material.icons.Icons.Outlined.FitScreen
                 },
                 onClick = {
                     viewModel.changeVideoAspect(
@@ -250,7 +243,7 @@ fun RenderPlayerButton(
         }
         PlayerButton.VideoZoom -> {
             ControlsButton(
-                icon = Icons.Default.ZoomIn,
+                icon = button.getIcon(),
                 onClick = { viewModel.showSheet(Sheets.VideoZoom) },
                 onLongClick = { viewModel.resetVideoZoomAndPan() },
                 horizontalSpacing = MaterialTheme.padding.mediumSmall,

@@ -185,7 +185,7 @@ object PlayerSettingsMainScreen : Screen() {
             titleRes = MR.strings.pref_player_layout,
             subtitleRes = MR.strings.pref_player_layout_summary,
             icon = Icons.Outlined.Dashboard,
-            screen = PlayerSettingsLayoutScreen,
+            screen = PlayerSettingsLayoutMainScreen,
         ),
         Item(
             titleRes = MR.strings.pref_player_gestures,

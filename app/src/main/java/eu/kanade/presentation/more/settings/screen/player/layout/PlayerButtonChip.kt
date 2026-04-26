@@ -75,7 +75,7 @@ fun PlayerButtonChip(
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             Icon(
-                                imageVector = button.icon,
+                                imageVector = button.getIcon(),
                                 contentDescription = stringResource(button.titleRes),
                                 modifier = Modifier.size(24.dp),
                             )
@@ -89,13 +89,13 @@ fun PlayerButtonChip(
                         }
                     }
                     else -> {
-
                         Icon(
-                            imageVector = button.icon,
+                            imageVector = button.getIcon(),
                             contentDescription = stringResource(button.titleRes),
                             modifier = Modifier.size(24.dp),
                         )
                     }
+
                 }
             }
         }

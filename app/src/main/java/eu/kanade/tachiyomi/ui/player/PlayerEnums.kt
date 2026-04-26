@@ -18,23 +18,6 @@
 package eu.kanade.tachiyomi.ui.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.AspectRatio
-import androidx.compose.material.icons.outlined.Audiotrack
-import androidx.compose.material.icons.outlined.Bookmarks
-import androidx.compose.material.icons.outlined.FastForward
-import androidx.compose.material.icons.outlined.HighQuality
-import androidx.compose.material.icons.outlined.LockOpen
-import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.PictureInPictureAlt
-import androidx.compose.material.icons.outlined.PlayCircle
-import androidx.compose.material.icons.outlined.ScreenRotation
-import androidx.compose.material.icons.outlined.SmartDisplay
-import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material.icons.outlined.Subtitles
-import androidx.compose.material.icons.outlined.Title
-import androidx.compose.material.icons.outlined.TouchApp
-import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
@@ -349,26 +332,26 @@ enum class VideoFilterTheme(
 }
 
 enum class PlayerButton(
-    val icon: ImageVector,
+    val getIcon: () -> ImageVector,
     val titleRes: StringResource,
 ) {
-    BackArrow(ArrowBack, MR.strings.player_button_back_arrow),
-    VideoTitle(Title, MR.strings.player_button_video_title),
-    AutoPlay(PlayCircle, MR.strings.player_button_autoplay),
-    Cast(SmartDisplay, MR.strings.player_button_cast),
-    SubtitleTracks(Subtitles, MR.strings.player_button_subtitle_tracks),
-    AudioTracks(Audiotrack, MR.strings.player_button_audio_tracks),
-    QualityTracks(HighQuality, MR.strings.player_button_quality_tracks),
-    MoreOptions(MoreVert, MR.strings.player_button_more_options),
-    PlaybackSpeed(Speed, MR.strings.player_button_playback_speed),
-    CurrentChapter(Bookmarks, MR.strings.player_button_current_chapter),
-    LockControls(LockOpen, MR.strings.player_button_lock_controls),
-    ScreenRotation(ScreenRotation, MR.strings.player_button_screen_rotation),
-    PictureInPicture(PictureInPictureAlt, MR.strings.player_button_picture_in_picture),
-    AspectRatio(AspectRatio, MR.strings.player_button_aspect_ratio),
-    VideoZoom(ZoomIn, MR.strings.player_button_video_zoom),
-    SkipIntro(FastForward, MR.strings.player_button_skip_intro),
-    CustomButton(TouchApp, MR.strings.player_button_custom_button),
+    BackArrow({ androidx.compose.material.icons.automirrored.Icons.Outlined.ArrowBack }, MR.strings.player_button_back_arrow),
+    VideoTitle({ androidx.compose.material.icons.Icons.Outlined.Title }, MR.strings.player_button_video_title),
+    AutoPlay({ androidx.compose.material.icons.Icons.Outlined.PlayCircle }, MR.strings.player_button_autoplay),
+    Cast({ androidx.compose.material.icons.Icons.Outlined.SmartDisplay }, MR.strings.player_button_cast),
+    SubtitleTracks({ androidx.compose.material.icons.Icons.Outlined.Subtitles }, MR.strings.player_button_subtitle_tracks),
+    AudioTracks({ androidx.compose.material.icons.Icons.Outlined.Audiotrack }, MR.strings.player_button_audio_tracks),
+    QualityTracks({ androidx.compose.material.icons.Icons.Outlined.HighQuality }, MR.strings.player_button_quality_tracks),
+    MoreOptions({ androidx.compose.material.icons.Icons.Outlined.MoreVert }, MR.strings.player_button_more_options),
+    PlaybackSpeed({ androidx.compose.material.icons.Icons.Outlined.Speed }, MR.strings.player_button_playback_speed),
+    CurrentChapter({ androidx.compose.material.icons.Icons.Outlined.Bookmarks }, MR.strings.player_button_current_chapter),
+    LockControls({ androidx.compose.material.icons.Icons.Outlined.LockOpen }, MR.strings.player_button_lock_controls),
+    ScreenRotation({ androidx.compose.material.icons.Icons.Outlined.ScreenRotation }, MR.strings.player_button_screen_rotation),
+    PictureInPicture({ androidx.compose.material.icons.Icons.Outlined.PictureInPictureAlt }, MR.strings.player_button_picture_in_picture),
+    AspectRatio({ androidx.compose.material.icons.Icons.Outlined.AspectRatio }, MR.strings.player_button_aspect_ratio),
+    VideoZoom({ androidx.compose.material.icons.Icons.Outlined.ZoomIn }, MR.strings.player_button_video_zoom),
+    SkipIntro({ androidx.compose.material.icons.Icons.Outlined.FastForward }, MR.strings.player_button_skip_intro),
+    CustomButton({ androidx.compose.material.icons.Icons.Outlined.TouchApp }, MR.strings.player_button_custom_button),
 }
 
 val allPlayerButtons = PlayerButton.entries.filter { 

@@ -54,7 +54,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
-object PlayerSettingsLayoutScreen : Screen() {
+class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
 
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
@@ -63,24 +63,24 @@ object PlayerSettingsLayoutScreen : Screen() {
         val screenModel = rememberScreenModel { PlayerSettingsLayoutScreenModel() }
         val state by screenModel.state.collectAsState()
 
+        // Sync screen model with initial region if needed
+        androidx.compose.runtime.LaunchedEffect(initialRegion) {
+            screenModel.selectRegion(initialRegion)
+        }
+
         val selectedButtons = state.buttons
         val disabledButtons = state.disabledButtons
 
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = stringResource(MR.strings.pref_player_layout),
+                    title = stringResource(state.selectedRegion.titleRes),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                 )
             },
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
-                RegionSelector(
-                    selectedRegion = state.selectedRegion,
-                    onRegionSelected = screenModel::selectRegion,
-                )
-
                 val gridState = rememberLazyGridState()
                 val reorderableState = rememberReorderableLazyGridState(gridState) { from, to ->
                     val fromKey = from.key as? PlayerButton
@@ -141,7 +141,7 @@ object PlayerSettingsLayoutScreen : Screen() {
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                     )
                                     Text(
-                                        text = "Drop zone is empty",
+                                        text = "Empty",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -239,47 +239,10 @@ object PlayerSettingsLayoutScreen : Screen() {
                             }
                         }
                     }
-                    
+
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         IconsLegend()
                         Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalLayoutApi::class)
-    @Composable
-    private fun RegionSelector(
-        selectedRegion: LayoutRegion,
-        onRegionSelected: (LayoutRegion) -> Unit,
-    ) {
-        val regions = LayoutRegion.entries
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(MaterialTheme.padding.medium),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-        ) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                regions.forEach { region ->
-                    Surface(
-                        onClick = { onRegionSelected(region) },
-                        shape = RoundedCornerShape(50),
-                        color = if (selectedRegion == region) MaterialTheme.colorScheme.secondaryContainer 
-                                else MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, if (selectedRegion == region) Color.Transparent else MaterialTheme.colorScheme.outlineVariant),
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(region.titleRes),
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
                     }
                 }
             }
@@ -318,7 +281,7 @@ object PlayerSettingsLayoutScreen : Screen() {
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
-                                imageVector = button.icon,
+                                imageVector = button.getIcon(),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
