@@ -74,12 +74,6 @@ object PlayerSettingsLayoutMainScreen : Screen() {
                         ),
                     ) {
                         RegionSummaryItem(
-                            region = LayoutRegion.TopLeft,
-                            playerPreferences = playerPreferences,
-                            onClick = { navigator.push(PlayerSettingsLayoutScreen(LayoutRegion.TopLeft)) }
-                        )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                        RegionSummaryItem(
                             region = LayoutRegion.TopRight,
                             playerPreferences = playerPreferences,
                             onClick = { navigator.push(PlayerSettingsLayoutScreen(LayoutRegion.TopRight)) }
@@ -141,7 +135,6 @@ object PlayerSettingsLayoutMainScreen : Screen() {
     ) {
         val buttonsPref = remember(region) {
             when (region) {
-                LayoutRegion.TopLeft -> playerPreferences.topLeftControls()
                 LayoutRegion.TopRight -> playerPreferences.topRightControls()
                 LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls()
                 LayoutRegion.BottomRight -> playerPreferences.bottomRightControls()

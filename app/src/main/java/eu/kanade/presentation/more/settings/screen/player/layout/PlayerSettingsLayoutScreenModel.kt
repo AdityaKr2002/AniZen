@@ -27,7 +27,6 @@ class PlayerSettingsLayoutScreenModel(
 
     private fun loadRegion(region: LayoutRegion) {
         val buttonsCsv = when (region) {
-            LayoutRegion.TopLeft -> playerPreferences.topLeftControls().get()
             LayoutRegion.TopRight -> playerPreferences.topRightControls().get()
             LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().get()
             LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().get()
@@ -41,11 +40,10 @@ class PlayerSettingsLayoutScreenModel(
             val otherRegions = LayoutRegion.entries.filter { it != region && it != LayoutRegion.Portrait }
             val otherButtons = otherRegions.flatMap { r ->
                 val csv = when (r) {
-                    LayoutRegion.TopLeft -> playerPreferences.topLeftControls().get()
                     LayoutRegion.TopRight -> playerPreferences.topRightControls().get()
                     LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().get()
                     LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().get()
-                    else -> ""
+                    LayoutRegion.Portrait -> ""
                 }
                 parseButtons(csv)
             }
@@ -63,7 +61,6 @@ class PlayerSettingsLayoutScreenModel(
     fun updateButtons(newButtons: List<PlayerButton>) {
         val csv = newButtons.joinToString(",") { it.name }
         when (state.value.selectedRegion) {
-            LayoutRegion.TopLeft -> playerPreferences.topLeftControls().set(csv)
             LayoutRegion.TopRight -> playerPreferences.topRightControls().set(csv)
             LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().set(csv)
             LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().set(csv)
@@ -74,7 +71,6 @@ class PlayerSettingsLayoutScreenModel(
 
     fun resetToDefault() {
         when (state.value.selectedRegion) {
-            LayoutRegion.TopLeft -> playerPreferences.topLeftControls().delete()
             LayoutRegion.TopRight -> playerPreferences.topRightControls().delete()
             LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().delete()
             LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().delete()
@@ -90,7 +86,7 @@ class PlayerSettingsLayoutScreenModel(
 
 @Immutable
 data class LayoutScreenState(
-    val selectedRegion: LayoutRegion = LayoutRegion.TopLeft,
+    val selectedRegion: LayoutRegion = LayoutRegion.TopRight,
     val buttons: ImmutableList<PlayerButton> = emptyList<PlayerButton>().toImmutableList(),
     val disabledButtons: ImmutableList<PlayerButton> = emptyList<PlayerButton>().toImmutableList(),
 )
