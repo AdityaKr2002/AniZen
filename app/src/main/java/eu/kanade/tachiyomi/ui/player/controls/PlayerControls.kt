@@ -89,6 +89,16 @@ import kotlinx.coroutines.flow.update
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
+import eu.kanade.tachiyomi.ui.player.PlayerButton
+import eu.kanade.tachiyomi.ui.player.parseButtons
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -129,6 +139,21 @@ fun PlayerControls(
     val playerTimeToDisappear by playerPreferences.playerTimeToDisappear().collectAsState()
     var isSeeking by remember { mutableStateOf(false) }
     var resetControls by remember { mutableStateOf(true) }
+
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+    val topLeftButtons by playerPreferences.topLeftControls().collectAsState()
+    val topRightButtons by playerPreferences.topRightControls().collectAsState()
+    val bottomLeftButtons by playerPreferences.bottomLeftControls().collectAsState()
+    val bottomRightButtons by playerPreferences.bottomRightControls().collectAsState()
+    val portraitBottomButtons by playerPreferences.portraitBottomControls().collectAsState()
+
+    val topLeftButtonsList = remember(topLeftButtons) { parseButtons(topLeftButtons) }
+    val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons) }
+    val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons) }
+    val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons) }
+    val portraitBottomButtonsList = remember(portraitBottomButtons) { parseButtons(portraitBottomButtons) }
 
     val customButtons by viewModel.customButtons.collectAsState()
     val customButton by viewModel.primaryButton.collectAsState()
@@ -183,6 +208,7 @@ fun PlayerControls(
                     unlockControlsButton,
                     bottomRightControls, bottomLeftControls,
                     centerControls, seekbar, playerUpdates,
+                    portraitBottomBar,
                 ) = createRefs()
 
                 val hasPreviousEpisode by viewModel.hasPreviousEpisode.collectAsState()

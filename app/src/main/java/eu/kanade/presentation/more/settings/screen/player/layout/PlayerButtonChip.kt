@@ -89,6 +89,7 @@ fun PlayerButtonChip(
                         }
                     }
                     else -> {
+
                         Icon(
                             imageVector = button.icon,
                             contentDescription = stringResource(button.titleRes),

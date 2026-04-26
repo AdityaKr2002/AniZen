@@ -39,7 +39,7 @@ fun TopLeftPlayerControls(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.mediumSmall),
+        horizontalArrangement = Arrangement.spacedBy(androidx.compose.material3.MaterialTheme.padding.mediumSmall),
     ) {
         buttons.forEach { button ->
             RenderPlayerButton(
