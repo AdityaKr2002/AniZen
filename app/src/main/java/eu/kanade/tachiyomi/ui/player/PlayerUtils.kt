@@ -68,3 +68,17 @@ internal fun videoDisplaySize(screenSize: IntSize): Pair<Float, Float> {
     val sa = sw / sh
     return if (va >= sa) Pair(sw, sw / va) else Pair(sh * va, sh)
 }
+
+fun parseButtons(
+    csv: String,
+): List<PlayerButton> =
+    csv
+        .splitToSequence(',')
+        .map { it.trim() }
+        .mapNotNull { name ->
+            try {
+                PlayerButton.valueOf(name)
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }.toList()

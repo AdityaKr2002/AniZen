@@ -102,4 +102,27 @@ class PlayerPreferences(
     fun selfHealingLinks() = preferenceStore.getBoolean("pref_self_healing_links", true)
     fun intelligentBufferHandoff() = preferenceStore.getBoolean("pref_intelligent_buffer_handoff", false)
     fun networkAwareThrottling() = preferenceStore.getBoolean("pref_network_aware_throttling", true)
+
+    // Layout
+
+    fun topLeftControls() = preferenceStore.getString(
+        "pref_top_left_controls",
+        "BackArrow,VideoTitle",
+    )
+    fun topRightControls() = preferenceStore.getString(
+        "pref_top_right_controls",
+        "AutoPlay,Cast,SubtitleTracks,AudioTracks,QualityTracks,MoreOptions",
+    )
+    fun bottomLeftControls() = preferenceStore.getString(
+        "pref_bottom_left_controls",
+        "LockControls,ScreenRotation,PlaybackSpeed,CurrentChapter",
+    )
+    fun bottomRightControls() = preferenceStore.getString(
+        "pref_bottom_right_controls",
+        "SkipIntro,CustomButton,PictureInPicture,VideoZoom,AspectRatio",
+    )
+    fun portraitBottomControls() = preferenceStore.getString(
+        "pref_portrait_bottom_controls",
+        "ScreenRotation,AudioTracks,SubtitleTracks,CurrentChapter,PlaybackSpeed,VideoZoom,SkipIntro,AspectRatio,PictureInPicture,LockControls,MoreOptions",
+    )
 }
