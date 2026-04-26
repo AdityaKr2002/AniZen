@@ -41,6 +41,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.more.settings.screen.SettingsSearchScreen
 import eu.kanade.presentation.more.settings.screen.player.custombutton.PlayerSettingsCustomButtonScreen
 import eu.kanade.presentation.more.settings.screen.player.editor.PlayerSettingsEditorScreen
+import eu.kanade.presentation.more.settings.screen.player.layout.PlayerSettingsLayoutMainScreen
 import eu.kanade.presentation.more.settings.screen.player.layout.PlayerSettingsLayoutScreen
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress

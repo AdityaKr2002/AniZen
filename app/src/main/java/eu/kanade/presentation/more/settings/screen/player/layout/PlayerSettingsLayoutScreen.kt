@@ -64,7 +64,6 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
         val screenModel = rememberScreenModel { PlayerSettingsLayoutScreenModel() }
         val state by screenModel.state.collectAsState()
 
-        // Sync screen model with initial region if needed
         androidx.compose.runtime.LaunchedEffect(initialRegion) {
             screenModel.selectRegion(initialRegion)
         }

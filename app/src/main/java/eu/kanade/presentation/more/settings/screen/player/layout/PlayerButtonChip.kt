@@ -96,7 +96,6 @@ fun PlayerButtonChip(
                             modifier = Modifier.size(24.dp),
                         )
                     }
-
                 }
             }
         }
