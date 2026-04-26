@@ -43,6 +43,7 @@ class PlayerSettingsLayoutScreenModel(
                     LayoutRegion.TopRight -> playerPreferences.topRightControls().get()
                     LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().get()
                     LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().get()
+                    LayoutRegion.Portrait -> ""
                 }
                 parseButtons(csv)
             }

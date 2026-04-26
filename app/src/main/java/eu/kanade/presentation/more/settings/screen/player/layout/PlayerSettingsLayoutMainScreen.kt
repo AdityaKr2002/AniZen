@@ -135,7 +135,6 @@ object PlayerSettingsLayoutMainScreen : Screen() {
     ) {
         val buttonsPref = remember(region) {
             when (region) {
-                LayoutRegion.TopLeft -> playerPreferences.topLeftControls()
                 LayoutRegion.TopRight -> playerPreferences.topRightControls()
                 LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls()
                 LayoutRegion.BottomRight -> playerPreferences.bottomRightControls()
