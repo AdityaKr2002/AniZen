@@ -187,6 +187,31 @@
 
     <!-- Player settings -->
     <string name="label_player_settings">Player settings</string>
+    <string name="pref_player_layout">Player layout</string>
+    <string name="pref_player_layout_summary">Customize the controls shown in the player</string>
+    <string name="pref_player_layout_landscape_top_left">Landscape: Top left</string>
+    <string name="pref_player_layout_landscape_top_right">Landscape: Top right</string>
+    <string name="pref_player_layout_landscape_bottom_left">Landscape: Bottom left</string>
+    <string name="pref_player_layout_landscape_bottom_right">Landscape: Bottom right</string>
+    <string name="pref_player_layout_portrait_bottom">Portrait: Bottom bar</string>
+
+    <string name="player_button_back_arrow">Back arrow</string>
+    <string name="player_button_video_title">Video title</string>
+    <string name="player_button_autoplay">Autoplay</string>
+    <string name="player_button_cast">Cast</string>
+    <string name="player_button_subtitle_tracks">Subtitle tracks</string>
+    <string name="player_button_audio_tracks">Audio tracks</string>
+    <string name="player_button_quality_tracks">Quality tracks</string>
+    <string name="player_button_more_options">More options</string>
+    <string name="player_button_playback_speed">Playback speed</string>
+    <string name="player_button_current_chapter">Current chapter</string>
+    <string name="player_button_lock_controls">Lock controls</string>
+    <string name="player_button_screen_rotation">Screen rotation</string>
+    <string name="player_button_picture_in_picture">Picture in picture</string>
+    <string name="player_button_aspect_ratio">Aspect ratio</string>
+    <string name="player_button_video_zoom">Video zoom</string>
+    <string name="player_button_skip_intro">Skip intro</string>
+    <string name="player_button_custom_button">Custom button</string>
     <string name="action_search_player_settings">Search player settings</string>
 
     <!-- Player settings - internal player -->

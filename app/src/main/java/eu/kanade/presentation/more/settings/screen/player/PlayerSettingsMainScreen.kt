@@ -41,6 +41,7 @@ import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.more.settings.screen.SettingsSearchScreen
 import eu.kanade.presentation.more.settings.screen.player.custombutton.PlayerSettingsCustomButtonScreen
 import eu.kanade.presentation.more.settings.screen.player.editor.PlayerSettingsEditorScreen
+import eu.kanade.presentation.more.settings.screen.player.layout.PlayerSettingsLayoutScreen
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
@@ -48,6 +49,7 @@ import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
+import androidx.compose.material.icons.outlined.Dashboard
 import cafe.adriel.voyager.core.screen.Screen as VoyagerScreen
 
 object PlayerSettingsMainScreen : Screen() {
@@ -178,6 +180,12 @@ object PlayerSettingsMainScreen : Screen() {
             subtitleRes = MR.strings.pref_player_internal_summary,
             icon = Icons.Outlined.PlayCircleOutline,
             screen = PlayerSettingsPlayerScreen,
+        ),
+        Item(
+            titleRes = MR.strings.pref_player_layout,
+            subtitleRes = MR.strings.pref_player_layout_summary,
+            icon = Icons.Outlined.Dashboard,
+            screen = PlayerSettingsLayoutScreen,
         ),
         Item(
             titleRes = MR.strings.pref_player_gestures,
