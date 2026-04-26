@@ -47,6 +47,7 @@ import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.ui.player.LayoutRegion
 import eu.kanade.tachiyomi.ui.player.PlayerButton
 import eu.kanade.tachiyomi.ui.player.allPlayerButtons
+import eu.kanade.tachiyomi.ui.player.getIcon
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import tachiyomi.i18n.MR

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import eu.kanade.tachiyomi.ui.player.PlayerButton
+import eu.kanade.tachiyomi.ui.player.getIcon
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
