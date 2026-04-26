@@ -79,16 +79,25 @@ fun Context.openInBrowser(url: String, forceDefaultBrowser: Boolean = false) {
 }
 
 fun Context.openInBrowser(uri: Uri, forceDefaultBrowser: Boolean = false) {
-    try {
-        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-            // Force default browser so that verified extensions don't re-open Tachiyomi
-            if (forceDefaultBrowser) {
-                defaultBrowserPackageName()?.let { setPackage(it) }
-            }
+    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+        // Force default browser so that verified extensions don't re-open Tachiyomi
+        if (forceDefaultBrowser) {
+            defaultBrowserPackageName()?.let { setPackage(it) }
         }
+    }
+    try {
         startActivity(intent)
     } catch (e: Exception) {
-        toast(e.message)
+        if (intent.getPackage() != null) {
+            intent.setPackage(null)
+            try {
+                startActivity(intent)
+            } catch (e2: Exception) {
+                toast(e2.message)
+            }
+        } else {
+            toast(e.message)
+        }
     }
 }
 
