@@ -30,6 +30,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.FitScreen
+import androidx.compose.material.icons.filled.ZoomOutMap
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,6 +64,7 @@ import eu.kanade.tachiyomi.ui.player.controls.components.CurrentChapter
 import eu.kanade.tachiyomi.ui.player.controls.components.FilledControlsButton
 import eu.kanade.tachiyomi.ui.player.execute
 import eu.kanade.tachiyomi.ui.player.executeLongPress
+import eu.kanade.tachiyomi.ui.player.getIcon
 import `is`.xyz.mpv.MPVLib
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
@@ -225,8 +230,8 @@ fun RenderPlayerButton(
             ControlsButton(
                 icon = when (aspectRatio) {
                     VideoAspect.Fit -> button.getIcon()
-                    VideoAspect.Stretch -> androidx.compose.material.icons.Icons.Outlined.ZoomOutMap
-                    VideoAspect.Crop -> androidx.compose.material.icons.Icons.Outlined.FitScreen
+                    VideoAspect.Stretch -> Icons.Filled.ZoomOutMap
+                    VideoAspect.Crop -> Icons.Filled.FitScreen
                 },
                 onClick = {
                     viewModel.changeVideoAspect(
