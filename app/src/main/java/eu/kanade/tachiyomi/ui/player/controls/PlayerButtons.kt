@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.ZoomOutMap
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -247,12 +250,45 @@ fun RenderPlayerButton(
             )
         }
         PlayerButton.VideoZoom -> {
-            ControlsButton(
-                icon = button.getIcon(),
-                onClick = { viewModel.showSheet(Sheets.VideoZoom) },
-                onLongClick = { viewModel.resetVideoZoomAndPan() },
-                horizontalSpacing = MaterialTheme.padding.mediumSmall,
-            )
+            if (kotlin.math.abs(videoZoom) >= 0.005f) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(50))
+                        .combinedClickable(
+                            onClick = { viewModel.showSheet(Sheets.VideoZoom) },
+                            onLongClick = { viewModel.resetVideoZoomAndPan() },
+                        ),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                        modifier = Modifier.padding(horizontal = MaterialTheme.padding.small),
+                    ) {
+                        Icon(
+                            imageVector = button.getIcon(),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Text(
+                            text = String.format("%.0f%%", videoZoom * 100),
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                }
+            } else {
+                ControlsButton(
+                    icon = button.getIcon(),
+                    onClick = { viewModel.showSheet(Sheets.VideoZoom) },
+                    onLongClick = { viewModel.resetVideoZoomAndPan() },
+                    horizontalSpacing = MaterialTheme.padding.mediumSmall,
+                )
+            }
         }
         PlayerButton.SkipIntro -> {
             if (skipIntroButton != null) {
