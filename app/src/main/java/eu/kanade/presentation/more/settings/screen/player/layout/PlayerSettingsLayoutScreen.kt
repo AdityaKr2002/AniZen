@@ -107,7 +107,7 @@ object PlayerSettingsLayoutScreen : Screen() {
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Text(
-                            text = "Long press to reorder. Tap '-' to remove.",
+                            text = "Long press to reorder items. Tap '-' icon to remove.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
@@ -122,7 +122,10 @@ object PlayerSettingsLayoutScreen : Screen() {
                                     .height(120.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                border = BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant
+                                ),
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -132,11 +135,13 @@ object PlayerSettingsLayoutScreen : Screen() {
                                     Icon(
                                         imageVector = Icons.Default.AddCircle,
                                         contentDescription = null,
-                                        modifier = Modifier.size(32.dp).padding(bottom = 8.dp),
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .padding(bottom = 8.dp),
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                     )
                                     Text(
-                                        text = "Empty",
+                                        text = "Drop zone is empty",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -204,27 +209,40 @@ object PlayerSettingsLayoutScreen : Screen() {
                                 containerColor = MaterialTheme.colorScheme.surfaceContainer
                             ),
                         ) {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                val availableButtons = allPlayerButtons.filter { it !in selectedButtons }
-                                availableButtons.forEach { button ->
-                                    val isEnabled = button !in disabledButtons
-                                    PlayerButtonChip(
-                                        button = button,
-                                        enabled = isEnabled,
-                                        onClick = {
-                                            screenModel.updateButtons(selectedButtons + button)
-                                        },
-                                        badgeIcon = Icons.Default.AddCircle,
-                                        badgeColor = if (isEnabled) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                                    )
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Available Palette",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    val availableButtons = allPlayerButtons.filter { it !in selectedButtons }
+                                    availableButtons.forEach { button ->
+                                        val isEnabled = button !in disabledButtons
+                                        PlayerButtonChip(
+                                            button = button,
+                                            enabled = isEnabled,
+                                            onClick = {
+                                                screenModel.updateButtons(selectedButtons + button)
+                                            },
+                                            badgeIcon = Icons.Default.AddCircle,
+                                            badgeColor = if (isEnabled) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                                        )
+                                    }
                                 }
                             }
                         }
+                    }
+                    
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        IconsLegend()
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
@@ -262,6 +280,55 @@ object PlayerSettingsLayoutScreen : Screen() {
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalLayoutApi::class)
+    @Composable
+    private fun IconsLegend() {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Icons Legend",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    allPlayerButtons.forEach { button ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = button.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = stringResource(button.titleRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
