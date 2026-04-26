@@ -395,7 +395,6 @@ val allPlayerButtons = PlayerButton.entries.filter {
 }
 
 enum class LayoutRegion(val titleRes: StringResource) {
-    TopLeft(MR.strings.pref_player_layout_landscape_top_left),
     TopRight(MR.strings.pref_player_layout_landscape_top_right),
     BottomLeft(MR.strings.pref_player_layout_landscape_bottom_left),
     BottomRight(MR.strings.pref_player_layout_landscape_bottom_right),

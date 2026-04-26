@@ -74,12 +74,6 @@ object PlayerSettingsLayoutMainScreen : Screen() {
                         ),
                     ) {
                         RegionSummaryItem(
-                            region = LayoutRegion.TopLeft,
-                            playerPreferences = playerPreferences,
-                            onClick = { navigator.push(PlayerSettingsLayoutScreen(LayoutRegion.TopLeft)) }
-                        )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                        RegionSummaryItem(
                             region = LayoutRegion.TopRight,
                             playerPreferences = playerPreferences,
                             onClick = { navigator.push(PlayerSettingsLayoutScreen(LayoutRegion.TopRight)) }

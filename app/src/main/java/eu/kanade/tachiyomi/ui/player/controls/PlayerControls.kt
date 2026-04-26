@@ -143,13 +143,11 @@ fun PlayerControls(
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
-    val topLeftButtons by playerPreferences.topLeftControls().collectAsState()
     val topRightButtons by playerPreferences.topRightControls().collectAsState()
     val bottomLeftButtons by playerPreferences.bottomLeftControls().collectAsState()
     val bottomRightButtons by playerPreferences.bottomRightControls().collectAsState()
     val portraitBottomButtons by playerPreferences.portraitBottomControls().collectAsState()
 
-    val topLeftButtonsList = remember(topLeftButtons) { parseButtons(topLeftButtons) }
     val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons) }
     val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons) }
     val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons) }
@@ -476,12 +474,13 @@ fun PlayerControls(
                         end.linkTo(topRightControls.start)
                     },
                 ) {
+                    val animeTitle by viewModel.animeTitle.collectAsState()
+                    val mediaTitle by viewModel.mediaTitle.collectAsState()
                     TopLeftPlayerControls(
-                        buttons = topLeftButtonsList,
-                        viewModel = viewModel,
-                        castManager = castManager,
-                        onBackPress = onBackPress,
-                        onCastClick = { showCastSheet = true },
+                        animeTitle = animeTitle,
+                        mediaTitle = mediaTitle,
+                        onTitleClick = { viewModel.showEpisodeListDialog() },
+                        onBackClick = onBackPress,
                     )
                 }
                 // Top right controls
