@@ -24,16 +24,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,6 +71,8 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
         val screenModel = rememberScreenModel { PlayerSettingsLayoutScreenModel() }
         val state by screenModel.state.collectAsState()
 
+        var showResetDialog by remember { mutableStateOf(false) }
+
         androidx.compose.runtime.LaunchedEffect(initialRegion) {
             screenModel.selectRegion(initialRegion)
         }
@@ -77,6 +86,14 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
                     title = stringResource(state.selectedRegion.titleRes),
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
+                    actions = {
+                        IconButton(onClick = { showResetDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Restore,
+                                contentDescription = "Reset to default",
+                            )
+                        }
+                    }
                 )
             },
         ) { paddingValues ->
@@ -141,7 +158,7 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                     )
                                     Text(
-                                        text = "Empty",
+                                        text = "Drop zone is empty",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -221,7 +238,10 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
-                                    val availableButtons = allPlayerButtons.filter { it !in selectedButtons }
+                                    val isCastEnabled = screenModel.isCastEnabled()
+                                    val availableButtons = allPlayerButtons.filter { 
+                                        it !in selectedButtons && (it != PlayerButton.Cast || isCastEnabled)
+                                    }
                                     availableButtons.forEach { button ->
                                         val isEnabled = button !in disabledButtons
                                         PlayerButtonChip(
@@ -241,17 +261,40 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
                     }
 
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        IconsLegend()
+                        IconsLegend(isCastEnabled = screenModel.isCastEnabled())
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+            }
+
+            if (showResetDialog) {
+                AlertDialog(
+                    onDismissRequest = { showResetDialog = false },
+                    title = { Text(text = "Reset to default?") },
+                    text = { Text(text = "This will reset the controls in this region to their default configuration.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                screenModel.resetToDefault()
+                                showResetDialog = false
+                            },
+                        ) {
+                            Text(stringResource(MR.strings.action_ok))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showResetDialog = false }) {
+                            Text(stringResource(MR.strings.action_cancel))
+                        }
+                    },
+                )
             }
         }
     }
 
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
-    private fun IconsLegend() {
+    private fun IconsLegend(isCastEnabled: Boolean) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,7 +318,7 @@ class PlayerSettingsLayoutScreen(val initialRegion: LayoutRegion) : Screen() {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    allPlayerButtons.forEach { button ->
+                    allPlayerButtons.filter { it != PlayerButton.Cast || isCastEnabled }.forEach { button ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)

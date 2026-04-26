@@ -71,6 +71,21 @@ class PlayerSettingsLayoutScreenModel(
         }
         mutableState.update { it.copy(buttons = newButtons.toImmutableList()) }
     }
+
+    fun resetToDefault() {
+        when (state.value.selectedRegion) {
+            LayoutRegion.TopLeft -> playerPreferences.topLeftControls().delete()
+            LayoutRegion.TopRight -> playerPreferences.topRightControls().delete()
+            LayoutRegion.BottomLeft -> playerPreferences.bottomLeftControls().delete()
+            LayoutRegion.BottomRight -> playerPreferences.bottomRightControls().delete()
+            LayoutRegion.Portrait -> playerPreferences.portraitBottomControls().delete()
+        }
+        loadRegion(state.value.selectedRegion)
+    }
+
+    fun isCastEnabled(): Boolean {
+        return playerPreferences.enableCast().get()
+    }
 }
 
 @Immutable

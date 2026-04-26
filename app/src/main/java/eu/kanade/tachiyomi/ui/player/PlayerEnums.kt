@@ -18,26 +18,11 @@
 package eu.kanade.tachiyomi.ui.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.Bookmarks
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.HighQuality
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PictureInPictureAlt
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.SmartDisplay
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AspectRatio
 import androidx.compose.material.icons.outlined.Audiotrack
 import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Cast
 import androidx.compose.material.icons.outlined.FastForward
 import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.LockOpen
@@ -45,7 +30,6 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PictureInPictureAlt
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.ScreenRotation
-import androidx.compose.material.icons.outlined.SmartDisplay
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Subtitles
 import androidx.compose.material.icons.outlined.Title
@@ -387,23 +371,23 @@ enum class PlayerButton(
 }
 
 fun PlayerButton.getIcon(): ImageVector = when (this) {
-    PlayerButton.BackArrow -> Icons.AutoMirrored.Filled.ArrowBack
-    PlayerButton.VideoTitle -> Icons.Filled.Title
-    PlayerButton.AutoPlay -> Icons.Filled.PlayCircle
-    PlayerButton.Cast -> Icons.Filled.SmartDisplay
-    PlayerButton.SubtitleTracks -> Icons.Filled.Subtitles
-    PlayerButton.AudioTracks -> Icons.Filled.Audiotrack
-    PlayerButton.QualityTracks -> Icons.Filled.HighQuality
-    PlayerButton.MoreOptions -> Icons.Filled.MoreVert
-    PlayerButton.PlaybackSpeed -> Icons.Filled.Speed
-    PlayerButton.CurrentChapter -> Icons.Filled.Bookmarks
-    PlayerButton.LockControls -> Icons.Filled.LockOpen
-    PlayerButton.ScreenRotation -> Icons.Filled.ScreenRotation
-    PlayerButton.PictureInPicture -> Icons.Filled.PictureInPictureAlt
-    PlayerButton.AspectRatio -> Icons.Filled.AspectRatio
-    PlayerButton.VideoZoom -> Icons.Filled.ZoomIn
-    PlayerButton.SkipIntro -> Icons.Filled.FastForward
-    PlayerButton.CustomButton -> Icons.Filled.TouchApp
+    PlayerButton.BackArrow -> Icons.AutoMirrored.Outlined.ArrowBack
+    PlayerButton.VideoTitle -> Icons.Outlined.Title
+    PlayerButton.AutoPlay -> Icons.Outlined.PlayCircle
+    PlayerButton.Cast -> Icons.Outlined.Cast
+    PlayerButton.SubtitleTracks -> Icons.Outlined.Subtitles
+    PlayerButton.AudioTracks -> Icons.Outlined.Audiotrack
+    PlayerButton.QualityTracks -> Icons.Outlined.HighQuality
+    PlayerButton.MoreOptions -> Icons.Outlined.MoreVert
+    PlayerButton.PlaybackSpeed -> Icons.Outlined.Speed
+    PlayerButton.CurrentChapter -> Icons.Outlined.Bookmarks
+    PlayerButton.LockControls -> Icons.Outlined.LockOpen
+    PlayerButton.ScreenRotation -> Icons.Outlined.ScreenRotation
+    PlayerButton.PictureInPicture -> Icons.Outlined.PictureInPictureAlt
+    PlayerButton.AspectRatio -> Icons.Outlined.AspectRatio
+    PlayerButton.VideoZoom -> Icons.Outlined.ZoomIn
+    PlayerButton.SkipIntro -> Icons.Outlined.FastForward
+    PlayerButton.CustomButton -> Icons.Outlined.TouchApp
 }
 
 val allPlayerButtons = PlayerButton.entries.filter { 
