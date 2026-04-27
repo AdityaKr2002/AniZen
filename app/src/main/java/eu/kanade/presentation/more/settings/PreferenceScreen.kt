@@ -74,15 +74,30 @@ fun PreferenceScreen(
                         PreferenceGroupHeader(title = preference.title)
                     }
                     item {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            tonalElevation = 2.dp
-                        ) {
-                            Column {
+                        if (useContainer) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp),
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                tonalElevation = 2.dp
+                            ) {
+                                Column {
+                                    preference.preferenceItems.forEach { item ->
+                                        PreferenceItem(
+                                            item = item,
+                                            highlightKey = highlightKey,
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp),
+                            ) {
                                 preference.preferenceItems.forEach { item ->
                                     PreferenceItem(
                                         item = item,
