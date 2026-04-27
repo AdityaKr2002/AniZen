@@ -110,9 +110,6 @@ fun MoreScreen(
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val containerStyles by uiPreferences.containerStyles().collectAsState()
-    val useContainer = remember(containerStyles) { ContainerStyle.SETTINGS in containerStyles }
 
     Scaffold(
         topBar = {
@@ -140,7 +137,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Preferences", useContainer = useContainer) {
+                MoreSection(title = "Preferences") {
                     SwitchPreferenceWidget(
                         title = stringResource(MR.strings.label_downloaded_only),
                         subtitle = stringResource(MR.strings.downloaded_only_summary),
@@ -159,7 +156,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Library", useContainer = useContainer) {
+                MoreSection(title = "Library") {
                     val downloadQueueState = downloadQueueStateProvider()
                     MoreItem(
                         title = stringResource(MR.strings.label_download_queue),
@@ -210,7 +207,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "System", useContainer = useContainer) {
+                MoreSection(title = "System") {
                     MoreItem(
                         title = "Extension Health",
                         subtitle = "Real-time telemetry and source status",
@@ -232,7 +229,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "General", useContainer = useContainer) {
+                MoreSection(title = "General") {
                     hiddenTabs.forEach { navItem ->
                         MoreItem(
                             title = stringResource(navItem.titleRes),
@@ -278,7 +275,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Support", useContainer = useContainer) {
+                MoreSection(title = "Support") {
                     MoreItem(
                         title = stringResource(MR.strings.pref_category_about),
                         icon = Icons.Outlined.Info,

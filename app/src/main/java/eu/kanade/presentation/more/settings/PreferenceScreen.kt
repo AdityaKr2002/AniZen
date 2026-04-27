@@ -42,10 +42,6 @@ fun PreferenceScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val containerStyles by uiPreferences.containerStyles().collectAsState()
-    val useContainer = remember(containerStyles) { ContainerStyle.SETTINGS in containerStyles }
-
     val state = rememberLazyListState()
     val highlightKey = SearchableSettings.highlightKey
     if (highlightKey != null) {
@@ -74,29 +70,15 @@ fun PreferenceScreen(
                         PreferenceGroupHeader(title = preference.title)
                     }
                     item {
-                        if (useContainer) {
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp),
-                                shape = MaterialTheme.shapes.large,
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                tonalElevation = 2.dp
-                            ) {
-                                Column {
-                                    preference.preferenceItems.forEach { item ->
-                                        PreferenceItem(
-                                            item = item,
-                                            highlightKey = highlightKey,
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                            ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            tonalElevation = 2.dp
+                        ) {
+                            Column {
                                 preference.preferenceItems.forEach { item ->
                                     PreferenceItem(
                                         item = item,
