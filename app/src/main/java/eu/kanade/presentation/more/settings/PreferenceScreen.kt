@@ -95,8 +95,7 @@ fun PreferenceScreen(
                         } else {
                             Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp),
+                                    .fillMaxWidth(),
                             ) {
                                 preference.preferenceItems.forEach { item ->
                                     PreferenceItem(

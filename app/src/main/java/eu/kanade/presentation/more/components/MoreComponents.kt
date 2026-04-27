@@ -53,7 +53,7 @@ fun MoreSection(
                 }
             }
         } else {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 content()
             }
         }
