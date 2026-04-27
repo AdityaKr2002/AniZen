@@ -42,6 +42,10 @@ fun PreferenceScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val containerStyles by uiPreferences.containerStyles().collectAsState()
+    val useContainer = remember(containerStyles) { ContainerStyle.SETTINGS in containerStyles }
+
     val state = rememberLazyListState()
     val highlightKey = SearchableSettings.highlightKey
     if (highlightKey != null) {

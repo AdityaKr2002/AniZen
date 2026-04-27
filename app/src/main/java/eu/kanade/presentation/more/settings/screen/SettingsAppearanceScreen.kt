@@ -221,6 +221,7 @@ object SettingsAppearanceScreen : SearchableSettings {
                         ContainerStyle.LIBRARY to "Library",
                         ContainerStyle.UPDATES to "Updates",
                         ContainerStyle.HISTORY to "History",
+                        ContainerStyle.SETTINGS to "Settings",
                         ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
                     ).toImmutableMap(),
                 ),
