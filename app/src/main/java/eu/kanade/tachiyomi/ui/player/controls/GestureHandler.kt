@@ -190,6 +190,13 @@ fun GestureHandler(
                             break
                         }
 
+                        // Only start zoom/pan logic if we have multiple fingers or significant movement
+                        if (event.changes.size <= 1 && prevDist == 0f) {
+                            // Single finger and not already zooming? Let it pass to the tap handler
+                            if (event.changes.fastAll { it.changedToUp() }) break
+                            continue
+                        }
+
                         val currentZoom = viewModel.videoZoom.value
                         if (kotlin.math.abs(zoom - currentZoom) > 0.001f && event.changes.size <= 1) {
                             zoom = currentZoom
