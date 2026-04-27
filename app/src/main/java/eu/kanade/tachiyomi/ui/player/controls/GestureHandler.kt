@@ -336,9 +336,10 @@ fun GestureHandler(
                             
                             val distance = (pointer.position - startPosition).getDistance()
                             if (!viewModel.isLongPressing.value) {
-                                if (distance > viewConfiguration.touchSlop) {
+                                // Increase slop for tap detection to prevent micro-movements from cancelling double-taps
+                                if (distance > viewConfiguration.touchSlop * 1.5f) {
                                     longPressJob?.cancel()
-                                    // If it's a drag, let other pointerInputs handle it
+                                    // If it's a significant drag, let other pointerInputs handle it
                                     if (Math.abs(pointer.position.y - startPosition.y) > Math.abs(pointer.position.x - startPosition.x)) {
                                         // Vertical drag (volume/brightness)
                                         break
@@ -461,7 +462,7 @@ fun GestureHandler(
                             val diffX = kotlin.math.abs(pointer.position.x - down.position.x)
                             val diffY = kotlin.math.abs(pointer.position.y - down.position.y)
                             
-                            if (diffX > viewConfiguration.touchSlop || diffY > viewConfiguration.touchSlop) {
+                            if (diffX > viewConfiguration.touchSlop * 1.5f || diffY > viewConfiguration.touchSlop * 1.5f) {
                                 if (diffX > diffY && seekGesture) {
                                     dragDirection = 1
                                     startingPosition = position.toInt()
