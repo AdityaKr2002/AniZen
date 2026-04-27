@@ -107,6 +107,7 @@ fun GestureHandler(
     val gestureVolumeBrightness = gesturePreferences.gestureVolumeBrightness().get()
     val swapVolumeBrightness by gesturePreferences.swapVolumeBrightness().collectAsStatePref()
     val seekGesture by gesturePreferences.gestureHorizontalSeek().collectAsStatePref()
+    val videoZoomGesture by gesturePreferences.videoZoomGesture().collectAsStatePref()
     val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsStatePref()
     val showSeekbar by gesturePreferences.showSeekBar().collectAsStatePref()
     
@@ -251,7 +252,7 @@ fun GestureHandler(
                             break
                         }
 
-                        if (changes.size > 1) {
+                        if (changes.size > 1 && videoZoomGesture) {
                             // MULTI-TOUCH (Zoom/Pan)
                             dragDirection = 3
                             val p1 = changes[0].position
@@ -376,16 +377,21 @@ fun GestureHandler(
                                     viewModel.displayVolumeSlider()
                                 }
                             }
+                        } else if (dragDirection == 3 && videoZoomGesture) {
+                            // Multi-touch Pan (handled in multi-touch block but routing check)
+                            // This ensures the multi-touch consumption happens
                         }
                     }
                 }
             }
-            .pointerInput(areControlsLocked, isDoubleTapSeeking) {
+            .pointerInput(areControlsLocked, isDoubleTapSeeking, videoZoomGesture) {
                 // Secondary block just for Double Tap detection to leverage OS-optimized detectTapGestures
                 // This ensures we get the "nas-style" snappy double-click without reimplementing the wheel
                 if (areControlsLocked) return@pointerInput
                 detectTapGestures(
                     onDoubleTap = { offset ->
+                        // If we are zooming and not already seeking, we might want to prevent double-tap seek?
+                        // But since we defaulted zoom to OFF, we prioritize seek.
                         if (isDoubleTapSeeking || seekAmount != 0) return@detectTapGestures
                         if (offset.x > size.width * 0.6f) {
                             viewModel.handleRightDoubleTap()
