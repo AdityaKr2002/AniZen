@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun MoreSection(
     title: String,
+    useContainer: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column {
@@ -40,13 +41,19 @@ fun MoreSection(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
         )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            tonalElevation = 2.dp
-        ) {
-            Column {
+        if (useContainer) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 2.dp
+            ) {
+                Column {
+                    content()
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                 content()
             }
         }

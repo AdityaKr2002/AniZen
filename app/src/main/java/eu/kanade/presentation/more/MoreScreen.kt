@@ -80,6 +80,12 @@ import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+
+import eu.kanade.domain.ui.ContainerStyle
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.more.components.MoreItem
 import eu.kanade.presentation.more.components.MoreSection
 
@@ -104,6 +110,9 @@ fun MoreScreen(
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val containerStyles by uiPreferences.containerStyles().collectAsState()
+    val useContainer = remember(containerStyles) { ContainerStyle.SETTINGS in containerStyles }
 
     Scaffold(
         topBar = {
@@ -131,7 +140,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Preferences") {
+                MoreSection(title = "Preferences", useContainer = useContainer) {
                     SwitchPreferenceWidget(
                         title = stringResource(MR.strings.label_downloaded_only),
                         subtitle = stringResource(MR.strings.downloaded_only_summary),
@@ -150,7 +159,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Library") {
+                MoreSection(title = "Library", useContainer = useContainer) {
                     val downloadQueueState = downloadQueueStateProvider()
                     MoreItem(
                         title = stringResource(MR.strings.label_download_queue),
@@ -201,7 +210,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "System") {
+                MoreSection(title = "System", useContainer = useContainer) {
                     MoreItem(
                         title = "Extension Health",
                         subtitle = "Real-time telemetry and source status",
@@ -223,7 +232,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "General") {
+                MoreSection(title = "General", useContainer = useContainer) {
                     hiddenTabs.forEach { navItem ->
                         MoreItem(
                             title = stringResource(navItem.titleRes),
@@ -269,7 +278,7 @@ fun MoreScreen(
             }
 
             item {
-                MoreSection(title = "Support") {
+                MoreSection(title = "Support", useContainer = useContainer) {
                     MoreItem(
                         title = stringResource(MR.strings.pref_category_about),
                         icon = Icons.Outlined.Info,

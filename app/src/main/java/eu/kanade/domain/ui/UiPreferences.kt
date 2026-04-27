@@ -211,7 +211,6 @@ class UiPreferences(
             ContainerStyle.LIBRARY,
             ContainerStyle.UPDATES,
             ContainerStyle.HISTORY,
-            ContainerStyle.DETAILS,
             ContainerStyle.SETTINGS,
             ContainerStyle.BROWSE,
         ),
