@@ -214,21 +214,6 @@ fun GestureHandler(
                         
                         if (changes.fastAll { it.changedToUp() }) {
                             // End of gesture
-                            if (!isLongPressTriggered && dragDirection == 0) {
-                                val duration = System.currentTimeMillis() - startTime
-                                if (duration < viewConfiguration.longPressTimeoutMillis) {
-                                    // Potential Tap or Double Tap
-                                    // Note: detectTapGestures logic is handled by internal OS, but here we are manual.
-                                    // To match OS feel, we use a small delay or check previous state.
-                                    // For simplicity and speed, we check if this is a double-tap candidate.
-                                    if (isDoubleTapSeeking) {
-                                        // Already seeking, onPress handled it
-                                    } else {
-                                        // Simple tap handler
-                                        if (controlsShown) viewModel.hideControls() else viewModel.showControls()
-                                    }
-                                }
-                            }
                             
                             // Cleanup Sliders
                             if (dragDirection == 1) {
@@ -384,11 +369,16 @@ fun GestureHandler(
                     }
                 }
             }
-            .pointerInput(areControlsLocked, isDoubleTapSeeking, videoZoomGesture) {
+            .pointerInput(areControlsLocked, videoZoomGesture) {
                 // Secondary block just for Double Tap detection to leverage OS-optimized detectTapGestures
                 // This ensures we get the "nas-style" snappy double-click without reimplementing the wheel
                 if (areControlsLocked) return@pointerInput
                 detectTapGestures(
+                    onTap = {
+                        if (!isDoubleTapSeeking && seekAmount == 0) {
+                            if (controlsShown) viewModel.hideControls() else viewModel.showControls()
+                        }
+                    },
                     onDoubleTap = { offset ->
                         // If we are zooming and not already seeking, we might want to prevent double-tap seek?
                         // But since we defaulted zoom to OFF, we prioritize seek.
