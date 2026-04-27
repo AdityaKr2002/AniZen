@@ -110,7 +110,7 @@ fun GestureHandler(
     val gestureVolumeBrightness = gesturePreferences.gestureVolumeBrightness().get()
     val swapVolumeBrightness by gesturePreferences.swapVolumeBrightness().collectAsStatePref()
     val seekGesture by gesturePreferences.gestureHorizontalSeek().collectAsStatePref()
-    val videoZoomGesture by gesturePreferences.videoZoomGesture().collectAsStatePref()
+    val videoZoomGesture by gesturePreferences.gestureVideoZoom().collectAsStatePref()
     val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsStatePref()
     val showSeekbar by gesturePreferences.showSeekBar().collectAsStatePref()
     
@@ -259,11 +259,11 @@ fun GestureHandler(
                     }
                 ) { change, dragAmount ->
                     change.consume()
-                    val it = calculateNewHorizontalGestureValue(startingPosition.toFloat(), startingX, change.position.x, 0.15f)
+                    val itValue = calculateNewHorizontalGestureValue(startingPosition.toFloat(), startingX, change.position.x, 0.15f)
                     viewModel.gestureSeekAmount.update { _ ->
-                        Pair(startingPosition, (it - startingPosition).toInt().coerceIn(0 - startingPosition, (duration - startingPosition).toInt()))
+                        Pair(startingPosition, (itValue - startingPosition).toInt().coerceIn(0 - startingPosition, (duration - startingPosition).toInt()))
                     }
-                    viewModel.seekTo(it.toInt().coerceIn(0, duration.toInt()), preciseSeeking)
+                    viewModel.seekTo(itValue.toInt().coerceIn(0, duration.toInt()), preciseSeeking)
                     if (showSeekbar) viewModel.showSeekBar()
                 }
             }
@@ -295,7 +295,7 @@ fun GestureHandler(
                             viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
                             viewModel.displayBrightnessSlider()
                         } else {
-                            viewModel.setVolume((originalVolume - diffY * volumeGestureSens).toInt())
+                            viewModel.setVolume(originalVolume.toFloat() - diffY * volumeGestureSens)
                             viewModel.displayVolumeSlider()
                         }
                     } else {
@@ -303,7 +303,7 @@ fun GestureHandler(
                             viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
                             viewModel.displayBrightnessSlider()
                         } else {
-                            viewModel.setVolume((originalVolume - diffY * volumeGestureSens).toInt())
+                            viewModel.setVolume(originalVolume.toFloat() - diffY * volumeGestureSens)
                             viewModel.displayVolumeSlider()
                         }
                     }
