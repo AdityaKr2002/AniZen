@@ -130,6 +130,7 @@ fun GestureHandler(
     
     var speedRampJob by remember { mutableStateOf<Job?>(null) }
     var originalSpeed by remember { mutableFloatStateOf(1f) }
+    var wasPaused by remember { mutableStateOf(false) }
 
     fun rampSpeed(targetSpeed: Float, onComplete: () -> Unit = {}) {
         speedRampJob?.cancel()
@@ -202,10 +203,16 @@ fun GestureHandler(
                             }
                         }
                         scope.launch { interactionSource.emit(press) }
-                        try {
-                            awaitRelease()
-                        } finally {
+                        val released = tryAwaitRelease()
+                        if (viewModel.isLongPressing.value) {
+                            viewModel.isLongPressing.update { false }
+                            MPVLib.setPropertyDouble("speed", originalSpeed.toDouble())
+                            viewModel.playerUpdate.update { PlayerUpdates.None }
+                        }
+                        if (released) {
                             scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
+                        } else {
+                            scope.launch { interactionSource.emit(PressInteraction.Cancel(press)) }
                         }
                     },
                     onLongPress = {
@@ -272,40 +279,82 @@ fun GestureHandler(
                 if (areControlsLocked || !gestureVolumeBrightness) return@pointerInput
                 var startingY = 0f
                 var mpvVolumeStartingY = 0f
-                var originalVolume = 0
-                var originalMPVVolume = 0
-                var originalBrightness = 0f
+                var originalVolume = currentVolume
+                var originalMPVVolume = currentMPVVolume
+                var originalBrightness = currentBrightness
                 val brightnessGestureSens = 0.001f
                 val volumeGestureSens = 0.001f * viewModel.maxVolume
                 val mpvVolumeGestureSens = 0.001f * volumeBoostingCap
-
+                val isIncreasingVolumeBoost: (Float) -> Boolean = {
+                    volumeBoostingCap > 0 &&
+                        currentVolume == viewModel.maxVolume &&
+                        currentMPVVolume - 100 < volumeBoostingCap &&
+                        it < 0
+                }
+                val isDecreasingVolumeBoost: (Float) -> Boolean = {
+                    volumeBoostingCap > 0 &&
+                        currentVolume == viewModel.maxVolume &&
+                        currentMPVVolume - 100 in 1..volumeBoostingCap &&
+                        it > 0
+                }
                 detectVerticalDragGestures(
+                    onDragEnd = { startingY = 0f },
                     onDragStart = {
-                        startingY = it.y
-                        mpvVolumeStartingY = it.y
+                        startingY = 0f
+                        mpvVolumeStartingY = 0f
                         originalVolume = currentVolume
                         originalMPVVolume = currentMPVVolume
                         originalBrightness = currentBrightness
+                    },
+                ) { change, amount ->
+                    val changeVolume: () -> Unit = {
+                        if (isIncreasingVolumeBoost(amount) || isDecreasingVolumeBoost(amount)) {
+                            if (mpvVolumeStartingY == 0f) {
+                                startingY = 0f
+                                originalVolume = currentVolume
+                                mpvVolumeStartingY = change.position.y
+                            }
+                            viewModel.changeMPVVolumeTo(
+                                calculateNewVerticalGestureValue(
+                                    originalMPVVolume,
+                                    mpvVolumeStartingY,
+                                    change.position.y,
+                                    mpvVolumeGestureSens,
+                                ).coerceIn(100..volumeBoostingCap + 100),
+                            )
+                        } else {
+                            if (startingY == 0f) {
+                                mpvVolumeStartingY = 0f
+                                originalMPVVolume = currentMPVVolume
+                                startingY = change.position.y
+                            }
+                            viewModel.changeVolumeTo(
+                                calculateNewVerticalGestureValue(
+                                    originalVolume,
+                                    startingY,
+                                    change.position.y,
+                                    volumeGestureSens,
+                                ),
+                            )
+                        }
+                        viewModel.displayVolumeSlider()
                     }
-                ) { change, _ ->
-                    change.consume()
-                    val diffY = change.position.y - startingY
+                    val changeBrightness: () -> Unit = {
+                        if (startingY == 0f) startingY = change.position.y
+                        viewModel.changeBrightnessTo(
+                            calculateNewVerticalGestureValue(
+                                originalBrightness,
+                                startingY,
+                                change.position.y,
+                                brightnessGestureSens,
+                            ).coerceIn(0f, 1f),
+                        )
+                        viewModel.displayBrightnessSlider()
+                    }
                     if (swapVolumeBrightness) {
-                        if (change.position.x > size.width / 2) {
-                            viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
-                            viewModel.displayBrightnessSlider()
-                        } else {
-                            viewModel.setVolume(originalVolume.toFloat() - diffY * volumeGestureSens)
-                            viewModel.displayVolumeSlider()
-                        }
+                        if (change.position.x > size.width / 2) changeBrightness() else changeVolume()
                     } else {
-                        if (change.position.x < size.width / 2) {
-                            viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
-                            viewModel.displayBrightnessSlider()
-                        } else {
-                            viewModel.setVolume(originalVolume.toFloat() - diffY * volumeGestureSens)
-                            viewModel.displayVolumeSlider()
-                        }
+                        if (change.position.x < size.width / 2) changeBrightness() else changeVolume()
                     }
                 }
             }
@@ -363,6 +412,14 @@ fun GestureHandler(
 
 fun calculateNewVerticalGestureValue(originalValue: Int, startingY: Float, newY: Float, sensitivity: Float): Int {
     return originalValue + ((startingY - newY) * sensitivity).toInt()
+}
+
+fun calculateNewVerticalGestureValue(originalValue: Float, startingY: Float, newY: Float, sensitivity: Float): Float {
+    return originalValue + ((startingY - newY) * sensitivity)
+}
+
+fun calculateNewHorizontalGestureValue(originalValue: Int, startingX: Float, newX: Float, sensitivity: Float): Int {
+    return originalValue + ((newX - startingX) * sensitivity).toInt()
 }
 
 fun calculateNewHorizontalGestureValue(originalValue: Float, startingX: Float, newX: Float, sensitivity: Float): Float {
