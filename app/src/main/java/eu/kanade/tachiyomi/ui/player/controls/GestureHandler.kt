@@ -21,6 +21,9 @@ import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -115,8 +118,11 @@ fun GestureHandler(
     val pausedLongPressAction by gesturePreferences.pausedLongPressAction().collectAsStatePref()
     val longPressSliding by gesturePreferences.gestureLongPressSpeedSliding().collectAsStatePref()
 
-    val isLongPressingViewModel by viewModel.isLongPressing.collectAsState()
+    val currentVolume by viewModel.currentVolume.collectAsState()
+    val currentMPVVolume by viewModel.currentMPVVolume.collectAsState()
+    val currentBrightness by viewModel.currentBrightness.collectAsState()
     val volumeBoostingCap = audioPreferences.volumeBoostCap().get()
+
     val context = LocalContext.current
     val isTv = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) }
     val scope = rememberCoroutineScope()
@@ -150,229 +156,12 @@ fun GestureHandler(
         modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeGestures)
-            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, longPressSliding, gestureVolumeBrightness, seekGesture) {
+            // BLOCK 1: Taps & Long Press (OS Optimized)
+            .pointerInput(areControlsLocked, longPressAction, pausedLongPressAction, isDoubleTapSeeking, seekAmount) {
                 if (areControlsLocked) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        val up = waitForUpOrCancellation()
-                        if (up != null) {
-                            if (controlsShown) viewModel.hideControls() else viewModel.showControls()
-                        }
-                    }
+                    detectTapGestures(onTap = { if (controlsShown) viewModel.hideControls() else viewModel.showControls() })
                     return@pointerInput
                 }
-
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val startPosition = down.position
-                    val startTime = System.currentTimeMillis()
-                    var lastClickTime by mutableLongStateOf(0L)
-                    
-                    var isLongPressTriggered = false
-                    var isSpeedSlidingTriggered = false
-                    var dragDirection = 0 // 0: None, 1: Horizontal, 2: Vertical, 3: Multi (Zoom)
-                    
-                    // Initial state for drags
-                    var startingVideoPos = position.toInt()
-                    var wasPausedBeforeDrag = false
-                    var initialVolumePercent = if (viewModel.currentMPVVolume.value > 100) {
-                        viewModel.currentMPVVolume.value.toFloat()
-                    } else {
-                        viewModel.currentVolume.value.toFloat() / viewModel.maxVolume * 100f
-                    }
-                    var initialBrightness = viewModel.currentBrightness.value
-                    
-                    // Initial state for zoom
-                    var initialZoom = viewModel.videoZoom.value
-                    var initialPanX = viewModel.videoPanX.value
-                    var initialPanY = viewModel.videoPanY.value
-                    var prevDist = 0f
-                    var prevMidX = 0f
-                    var prevMidY = 0f
-
-                    val press = PressInteraction.Press(
-                        startPosition.copy(x = if (startPosition.x > size.width * 0.6f) startPosition.x - size.width * 0.6f else startPosition.x),
-                    )
-                    scope.launch { interactionSource.emit(press) }
-
-                    // Handle Cumulative Seek (3rd, 4th click)
-                    if (isDoubleTapSeeking) {
-                        if (startPosition.x > size.width * 0.6f) {
-                            if (!isSeekingForwards) viewModel.updateSeekAmount(0)
-                            viewModel.handleRightDoubleTap()
-                        } else if (startPosition.x < size.width * 0.4f) {
-                            if (isSeekingForwards) viewModel.updateSeekAmount(0)
-                            viewModel.handleLeftDoubleTap()
-                        } else {
-                            viewModel.handleCenterDoubleTap()
-                        }
-                    }
-
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val changes = event.changes
-                        
-                        if (changes.fastAll { it.changedToUp() }) {
-                            // End of gesture
-                            
-                            // Cleanup Sliders
-                            if (dragDirection == 1) {
-                                viewModel.gestureSeekAmount.update { null }
-                                viewModel.hideSeekBar()
-                                if (!wasPausedBeforeDrag) viewModel.unpause()
-                            }
-                            
-                            // Cleanup Long Press Speed
-                            if (isLongPressTriggered && isSpeedLongPress) {
-                                val wasPausedOriginally = wasPaused
-                                viewModel.isLongPressing.update { false }
-                                isSpeedLongPress = false
-                                rampSpeed(originalSpeed) {
-                                    if (wasPausedOriginally) viewModel.pause()
-                                    viewModel.playerUpdate.update { PlayerUpdates.None }
-                                }
-                            }
-
-                            scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
-                            break
-                        }
-
-                        if (changes.size > 1 && videoZoomGesture) {
-                            // MULTI-TOUCH (Zoom/Pan)
-                            dragDirection = 3
-                            val p1 = changes[0].position
-                            val p2 = changes[1].position
-                            val dx = p2.x - p1.x
-                            val dy = p2.y - p1.y
-                            val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
-                            val midX = (p1.x + p2.x) / 2f
-                            val midY = (p1.y + p2.y) / 2f
-
-                            if (prevDist == 0f) {
-                                prevDist = dist
-                                prevMidX = midX
-                                prevMidY = midY
-                            } else {
-                                val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
-                                val newZoom = (viewModel.videoZoom.value + zoomDelta).coerceIn(-1f, 3f)
-                                viewModel.setVideoZoom(newZoom)
-                                viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(newZoom) }
-
-                                val scale = 2f.pow(newZoom)
-                                val (bw, bh) = videoDisplaySize(size)
-                                val panDX = midX - prevMidX
-                                val panDY = midY - prevMidY
-                                val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
-                                val newPanX = (viewModel.videoPanX.value + panDX / (bw * scale)).coerceIn(-maxPan, maxPan)
-                                val newPanY = (viewModel.videoPanY.value + panDY / (bh * scale)).coerceIn(-maxPan, maxPan)
-                                viewModel.setVideoPan(newPanX, newPanY)
-                                
-                                prevDist = dist
-                                prevMidX = midX
-                                prevMidY = midY
-                            }
-                            changes.fastForEach { it.consume() }
-                            continue
-                        }
-
-                        // SINGLE-TOUCH
-                        val pointer = changes[0]
-                        val diffX = pointer.position.x - startPosition.x
-                        val diffY = pointer.position.y - startPosition.y
-                        val distance = sqrt((diffX * diffX + diffY * diffY).toDouble()).toFloat()
-
-                        // 1. Long Press Detection
-                        if (!isLongPressTriggered && dragDirection == 0 && (System.currentTimeMillis() - startTime) > viewConfiguration.longPressTimeoutMillis) {
-                            if (distance < viewConfiguration.touchSlop) {
-                                isLongPressTriggered = true
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                
-                                // Long Press Logic
-                                val isPaused = viewModel.paused.value
-                                wasPaused = isPaused
-                                if (isPaused) {
-                                    if (pausedLongPressAction == PausedLongPressAction.Play2x) {
-                                        viewModel.isLongPressing.update { true }
-                                        isSpeedLongPress = true
-                                        viewModel.unpause()
-                                        originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-                                        rampSpeed(playerPreferences.playerSpeedLongPress().get())
-                                    } else if (pausedLongPressAction == PausedLongPressAction.Screenshot) {
-                                        viewModel.sheetShown.update { Sheets.Screenshot }
-                                    }
-                                } else {
-                                    if (longPressAction == LongPressAction.Speed) {
-                                        viewModel.isLongPressing.update { true }
-                                        isSpeedLongPress = true
-                                        originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-                                        rampSpeed(playerPreferences.playerSpeedLongPress().get())
-                                    } else if (longPressAction == LongPressAction.Screenshot) {
-                                        viewModel.sheetShown.update { Sheets.Screenshot }
-                                    }
-                                }
-                            }
-                        }
-
-                        // 2. Drag Detection
-                        if (dragDirection == 0 && distance > viewConfiguration.touchSlop * 1.2f) {
-                            if (abs(diffX) > abs(diffY) && seekGesture) {
-                                dragDirection = 1 // Horizontal Seek
-                                startingVideoPos = position.toInt()
-                                wasPausedBeforeDrag = viewModel.paused.value
-                                viewModel.pause()
-                            } else if (abs(diffY) > abs(diffX) && gestureVolumeBrightness) {
-                                dragDirection = 2 // Vertical Volume/Brightness
-                            }
-                        }
-
-                        // 3. Action Routing
-                        if (isLongPressTriggered && isSpeedLongPress && longPressSliding) {
-                            // Speed Sliding
-                            pointer.consume()
-                            var currentSpeed = MPVLib.getPropertyDouble("speed")
-                            currentSpeed = (currentSpeed + diffX * 0.0035).coerceIn(0.25, 4.0)
-                            val snappedSpeed = (Math.round(currentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
-                            MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
-                            viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(snappedSpeed, isDragging = true) }
-                        } else if (dragDirection == 1) {
-                            // Seeking
-                            pointer.consume()
-                            val seekDiff = (diffX * 0.15f).toInt()
-                            val targetPos = (startingVideoPos + seekDiff).coerceIn(0, duration.toInt())
-                            viewModel.gestureSeekAmount.update { Pair(startingVideoPos, seekDiff) }
-                            viewModel.seekTo(targetPos, preciseSeeking)
-                            if (showSeekbar) viewModel.showSeekBar()
-                        } else if (dragDirection == 2) {
-                            // Volume / Brightness
-                            pointer.consume()
-                            if (swapVolumeBrightness) {
-                                if (startPosition.x > size.width / 2) {
-                                    viewModel.changeBrightnessTo((initialBrightness - diffY * 0.001f).coerceIn(0f, 1f))
-                                    viewModel.displayBrightnessSlider()
-                                } else {
-                                    viewModel.setVolume(initialVolumePercent - diffY * 0.08f)
-                                    viewModel.displayVolumeSlider()
-                                }
-                            } else {
-                                if (startPosition.x < size.width / 2) {
-                                    viewModel.changeBrightnessTo((initialBrightness - diffY * 0.001f).coerceIn(0f, 1f))
-                                    viewModel.displayBrightnessSlider()
-                                } else {
-                                    viewModel.setVolume(initialVolumePercent - diffY * 0.08f)
-                                    viewModel.displayVolumeSlider()
-                                }
-                            }
-                        } else if (dragDirection == 3 && videoZoomGesture) {
-                            // Multi-touch Pan (handled in multi-touch block but routing check)
-                            // This ensures the multi-touch consumption happens
-                        }
-                    }
-                }
-            }
-            .pointerInput(areControlsLocked, videoZoomGesture) {
-                // Secondary block just for Double Tap detection to leverage OS-optimized detectTapGestures
-                // This ensures we get the "nas-style" snappy double-click without reimplementing the wheel
-                if (areControlsLocked) return@pointerInput
                 detectTapGestures(
                     onTap = {
                         if (!isDoubleTapSeeking && seekAmount == 0) {
@@ -380,36 +169,202 @@ fun GestureHandler(
                         }
                     },
                     onDoubleTap = { offset ->
-                        // If we are zooming and not already seeking, we might want to prevent double-tap seek?
-                        // But since we defaulted zoom to OFF, we prioritize seek.
                         if (isDoubleTapSeeking || seekAmount != 0) return@detectTapGestures
-                        if (offset.x > size.width * 0.6f) {
+                        if (offset.x > size.width * 3 / 5) {
+                            if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                             viewModel.handleRightDoubleTap()
                             isDoubleTapSeeking = true
-                        } else if (offset.x < size.width * 0.4f) {
+                        } else if (offset.x < size.width * 2 / 5) {
+                            if (isSeekingForwards) viewModel.updateSeekAmount(0)
                             viewModel.handleLeftDoubleTap()
                             isDoubleTapSeeking = true
                         } else {
                             viewModel.handleCenterDoubleTap()
                         }
+                    },
+                    onPress = { offset ->
+                        if (panelShown != Panels.None && !allowGesturesInPanels) {
+                            viewModel.panelShown.update { Panels.None }
+                        }
+                        val press = PressInteraction.Press(
+                            offset.copy(x = if (offset.x > size.width * 3 / 5) offset.x - size.width * 0.6f else offset.x),
+                        )
+                        // Hyper-Lane Cumulative Seek (Instant 3rd/4th click)
+                        if (isDoubleTapSeeking) {
+                            if (offset.x > size.width * 3 / 5) {
+                                if (!isSeekingForwards) viewModel.updateSeekAmount(0)
+                                viewModel.handleRightDoubleTap()
+                            } else if (offset.x < size.width * 2 / 5) {
+                                if (isSeekingForwards) viewModel.updateSeekAmount(0)
+                                viewModel.handleLeftDoubleTap()
+                            } else {
+                                viewModel.handleCenterDoubleTap()
+                            }
+                        }
+                        scope.launch { interactionSource.emit(press) }
+                        try {
+                            awaitRelease()
+                        } finally {
+                            scope.launch { interactionSource.emit(PressInteraction.Release(press)) }
+                        }
+                    },
+                    onLongPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        val isPaused = viewModel.paused.value
+                        if (isPaused) {
+                            when (pausedLongPressAction) {
+                                PausedLongPressAction.Screenshot -> viewModel.sheetShown.update { Sheets.Screenshot }
+                                PausedLongPressAction.Play2x -> {
+                                    viewModel.isLongPressing.update { true }
+                                    viewModel.unpause()
+                                    originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+                                    rampSpeed(playerPreferences.playerSpeedLongPress().get())
+                                }
+                                else -> {}
+                            }
+                        } else {
+                            if (longPressAction == LongPressAction.Speed) {
+                                viewModel.isLongPressing.update { true }
+                                originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+                                rampSpeed(playerPreferences.playerSpeedLongPress().get())
+                            } else if (longPressAction == LongPressAction.Screenshot) {
+                                viewModel.sheetShown.update { Sheets.Screenshot }
+                            }
+                        }
                     }
                 )
+            }
+            // BLOCK 2: Horizontal Drag (Seeking)
+            .pointerInput(areControlsLocked, seekGesture) {
+                if (areControlsLocked || !seekGesture) return@pointerInput
+                var startingPosition = 0
+                var startingX = 0f
+                var wasPausedBeforeDrag = false
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        startingPosition = position.toInt()
+                        startingX = it.x
+                        wasPausedBeforeDrag = viewModel.paused.value
+                        viewModel.pause()
+                    },
+                    onDragEnd = {
+                        viewModel.gestureSeekAmount.update { null }
+                        viewModel.hideSeekBar()
+                        if (!wasPausedBeforeDrag) viewModel.unpause()
+                    },
+                    onDragCancel = {
+                        viewModel.gestureSeekAmount.update { null }
+                        viewModel.hideSeekBar()
+                        if (!wasPausedBeforeDrag) viewModel.unpause()
+                    }
+                ) { change, dragAmount ->
+                    change.consume()
+                    val it = calculateNewHorizontalGestureValue(startingPosition.toFloat(), startingX, change.position.x, 0.15f)
+                    viewModel.gestureSeekAmount.update { _ ->
+                        Pair(startingPosition, (it - startingPosition).toInt().coerceIn(0 - startingPosition, (duration - startingPosition).toInt()))
+                    }
+                    viewModel.seekTo(it.toInt().coerceIn(0, duration.toInt()), preciseSeeking)
+                    if (showSeekbar) viewModel.showSeekBar()
+                }
+            }
+            // BLOCK 3: Vertical Drag (Volume/Brightness)
+            .pointerInput(areControlsLocked, gestureVolumeBrightness) {
+                if (areControlsLocked || !gestureVolumeBrightness) return@pointerInput
+                var startingY = 0f
+                var mpvVolumeStartingY = 0f
+                var originalVolume = 0
+                var originalMPVVolume = 0
+                var originalBrightness = 0f
+                val brightnessGestureSens = 0.001f
+                val volumeGestureSens = 0.001f * viewModel.maxVolume
+                val mpvVolumeGestureSens = 0.001f * volumeBoostingCap
+
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        startingY = it.y
+                        mpvVolumeStartingY = it.y
+                        originalVolume = currentVolume
+                        originalMPVVolume = currentMPVVolume
+                        originalBrightness = currentBrightness
+                    }
+                ) { change, _ ->
+                    change.consume()
+                    val diffY = change.position.y - startingY
+                    if (swapVolumeBrightness) {
+                        if (change.position.x > size.width / 2) {
+                            viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
+                            viewModel.displayBrightnessSlider()
+                        } else {
+                            viewModel.setVolume((originalVolume - diffY * volumeGestureSens).toInt())
+                            viewModel.displayVolumeSlider()
+                        }
+                    } else {
+                        if (change.position.x < size.width / 2) {
+                            viewModel.changeBrightnessTo((originalBrightness - diffY * brightnessGestureSens).coerceIn(0f, 1f))
+                            viewModel.displayBrightnessSlider()
+                        } else {
+                            viewModel.setVolume((originalVolume - diffY * volumeGestureSens).toInt())
+                            viewModel.displayVolumeSlider()
+                        }
+                    }
+                }
+            }
+            // BLOCK 4: Zoom/Pan (Isolated Pro Features)
+            .pointerInput(areControlsLocked, videoZoomGesture) {
+                if (areControlsLocked || !videoZoomGesture) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var prevDist = 0f
+                    var prevMidX = 0f
+                    var prevMidY = 0f
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val changes = event.changes
+                        if (changes.fastAll { it.changedToUp() }) break
+                        if (changes.size < 2) continue // Only 2+ fingers for zoom
+
+                        val p1 = changes[0].position
+                        val p2 = changes[1].position
+                        val dx = p2.x - p1.x
+                        val dy = p2.y - p1.y
+                        val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+                        val midX = (p1.x + p2.x) / 2f
+                        val midY = (p1.y + p2.y) / 2f
+
+                        if (prevDist == 0f) {
+                            prevDist = dist
+                            prevMidX = midX
+                            prevMidY = midY
+                        } else {
+                            val zoomDelta = ln((dist / prevDist).toDouble()).toFloat() * 1.2f
+                            val newZoom = (viewModel.videoZoom.value + zoomDelta).coerceIn(-1f, 3f)
+                            viewModel.setVideoZoom(newZoom)
+                            viewModel.playerUpdate.update { PlayerUpdates.VideoZoom(newZoom) }
+
+                            val scale = 2f.pow(newZoom)
+                            val (bw, bh) = videoDisplaySize(size)
+                            val panDX = midX - prevMidX
+                            val panDY = midY - prevMidY
+                            val maxPan = ((scale - 1f) / (2f * scale)).coerceAtLeast(0f)
+                            val newPanX = (viewModel.videoPanX.value + panDX / (bw * scale)).coerceIn(-maxPan, maxPan)
+                            val newPanY = (viewModel.videoPanY.value + panDY / (bh * scale)).coerceIn(-maxPan, maxPan)
+                            viewModel.setVideoPan(newPanX, newPanY)
+                            
+                            prevDist = dist
+                            prevMidX = midX
+                            prevMidY = midY
+                        }
+                        changes.fastForEach { it.consume() }
+                    }
+                }
             }
     ) {}
 }
 
-/**
- * Extension for DoubleTapToSeekOvals to allow standard call.
- */
-@Composable
-fun DoubleTapToSeekOvals(
-    amount: Int,
-    text: String?,
-    showOvals: Boolean,
-    showSeekIcon: Boolean,
-    showSeekTime: Boolean,
-    interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier,
-) {
-    // Implementation matches the one in PlayerControls for backward compatibility
+fun calculateNewVerticalGestureValue(originalValue: Int, startingY: Float, newY: Float, sensitivity: Float): Int {
+    return originalValue + ((startingY - newY) * sensitivity).toInt()
+}
+
+fun calculateNewHorizontalGestureValue(originalValue: Float, startingX: Float, newX: Float, sensitivity: Float): Float {
+    return originalValue + ((newX - startingX) * sensitivity)
 }
