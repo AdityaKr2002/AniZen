@@ -86,7 +86,7 @@ import tachiyomi.data.source.NoResultsException
 import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodes
 import tachiyomi.domain.track.interactor.GetTracks
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.domain.track.interactor.GetTracksPerAnime
+import tachiyomi.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
