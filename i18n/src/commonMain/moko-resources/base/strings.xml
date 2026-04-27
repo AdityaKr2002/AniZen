@@ -304,7 +304,10 @@
     <string name="pref_player_smooth_seek_summary">When enabled, seeking will not focus on keyframes, leading to slower but precise seeking</string>
 
     <string name="pref_category_double_tap">Double tap</string>
-    <string name="pref_left_double_tap">Double tap (left)</string>
+    <string name="pref_show_double_tap_ovals">Show double tap background</string>
+    <string name="pref_show_seek_icon">Show seek icon</string>
+    <string name="pref_show_seek_time_while_seeking">Show seek time while seeking</string>
+    <string name="pref_left_double_tap">Left double tap</string>
     <string name="pref_center_double_tap">Double tap (center)</string>
     <string name="pref_right_double_tap">Double tap (right)</string>
     <string name="pref_double_tap_info">When a tap gesture is set to "Custom", it can be bound through input.conf. The key codes are 0x10001 for left, 0x10002 for center, and 0x10003 for right.</string>
