@@ -268,7 +268,8 @@ fun GestureHandler(
                         if (controlsShown) viewModel.hideControls() else viewModel.showControls()
                     },
                     onDoubleTap = { offset ->
-                        if (areControlsLocked || isDoubleTapSeeking) return@detectTapGestures
+                        // If we are already seeking (seekAmount != 0), don't trigger onDoubleTap to avoid double-counting the 4th tap
+                        if (areControlsLocked || isDoubleTapSeeking || seekAmount != 0) return@detectTapGestures
                         if (offset.x > size.width * 3 / 5) {
                             if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                             viewModel.handleRightDoubleTap()
@@ -288,7 +289,7 @@ fun GestureHandler(
                         scope.launch { interactionSource.emit(press) }
                         
                         // Handle instant seek-on-press if already seeking
-                        if (!areControlsLocked && isDoubleTapSeeking && seekAmount != 0) {
+                        if (!areControlsLocked && isDoubleTapSeeking) {
                             if (offset.x > size.width * 3 / 5) {
                                 if (!isSeekingForwards) viewModel.updateSeekAmount(0)
                                 viewModel.handleRightDoubleTap()
