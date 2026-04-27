@@ -76,6 +76,8 @@ class RelatedAnimeScreenModel(
                             newItems = newItems.put(title, section.items)
                         }
                         mutableState.update { it.copy(items = newItems) }
+                    } else {
+                        AnimeScreenModel.triggerFetch(animeId)
                     }
                 }
         }

@@ -229,7 +229,7 @@ object SettingsAppearanceScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.showSeasonsSection(),
                     title = "Show seasons section",
-                    subtitle = "Show series seasons in anime details",
+                    subtitle = stringResource(tachiyomi.i18n.kmk.KMR.strings.pref_show_seasons_section_warning),
                 ),
                 Preference.PreferenceItem.SliderPreference(
                     value = animeItemSpacing,

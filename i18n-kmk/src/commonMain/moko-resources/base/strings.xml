@@ -144,7 +144,10 @@
     <string name="manual_download">Manual download</string>
     <!-- Browse settings -->
     <string name="pref_source_related_mangas">Suggestions</string>
-    <string name="pref_source_related_mangas_summary">Show source-website's Suggestions while viewing entry</string>
+    <string name="pref_source_related_mangas_summary">Show source-website\'s Suggestions while viewing entry</string>
+    <string name="pref_smart_related_mangas">Smart Recommendations</string>
+    <string name="pref_smart_related_mangas_summary">Use tags and genres to find similar anime (Highly request-intensive)</string>
+    <string name="pref_show_seasons_section_warning">Show series seasons in anime details (May increase API requests)</string>
     <string name="related_mangas_website_suggestions">Website Suggestions</string>
     <string name="related_mangas_more">More like these...</string>
     <string name="saved_searches_add_feed">Saved Searches (Hold to add to Feed)</string>

@@ -119,6 +119,7 @@ class SourcePreferences(
     // Related Anime Suggestions
     fun relatedAnimeExpand() = preferenceStore.getBoolean("pref_expand_related_mangas", true)
     fun relatedAnimeShowSource() = preferenceStore.getBoolean("pref_source_related_mangas", true)
+    fun relatedAnimeShowSmart() = preferenceStore.getBoolean("pref_smart_related_mangas", false)
     fun relatedAnimeShowHome() = preferenceStore.getBoolean("pref_show_home_on_related_mangas", false)
     fun relatedAnimeInOverflow() = preferenceStore.getBoolean("put_related_mangas_in_overflow", false)
     fun relatedAnimeDisplayMode() = preferenceStore.getObject(

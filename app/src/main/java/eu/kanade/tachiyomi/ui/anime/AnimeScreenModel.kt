@@ -85,7 +85,8 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.source.NoResultsException
 import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodes
 import tachiyomi.domain.track.interactor.GetTracks
-import tachiyomi.domain.track.interactor.GetTracksPerAnime
+import eu.kanade.domain.source.service.SourcePreferences
+import eu.kanade.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
@@ -148,6 +149,7 @@ class AnimeScreenModel(
     private val lifecycle: Lifecycle,
     private val animeId: Long,
     private val isFromSource: Boolean,
+    private val sourcePreferences: SourcePreferences = Injekt.get(),
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val trackPreferences: TrackPreferences = Injekt.get(),
@@ -561,6 +563,12 @@ class AnimeScreenModel(
             observeSeasons()
             observeMergedAnime()
 
+            screenModelScope.launchIO {
+                fetchTriggerFlow.filter { it == animeId }.collect {
+                    successState?.let { state -> fetchSuggestions(state.anime, manualFetch = true) }
+                }
+            }
+
             if (isActive) {
                 val isLocal = initialAnime.isLocal()
                 val needRefreshInfo = !initialAnime.initialized
@@ -575,7 +583,9 @@ class AnimeScreenModel(
                 }
             }
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
-            fetchSuggestions(initialAnime)
+            if (initialAnime.initialized) {
+                fetchSuggestions(initialAnime)
+            }
         }
     }
 
@@ -620,15 +630,34 @@ class AnimeScreenModel(
 
         private val _suggestionsUpdateFlow = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 1)
         val suggestionsUpdateFlow = _suggestionsUpdateFlow.asSharedFlow()
+
+        private val _fetchTriggerFlow = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 1)
+        val fetchTriggerFlow = _fetchTriggerFlow.asSharedFlow()
+
+        fun triggerFetch(animeId: Long) {
+            _fetchTriggerFlow.tryEmit(animeId)
+        }
     }
 
-    private fun fetchSuggestions(anime: Anime) {
+    private fun fetchSuggestions(anime: Anime, manualFetch: Boolean = false) {
         val now = System.currentTimeMillis()
         val cached = suggestionsCache.get(anime.id)
         if (cached != null && (now - cached.timestamp) < CACHE_TTL) {
             updateSuccessState { it.copySuccess(suggestionSections = cached.sections, isSuggestionsLoading = false) }
             return
         }
+
+        if (!manualFetch) {
+            val showSuggestions = sourcePreferences.relatedAnimeShowSource().get()
+            val expandSuggestions = sourcePreferences.relatedAnimeExpand().get()
+            val inOverflow = sourcePreferences.relatedAnimeInOverflow().get()
+
+            if (!showSuggestions || !expandSuggestions || inOverflow) {
+                updateSuccessState { it.copySuccess(isSuggestionsLoading = false) }
+                return
+            }
+        }
+
         updateSuccessState { it.copySuccess(isSuggestionsLoading = true) }
 
         fetchSuggestionsJob?.cancel()
@@ -769,6 +798,10 @@ class AnimeScreenModel(
 
                         // 4. Smart Recommendations (Parallel Tag Search)
                         launch {
+                            if (!sourcePreferences.relatedAnimeShowSmart().get()) {
+                                updateSection(SuggestionSection.Type.Tag, emptyList())
+                                return@launch
+                            }
                             kotlinx.coroutines.withTimeoutOrNull(15000L) {
                                 kotlinx.coroutines.coroutineScope {
                                     val tags = anime.genre?.take(3) ?: emptyList()
@@ -1538,6 +1571,10 @@ class AnimeScreenModel(
 
     fun toggleDiscoveryExpansion() {
         updateSuccessState { it.copySuccess(discoveryExpanded = !it.discoveryExpanded) }
+    }
+
+    fun triggerFetchSuggestions() {
+        successState?.let { fetchSuggestions(it.anime, manualFetch = true) }
     }
 
     fun dismissDialog() = updateSuccessState { it.copySuccess(dialog = null) }
