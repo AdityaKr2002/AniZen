@@ -46,6 +46,10 @@ class PlayerPreferences(
     fun playerTimeToDisappear() = preferenceStore.getInt("pref_player_time_to_disappear", 4000)
     fun panelOpacity() = preferenceStore.getInt("pref_panel_opacity", 60)
 
+    fun showDoubleTapOvals() = preferenceStore.getBoolean("pref_show_double_tap_ovals", true)
+    fun showSeekIcon() = preferenceStore.getBoolean("pref_show_seek_icon", true)
+    fun showSeekTimeWhileSeeking() = preferenceStore.getBoolean("pref_show_seek_time_while_seeking", true)
+
     // Skip intro button
 
     fun enableSkipIntro() = preferenceStore.getBoolean("pref_enable_skip_intro", true)

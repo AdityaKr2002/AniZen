@@ -40,11 +40,12 @@ object PlayerSettingsGesturesScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val gesturePreferences = remember { Injekt.get<GesturePreferences>() }
+        val playerPreferences = remember { Injekt.get<eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences>() }
 
         return listOf(
             getSlidersGroup(gesturePreferences = gesturePreferences),
             getSeekingGroup(gesturePreferences = gesturePreferences),
-            getDoubleTapGroup(gesturePreferences = gesturePreferences),
+            getDoubleTapGroup(gesturePreferences = gesturePreferences, playerPreferences = playerPreferences),
             getMediaControlsGroup(gesturePreferences = gesturePreferences),
         )
     }
@@ -53,6 +54,7 @@ object PlayerSettingsGesturesScreen : SearchableSettings {
     private fun getSlidersGroup(gesturePreferences: GesturePreferences): Preference.PreferenceGroup {
         val enableVolumeBrightnessGestures = gesturePreferences.gestureVolumeBrightness()
         val swapVol = gesturePreferences.swapVolumeBrightness()
+        val videoZoomGesture = gesturePreferences.gestureVideoZoom()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_player_sliders),
@@ -64,6 +66,11 @@ object PlayerSettingsGesturesScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     pref = swapVol,
                     title = stringResource(MR.strings.pref_controls_swap_vol_brightness),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = videoZoomGesture,
+                    title = stringResource(MR.strings.pref_video_zoom_gesture),
+                    subtitle = stringResource(MR.strings.pref_video_zoom_gesture_summary),
                 ),
             ),
         )
@@ -128,14 +135,33 @@ object PlayerSettingsGesturesScreen : SearchableSettings {
     }
 
     @Composable
-    private fun getDoubleTapGroup(gesturePreferences: GesturePreferences): Preference.PreferenceGroup {
+    private fun getDoubleTapGroup(
+        gesturePreferences: GesturePreferences,
+        playerPreferences: eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+    ): Preference.PreferenceGroup {
         val leftDoubleTap = gesturePreferences.leftDoubleTapGesture()
         val centerDoubleTap = gesturePreferences.centerDoubleTapGesture()
         val rightDoubleTap = gesturePreferences.rightDoubleTapGesture()
 
+        val showDoubleTapOvals = playerPreferences.showDoubleTapOvals()
+        val showSeekIcon = playerPreferences.showSeekIcon()
+        val showSeekTimeWhileSeeking = playerPreferences.showSeekTimeWhileSeeking()
+
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_double_tap),
             preferenceItems = persistentListOf(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = showDoubleTapOvals,
+                    title = stringResource(MR.strings.pref_show_double_tap_ovals),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = showSeekIcon,
+                    title = stringResource(MR.strings.pref_show_seek_icon),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = showSeekTimeWhileSeeking,
+                    title = stringResource(MR.strings.pref_show_seek_time_while_seeking),
+                ),
                 Preference.PreferenceItem.ListPreference(
                     pref = leftDoubleTap,
                     title = stringResource(MR.strings.pref_left_double_tap),
