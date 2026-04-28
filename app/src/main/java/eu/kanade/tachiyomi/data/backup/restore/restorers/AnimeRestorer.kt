@@ -244,6 +244,8 @@ class AnimeRestorer(
                     episode.sourceOrder,
                     episode.dateFetch,
                     episode.dateUpload,
+                    episode.summary,
+                    episode.previewUrl,
                     episode.version,
                 )
             }
@@ -269,6 +271,8 @@ class AnimeRestorer(
                     sourceOrder = null,
                     dateFetch = null,
                     dateUpload = null,
+                    summary = episode.summary,
+                    previewUrl = episode.previewUrl,
                     episodeId = episode.id,
                     version = episode.version,
                     isSyncing = 0,
