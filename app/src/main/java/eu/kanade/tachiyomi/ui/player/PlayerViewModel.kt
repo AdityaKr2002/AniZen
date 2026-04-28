@@ -1732,9 +1732,10 @@ class PlayerViewModel @JvmOverloads constructor(
         val preloadMode = playerPreferences.preloadMode().get()
         val performanceProfile = decoderPreferences.performanceProfile().get()
         val canPreloadPerformance = when (performanceProfile) {
-            PerformanceProfile.HighPerformance -> true
-            PerformanceProfile.LowPower -> false
-            PerformanceProfile.Automatic -> DeviceTierManager.getTier(activity) != DeviceTierManager.Tier.LOW
+            PlayerEfficiency.MaxPerformance -> true
+            PlayerEfficiency.PowerSaver -> false
+            PlayerEfficiency.Balanced -> true
+            PlayerEfficiency.Automatic -> DeviceTierManager.getTier(activity) != DeviceTierManager.Tier.LOW
         }
 
         // Hierarchy: PreloadMode (Explicit Intent) > PerformanceProfile (Global) > Tier (Default)

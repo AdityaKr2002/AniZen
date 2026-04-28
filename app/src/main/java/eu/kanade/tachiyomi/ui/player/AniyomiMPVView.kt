@@ -131,15 +131,16 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     fun applyPlaybackStrategy() {
         val performanceProfile = decoderPreferences.performanceProfile().get()
         val tier = when (performanceProfile) {
-            PerformanceProfile.HighPerformance -> DeviceTierManager.Tier.HIGH
-            PerformanceProfile.LowPower -> DeviceTierManager.Tier.LOW
+            PlayerEfficiency.MaxPerformance -> DeviceTierManager.Tier.HIGH
+            PlayerEfficiency.Balanced -> DeviceTierManager.Tier.MID
+            PlayerEfficiency.PowerSaver -> DeviceTierManager.Tier.LOW
             else -> DeviceTierManager.getTier(context)
         }
 
         val (maxMb, maxBackMb, readahead) = when (tier) {
-            DeviceTierManager.Tier.LOW -> Triple(128, 32, 1800)
-            DeviceTierManager.Tier.MID -> Triple(192, 64, 3600)
-            DeviceTierManager.Tier.HIGH -> Triple(256, 128, 7200)
+            DeviceTierManager.Tier.LOW -> Triple(64, 32, 60)
+            DeviceTierManager.Tier.MID -> Triple(128, 64, 120)
+            DeviceTierManager.Tier.HIGH -> Triple(192, 128, 180)
         }
 
         currentMaxBytes = maxMb * 1024 * 1024L
@@ -210,22 +211,15 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
-        val refreshRate = if (smoothMotionEnabled && interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
-            interpolationFPSLimit.toFloat()
-        } else {
-            displayRefreshRate
-        }
-
-        if (refreshRate != displayRefreshRate) {
+        if (smoothMotionEnabled && interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
             context.findActivity()?.window?.let { window ->
                 val params = window.attributes
-                params.preferredRefreshRate = refreshRate
+                params.preferredRefreshRate = interpolationFPSLimit.toFloat()
                 window.attributes = params
             }
+            MPVLib.setOptionString("display-fps", interpolationFPSLimit.toString())
+            MPVLib.setOptionString("override-display-fps", interpolationFPSLimit.toString())
         }
-
-        MPVLib.setOptionString("display-fps", refreshRate.toString())
-        MPVLib.setOptionString("override-display-fps", refreshRate.toString())
 
         if (decoderPreferences.highQualityScaling().get()) {
             MPVLib.setOptionString("scale", "ewa_lanczossharp")
