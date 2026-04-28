@@ -1210,6 +1210,7 @@ private fun EpisodeItemWrapper(
                 summary = item.episode.summary.takeIf { showEpisodeSummary },
                 previewUrl = item.episode.previewUrl.takeIf { showEpisodeThumbnail },
                 selected = item.selected,
+                isAnyEpisodeSelected = isAnyEpisodeSelected,
                 downloadIndicatorEnabled = !isAnyEpisodeSelected && !anime.isLocal(),
                 downloadStateProvider = { item.downloadState },
                 downloadProgressProvider = { item.downloadProgress },
