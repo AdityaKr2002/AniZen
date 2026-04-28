@@ -490,9 +490,9 @@ class AnimeScreenModel(
             episodeToSeason = episodeToSeason,
             showEpisodeSummary = showEpisodeSummary,
             showEpisodeThumbnail = showEpisodeThumbnail,
-            )
-            }
-            }
+        )
+    }
+
     fun onSeasonSelected(season: String?) {
         updateSuccessState { it.copySuccess(selectedSeason = season) }
         if (season == null) {
@@ -1713,7 +1713,8 @@ class AnimeScreenModel(
             val episodeToSeason: Map<Long, String> = emptyMap(),
             val showEpisodeSummary: Boolean = true,
             val showEpisodeThumbnail: Boolean = true,
-            ) : State {            companion object {
+        ) : State {
+            companion object {
                 fun create(
                     anime: Anime,
                     source: Source,
