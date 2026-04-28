@@ -20,6 +20,8 @@ object EpisodeMapper {
         sourceOrder: Long,
         dateFetch: Long,
         dateUpload: Long,
+        summary: String?,
+        previewUrl: String?,
         lastModifiedAt: Long,
         version: Long,
         @Suppress("UNUSED_PARAMETER")
@@ -41,6 +43,8 @@ object EpisodeMapper {
         dateUpload = dateUpload,
         episodeNumber = episodeNumber,
         scanlator = scanlator,
+        summary = summary,
+        previewUrl = previewUrl,
         lastModifiedAt = lastModifiedAt,
         version = version,
     )

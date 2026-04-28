@@ -19,6 +19,8 @@ data class Episode(
     val dateUpload: Long,
     val episodeNumber: Double,
     val scanlator: String?,
+    val summary: String?,
+    val previewUrl: String?,
     val lastModifiedAt: Long,
     val version: Long,
 ) {
@@ -32,6 +34,8 @@ data class Episode(
             dateUpload = other.dateUpload,
             episodeNumber = other.episodeNumber,
             scanlator = other.scanlator?.ifBlank { null },
+            summary = other.summary?.ifBlank { null },
+            previewUrl = other.previewUrl?.ifBlank { null },
         )
     }
 
@@ -53,6 +57,8 @@ data class Episode(
             dateUpload = -1,
             episodeNumber = -1.0,
             scanlator = null,
+            summary = null,
+            previewUrl = null,
             lastModifiedAt = 0,
             version = 1,
         )

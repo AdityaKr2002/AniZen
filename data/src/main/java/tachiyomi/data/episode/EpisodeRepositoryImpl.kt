@@ -33,6 +33,8 @@ class EpisodeRepositoryImpl(
                         episode.sourceOrder,
                         episode.dateFetch,
                         episode.dateUpload,
+                        episode.summary,
+                        episode.previewUrl,
                         episode.version,
                     )
                     val lastInsertId = episodesQueries.selectLastInsertedRowId().executeAsOne()
@@ -72,6 +74,8 @@ class EpisodeRepositoryImpl(
                     sourceOrder = episodeUpdate.sourceOrder,
                     dateFetch = episodeUpdate.dateFetch,
                     dateUpload = episodeUpdate.dateUpload,
+                    summary = episodeUpdate.summary,
+                    previewUrl = episodeUpdate.previewUrl,
                     episodeId = episodeUpdate.id,
                     version = episodeUpdate.version,
                     isSyncing = 0,

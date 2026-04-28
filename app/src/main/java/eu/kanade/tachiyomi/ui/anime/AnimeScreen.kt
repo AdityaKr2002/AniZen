@@ -414,6 +414,8 @@ class AnimeScreen(
                         onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
                         onSortModeChanged = screenModel::setSorting,
                         onDisplayModeChanged = screenModel::setDisplayMode,
+                        onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
+                        onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
                         onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
                     )
                 }

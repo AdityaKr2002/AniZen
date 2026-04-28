@@ -131,6 +131,8 @@ class SyncEpisodesWithSource(
                         episodeNumber = episode.episodeNumber,
                         scanlator = episode.scanlator,
                         sourceOrder = episode.sourceOrder,
+                        summary = episode.summary,
+                        previewUrl = episode.previewUrl,
                     )
                     if (episode.dateUpload != 0L) {
                         toChangeEpisode = toChangeEpisode.copy(dateUpload = episode.dateUpload)

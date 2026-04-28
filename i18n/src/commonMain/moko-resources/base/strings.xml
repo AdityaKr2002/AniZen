@@ -1625,4 +1625,6 @@
     <string name="pref_show_bottom_bar_labels">Always show nav labels</string>
 
     <string name="feed">Feed</string>
+    <string name="pref_show_episode_summary">Show episode summary</string>
+    <string name="pref_show_episode_thumbnail">Show episode thumbnail</string>
 </resources>

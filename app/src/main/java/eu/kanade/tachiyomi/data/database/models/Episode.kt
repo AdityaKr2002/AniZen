@@ -57,6 +57,8 @@ fun Episode.toDomainEpisode(): DomainEpisode? {
         dateUpload = date_upload,
         episodeNumber = episode_number.toDouble(),
         scanlator = scanlator,
+        summary = summary,
+        previewUrl = preview_url,
         lastModifiedAt = last_modified,
         version = version,
     )

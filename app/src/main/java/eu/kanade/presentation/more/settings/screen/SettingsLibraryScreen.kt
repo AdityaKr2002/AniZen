@@ -267,6 +267,14 @@ object SettingsLibraryScreen : SearchableSettings {
                     title = stringResource(MR.strings.pref_sync_manga_on_add),
                     subtitle = stringResource(MR.strings.pref_sync_manga_on_add_description),
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = libraryPreferences.showEpisodeSummary(),
+                    title = stringResource(MR.strings.pref_show_episode_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = libraryPreferences.showEpisodeThumbnail(),
+                    title = stringResource(MR.strings.pref_show_episode_thumbnail),
+                ),
                 Preference.PreferenceItem.ListPreference(
                     pref = libraryPreferences.seasonGroupingMode(),
                     title = "Season grouping",
