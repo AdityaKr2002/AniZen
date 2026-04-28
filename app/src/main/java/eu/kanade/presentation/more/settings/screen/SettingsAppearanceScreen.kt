@@ -221,7 +221,6 @@ object SettingsAppearanceScreen : SearchableSettings {
                         ContainerStyle.LIBRARY to "Library",
                         ContainerStyle.UPDATES to "Updates",
                         ContainerStyle.HISTORY to "History",
-                        ContainerStyle.DETAILS to "Details (Seasons)",
                         ContainerStyle.SETTINGS to "Settings",
                         ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
                     ).toImmutableMap(),
@@ -229,7 +228,7 @@ object SettingsAppearanceScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.showSeasonsSection(),
                     title = "Show seasons section",
-                    subtitle = "Show series seasons in anime details",
+                    subtitle = stringResource(tachiyomi.i18n.kmk.KMR.strings.pref_show_seasons_section_warning),
                 ),
                 Preference.PreferenceItem.SliderPreference(
                     value = animeItemSpacing,

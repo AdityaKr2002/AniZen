@@ -46,7 +46,7 @@ fun AnimeSeasonSection(
 
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsState()
-    val useContainer = remember(containerStyles) { ContainerStyle.DETAILS in containerStyles }
+    val useContainer = true
 
     // Intuitive Sorting: Seasons/Movies first (positive/0/-2), then OVAs/ONAs/Specials
     val sortedSeasons = remember(seasons) {

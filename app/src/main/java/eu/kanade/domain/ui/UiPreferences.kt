@@ -176,7 +176,7 @@ class UiPreferences(
 
     fun autoExpandAnimeDescription() = preferenceStore.getBoolean("pref_auto_expand_anime_description", false)
 
-    fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", true)
+    fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", false)
 
     fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 15)
 
@@ -211,7 +211,6 @@ class UiPreferences(
             ContainerStyle.LIBRARY,
             ContainerStyle.UPDATES,
             ContainerStyle.HISTORY,
-            ContainerStyle.DETAILS,
             ContainerStyle.SETTINGS,
             ContainerStyle.BROWSE,
         ),

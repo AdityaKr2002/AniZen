@@ -195,6 +195,10 @@ fun AnimeScreen(
             .distinctBy { it.id to it.url }.take(15)
     }
 
+    val onSuggestionsClicked = {
+        navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id))
+    }
+
     if (!isTabletUi) {
         AnimeScreenSmallImpl(
             state = state,
@@ -228,6 +232,7 @@ fun AnimeScreen(
             onEditCategoryClicked = onEditCategoryClicked,
             onEditNotesClicked = onEditNotesClicked,
             onMigrateClicked = onMigrateClicked,
+            onSuggestionsClicked = onSuggestionsClicked,
             changeAnimeSkipIntro = changeAnimeSkipIntro,
             onEditInfoClicked = onEditInfoClicked,
             onClearAnimeClicked = onClearAnimeClicked,
@@ -281,6 +286,7 @@ fun AnimeScreen(
             onEditNotesClicked = onEditNotesClicked,
             changeAnimeSkipIntro = changeAnimeSkipIntro,
             onMigrateClicked = onMigrateClicked,
+            onSuggestionsClicked = onSuggestionsClicked,
             onEditInfoClicked = onEditInfoClicked,
             onClearAnimeClicked = onClearAnimeClicked,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
@@ -299,8 +305,7 @@ fun AnimeScreen(
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             combinedItems = combinedItems,
         )
-    }
-}
+    }}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -335,6 +340,7 @@ private fun AnimeScreenSmallImpl(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
+    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
@@ -390,6 +396,8 @@ private fun AnimeScreenSmallImpl(
     }
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value
+    val expandSuggestions = sourcePreferences.relatedAnimeExpand().collectAsState().value
+    val suggestionsInOverflow = sourcePreferences.relatedAnimeInOverflow().collectAsState().value
 
     val isAnySelected by remember {
         derivedStateOf { episodes.fastAny { it.selected } }
@@ -470,6 +478,7 @@ private fun AnimeScreenSmallImpl(
                         onClickEditCategory = onEditCategoryClicked,
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
+                        onClickSuggestions = onSuggestionsClicked.takeIf { suggestionsInOverflow },
                         onClickEditNotes = onEditNotesClicked,
                         onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
                         onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
@@ -587,7 +596,7 @@ private fun AnimeScreenSmallImpl(
                                 )
                             }
 
-                            if (showSuggestions) {
+                            if (showSuggestions && !suggestionsInOverflow) {
                                 item(key = "discovery-section-small", contentType = "discovery") {
                                     val navigator = LocalNavigator.currentOrThrow
                                     Surface(
@@ -603,38 +612,40 @@ private fun AnimeScreenSmallImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    modifier = Modifier.heightIn(min = 180.dp),
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    userScrollEnabled = false,
-                                                ) {
-                                                    items(5, key = { "skeleton-small-$it" }) {
-                                                        SkeletonAnimeCard()
+                                            if (expandSuggestions) {
+                                                if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        modifier = Modifier.heightIn(min = 180.dp),
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        userScrollEnabled = false,
+                                                    ) {
+                                                        items(5, key = { "skeleton-small-$it" }) {
+                                                            SkeletonAnimeCard()
+                                                        }
                                                     }
-                                                }
-                                            } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
-                                                Text(
-                                                    text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            } else {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    modifier = Modifier.heightIn(min = 180.dp),
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {
-                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}" },
-                                                    ) { _, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(
-                                                            anime = anime,
-                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                        )
+                                                } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
+                                                    Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        modifier = Modifier.heightIn(min = 180.dp),
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}" },
+                                                        ) { _, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -735,6 +746,7 @@ fun AnimeScreenLargeImpl(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
+    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
@@ -787,6 +799,8 @@ fun AnimeScreenLargeImpl(
     }
 
     val showSuggestions = sourcePreferences.relatedAnimeShowSource().collectAsState().value
+    val expandSuggestions = sourcePreferences.relatedAnimeExpand().collectAsState().value
+    val suggestionsInOverflow = sourcePreferences.relatedAnimeInOverflow().collectAsState().value
 
     val isAnySelected by remember {
         derivedStateOf { episodes.fastAny { it.selected } }
@@ -876,6 +890,7 @@ fun AnimeScreenLargeImpl(
                         onClickEditCategory = onEditCategoryClicked,
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
+                        onClickSuggestions = onSuggestionsClicked.takeIf { suggestionsInOverflow },
                         onClickEditNotes = onEditNotesClicked,
                         onClickSettings = onSettingsClicked,
                         onClickMerge = onMergeClicked,
@@ -986,7 +1001,7 @@ fun AnimeScreenLargeImpl(
                                     onCopyTagToClipboard = onCopyTagToClipboard,
                                 )
 
-                                if (showSuggestions) {
+                                if (showSuggestions && !suggestionsInOverflow) {
                                     val navigator = LocalNavigator.currentOrThrow
                                     Surface(
                                         modifier = Modifier
@@ -1001,37 +1016,40 @@ fun AnimeScreenLargeImpl(
                                                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
                                             )
 
-                                            if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    modifier = Modifier.heightIn(min = 180.dp),
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    userScrollEnabled = false,
-                                                ) {
-                                                    items(5, key = { "skeleton-large-$it" }) {
-                                                        SkeletonAnimeCard()
+                                            if (expandSuggestions) {
+                                                if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        modifier = Modifier.heightIn(min = 180.dp),
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        userScrollEnabled = false,
+                                                    ) {
+                                                        items(5, key = { "skeleton-large-$it" }) {
+                                                            SkeletonAnimeCard()
+                                                        }
                                                     }
-                                                }
-                                            } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
-                                                Text(
-                                                    text = "No suggestions found for this entry",
-                                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            } else {
-                                                androidx.compose.foundation.lazy.LazyRow(
-                                                    modifier = Modifier.heightIn(min = 180.dp),
-                                                    contentPadding = PaddingValues(horizontal = 12.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                ) {                                                    itemsIndexed(
-                                                        items = combinedItems,
-                                                        key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${anime.id}" },
-                                                    ) { _, anime: tachiyomi.domain.anime.model.Anime ->
-                                                        SuggestionItem(
-                                                            anime = anime,
-                                                            onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
-                                                        )
+                                                } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
+                                                    Text(
+                                                        text = "No suggestions found for this entry",
+                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                } else {
+                                                    androidx.compose.foundation.lazy.LazyRow(
+                                                        modifier = Modifier.heightIn(min = 180.dp),
+                                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        itemsIndexed(
+                                                            items = combinedItems,
+                                                            key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-large-${anime.id}" },
+                                                        ) { _, anime: tachiyomi.domain.anime.model.Anime ->
+                                                            SuggestionItem(
+                                                                anime = anime,
+                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }

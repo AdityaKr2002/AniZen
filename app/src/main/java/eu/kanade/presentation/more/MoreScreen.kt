@@ -80,6 +80,12 @@ import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+
+import eu.kanade.domain.ui.ContainerStyle
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.more.components.MoreItem
 import eu.kanade.presentation.more.components.MoreSection
 
