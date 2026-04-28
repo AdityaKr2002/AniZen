@@ -9,9 +9,11 @@ import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.anime.interactor.FetchInterval
+import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.GetAnimeByUrlAndSourceId
 import tachiyomi.domain.anime.interactor.SetCustomAnimeInfo
 import tachiyomi.domain.anime.model.Anime
+import tachiyomi.domain.anime.model.AnimeUpdate
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.episode.interactor.GetEpisodesByAnimeId
 import tachiyomi.domain.episode.model.Episode
@@ -29,9 +31,10 @@ class AnimeRestorer(
 
     private val handler: DatabaseHandler = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
+    private val getAnime: GetAnime = Injekt.get(),
     private val getAnimeByUrlAndSourceId: GetAnimeByUrlAndSourceId = Injekt.get(),
     private val getEpisodesByAnimeId: GetEpisodesByAnimeId = Injekt.get(),
-    private val updateAnime: UpdateAnime = Injekt.get(),
+    private val updateAnimeInteractor: UpdateAnime = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
     fetchInterval: FetchInterval = Injekt.get(),
@@ -132,29 +135,29 @@ class AnimeRestorer(
                 artist = anime.artist,
                 author = anime.author,
                 description = anime.description,
-                genre = anime.genre?.joinToString(separator = ", "),
+                genre = anime.genre,
                 title = anime.title,
                 status = anime.status,
                 thumbnailUrl = anime.thumbnailUrl,
                 favorite = anime.favorite,
                 lastUpdate = anime.lastUpdate,
-                nextUpdate = null,
-                calculateInterval = null,
+                nextUpdate = anime.nextUpdate,
                 initialized = anime.initialized,
                 viewer = anime.viewerFlags,
                 episodeFlags = anime.episodeFlags,
                 coverLastModified = anime.coverLastModified,
                 dateAdded = anime.dateAdded,
-                animeId = anime.id,
-                updateStrategy = anime.updateStrategy.let(UpdateStrategyColumnAdapter::encode),
+                updateStrategy = UpdateStrategyColumnAdapter.encode(anime.updateStrategy),
+                calculateInterval = anime.fetchInterval.toLong(),
                 version = anime.version,
-                isSyncing = 1,
+                isSyncing = 1L,
                 parentId = anime.parentId,
                 seasonNumber = anime.seasonNumber,
                 seasonOrder = anime.seasonOrder,
+                animeId = anime.id,
             )
         }
-        return anime
+        return getAnime.await(anime.id)!!
     }
 
     private suspend fun restoreNewAnime(
@@ -229,24 +232,24 @@ class AnimeRestorer(
         handler.await(true) {
             episodes.forEach { episode ->
                 episodesQueries.insert(
-                    episode.animeId,
-                    episode.url,
-                    episode.name,
-                    episode.scanlator,
-                    episode.seen,
-                    episode.bookmark,
+                    animeId = episode.animeId,
+                    url = episode.url,
+                    name = episode.name,
+                    scanlator = episode.scanlator,
+                    seen = episode.seen,
+                    bookmark = episode.bookmark,
                     // AM (FILLERMARK) -->
-                    episode.fillermark,
+                    fillermark = episode.fillermark,
                     // <-- AM (FILLERMARK)
-                    episode.lastSecondSeen,
-                    episode.totalSeconds,
-                    episode.episodeNumber,
-                    episode.sourceOrder,
-                    episode.dateFetch,
-                    episode.dateUpload,
-                    episode.summary,
-                    episode.previewUrl,
-                    episode.version,
+                    lastSecondSeen = episode.lastSecondSeen,
+                    totalSeconds = episode.totalSeconds,
+                    episodeNumber = episode.episodeNumber,
+                    sourceOrder = episode.sourceOrder,
+                    dateFetch = episode.dateFetch,
+                    dateUpload = episode.dateUpload,
+                    summary = episode.summary,
+                    previewUrl = episode.previewUrl,
+                    version = episode.version,
                 )
             }
         }
@@ -275,7 +278,7 @@ class AnimeRestorer(
                     previewUrl = episode.previewUrl,
                     episodeId = episode.id,
                     version = episode.version,
-                    isSyncing = 0,
+                    isSyncing = 0L,
                 )
             }
         }
@@ -300,14 +303,14 @@ class AnimeRestorer(
                 thumbnailUrl = anime.thumbnailUrl,
                 favorite = anime.favorite,
                 lastUpdate = anime.lastUpdate,
-                nextUpdate = 0L,
-                calculateInterval = 0L,
+                nextUpdate = anime.nextUpdate,
                 initialized = anime.initialized,
                 viewerFlags = anime.viewerFlags,
                 episodeFlags = anime.episodeFlags,
                 coverLastModified = anime.coverLastModified,
                 dateAdded = anime.dateAdded,
                 updateStrategy = anime.updateStrategy,
+                calculateInterval = anime.fetchInterval.toLong(),
                 version = anime.version,
                 parentId = anime.parentId,
                 seasonNumber = anime.seasonNumber,
@@ -329,7 +332,7 @@ class AnimeRestorer(
         restoreEpisodes(anime, episodes)
         restoreTracking(anime, tracks)
         restoreHistory(anime, history)
-        updateAnime.awaitUpdateFetchInterval(anime, now, currentFetchWindow)
+        updateAnimeInteractor.awaitUpdateFetchInterval(anime, now, currentFetchWindow)
         return anime
     }
 
