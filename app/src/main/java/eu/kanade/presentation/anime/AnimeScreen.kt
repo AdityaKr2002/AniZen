@@ -159,7 +159,6 @@ fun AnimeScreen(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
-    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
     onClearAnimeClicked: () -> Unit,
