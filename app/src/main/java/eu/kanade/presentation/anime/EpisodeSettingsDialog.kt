@@ -221,7 +221,7 @@ private fun ColumnScope.DisplayPage(
             modifier = Modifier.padding(vertical = 8.dp),
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
         )
-...
+
         Text(
             text = "Season grouping",
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -239,7 +239,7 @@ private fun ColumnScope.DisplayPage(
                 label = label,
                 selected = (anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK) == flag,
                 onClick = {
-                    onItemSelected(flag or 0x10000000L) // Use a high bit to indicate season grouping change
+                    onDisplayModeChanged(flag or 0x10000000L) // Use a high bit to indicate season grouping change
                 },
             )
         }
