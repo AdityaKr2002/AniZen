@@ -120,7 +120,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     pref = performanceProfile,
                     title = stringResource(MR.strings.pref_performance_profile),
                     subtitle = stringResource(MR.strings.pref_performance_profile_summary),
-                    entries = eu.kanade.tachiyomi.ui.player.PerformanceProfile.entries.associateWith {
+                    entries = eu.kanade.tachiyomi.ui.player.PlayerEfficiency.entries.associateWith {
                         stringResource(it.titleRes)
                     }.toPersistentMap(),
                 ),

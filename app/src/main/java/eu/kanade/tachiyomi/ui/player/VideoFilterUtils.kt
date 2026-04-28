@@ -64,38 +64,39 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
-    val lavfiList = mutableListOf<String>()
-
     val sharpen = decoderPreferences.sharpenFilter().get()
     val blur = decoderPreferences.blurFilter().get()
     val deband = decoderPreferences.videoDebanding().get()
     val useYuv420p = decoderPreferences.useYUV420P().get()
 
-    // If any filter requires CPU processing, or the user manually requested it, 
-    // we MUST ensure a stable pixel format inside the lavfi context.
-    if (deband == Debanding.CPU || sharpen > 0 || blur > 0 || useYuv420p) {
-        lavfiList.add("format=yuv420p")
-    }
+    val cpuFilters = mutableListOf<String>()
 
     if (deband == Debanding.CPU) {
-        lavfiList.add("deband=1:1:64:16")
+        cpuFilters.add("deband=1:1:64:16")
     }
 
     if (sharpen > 0) {
         val amount = (sharpen / 100f) * 2.0f
-        lavfiList.add("unsharp=5:5:$amount:5:5:0")
+        cpuFilters.add("unsharp=5:5:$amount:5:5:0")
     }
 
     if (blur > 0) {
         val luma = blur / 10f
         // Blur both luma and chroma planes to prevent green artifacts
-        lavfiList.add("boxblur=$luma:1:$luma:1")
+        cpuFilters.add("boxblur=$luma:1:$luma:1")
     }
 
-    return if (lavfiList.isNotEmpty()) {
-        "lavfi=[${lavfiList.joinToString(",")}]"
-    } else {
-        ""
+    return when {
+        cpuFilters.isNotEmpty() -> {
+            // If any filter requires CPU processing, we MUST ensure a stable pixel format 
+            // inside the lavfi context.
+            "lavfi=[format=yuv420p,${cpuFilters.joinToString(",")}]"
+        }
+        useYuv420p -> {
+            // Use native mpv filter instead of lavfi wrapper for better performance
+            "format=yuv420p"
+        }
+        else -> ""
     }
 }
 

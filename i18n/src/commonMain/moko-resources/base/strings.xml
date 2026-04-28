@@ -859,11 +859,12 @@
     <string name="rotation_type">Rotation</string>
     <string name="rotation_free">Free</string>
     <string name="pref_category_player_performance">Performance</string>
-    <string name="pref_performance_profile">Performance profile</string>
-    <string name="pref_performance_profile_automatic">Automatic (Recommended)</string>
-    <string name="pref_performance_profile_high">High Performance</string>
-    <string name="pref_performance_profile_low_power">Low Power / Battery Saver</string>
-    <string name="pref_performance_profile_summary">Adjusts playback cache and resources based on your device hardware.</string>
+    <string name="pref_performance_profile">Player cache</string>
+    <string name="pref_performance_profile_automatic">Auto</string>
+    <string name="pref_performance_profile_high">High</string>
+    <string name="pref_performance_profile_mid">Mid</string>
+    <string name="pref_performance_profile_low_power">Low</string>
+    <string name="pref_performance_profile_summary">Adjusts caching, preloading, and resource usage to balance speed and battery life.</string>
     <string name="pref_preload_mode">Preload next episode</string>
     <string name="pref_preload_mode_summary">Pre-fetches stream metadata for the next episode before current one finishes.</string>
     <string name="pref_preload_off">Off</string>

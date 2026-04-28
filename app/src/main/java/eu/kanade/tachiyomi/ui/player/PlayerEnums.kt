@@ -67,10 +67,11 @@ enum class VideoAspect(val titleRes: StringResource) {
     Stretch(MR.strings.video_stretch_screen),
 }
 
-enum class PerformanceProfile(val titleRes: StringResource) {
+enum class PlayerEfficiency(val titleRes: StringResource) {
     Automatic(MR.strings.pref_performance_profile_automatic),
-    HighPerformance(MR.strings.pref_performance_profile_high),
-    LowPower(MR.strings.pref_performance_profile_low_power),
+    MaxPerformance(MR.strings.pref_performance_profile_high),
+    Balanced(MR.strings.pref_performance_profile_mid),
+    PowerSaver(MR.strings.pref_performance_profile_low_power),
 }
 
 enum class PreloadState {
