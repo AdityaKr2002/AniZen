@@ -159,6 +159,7 @@ fun AnimeScreen(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
+    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
     onClearAnimeClicked: () -> Unit,
@@ -195,6 +196,10 @@ fun AnimeScreen(
             .distinctBy { it.id to it.url }.take(15)
     }
 
+    val onSuggestionsClicked = {
+        navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id))
+    }
+
     if (!isTabletUi) {
         AnimeScreenSmallImpl(
             state = state,
@@ -228,6 +233,7 @@ fun AnimeScreen(
             onEditCategoryClicked = onEditCategoryClicked,
             onEditNotesClicked = onEditNotesClicked,
             onMigrateClicked = onMigrateClicked,
+            onSuggestionsClicked = onSuggestionsClicked,
             changeAnimeSkipIntro = changeAnimeSkipIntro,
             onEditInfoClicked = onEditInfoClicked,
             onClearAnimeClicked = onClearAnimeClicked,
@@ -281,6 +287,7 @@ fun AnimeScreen(
             onEditNotesClicked = onEditNotesClicked,
             changeAnimeSkipIntro = changeAnimeSkipIntro,
             onMigrateClicked = onMigrateClicked,
+            onSuggestionsClicked = onSuggestionsClicked,
             onEditInfoClicked = onEditInfoClicked,
             onClearAnimeClicked = onClearAnimeClicked,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
@@ -299,8 +306,7 @@ fun AnimeScreen(
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             combinedItems = combinedItems,
         )
-    }
-}
+    }}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -335,6 +341,7 @@ private fun AnimeScreenSmallImpl(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
+    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
@@ -472,6 +479,7 @@ private fun AnimeScreenSmallImpl(
                         onClickEditCategory = onEditCategoryClicked,
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
+                        onClickSuggestions = onSuggestionsClicked.takeIf { suggestionsInOverflow },
                         onClickEditNotes = onEditNotesClicked,
                         onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
                         onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
@@ -739,6 +747,7 @@ fun AnimeScreenLargeImpl(
     onEditCategoryClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
     onMigrateClicked: (() -> Unit)?,
+    onSuggestionsClicked: () -> Unit,
     changeAnimeSkipIntro: (() -> Unit)?,
     onSettingsClicked: (() -> Unit)?,
     onEditInfoClicked: () -> Unit,
@@ -882,6 +891,7 @@ fun AnimeScreenLargeImpl(
                         onClickEditCategory = onEditCategoryClicked,
                         onClickRefresh = onRefresh,
                         onClickMigrate = onMigrateClicked,
+                        onClickSuggestions = onSuggestionsClicked.takeIf { suggestionsInOverflow },
                         onClickEditNotes = onEditNotesClicked,
                         onClickSettings = onSettingsClicked,
                         onClickMerge = onMergeClicked,

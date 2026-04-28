@@ -57,6 +57,7 @@ fun AnimeToolbar(
     onClickMigrate: (() -> Unit)?,
     onClickEditNotes: () -> Unit,
     onClickSettings: (() -> Unit)?,
+    onClickSuggestions: (() -> Unit)?,
     // SY -->
     onClickEditInfo: (() -> Unit)?,
     onClickClearAnime: (() -> Unit)?,
@@ -209,6 +210,14 @@ fun AnimeToolbar(
                                         AppBar.OverflowAction(
                                             title = stringResource(MR.strings.action_clear_anime),
                                             onClick = onClickClearAnime,
+                                        ),
+                                    )
+                                }
+                                if (onClickSuggestions != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(tachiyomi.i18n.sy.SYMR.strings.az_recommends),
+                                            onClick = onClickSuggestions,
                                         ),
                                     )
                                 }
