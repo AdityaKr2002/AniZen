@@ -94,7 +94,6 @@ fun AnimeEpisodeListItem(
     // <-- AM (FILE_SIZE)
     modifier: Modifier = Modifier,
 ) {
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val start = getSwipeAction(
         action = episodeSwipeStartAction,
         seen = seen,
@@ -132,9 +131,8 @@ fun AnimeEpisodeListItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 12.dp)
-                .animateContentSize(),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.Top,
         ) {
             if (previewUrl.isNullOrBlank() && summary.isNullOrBlank()) {
                 SimpleEpisodeListItemImpl(
@@ -157,7 +155,7 @@ fun AnimeEpisodeListItem(
             Column {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                 ) {
                     EpisodeThumbnail(previewUrl = previewUrl)
 
@@ -281,18 +279,14 @@ private fun EpisodeThumbnail(
     previewUrl: String?,
 ) {
     val targetWidth = ((LocalConfiguration.current.screenWidthDp * 0.4f).coerceAtMost(250f))
-    if (previewUrl != null) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(previewUrl)
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
+    if (!previewUrl.isNullOrBlank()) {
+        AnimeCover.Square(
+            data = previewUrl,
             modifier = Modifier
                 .width(targetWidth.dp)
-                .padding(end = 8.dp)
-                .clip(MaterialTheme.shapes.small),
-            contentScale = ContentScale.Crop,
+                .padding(end = 8.dp),
+            ratio = 16f / 9f,
+            shape = MaterialTheme.shapes.small,
         )
     }
 }
@@ -304,7 +298,7 @@ private fun EpisodeSummary(
     summary: String?,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    if (summary != null) {
+    if (!summary.isNullOrBlank()) {
         Text(
             text = summary,
             style = MaterialTheme.typography.labelMedium,
@@ -318,6 +312,7 @@ private fun EpisodeSummary(
                 alpha = if (seen) DISABLED_ALPHA else SECONDARY_ALPHA,
             ),
             modifier = Modifier.padding(bottom = 4.dp, start = 4.dp, end = 4.dp)
+                .animateContentSize()
                 .clickable(
                     enabled = !isAnyEpisodeSelected,
                     onClick = { expanded = !expanded },
