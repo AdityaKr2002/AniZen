@@ -1,0 +1,3 @@
+-- Add summary and preview_url to episodes table
+ALTER TABLE episodes ADD COLUMN summary TEXT;
+ALTER TABLE episodes ADD COLUMN preview_url TEXT;

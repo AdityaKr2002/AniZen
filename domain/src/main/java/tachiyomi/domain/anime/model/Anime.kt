@@ -156,6 +156,14 @@ data class Anime(
         return episodeFlags and EPISODE_SORT_DIR_MASK == EPISODE_SORT_DESC
     }
 
+    fun showPreviews(): Boolean {
+        return episodeFlags and EPISODE_PREVIEWS_MASK == EPISODE_SHOW_PREVIEWS
+    }
+
+    fun showSummaries(): Boolean {
+        return episodeFlags and EPISODE_SUMMARIES_MASK == EPISODE_SHOW_SUMMARIES
+    }
+
     private fun Long.removeHexZeros(zeros: Int): Long {
         val hex = 16.0
         return this.div(hex.pow(zeros)).toLong()
@@ -192,6 +200,14 @@ data class Anime(
         const val EPISODE_SORTING_ALPHABET = 0x00000300L
         const val EPISODE_SORTING_MASK = 0x00000300L
         // <-- AM (FILLERMARK)
+
+        const val EPISODE_SHOW_PREVIEWS = 0x00000000L
+        const val EPISODE_SHOW_NOT_PREVIEWS = 0x00000800L
+        const val EPISODE_PREVIEWS_MASK = 0x00000800L
+
+        const val EPISODE_SHOW_SUMMARIES = 0x00000000L
+        const val EPISODE_SHOW_NOT_SUMMARIES = 0x00001000L
+        const val EPISODE_SUMMARIES_MASK = 0x00001000L
 
         const val EPISODE_DISPLAY_NAME = 0x00000000L
         const val EPISODE_DISPLAY_NUMBER = 0x00100000L

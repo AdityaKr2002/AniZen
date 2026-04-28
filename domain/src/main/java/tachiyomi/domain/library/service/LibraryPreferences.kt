@@ -148,6 +148,10 @@ class LibraryPreferences(
 
     fun showLanguageIcon() = preferenceStore.getBoolean("display_language_icon", false)
 
+    fun showEpisodeSummary() = preferenceStore.getBoolean("display_episode_summary", true)
+
+    fun showEpisodeThumbnail() = preferenceStore.getBoolean("display_episode_thumbnail", true)
+
     fun newShowUpdatesCount() = preferenceStore.getBoolean("library_show_updates_count", true)
 
     fun newMangaUpdatesCount() = preferenceStore.getInt("library_unread_updates_count", 0)
@@ -245,6 +249,8 @@ class LibraryPreferences(
         sortEpisodeByAscendingOrDescending().set(
             if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
         )
+        showEpisodeSummary().set(anime.showSummaries())
+        showEpisodeThumbnail().set(anime.showPreviews())
     }
 
     fun autoClearChapterCache() = preferenceStore.getBoolean("auto_clear_chapter_cache", false)

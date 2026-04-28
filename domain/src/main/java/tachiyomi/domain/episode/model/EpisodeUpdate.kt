@@ -17,27 +17,31 @@ data class EpisodeUpdate(
     val dateUpload: Long? = null,
     val episodeNumber: Double? = null,
     val scanlator: String? = null,
+    val summary: String? = null,
+    val previewUrl: String? = null,
     val version: Long? = null,
 )
 
 fun Episode.toEpisodeUpdate(): EpisodeUpdate {
     return EpisodeUpdate(
-        id,
-        animeId,
-        seen,
-        bookmark,
+        id = id,
+        animeId = animeId,
+        seen = seen,
+        bookmark = bookmark,
         // AM (FILLERMARK) -->
-        fillermark,
+        fillermark = fillermark,
         // AM (FILLERMARK) <--
-        lastSecondSeen,
-        totalSeconds,
-        dateFetch,
-        sourceOrder,
-        url,
-        name,
-        dateUpload,
-        episodeNumber,
-        scanlator,
-        version,
+        lastSecondSeen = lastSecondSeen,
+        totalSeconds = totalSeconds,
+        dateFetch = dateFetch,
+        sourceOrder = sourceOrder,
+        url = url,
+        name = name,
+        dateUpload = dateUpload,
+        episodeNumber = episodeNumber,
+        scanlator = scanlator,
+        summary = summary,
+        previewUrl = previewUrl,
+        version = version,
     )
 }

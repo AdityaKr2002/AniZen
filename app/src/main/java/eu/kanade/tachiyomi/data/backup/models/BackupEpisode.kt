@@ -24,6 +24,8 @@ data class BackupEpisode(
     // episodeNumber is called number is 1.x
     @ProtoNumber(9) var episodeNumber: Float = 0F,
     @ProtoNumber(10) var sourceOrder: Long = 0,
+    @ProtoNumber(17) var summary: String? = null,
+    @ProtoNumber(18) var previewUrl: String? = null,
     @ProtoNumber(11) var lastModifiedAt: Long = 0,
     @ProtoNumber(12) var version: Long = 0,
 ) {
@@ -33,6 +35,8 @@ data class BackupEpisode(
             name = this@BackupEpisode.name,
             episodeNumber = this@BackupEpisode.episodeNumber.toDouble(),
             scanlator = this@BackupEpisode.scanlator,
+            summary = this@BackupEpisode.summary,
+            previewUrl = this@BackupEpisode.previewUrl,
             seen = this@BackupEpisode.seen,
             bookmark = this@BackupEpisode.bookmark,
             // AM (FILLERMARK) -->
@@ -66,6 +70,8 @@ val backupEpisodeMapper = {
         sourceOrder: Long,
         dateFetch: Long,
         dateUpload: Long,
+        summary: String?,
+        previewUrl: String?,
         lastModifiedAt: Long,
         version: Long,
         _: Long,
@@ -75,6 +81,8 @@ val backupEpisodeMapper = {
         name = name,
         episodeNumber = episodeNumber.toFloat(),
         scanlator = scanlator,
+        summary = summary,
+        previewUrl = previewUrl,
         seen = seen,
         bookmark = bookmark,
         // AM (FILLERMARK) -->

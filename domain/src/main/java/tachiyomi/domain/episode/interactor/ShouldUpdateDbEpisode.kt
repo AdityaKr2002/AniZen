@@ -9,6 +9,8 @@ class ShouldUpdateDbEpisode {
             dbEpisode.name != sourceEpisode.name ||
             dbEpisode.dateUpload != sourceEpisode.dateUpload ||
             dbEpisode.episodeNumber != sourceEpisode.episodeNumber ||
-            dbEpisode.sourceOrder != sourceEpisode.sourceOrder
+            dbEpisode.sourceOrder != sourceEpisode.sourceOrder ||
+            dbEpisode.summary != sourceEpisode.summary ||
+            dbEpisode.previewUrl != sourceEpisode.previewUrl
     }
 }

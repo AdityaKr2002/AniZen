@@ -252,6 +252,8 @@ class AnimeScreenModel(
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
+        showEpisodeSummary: Boolean = anime.showSummaries(),
+        showEpisodeThumbnail: Boolean = anime.showPreviews(),
     ): State.Success {
         val processedEpisodes = if (anime === this.anime && episodes === this.episodes) {
             this.processedEpisodes
@@ -486,9 +488,11 @@ class AnimeScreenModel(
             availableSeasons = sortedSeasons.toImmutableList(),
             selectedSeason = finalSelectedSeason,
             episodeToSeason = episodeToSeason,
-        )
-    }
-
+            showEpisodeSummary = showEpisodeSummary,
+            showEpisodeThumbnail = showEpisodeThumbnail,
+            )
+            }
+            }
     fun onSeasonSelected(season: String?) {
         updateSuccessState { it.copySuccess(selectedSeason = season) }
         if (season == null) {
@@ -1407,6 +1411,16 @@ class AnimeScreenModel(
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetSortingModeOrFlipOrder(anime, sort) }
     }
 
+    fun setShowEpisodeSummary(flag: Long) {
+        val anime = successState?.anime ?: return
+        screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetShowSummaries(anime, flag) }
+    }
+
+    fun setShowEpisodeThumbnail(flag: Long) {
+        val anime = successState?.anime ?: return
+        screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetShowPreviews(anime, flag) }
+    }
+
     fun setCurrentSettingsAsDefault(applyToExisting: Boolean) {
         val anime = successState?.anime ?: return
         screenModelScope.launchNonCancellable {
@@ -1421,6 +1435,8 @@ class AnimeScreenModel(
                     displayMode = anime.displayMode,
                     sortingDirection = if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
                     seasonGrouping = anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK,
+                    showPreviews = anime.episodeFlags and Anime.EPISODE_PREVIEWS_MASK,
+                    showSummaries = anime.episodeFlags and Anime.EPISODE_SUMMARIES_MASK,
                 )
             }
             snackbarHostState.showSnackbar(message = context.stringResource(MR.strings.episode_settings_updated))
@@ -1695,8 +1711,9 @@ class AnimeScreenModel(
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
             val episodeToSeason: Map<Long, String> = emptyMap(),
-        ) : State {
-            companion object {
+            val showEpisodeSummary: Boolean = true,
+            val showEpisodeThumbnail: Boolean = true,
+            ) : State {            companion object {
                 fun create(
                     anime: Anime,
                     source: Source,
@@ -1920,6 +1937,8 @@ class AnimeScreenModel(
                         availableSeasons = sortedSeasons.toImmutableList(),
                         selectedSeason = finalSelectedSeason,
                         episodeToSeason = episodeToSeason,
+                        showEpisodeSummary = anime.showSummaries(),
+                        showEpisodeThumbnail = anime.showPreviews(),
                     )
                 }
             }

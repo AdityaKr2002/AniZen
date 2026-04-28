@@ -27,6 +27,7 @@ import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.ank.AMR
+import tachiyomi.presentation.core.components.CheckboxItem
 import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.RadioItem
 import tachiyomi.presentation.core.components.SortItem
@@ -45,6 +46,8 @@ fun EpisodeSettingsDialog(
     // <-- AM (FILLERMARK)
     onSortModeChanged: (Long) -> Unit,
     onDisplayModeChanged: (Long) -> Unit,
+    onShowPreviewsEnabled: (Long) -> Unit,
+    onShowSummariesEnabled: (Long) -> Unit,
     onSetAsDefault: (applyToExistingAnime: Boolean) -> Unit,
 ) {
     var showSetAsDefaultDialog by rememberSaveable { mutableStateOf(false) }
@@ -103,8 +106,12 @@ fun EpisodeSettingsDialog(
                 2 -> {
                     DisplayPage(
                         anime = anime,
-                        displayMode = anime?.displayMode ?: 0,
-                        onItemSelected = onDisplayModeChanged,
+                        displayMode = anime?.displayMode ?: Anime.EPISODE_DISPLAY_NAME,
+                        onDisplayModeChanged = onDisplayModeChanged,
+                        showPreviews = anime?.showPreviews() ?: true,
+                        onShowPreviewsEnabled = onShowPreviewsEnabled,
+                        showSummaries = anime?.showSummaries() ?: true,
+                        onShowSummariesEnabled = onShowSummariesEnabled,
                     )
                 }
             }
@@ -173,7 +180,11 @@ private fun ColumnScope.SortPage(
 private fun ColumnScope.DisplayPage(
     anime: Anime?,
     displayMode: Long,
-    onItemSelected: (Long) -> Unit,
+    onDisplayModeChanged: (Long) -> Unit,
+    showPreviews: Boolean,
+    onShowPreviewsEnabled: (Long) -> Unit,
+    showSummaries: Boolean,
+    onShowSummariesEnabled: (Long) -> Unit,
 ) {
     listOf(
         MR.strings.show_title to Anime.EPISODE_DISPLAY_NAME,
@@ -182,16 +193,35 @@ private fun ColumnScope.DisplayPage(
         RadioItem(
             label = stringResource(titleRes),
             selected = displayMode == mode,
-            onClick = { onItemSelected(mode) },
+            onClick = { onDisplayModeChanged(mode) },
         )
     }
+
+    androidx.compose.material3.HorizontalDivider(
+        modifier = Modifier.padding(vertical = 8.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+    )
+
+    val showPreviewsFlag = if (showPreviews) Anime.EPISODE_SHOW_NOT_PREVIEWS else Anime.EPISODE_SHOW_PREVIEWS
+    CheckboxItem(
+        label = stringResource(MR.strings.pref_show_episode_thumbnail),
+        checked = showPreviews,
+        onClick = { onShowPreviewsEnabled(showPreviewsFlag) },
+    )
+
+    val showSummariesFlag = if (showSummaries) Anime.EPISODE_SHOW_NOT_SUMMARIES else Anime.EPISODE_SHOW_SUMMARIES
+    CheckboxItem(
+        label = stringResource(MR.strings.pref_show_episode_summary),
+        checked = showSummaries,
+        onClick = { onShowSummariesEnabled(showSummariesFlag) },
+    )
 
     if (anime != null) {
         androidx.compose.material3.HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp),
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
         )
-
+...
         Text(
             text = "Season grouping",
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),

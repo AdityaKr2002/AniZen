@@ -44,6 +44,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.model.Download
 import me.saket.swipe.SwipeableActionsBox
@@ -63,9 +66,9 @@ fun AnimeEpisodeListItem(
     scanlator: String?,
     seen: Boolean,
     bookmark: Boolean,
-    // AM (FILLERMARK) -->
     fillermark: Boolean,
-    // <-- AM (FILLERMARK)
+    summary: String?,
+    previewUrl: String?,
     selected: Boolean,
     downloadIndicatorEnabled: Boolean,
     downloadStateProvider: () -> Download.State,
@@ -126,6 +129,20 @@ fun AnimeEpisodeListItem(
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp)
                 .animateContentSize(),
         ) {
+            if (!previewUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        .data(previewUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 12.dp)
+                        .size(width = 120.dp, height = 68.dp)
+                        .clip(MaterialTheme.shapes.small),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                )
+            }
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -204,6 +221,15 @@ fun AnimeEpisodeListItem(
                             )
                         }
                     }
+                }
+                if (!summary.isNullOrBlank()) {
+                    Text(
+                        text = summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA),
+                    )
                 }
             }
 

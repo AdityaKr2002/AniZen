@@ -13,6 +13,8 @@ fun Episode.toSEpisode(): SEpisode {
         it.date_upload = dateUpload
         it.episode_number = episodeNumber.toFloat()
         it.scanlator = scanlator
+        it.summary = summary
+        it.preview_url = previewUrl
     }
 }
 
@@ -23,6 +25,8 @@ fun Episode.copyFromSEpisode(sEpisode: SEpisode): Episode {
         dateUpload = sEpisode.date_upload,
         episodeNumber = sEpisode.episode_number.toDouble(),
         scanlator = sEpisode.scanlator?.ifBlank { null },
+        summary = sEpisode.summary?.ifBlank { null },
+        previewUrl = sEpisode.preview_url?.ifBlank { null },
     )
 }
 
@@ -32,6 +36,8 @@ fun Episode.toDbEpisode(): DbEpisode = EpisodeImpl().also {
     it.url = url
     it.name = name
     it.scanlator = scanlator
+    it.summary = summary
+    it.preview_url = previewUrl
     it.seen = seen
     it.bookmark = bookmark
     // AM (FILLERMARK) -->

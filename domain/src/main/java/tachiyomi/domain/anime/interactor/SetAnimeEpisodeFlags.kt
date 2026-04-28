@@ -56,6 +56,24 @@ class SetAnimeEpisodeFlags(
         )
     }
 
+    suspend fun awaitSetShowPreviews(manga: Anime, flag: Long): Boolean {
+        return animeRepository.update(
+            AnimeUpdate(
+                id = manga.id,
+                episodeFlags = manga.episodeFlags.setFlag(flag, Anime.EPISODE_PREVIEWS_MASK),
+            ),
+        )
+    }
+
+    suspend fun awaitSetShowSummaries(manga: Anime, flag: Long): Boolean {
+        return animeRepository.update(
+            AnimeUpdate(
+                id = manga.id,
+                episodeFlags = manga.episodeFlags.setFlag(flag, Anime.EPISODE_SUMMARIES_MASK),
+            ),
+        )
+    }
+
     suspend fun awaitSetSeasonGrouping(manga: Anime, enabled: Boolean): Boolean {
         val flag = if (enabled) {
             // Default to Tabs if enabled via this simple toggle (legacy support)
@@ -112,6 +130,8 @@ class SetAnimeEpisodeFlags(
         sortingDirection: Long,
         displayMode: Long,
         seasonGrouping: Long,
+        showPreviews: Long,
+        showSummaries: Long,
     ): Boolean {
         return animeRepository.update(
             AnimeUpdate(
@@ -125,7 +145,9 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
-                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK),
+                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK)
+                    .setFlag(showPreviews, Anime.EPISODE_PREVIEWS_MASK)
+                    .setFlag(showSummaries, Anime.EPISODE_SUMMARIES_MASK),
             ),
         )
     }
@@ -139,6 +161,8 @@ class SetAnimeEpisodeFlags(
         displayMode: Long,
         sortingDirection: Long,
         seasonGrouping: Long,
+        showPreviews: Long,
+        showSummaries: Long,
     ) {
         val updates = getFavorites.await().map { anime ->
             AnimeUpdate(
@@ -152,7 +176,9 @@ class SetAnimeEpisodeFlags(
                     .setFlag(sortingMode, Anime.EPISODE_SORTING_MASK)
                     .setFlag(sortingDirection, Anime.EPISODE_SORT_DIR_MASK)
                     .setFlag(displayMode, Anime.EPISODE_DISPLAY_MASK)
-                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK),
+                    .setFlag(seasonGrouping, Anime.EPISODE_SEASON_GROUP_MASK)
+                    .setFlag(showPreviews, Anime.EPISODE_PREVIEWS_MASK)
+                    .setFlag(showSummaries, Anime.EPISODE_SUMMARIES_MASK),
             )
         }
         animeRepository.updateAll(updates)
