@@ -1,6 +1,7 @@
 package eu.kanade.presentation.anime.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +73,7 @@ fun AnimeEpisodeListItem(
     summary: String?,
     previewUrl: String?,
     selected: Boolean,
+    isAnyEpisodeSelected: Boolean,
     downloadIndicatorEnabled: Boolean,
     downloadStateProvider: () -> Download.State,
     downloadProgressProvider: () -> Int,
@@ -224,12 +227,17 @@ fun AnimeEpisodeListItem(
                     }
                 }
                 if (!summary.isNullOrBlank()) {
+                    var expanded by remember { mutableStateOf(false) }
                     Text(
                         text = summary,
                         style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
+                        maxLines = if (expanded) Int.MAX_VALUE else 2,
                         overflow = TextOverflow.Ellipsis,
                         color = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA),
+                        modifier = Modifier.clickable(
+                            enabled = !isAnyEpisodeSelected,
+                            onClick = { expanded = !expanded },
+                        ),
                     )
                 }
             }
