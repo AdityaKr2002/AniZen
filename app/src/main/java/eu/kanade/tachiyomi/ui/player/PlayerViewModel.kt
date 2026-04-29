@@ -1530,6 +1530,7 @@ class PlayerViewModel @JvmOverloads constructor(
         // Pause until everything has loaded
         updatePausedState()
         pause()
+        kotlinx.coroutines.delay(500)
 
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
