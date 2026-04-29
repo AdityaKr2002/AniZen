@@ -210,15 +210,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("video-sync", "audio")
         }
 
-        val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
-        if (smoothMotionEnabled && interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
-            context.findActivity()?.window?.let { window ->
-                val params = window.attributes
-                params.preferredRefreshRate = interpolationFPSLimit.toFloat()
-                window.attributes = params
+        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
+        if (smoothMotionEnabled) {
+            val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
+            if (interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
+                context.findActivity()?.window?.let { window ->
+                    val params = window.attributes
+                    params.preferredRefreshRate = interpolationFPSLimit.toFloat()
+                    window.attributes = params
+                }
+                MPVLib.setOptionString("display-fps", interpolationFPSLimit.toString())
+                MPVLib.setOptionString("override-display-fps", interpolationFPSLimit.toString())
             }
-            MPVLib.setOptionString("display-fps", interpolationFPSLimit.toString())
-            MPVLib.setOptionString("override-display-fps", interpolationFPSLimit.toString())
+            // Interpolation requires display-resample
+            MPVLib.setOptionString("video-sync", "display-resample")
+            MPVLib.setOptionString("interpolation", "yes")
+            val mode = decoderPreferences.interpolationMode().get()
+            MPVLib.setOptionString("tscale", mode.value)
         }
 
         if (decoderPreferences.highQualityScaling().get()) {
@@ -227,13 +235,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("dscale", "mitchell")
         }
 
-        if (smoothMotionEnabled) {
-            // Interpolation requires display-resample
-            MPVLib.setOptionString("video-sync", "display-resample")
-            MPVLib.setOptionString("interpolation", "yes")
-            val mode = decoderPreferences.interpolationMode().get()
-            MPVLib.setOptionString("tscale", mode.value)
-        }
 
         // Initialize Debanding
         when (val mode = decoderPreferences.videoDebanding().get()) {
