@@ -200,7 +200,16 @@ class DownloadManager(
 
         val file = files[0]
 
-        return Video(
+        val subtitleTracks = episodeDir?.listFiles().orEmpty()
+            .filter {
+                val name = it.name.orEmpty().lowercase()
+                name.endsWith(".srt") || name.endsWith(".ass") || name.endsWith(".vtt")
+            }
+            .map {
+                eu.kanade.tachiyomi.animesource.model.Track(it.uri.toString(), tachiyomi.core.common.storage.nameWithoutExtension(it.name.orEmpty()))
+            }
+
+        val video = Video(
             file.uri.toString(),
             "download: " + file.uri.toString(),
             file.uri.toString(),
@@ -209,6 +218,8 @@ class DownloadManager(
             status = Video.State.READY
             mimeType = "video/mp4"
         }
+
+        return video.copy(initialized = true, subtitleTracks = subtitleTracks)
     }
 
     /**
