@@ -422,8 +422,9 @@ private fun computeGridScrollRange(state: LazyGridState, columnCount: Int): Int 
     val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
     val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
     val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
-    val totalRows = (totalCount + columnCount - 1) / columnCount
-    return (totalRows * avgSizePerRow).roundToInt()
+    val totalRows = 1 + (totalCount - 1) / columnCount
+    val endSpacing = avgSizePerRow - endChild.size.height
+    return (endSpacing + (laidOutArea.toFloat() / laidOutRows) * totalRows).roundToInt()
 }
 
 private class MutableData<T>(var value: T)
