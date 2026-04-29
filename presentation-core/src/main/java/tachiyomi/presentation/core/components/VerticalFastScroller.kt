@@ -414,15 +414,15 @@ private fun computeGridScrollOffset(state: LazyGridState, columnCount: Int): Int
 }
 
 private fun computeGridScrollRange(state: LazyGridState, columnCount: Int): Int {
-    val totalCount = state.layoutInfo.totalItemsCount
-    if (totalCount == 0) return 0
+    if (state.layoutInfo.totalItemsCount == 0) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
     val endChild = visibleItems.last()
     val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
     val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
     val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
-    val totalRows = 1 + (totalCount - 1) / columnCount
+
+    val totalRows = 1 + (state.layoutInfo.totalItemsCount - 1) / columnCount
     val endSpacing = avgSizePerRow - endChild.size.height
     return (endSpacing + (laidOutArea.toFloat() / laidOutRows) * totalRows).roundToInt()
 }
