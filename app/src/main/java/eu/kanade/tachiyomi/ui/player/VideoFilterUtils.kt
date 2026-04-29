@@ -119,11 +119,16 @@ fun checkAndSetCopyMode(prefs: DecoderPreferences) {
         }
     }
 
-    if (prefs.forceMediaCodecCopy().get()) {
-        MPVLib.setPropertyString("hwdec", "mediacodec-copy")
-    } else {
-        val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
-        MPVLib.setPropertyString("hwdec", hwdec)
+    // Optimization: Only update HW decoder if playback is actually active
+    // This prevents triggering decoder re-negotiation (and black screens) while paused.
+    val isPaused = MPVLib.getPropertyBoolean("pause")
+    if (!isPaused) {
+        if (prefs.forceMediaCodecCopy().get()) {
+            MPVLib.setPropertyString("hwdec", "mediacodec-copy")
+        } else {
+            val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
+            MPVLib.setPropertyString("hwdec", hwdec)
+        }
     }
 }
 
