@@ -303,7 +303,6 @@ private fun EpisodeSummary(
             text = summary,
             style = MaterialTheme.typography.labelMedium,
             maxLines = if (expanded) Int.MAX_VALUE else 3,
-            minLines = 3,
             fontWeight = FontWeight.Normal,
             fontSize = 10.sp,
             lineHeight = 11.sp,
@@ -312,7 +311,6 @@ private fun EpisodeSummary(
                 alpha = if (seen) DISABLED_ALPHA else SECONDARY_ALPHA,
             ),
             modifier = Modifier.padding(bottom = 4.dp, start = 4.dp, end = 4.dp)
-                .animateContentSize()
                 .clickable(
                     enabled = !isAnyEpisodeSelected,
                     onClick = { expanded = !expanded },
