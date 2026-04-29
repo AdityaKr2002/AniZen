@@ -9,9 +9,11 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -54,13 +56,9 @@ import tachiyomi.presentation.core.components.Scroller.EXACT_HEIGHT_KEY_PREFIX
 import tachiyomi.presentation.core.components.Scroller.STICKY_HEADER_KEY_PREFIX
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
-/**
- * Draws vertical fast scroller to a lazy list
- *
- * Set key with [STICKY_HEADER_KEY_PREFIX] prefix to any sticky header item in the list.
- */
 @Composable
 fun VerticalFastScroller(
     listState: LazyListState,
@@ -94,7 +92,6 @@ fun VerticalFastScroller(
                 )
             }
 
-            // listState.isScrollInProgress occasionally flickers
             val scrollStateTracker = remember { MutableData(listState.isScrollInProgress) }
             val stableScrollInProgress = scrollStateTracker.value || listState.isScrollInProgress
             scrollStateTracker.value = listState.isScrollInProgress
@@ -139,7 +136,6 @@ fun VerticalFastScroller(
 
             if (maxRemainingSections < 0.5) return@subcompose
 
-            // When thumb dragged
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
                 val thumbProportion = (thumbOffsetY - thumbTopPadding) / trackHeightPx
@@ -161,14 +157,12 @@ fun VerticalFastScroller(
                 scrolled.tryEmit(Unit)
             }
 
-            // When list scrolled
             if (layoutInfo.totalItemsCount != 0 && !isThumbDragged) {
                 val proportion = 1f - remainingSections / maxRemainingSections
                 thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
                 if (stableScrollInProgress) scrolled.tryEmit(Unit)
             }
 
-            // Thumb alpha
             val alpha = remember { Animatable(0f) }
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
@@ -232,12 +226,11 @@ fun VerticalFastScroller(
     }
 }
 
-// TODO: Ideally rewrite VerticalGridFastScroller to use similar logic as VerticalFastScroller
 @Composable
 fun VerticalGridFastScroller(
     state: LazyGridState,
     columns: GridCells,
-    arrangement: androidx.compose.foundation.layout.Arrangement.Horizontal,
+    arrangement: Arrangement.Horizontal,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     thumbAllowed: () -> Boolean = { true },
@@ -253,12 +246,6 @@ fun VerticalGridFastScroller(
         contentPadding = contentPadding,
     )
 
-    val headerHeights = remember { mutableStateMapOf<Int, Int>() }
-    LaunchedEffect(state.layoutInfo.totalItemsCount) {
-        headerHeights.clear()
-    }
-    var cachedGridItemHeight by remember { mutableFloatStateOf(0f) }
-
     SubcomposeLayout(modifier = modifier) { constraints ->
         val contentPlaceable = subcompose("content", content).map { it.measure(constraints) }
         val contentHeight = contentPlaceable.fastMaxBy { it.height }?.height ?: 0
@@ -271,30 +258,6 @@ fun VerticalGridFastScroller(
                 layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount
             }
             if (!showScroller) return@subcompose
-
-            LaunchedEffect(layoutInfo) {
-                val visibleItems = layoutInfo.visibleItemsInfo
-                if (visibleItems.isEmpty()) return@LaunchedEffect
-                visibleItems.fastForEach { item ->
-                    if ((item.key as? String?)?.startsWith(EXACT_HEIGHT_KEY_PREFIX) == true) {
-                        headerHeights[item.index] = item.size.height
-                    }
-                }
-
-                val knownHeaderIndexes = headerHeights.keys
-                val gridItems = visibleItems.filter { it.index !in knownHeaderIndexes }
-
-                if (gridItems.isNotEmpty()) {
-                    val start = gridItems.first()
-                    val end = gridItems.last()
-                    val laidOutArea = (end.offset.y + end.size.height) - start.offset.y
-                    val laidOutRange = abs(start.index - end.index) + 1
-                    if (laidOutRange > 0) {
-                        cachedGridItemHeight = laidOutArea.toFloat() / laidOutRange
-                    }
-                }
-            }
-
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
 
@@ -315,41 +278,35 @@ fun VerticalGridFastScroller(
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
             val trackHeightPx = heightPx - thumbHeightPx
 
-            // When thumb dragged
+            val columnCount = remember(columns) { slotSizesSums(constraints).size.coerceAtLeast(1) }
+            val scrollRange = remember(columns) { computeGridScrollRange(state = state, columnCount = columnCount) }
+
             LaunchedEffect(thumbOffsetY) {
                 if (layoutInfo.totalItemsCount == 0 || !isThumbDragged) return@LaunchedEffect
+                val visibleItems = state.layoutInfo.visibleItemsInfo
+                val startChild = visibleItems.first()
+                val endChild = visibleItems.last()
+                val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
+                val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
+                val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
+
                 val scrollRatio = (thumbOffsetY - thumbTopPadding) / trackHeightPx
-                val columnCount = slotSizesSums(constraints).size.coerceAtLeast(1)
-                
-                val scrollRange = computeScrollRange(state, headerHeights, cachedGridItemHeight)
                 val scrollAmt = scrollRatio * (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
-                val rowNumber = (scrollAmt / (cachedGridItemHeight.coerceAtLeast(1f))).toInt()
-                val rowOffset = scrollAmt - rowNumber * (cachedGridItemHeight.coerceAtLeast(1f))
+                val rowNumber = (scrollAmt / avgSizePerRow.coerceAtLeast(1f)).toInt()
+                val rowOffset = scrollAmt - rowNumber * avgSizePerRow
 
                 state.scrollToItem(index = columnCount * rowNumber, scrollOffset = rowOffset.roundToInt())
                 scrolled.tryEmit(Unit)
             }
 
-            // When list scrolled
-            LaunchedEffect(state.firstVisibleItemScrollOffset, layoutInfo) {
+            LaunchedEffect(state.firstVisibleItemScrollOffset) {
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
-                val scrollOffset = computeScrollOffset(
-                    state = state,
-                    headerHeights = headerHeights,
-                    cachedGridItemHeight = cachedGridItemHeight,
-                )
-                val scrollRange = computeScrollRange(
-                    state = state,
-                    headerHeights = headerHeights,
-                    cachedGridItemHeight = cachedGridItemHeight,
-                )
-                val extraScrollRange = (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
-                val proportion = (scrollOffset.toFloat() / extraScrollRange).coerceAtMost(1f)
+                val scrollOffset = computeGridScrollOffset(state = state, columnCount = columnCount)
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
                 thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
                 scrolled.tryEmit(Unit)
             }
 
-            // Thumb alpha
             val alpha = remember { Animatable(0f) }
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(scrolled, alpha) {
@@ -416,7 +373,7 @@ fun VerticalGridFastScroller(
 @Composable
 private fun rememberColumnWidthSums(
     columns: GridCells,
-    horizontalArrangement: androidx.compose.foundation.layout.Arrangement.Horizontal,
+    horizontalArrangement: Arrangement.Horizontal,
     contentPadding: PaddingValues,
 ) = remember<Density.(Constraints) -> List<Int>>(
     columns,
@@ -443,37 +400,30 @@ private fun rememberColumnWidthSums(
     }
 }
 
-private fun computeScrollOffset(
-    state: LazyGridState,
-    headerHeights: Map<Int, Int>,
-    cachedGridItemHeight: Float,
-): Int {
+private fun computeGridScrollOffset(state: LazyGridState, columnCount: Int): Int {
     if (state.layoutInfo.totalItemsCount == 0) return 0
     val visibleItems = state.layoutInfo.visibleItemsInfo
     val startChild = visibleItems.first()
-    val avgCellHeight = if (cachedGridItemHeight > 0) cachedGridItemHeight else 1f
-    val itemsBefore = startChild.index
-    val knownHeaderIndexes = headerHeights.keys
-    val knownHeadersBefore = knownHeaderIndexes.filter { it < itemsBefore }
-    val normalItemsBefore = itemsBefore - knownHeadersBefore.size
-    val estimatedOffset = knownHeadersBefore.sumOf { headerHeights[it] ?: 0 } +
-        (normalItemsBefore * avgCellHeight)
-    val startDecoratedTop = startChild.offset.y
-    return (estimatedOffset + (0 - startDecoratedTop)).roundToInt()
+    val endChild = visibleItems.last()
+    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
+    val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
+    val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
+
+    val rowsBefore = min(startChild.index, endChild.index).coerceAtLeast(0) / columnCount
+    return (rowsBefore * avgSizePerRow - startChild.offset.y).roundToInt()
 }
 
-private fun computeScrollRange(
-    state: LazyGridState,
-    headerHeights: Map<Int, Int>,
-    cachedGridItemHeight: Float,
-): Int {
+private fun computeGridScrollRange(state: LazyGridState, columnCount: Int): Int {
     val totalCount = state.layoutInfo.totalItemsCount
     if (totalCount == 0) return 0
-    val avgCellHeight = if (cachedGridItemHeight > 0) cachedGridItemHeight else 1f
-    val knownHeadersHeight = headerHeights.values.sum()
-    val knownHeadersCount = headerHeights.size
-    val normalItemCount = (totalCount - knownHeadersCount).coerceAtLeast(0)
-    return knownHeadersHeight + (normalItemCount * avgCellHeight).roundToInt()
+    val visibleItems = state.layoutInfo.visibleItemsInfo
+    val startChild = visibleItems.first()
+    val endChild = visibleItems.last()
+    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
+    val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
+    val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
+    val totalRows = (totalCount + columnCount - 1) / columnCount
+    return (totalRows * avgSizePerRow).roundToInt()
 }
 
 private class MutableData<T>(var value: T)
