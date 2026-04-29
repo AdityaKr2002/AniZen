@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
+import tachiyomi.core.common.storage.nameWithoutExtension
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.anime.model.Anime
@@ -206,7 +207,7 @@ class DownloadManager(
                 name.endsWith(".srt") || name.endsWith(".ass") || name.endsWith(".vtt")
             }
             .map {
-                eu.kanade.tachiyomi.animesource.model.Track(it.uri.toString(), tachiyomi.core.common.storage.nameWithoutExtension(it.name.orEmpty()))
+                eu.kanade.tachiyomi.animesource.model.Track(it.uri.toString(), it.nameWithoutExtension.orEmpty())
             }
 
         val video = Video(
