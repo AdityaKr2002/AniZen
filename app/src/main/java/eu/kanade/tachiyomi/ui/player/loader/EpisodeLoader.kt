@@ -17,6 +17,7 @@ import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.episode.model.Episode
 import tachiyomi.source.localanime.LocalAnimeSource
 import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
+import eu.kanade.tachiyomi.util.subtitles.StremioSubtitleResolver
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -163,10 +164,23 @@ class EpisodeLoader {
                 else -> error("source not supported")
             }
 
-            return if (source is AnimeHttpSource) {
+            val sortedVideos = if (source is AnimeHttpSource) {
                 source.run { videos.sortVideos() }
             } else {
                 videos
+            }
+            
+            return sortedVideos.resolveSubtitles()
+        }
+
+        private suspend fun List<Video>.resolveSubtitles(): List<Video> {
+            return this.map { video ->
+                if (video.subtitleTracks.isEmpty()) return@map video
+
+                val resolvedTracks = video.subtitleTracks.flatMap { StremioSubtitleResolver.resolve(it) }
+                if (resolvedTracks == video.subtitleTracks) return@map video
+
+                video.copy(subtitleTracks = resolvedTracks)
             }
         }
 

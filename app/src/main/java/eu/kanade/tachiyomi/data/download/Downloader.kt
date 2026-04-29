@@ -33,6 +33,7 @@ import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import tachiyomi.core.common.util.system.logcat
 import eu.kanade.tachiyomi.util.storage.DiskUtil
+import eu.kanade.tachiyomi.util.subtitles.StremioSubtitleResolver
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import okhttp3.Headers
 import okhttp3.Request
@@ -496,45 +497,48 @@ class Downloader(
 
     private suspend fun downloadSubtitles(video: Video, sandboxDir: File, videoFilename: String) {
         if (video.subtitleTracks.isEmpty()) return
-        
+
         val client = networkHelper.client
         coroutineScope {
-            video.subtitleTracks.forEach { track ->
+            video.subtitleTracks.forEach { originalTrack ->
                 launch {
-                    val subExt = when {
-                        track.url.endsWith(".vtt") -> "vtt"
-                        track.url.endsWith(".ass") -> "ass"
-                        else -> "srt"
-                    }
-                    val filename = "${videoFilename}.${track.lang}.$subExt"
-                    val subFile = File(sandboxDir, filename)
-                    if (subFile.exists() && subFile.length() > 0) return@launch
+                    val resolvedTracks = StremioSubtitleResolver.resolve(originalTrack)
+                    resolvedTracks.forEach { track ->
+                        val subExt = when {
+                            track.url.endsWith(".vtt") -> "vtt"
+                            track.url.endsWith(".ass") -> "ass"
+                            else -> "srt"
+                        }
+                        val filename = "${videoFilename}.${track.lang}.$subExt"
+                        val subFile = File(sandboxDir, filename)
+                        if (subFile.exists() && subFile.length() > 0) return@forEach
 
-                    if (track.url.isBlank()) return@launch
+                        if (track.url.isBlank()) return@forEach
 
-                    if (track.url.startsWith("file://")) {
-                        try {
-                            val sourceFile = File(track.url.removePrefix("file://"))
-                            if (sourceFile.exists()) {
-                                sourceFile.inputStream().use { input ->
+                        if (track.url.startsWith("file://")) {
+                            try {
+                                val sourceFile = File(track.url.removePrefix("file://"))
+                                if (sourceFile.exists()) {
+                                    sourceFile.inputStream().use { input ->
+                                        java.io.FileOutputStream(subFile).use { output ->
+                                            input.copyTo(output)
+                                        }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                logcat(LogPriority.ERROR, e) { "Failed to copy local subtitle: ${track.url}" }
+                            }
+                            return@forEach
+                        }
+
+                        retry(times = 3) {
+                            val req = Request.Builder().url(track.url).build()
+                            client.newCall(req).execute().use { res ->
+                                if (!res.isSuccessful) throw IOException("Failed to download subtitle: ${res.code}")
+                                res.body?.byteStream()?.use { input ->
                                     java.io.FileOutputStream(subFile).use { output ->
                                         input.copyTo(output)
                                     }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            logcat(LogPriority.ERROR, e) { "Failed to copy local subtitle: ${track.url}" }
-                        }
-                        return@launch
-                    }
-
-                    retry(times = 3) {
-                        val req = Request.Builder().url(track.url).build()
-                        client.newCall(req).execute().use { res ->
-                            if (!res.isSuccessful) throw IOException("Failed to download subtitle: ${res.code}")
-                            res.body?.byteStream()?.use { input ->
-                                java.io.FileOutputStream(subFile).use { output ->
-                                    input.copyTo(output)
                                 }
                             }
                         }
