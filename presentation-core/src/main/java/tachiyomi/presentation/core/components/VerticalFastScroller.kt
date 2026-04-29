@@ -345,7 +345,7 @@ fun VerticalGridFastScroller(
                     headerHeights = headerHeights,
                     cachedGridItemHeight = cachedGridItemHeight,
                 )
-                val proportion = (scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx)
                 thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
                 scrolled.tryEmit(Unit)
             }
