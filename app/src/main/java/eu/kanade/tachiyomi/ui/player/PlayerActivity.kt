@@ -376,16 +376,7 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onPause() {
-        if (player.initialized) {
-            player.shrinkCache()
-        }
-        viewModel.cancelPreload()
         viewModel.saveCurrentEpisodeWatchingProgress()
-
-        // Mantener sesión Cast activa
-        castManager.maintainCastSessionBackground()
-
-        updateDiscordRPC(exitingPlayer = false)
 
         if (isInPictureInPictureMode) {
             super.onPause()
