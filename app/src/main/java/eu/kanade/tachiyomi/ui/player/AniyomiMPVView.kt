@@ -260,8 +260,8 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setOptionString("msg-level", "all=" + if (networkPreferences.verboseLogging().get()) "v" else "warn")
 
-        MPVLib.setOptionString("keep-open", "always")
         MPVLib.setPropertyBoolean("input-default-bindings", true)
+        MPVLib.setOptionString("keep-open", "always")
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
