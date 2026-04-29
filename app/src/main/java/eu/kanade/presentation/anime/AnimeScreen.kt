@@ -532,6 +532,7 @@ private fun AnimeScreenSmallImpl(
                             contentPadding = PaddingValues(
                                 start = contentPadding.calculateStartPadding(layoutDirection),
                                 end = contentPadding.calculateEndPadding(layoutDirection),
+                                bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
                             item(key = "info-box-small", contentType = AnimeScreenItem.INFO_BOX) {
