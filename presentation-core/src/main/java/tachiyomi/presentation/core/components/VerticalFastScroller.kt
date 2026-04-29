@@ -302,8 +302,15 @@ fun VerticalGridFastScroller(
             LaunchedEffect(state.firstVisibleItemScrollOffset) {
                 if (state.layoutInfo.totalItemsCount == 0 || isThumbDragged) return@LaunchedEffect
                 val scrollOffset = computeGridScrollOffset(state = state, columnCount = columnCount)
-                val proportion = scrollOffset.toFloat() / (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
-                thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
+                
+                val totalScrollRange = (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
+                val proportion = (scrollOffset.toFloat() / totalScrollRange).coerceIn(0f, 1f)
+                
+                thumbOffsetY = if (proportion >= 0.99f) {
+                    trackHeightPx + thumbTopPadding
+                } else {
+                    trackHeightPx * proportion + thumbTopPadding
+                }
                 scrolled.tryEmit(Unit)
             }
 
