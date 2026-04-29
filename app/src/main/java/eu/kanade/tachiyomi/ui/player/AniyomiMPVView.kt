@@ -193,13 +193,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         // Use display-resample ONLY if smooth motion is enabled.
         // For standard playback, fallback to audio sync for power efficiency and to respect native frame rates.
         if (smoothMotionEnabled) {
-            MPVLib.setOptionString("video-sync", "display-resample")
-        } else {
-            MPVLib.setOptionString("video-sync", "audio")
-        }
-
-        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        if (smoothMotionEnabled) {
             val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
             if (interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
                 context.findActivity()?.window?.let { window ->
@@ -215,6 +208,8 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("interpolation", "yes")
             val mode = decoderPreferences.interpolationMode().get()
             MPVLib.setOptionString("tscale", mode.value)
+        } else {
+            MPVLib.setOptionString("video-sync", "audio")
         }
 
         if (decoderPreferences.highQualityScaling().get()) {
