@@ -33,6 +33,7 @@ import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.buildVFChain
+import eu.kanade.tachiyomi.ui.player.checkAndSetCopyMode
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.util.system.DeviceTierManager
 import eu.kanade.tachiyomi.util.system.findActivity
@@ -172,7 +173,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        val hwdec = if (decoderPreferences.tryHWDecoding().get()) {
+        checkAndSetCopyMode(decoderPreferences)
+        val hwdec = if (decoderPreferences.forceMediaCodecCopy().get()) {
+            "mediacodec-copy"
+        } else if (decoderPreferences.tryHWDecoding().get()) {
             "auto"
         } else {
             "no"
