@@ -121,7 +121,7 @@ fun checkAndSetCopyMode(prefs: DecoderPreferences) {
 
     // Optimization: Only update HW decoder if playback is actually active
     // This prevents triggering decoder re-negotiation (and black screens) while paused.
-    val isPaused = MPVLib.getPropertyBoolean("pause")
+    val isPaused = MPVLib.getPropertyBoolean("pause") ?: true
     if (!isPaused) {
         if (prefs.forceMediaCodecCopy().get()) {
             MPVLib.setPropertyString("hwdec", "mediacodec-copy")
