@@ -201,15 +201,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         // For standard playback, fallback to audio sync for power efficiency and to respect native frame rates.
         if (smoothMotionEnabled) {
             val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
-            if (interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
+            val targetFPS = if (interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
                 context.findActivity()?.window?.let { window ->
                     val params = window.attributes
                     params.preferredRefreshRate = interpolationFPSLimit.toFloat()
                     window.attributes = params
                 }
-                MPVLib.setOptionString("display-fps", interpolationFPSLimit.toString())
-                MPVLib.setOptionString("override-display-fps", interpolationFPSLimit.toString())
+                interpolationFPSLimit.toFloat()
+            } else {
+                displayRefreshRate
             }
+
+            MPVLib.setOptionString("display-fps", targetFPS.toString())
+            MPVLib.setOptionString("override-display-fps", targetFPS.toString())
+
             // Interpolation requires display-resample
             MPVLib.setOptionString("video-sync", "display-resample")
             MPVLib.setOptionString("interpolation", "yes")
