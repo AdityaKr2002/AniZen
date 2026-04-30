@@ -124,8 +124,12 @@ data object HistoryTab : Tab {
                 is HistoryScreenModel.Dialog.Delete -> {
                     HistoryDeleteDialog(
                         onDismissRequest = { screenModel.setDialog(null) },
-                        onDelete = {
-                            screenModel.removeFromHistory(dialog.history)
+                        onDelete = { all ->
+                            if (all) {
+                                screenModel.removeAllFromHistory(dialog.history.animeId)
+                            } else {
+                                screenModel.removeFromHistory(dialog.history)
+                            }
                             screenModel.setDialog(null)
                         },
                     )
