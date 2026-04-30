@@ -102,9 +102,9 @@ class FetchInterval(
 
         if (interval < -100) {
             val encoded = -interval - 10000
-            val dayOfWeek = encoded / 1000 // 1 (Mon) to 7 (Sun)
-            val hour = (encoded % 1000) / 60
-            val minute = encoded % 60
+            val dayOfWeek = encoded / 2000 // 1 (Mon) to 7 (Sun)
+            val hour = (encoded % 2000) / 60
+            val minute = (encoded % 2000) % 60
 
             var next = dateTime.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
             if (next.isBefore(dateTime) || next.isEqual(dateTime)) {

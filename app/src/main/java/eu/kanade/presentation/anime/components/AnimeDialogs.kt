@@ -99,12 +99,12 @@ fun SetIntervalDialog(
     }
 
     // Scheduled State
-    // fetchInterval = -(10000 + D*1000 + H*60 + M)
+    // fetchInterval = -(10000 + D*2000 + H*60 + M)
     val initialEncoded = if (interval < -100) -interval - 10000 else 0
     var selectedDayIndex by rememberSaveable {
         mutableIntStateOf(
             if (initialEncoded > 0) {
-                val d = initialEncoded / 1000 // 1-7
+                val d = initialEncoded / 2000 // 1-7
                 // Map 1-7 (Mon-Sun) to 0-6 (Sat-Fri)
                 // Sat=6, Sun=7, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5
                 when (d) {
@@ -123,8 +123,8 @@ fun SetIntervalDialog(
         )
     }
 
-    val initialHour24 = if (initialEncoded > 0) (initialEncoded % 1000) / 60 else 0
-    val initialMinute = if (initialEncoded > 0) initialEncoded % 60 else 0
+    val initialHour24 = if (initialEncoded > 0) (initialEncoded % 2000) / 60 else 0
+    val initialMinute = if (initialEncoded > 0) (initialEncoded % 2000) % 60 else 0
 
     var selectedHour12 by rememberSaveable { mutableIntStateOf(if (initialHour24 % 12 == 0) 12 else initialHour24 % 12) }
     var selectedMinute by rememberSaveable { mutableIntStateOf(initialMinute) }
@@ -146,7 +146,7 @@ fun SetIntervalDialog(
             Column {
                 if (interval == FetchInterval.MANUAL_DISABLE) {
                     Text(stringResource(MR.strings.disabled))
-                } else if (nextUpdateDays != null && nextUpdateDays >= 0 && !isScheduledMode) {
+                } else if (nextUpdateDays != null && nextUpdateDays >= 0) {
                     Text(
                         stringResource(
                             MR.strings.anime_interval_expected_update,
@@ -301,7 +301,7 @@ fun SetIntervalDialog(
                             selectedAmPm == 1 && selectedHour12 == 12 -> 12
                             else -> selectedHour12 + 12
                         }
-                        -(10000 + d * 1000 + h24 * 60 + selectedMinute)
+                        -(10000 + d * 2000 + h24 * 60 + selectedMinute)
                     }
                     onValueChanged?.invoke(newValue)
                     onDismissRequest()
