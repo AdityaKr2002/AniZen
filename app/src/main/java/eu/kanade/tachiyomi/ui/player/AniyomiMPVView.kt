@@ -170,8 +170,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
-        // Switch back to standard gpu profile for mobile stability
-        MPVLib.setOptionString("profile", "gpu")
+        MPVLib.setOptionString("profile", "fast")
         
         val hwdec = if (decoderPreferences.tryHWDecoding().get()) {
             "auto"
@@ -180,6 +179,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
         MPVLib.setOptionString("hwdec", hwdec)
         MPVLib.setOptionString("hwdec-codecs", "all")
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        MPVLib.setOptionString("vd-lavc-fast", "yes")
+        MPVLib.setOptionString("vd-lavc-threads", "0")
+        MPVLib.setOptionString("opengl-pbo", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
