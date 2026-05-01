@@ -81,7 +81,7 @@ enum class AnimeCover(val ratio: Float) {
         size: Size = Size.Normal,
         scale: ContentScale = ContentScale.Crop,
         ratio: Float = this.ratio,
-        shouldExtractColor: Boolean = false,
+        shouldExtractColor: Boolean = true,
         // KMK <--
     ) {
         val context = LocalContext.current
