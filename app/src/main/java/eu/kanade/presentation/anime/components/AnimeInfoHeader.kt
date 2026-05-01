@@ -144,6 +144,7 @@ fun AnimeInfoBox(
     doSearch: (query: String, global: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source> = persistentListOf(),
+    isRefreshing: Boolean = false,
 ) {
     Box(
         modifier = modifier
@@ -162,10 +163,12 @@ fun AnimeInfoBox(
             Brush.verticalGradient(colors = backdropGradientColors)
         }
         val context = LocalContext.current
-        val backdropImageRequest = remember(anime) {
+        val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
+        val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
+        val backdropImageRequest = remember(anime.id, anime.thumbnailUrl, anime.coverLastModified, animatedTransitions) {
             ImageRequest.Builder(context)
-                .data(anime)
-                .crossfade(true)
+                .data(anime.asAnimeCover())
+                .crossfade(animatedTransitions)
                 .build()
         }
         AsyncImage(
@@ -197,6 +200,7 @@ fun AnimeInfoBox(
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
                     mergedSources = mergedSources,
+                    isRefreshing = isRefreshing,
                 )
             } else {
                 AnimeAndSourceTitlesLarge(
@@ -208,6 +212,7 @@ fun AnimeInfoBox(
                     onCoverClick = onCoverClick,
                     doSearch = doSearch,
                     mergedSources = mergedSources,
+                    isRefreshing = isRefreshing,
                 )
             }
         }
@@ -450,6 +455,7 @@ private fun AnimeAndSourceTitlesLarge(
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
     mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
+    isRefreshing: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -482,6 +488,7 @@ private fun AnimeAndSourceTitlesLarge(
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
                 mergedSources = mergedSources,
+                isRefreshing = isRefreshing,
             )
         }
     }
@@ -497,6 +504,7 @@ private fun AnimeAndSourceTitlesSmall(
     onCoverClick: () -> Unit,
     doSearch: (query: String, global: Boolean) -> Unit,
     mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
+    isRefreshing: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -529,6 +537,7 @@ private fun AnimeAndSourceTitlesSmall(
                 doSearch = doSearch,
                 textAlign = TextAlign.Start,
                 mergedSources = mergedSources,
+                isRefreshing = isRefreshing,
             )
         }
     }
@@ -546,6 +555,7 @@ private fun AnimeContentInfo(
     doSearch: (query: String, global: Boolean) -> Unit,
     textAlign: TextAlign? = LocalTextStyle.current.textAlign,
     mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source>,
+    isRefreshing: Boolean,
 ) {
     val context = LocalContext.current
     Text(
@@ -579,7 +589,7 @@ private fun AnimeContentInfo(
         )
         Text(
             text = author?.takeIf { it.isNotBlank() }
-                ?: stringResource(MR.strings.unknown_author),
+                ?: if (isRefreshing) "" else stringResource(MR.strings.unknown_author),
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

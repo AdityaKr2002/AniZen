@@ -17,7 +17,8 @@ object CoverColorObserver {
     }
 
     fun updateRatio(animeId: Long, ratio: Float) {
-        if (_ratios.value[animeId] == ratio) return
+        val currentRatio = _ratios.value[animeId]
+        if (currentRatio != null && Math.abs(currentRatio - ratio) < 0.01f) return
         _ratios.update { it + (animeId to ratio) }
     }
 

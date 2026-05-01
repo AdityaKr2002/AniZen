@@ -256,6 +256,7 @@ class PlayerActivity : BaseActivity() {
                     hosterIndex = initResult.first.videoIndex.first,
                     videoIndex = initResult.first.videoIndex.second,
                 )
+                viewModel.restoreAspectRatio()
             }
         }
 

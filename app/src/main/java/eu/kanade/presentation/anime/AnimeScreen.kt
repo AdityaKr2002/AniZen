@@ -102,6 +102,8 @@ import eu.kanade.tachiyomi.util.system.CoverColorObserver
 import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.anime.model.Anime
@@ -412,8 +414,12 @@ private fun AnimeScreenSmallImpl(
     }
     BackHandler(onBack = internalOnBackPressed)
 
-    val vibrantColors by CoverColorObserver.vibrantColors.collectAsState()
-    val vibrantColor = vibrantColors[state.anime.id] ?: state.anime.asAnimeCover().vibrantCoverColor
+    val vibrantColorState by remember(state.anime.id) {
+        CoverColorObserver.vibrantColors
+            .map { it[state.anime.id] }
+            .distinctUntilChanged()
+    }.collectAsState(initial = CoverColorObserver.get(state.anime.id))
+    val vibrantColor = vibrantColorState ?: state.anime.asAnimeCover().vibrantCoverColor
 
     DynamicTachiyomiTheme(colorSeed = vibrantColor) {
         Box(
@@ -546,6 +552,7 @@ private fun AnimeScreenSmallImpl(
                                     onCoverClick = onCoverClicked,
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
+                                    isRefreshing = state.isRefreshingData,
                                 )
                             }
                             if (showSeasonsSection) {
@@ -825,8 +832,12 @@ fun AnimeScreenLargeImpl(
     }
     BackHandler(onBack = internalOnBackPressed)
 
-    val vibrantColors by CoverColorObserver.vibrantColors.collectAsState()
-    val vibrantColor = vibrantColors[state.anime.id] ?: state.anime.asAnimeCover().vibrantCoverColor
+    val vibrantColorState by remember(state.anime.id) {
+        CoverColorObserver.vibrantColors
+            .map { it[state.anime.id] }
+            .distinctUntilChanged()
+    }.collectAsState(initial = CoverColorObserver.get(state.anime.id))
+    val vibrantColor = vibrantColorState ?: state.anime.asAnimeCover().vibrantCoverColor
 
     DynamicTachiyomiTheme(colorSeed = vibrantColor) {
         Box(
@@ -961,6 +972,7 @@ fun AnimeScreenLargeImpl(
                                     onCoverClick = onCoverClicked,
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
+                                    isRefreshing = state.isRefreshingData,
                                 )
                                 if (showSeasonsSection) {
                                     val navigator = LocalNavigator.currentOrThrow

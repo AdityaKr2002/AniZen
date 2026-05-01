@@ -58,6 +58,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -255,206 +256,227 @@ class AnimeScreenModel(
         showEpisodeSummary: Boolean = anime.showSummaries(),
         showEpisodeThumbnail: Boolean = anime.showPreviews(),
     ): State.Success {
-        val processedEpisodes = if (anime === this.anime && episodes === this.episodes) {
+        val episodesStatusHash = episodes.sumOf { it.episode.lastModifiedAt + if (it.episode.seen) 1 else 0 }
+        val episodesChanged = episodes.size != this.episodes.size || 
+                             episodesStatusHash != (this as? State.Success)?.let { success -> 
+                                 success.episodes.sumOf { it.episode.lastModifiedAt + if (it.episode.seen) 1 else 0 } 
+                             } ?: 0L ||
+                             episodes.firstOrNull()?.episode?.id != this.episodes.firstOrNull()?.episode?.id
+
+        val processedEpisodes = if (anime === this.anime && !episodesChanged) {
             this.processedEpisodes
         } else {
             episodes.applyFilters(anime).toImmutableList()
         }
 
-        val missingEpisodeCount = if (processedEpisodes === this.processedEpisodes) {
+        val missingEpisodeCount = if (processedEpisodes.size == this.processedEpisodes.size && !episodesChanged) {
             this.missingEpisodeCount
         } else {
             processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
         }
 
-        val episodeListItems = mutableListOf<EpisodeList>()
-        val availableSeasonsList = mutableListOf<String>()
-        val episodeToSeason = mutableMapOf<Long, String>()
-        
-        val groupingMode = anime.seasonGroupingMode
-        // Handle Seasons
-        if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
-            // Step 1: Detect if source provides episodes in descending order (newest first)
-            val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
+        val (episodeListItems, availableSeasons, epToSeason) = if (
+            anime.seasonGroupingMode == this.anime.seasonGroupingMode &&
+            anime.sortDescending() == this.anime.sortDescending() &&
+            !episodesChanged &&
+            processedEpisodes.size == this.processedEpisodes.size
+        ) {
+            Triple(this.episodeListItems, this.availableSeasons, this.episodeToSeason)
+        } else {
+            val items = mutableListOf<EpisodeList>()
+            val seasonsList = mutableListOf<String>()
+            val mapping = mutableMapOf<Long, String>()
             
-            // Detect if sourceOrder is likely descending (newest first)
-            val firstWithNumber = sourceOrdered.firstOrNull { it.episode.episodeNumber >= 0 }
-            val lastWithNumber = sourceOrdered.lastOrNull { it.episode.episodeNumber >= 0 }
-            val isSourceDescending = if (firstWithNumber != null && lastWithNumber != null && firstWithNumber !== lastWithNumber) {
-                firstWithNumber.episode.episodeNumber > lastWithNumber.episode.episodeNumber
-            } else {
-                false
-            }
-            
-            // Step 2: Process episodes in chronological sequence (oldest to newest) to find blocks
-            val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
-            
-            data class EpisodeBlock(
-                val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
-                var year: Int? = null
-            )
-            val blocks = mutableListOf<EpisodeBlock>()
-            var currentBlock = EpisodeBlock()
-            val cal = Calendar.getInstance()
-            
-            for (index in chronological.indices) {
-                val item = chronological[index]
-                val prevItem = chronological.getOrNull(index - 1)
+            val groupingMode = anime.seasonGroupingMode
+            // Handle Seasons
+            if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
+                // Step 1: Detect if source provides episodes in descending order (newest first)
+                val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
                 
-                val itemYear = if (item.episode.dateUpload > 0) {
-                    cal.timeInMillis = item.episode.dateUpload
-                    cal.get(Calendar.YEAR)
-                } else null
-
-                val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
-                val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
-                val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
-
-                val isNewBlock = if (prevItem == null) {
-                    true
-                } else if (currentIsSpecial != prevIsSpecial) {
-                    // Split when switching between special and regular content
-                    true
-                } else if (currentExplicit != null || prevExplicit != null) {
-                    // If titles explicitly mention seasons, split whenever they change
-                    currentExplicit != prevExplicit
+                // Detect if sourceOrder is likely descending (newest first)
+                val firstWithNumber = sourceOrdered.firstOrNull { it.episode.episodeNumber >= 0 }
+                val lastWithNumber = sourceOrdered.lastOrNull { it.episode.episodeNumber >= 0 }
+                val isSourceDescending = if (firstWithNumber != null && lastWithNumber != null && firstWithNumber !== lastWithNumber) {
+                    firstWithNumber.episode.episodeNumber > lastWithNumber.episode.episodeNumber
                 } else {
-                    // Fallback for episodes without "S1/S2" in title
-                    val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
-                                    item.episode.episodeNumber < prevItem.episode.episodeNumber
+                    false
+                }
+                
+                // Step 2: Process episodes in chronological sequence (oldest to newest) to find blocks
+                val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
+                
+                data class EpisodeBlock(
+                    val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
+                    var year: Int? = null
+                )
+                val blocks = mutableListOf<EpisodeBlock>()
+                var currentBlock = EpisodeBlock()
+                val cal = Calendar.getInstance()
+                
+                for (index in chronological.indices) {
+                    val item = chronological[index]
+                    val prevItem = chronological.getOrNull(index - 1)
                     
-                    val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
-                        (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
-                    
-                    // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
-                    val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-
-                    val prevYear = if (prevItem.episode.dateUpload > 0) {
-                        cal.timeInMillis = prevItem.episode.dateUpload
+                    val itemYear = if (item.episode.dateUpload > 0) {
+                        cal.timeInMillis = item.episode.dateUpload
                         cal.get(Calendar.YEAR)
                     } else null
-                    
-                    val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
-                    
-                    if (currentIsSpecial) {
-                        numRestart
+
+                    val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
+                    val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+                    val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
+                    val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
+
+                    val isNewBlock = if (prevItem == null) {
+                        true
+                    } else if (currentIsSpecial != prevIsSpecial) {
+                        // Split when switching between special and regular content
+                        true
+                    } else if (currentExplicit != null || prevExplicit != null) {
+                        // If titles explicitly mention seasons, split whenever they change
+                        currentExplicit != prevExplicit
                     } else {
-                        numRestart || timeJump || yearChange || sameDateRestart
-                    }
-                }
+                        // Fallback for episodes without "S1/S2" in title
+                        val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
+                                        item.episode.episodeNumber < prevItem.episode.episodeNumber
+                        
+                        val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
+                            (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
+                        
+                        // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
+                        val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
 
-                if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
-                    blocks.add(currentBlock)
-                    currentBlock = EpisodeBlock()
-                }
-                currentBlock.episodes.add(item)
-                if (currentBlock.year == null) currentBlock.year = itemYear
-            }
-            if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
+                        val prevYear = if (prevItem.episode.dateUpload > 0) {
+                            cal.timeInMillis = prevItem.episode.dateUpload
+                            cal.get(Calendar.YEAR)
+                        } else null
+                        
+                        val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
+                        
+                        if (currentIsSpecial) {
+                            numRestart
+                        } else {
+                            numRestart || timeJump || yearChange || sameDateRestart
+                        }
+                    }
 
-            // Step 3: Assign season names to blocks
-            var implicitSeasonCount = 0
-            blocks.forEach { block ->
-                var explicitSeasonName: String? = null
-                var hasSpecials = false
-                for (item in block.episodes) {
-                    if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
-                        hasSpecials = true
+                    if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
+                        blocks.add(currentBlock)
+                        currentBlock = EpisodeBlock()
                     }
-                    if (explicitSeasonName == null) {
-                        val name = EpisodeSeasonUtils.getSeasonName(item.episode)
-                        if (name != "Season 0") explicitSeasonName = name
-                    }
+                    currentBlock.episodes.add(item)
+                    if (currentBlock.year == null) currentBlock.year = itemYear
                 }
-                
-                val seasonName = if (hasSpecials) {
-                    "Specials"
-                } else if (explicitSeasonName != null) {
-                    explicitSeasonName
-                } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                    "Extras"
-                } else {
-                    implicitSeasonCount++
-                    if (block.year != null) {
-                        "Season $implicitSeasonCount (${block.year})"
+                if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
+
+                // Step 3: Assign season names to blocks
+                var implicitSeasonCount = 0
+                blocks.forEach { block ->
+                    var explicitSeasonName: String? = null
+                    var hasSpecials = false
+                    for (item in block.episodes) {
+                        if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                            hasSpecials = true
+                        }
+                        if (explicitSeasonName == null) {
+                            val name = EpisodeSeasonUtils.getSeasonName(item.episode)
+                            if (name != "Season 0") explicitSeasonName = name
+                        }
+                    }
+                    
+                    val seasonName = if (hasSpecials) {
+                        "Specials"
+                    } else if (explicitSeasonName != null) {
+                        explicitSeasonName
+                    } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
+                        "Extras"
                     } else {
-                        "Season $implicitSeasonCount"
+                        implicitSeasonCount++
+                        if (block.year != null) {
+                            "Season $implicitSeasonCount (${block.year})"
+                        } else {
+                            "Season $implicitSeasonCount"
+                        }
+                    }
+                    
+                    block.episodes.forEach { item ->
+                        mapping[item.episode.id] = seasonName
                     }
                 }
-                
-                block.episodes.forEach { item ->
-                    episodeToSeason[item.episode.id] = seasonName
+
+                // Step 4: Populate final list (Ordered based on UI sort preference)
+                var lastSeasonHeader: String? = null
+                for (i in 0..processedEpisodes.lastIndex) {
+                    val item = processedEpisodes[i]
+                    
+                    // 1. Season Header (Must be BEFORE the item)
+                    val seasonName = mapping[item.episode.id]
+                    if (seasonName != null && seasonName != lastSeasonHeader) {
+                        items.add(EpisodeList.Season(seasonName))
+                        if (!seasonsList.contains(seasonName)) {
+                            seasonsList.add(seasonName)
+                        }
+                        lastSeasonHeader = seasonName
+                    }
+
+                    // 2. Missing count at series start (only for ascending)
+                    if (i == 0 && !anime.sortDescending()) {
+                        val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
+                        if (gap > 0) {
+                            items.add(EpisodeList.MissingCount("start-${item.id}", gap))
+                        }
+                    }
+
+                    // 3. Add Item
+                    items.add(item)
+
+                    // 4. Missing count between items
+                    val next = processedEpisodes.getOrNull(i + 1)
+                    if (next != null) {
+                        val higher = if (anime.sortDescending()) item else next
+                        val lower = if (anime.sortDescending()) next else item
+                        val gap = calculateChapterGap(higher.episode, lower.episode)
+                        if (gap > 0) {
+                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                        }
+                    }
+                }
+            } else {
+                // Original logic for non-grouped episodes
+                for (i in 0..processedEpisodes.lastIndex) {
+                    val item = processedEpisodes[i]
+
+                    // Missing count at series start (only for ascending)
+                    if (i == 0 && !anime.sortDescending()) {
+                        val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
+                        if (gap > 0) {
+                            items.add(EpisodeList.MissingCount("start-${item.id}", gap))
+                        }
+                    }
+
+                    items.add(item)
+
+                    // Missing count between items
+                    val next = processedEpisodes.getOrNull(i + 1)
+                    if (next != null) {
+                        val higher = if (anime.sortDescending()) item else next
+                        val lower = if (anime.sortDescending()) next else item
+                        val gap = calculateChapterGap(higher.episode, lower.episode)
+                        if (gap > 0) {
+                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                        }
+                    }
                 }
             }
-
-            // Step 4: Populate final list (Ordered based on UI sort preference)
-            var lastSeasonHeader: String? = null
-            for (i in 0..processedEpisodes.lastIndex) {
-                val item = processedEpisodes[i]
-                
-                // 1. Season Header (Must be BEFORE the item)
-                val seasonName = episodeToSeason[item.episode.id]
-                if (seasonName != null && seasonName != lastSeasonHeader) {
-                    episodeListItems.add(EpisodeList.Season(seasonName))
-                    if (!availableSeasonsList.contains(seasonName)) {
-                        availableSeasonsList.add(seasonName)
-                    }
-                    lastSeasonHeader = seasonName
-                }
-
-                // 2. Missing count at series start (only for ascending)
-                if (i == 0 && !anime.sortDescending()) {
-                    val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
-                    if (gap > 0) {
-                        episodeListItems.add(EpisodeList.MissingCount("start-${item.id}", gap))
-                    }
-                }
-
-                // 3. Add Item
-                episodeListItems.add(item)
-
-                // 4. Missing count between items
-                val next = processedEpisodes.getOrNull(i + 1)
-                if (next != null) {
-                    val higher = if (anime.sortDescending()) item else next
-                    val lower = if (anime.sortDescending()) next else item
-                    val gap = calculateChapterGap(higher.episode, lower.episode)
-                    if (gap > 0) {
-                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
-                    }
-                }
-            }
-        } else {
-            // Original logic for non-grouped episodes
-            for (i in 0..processedEpisodes.lastIndex) {
-                val item = processedEpisodes[i]
-
-                // Missing count at series start (only for ascending)
-                if (i == 0 && !anime.sortDescending()) {
-                    val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
-                    if (gap > 0) {
-                        episodeListItems.add(EpisodeList.MissingCount("start-${item.id}", gap))
-                    }
-                }
-
-                episodeListItems.add(item)
-
-                // Missing count between items
-                val next = processedEpisodes.getOrNull(i + 1)
-                if (next != null) {
-                    val higher = if (anime.sortDescending()) item else next
-                    val lower = if (anime.sortDescending()) next else item
-                    val gap = calculateChapterGap(higher.episode, lower.episode)
-                    if (gap > 0) {
-                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
-                    }
-                }
-            }
+            Triple(items.toImmutableList(), seasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator).toImmutableList(), mapping)
         }
 
+        val groupingMode = anime.seasonGroupingMode
+        val availableSeasonsList = availableSeasons
+        val episodeToSeason = epToSeason
+
         // Default to first season if none selected and grouping is in Tabs mode
-        val sortedSeasons = availableSeasonsList.sortedWith(EpisodeSeasonUtils.SeasonComparator)
+        val sortedSeasons = availableSeasonsList
         var finalSelectedSeason = if (selectedSeason == null && groupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             sortedSeasons.firstOrNull()
         } else {
@@ -470,7 +492,7 @@ class AnimeScreenModel(
             anime = anime,
             episodes = episodes.toImmutableList(),
             processedEpisodes = processedEpisodes,
-            episodeListItems = episodeListItems.toImmutableList(),
+            episodeListItems = episodeListItems,
             missingEpisodeCount = missingEpisodeCount,
             trackItems = trackItems.toImmutableList(),
             suggestionSections = suggestionSections,
@@ -485,7 +507,7 @@ class AnimeScreenModel(
             isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
             nextAiringEpisode = nextAiringEpisode,
-            availableSeasons = sortedSeasons.toImmutableList(),
+            availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
             episodeToSeason = episodeToSeason,
             showEpisodeSummary = showEpisodeSummary,
@@ -727,11 +749,13 @@ class AnimeScreenModel(
                 }
 
                 fun updateSection(type: SuggestionSection.Type, items: List<Anime>) {
+                    val currentSuccess = successState ?: return
+                    val rankedItems = rankAndSortItems(items, currentSuccess.anime, type).toImmutableList()
+                    
                     updateSuccessState { state ->
                         val index = initialSections.indexOfFirst { it.type == type }
                         if (index != -1) {
-                            val rankedItems = rankAndSortItems(items, state.anime, type)
-                            initialSections[index] = initialSections[index].copy(items = rankedItems.toImmutableList())
+                            initialSections[index] = initialSections[index].copy(items = rankedItems)
 
                             // Fallback: If Recommended (Source) is empty but Franchise has items, mirror them to Recommended
                             if (type == SuggestionSection.Type.Franchise && initialSections.find { it.type == SuggestionSection.Type.Source }?.items.isNullOrEmpty()) {
