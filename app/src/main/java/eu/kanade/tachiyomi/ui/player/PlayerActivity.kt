@@ -256,7 +256,6 @@ class PlayerActivity : BaseActivity() {
                     hosterIndex = initResult.first.videoIndex.first,
                     videoIndex = initResult.first.videoIndex.second,
                 )
-                viewModel.restoreAspectRatio()
             }
         }
 
@@ -1389,6 +1388,7 @@ class PlayerActivity : BaseActivity() {
         setupChapters()
         addExternalSubtitles()
         setupTracks()
+        viewModel.restoreAspectRatio()
 
         // aniSkip stuff
         viewModel.waitingSkipIntro = playerPreferences.waitingTimeIntroSkip().get()
