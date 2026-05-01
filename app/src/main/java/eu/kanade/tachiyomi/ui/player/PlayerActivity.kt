@@ -755,7 +755,10 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting || !player.initialized) return
         when (property) {
             "video-params/w" -> PlayerStats.videoW.value = value
-            "video-params/h" -> PlayerStats.videoH.value = value
+            "video-params/h" -> {
+                PlayerStats.videoH.value = value
+                viewModel.restoreAspectRatio()
+            }
             "video-out-params/w" -> PlayerStats.videoOutW.value = value
             "video-out-params/h" -> PlayerStats.videoOutH.value = value
             "dwidth" -> PlayerStats.dwidth.value = value
