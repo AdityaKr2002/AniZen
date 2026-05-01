@@ -834,6 +834,7 @@ class PlayerViewModel @JvmOverloads constructor(
         MPVLib.setPropertyDouble("video-aspect-override", ratio)
         _videoAspectOverride.value = ratio
         playerPreferences.aspectState().set(aspect)
+        playerPreferences.lastAspectRatio().set(ratio.toFloat())
         playerUpdate.update { PlayerUpdates.AspectRatio }
     }
 
@@ -843,13 +844,27 @@ class PlayerViewModel @JvmOverloads constructor(
         MPVLib.setPropertyDouble("video-aspect-override", ratio)
         // Reset VideoAspect to Fit so the icon and standard toggle behavior are consistent
         playerPreferences.aspectState().set(VideoAspect.Fit)
-        
-        playerUpdate.update { 
+        playerPreferences.lastAspectRatio().set(ratio.toFloat())
+
+        playerUpdate.update {
             if (ratio == -1.0) {
                 PlayerUpdates.ShowTextResource(MR.strings.video_fit_screen)
             } else {
                 PlayerUpdates.ShowText(label)
             }
+        }
+    }
+
+    fun restoreAspectRatio() {
+        val aspect = playerPreferences.aspectState().get()
+        val lastRatio = playerPreferences.lastAspectRatio().get().toDouble()
+        if (lastRatio != -1.0) {
+            _videoAspectOverride.value = lastRatio
+            MPVLib.setPropertyDouble("panscan", 0.0)
+            MPVLib.setPropertyDouble("video-aspect-override", lastRatio)
+            playerPreferences.aspectState().set(VideoAspect.Fit)
+        } else {
+            changeVideoAspect(aspect)
         }
     }
 
