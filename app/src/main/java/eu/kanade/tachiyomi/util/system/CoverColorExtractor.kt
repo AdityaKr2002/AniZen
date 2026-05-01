@@ -38,7 +38,11 @@ object CoverColorExtractor {
             is BitmapImage -> image.bitmap
             else -> image.asDrawable(context.resources).toBitmap()
         }.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && it.config == Bitmap.Config.HARDWARE) {
+            // Downsample to a tiny size for negligible extraction cost (max 100x100)
+            val scale = 100f / Math.max(it.width, it.height).coerceAtLeast(1)
+            if (scale < 1f) {
+                Bitmap.createScaledBitmap(it, (it.width * scale).toInt(), (it.height * scale).toInt(), true)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && it.config == Bitmap.Config.HARDWARE) {
                 it.copy(Bitmap.Config.ARGB_8888, false)
             } else {
                 it
