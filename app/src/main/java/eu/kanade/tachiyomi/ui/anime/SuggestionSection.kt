@@ -13,8 +13,8 @@ data class SuggestionSection(
 ) : Serializable {
     enum class Type {
         Franchise,
+        Source,
         Similarity,
         Tag,
-        Source,
     }
 }
