@@ -791,6 +791,14 @@ fun AnimeScreenLargeImpl(
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
+
+    // Defer heavy list rendering until after the entry animation completes to ensure 60fps transition
+    var isAnimationFinished by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(350) // Average Voyager/Compose transition duration
+        isAnimationFinished = true
+    }
+
     val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode, isAnimationFinished) {
         if (!isAnimationFinished) return@remember emptyList()
         if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
@@ -832,13 +840,6 @@ fun AnimeScreenLargeImpl(
     var topBarHeight by remember { mutableIntStateOf(0) }
     val episodeListState = rememberLazyListState()
     val infoScrollState = rememberScrollState()
-
-    // Defer heavy list rendering until after the entry animation completes to ensure 60fps transition
-    var isAnimationFinished by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(350) // Average Voyager/Compose transition duration
-        isAnimationFinished = true
-    }
 
     val isFirstItemVisible by remember {
         derivedStateOf { episodeListState.firstVisibleItemIndex == 0 }
