@@ -756,14 +756,6 @@ class AnimeScreenModel(
                         val index = initialSections.indexOfFirst { it.type == type }
                         if (index != -1) {
                             initialSections[index] = initialSections[index].copy(items = rankedItems)
-
-                            // Fallback: If Recommended (Source) is empty but Franchise has items, mirror them to Recommended
-                            if (type == SuggestionSection.Type.Franchise && initialSections.find { it.type == SuggestionSection.Type.Source }?.items.isNullOrEmpty()) {
-                                val sourceIndex = initialSections.indexOfFirst { it.type == SuggestionSection.Type.Source }
-                                if (sourceIndex != -1) {
-                                    initialSections[sourceIndex] = initialSections[sourceIndex].copy(items = rankedItems.take(10).toImmutableList())
-                                }
-                            }
                         }
                         val finalSections = initialSections
                             .sortedBy { it.type }

@@ -77,4 +77,63 @@ interface AnimeCatalogueSource : AnimeSource {
         ReplaceWith("getLatestUpdates"),
     )
     fun fetchLatestUpdates(page: Int): Observable<AnimesPage>
+
+    // KMK -->
+
+    /**
+     * Whether parsing related animes in anime page or extension provide custom related animes request.
+     * @default false
+     * @since komikku/extensions-lib 1.6
+     */
+    val supportsRelatedAnimes: Boolean get() = false
+
+    /**
+     * Get all the available related animes for an anime.
+     * Normally it's not needed to override this method.
+     *
+     * @since komikku/extensions-lib 1.6
+     * @param anime the current anime to get related animes.
+     * @return a list of <keyword, related animes>
+     * @throws UnsupportedOperationException if a source doesn't support related animes.
+     */
+    override suspend fun getRelatedAnimeList(
+        anime: eu.kanade.tachiyomi.animesource.model.SAnime,
+        exceptionHandler: (Throwable) -> Unit,
+        pushResults: suspend (relatedAnime: Pair<String, List<eu.kanade.tachiyomi.animesource.model.SAnime>>, completed: Boolean) -> Unit,
+    ) {
+        if (supportsRelatedAnimes) {
+            getRelatedAnimeListByExtension(anime, pushResults)
+        }
+    }
+
+    /**
+     * Get related animes provided by extension
+     *
+     * @return a list of <keyword, related animes>
+     * @since komikku/extensions-lib 1.6
+     */
+    suspend fun getRelatedAnimeListByExtension(
+        anime: eu.kanade.tachiyomi.animesource.model.SAnime,
+        pushResults: suspend (relatedAnime: Pair<String, List<eu.kanade.tachiyomi.animesource.model.SAnime>>, completed: Boolean) -> Unit,
+    ) {
+        try {
+            val related = fetchRelatedAnimeList(anime)
+            if (related.isNotEmpty()) {
+                pushResults(Pair("", related), false)
+            }
+        } catch (e: Throwable) {
+            // Ignored
+        }
+    }
+
+    /**
+     * Fetch related animes for an anime from source/site.
+     *
+     * @since komikku/extensions-lib 1.6
+     * @param anime the current anime to get related animes.
+     * @return the related animes for the current anime.
+     * @throws UnsupportedOperationException if a source doesn't support related animes.
+     */
+    suspend fun fetchRelatedAnimeList(anime: eu.kanade.tachiyomi.animesource.model.SAnime): List<eu.kanade.tachiyomi.animesource.model.SAnime> = throw UnsupportedOperationException("Unsupported!")
+    // KMK <--
 }
