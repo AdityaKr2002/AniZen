@@ -858,7 +858,9 @@ class PlayerViewModel @JvmOverloads constructor(
     fun restoreAspectRatio() {
         val aspect = playerPreferences.aspectState().get()
         val lastRatio = playerPreferences.lastAspectRatio().get().toDouble()
-        if (lastRatio != -1.0) {
+        if (aspect == VideoAspect.Stretch) {
+            changeVideoAspect(VideoAspect.Stretch)
+        } else if (lastRatio != -1.0) {
             _videoAspectOverride.value = lastRatio
             MPVLib.setPropertyDouble("panscan", 0.0)
             MPVLib.setPropertyDouble("video-aspect-override", lastRatio)

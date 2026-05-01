@@ -738,7 +738,7 @@ class PlayerActivity : BaseActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         if (!isInPictureInPictureMode) {
-            viewModel.changeVideoAspect(playerPreferences.aspectState().get())
+            viewModel.restoreAspectRatio()
         } else {
             viewModel.hideControls()
         }
@@ -886,7 +886,10 @@ class PlayerActivity : BaseActivity() {
                 viewModel.viewModelScope.launchIO { fileLoaded() }
             }
             MPVLib.mpvEventId.MPV_EVENT_SEEK -> viewModel.isLoading.update { true }
-            MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> player.isExiting = false
+            MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
+                player.isExiting = false
+                viewModel.restoreAspectRatio()
+            }
         }
     }
 
