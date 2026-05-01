@@ -194,8 +194,8 @@ fun AnimeScreen(
     }.takeIf { state.source is ConfigurableSource }
 
     val combinedItems = remember(state.suggestionSections) {
-        state.suggestionSections.flatMap { it.items.take(3) }
-            .distinctBy { it.id to it.url }.take(15)
+        state.suggestionSections.flatMap { it.items }
+            .distinctBy { it.id to it.url }
     }
 
     val onSuggestionsClicked = {
