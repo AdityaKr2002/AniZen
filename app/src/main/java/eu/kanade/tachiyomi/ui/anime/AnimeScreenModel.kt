@@ -688,7 +688,6 @@ class AnimeScreenModel(
 
         fetchSuggestionsJob?.cancel()
         fetchSuggestionsJob = screenModelScope.launch(suggestionsDispatcher) {
-            if (!manualFetch) delay(500) // Wait for entry animation to finish
             try {
                 // Update affinity vector in background if needed
                 calculateUserAffinity.await()

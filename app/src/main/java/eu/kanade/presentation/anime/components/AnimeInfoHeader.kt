@@ -145,7 +145,6 @@ fun AnimeInfoBox(
     modifier: Modifier = Modifier,
     mergedSources: ImmutableList<eu.kanade.tachiyomi.source.Source> = persistentListOf(),
     isRefreshing: Boolean = false,
-    isAnimationFinished: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -166,31 +165,28 @@ fun AnimeInfoBox(
         val context = LocalContext.current
         val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsState()
-
-        if (isAnimationFinished) {
-            val backdropImageRequest = remember(anime.id, anime.thumbnailUrl, anime.coverLastModified, animatedTransitions) {
-                ImageRequest.Builder(context)
-                    .data(anime.asAnimeCover())
-                    .crossfade(animatedTransitions)
-                    .build()
-            }
-            AsyncImage(
-                model = backdropImageRequest,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clipToBounds()
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(brush = backdropBrush)
-                    }
-                    .blur(4.dp)
-                    .graphicsLayer {
-                        alpha = 0.25f
-                    },
-            )
+        val backdropImageRequest = remember(anime.id, anime.thumbnailUrl, anime.coverLastModified, animatedTransitions) {
+            ImageRequest.Builder(context)
+                .data(anime.asAnimeCover())
+                .crossfade(animatedTransitions)
+                .build()
         }
+        AsyncImage(
+            model = backdropImageRequest,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .matchParentSize()
+                .clipToBounds()
+                .drawWithContent {
+                    drawContent()
+                    drawRect(brush = backdropBrush)
+                }
+                .blur(4.dp)
+                .graphicsLayer {
+                    alpha = 0.25f
+                },
+        )
 
         // Anime & source info
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {

@@ -365,17 +365,7 @@ private fun AnimeScreenSmallImpl(
 ) {
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
-
-    // Defer heavy list rendering until after the entry animation completes to ensure 60fps transition
-    var isAnimationFinished by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(350) // Average Voyager/Compose transition duration
-        isAnimationFinished = true
-    }
-
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode, isAnimationFinished) {
-        if (!isAnimationFinished) return@remember emptyList()
-        
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
         if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
@@ -395,8 +385,7 @@ private fun AnimeScreenSmallImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode, isAnimationFinished) {
-        if (!isAnimationFinished) return@remember 0
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
         if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             listItem.count { it is EpisodeList.Item }
         } else {
@@ -564,7 +553,6 @@ private fun AnimeScreenSmallImpl(
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
                                     isRefreshing = state.isRefreshingData,
-                                    isAnimationFinished = isAnimationFinished,
                                 )
                             }
                             if (showSeasonsSection) {
@@ -791,16 +779,7 @@ fun AnimeScreenLargeImpl(
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
-
-    // Defer heavy list rendering until after the entry animation completes to ensure 60fps transition
-    var isAnimationFinished by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(350) // Average Voyager/Compose transition duration
-        isAnimationFinished = true
-    }
-
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode, isAnimationFinished) {
-        if (!isAnimationFinished) return@remember emptyList()
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
         if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
             state.episodeListItems
         } else {
@@ -820,8 +799,7 @@ fun AnimeScreenLargeImpl(
         }
     }
     
-    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode, isAnimationFinished) {
-        if (!isAnimationFinished) return@remember 0
+    val currentSeasonCount = remember(listItem, state.anime.seasonGroupingMode) {
         if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) {
             listItem.count { it is EpisodeList.Item }
         } else {
@@ -995,7 +973,6 @@ fun AnimeScreenLargeImpl(
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
                                     isRefreshing = state.isRefreshingData,
-                                    isAnimationFinished = isAnimationFinished,
                                 )
                                 if (showSeasonsSection) {
                                     val navigator = LocalNavigator.currentOrThrow
