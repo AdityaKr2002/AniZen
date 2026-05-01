@@ -277,14 +277,12 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @return the related animes for the current anime.
      * @throws UnsupportedOperationException if a source doesn't support related animes.
      */
-    override suspend fun fetchRelatedAnimeList(anime: SAnime): List<SAnime> = kotlinx.coroutines.coroutineScope {
-        kotlinx.coroutines.async {
-            client.newCall(relatedAnimeListRequest(anime))
-                .execute()
-                .let { response ->
-                    relatedAnimeListParse(response)
-                }
-        }.await()
+    override suspend fun fetchRelatedAnimeList(anime: SAnime): List<SAnime> {
+        return client.newCall(relatedAnimeListRequest(anime))
+            .awaitSuccess()
+            .let { response ->
+                relatedAnimeListParse(response)
+            }
     }
 
     /**
