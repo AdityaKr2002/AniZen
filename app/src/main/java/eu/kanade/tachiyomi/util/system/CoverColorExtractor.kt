@@ -34,16 +34,22 @@ object CoverColorExtractor {
 
         if (!extractColor || cover.vibrantCoverColor != null || CoverColorObserver.get(cover.animeId) != null) return@withContext
 
-        val bitmap = when (image) {
+        val originalBitmap = when (image) {
             is BitmapImage -> image.bitmap
             else -> image.asDrawable(context.resources).toBitmap()
-        }.let {
+        }
+
+        val softwareBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && originalBitmap.config == Bitmap.Config.HARDWARE) {
+            originalBitmap.copy(Bitmap.Config.ARGB_8888, false)
+        } else {
+            originalBitmap
+        }
+
+        val bitmap = softwareBitmap.let {
             // Downsample to a tiny size for negligible extraction cost (max 100x100)
             val scale = 100f / Math.max(it.width, it.height).coerceAtLeast(1)
             if (scale < 1f) {
                 Bitmap.createScaledBitmap(it, (it.width * scale).toInt(), (it.height * scale).toInt(), true)
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && it.config == Bitmap.Config.HARDWARE) {
-                it.copy(Bitmap.Config.ARGB_8888, false)
             } else {
                 it
             }
