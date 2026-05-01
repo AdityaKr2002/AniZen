@@ -564,6 +564,7 @@ private fun AnimeScreenSmallImpl(
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
                                     isRefreshing = state.isRefreshingData,
+                                    isAnimationFinished = isAnimationFinished,
                                 )
                             }
                             if (showSeasonsSection) {
@@ -993,6 +994,7 @@ fun AnimeScreenLargeImpl(
                                     doSearch = onSearch,
                                     mergedSources = state.mergedSources,
                                     isRefreshing = state.isRefreshingData,
+                                    isAnimationFinished = isAnimationFinished,
                                 )
                                 if (showSeasonsSection) {
                                     val navigator = LocalNavigator.currentOrThrow
