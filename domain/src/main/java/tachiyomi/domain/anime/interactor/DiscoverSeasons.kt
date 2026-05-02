@@ -55,9 +55,9 @@ class DiscoverSeasons(
             }.take(10)
 
             val verified = candidates
-                .filter { it.url != anime.url } // Filter out the current anime
+                .filter { it.url.trimEnd('/') != anime.url.trimEnd('/') } // Filter out the current anime
                 .map { it.toDomainAnime(anime.source) }
-                .distinctBy { it.id } // Filter out exact duplicate IDs if any
+                .distinctBy { it.url.trimEnd('/') } // Deduplicate by URL instead of placeholder ID
 
             verified.sortedBy { sAnime ->
                 SeasonRecognition.parseSeasonNumber(anime.title, sAnime.title)
