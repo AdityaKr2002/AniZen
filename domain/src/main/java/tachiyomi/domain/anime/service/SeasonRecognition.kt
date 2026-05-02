@@ -119,18 +119,6 @@ object SeasonRecognition {
     fun isUnrelated(originalTitle: String, candidateTitle: String): Boolean {
         // Hard Block: If candidate has "No. 1" but original doesn't, it's garbage.
         if (candidateTitle.contains(Regex("""(?i)No\.?\s*1""")) && !originalTitle.contains(Regex("""(?i)No\.?\s*1"""))) return true
-        
-        // Excessive Subtitle Check: If the candidate title is way longer than the original (excluding season markers),
-        // it's likely a descriptive special or recap.
-        val root = getRootTitle(originalTitle).lowercase()
-        val candidateClean = getRootTitle(candidateTitle).lowercase()
-        
-        if (candidateClean.startsWith(root) && candidateClean.length > root.length + 2) {
-            val extraPart = candidateClean.removePrefix(root).trim()
-            val extraWords = extraPart.split(Regex("""\s+""")).filter { it.length > 2 }.size
-            if (extraWords >= 3) return true // Too many extra words for a main season
-        }
-
         return negativeKeywords.containsMatchIn(candidateTitle)
     }
 
