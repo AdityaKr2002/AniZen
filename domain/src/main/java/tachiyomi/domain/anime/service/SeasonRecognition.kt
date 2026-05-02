@@ -59,6 +59,20 @@ object SeasonRecognition {
         "XVI" to 16.0, "XVII" to 17.0, "XVIII" to 18.0, "XIX" to 19.0, "XX" to 20.0
     )
 
+    private val stopwords = setOf(
+        "the", "of", "and", "in", "to", "for", "with", "is", "at", "from", "on", "by", "an", "as",
+        "no", "wa", "wo", "ni", "ga", "de", "mo", "to", "da", "na", "ka"
+    )
+
+    fun getSignatureWords(title: String): Set<String> {
+        return title.lowercase()
+            .replace(Regex("""[^a-z0-9\s]"""), " ")
+            .split(Regex("""\s+"""))
+            .filter { it.length > 2 && it !in stopwords }
+            .filter { !romanNumerals.matches(it) }
+            .toSet()
+    }
+
     fun diceCoefficient(s1: String, s2: String): Double {
         val str1 = s1.lowercase().replace(Regex("""\s+"""), "")
         val str2 = s2.lowercase().replace(Regex("""\s+"""), "")

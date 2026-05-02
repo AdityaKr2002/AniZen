@@ -32,13 +32,13 @@ class DiscoverSeasons(
                 // NO-TOLERANCE FILTERS
                 if (SeasonRecognition.isUnrelated(originalFullTitle, candidateFullTitle)) return@filter false
                 
-                // Smart Fuzzy Match: Allow variations like "Frieren" vs "Sousou no Frieren"
-                // 1. Check if the candidate contains the MAIN keyword (longest word from root)
-                val longestWord = rootTitle.split(Regex("""\s+""")).maxByOrNull { it.length } ?: ""
-                if (longestWord.length > 3 && !candidateFullTitle.contains(longestWord, ignoreCase = true)) {
-                     // If the most unique word isn't there, it's likely wrong.
-                     // Exception: deeply localized titles (ignoring for now to prevent noise)
-                     return@filter false
+                // 1. Signature Word Coverage Lock
+                val originalSignature = SeasonRecognition.getSignatureWords(rootTitle)
+                if (originalSignature.isNotEmpty()) {
+                    val allWordsContained = originalSignature.all { sigWord ->
+                        candidateFullTitle.contains(sigWord, ignoreCase = true)
+                    }
+                    if (!allWordsContained) return@filter false
                 }
 
                 // 2. Similarity Check (Dice Coefficient)
