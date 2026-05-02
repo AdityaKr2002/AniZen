@@ -73,6 +73,34 @@ object SeasonRecognition {
             .toSet()
     }
 
+    /**
+     * Sorts words alphabetically and compares. 
+     * Handles "Attack on Titan" vs "Titan, Attack on"
+     */
+    fun tokenSortSimilarity(s1: String, s2: String): Double {
+        val sig1 = getSignatureWords(s1).sorted().joinToString("")
+        val sig2 = getSignatureWords(s2).sorted().joinToString("")
+        if (sig1.isEmpty() || sig2.isEmpty()) return 0.0
+        
+        return diceCoefficient(sig1, sig2)
+    }
+
+    /**
+     * Checks if one title is an acronym of the other (e.g. "MT" vs "Mushoku Tensei")
+     */
+    fun isAcronymMatch(original: String, candidate: String): Boolean {
+        val (short, long) = if (original.length < candidate.length) original to candidate else candidate to original
+        if (short.length < 2 || short.any { it.isWhitespace() }) return false
+        
+        val acronym = getSignatureWords(long)
+            .sortedBy { long.indexOf(it) } // Keep original order
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+            .lowercase()
+            
+        return acronym.contains(short.lowercase())
+    }
+
     fun diceCoefficient(s1: String, s2: String): Double {
         val str1 = s1.lowercase().replace(Regex("""\s+"""), "")
         val str2 = s2.lowercase().replace(Regex("""\s+"""), "")

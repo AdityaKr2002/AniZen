@@ -41,11 +41,15 @@ class DiscoverSeasons(
                     if (!allWordsContained) return@filter false
                 }
 
-                // 2. Similarity Check (Dice Coefficient)
-                // We accept > 0.4 because sequels often add many words ("...Season 2 Part 3")
-                // which lowers the score against the short root title.
-                val similarity = SeasonRecognition.diceCoefficient(rootTitle, candidateFullTitle)
-                if (similarity < 0.4 && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) return@filter false
+                // 2. Multi-Layer Similarity Check
+                val dice = SeasonRecognition.diceCoefficient(rootTitle, candidateFullTitle)
+                val tokenSort = SeasonRecognition.tokenSortSimilarity(rootTitle, candidateFullTitle)
+                val isAcronym = SeasonRecognition.isAcronymMatch(rootTitle, candidateFullTitle)
+                
+                // Final Decision: Must pass signature check AND one of the similarity checks
+                if (dice < 0.4 && tokenSort < 0.4 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
+                    return@filter false
+                }
                 
                 true
             }.take(10)
