@@ -50,6 +50,10 @@ class DiscoverSeasons(
                 if (dice < 0.4 && tokenSort < 0.4 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
                     return@filter false
                 }
+
+                // 3. Main Season Lock: Remove anything identified as a Movie, OVA, or Special
+                val seasonNum = SeasonRecognition.parseSeasonNumber(anime.title, candidateFullTitle)
+                if (seasonNum < 1.0) return@filter false
                 
                 true
             }.take(10)
