@@ -251,10 +251,10 @@ object SeasonRecognition {
         }
 
         // 4. Strict Identity Logic
-        val fullOriginal = animeTitle.lowercase().replace(Regex("""[^a-z0-9]"""), "")
+        val fullRoot = rootTitle.lowercase().replace(Regex("""[^a-z0-9]"""), "")
         val fullCandidate = seasonName.lowercase().replace(Regex("""[^a-z0-9]"""), "")
         
-        if (fullOriginal == fullCandidate) {
+        if (fullRoot == fullCandidate) {
             return 1.0
         }
 
