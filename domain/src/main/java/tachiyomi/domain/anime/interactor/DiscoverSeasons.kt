@@ -50,35 +50,8 @@ class DiscoverSeasons(
                 true
             }.take(10)
 
-            val verified = mutableListOf<tachiyomi.domain.anime.model.Anime>()
-            
-            // 2. Mandatory Metadata Signature Verification
-            for (sAnime in candidates) {
-                try {
-                    val details = source.getAnimeDetails(sAnime)
-                    val candidateAuthor = details.author?.lowercase()?.trim()
-                    val originalAuthor = anime.author?.lowercase()?.trim()
-                    
-                    // If metadata exists, it MUST match significantly
-                    val isVerified = if (!originalAuthor.isNullOrBlank() && !candidateAuthor.isNullOrBlank()) {
-                        val oAuthWords = originalAuthor.split(Regex("""\s+""")).filter { it.length > 2 }.toSet()
-                        val cAuthWords = candidateAuthor.split(Regex("""\s+""")).filter { it.length > 2 }.toSet()
-                        oAuthWords.intersect(cAuthWords).isNotEmpty() || candidateAuthor.contains(originalAuthor)
-                    } else if (!originalAuthor.isNullOrBlank() && candidateAuthor.isNullOrBlank()) {
-                        false // Original has author but candidate doesn't? Suspicious, block it.
-                    } else {
-                        true // No metadata to compare, trust the strict title lock
-                    }
-                    
-                    if (isVerified) {
-                        verified.add(sAnime.toDomainAnime(anime.source))
-                    }
-                } catch (e: Exception) {
-                    // Fail-safe: if network fails, don't show the candidate to be safe
-                }
-            }
-
-            verified.sortedBy { it.title.length }
+            candidates.map { it.toDomainAnime(anime.source) }
+                .sortedBy { it.title.length }
         } catch (e: Exception) {
             emptyList()
         }
