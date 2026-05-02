@@ -249,10 +249,10 @@ object SeasonRecognition {
         basic.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
 
         // 3. Format tags
-        if (cleanSeasonName.contains("movie", ignoreCase = true)) return -2.0
-        if (cleanSeasonName.contains("ova", ignoreCase = true) || cleanSeasonName.contains("oav", ignoreCase = true)) return -3.0
-        if (cleanSeasonName.contains("ona", ignoreCase = true)) return -4.0
-        if (cleanSeasonName.contains("special", ignoreCase = true)) return -5.0
+        if (cleanSeasonName.contains(Regex("""\b(?:movie|film|theatrical)\b""", RegexOption.IGNORE_CASE))) return -2.0
+        if (cleanSeasonName.contains(Regex("""\b(?:ova|oav)\b""", RegexOption.IGNORE_CASE))) return -3.0
+        if (cleanSeasonName.contains(Regex("""\b(?:ona)\b""", RegexOption.IGNORE_CASE))) return -4.0
+        if (cleanSeasonName.contains(Regex("""\b(?:special|omake|extra|recap|summary|reawakening|re-awakening|preview)\b""", RegexOption.IGNORE_CASE))) return -5.0
         
         // Final check anchored to "Season" or "Part"
         if (cleanSeasonName.contains(Regex("""(?i)final\s+(?:season|part|chapter)""")) || 
@@ -268,17 +268,16 @@ object SeasonRecognition {
             return 1.0
         }
 
-        // Sequel check
+        // 5. Number Extraction from context
         if (matchingContext.length > 1) {
             val numberInSubtitle = number.find(matchingContext)
-            return if (numberInSubtitle != null) {
-                getSeasonNumberFromMatch(numberInSubtitle)
-            } else {
-                2.0 
+            if (numberInSubtitle != null) {
+                return getSeasonNumberFromMatch(numberInSubtitle)
             }
         }
 
-        return 1.0
+        // 6. No number found? It's a related Special/Side-story, not Season 2.
+        return -5.0
     }
 
     private fun getSeasonNumberFromMatch(match: MatchResult): Double {

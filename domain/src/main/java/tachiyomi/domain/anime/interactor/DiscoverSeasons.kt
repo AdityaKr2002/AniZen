@@ -54,8 +54,33 @@ class DiscoverSeasons(
                 true
             }.take(10)
 
-            candidates.map { it.toDomainAnime(anime.source) }
-                .sortedBy { it.title.length }
+            val mapped = candidates.map { sAnime ->
+                val domainAnime = sAnime.toDomainAnime(anime.source)
+                val seasonNum = SeasonRecognition.parseSeasonNumber(anime.title, domainAnime.title)
+                domainAnime to seasonNum
+            }
+
+            // Deduplication: If multiple entries claim the same season number, 
+            // pick the one that is most likely the "Main" entry.
+            val uniqueSeasons = mapped.groupBy { it.second }
+                .map { (num, matches) ->
+                    matches.minByOrNull { (anime, _) ->
+                        // Priority Score: Lower is better
+                        var score = anime.title.length // Shorter titles are usually cleaner
+                        
+                        // Boost if title contains the actual number/roman numeral
+                        val hasExplicitNumber = anime.title.contains(Regex("""\b(?i)(?:Season|S|Part|Cour|Vol)\s*\d+\b""")) ||
+                                               anime.title.contains(Regex("""\b(?i)(?:I|II|III|IV|V|VI|VII|VIII|IX|X)\b"""))
+                        
+                        if (hasExplicitNumber) score -= 100 
+                        
+                        score
+                    }!!.first
+                }
+
+            uniqueSeasons.sortedBy { sAnime ->
+                SeasonRecognition.parseSeasonNumber(anime.title, sAnime.title)
+            }
         } catch (e: Exception) {
             emptyList()
         }
