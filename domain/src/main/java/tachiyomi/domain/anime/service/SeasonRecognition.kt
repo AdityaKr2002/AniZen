@@ -186,6 +186,8 @@ object SeasonRecognition {
             .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
             .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
             .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
+            // Remove bare numbers (2-10) or Roman numerals (II-XX) at the very end
+            .replace(Regex("""\s+(?:[2-9]|10|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)$""", RegexOption.IGNORE_CASE), "")
             // Special handling for "Final" to avoid titles like "Final Fantasy"
             .replace(Regex("""(?i)\s+(?:Final\s+Season|Final\s+Part|The\s+Final\s+Season|The\s+Final\s+Part|Conclusion|Ending)$"""), "")
             // Remove common tags
