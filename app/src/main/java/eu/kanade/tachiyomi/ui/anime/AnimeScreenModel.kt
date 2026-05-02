@@ -577,8 +577,8 @@ class AnimeScreenModel(
                             episodes = episodes.toEpisodeListItems(anime),
                         )
                     }
-                    // If details were just loaded (genre added), retry suggestions
-                    if (oldAnime?.genre.isNullOrEmpty() && !anime.genre.isNullOrEmpty() && successState?.suggestionSections.isNullOrEmpty()) {
+                    // If details were just loaded, retry suggestions
+                    if (successState?.suggestionSections.isNullOrEmpty() && anime.initialized) {
                         fetchSuggestions(anime)
                     }
                 }
@@ -609,8 +609,10 @@ class AnimeScreenModel(
                 }
             }
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
-            if (initialAnime.initialized) {
-                fetchSuggestions(initialAnime)
+            successState?.anime?.let { currentAnime ->
+                if (currentAnime.initialized) {
+                    fetchSuggestions(currentAnime)
+                }
             }
         }
     }
