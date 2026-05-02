@@ -68,7 +68,7 @@ object SeasonRecognition {
         return title.lowercase()
             .replace(Regex("""[^a-z0-9\s]"""), " ")
             .split(Regex("""\s+"""))
-            .filter { it.length > 2 && it !in stopwords }
+            .filter { it.length >= 2 && it !in stopwords }
             .filter { !romanNumerals.matches(it) }
             .toSet()
     }
