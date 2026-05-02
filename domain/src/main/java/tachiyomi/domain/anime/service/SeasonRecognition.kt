@@ -114,14 +114,14 @@ object SeasonRecognition {
         return 2.0 * intersection / (set1.size + set2.size)
     }
 
-    private val negativeKeywords = Regex("""(?i)\b(?:Spin-off|Alternative|Anthology|Recap|Summary|MV|PV|Trailer|Promo|CM|Teaser|Live Action|Stage Play|Remake|Version|Collection|Dub|Sub|No\.?\s*1|ReAwakening|Re-Awakening|How to Get Stronger|Recap)\b""")
+    private val negativeKeywords = Regex("""(?i)\b(?:Spin-off|Alternative|Anthology|Recap|Summary|MV|PV|Trailer|Promo|CM|Teaser|Live Action|Stage Play|Remake|Version|Collection|Dub|Sub|No\.?\s*1|Preview)\b""")
 
     fun isUnrelated(originalTitle: String, candidateTitle: String): Boolean {
         // Hard Block: If candidate has "No. 1" but original doesn't, it's garbage.
         if (candidateTitle.contains(Regex("""(?i)No\.?\s*1""")) && !originalTitle.contains(Regex("""(?i)No\.?\s*1"""))) return true
         
         // Excessive Subtitle Check: If the candidate title is way longer than the original (excluding season markers),
-        // it's likely a descriptive special or recap (e.g. "Solo Leveling: ReAwakening")
+        // it's likely a descriptive special or recap.
         val root = getRootTitle(originalTitle).lowercase()
         val candidateClean = getRootTitle(candidateTitle).lowercase()
         
