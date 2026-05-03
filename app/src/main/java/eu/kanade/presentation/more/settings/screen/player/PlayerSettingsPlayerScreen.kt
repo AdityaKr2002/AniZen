@@ -158,6 +158,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
         val showChapter = playerPreferences.showCurrentChapter()
         val rememberPlayerBrightness = playerPreferences.rememberPlayerBrightness()
         val rememberPlayerVolume = playerPreferences.rememberPlayerVolume()
+        val rememberAspectRatio = playerPreferences.rememberAspectRatio()
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_category_controls),
@@ -182,6 +183,10 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                 Preference.PreferenceItem.SwitchPreference(
                     pref = rememberPlayerVolume,
                     title = stringResource(MR.strings.pref_remember_volume),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = rememberAspectRatio,
+                    title = stringResource(MR.strings.pref_remember_aspect_ratio),
                 ),
             ),
         )
