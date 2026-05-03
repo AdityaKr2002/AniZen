@@ -256,7 +256,6 @@ class PlayerActivity : BaseActivity() {
                     hosterIndex = initResult.first.videoIndex.first,
                     videoIndex = initResult.first.videoIndex.second,
                 )
-                viewModel.restoreAspectRatio()
             }
         }
 
@@ -739,7 +738,7 @@ class PlayerActivity : BaseActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         if (!isInPictureInPictureMode) {
-            viewModel.changeVideoAspect(playerPreferences.aspectState().get())
+            viewModel.restoreAspectRatio()
         } else {
             viewModel.hideControls()
         }
@@ -756,7 +755,10 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting || !player.initialized) return
         when (property) {
             "video-params/w" -> PlayerStats.videoW.value = value
-            "video-params/h" -> PlayerStats.videoH.value = value
+            "video-params/h" -> {
+                PlayerStats.videoH.value = value
+                viewModel.restoreAspectRatio()
+            }
             "video-out-params/w" -> PlayerStats.videoOutW.value = value
             "video-out-params/h" -> PlayerStats.videoOutH.value = value
             "dwidth" -> PlayerStats.dwidth.value = value
@@ -884,7 +886,10 @@ class PlayerActivity : BaseActivity() {
                 viewModel.viewModelScope.launchIO { fileLoaded() }
             }
             MPVLib.mpvEventId.MPV_EVENT_SEEK -> viewModel.isLoading.update { true }
-            MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> player.isExiting = false
+            MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
+                player.isExiting = false
+                viewModel.restoreAspectRatio()
+            }
         }
     }
 
@@ -1389,6 +1394,7 @@ class PlayerActivity : BaseActivity() {
         setupChapters()
         addExternalSubtitles()
         setupTracks()
+        viewModel.restoreAspectRatio()
 
         // aniSkip stuff
         viewModel.waitingSkipIntro = playerPreferences.waitingTimeIntroSkip().get()

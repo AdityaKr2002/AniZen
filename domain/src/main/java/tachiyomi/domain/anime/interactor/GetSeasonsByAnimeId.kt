@@ -44,9 +44,9 @@ class GetSeasonsByAnimeId(
             }.sortedBy { it.seasonNumber }
         }
 
-        // 3. Use virtual seasons from auto-discovery as fallback
+        // 3. Fallback: Virtual Discovery Seasons
         if (virtualSeasons.isNotEmpty()) {
-            val all = (listOf(anime) + virtualSeasons).distinctBy { it.id }
+            val all = (listOf(anime) + virtualSeasons).distinctBy { it.url.trimEnd('/') }
             return all.map { 
                 Season(
                     anime = it,
@@ -115,7 +115,7 @@ class GetSeasonsByAnimeId(
 
         // 3. Fallback: Virtual Discovery Seasons
         if (virtualSeasons.isNotEmpty()) {
-            val all = (listOf(anime) + virtualSeasons).distinctBy { it.id }
+            val all = (listOf(anime) + virtualSeasons).distinctBy { it.url.trimEnd('/') }
             return all.map {
                 Season(
                     it,

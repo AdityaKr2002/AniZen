@@ -577,8 +577,8 @@ class AnimeScreenModel(
                             episodes = episodes.toEpisodeListItems(anime),
                         )
                     }
-                    // If details were just loaded (genre added), retry suggestions
-                    if (oldAnime?.genre.isNullOrEmpty() && !anime.genre.isNullOrEmpty() && successState?.suggestionSections.isNullOrEmpty()) {
+                    // If details were just loaded, retry suggestions
+                    if (successState?.suggestionSections.isNullOrEmpty() && anime.initialized) {
                         fetchSuggestions(anime)
                     }
                 }
@@ -609,8 +609,10 @@ class AnimeScreenModel(
                 }
             }
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
-            if (initialAnime.initialized) {
-                fetchSuggestions(initialAnime)
+            successState?.anime?.let { currentAnime ->
+                if (currentAnime.initialized) {
+                    fetchSuggestions(currentAnime)
+                }
             }
         }
     }
@@ -756,14 +758,6 @@ class AnimeScreenModel(
                         val index = initialSections.indexOfFirst { it.type == type }
                         if (index != -1) {
                             initialSections[index] = initialSections[index].copy(items = rankedItems)
-
-                            // Fallback: If Recommended (Source) is empty but Franchise has items, mirror them to Recommended
-                            if (type == SuggestionSection.Type.Franchise && initialSections.find { it.type == SuggestionSection.Type.Source }?.items.isNullOrEmpty()) {
-                                val sourceIndex = initialSections.indexOfFirst { it.type == SuggestionSection.Type.Source }
-                                if (sourceIndex != -1) {
-                                    initialSections[sourceIndex] = initialSections[sourceIndex].copy(items = rankedItems.take(10).toImmutableList())
-                                }
-                            }
                         }
                         val finalSections = initialSections
                             .sortedBy { it.type }

@@ -32,53 +32,40 @@ class DiscoverSeasons(
                 // NO-TOLERANCE FILTERS
                 if (SeasonRecognition.isUnrelated(originalFullTitle, candidateFullTitle)) return@filter false
                 
-                // Smart Fuzzy Match: Allow variations like "Frieren" vs "Sousou no Frieren"
-                // 1. Check if the candidate contains the MAIN keyword (longest word from root)
-                val longestWord = rootTitle.split(Regex("""\s+""")).maxByOrNull { it.length } ?: ""
-                if (longestWord.length > 3 && !candidateFullTitle.contains(longestWord, ignoreCase = true)) {
-                     // If the most unique word isn't there, it's likely wrong.
-                     // Exception: deeply localized titles (ignoring for now to prevent noise)
-                     return@filter false
+                // 1. Signature Word Coverage Lock
+                val originalSignature = SeasonRecognition.getSignatureWords(rootTitle)
+                if (originalSignature.isNotEmpty()) {
+                    val allWordsContained = originalSignature.all { sigWord ->
+                        candidateFullTitle.contains(sigWord, ignoreCase = true)
+                    }
+                    if (!allWordsContained) return@filter false
                 }
 
-                // 2. Similarity Check (Dice Coefficient)
-                // We accept > 0.4 because sequels often add many words ("...Season 2 Part 3")
-                // which lowers the score against the short root title.
-                val similarity = SeasonRecognition.diceCoefficient(rootTitle, candidateFullTitle)
-                if (similarity < 0.4 && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) return@filter false
+                // 2. Multi-Layer Similarity Check
+                val dice = SeasonRecognition.diceCoefficient(rootTitle, candidateFullTitle)
+                val tokenSort = SeasonRecognition.tokenSortSimilarity(rootTitle, candidateFullTitle)
+                val isAcronym = SeasonRecognition.isAcronymMatch(rootTitle, candidateFullTitle)
+                
+                // Final Decision: Must pass signature check AND one of the similarity checks
+                if (dice < 0.4 && tokenSort < 0.4 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
+                    return@filter false
+                }
+
+                // 3. Main Season Lock: Remove anything identified as a Movie, OVA, or Special
+                val seasonNum = SeasonRecognition.parseSeasonNumber(anime.title, candidateFullTitle)
+                if (seasonNum < 1.0) return@filter false
                 
                 true
             }.take(10)
 
-            val verified = mutableListOf<tachiyomi.domain.anime.model.Anime>()
-            
-            // 2. Mandatory Metadata Signature Verification
-            for (sAnime in candidates) {
-                try {
-                    val details = source.getAnimeDetails(sAnime)
-                    val candidateAuthor = details.author?.lowercase()?.trim()
-                    val originalAuthor = anime.author?.lowercase()?.trim()
-                    
-                    // If metadata exists, it MUST match significantly
-                    val isVerified = if (!originalAuthor.isNullOrBlank() && !candidateAuthor.isNullOrBlank()) {
-                        val oAuthWords = originalAuthor.split(Regex("""\s+""")).filter { it.length > 2 }.toSet()
-                        val cAuthWords = candidateAuthor.split(Regex("""\s+""")).filter { it.length > 2 }.toSet()
-                        oAuthWords.intersect(cAuthWords).isNotEmpty() || candidateAuthor.contains(originalAuthor)
-                    } else if (!originalAuthor.isNullOrBlank() && candidateAuthor.isNullOrBlank()) {
-                        false // Original has author but candidate doesn't? Suspicious, block it.
-                    } else {
-                        true // No metadata to compare, trust the strict title lock
-                    }
-                    
-                    if (isVerified) {
-                        verified.add(sAnime.toDomainAnime(anime.source))
-                    }
-                } catch (e: Exception) {
-                    // Fail-safe: if network fails, don't show the candidate to be safe
-                }
-            }
+            val verified = candidates
+                .filter { it.url.trimEnd('/') != anime.url.trimEnd('/') } // Filter out the current anime
+                .map { it.toDomainAnime(anime.source) }
+                .distinctBy { it.url.trimEnd('/') } // Deduplicate by URL instead of placeholder ID
 
-            verified.sortedBy { it.title.length }
+            verified.sortedBy { sAnime ->
+                SeasonRecognition.parseSeasonNumber(anime.title, sAnime.title)
+            }
         } catch (e: Exception) {
             emptyList()
         }

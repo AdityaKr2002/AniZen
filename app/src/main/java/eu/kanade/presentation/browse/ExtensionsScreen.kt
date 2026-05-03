@@ -531,7 +531,7 @@ private fun ExtensionItemActions(
                     )
                 }
             }
-            installStep == InstallStep.Idle -> {
+            else -> {
                 when (extension) {
                     is Extension.Installed -> {
                         IconButton(onClick = { onClickItemSecondaryAction(extension) }) {

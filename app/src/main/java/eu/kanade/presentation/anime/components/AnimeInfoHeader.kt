@@ -561,8 +561,6 @@ private fun AnimeContentInfo(
     Text(
         text = title.ifBlank { stringResource(MR.strings.unknown_title) },
         style = MaterialTheme.typography.titleLarge,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
         modifier = Modifier.clickableNoIndication(
             onLongClick = {
                 if (title.isNotBlank()) {
