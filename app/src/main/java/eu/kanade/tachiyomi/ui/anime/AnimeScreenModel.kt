@@ -256,10 +256,10 @@ class AnimeScreenModel(
         showEpisodeSummary: Boolean = anime.showSummaries(),
         showEpisodeThumbnail: Boolean = anime.showPreviews(),
     ): State.Success {
-        val episodesStatusHash = episodes.sumOf { it.episode.lastModifiedAt + if (it.episode.seen) 1 else 0 }
+        val episodesStatusHash = episodes.sumOf { it.episode.lastModifiedAt + (if (it.episode.seen) 1 else 0) + (if (it.selected) 2 else 0) }
         val episodesChanged = episodes.size != this.episodes.size || 
                              episodesStatusHash != (this as? State.Success)?.let { success -> 
-                                 success.episodes.sumOf { it.episode.lastModifiedAt + if (it.episode.seen) 1 else 0 } 
+                                 success.episodes.sumOf { it.episode.lastModifiedAt + (if (it.episode.seen) 1 else 0) + (if (it.selected) 2 else 0) } 
                              } ?: 0L ||
                              episodes.firstOrNull()?.episode?.id != this.episodes.firstOrNull()?.episode?.id
 
@@ -1463,46 +1463,52 @@ class AnimeScreenModel(
 
     fun toggleSelection(item: EpisodeList.Item, selected: Boolean, userSelected: Boolean = false, fromLongPress: Boolean = false) {
         updateSuccessState { successState ->
-            val newEpisodes = successState.processedEpisodes.toMutableList().apply {
-                val selectedIndex = successState.processedEpisodes.indexOfFirst { it.id == item.episode.id }
-                if (selectedIndex < 0) return@apply
-                val selectedItem = get(selectedIndex)
-                if ((selectedItem.selected && selected) || (!selectedItem.selected && !selected)) return@apply
-                val firstSelection = none { it.selected }
-                set(selectedIndex, selectedItem.copy(selected = selected))
-                selectedEpisodeIds.addOrRemove(item.id, selected)
-                if (selected && userSelected && fromLongPress) {
-                    if (firstSelection) {
+            val processedEpisodes = successState.processedEpisodes
+            val selectedIndex = processedEpisodes.indexOfFirst { it.id == item.episode.id }
+            if (selectedIndex < 0) return@updateSuccessState successState
+            
+            val selectedItem = processedEpisodes[selectedIndex]
+            if ((selectedItem.selected && selected) || (!selectedItem.selected && !selected)) return@updateSuccessState successState
+            
+            val firstSelection = processedEpisodes.none { it.selected }
+            selectedEpisodeIds.addOrRemove(item.id, selected)
+            
+            if (selected && userSelected && fromLongPress) {
+                if (firstSelection) {
+                    selectedPositions[0] = selectedIndex
+                    selectedPositions[1] = selectedIndex
+                } else {
+                    val range = if (selectedIndex < selectedPositions[0]) {
+                        val r = selectedIndex + 1..<selectedPositions[0]
                         selectedPositions[0] = selectedIndex
+                        r
+                    } else if (selectedIndex > selectedPositions[1]) {
+                        val r = (selectedPositions[1] + 1)..<selectedIndex
                         selectedPositions[1] = selectedIndex
-                    } else {
-                        val range = if (selectedIndex < selectedPositions[0]) {
-                            val r = selectedIndex + 1..<selectedPositions[0]
-                            selectedPositions[0] = selectedIndex
-                            r
-                        } else if (selectedIndex > selectedPositions[1]) {
-                            val r = (selectedPositions[1] + 1)..<selectedIndex
-                            selectedPositions[1] = selectedIndex
-                            r
-                        } else IntRange.EMPTY
-                        range.forEach {
-                            val inbetweenItem = get(it)
-                            if (!inbetweenItem.selected) {
-                                selectedEpisodeIds.add(inbetweenItem.id)
-                                set(it, inbetweenItem.copy(selected = true))
-                            }
+                        r
+                    } else IntRange.EMPTY
+                    
+                    range.forEach {
+                        val inbetweenItem = processedEpisodes[it]
+                        if (!inbetweenItem.selected) {
+                            selectedEpisodeIds.add(inbetweenItem.id)
                         }
                     }
-                } else if (userSelected && !fromLongPress) {
-                    if (!selected) {
-                        if (selectedIndex == selectedPositions[0]) selectedPositions[0] = indexOfFirst { it.selected }
-                        else if (selectedIndex == selectedPositions[1]) selectedPositions[1] = indexOfLast { it.selected }
-                    } else {
-                        if (selectedIndex < selectedPositions[0]) selectedPositions[0] = selectedIndex
-                        else if (selectedIndex > selectedPositions[1]) selectedPositions[1] = selectedIndex
-                    }
                 }
+            } else if (userSelected && !fromLongPress) {
+                if (!selected) {
+                    if (selectedIndex == selectedPositions[0]) selectedPositions[0] = processedEpisodes.indexOfFirst { it.id in selectedEpisodeIds }
+                    else if (selectedIndex == selectedPositions[1]) selectedPositions[1] = processedEpisodes.indexOfLast { it.id in selectedEpisodeIds }
+                } else {
+                    if (selectedIndex < selectedPositions[0]) selectedPositions[0] = selectedIndex
+                    else if (selectedIndex > selectedPositions[1]) selectedPositions[1] = selectedIndex
+                }
+            }
+
+            val newEpisodes = successState.episodes.map { epItem ->
+                epItem.copy(selected = selectedEpisodeIds.contains(epItem.id))
             }.toImmutableList()
+
             successState.copySuccess(episodes = newEpisodes)
         }
     }

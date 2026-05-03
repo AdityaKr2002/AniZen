@@ -240,6 +240,7 @@
     <string name="pref_controls_display_volume_percentage">Display volume as percentage</string>
     <string name="pref_remember_brightness">Remember and switch to the last used brightness</string>
     <string name="pref_remember_volume">Remember and switch to the last used volume</string>
+    <string name="pref_remember_aspect_ratio">Remember custom aspect ratio globally</string>
 
     <string name="pref_hosters">Hosters</string>
     <string name="pref_hosters_show_failure">Display failed hosters</string>

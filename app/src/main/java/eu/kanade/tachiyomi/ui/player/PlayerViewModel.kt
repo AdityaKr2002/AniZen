@@ -847,6 +847,8 @@ class PlayerViewModel @JvmOverloads constructor(
         // Reset VideoAspect to Fit so the icon and standard toggle behavior are consistent
         playerPreferences.aspectState().set(VideoAspect.Fit)
         playerPreferences.lastAspectRatio().set(ratio.toFloat())
+        val currentAnimeId = currentAnime.value?.id ?: -1L
+        playerPreferences.lastAspectRatioAnimeId().set(currentAnimeId)
 
         playerUpdate.update {
             if (ratio == -1.0) {
@@ -860,14 +862,22 @@ class PlayerViewModel @JvmOverloads constructor(
     fun restoreAspectRatio() {
         val aspect = playerPreferences.aspectState().get()
         val lastRatio = playerPreferences.lastAspectRatio().get().toDouble()
+        val lastRatioAnimeId = playerPreferences.lastAspectRatioAnimeId().get()
+        val rememberAspectRatio = playerPreferences.rememberAspectRatio().get()
+        val currentAnimeId = currentAnime.value?.id ?: -1L
+
         if (aspect == VideoAspect.Stretch) {
             changeVideoAspect(VideoAspect.Stretch, showUpdate = false)
-        } else if (lastRatio != -1.0) {
+        } else if (lastRatio != -1.0 && (rememberAspectRatio || lastRatioAnimeId == currentAnimeId)) {
             _videoAspectOverride.value = lastRatio
             MPVLib.setPropertyDouble("panscan", 0.0)
             MPVLib.setPropertyDouble("video-aspect-override", lastRatio)
             playerPreferences.aspectState().set(VideoAspect.Fit)
         } else {
+            if (lastRatio != -1.0) {
+                playerPreferences.lastAspectRatio().set(-1f)
+                playerPreferences.lastAspectRatioAnimeId().set(-1L)
+            }
             changeVideoAspect(aspect, showUpdate = false)
         }
     }

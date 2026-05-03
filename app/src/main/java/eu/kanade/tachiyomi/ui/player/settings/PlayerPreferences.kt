@@ -96,7 +96,11 @@ class PlayerPreferences(
     fun invertDuration() = preferenceStore.getBoolean("invert_duration", false)
     fun aspectState() = preferenceStore.getEnum("pref_player_aspect_state", VideoAspect.Fit)
 
+    fun rememberAspectRatio() = preferenceStore.getBoolean("pref_remember_aspect_ratio", false)
+
     fun lastAspectRatio() = preferenceStore.getFloat("pref_player_last_aspect_ratio", -1f)
+
+    fun lastAspectRatioAnimeId() = preferenceStore.getLong("pref_last_aspect_ratio_anime_id", -1L)
 
     fun customAspectRatios() = preferenceStore.getStringSet("pref_player_custom_aspect_ratios", emptySet())
 
