@@ -45,9 +45,11 @@ class HosterLoader {
                 return availableHosters[prefHosterIdx].index to prefVideoIdx
             }
 
-            // Check for first video with non-empty url
+            // Check for first video (we no longer require videoUrl to be non-empty,
+            // because unresolved videos from extensions like Torrent/Stremio
+            // intentionally have empty URLs until they are clicked/resolved).
             val firstValid: (Pair<Video, Video.State>) -> Boolean = { (v, s) ->
-                v.videoUrl.isNotEmpty() && (s == Video.State.READY || s == Video.State.QUEUE)
+                s == Video.State.READY || s == Video.State.QUEUE
             }
             val firstAvailableHosterIdx = availableHosters.indexOfFirst {
                 (it.value as HosterState.Ready).let { hoster ->

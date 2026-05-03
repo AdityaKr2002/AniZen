@@ -1625,12 +1625,18 @@ class PlayerViewModel @JvmOverloads constructor(
         }
 
         viewModelScope.launchIO {
-            val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
-            if (success) {
-                if (sheetShown.value == Sheets.QualityTracks) {
-                    dismissSheet()
+            try {
+                val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
+                if (success) {
+                    if (sheetShown.value == Sheets.QualityTracks) {
+                        dismissSheet()
+                    }
+                } else {
+                    updateIsLoadingEpisode(false)
                 }
-            } else {
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                logcat(LogPriority.ERROR, e) { "Error manually loading video" }
                 updateIsLoadingEpisode(false)
             }
         }
