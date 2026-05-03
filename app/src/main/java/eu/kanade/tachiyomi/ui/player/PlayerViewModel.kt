@@ -810,7 +810,7 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     @Suppress("DEPRECATION")
-    fun changeVideoAspect(aspect: VideoAspect) {
+    fun changeVideoAspect(aspect: VideoAspect, showUpdate: Boolean = true) {
         var ratio = -1.0
         var pan = 1.0
         when (aspect) {
@@ -835,7 +835,9 @@ class PlayerViewModel @JvmOverloads constructor(
         _videoAspectOverride.value = ratio
         playerPreferences.aspectState().set(aspect)
         playerPreferences.lastAspectRatio().set(ratio.toFloat())
-        playerUpdate.update { PlayerUpdates.AspectRatio }
+        if (showUpdate) {
+            playerUpdate.update { PlayerUpdates.AspectRatio }
+        }
     }
 
     fun setCustomVideoAspect(ratio: Double, label: String) {
@@ -859,14 +861,14 @@ class PlayerViewModel @JvmOverloads constructor(
         val aspect = playerPreferences.aspectState().get()
         val lastRatio = playerPreferences.lastAspectRatio().get().toDouble()
         if (aspect == VideoAspect.Stretch) {
-            changeVideoAspect(VideoAspect.Stretch)
+            changeVideoAspect(VideoAspect.Stretch, showUpdate = false)
         } else if (lastRatio != -1.0) {
             _videoAspectOverride.value = lastRatio
             MPVLib.setPropertyDouble("panscan", 0.0)
             MPVLib.setPropertyDouble("video-aspect-override", lastRatio)
             playerPreferences.aspectState().set(VideoAspect.Fit)
         } else {
-            changeVideoAspect(aspect)
+            changeVideoAspect(aspect, showUpdate = false)
         }
     }
 
