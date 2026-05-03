@@ -256,10 +256,22 @@ class AnimeScreenModel(
         showEpisodeSummary: Boolean = anime.showSummaries(),
         showEpisodeThumbnail: Boolean = anime.showPreviews(),
     ): State.Success {
-        val episodesStatusHash = episodes.sumOf { it.episode.lastModifiedAt + (if (it.episode.seen) 1 else 0) + (if (it.selected) 2 else 0) }
+        val episodesStatusHash = episodes.sumOf { 
+            it.episode.lastModifiedAt + 
+            (if (it.episode.seen) 1L else 0L) + 
+            (if (it.selected) 2L else 0L) + 
+            (it.downloadState.hashCode().toLong() * 10L) + 
+            (it.downloadProgress.toLong() * 100L)
+        }
         val episodesChanged = episodes.size != this.episodes.size || 
                              episodesStatusHash != (this as? State.Success)?.let { success -> 
-                                 success.episodes.sumOf { it.episode.lastModifiedAt + (if (it.episode.seen) 1 else 0) + (if (it.selected) 2 else 0) } 
+                                 success.episodes.sumOf { 
+                                     it.episode.lastModifiedAt + 
+                                     (if (it.episode.seen) 1L else 0L) + 
+                                     (if (it.selected) 2L else 0L) + 
+                                     (it.downloadState.hashCode().toLong() * 10L) + 
+                                     (it.downloadProgress.toLong() * 100L)
+                                 } 
                              } ?: 0L ||
                              episodes.firstOrNull()?.episode?.id != this.episodes.firstOrNull()?.episode?.id
 
