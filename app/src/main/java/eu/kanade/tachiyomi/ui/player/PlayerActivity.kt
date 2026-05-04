@@ -130,7 +130,7 @@ import eu.kanade.tachiyomi.util.storage.DiskUtil
 import uy.kohesive.injekt.injectLazy
 
 class PlayerActivity : BaseActivity() {
-    private val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
+    internal val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
     private val downloadManager: DownloadManager by injectLazy()
     private val downloadProvider: DownloadProvider by injectLazy()
     private val binding by lazy { PlayerLayoutBinding.inflate(layoutInflater) }
