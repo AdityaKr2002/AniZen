@@ -384,6 +384,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         "video-params/aspect" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
         "pause" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "paused-for-cache" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
+        "core-idle" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "seeking" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "eof-reached" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "hwdec-current" to MPVLib.mpvFormat.MPV_FORMAT_STRING,

@@ -210,6 +210,11 @@ class PlayerViewModel @JvmOverloads constructor(
     val animeTitle = MutableStateFlow("")
 
     val isLoading = MutableStateFlow(true)
+    val pausedForCache = MutableStateFlow(false)
+    val coreIdle = MutableStateFlow(false)
+    private val _isStopped = MutableStateFlow(false)
+    val isStopped = _isStopped.asStateFlow()
+
     val playbackSpeed = MutableStateFlow(playerPreferences.playerSpeed().get())
     val isLongPressing = MutableStateFlow(false)
 
@@ -376,6 +381,10 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun updateIsLoadingEpisode(value: Boolean) {
         _isLoadingEpisode.update { _ -> value }
+    }
+
+    fun setIsStopped(value: Boolean) {
+        _isStopped.update { _ -> value }
     }
 
     private fun updateEpisodeList(episodeList: List<Episode>) {

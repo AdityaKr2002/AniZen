@@ -125,7 +125,10 @@ fun PlayerControls(
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
     val seekBarShown by viewModel.seekBarShown.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val pausedForCache by viewModel.pausedForCache.collectAsState()
+    val coreIdle by viewModel.coreIdle.collectAsState()
     val isLoadingEpisode by viewModel.isLoadingEpisode.collectAsState()
+    val isStopped by viewModel.isStopped.collectAsState()
     val duration by viewModel.duration.collectAsState()
     val position by viewModel.pos.collectAsState()
     val paused by viewModel.paused.collectAsState()
@@ -378,7 +381,7 @@ fun PlayerControls(
                 AnimatedVisibility(
                     visible = (
                         (controlsShown && !areControlsLocked || gestureSeekAmount != null) ||
-                            isLoading ||
+                            (pausedForCache || (coreIdle && !paused)) ||
                             isLoadingEpisode
                         ) && !isLongPressing,
                     enter = fadeIn(playerControlsEnterAnimationSpec()),
@@ -396,7 +399,8 @@ fun PlayerControls(
                         onSkipPrevious = { viewModel.changeEpisode(true) },
                         hasNext = hasNextEpisode,
                         onSkipNext = { viewModel.changeEpisode(false) },
-                        isLoading = isLoading,
+                        isStopped = isStopped,
+                        isLoading = (pausedForCache || (coreIdle && !paused)),
                         isLoadingEpisode = isLoadingEpisode,
                         controlsShown = controlsShown,
                         areControlsLocked = areControlsLocked,

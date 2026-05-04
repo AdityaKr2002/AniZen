@@ -815,7 +815,12 @@ class PlayerActivity : BaseActivity() {
             }
 
             "paused-for-cache" -> {
+                viewModel.pausedForCache.update { value }
                 viewModel.isLoading.update { value }
+            }
+
+            "core-idle" -> {
+                viewModel.coreIdle.update { value }
             }
 
             "seeking" -> {
@@ -1165,6 +1170,7 @@ class PlayerActivity : BaseActivity() {
         viewModel.panelShown.update { _ -> Panels.None }
         viewModel.pause()
         viewModel.isLoading.update { _ -> true }
+        viewModel.setIsStopped(false)
         viewModel.resetHosterState()
 
         lifecycleScope.launch {
@@ -1229,6 +1235,7 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         if (video == null) return
 
+        viewModel.setIsStopped(false)
         setHttpOptions(video)
 
         if (viewModel.isLoadingEpisode.value) {
@@ -1295,6 +1302,9 @@ class PlayerActivity : BaseActivity() {
      * this case the activity is closed and a toast is shown to the user.
      */
     private fun setInitialEpisodeError(error: Throwable) {
+        viewModel.updateIsLoadingEpisode(false)
+        viewModel.isLoading.value = false
+        viewModel.setIsStopped(true)
         if (error is PlayerViewModel.ExceptionWithStringResource) {
             toast(error.stringResource)
         } else {
@@ -1520,6 +1530,7 @@ class PlayerActivity : BaseActivity() {
 
         viewModel.updateIsLoadingEpisode(false)
         viewModel.isLoading.value = false
+        viewModel.setIsStopped(true)
 
         viewModel.setCurrentVideoError()
 
