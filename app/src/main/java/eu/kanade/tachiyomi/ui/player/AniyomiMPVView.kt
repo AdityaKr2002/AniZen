@@ -85,11 +85,17 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     var timePos: Int?
         get() = getPropertyInt("time-pos")
-        set(position) = MPVLib.setPropertyInt("time-pos", position!!)
+        set(position) {
+            if (!initialized) return
+            MPVLib.setPropertyInt("time-pos", position!!)
+        }
 
     var paused: Boolean?
         get() = getPropertyBoolean("pause")
-        set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
+        set(paused) {
+            if (!initialized) return
+            MPVLib.setPropertyBoolean("pause", paused!!)
+        }
 
     val hwdecActive: String
         get() = getPropertyString("hwdec-current") ?: "no"
@@ -120,6 +126,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             return v.toIntOrNull() ?: -1
         }
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+            if (!initialized) return
             if (value == -1) {
                 MPVLib.setPropertyString(name, "no")
             } else {

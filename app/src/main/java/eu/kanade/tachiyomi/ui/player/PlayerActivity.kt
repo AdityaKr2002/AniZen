@@ -1284,10 +1284,13 @@ class PlayerActivity : BaseActivity() {
                 MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
             }
         } else {
-            player.timePos?.let {
-                MPVLib.command(arrayOf("set", "start", "${player.timePos}"))
-            }
+            MPVLib.command(arrayOf("set", "start", "${viewModel.pos.value}"))
         }
+
+        val videoOptions = video.mpvArgs.joinToString(",") { (option, value) ->
+            "$option=\"$value\""
+        }
+
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
@@ -1303,7 +1306,8 @@ class PlayerActivity : BaseActivity() {
                     "loadfile",
                     parseVideoUrl(video.videoUrl)!!,
                     "replace",
-                    "0"
+                    "0",
+                    videoOptions,
                 )
             )
         }
@@ -1569,16 +1573,16 @@ class PlayerActivity : BaseActivity() {
         logcat(LogPriority.ERROR) { errorMessage }
         showToast(errorMessage)
 
-        viewModel.updateIsLoadingEpisode(false)
-        viewModel.isLoading.value = false
-        viewModel.setIsStopped(true)
-
         viewModel.setCurrentVideoError()
 
         if (playerPreferences.switchOnFailure().get()) {
             if (!viewModel.loadBestVideo()) {
                 finish()
             }
+        } else {
+            viewModel.updateIsLoadingEpisode(false)
+            viewModel.isLoading.value = false
+            viewModel.setIsStopped(true)
         }
     }
 
