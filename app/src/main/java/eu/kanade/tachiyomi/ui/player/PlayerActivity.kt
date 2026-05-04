@@ -1298,9 +1298,20 @@ class PlayerActivity : BaseActivity() {
                 torrentLinkHandler(video.videoUrl, video.quality)
             }
         } else {
-            MPVLib.command(arrayOf("loadfile", parseVideoUrl(video.videoUrl)))
+            val videoOptions = video.mpvArgs?.joinToString(",") { (option, value) ->
+                "$option=\"$value\""
+            } ?: ""
+
+            MPVLib.command(
+                arrayOf(
+                    "loadfile",
+                    parseVideoUrl(video.videoUrl)!!,
+                    "replace",
+                    "0",
+                    videoOptions
+                )
+            )
         }
-        updateDiscordRPC(exitingPlayer = false)
     }
 
     private fun torrentLinkHandler(videoUrl: String, quality: String) {
@@ -1458,6 +1469,7 @@ class PlayerActivity : BaseActivity() {
                 }
             }
         }
+        updateDiscordRPC(exitingPlayer = false)
     }
 
     private fun addExternalSubtitles() {
@@ -1562,8 +1574,6 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         logcat(LogPriority.ERROR) { errorMessage }
         showToast(errorMessage)
-
-        MPVLib.command(arrayOf("stop"))
 
         viewModel.updateIsLoadingEpisode(false)
         viewModel.isLoading.value = false

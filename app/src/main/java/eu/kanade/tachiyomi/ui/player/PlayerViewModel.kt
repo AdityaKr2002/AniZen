@@ -1632,7 +1632,9 @@ class PlayerViewModel @JvmOverloads constructor(
 
         qualityIndex = Pair(hosterIndex, videoIndex)
 
-        activity.setVideo(resolvedVideo)
+        activity.runOnUiThread {
+            activity.setVideo(resolvedVideo)
+        }
         return true
     }
 
