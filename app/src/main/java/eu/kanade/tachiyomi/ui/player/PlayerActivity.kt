@@ -1510,6 +1510,23 @@ class PlayerActivity : BaseActivity() {
         }
     }
 
+    fun onVideoError(errorMessage: String) {
+        if (player.isExiting) return
+        logcat(LogPriority.ERROR) { errorMessage }
+        showToast(errorMessage)
+
+        viewModel.setCurrentVideoError()
+
+        if (playerPreferences.switchOnFailure().get()) {
+            if (!viewModel.loadBestVideo()) {
+                finish()
+            }
+        } else {
+            viewModel.updateIsLoadingEpisode(false)
+            viewModel.isLoading.value = false
+        }
+    }
+
     // AM (DISCORD) -->
     private fun updateDiscordRPC(exitingPlayer: Boolean) {
         if (!connectionsPreferences.enableDiscordRPC().get()) return

@@ -1609,6 +1609,29 @@ class PlayerViewModel @JvmOverloads constructor(
         return true
     }
 
+    fun setCurrentVideoError() {
+        val (hosterIdx, videoIdx) = selectedHosterVideoIndex.value
+        if (hosterIdx == -1 || videoIdx == -1) return
+        val currentHosterState = (hosterState.value.getOrNull(hosterIdx) as? HosterState.Ready) ?: return
+        val currentVideo = currentHosterState.videoList.getOrNull(videoIdx) ?: return
+
+        _hosterState.updateAt(
+            hosterIdx,
+            currentHosterState.getChangedAt(videoIdx, currentVideo, Video.State.ERROR),
+        )
+    }
+
+    fun loadBestVideo(): Boolean {
+        val source = currentSource.value ?: return false
+        val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
+        if (hosterIdx == -1) return false
+        val newVideo = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
+        viewModelScope.launchIO {
+            loadVideo(source, newVideo, hosterIdx, videoIdx)
+        }
+        return true
+    }
+
     fun onVideoClicked(hosterIndex: Int, videoIndex: Int) {
         val hosterState = _hosterState.value[hosterIndex] as? HosterState.Ready
         val video = hosterState?.videoList

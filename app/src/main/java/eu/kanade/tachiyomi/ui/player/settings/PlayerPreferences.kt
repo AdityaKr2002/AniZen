@@ -108,6 +108,8 @@ class PlayerPreferences(
 
     fun autoplayEnabled() = preferenceStore.getBoolean("pref_auto_play_enabled", false)
 
+    fun switchOnFailure() = preferenceStore.getBoolean("pref_switch_on_failure", true)
+
     fun preloadMode() = preferenceStore.getEnum("pref_preload_mode_key", PreloadMode.WifiOnly)
     fun selfHealingLinks() = preferenceStore.getBoolean("pref_self_healing_links", true)
     fun intelligentBufferHandoff() = preferenceStore.getBoolean("pref_intelligent_buffer_handoff", false)

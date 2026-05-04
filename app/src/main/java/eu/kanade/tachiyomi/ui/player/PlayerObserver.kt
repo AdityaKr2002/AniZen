@@ -40,9 +40,8 @@ class PlayerObserver(val activity: PlayerActivity) :
             errorMessage += ": $httpError"
             httpError = null
         }
-        logcat(LogPriority.ERROR) { errorMessage }
         activity.runOnUiThread {
-            activity.toast(errorMessage, Toast.LENGTH_LONG)
+            activity.onVideoError(errorMessage)
         }
     }
 
