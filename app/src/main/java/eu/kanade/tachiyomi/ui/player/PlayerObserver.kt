@@ -42,6 +42,10 @@ class PlayerObserver(val activity: PlayerActivity) :
         }
         logcat(LogPriority.ERROR) { errorMessage }
         activity.runOnUiThread {
+            val (hIdx, vIdx) = activity.viewModel.selectedHosterVideoIndex.value
+            if (hIdx != -1 && vIdx != -1) {
+                activity.viewModel.setVideoError(hIdx, vIdx)
+            }
             activity.viewModel.updateIsLoadingEpisode(false)
             activity.viewModel.isLoading.value = false
             activity.toast(errorMessage, Toast.LENGTH_LONG)

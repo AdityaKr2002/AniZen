@@ -1229,8 +1229,22 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         if (video == null) return
 
+        val resumePosition = position
+            ?: if (viewModel.isLoadingEpisode.value) {
+                viewModel.currentEpisode.value?.let { episode ->
+                    val preservePos = playerPreferences.preserveWatchingPosition().get()
+                    if (episode.seen && !preservePos) {
+                        0L
+                    } else {
+                        episode.last_second_seen
+                    }
+                }
+            } else {
+                player.timePos?.toLong()?.times(1000L)
+            }
+
         if (!player.initialized) {
-            logcat(LogPriority.WARN) { "setVideo called but player is not initialized yet. Re-initializing..." }
+            logcat(LogPriority.WARN) { "setVideo called but player is not initialized. Initializing..." }
             setupPlayerMPV()
         }
 
@@ -1245,22 +1259,10 @@ class PlayerActivity : BaseActivity() {
             MPVLib.setOptionString("android-mime-type", it)
         }
 
-        if (viewModel.isLoadingEpisode.value) {
-            viewModel.currentEpisode.value?.let { episode ->
-                val preservePos = playerPreferences.preserveWatchingPosition().get()
-                val resumePosition = position
-                    ?: if (episode.seen && !preservePos) {
-                        0L
-                    } else {
-                        episode.last_second_seen
-                    }
-                MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
-            }
-        } else {
-            player.timePos?.let {
-                MPVLib.command(arrayOf("set", "start", "${player.timePos}"))
-            }
+        if (resumePosition != null) {
+            MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
         }
+
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
