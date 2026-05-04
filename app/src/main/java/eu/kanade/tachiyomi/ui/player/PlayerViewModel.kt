@@ -1562,6 +1562,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
+                setIsStopped(true)
             }
         }
     }
@@ -1570,6 +1571,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
         updateIsLoadingEpisode(true)
         isLoading.value = true
+        setIsStopped(false)
 
         val oldSelectedIndex = _selectedHosterVideoIndex.value
         _selectedHosterVideoIndex.update { _ -> Pair(hosterIndex, videoIndex) }
@@ -1664,6 +1666,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
+                setIsStopped(true)
             }
         }
         return true
@@ -1699,6 +1702,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 logcat(LogPriority.ERROR, e) { "Error manually loading video" }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
+                setIsStopped(true)
             }
         }
     }

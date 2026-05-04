@@ -1174,52 +1174,61 @@ class PlayerActivity : BaseActivity() {
         viewModel.resetHosterState()
 
         lifecycleScope.launch {
-            viewModel.updateIsLoadingEpisode(true)
-            viewModel.updateIsLoadingHosters(true)
-            viewModel.cancelHosterVideoLinksJob()
+            try {
+                viewModel.updateIsLoadingEpisode(true)
+                viewModel.updateIsLoadingHosters(true)
+                viewModel.cancelHosterVideoLinksJob()
 
-            val pipEpisodeToasts = playerPreferences.pipEpisodeToasts().get()
-            val switchMethod = viewModel.loadEpisode(episodeId)
+                val pipEpisodeToasts = playerPreferences.pipEpisodeToasts().get()
+                val switchMethod = viewModel.loadEpisode(episodeId)
 
-            viewModel.updateIsLoadingHosters(false)
+                viewModel.updateIsLoadingHosters(false)
 
-            when (switchMethod) {
-                null -> {
-                    if (viewModel.currentAnime.value != null && !autoPlay) {
-                        launchUI { toast(MR.strings.no_next_episode) }
-                    }
-                    viewModel.isLoading.update { _ -> false }
-                    viewModel.updateIsLoadingEpisode(false)
-                }
-
-                else -> {
-                    if (switchMethod.hosterList != null) {
-                        when {
-                            switchMethod.hosterList.isEmpty() -> setInitialEpisodeError(
-                                PlayerViewModel.ExceptionWithStringResource(
-                                    "Hoster list is empty",
-                                    MR.strings.no_hosters,
-                                ),
-                            )
-                            else -> {
-                                viewModel.loadHosters(
-                                    source = switchMethod.source,
-                                    hosterList = switchMethod.hosterList,
-                                    hosterIndex = -1,
-                                    videoIndex = -1,
-                                )
-                            }
+                when (switchMethod) {
+                    null -> {
+                        if (viewModel.currentAnime.value != null && !autoPlay) {
+                            launchUI { toast(MR.strings.no_next_episode) }
                         }
-                    } else {
-                        logcat(LogPriority.ERROR) { "Error getting links" }
                         viewModel.isLoading.update { _ -> false }
                         viewModel.updateIsLoadingEpisode(false)
                     }
 
-                    if (isInPictureInPictureMode && pipEpisodeToasts) {
-                        launchUI { toast(switchMethod.episodeTitle) }
+                    else -> {
+                        if (switchMethod.hosterList != null) {
+                            when {
+                                switchMethod.hosterList.isEmpty() -> setInitialEpisodeError(
+                                    PlayerViewModel.ExceptionWithStringResource(
+                                        "Hoster list is empty",
+                                        MR.strings.no_hosters,
+                                    ),
+                                )
+
+                                else -> {
+                                    viewModel.loadHosters(
+                                        source = switchMethod.source,
+                                        hosterList = switchMethod.hosterList,
+                                        hosterIndex = -1,
+                                        videoIndex = -1,
+                                    )
+                                }
+                            }
+                        } else {
+                            logcat(LogPriority.ERROR) { "Error getting links" }
+                            viewModel.isLoading.update { _ -> false }
+                            viewModel.updateIsLoadingEpisode(false)
+                            viewModel.setIsStopped(true)
+                        }
+
+                        if (isInPictureInPictureMode && pipEpisodeToasts) {
+                            launchUI { toast(switchMethod.episodeTitle) }
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Error switching episode" }
+                viewModel.updateIsLoadingEpisode(false)
+                viewModel.isLoading.value = false
+                viewModel.setIsStopped(true)
             }
         }
 
@@ -1396,6 +1405,7 @@ class PlayerActivity : BaseActivity() {
     // at void is.xyz.mpv.MPVLib.event(int) (MPVLib.java:86)
     private fun fileLoaded() {
         if (player.isExiting) return
+        viewModel.updateIsLoadingEpisode(false)
         setMpvMediaTitle()
         setupPlayerOrientation()
         setupChapters()

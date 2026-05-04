@@ -381,7 +381,7 @@ fun PlayerControls(
                 AnimatedVisibility(
                     visible = (
                         (controlsShown && !areControlsLocked || gestureSeekAmount != null) ||
-                            (pausedForCache || (coreIdle && !paused)) ||
+                            ((pausedForCache || (coreIdle && !paused)) && !isStopped) ||
                             isLoadingEpisode
                         ) && !isLongPressing,
                     enter = fadeIn(playerControlsEnterAnimationSpec()),
