@@ -1526,20 +1526,30 @@ class PlayerViewModel @JvmOverloads constructor(
                     if (hasFoundPreferredVideo.compareAndSet(false, true)) {
                         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
                         if (hosterIdx == -1) {
+                            updateIsLoadingEpisode(false)
+                            isLoading.value = false
                             throw ExceptionWithStringResource("No available videos", MR.strings.no_available_videos)
                         }
 
                         val video = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
 
-                        loadVideo(source, video, hosterIdx, videoIdx)
+                        val success = loadVideo(source, video, hosterIdx, videoIdx)
+                        if (!success) {
+                            updateIsLoadingEpisode(false)
+                            isLoading.value = false
+                        }
                     }
                 }
-            } catch (e: CancellationException) {
-                _hosterState.update { _ ->
-                    hosterList.map { HosterState.Idle(it.hosterName) }
+            } catch (e: Exception) {
+                if (e is CancellationException) {
+                    _hosterState.update { _ ->
+                        hosterList.map { HosterState.Idle(it.hosterName) }
+                    }
+                    throw e
                 }
-
-                throw e
+                logcat(LogPriority.ERROR, e) { "Error loading hosters" }
+                updateIsLoadingEpisode(false)
+                isLoading.value = false
             }
         }
     }
@@ -1627,7 +1637,18 @@ class PlayerViewModel @JvmOverloads constructor(
         if (hosterIdx == -1) return false
         val newVideo = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
         viewModelScope.launchIO {
-            loadVideo(source, newVideo, hosterIdx, videoIdx)
+            try {
+                val success = loadVideo(source, newVideo, hosterIdx, videoIdx)
+                if (!success) {
+                    updateIsLoadingEpisode(false)
+                    isLoading.value = false
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                logcat(LogPriority.ERROR, e) { "Error loading best video" }
+                updateIsLoadingEpisode(false)
+                isLoading.value = false
+            }
         }
         return true
     }
@@ -1655,11 +1676,13 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
                 } else {
                     updateIsLoadingEpisode(false)
+                    isLoading.value = false
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 logcat(LogPriority.ERROR, e) { "Error manually loading video" }
                 updateIsLoadingEpisode(false)
+                isLoading.value = false
             }
         }
     }

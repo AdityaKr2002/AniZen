@@ -1183,6 +1183,7 @@ class PlayerActivity : BaseActivity() {
                         launchUI { toast(MR.strings.no_next_episode) }
                     }
                     viewModel.isLoading.update { _ -> false }
+                    viewModel.updateIsLoadingEpisode(false)
                 }
 
                 else -> {
