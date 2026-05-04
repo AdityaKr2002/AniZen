@@ -360,7 +360,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     }
 
     override fun onDetachedFromWindow() {
-        initialized = false
         super.onDetachedFromWindow()
     }
 

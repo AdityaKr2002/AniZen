@@ -509,6 +509,8 @@ class PlayerActivity : BaseActivity() {
             cacheDir = applicationContext.cacheDir.path,
             logLvl = logLevel,
         )
+        MPVLib.removeLogObserver(playerObserver)
+        MPVLib.removeObserver(playerObserver)
         MPVLib.addLogObserver(playerObserver)
         MPVLib.addObserver(playerObserver)
     }
@@ -1183,6 +1185,7 @@ class PlayerActivity : BaseActivity() {
                         launchUI { toast(MR.strings.no_next_episode) }
                     }
                     viewModel.isLoading.update { _ -> false }
+                    viewModel.updateIsLoadingEpisode(false)
                 }
 
                 else -> {
@@ -1225,6 +1228,14 @@ class PlayerActivity : BaseActivity() {
     fun setVideo(video: Video?, position: Long? = null) {
         if (player.isExiting) return
         if (video == null) return
+
+        if (!player.initialized) {
+            logcat(LogPriority.WARN) { "setVideo called but player is not initialized yet. Re-initializing..." }
+            setupPlayerMPV()
+        }
+
+        // Stop previous playback/loading to ensure clean state and avoid decoder conflicts
+        MPVLib.command(arrayOf("stop"))
 
         setHttpOptions(video)
 

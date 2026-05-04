@@ -42,6 +42,8 @@ class PlayerObserver(val activity: PlayerActivity) :
         }
         logcat(LogPriority.ERROR) { errorMessage }
         activity.runOnUiThread {
+            activity.viewModel.updateIsLoadingEpisode(false)
+            activity.viewModel.isLoading.update { false }
             activity.toast(errorMessage, Toast.LENGTH_LONG)
         }
     }
