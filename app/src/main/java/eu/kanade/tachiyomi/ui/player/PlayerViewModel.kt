@@ -1550,7 +1550,7 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
                     _hosterState.update { _ ->
                         hosterList.map { HosterState.Idle(it.hosterName) }
                     }
@@ -1559,6 +1559,8 @@ class PlayerViewModel @JvmOverloads constructor(
                 logcat(LogPriority.ERROR, e) { "Error loading hosters" }
                 if (e is ExceptionWithStringResource) {
                     activity.runOnUiThread { activity.toast(e.stringResource) }
+                } else if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout while loading hosters") }
                 }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
@@ -1659,10 +1661,12 @@ class PlayerViewModel @JvmOverloads constructor(
                     isLoading.value = false
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
                 logcat(LogPriority.ERROR, e) { "Error loading best video" }
                 if (e is ExceptionWithStringResource) {
                     activity.runOnUiThread { activity.toast(e.stringResource) }
+                } else if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout resolving video") }
                 }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
@@ -1698,8 +1702,11 @@ class PlayerViewModel @JvmOverloads constructor(
                     isLoading.value = false
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
                 logcat(LogPriority.ERROR, e) { "Error manually loading video" }
+                if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout resolving video") }
+                }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
                 setIsStopped(true)
@@ -1780,6 +1787,9 @@ class PlayerViewModel @JvmOverloads constructor(
 
                 this@PlayerViewModel.episodeId = currentEpisode.id!!
             } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
+                    throw e
+                }
                 logcat(LogPriority.ERROR, e) { e.message ?: "Error getting links" }
             } finally {
                 // Always reset preload state after any attempt to load an episode

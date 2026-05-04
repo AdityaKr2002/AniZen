@@ -234,28 +234,36 @@ class PlayerActivity : BaseActivity() {
         viewModel.saveCurrentEpisodeWatchingProgress()
 
         lifecycleScope.launchNonCancellable {
-            viewModel.updateIsLoadingEpisode(true)
-            viewModel.updateIsLoadingHosters(true)
+            try {
+                viewModel.updateIsLoadingEpisode(true)
+                viewModel.updateIsLoadingHosters(true)
 
-            val initResult = viewModel.init(animeId, episodeId, hostList, hostIndex, vidIndex)
-            if (!initResult.second.getOrDefault(false)) {
-                val exception = initResult.second.exceptionOrNull() ?: IllegalStateException(
-                    "Unknown error",
-                )
-                withUIContext {
-                    setInitialEpisodeError(exception)
+                val initResult = viewModel.init(animeId, episodeId, hostList, hostIndex, vidIndex)
+                if (!initResult.second.getOrDefault(false)) {
+                    val exception = initResult.second.exceptionOrNull() ?: IllegalStateException(
+                        "Unknown error",
+                    )
+                    withUIContext {
+                        setInitialEpisodeError(exception)
+                    }
                 }
-            }
 
-            viewModel.updateIsLoadingHosters(false)
+                viewModel.updateIsLoadingHosters(false)
 
-            lifecycleScope.launch {
-                viewModel.loadHosters(
-                    source = viewModel.currentSource.value!!,
-                    hosterList = initResult.first.hosterList ?: emptyList(),
-                    hosterIndex = initResult.first.videoIndex.first,
-                    videoIndex = initResult.first.videoIndex.second,
-                )
+                lifecycleScope.launch {
+                    viewModel.loadHosters(
+                        source = viewModel.currentSource.value!!,
+                        hosterList = initResult.first.hosterList ?: emptyList(),
+                        hosterIndex = initResult.first.videoIndex.first,
+                        videoIndex = initResult.first.videoIndex.second,
+                    )
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Error during initialization" }
+                viewModel.updateIsLoadingEpisode(false)
+                viewModel.updateIsLoadingHosters(false)
+                viewModel.setIsStopped(true)
+                setInitialEpisodeError(e)
             }
         }
 
@@ -769,6 +777,13 @@ class PlayerActivity : BaseActivity() {
                 player.checkAdaptiveScaling(value)
             }
             "vo-passes" -> PlayerStats.voPasses.value = value
+            "paused-for-cache" -> {
+                viewModel.pausedForCache.update { value == 1L }
+                viewModel.isLoading.update { value == 1L }
+            }
+            "core-idle" -> {
+                viewModel.coreIdle.update { value == 1L }
+            }
             "time-pos" -> {
                 if (!viewModel.isSeekingUI.value) {
                     viewModel.updatePlayBackPos(value.toFloat())
@@ -787,6 +802,15 @@ class PlayerActivity : BaseActivity() {
     internal fun onObserverEvent(property: String) {
         if (player.isExiting || !player.initialized) return
         when (property) {
+            "paused-for-cache" -> {
+                val value = player.pausedForCache ?: false
+                viewModel.pausedForCache.update { value }
+                viewModel.isLoading.update { value }
+            }
+            "core-idle" -> {
+                val value = player.coreIdle ?: false
+                viewModel.coreIdle.update { value }
+            }
             "chapter-list" -> {
                 viewModel.loadChapters()
                 viewModel.updateChapter(0)

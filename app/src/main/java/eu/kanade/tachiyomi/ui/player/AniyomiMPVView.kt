@@ -94,6 +94,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     val hwdecActive: String
         get() = getPropertyString("hwdec-current") ?: "no"
 
+    val coreIdle: Boolean?
+        get() = getPropertyBoolean("core-idle")
+
+    val pausedForCache: Boolean?
+        get() = getPropertyBoolean("paused-for-cache")
+
     val videoH: Int?
         get() = getPropertyInt("video-params/h")
 
