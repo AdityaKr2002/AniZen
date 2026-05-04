@@ -214,7 +214,7 @@ class EpisodeLoader {
                 }
                 HosterState.Ready(hoster.hosterName, videos, List(videos.size) { Video.State.QUEUE })
             } catch (e: Exception) {
-                if (e is CancellationException) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
                     throw e
                 }
 
