@@ -1537,6 +1537,7 @@ class PlayerViewModel @JvmOverloads constructor(
                         if (hosterIdx == -1) {
                             updateIsLoadingEpisode(false)
                             isLoading.value = false
+                            setIsStopped(true)
                             throw ExceptionWithStringResource("No available videos", MR.strings.no_available_videos)
                         }
 
@@ -1546,6 +1547,7 @@ class PlayerViewModel @JvmOverloads constructor(
                         if (!success) {
                             updateIsLoadingEpisode(false)
                             isLoading.value = false
+                            setIsStopped(true)
                         }
                     }
                 }
@@ -1657,6 +1659,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 if (!success) {
                     updateIsLoadingEpisode(false)
                     isLoading.value = false
+                    setIsStopped(true)
                 }
             } catch (e: Exception) {
                 if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
@@ -1698,6 +1701,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 } else {
                     updateIsLoadingEpisode(false)
                     isLoading.value = false
+                    setIsStopped(true)
                 }
             } catch (e: Exception) {
                 if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
