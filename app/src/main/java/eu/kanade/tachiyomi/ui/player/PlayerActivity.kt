@@ -1298,17 +1298,12 @@ class PlayerActivity : BaseActivity() {
                 torrentLinkHandler(video.videoUrl, video.quality)
             }
         } else {
-            val videoOptions = video.mpvArgs?.joinToString(",") { (option, value) ->
-                "$option=\"$value\""
-            } ?: ""
-
             MPVLib.command(
                 arrayOf(
                     "loadfile",
                     parseVideoUrl(video.videoUrl)!!,
                     "replace",
-                    "0",
-                    videoOptions
+                    "0"
                 )
             )
         }
@@ -1569,7 +1564,6 @@ class PlayerActivity : BaseActivity() {
             viewModel.changeEpisode(previous = false, autoPlay = true)
         }
     }
-
     fun onVideoError(errorMessage: String) {
         if (player.isExiting) return
         logcat(LogPriority.ERROR) { errorMessage }
