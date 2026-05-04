@@ -1544,20 +1544,9 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
-    private var videoLoadingJob: Job? = null
-
-    private suspend fun loadVideo(
-        source: AnimeSource?,
-        video: Video,
-        hosterIndex: Int,
-        videoIndex: Int,
-        position: Long? = null,
-    ): Boolean {
+    private suspend fun loadVideo(source: AnimeSource?, video: Video, hosterIndex: Int, videoIndex: Int): Boolean {
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
-        if (currentVideo.value == null) {
-            updateIsLoadingEpisode(true)
-        }
-        isLoading.value = true
+        updateIsLoadingEpisode(true)
 
         val oldSelectedIndex = _selectedHosterVideoIndex.value
         _selectedHosterVideoIndex.update { _ -> Pair(hosterIndex, videoIndex) }
@@ -1570,7 +1559,6 @@ class PlayerViewModel @JvmOverloads constructor(
         // Pause until everything has loaded
         updatePausedState()
         pause()
-        kotlinx.coroutines.delay(500)
 
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
@@ -1597,7 +1585,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
                 val newVideo = (hosterState.value[newHosterIdx] as HosterState.Ready).videoList[newVideoIdx]
 
-                return loadVideo(source, newVideo, newHosterIdx, newVideoIdx, position)
+                return loadVideo(source, newVideo, newHosterIdx, newVideoIdx)
             } else {
                 _selectedHosterVideoIndex.update { _ -> oldSelectedIndex }
                 _hosterState.updateAt(
@@ -1617,7 +1605,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
         qualityIndex = Pair(hosterIndex, videoIndex)
 
-        activity.setVideo(resolvedVideo, position)
+        activity.setVideo(resolvedVideo)
         return true
     }
 
@@ -1627,35 +1615,30 @@ class PlayerViewModel @JvmOverloads constructor(
             ?.getOrNull(videoIndex)
             ?: return // Shouldn't happen, but just in case™
 
-        videoLoadingJob?.cancel()
-        videoLoadingJob = viewModelScope.launchIO {
+        val videoState = hosterState.videoState
+            .getOrNull(videoIndex)
+            ?: return
+
+        if (videoState == Video.State.ERROR) {
+            return
+        }
+
+        viewModelScope.launchIO {
             try {
-                saveCurrentEpisodeWatchingProgress()
-                val currentPos = pos.value.toLong() * 1000L
-                val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex, currentPos)
+                val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
                 if (success) {
                     if (sheetShown.value == Sheets.QualityTracks) {
                         dismissSheet()
                     }
                 } else {
                     updateIsLoadingEpisode(false)
-                    isLoading.value = false
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 logcat(LogPriority.ERROR, e) { "Error manually loading video" }
                 updateIsLoadingEpisode(false)
-                isLoading.value = false
             }
         }
-    }
-
-    fun setVideoError(hosterIndex: Int, videoIndex: Int) {
-        val hosterReadyState = (_hosterState.value.getOrNull(hosterIndex) as? HosterState.Ready) ?: return
-        _hosterState.updateAt(
-            hosterIndex,
-            hosterReadyState.getChangedAt(videoIndex, hosterReadyState.videoList[videoIndex], Video.State.ERROR),
-        )
     }
 
     fun onHosterClicked(index: Int) {

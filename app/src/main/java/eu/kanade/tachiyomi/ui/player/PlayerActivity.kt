@@ -130,7 +130,7 @@ import eu.kanade.tachiyomi.util.storage.DiskUtil
 import uy.kohesive.injekt.injectLazy
 
 class PlayerActivity : BaseActivity() {
-    internal val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
+    private val viewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModelProviderFactory(this) })
     private val downloadManager: DownloadManager by injectLazy()
     private val downloadProvider: DownloadProvider by injectLazy()
     private val binding by lazy { PlayerLayoutBinding.inflate(layoutInflater) }
@@ -509,8 +509,6 @@ class PlayerActivity : BaseActivity() {
             cacheDir = applicationContext.cacheDir.path,
             logLvl = logLevel,
         )
-        MPVLib.removeLogObserver(playerObserver)
-        MPVLib.removeObserver(playerObserver)
         MPVLib.addLogObserver(playerObserver)
         MPVLib.addObserver(playerObserver)
     }
@@ -1185,7 +1183,6 @@ class PlayerActivity : BaseActivity() {
                         launchUI { toast(MR.strings.no_next_episode) }
                     }
                     viewModel.isLoading.update { _ -> false }
-                    viewModel.updateIsLoadingEpisode(false)
                 }
 
                 else -> {
@@ -1229,34 +1226,24 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         if (video == null) return
 
-        val resumePosition = position
-            ?: player.timePos?.toLong()?.times(1000L)
-            ?: viewModel.currentEpisode.value?.let { episode ->
-                val preservePos = playerPreferences.preserveWatchingPosition().get()
-                if (episode.seen && !preservePos) {
-                    0L
-                } else {
-                    episode.last_second_seen
-                }
-            }
-
-        if (!player.initialized) {
-            logcat(LogPriority.WARN) { "setVideo called but player is not initialized. Initializing..." }
-            setupPlayerMPV()
-        }
-
         setHttpOptions(video)
 
-        // Set mime-type for TV or if provided
-        val mime = video.mimeType ?: if (isTv) "video/mp4" else null
-        mime?.let {
-            MPVLib.setOptionString("android-mime-type", it)
+        if (viewModel.isLoadingEpisode.value) {
+            viewModel.currentEpisode.value?.let { episode ->
+                val preservePos = playerPreferences.preserveWatchingPosition().get()
+                val resumePosition = position
+                    ?: if (episode.seen && !preservePos) {
+                        0L
+                    } else {
+                        episode.last_second_seen
+                    }
+                MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
+            }
+        } else {
+            player.timePos?.let {
+                MPVLib.command(arrayOf("set", "start", "${player.timePos}"))
+            }
         }
-
-        if (resumePosition != null && resumePosition > 0) {
-            MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
-        }
-
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
@@ -1402,9 +1389,6 @@ class PlayerActivity : BaseActivity() {
         addExternalSubtitles()
         setupTracks()
         viewModel.restoreAspectRatio()
-
-        viewModel.isLoading.value = false
-        viewModel.updateIsLoadingEpisode(false)
 
         // aniSkip stuff
         viewModel.waitingSkipIntro = playerPreferences.waitingTimeIntroSkip().get()

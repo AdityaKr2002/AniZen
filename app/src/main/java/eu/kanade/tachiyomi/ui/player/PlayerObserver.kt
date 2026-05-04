@@ -35,22 +35,13 @@ class PlayerObserver(val activity: PlayerActivity) :
     }
 
     override fun efEvent(err: String?) {
-        if (err == null) return
-        var errorMessage = err
+        var errorMessage = err ?: "Error: File ended"
         if (!httpError.isNullOrEmpty()) {
             errorMessage += ": $httpError"
             httpError = null
         }
         logcat(LogPriority.ERROR) { errorMessage }
         activity.runOnUiThread {
-            if (errorMessage == "loading failed") {
-                val (hIdx, vIdx) = activity.viewModel.selectedHosterVideoIndex.value
-                if (hIdx != -1 && vIdx != -1) {
-                    activity.viewModel.setVideoError(hIdx, vIdx)
-                }
-            }
-            activity.viewModel.updateIsLoadingEpisode(false)
-            activity.viewModel.isLoading.value = false
             activity.toast(errorMessage, Toast.LENGTH_LONG)
         }
     }
