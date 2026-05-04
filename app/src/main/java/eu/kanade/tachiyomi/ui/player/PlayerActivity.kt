@@ -1230,26 +1230,20 @@ class PlayerActivity : BaseActivity() {
         if (video == null) return
 
         val resumePosition = position
-            ?: if (viewModel.isLoadingEpisode.value) {
-                viewModel.currentEpisode.value?.let { episode ->
-                    val preservePos = playerPreferences.preserveWatchingPosition().get()
-                    if (episode.seen && !preservePos) {
-                        0L
-                    } else {
-                        episode.last_second_seen
-                    }
+            ?: player.timePos?.toLong()?.times(1000L)
+            ?: viewModel.currentEpisode.value?.let { episode ->
+                val preservePos = playerPreferences.preserveWatchingPosition().get()
+                if (episode.seen && !preservePos) {
+                    0L
+                } else {
+                    episode.last_second_seen
                 }
-            } else {
-                player.timePos?.toLong()?.times(1000L)
             }
 
         if (!player.initialized) {
             logcat(LogPriority.WARN) { "setVideo called but player is not initialized. Initializing..." }
             setupPlayerMPV()
         }
-
-        // Stop previous playback/loading to ensure clean state and avoid decoder conflicts
-        MPVLib.command(arrayOf("stop"))
 
         setHttpOptions(video)
 
@@ -1259,7 +1253,7 @@ class PlayerActivity : BaseActivity() {
             MPVLib.setOptionString("android-mime-type", it)
         }
 
-        if (resumePosition != null) {
+        if (resumePosition != null && resumePosition > 0) {
             MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
         }
 
@@ -1408,6 +1402,9 @@ class PlayerActivity : BaseActivity() {
         addExternalSubtitles()
         setupTracks()
         viewModel.restoreAspectRatio()
+
+        viewModel.isLoading.value = false
+        viewModel.updateIsLoadingEpisode(false)
 
         // aniSkip stuff
         viewModel.waitingSkipIntro = playerPreferences.waitingTimeIntroSkip().get()
