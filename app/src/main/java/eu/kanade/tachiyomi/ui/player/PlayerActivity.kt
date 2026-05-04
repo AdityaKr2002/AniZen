@@ -1206,6 +1206,8 @@ class PlayerActivity : BaseActivity() {
                         }
                     } else {
                         logcat(LogPriority.ERROR) { "Error getting links" }
+                        viewModel.isLoading.update { _ -> false }
+                        viewModel.updateIsLoadingEpisode(false)
                     }
 
                     if (isInPictureInPictureMode && pipEpisodeToasts) {
@@ -1516,15 +1518,15 @@ class PlayerActivity : BaseActivity() {
         logcat(LogPriority.ERROR) { errorMessage }
         showToast(errorMessage)
 
+        viewModel.updateIsLoadingEpisode(false)
+        viewModel.isLoading.value = false
+
         viewModel.setCurrentVideoError()
 
         if (playerPreferences.switchOnFailure().get()) {
             if (!viewModel.loadBestVideo()) {
                 finish()
             }
-        } else {
-            viewModel.updateIsLoadingEpisode(false)
-            viewModel.isLoading.value = false
         }
     }
 

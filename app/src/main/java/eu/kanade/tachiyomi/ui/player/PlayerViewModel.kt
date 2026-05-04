@@ -1548,6 +1548,9 @@ class PlayerViewModel @JvmOverloads constructor(
                     throw e
                 }
                 logcat(LogPriority.ERROR, e) { "Error loading hosters" }
+                if (e is ExceptionWithStringResource) {
+                    activity.runOnUiThread { activity.toast(e.stringResource) }
+                }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
             }
@@ -1557,6 +1560,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private suspend fun loadVideo(source: AnimeSource?, video: Video, hosterIndex: Int, videoIndex: Int): Boolean {
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
         updateIsLoadingEpisode(true)
+        isLoading.value = true
 
         val oldSelectedIndex = _selectedHosterVideoIndex.value
         _selectedHosterVideoIndex.update { _ -> Pair(hosterIndex, videoIndex) }
@@ -1646,6 +1650,9 @@ class PlayerViewModel @JvmOverloads constructor(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 logcat(LogPriority.ERROR, e) { "Error loading best video" }
+                if (e is ExceptionWithStringResource) {
+                    activity.runOnUiThread { activity.toast(e.stringResource) }
+                }
                 updateIsLoadingEpisode(false)
                 isLoading.value = false
             }
