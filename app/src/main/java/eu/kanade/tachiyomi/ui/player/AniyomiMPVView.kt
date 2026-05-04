@@ -271,12 +271,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setPropertyBoolean("input-default-bindings", true)
         MPVLib.setOptionString("keep-open", "yes")
+        MPVLib.setOptionString("idle", "yes")
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
-
-        // Network optimizations
-        MPVLib.setOptionString("network-timeout", "15")
         MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")

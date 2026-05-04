@@ -1571,10 +1571,11 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
+    private var loadingJob: Job? = null
+
     private suspend fun loadVideo(source: AnimeSource?, video: Video, hosterIndex: Int, videoIndex: Int): Boolean {
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
         updateIsLoadingEpisode(true)
-        isLoading.value = true
         setIsStopped(false)
 
         val oldSelectedIndex = _selectedHosterVideoIndex.value
@@ -1584,6 +1585,10 @@ class PlayerViewModel @JvmOverloads constructor(
             hosterIndex,
             selectedHosterState.getChangedAt(videoIndex, video, Video.State.LOAD_VIDEO),
         )
+
+        // Pause until everything has loaded
+        updatePausedState()
+        pause()
 
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
@@ -1653,7 +1658,8 @@ class PlayerViewModel @JvmOverloads constructor(
         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
         if (hosterIdx == -1) return false
         val newVideo = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
-        viewModelScope.launchIO {
+        loadingJob?.cancel()
+        loadingJob = viewModelScope.launchIO {
             try {
                 val success = loadVideo(source, newVideo, hosterIdx, videoIdx)
                 if (!success) {
@@ -1691,7 +1697,8 @@ class PlayerViewModel @JvmOverloads constructor(
             return
         }
 
-        viewModelScope.launchIO {
+        loadingJob?.cancel()
+        loadingJob = viewModelScope.launchIO {
             try {
                 val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
                 if (success) {

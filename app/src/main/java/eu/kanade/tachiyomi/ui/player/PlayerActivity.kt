@@ -1307,6 +1307,7 @@ class PlayerActivity : BaseActivity() {
                     parseVideoUrl(video.videoUrl)!!,
                     "replace",
                     "0",
+                    videoOptions,
                 )
             )
         }
@@ -1439,6 +1440,7 @@ class PlayerActivity : BaseActivity() {
     // at void is.xyz.mpv.MPVLib.event(int) (MPVLib.java:86)
     private fun fileLoaded() {
         if (player.isExiting) return
+        viewModel.isLoading.update { false }
         viewModel.updateIsLoadingEpisode(false)
         setMpvMediaTitle()
         setupPlayerOrientation()
