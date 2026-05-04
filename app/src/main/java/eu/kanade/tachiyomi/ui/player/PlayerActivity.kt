@@ -1307,7 +1307,6 @@ class PlayerActivity : BaseActivity() {
                     parseVideoUrl(video.videoUrl)!!,
                     "replace",
                     "0",
-                    videoOptions,
                 )
             )
         }
@@ -1593,20 +1592,18 @@ class PlayerActivity : BaseActivity() {
         viewModel.viewModelScope.launchIO {
             try {
                 if (!exitingPlayer) {
-                    val timePos = player.timePos ?: return@launchIO
-                    val duration = player.duration ?: 1440
+                    val anime = viewModel.currentAnime.value ?: return@launchIO
+                    val episode = viewModel.currentEpisode.value ?: return@launchIO
+                    val currentPosition = viewModel.pos.value.toLong() * 1000
+                    val duration = player.duration?.toLong()?.times(1000) ?: 1440000L
 
-                    val currentPosition = timePos.toLong() * 1000
                     val startTimestamp = Calendar.getInstance().apply {
                         timeInMillis = System.currentTimeMillis() - currentPosition
                     }
                     val endTimestamp = Calendar.getInstance().apply {
                         timeInMillis = startTimestamp.timeInMillis
-                        add(Calendar.SECOND, duration)
+                        add(Calendar.MILLISECOND, duration.toInt())
                     }
-
-                    val anime = viewModel.currentAnime.value ?: return@launchIO
-                    val episode = viewModel.currentEpisode.value ?: return@launchIO
 
                     DiscordRPCService.setPlayerActivity(
                         context = this@PlayerActivity,
