@@ -156,7 +156,7 @@ class HosterLoader {
         suspend fun getResolvedVideo(source: AnimeSource?, video: Video): Video? {
             val resolvedVideo = if (source is AnimeHttpSource && !video.initialized) {
                 try {
-                    kotlinx.coroutines.withTimeout(45000) {
+                    kotlinx.coroutines.withTimeout(15000) {
                         source.resolveVideo(video)
                     }
                 } catch (e: Exception) {

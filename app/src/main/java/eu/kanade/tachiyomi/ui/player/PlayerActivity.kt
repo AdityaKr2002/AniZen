@@ -1563,6 +1563,8 @@ class PlayerActivity : BaseActivity() {
         logcat(LogPriority.ERROR) { errorMessage }
         showToast(errorMessage)
 
+        MPVLib.command(arrayOf("stop"))
+
         viewModel.updateIsLoadingEpisode(false)
         viewModel.isLoading.value = false
         viewModel.setIsStopped(true)

@@ -269,6 +269,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
 
         // Network optimizations
+        MPVLib.setOptionString("network-timeout", "15")
         MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")
