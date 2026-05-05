@@ -1586,6 +1586,8 @@ class PlayerViewModel @JvmOverloads constructor(
             selectedHosterState.getChangedAt(videoIndex, video, Video.State.LOAD_VIDEO),
         )
 
+        updatePausedState()
+
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
         } else {
@@ -1631,9 +1633,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
         qualityIndex = Pair(hosterIndex, videoIndex)
 
-        activity.runOnUiThread {
-            activity.setVideo(resolvedVideo)
-        }
+        activity.setVideo(resolvedVideo)
         return true
     }
 
@@ -1654,8 +1654,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
         if (hosterIdx == -1) return false
         val newVideo = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
-        loadingJob?.cancel()
-        loadingJob = viewModelScope.launchIO {
+        viewModelScope.launchIO {
             try {
                 val success = loadVideo(source, newVideo, hosterIdx, videoIdx)
                 if (!success) {
@@ -1693,8 +1692,7 @@ class PlayerViewModel @JvmOverloads constructor(
             return
         }
 
-        loadingJob?.cancel()
-        loadingJob = viewModelScope.launchIO {
+        viewModelScope.launchIO {
             try {
                 val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
                 if (success) {

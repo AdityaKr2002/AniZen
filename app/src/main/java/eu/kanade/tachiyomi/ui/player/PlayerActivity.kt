@@ -1437,6 +1437,7 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         viewModel.isLoading.update { false }
         viewModel.updateIsLoadingEpisode(false)
+        viewModel.setPausedState()
         setMpvMediaTitle()
         setupPlayerOrientation()
         setupChapters()
