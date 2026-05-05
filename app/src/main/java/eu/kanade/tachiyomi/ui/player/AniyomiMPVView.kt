@@ -278,10 +278,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")
-        MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-pause", "yes") // Enable classic buffering when underrunning
-        MPVLib.setOptionString("cache-on-disk", "no")
-        MPVLib.setOptionString("demuxer-thread", "yes")
 
         applyPlaybackStrategy()
 

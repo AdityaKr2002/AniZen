@@ -913,7 +913,7 @@ class PlayerActivity : BaseActivity() {
         when (eventId) {
             MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
                 PlayerStats.isAdaptiveDowngraded.value = false
-                viewModel.viewModelScope.launchIO { fileLoaded() }
+                fileLoaded()
             }
             MPVLib.mpvEventId.MPV_EVENT_SEEK -> viewModel.isLoading.update { true }
             MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
@@ -1291,6 +1291,9 @@ class PlayerActivity : BaseActivity() {
             "$option=\"$value\""
         }
 
+        val command = mutableListOf("loadfile", parseVideoUrl(video.videoUrl)!!, "replace", "0")
+        if (videoOptions.isNotEmpty()) command.add(videoOptions)
+
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
@@ -1301,15 +1304,7 @@ class PlayerActivity : BaseActivity() {
                 torrentLinkHandler(video.videoUrl, video.quality)
             }
         } else {
-            MPVLib.command(
-                arrayOf(
-                    "loadfile",
-                    parseVideoUrl(video.videoUrl)!!,
-                    "replace",
-                    "0",
-                    videoOptions,
-                )
-            )
+            MPVLib.command(command.toTypedArray())
         }
     }
 
@@ -1381,11 +1376,6 @@ class PlayerActivity : BaseActivity() {
         }.joinToString(",")
 
         MPVLib.setOptionString("http-header-fields", httpHeaderString)
-        // Also set the global user-agent for this specific video request to be safe, 
-        // as some MPV versions prioritize it over the fields string.
-        headers["User-Agent"]?.let {
-            MPVLib.setOptionString("user-agent", it)
-        }
     }
 
     /**
@@ -1577,6 +1567,7 @@ class PlayerActivity : BaseActivity() {
         viewModel.setCurrentVideoError()
 
         if (playerPreferences.switchOnFailure().get()) {
+            MPVLib.command(arrayOf("stop"))
             if (!viewModel.loadBestVideo()) {
                 finish()
             }
