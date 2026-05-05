@@ -913,7 +913,7 @@ class PlayerActivity : BaseActivity() {
         when (eventId) {
             MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
                 PlayerStats.isAdaptiveDowngraded.value = false
-                fileLoaded()
+                viewModel.viewModelScope.launchIO { fileLoaded() }
             }
             MPVLib.mpvEventId.MPV_EVENT_SEEK -> viewModel.isLoading.update { true }
             MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
@@ -1291,9 +1291,6 @@ class PlayerActivity : BaseActivity() {
             "$option=\"$value\""
         }
 
-        val command = mutableListOf("loadfile", parseVideoUrl(video.videoUrl)!!, "replace", "0")
-        if (videoOptions.isNotEmpty()) command.add(videoOptions)
-
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
@@ -1304,7 +1301,15 @@ class PlayerActivity : BaseActivity() {
                 torrentLinkHandler(video.videoUrl, video.quality)
             }
         } else {
-            MPVLib.command(command.toTypedArray())
+            MPVLib.command(
+                arrayOf(
+                    "loadfile",
+                    parseVideoUrl(video.videoUrl)!!,
+                    "replace",
+                    "0",
+                    videoOptions,
+                )
+            )
         }
     }
 
@@ -1567,7 +1572,6 @@ class PlayerActivity : BaseActivity() {
         viewModel.setCurrentVideoError()
 
         if (playerPreferences.switchOnFailure().get()) {
-            MPVLib.command(arrayOf("stop"))
             if (!viewModel.loadBestVideo()) {
                 finish()
             }
