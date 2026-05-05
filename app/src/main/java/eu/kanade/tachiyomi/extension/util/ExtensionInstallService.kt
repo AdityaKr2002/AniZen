@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.Uri
+import android.os.Build
 import android.os.IBinder
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.tachiyomi.R
