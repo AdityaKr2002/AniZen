@@ -35,14 +35,15 @@ class PlayerObserver(val activity: PlayerActivity) :
     }
 
     override fun efEvent(err: String?) {
-        var errorMessage = err ?: "Error: File ended"
+        if (err == null) return // Ignore normal EOF or file replacement events
+        
+        var errorMessage = err
         if (!httpError.isNullOrEmpty()) {
             errorMessage += ": $httpError"
             httpError = null
         }
-        logcat(LogPriority.ERROR) { errorMessage }
         activity.runOnUiThread {
-            activity.toast(errorMessage, Toast.LENGTH_LONG)
+            activity.onVideoError(errorMessage)
         }
     }
 

@@ -94,6 +94,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     val hwdecActive: String
         get() = getPropertyString("hwdec-current") ?: "no"
 
+    val coreIdle: Boolean?
+        get() = getPropertyBoolean("core-idle")
+
+    val pausedForCache: Boolean?
+        get() = getPropertyBoolean("paused-for-cache")
+
     val videoH: Int?
         get() = getPropertyInt("video-params/h")
 
@@ -258,17 +264,17 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setPropertyBoolean("input-default-bindings", true)
         MPVLib.setOptionString("keep-open", "yes")
+        MPVLib.setOptionString("idle", "yes")
+
+        // We handle selecting this in the viewmodel
+        MPVLib.setOptionString("sid", "no")
+        MPVLib.setOptionString("aid", "no")
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
-
-        // Network optimizations
+        MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")
-        MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-pause", "yes") // Enable classic buffering when underrunning
-        MPVLib.setOptionString("cache-on-disk", "no")
-        MPVLib.setOptionString("demuxer-thread", "yes")
 
         applyPlaybackStrategy()
 
@@ -360,7 +366,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     }
 
     override fun onDetachedFromWindow() {
-        initialized = false
         super.onDetachedFromWindow()
     }
 
@@ -385,6 +390,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         "video-params/aspect" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
         "pause" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "paused-for-cache" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
+        "core-idle" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "seeking" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "eof-reached" to MPVLib.mpvFormat.MPV_FORMAT_FLAG,
         "hwdec-current" to MPVLib.mpvFormat.MPV_FORMAT_STRING,

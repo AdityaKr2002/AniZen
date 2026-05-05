@@ -210,6 +210,11 @@ class PlayerViewModel @JvmOverloads constructor(
     val animeTitle = MutableStateFlow("")
 
     val isLoading = MutableStateFlow(true)
+    val pausedForCache = MutableStateFlow(false)
+    val coreIdle = MutableStateFlow(false)
+    private val _isStopped = MutableStateFlow(false)
+    val isStopped = _isStopped.asStateFlow()
+
     val playbackSpeed = MutableStateFlow(playerPreferences.playerSpeed().get())
     val isLongPressing = MutableStateFlow(false)
 
@@ -376,6 +381,10 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun updateIsLoadingEpisode(value: Boolean) {
         _isLoadingEpisode.update { _ -> value }
+    }
+
+    fun setIsStopped(value: Boolean) {
+        _isStopped.update { _ -> value }
     }
 
     private fun updateEpisodeList(episodeList: List<Episode>) {
@@ -590,7 +599,7 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
-    private fun setPausedState() {
+    internal fun setPausedState() {
         pausedState.value?.let {
             if (it) {
                 pause()
@@ -1526,27 +1535,48 @@ class PlayerViewModel @JvmOverloads constructor(
                     if (hasFoundPreferredVideo.compareAndSet(false, true)) {
                         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
                         if (hosterIdx == -1) {
+                            updateIsLoadingEpisode(false)
+                            isLoading.value = false
+                            setIsStopped(true)
                             throw ExceptionWithStringResource("No available videos", MR.strings.no_available_videos)
                         }
 
                         val video = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
 
-                        loadVideo(source, video, hosterIdx, videoIdx)
+                        val success = loadVideo(source, video, hosterIdx, videoIdx)
+                        if (!success) {
+                            updateIsLoadingEpisode(false)
+                            isLoading.value = false
+                            setIsStopped(true)
+                        }
                     }
                 }
-            } catch (e: CancellationException) {
-                _hosterState.update { _ ->
-                    hosterList.map { HosterState.Idle(it.hosterName) }
+            } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
+                    _hosterState.update { _ ->
+                        hosterList.map { HosterState.Idle(it.hosterName) }
+                    }
+                    throw e
                 }
-
-                throw e
+                logcat(LogPriority.ERROR, e) { "Error loading hosters" }
+                if (e is ExceptionWithStringResource) {
+                    activity.runOnUiThread { activity.toast(e.stringResource) }
+                } else if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout while loading hosters") }
+                }
+                updateIsLoadingEpisode(false)
+                isLoading.value = false
+                setIsStopped(true)
             }
         }
     }
 
+    private var loadingJob: Job? = null
+
     private suspend fun loadVideo(source: AnimeSource?, video: Video, hosterIndex: Int, videoIndex: Int): Boolean {
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
         updateIsLoadingEpisode(true)
+        setIsStopped(false)
 
         val oldSelectedIndex = _selectedHosterVideoIndex.value
         _selectedHosterVideoIndex.update { _ -> Pair(hosterIndex, videoIndex) }
@@ -1559,7 +1589,6 @@ class PlayerViewModel @JvmOverloads constructor(
         // Pause until everything has loaded
         updatePausedState()
         pause()
-        kotlinx.coroutines.delay(500)
 
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
@@ -1610,6 +1639,47 @@ class PlayerViewModel @JvmOverloads constructor(
         return true
     }
 
+    fun setCurrentVideoError() {
+        val (hosterIdx, videoIdx) = selectedHosterVideoIndex.value
+        if (hosterIdx == -1 || videoIdx == -1) return
+        val currentHosterState = (hosterState.value.getOrNull(hosterIdx) as? HosterState.Ready) ?: return
+        val currentVideo = currentHosterState.videoList.getOrNull(videoIdx) ?: return
+
+        _hosterState.updateAt(
+            hosterIdx,
+            currentHosterState.getChangedAt(videoIdx, currentVideo, Video.State.ERROR),
+        )
+    }
+
+    fun loadBestVideo(): Boolean {
+        val source = currentSource.value ?: return false
+        val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
+        if (hosterIdx == -1) return false
+        val newVideo = (hosterState.value[hosterIdx] as HosterState.Ready).videoList[videoIdx]
+        viewModelScope.launchIO {
+            try {
+                val success = loadVideo(source, newVideo, hosterIdx, videoIdx)
+                if (!success) {
+                    updateIsLoadingEpisode(false)
+                    isLoading.value = false
+                    setIsStopped(true)
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+                logcat(LogPriority.ERROR, e) { "Error loading best video" }
+                if (e is ExceptionWithStringResource) {
+                    activity.runOnUiThread { activity.toast(e.stringResource) }
+                } else if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout resolving video") }
+                }
+                updateIsLoadingEpisode(false)
+                isLoading.value = false
+                setIsStopped(true)
+            }
+        }
+        return true
+    }
+
     fun onVideoClicked(hosterIndex: Int, videoIndex: Int) {
         val hosterState = _hosterState.value[hosterIndex] as? HosterState.Ready
         val video = hosterState?.videoList
@@ -1625,13 +1695,26 @@ class PlayerViewModel @JvmOverloads constructor(
         }
 
         viewModelScope.launchIO {
-            val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
-            if (success) {
-                if (sheetShown.value == Sheets.QualityTracks) {
-                    dismissSheet()
+            try {
+                val success = loadVideo(currentSource.value, video, hosterIndex, videoIndex)
+                if (success) {
+                    if (sheetShown.value == Sheets.QualityTracks) {
+                        dismissSheet()
+                    }
+                } else {
+                    updateIsLoadingEpisode(false)
+                    isLoading.value = false
+                    setIsStopped(true)
                 }
-            } else {
+            } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) throw e
+                logcat(LogPriority.ERROR, e) { "Error manually loading video" }
+                if (e is kotlinx.coroutines.TimeoutCancellationException) {
+                    activity.runOnUiThread { activity.toast("Timeout resolving video") }
+                }
                 updateIsLoadingEpisode(false)
+                isLoading.value = false
+                setIsStopped(true)
             }
         }
     }
@@ -1709,6 +1792,9 @@ class PlayerViewModel @JvmOverloads constructor(
 
                 this@PlayerViewModel.episodeId = currentEpisode.id!!
             } catch (e: Exception) {
+                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
+                    throw e
+                }
                 logcat(LogPriority.ERROR, e) { e.message ?: "Error getting links" }
             } finally {
                 // Always reset preload state after any attempt to load an episode
