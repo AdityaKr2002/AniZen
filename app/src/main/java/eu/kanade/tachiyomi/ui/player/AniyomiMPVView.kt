@@ -85,11 +85,15 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     var timePos: Int?
         get() = getPropertyInt("time-pos")
-        set(position) = MPVLib.setPropertyInt("time-pos", position!!)
+        set(position) {
+            if (initialized) MPVLib.setPropertyInt("time-pos", position!!)
+        }
 
     var paused: Boolean?
         get() = getPropertyBoolean("pause")
-        set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
+        set(paused) {
+            if (initialized) MPVLib.setPropertyBoolean("pause", paused!!)
+        }
 
     val hwdecActive: String
         get() = getPropertyString("hwdec-current") ?: "no"

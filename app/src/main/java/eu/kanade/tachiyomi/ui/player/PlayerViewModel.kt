@@ -829,7 +829,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
             VideoAspect.Fit -> {
                 pan = 0.0
-                MPVLib.setPropertyDouble("panscan", 0.0)
+                setPropertyDouble("panscan", 0.0)
             }
 
             VideoAspect.Stretch -> {
@@ -839,8 +839,8 @@ class PlayerViewModel @JvmOverloads constructor(
                 pan = 0.0
             }
         }
-        MPVLib.setPropertyDouble("panscan", pan)
-        MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        setPropertyDouble("panscan", pan)
+        setPropertyDouble("video-aspect-override", ratio)
         _videoAspectOverride.value = ratio
         playerPreferences.aspectState().set(aspect)
         playerPreferences.lastAspectRatio().set(ratio.toFloat())
@@ -851,8 +851,8 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun setCustomVideoAspect(ratio: Double, label: String) {
         _videoAspectOverride.value = ratio
-        MPVLib.setPropertyDouble("panscan", 0.0)
-        MPVLib.setPropertyDouble("video-aspect-override", ratio)
+        setPropertyDouble("panscan", 0.0)
+        setPropertyDouble("video-aspect-override", ratio)
         // Reset VideoAspect to Fit so the icon and standard toggle behavior are consistent
         playerPreferences.aspectState().set(VideoAspect.Fit)
         playerPreferences.lastAspectRatio().set(ratio.toFloat())
@@ -879,8 +879,8 @@ class PlayerViewModel @JvmOverloads constructor(
             changeVideoAspect(VideoAspect.Stretch, showUpdate = false)
         } else if (lastRatio != -1.0 && (rememberAspectRatio || lastRatioAnimeId == currentAnimeId)) {
             _videoAspectOverride.value = lastRatio
-            MPVLib.setPropertyDouble("panscan", 0.0)
-            MPVLib.setPropertyDouble("video-aspect-override", lastRatio)
+            setPropertyDouble("panscan", 0.0)
+            setPropertyDouble("video-aspect-override", lastRatio)
             playerPreferences.aspectState().set(VideoAspect.Fit)
         } else {
             if (lastRatio != -1.0) {
@@ -1080,16 +1080,22 @@ class PlayerViewModel @JvmOverloads constructor(
         _selectedHosterVideoIndex.update { _ -> Pair(-1, -1) }
     }
 
+    private fun setPropertyDouble(property: String, value: Double) {
+        if (activity.player.initialized) {
+            MPVLib.setPropertyDouble(property, value)
+        }
+    }
+
     fun setVideoZoom(zoom: Float) {
         videoZoom.value = zoom
-        MPVLib.setPropertyDouble("video-zoom", zoom.toDouble())
+        setPropertyDouble("video-zoom", zoom.toDouble())
     }
 
     fun setVideoPan(x: Float, y: Float) {
         videoPanX.value = x
         videoPanY.value = y
-        MPVLib.setPropertyDouble("video-pan-x", x.toDouble())
-        MPVLib.setPropertyDouble("video-pan-y", y.toDouble())
+        setPropertyDouble("video-pan-x", x.toDouble())
+        setPropertyDouble("video-pan-y", y.toDouble())
     }
 
     fun resetVideoZoomAndPan() {
@@ -1428,7 +1434,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private fun updateEpisode(episode: Episode) {
         mediaTitle.update { _ -> episode.name }
         _isEpisodeOnline.update { _ -> isEpisodeOnline() == true }
-        MPVLib.setPropertyDouble("user-data/current-anime/episode-number", episode.episode_number.toDouble())
+        setPropertyDouble("user-data/current-anime/episode-number", episode.episode_number.toDouble())
     }
 
     private fun initEpisodeList(anime: Anime): List<Episode> {
