@@ -25,7 +25,7 @@ class BackupFileValidator(
             throw IllegalStateException(e)
         }
 
-        val sources = (backup.backupSources + backup.backupMangaSources).associate { it.sourceId to it.name }
+        val sources = backup.backupAnimeSources.associate { it.sourceId to it.name }
         val missingSources = sources
             .filter { sourceManager.get(it.key) == null }
             .values.map {
@@ -39,7 +39,7 @@ class BackupFileValidator(
             .distinct()
             .sorted()
 
-        val animeTrackers = (backup.backupAnime + backup.backupManga)
+        val animeTrackers = backup.backupAnime
             .flatMap { it.tracking }
             .map { it.syncId }
         val trackers = animeTrackers.distinct()

@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.data.backup.create.creators.PreferenceBackupCreator
 import eu.kanade.tachiyomi.data.backup.create.creators.SourcesBackupCreator
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
+import eu.kanade.tachiyomi.data.backup.models.BackupAnimeSource
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupCustomButtons
 import eu.kanade.tachiyomi.data.backup.models.BackupExtension
@@ -89,14 +90,14 @@ class BackupCreator(
             val backupAnime = backupAnimes(getFavorites.await() + nonFavoriteAnime, options)
 
             val backup = Backup(
-                backupAnimeModern = backupAnime,
-                backupCategoriesModern = backupAnimeCategories(options),
-                backupSourcesModern = backupAnimeSources(backupAnime),
+                backupAnime = backupAnime,
+                backupAnimeCategories = backupAnimeCategories(options),
+                backupAnimeSources = backupAnimeSources(backupAnime),
                 backupPreferences = backupAppPreferences(options),
-                backupExtensionRepoModern = backupAnimeExtensionRepos(options),
-                backupCustomButtonModern = backupCustomButtons(options),
+                backupAnimeExtensionRepo = backupAnimeExtensionRepos(options),
+                backupCustomButton = backupCustomButtons(options),
                 backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensionsModern = backupExtensions(options),
+                backupExtensions = backupExtensions(options),
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
@@ -141,7 +142,7 @@ class BackupCreator(
         return animeBackupCreator(animes, options)
     }
 
-    fun backupAnimeSources(animes: List<BackupAnime>): List<BackupSource> {
+    fun backupAnimeSources(animes: List<BackupAnime>): List<BackupAnimeSource> {
         return sourcesBackupCreator(animes)
     }
 

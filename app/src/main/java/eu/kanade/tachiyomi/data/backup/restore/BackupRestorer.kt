@@ -73,14 +73,12 @@ class BackupRestorer(
         val backup = BackupDecoder(context).decode(uri)
 
         // SY -->
-        val backupAnime = backup.backupAnime + backup.backupManga + backup.backupAnimeModern
-        val backupAnimeCategories = backup.backupAnimeCategories + backup.backupCategories + backup.backupCategoriesModern
+        val backupAnime = backup.backupAnime
+        val backupAnimeCategories = backup.backupAnimeCategories
         // SY <--
 
         // Store source mapping for error messages
-        val backupAnimeMaps = backup.backupSources + backup.backupMangaSources + backup.backupSourcesModern +
-            backup.backupBrokenAnimeSources.map { it.toBackupSource() } +
-            backup.backupBrokenMangaSources.map { it.toBackupSource() }
+        val backupAnimeMaps = backup.backupAnimeSources + backup.backupSources.map { BackupAnimeSource(it.name, it.sourceId) }
         animeSourceMapping = backupAnimeMaps.associate { it.sourceId to it.name }
 
         if (options.libraryEntries) {
@@ -93,7 +91,7 @@ class BackupRestorer(
             restoreAmount += 1
         }
         if (options.extensionRepoSettings) {
-            restoreAmount += (backup.backupAnimeExtensionRepo + backup.backupExtensionRepoModern).size
+            restoreAmount += backup.backupAnimeExtensionRepo.size
         }
         if (options.customButtons) {
             restoreAmount += 1
@@ -121,13 +119,13 @@ class BackupRestorer(
                 restoreAnime(backupAnime, if (options.categories) backupAnimeCategories else emptyList())
             }
             if (options.extensionRepoSettings) {
-                restoreExtensionRepos(backup.backupAnimeExtensionRepo + backup.backupExtensionRepoModern)
+                restoreExtensionRepos(backup.backupAnimeExtensionRepo)
             }
             if (options.customButtons) {
-                restoreCustomButtons(backup.backupCustomButton + backup.backupCustomButtonModern)
+                restoreCustomButtons(backup.backupCustomButton)
             }
             if (options.extensions) {
-                restoreExtensions(backup.backupExtensions + backup.backupExtensionsModern)
+                restoreExtensions(backup.backupExtensions)
             }
 
             // TODO: optionally trigger online library + tracker update
