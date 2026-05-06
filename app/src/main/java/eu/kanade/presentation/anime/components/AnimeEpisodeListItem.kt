@@ -207,7 +207,6 @@ fun AnimeEpisodeListItem(
                         watchProgress = watchProgress,
                         fillermark = fillermark,
                         scanlator = scanlator,
-                        fileSize = fileSize,
                     )
 
                     if (previewUrl != null) {
@@ -260,7 +259,6 @@ private fun RowScope.SimpleEpisodeListItemImpl(
             watchProgress = watchProgress,
             fillermark = fillermark,
             scanlator = scanlator,
-            fileSize = fileSize,
         )
     }
 
@@ -326,7 +324,6 @@ private fun EpisodeInformation(
     watchProgress: String?,
     fillermark: Boolean,
     scanlator: String?,
-    fileSize: Long?,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         val subtitleStyle = MaterialTheme.typography.bodySmall
@@ -357,7 +354,7 @@ private fun EpisodeInformation(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (watchProgress != null || scanlator != null || fileSize != null) DotSeparatorText()
+                if (watchProgress != null || scanlator != null) DotSeparatorText()
             }
             if (watchProgress != null) {
                 Text(
@@ -366,22 +363,14 @@ private fun EpisodeInformation(
                     overflow = TextOverflow.Ellipsis,
                     color = LocalContentColor.current.copy(alpha = DISABLED_ALPHA),
                 )
-                if (scanlator != null || fileSize != null) DotSeparatorText()
+                if (scanlator != null) DotSeparatorText()
             }
             if (scanlator != null) {
                 Text(
                     text = scanlator,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                )
-                if (fileSize != null) DotSeparatorText()
-            }
-            if (fileSize != null) {
-                val context = LocalContext.current
-                Text(
-                    text = android.text.format.Formatter.formatFileSize(context, fileSize),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
             }
         }
