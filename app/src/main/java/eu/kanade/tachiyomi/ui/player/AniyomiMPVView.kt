@@ -280,6 +280,17 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")
 
+        // Network optimizations
+        MPVLib.setOptionString("cache", "yes")
+        MPVLib.setOptionString("cache-pause", "yes")
+        MPVLib.setOptionString("cache-on-disk", "no")
+        MPVLib.setOptionString("demuxer-thread", "yes")
+
+        // Limit demuxer cache since the defaults are too high for mobile devices
+        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
+        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+
         applyPlaybackStrategy()
 
         // Let FFmpeg and Android MediaCodec auto-negotiate thread counts and hardware frame buffers.

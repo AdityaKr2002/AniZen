@@ -1272,6 +1272,12 @@ class PlayerActivity : BaseActivity() {
         viewModel.setIsStopped(false)
         setHttpOptions(video)
 
+        // Set mime-type for TV or if provided
+        val mime = video.mimeType ?: if (isTv) "video/mp4" else null
+        mime?.let {
+            MPVLib.setOptionString("android-mime-type", it)
+        }
+
         if (viewModel.isLoadingEpisode.value) {
             viewModel.currentEpisode.value?.let { episode ->
                 val preservePos = playerPreferences.preserveWatchingPosition().get()
@@ -1381,6 +1387,11 @@ class PlayerActivity : BaseActivity() {
         }.joinToString(",")
 
         MPVLib.setOptionString("http-header-fields", httpHeaderString)
+        // Also set the global user-agent for this specific video request to be safe,
+        // as some MPV versions prioritize it over the fields string.
+        headers["User-Agent"]?.let {
+            MPVLib.setOptionString("user-agent", it)
+        }
     }
 
     /**
