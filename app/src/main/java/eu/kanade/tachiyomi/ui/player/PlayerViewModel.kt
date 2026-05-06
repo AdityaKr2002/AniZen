@@ -475,7 +475,6 @@ class PlayerViewModel @JvmOverloads constructor(
 
         isLoadingTracks.update { _ -> false }
         updateIsLoadingEpisode(false)
-        setPausedState()
     }
 
     @Immutable
