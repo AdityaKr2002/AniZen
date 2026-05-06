@@ -1592,10 +1592,6 @@ class PlayerViewModel @JvmOverloads constructor(
             selectedHosterState.getChangedAt(videoIndex, video, Video.State.LOAD_VIDEO),
         )
 
-        // Pause until everything has loaded
-        updatePausedState()
-        pause()
-
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
         } else {

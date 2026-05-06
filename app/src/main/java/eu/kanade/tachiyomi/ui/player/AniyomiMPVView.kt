@@ -268,11 +268,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setPropertyBoolean("input-default-bindings", true)
         MPVLib.setOptionString("keep-open", "yes")
-        MPVLib.setOptionString("idle", "yes")
-
-        // We handle selecting this in the viewmodel
-        MPVLib.setOptionString("sid", "no")
-        MPVLib.setOptionString("aid", "no")
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
