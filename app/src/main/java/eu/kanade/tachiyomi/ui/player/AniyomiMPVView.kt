@@ -85,11 +85,15 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     var timePos: Int?
         get() = getPropertyInt("time-pos")
-        set(position) = MPVLib.setPropertyInt("time-pos", position!!)
+        set(position) {
+            if (initialized) MPVLib.setPropertyInt("time-pos", position!!)
+        }
 
     var paused: Boolean?
         get() = getPropertyBoolean("pause")
-        set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
+        set(paused) {
+            if (initialized) MPVLib.setPropertyBoolean("pause", paused!!)
+        }
 
     val hwdecActive: String
         get() = getPropertyString("hwdec-current") ?: "no"
@@ -264,17 +268,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         MPVLib.setPropertyBoolean("input-default-bindings", true)
         MPVLib.setOptionString("keep-open", "yes")
-        MPVLib.setOptionString("idle", "yes")
-
-        // We handle selecting this in the viewmodel
-        MPVLib.setOptionString("sid", "no")
-        MPVLib.setOptionString("aid", "no")
 
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("http-proxy", "")
         MPVLib.setOptionString("cookies", "yes")
+
+        // Network optimizations
+        MPVLib.setOptionString("cache", "yes")
+        MPVLib.setOptionString("cache-pause", "yes")
+        MPVLib.setOptionString("cache-on-disk", "no")
+        MPVLib.setOptionString("demuxer-thread", "yes")
+
+        // Limit demuxer cache since the defaults are too high for mobile devices
+        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
+        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
 
         applyPlaybackStrategy()
 
