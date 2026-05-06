@@ -38,13 +38,11 @@ class EpisodeLoader {
          */
         suspend fun getHosters(episode: Episode, anime: Anime, source: AnimeSource): List<Hoster> {
             val isDownloaded = isDownload(episode, anime)
-            return kotlinx.coroutines.withTimeout(30000) {
-                when {
-                    isDownloaded -> getHostersOnDownloaded(episode, anime, source)
-                    source is AnimeHttpSource -> getHostersOnHttp(episode, source)
-                    source is LocalAnimeSource -> getHostersOnLocal(episode)
-                    else -> error("source not supported")
-                }
+            return when {
+                isDownloaded -> getHostersOnDownloaded(episode, anime, source)
+                source is AnimeHttpSource -> getHostersOnHttp(episode, source)
+                source is LocalAnimeSource -> getHostersOnLocal(episode)
+                else -> error("source not supported")
             }
         }
 
@@ -209,12 +207,10 @@ class EpisodeLoader {
 
         suspend fun loadHosterVideos(source: AnimeSource, hoster: Hoster): HosterState {
             return try {
-                val videos = kotlinx.coroutines.withTimeout(30000) {
-                    getVideos(source, hoster)
-                }
+                val videos = getVideos(source, hoster)
                 HosterState.Ready(hoster.hosterName, videos, List(videos.size) { Video.State.QUEUE })
             } catch (e: Exception) {
-                if (e is CancellationException && e !is kotlinx.coroutines.TimeoutCancellationException) {
+                if (e is CancellationException) {
                     throw e
                 }
 
