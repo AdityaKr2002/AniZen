@@ -593,24 +593,6 @@ class PlayerViewModel @JvmOverloads constructor(
         _readAhead.update { value.toFloat() }
     }
 
-    private fun updatePausedState() {
-        if (pausedState.value == null) {
-            _pausedState.update { _ -> paused.value }
-        }
-    }
-
-    internal fun setPausedState() {
-        pausedState.value?.let {
-            if (it) {
-                pause()
-            } else {
-                unpause()
-            }
-
-            _pausedState.update { _ -> null }
-        }
-    }
-
     fun pauseUnpause() {
         if (paused.value) {
             unpause()
@@ -1637,9 +1619,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
         qualityIndex = Pair(hosterIndex, videoIndex)
 
-        activity.runOnUiThread {
-            activity.setVideo(resolvedVideo)
-        }
+        activity.setVideo(resolvedVideo)
         return true
     }
 

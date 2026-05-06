@@ -1269,7 +1269,6 @@ class PlayerActivity : BaseActivity() {
         if (player.isExiting) return
         if (video == null) return
 
-        viewModel.setIsStopped(false)
         setHttpOptions(video)
 
         // Set mime-type for TV or if provided
@@ -1290,13 +1289,10 @@ class PlayerActivity : BaseActivity() {
                 MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
             }
         } else {
-            MPVLib.command(arrayOf("set", "start", "${viewModel.pos.value}"))
+            player.timePos?.let {
+                MPVLib.command(arrayOf("set", "start", "${player.timePos}"))
+            }
         }
-
-        val videoOptions = video.mpvArgs.joinToString(",") { (option, value) ->
-            "$option=\"$value\""
-        }
-
         if (video.videoUrl.startsWith(TorrentServerUtils.hostUrl) ||
             video.videoUrl.startsWith("magnet") ||
             video.videoUrl.endsWith(".torrent")
@@ -1307,16 +1303,9 @@ class PlayerActivity : BaseActivity() {
                 torrentLinkHandler(video.videoUrl, video.quality)
             }
         } else {
-            MPVLib.command(
-                arrayOf(
-                    "loadfile",
-                    parseVideoUrl(video.videoUrl)!!,
-                    "replace",
-                    "0",
-                    videoOptions,
-                )
-            )
+            MPVLib.command(arrayOf("loadfile", parseVideoUrl(video.videoUrl)))
         }
+        updateDiscordRPC(exitingPlayer = false)
     }
 
     private fun torrentLinkHandler(videoUrl: String, quality: String) {
@@ -1354,7 +1343,6 @@ class PlayerActivity : BaseActivity() {
     private fun setInitialEpisodeError(error: Throwable) {
         viewModel.updateIsLoadingEpisode(false)
         viewModel.isLoading.value = false
-        viewModel.setIsStopped(true)
         if (error is PlayerViewModel.ExceptionWithStringResource) {
             toast(error.stringResource)
         } else {
@@ -1446,9 +1434,6 @@ class PlayerActivity : BaseActivity() {
     // at void is.xyz.mpv.MPVLib.event(int) (MPVLib.java:86)
     private fun fileLoaded() {
         if (player.isExiting) return
-        viewModel.isLoading.update { false }
-        viewModel.updateIsLoadingEpisode(false)
-        viewModel.setPausedState()
         setMpvMediaTitle()
         setupPlayerOrientation()
         setupChapters()
