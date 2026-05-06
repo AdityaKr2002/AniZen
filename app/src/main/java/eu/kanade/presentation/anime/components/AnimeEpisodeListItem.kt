@@ -370,6 +370,7 @@ private fun EpisodeInformation(
                     text = scanlator,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
             }
         }

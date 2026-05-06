@@ -1210,11 +1210,7 @@ private fun EpisodeItemWrapper(
                 watchProgress = item.episode.lastSecondSeen
                     .takeIf { !item.episode.seen && it > 0L }
                     ?.let {
-                        stringResource(
-                            MR.strings.episode_progress,
-                            formatTime(it),
-                            formatTime(item.episode.totalSeconds),
-                        )
+                        "${formatTime(it)} / ${formatTime(item.episode.totalSeconds)}"
                     },
                 scanlator = item.episode.scanlator.takeIf { !it.isNullOrBlank() },
                 seen = item.episode.seen,
