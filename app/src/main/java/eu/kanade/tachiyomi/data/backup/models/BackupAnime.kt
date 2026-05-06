@@ -41,6 +41,7 @@ data class BackupAnime(
     // Mihon values start here
     @ProtoNumber(109) var version: Long = 0,
     @ProtoNumber(110) var notes: String = "",
+    @ProtoNumber(111) var initialized: Boolean = false,
 
     // AM (CUSTOM_INFORMATION) -->
     // Bump values by 200
@@ -52,11 +53,17 @@ data class BackupAnime(
     @ProtoNumber(205) var customGenre: List<String>? = null,
     // <-- AM (CUSTOM_INFORMATION)
 
+    @ProtoNumber(206) var excludedScanlators: List<String> = emptyList(),
+
     // AY -->
     // Aniyomi specific values
     @ProtoNumber(500) var backgroundUrl: String? = null,
     @ProtoNumber(502) var parentId: Long? = null,
     @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
+    @ProtoNumber(504) var seasonFlags: Long = 0,
+    @ProtoNumber(505) var seasonNumber: Double = -1.0,
+    @ProtoNumber(506) var seasonSourceOrder: Long = 0,
+    @ProtoNumber(507) var fetchType: Int = 1,
     // <-- AY
 
     // J2K specific values (kept for compatibility)

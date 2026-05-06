@@ -28,6 +28,12 @@ data class BackupEpisode(
     @ProtoNumber(18) var previewUrl: String? = null,
     @ProtoNumber(11) var lastModifiedAt: Long = 0,
     @ProtoNumber(12) var version: Long = 0,
+
+    // AY -->
+    @ProtoNumber(501) var fillermarkAY: Boolean = false,
+    @ProtoNumber(502) var summaryAY: String? = null,
+    @ProtoNumber(503) var previewUrlAY: String? = null,
+    // <-- AY
 ) {
     fun toEpisodeImpl(): Episode {
         return Episode.create().copy(
@@ -35,12 +41,12 @@ data class BackupEpisode(
             name = this@BackupEpisode.name,
             episodeNumber = this@BackupEpisode.episodeNumber.toDouble(),
             scanlator = this@BackupEpisode.scanlator,
-            summary = this@BackupEpisode.summary,
-            previewUrl = this@BackupEpisode.previewUrl,
+            summary = this@BackupEpisode.summary ?: this@BackupEpisode.summaryAY,
+            previewUrl = this@BackupEpisode.previewUrl ?: this@BackupEpisode.previewUrlAY,
             seen = this@BackupEpisode.seen,
             bookmark = this@BackupEpisode.bookmark,
             // AM (FILLERMARK) -->
-            fillermark = this@BackupEpisode.fillermark,
+            fillermark = this@BackupEpisode.fillermark || this@BackupEpisode.fillermarkAY,
             // <-- AM (FILLERMARK)
             lastSecondSeen = this@BackupEpisode.lastSecondSeen,
             totalSeconds = this@BackupEpisode.totalSeconds,
@@ -95,5 +101,10 @@ val backupEpisodeMapper = {
         sourceOrder = sourceOrder,
         lastModifiedAt = lastModifiedAt,
         version = version,
+        // AY -->
+        fillermarkAY = fillermark,
+        summaryAY = summary,
+        previewUrlAY = previewUrl,
+        // <-- AY
     )
 }

@@ -98,6 +98,7 @@ class BackupCreator(
                 backupCustomButton = backupCustomButtons(options),
                 backupSourcePreferences = backupSourcePreferences(options),
                 backupExtensions = backupExtensions(options),
+                isLegacy = false,
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
