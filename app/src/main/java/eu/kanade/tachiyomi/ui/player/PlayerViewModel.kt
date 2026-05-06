@@ -475,6 +475,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
         isLoadingTracks.update { _ -> false }
         updateIsLoadingEpisode(false)
+        setPausedState()
     }
 
     @Immutable
@@ -590,6 +591,24 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun updateReadAhead(value: Long) {
         _readAhead.update { value.toFloat() }
+    }
+
+    private fun updatePausedState() {
+        if (pausedState.value == null) {
+            _pausedState.update { _ -> paused.value }
+        }
+    }
+
+    private fun setPausedState() {
+        pausedState.value?.let {
+            if (it) {
+                pause()
+            } else {
+                unpause()
+            }
+
+            _pausedState.update { _ -> null }
+        }
     }
 
     fun pauseUnpause() {
@@ -1572,6 +1591,11 @@ class PlayerViewModel @JvmOverloads constructor(
             hosterIndex,
             selectedHosterState.getChangedAt(videoIndex, video, Video.State.LOAD_VIDEO),
         )
+
+        // Pause until everything has loaded
+        updatePausedState()
+        pause()
+        kotlinx.coroutines.delay(500)
 
         val resolvedVideo = if (selectedHosterState.videoState[videoIndex] != Video.State.READY) {
             HosterLoader.getResolvedVideo(source, video)
