@@ -40,13 +40,16 @@ data class LegacyBackup(
 
 @Serializable
 data class Backup(
+    @ProtoNumber(1) val backupManga: List<BackupManga> = emptyList(),
+    @ProtoNumber(2) var backupCategories: List<BackupCategory> = emptyList(),
+    @ProtoNumber(101) var backupSources: List<BackupSource> = emptyList(),
     @ProtoNumber(104) var backupPreferences: List<BackupPreference> = emptyList(),
     @ProtoNumber(105) var backupSourcePreferences: List<BackupSourcePreferences> = emptyList(),
     @ProtoNumber(106) var backupMangaExtensionRepo: List<BackupExtensionRepos> = emptyList(),
 
     // Aniyomi specific values
-    @ProtoNumber(500) var isLegacy: Boolean = true,
-    @ProtoNumber(501) var backupAnime: List<BackupAnime> = emptyList(),
+    @ProtoNumber(500) val isLegacy: Boolean = true,
+    @ProtoNumber(501) val backupAnime: List<BackupAnime> = emptyList(),
     @ProtoNumber(502) var backupAnimeCategories: List<BackupCategory> = emptyList(),
     @ProtoNumber(503) var backupAnimeSources: List<BackupAnimeSource> = emptyList(),
     @ProtoNumber(504) var backupExtensions: List<BackupExtension> = emptyList(),

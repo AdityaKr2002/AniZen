@@ -25,6 +25,7 @@ data class BackupTracking(
     @ProtoNumber(10) var startedWatchingDate: Long = 0,
     // finishedReadingDate is called endReadTime in 1.x
     @ProtoNumber(11) var finishedWatchingDate: Long = 0,
+    @ProtoNumber(12) var private: Boolean = false,
     @ProtoNumber(100) var mediaId: Long = 0,
 ) {
 
