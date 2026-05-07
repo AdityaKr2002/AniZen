@@ -51,15 +51,10 @@ data class BackupAnime(
     // Bump values by 200
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(200) var customStatus: Int = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(201) var customTitle: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(202) var customArtist: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(203) var customAuthor: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(204) var customDescription: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(205) var customGenre: List<String>? = null,
     // <-- AM (CUSTOM_INFORMATION)
 
@@ -68,11 +63,8 @@ data class BackupAnime(
 
     // AY -->
     // Aniyomi specific values
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(500) var backgroundUrl: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(502) var parentId: Long? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(504) var seasonFlags: Long = 0,
@@ -85,15 +77,10 @@ data class BackupAnime(
     // <-- AY
 
     // J2K specific values (kept for compatibility)
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(800) var customTitleJ2K: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(801) var customArtistJ2K: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(802) var customAuthorJ2K: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(804) var customDescriptionJ2K: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(805) var customGenreJ2K: List<String>? = null,
 ) {
     fun getAnimeImpl(): Anime {
@@ -145,6 +132,20 @@ data class BackupAnime(
                 description = description,
                 genre = genre,
                 status = status,
+            )
+        }
+        return null
+    }
+    // SY <--
+}
+       status = status,
+            )
+        }
+        return null
+    }
+    // SY <--
+}
+       status = status,
             )
         }
         return null
