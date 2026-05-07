@@ -35,7 +35,6 @@ import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,7 +52,7 @@ class BackupCreator(
     private val animeBackupCreator: AnimeBackupCreator = AnimeBackupCreator(),
     private val preferenceBackupCreator: PreferenceBackupCreator = PreferenceBackupCreator(),
     private val sourcesBackupCreator: SourcesBackupCreator = SourcesBackupCreator(),
-    private val extensionsBackupCreator: ExtensionsBackupCreator = ExtensionsBackupCreator(),
+    private val extensionsBackupCreator: ExtensionsBackupCreator = ExtensionsBackupCreator(context),
     private val extensionRepoBackupCreator: ExtensionRepoBackupCreator = ExtensionRepoBackupCreator(),
     private val customButtonBackupCreator: CustomButtonBackupCreator = CustomButtonBackupCreator(),
 ) {
@@ -63,17 +62,16 @@ class BackupCreator(
         try {
             file = if (isAutoBackup) {
                 val dir = UniFile.fromUri(context, uri)
-                val newFile = dir.createFile(getFilename())
-                newFile
+                dir?.createFile(getFilename())
             } else {
                 UniFile.fromUri(context, uri)
             }
 
             if (file == null || !file.exists()) {
-                throw Exception(context.stringResource(MR.strings.error_creating_backup))
+                throw Exception(context.stringResource(MR.strings.creating_backup_error))
             }
 
-            val nonFavoriteAnime = if (options.readItemAnime) {
+            val nonFavoriteAnime = if (options.seenEntries) {
                 animeRepository.getSeenAnimeNotInLibrary()
             } else {
                 emptyList()

@@ -51,7 +51,7 @@ class BackupCreateJob(private val context: Context, workerParams: WorkerParamete
             ?: BackupOptions()
 
         return try {
-            val location = BackupCreator(context, isAutoBackup).backup(uri, options)
+            val location = BackupCreator(context, isAutoBackup).createBackup(uri, options)
             if (!isAutoBackup) {
                 notifier.showBackupComplete(UniFile.fromUri(context, location.toUri())!!)
             }
