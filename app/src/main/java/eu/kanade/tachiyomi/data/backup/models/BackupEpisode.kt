@@ -9,7 +9,9 @@ import tachiyomi.domain.episode.model.Episode
 data class BackupEpisode(
     // in 1.x some of these values have different names
     // url is called key in 1.x
+    @EncodeDefault
     @ProtoNumber(1) var url: String = "",
+    @EncodeDefault
     @ProtoNumber(2) var name: String = "",
     @ProtoNumber(3) var scanlator: String? = null,
     @ProtoNumber(4) var seen: Boolean = false,
@@ -33,9 +35,7 @@ data class BackupEpisode(
     // AY -->
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(501) var fillermarkAY: Boolean = false,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(502) var summaryAY: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(503) var previewUrlAY: String? = null,
     // <-- AY
 ) {

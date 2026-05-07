@@ -43,7 +43,7 @@ class BackupCreator(
     private val context: Context,
     private val isAutoBackup: Boolean,
 
-    private val parser: ProtoBuf = ProtoBuf { encodeDefaults = true },
+    private val parser: ProtoBuf = Injekt.get(),
     private val getFavorites: GetFavorites = Injekt.get(),
     private val backupPreferences: BackupPreferences = Injekt.get(),
     private val animeRepository: AnimeRepository = Injekt.get(),
