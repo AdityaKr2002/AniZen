@@ -88,21 +88,34 @@ class BackupCreator(
                 emptyList()
             }
             val backupAnime = backupAnimes(getFavorites.await() + nonFavoriteAnime, options)
+            val backupAnimeCategories = backupAnimeCategories(options)
+            val backupAnimeSources = backupAnimeSources(backupAnime)
+            val backupExtensions = backupExtensions(options)
+            val backupAnimeExtensionRepo = backupAnimeExtensionRepos(options)
+            val backupCustomButton = backupCustomButtons(options)
 
             val backup = Backup(
                 backupManga = emptyList(),
                 backupCategories = emptyList(),
                 backupSources = emptyList(),
                 backupAnime = backupAnime,
-                backupAnimeCategories = backupAnimeCategories(options),
-                backupAnimeSources = backupAnimeSources(backupAnime),
+                backupAnimeCategories = backupAnimeCategories,
+                backupAnimeSources = backupAnimeSources,
                 backupPreferences = backupAppPreferences(options),
                 backupMangaExtensionRepo = emptyList(),
-                backupAnimeExtensionRepo = backupAnimeExtensionRepos(options),
-                backupCustomButton = backupCustomButtons(options),
+                backupAnimeExtensionRepo = backupAnimeExtensionRepo,
+                backupCustomButton = backupCustomButton,
                 backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensions = backupExtensions(options),
+                backupExtensions = backupExtensions,
                 isLegacy = false,
+
+                // Fill legacy Anizen ranges for older versions/forks
+                backupAnimeAnizen = backupAnime,
+                backupAnimeCategoriesAnizen = backupAnimeCategories,
+                backupAnimeSourcesAnizen = backupAnimeSources,
+                backupExtensionsAnizen = backupExtensions,
+                backupAnimeExtensionRepoAnizen = backupAnimeExtensionRepo,
+                backupCustomButtonAnizen = backupCustomButton,
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
