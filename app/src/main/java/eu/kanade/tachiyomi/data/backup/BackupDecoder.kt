@@ -45,16 +45,7 @@ class BackupDecoder(
                     parser.decodeFromByteArray(LegacyBackup.serializer(), backupString)
                         .toBackup()
                 } else {
-                    val backup = parser.decodeFromByteArray(Backup.serializer(), backupString)
-                    // Merge Anizen fields into standard fields if present
-                    backup.copy(
-                        backupAnime = backup.backupAnime.ifEmpty { backup.backupAnimeAnizen },
-                        backupAnimeCategories = backup.backupAnimeCategories.ifEmpty { backup.backupAnimeCategoriesAnizen },
-                        backupAnimeSources = backup.backupAnimeSources.ifEmpty { backup.backupAnimeSourcesAnizen },
-                        backupExtensions = backup.backupExtensions.ifEmpty { backup.backupExtensionsAnizen },
-                        backupAnimeExtensionRepo = backup.backupAnimeExtensionRepo.ifEmpty { backup.backupAnimeExtensionRepoAnizen },
-                        backupCustomButton = backup.backupCustomButton.ifEmpty { backup.backupCustomButtonAnizen },
-                    )
+                    parser.decodeFromByteArray(Backup.serializer(), backupString)
                 }
             } catch (e: SerializationException) {
                 logcat(LogPriority.ERROR, e) { "Failed to decode backup" }

@@ -87,24 +87,17 @@ class BackupCreator(
                 backupManga = emptyList(),
                 backupCategories = emptyList(),
                 backupSources = emptyList(),
+                backupPreferences = backupAppPreferences(options),
+                backupSourcePreferences = backupSourcePreferences(options),
+                backupMangaExtensionRepo = emptyList(),
+
+                isLegacy = false,
                 backupAnime = backupAnime,
                 backupAnimeCategories = backupAnimeCategories,
                 backupAnimeSources = backupAnimeSources,
-                backupPreferences = backupAppPreferences(options),
-                backupMangaExtensionRepo = emptyList(),
+                backupExtensions = backupExtensions,
                 backupAnimeExtensionRepo = backupAnimeExtensionRepo,
                 backupCustomButton = backupCustomButton,
-                backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensions = backupExtensions,
-                isLegacy = false,
-
-                // Fill legacy Anizen ranges for older versions/forks
-                backupAnimeAnizen = backupAnime,
-                backupAnimeCategoriesAnizen = backupAnimeCategories,
-                backupAnimeSourcesAnizen = backupAnimeSources,
-                backupExtensionsAnizen = backupExtensions,
-                backupAnimeExtensionRepoAnizen = backupAnimeExtensionRepo,
-                backupCustomButtonAnizen = backupCustomButton,
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
