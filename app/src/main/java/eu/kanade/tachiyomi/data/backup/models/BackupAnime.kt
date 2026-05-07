@@ -1,8 +1,10 @@
 package eu.kanade.tachiyomi.data.backup.models
 
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.protobuf.ProtoNumber
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.CustomAnimeInfo
@@ -12,10 +14,10 @@ import tachiyomi.domain.anime.model.CustomAnimeInfo
 data class BackupAnime(
     // in 1.x some of these values have different names
     @EncodeDefault
-    @ProtoNumber(1) var source: Long = 0,
+    @ProtoNumber(1) var source: Long,
     // url is called key in 1.x
     @EncodeDefault
-    @ProtoNumber(2) var url: String = "",
+    @ProtoNumber(2) var url: String,
     @EncodeDefault
     @ProtoNumber(3) var title: String = "",
     @ProtoNumber(4) var artist: String? = null,
@@ -42,49 +44,53 @@ data class BackupAnime(
     @ProtoNumber(105) var updateStrategy: UpdateStrategy = UpdateStrategy.ALWAYS_UPDATE,
     @ProtoNumber(106) var lastModifiedAt: Long = 0,
     @ProtoNumber(107) var favoriteModifiedAt: Long? = null,
-    // Mihon values start here
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(109) var version: Long = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(110) var notes: String = "",
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(111) var initialized: Boolean = false,
+
+    @Transient
+    var notes: String = "",
+    @Transient
+    var initialized: Boolean = false,
 
     // AM (CUSTOM_INFORMATION) -->
-    // Bump values by 200
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(200) var customStatus: Int = 0,
-    @ProtoNumber(201) var customTitle: String? = null,
-    @ProtoNumber(202) var customArtist: String? = null,
-    @ProtoNumber(203) var customAuthor: String? = null,
-    @ProtoNumber(204) var customDescription: String? = null,
-    @ProtoNumber(205) var customGenre: List<String>? = null,
+    @Transient
+    var customStatus: Int = 0,
+    @Transient
+    var customTitle: String? = null,
+    @Transient
+    var customArtist: String? = null,
+    @Transient
+    var customAuthor: String? = null,
+    @Transient
+    var customDescription: String? = null,
+    @Transient
+    var customGenre: List<String>? = null,
     // <-- AM (CUSTOM_INFORMATION)
 
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(206) var excludedScanlators: List<String> = emptyList(),
+    @Transient
+    var excludedScanlators: List<String> = emptyList(),
 
     // AY -->
     // Aniyomi specific values
     @ProtoNumber(500) var backgroundUrl: String? = null,
     @ProtoNumber(502) var parentId: Long? = null,
     @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(504) var seasonFlags: Long = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(505) var seasonNumber: Double = -1.0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(506) var seasonSourceOrder: Long = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(507) var fetchType: Int = 1,
+    @ProtoNumber(507) var fetchType: FetchType = FetchType.Episodes,
     // <-- AY
 
     // J2K specific values (kept for compatibility)
-    @ProtoNumber(800) var customTitleJ2K: String? = null,
-    @ProtoNumber(801) var customArtistJ2K: String? = null,
-    @ProtoNumber(802) var customAuthorJ2K: String? = null,
-    @ProtoNumber(804) var customDescriptionJ2K: String? = null,
-    @ProtoNumber(805) var customGenreJ2K: List<String>? = null,
+    @Transient
+    var customTitleJ2K: String? = null,
+    @Transient
+    var customArtistJ2K: String? = null,
+    @Transient
+    var customAuthorJ2K: String? = null,
+    @Transient
+    var customDescriptionJ2K: String? = null,
+    @Transient
+    var customGenreJ2K: List<String>? = null,
 ) {
     fun getAnimeImpl(): Anime {
         return Anime.create().copy(
