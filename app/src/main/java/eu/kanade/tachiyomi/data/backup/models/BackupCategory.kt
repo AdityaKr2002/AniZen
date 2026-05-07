@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.backup.models
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 import tachiyomi.domain.category.model.Category
