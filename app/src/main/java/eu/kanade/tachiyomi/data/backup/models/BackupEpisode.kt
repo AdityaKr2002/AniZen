@@ -87,6 +87,7 @@ val backupEpisodeMapper = {
         previewUrl: String?,
         lastModifiedAt: Long,
         version: Long,
+        _: Long,
     ->
     BackupEpisode(
         url = url,
