@@ -4,6 +4,7 @@ import android.content.Context
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
+import eu.kanade.tachiyomi.data.backup.models.BackupAnimeSource
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupEpisode
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
@@ -269,9 +270,9 @@ abstract class SyncService(
     }
 
     private fun mergeAnimeSourcesLists(
-        localSources: List<BackupSource>?,
-        remoteSources: List<BackupSource>?,
-    ): List<BackupSource> {
+        localSources: List<BackupAnimeSource>?,
+        remoteSources: List<BackupAnimeSource>?,
+    ): List<BackupAnimeSource> {
         val logTag = "MergeSources"
 
         // Create maps using sourceId as key
