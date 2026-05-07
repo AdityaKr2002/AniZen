@@ -125,9 +125,7 @@ class AppModule(val app: Application) : InjektModule {
             }
         }
         addSingletonFactory<ProtoBuf> {
-            ProtoBuf {
-                encodeDefaults = true
-            }
+            ProtoBuf
         }
 
         addSingletonFactory { ChapterCache(app) }
