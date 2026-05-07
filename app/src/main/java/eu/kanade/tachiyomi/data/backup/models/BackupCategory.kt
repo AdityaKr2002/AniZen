@@ -13,6 +13,7 @@ class BackupCategory(
     // Bump by 100 to specify this is a 0.x value
     @ProtoNumber(100) var flags: Long = 0,
     // KMK -->
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(900) var hidden: Boolean = false,
     // KMK <--
 ) {

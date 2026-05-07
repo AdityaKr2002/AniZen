@@ -42,38 +42,60 @@ data class BackupAnime(
     @ProtoNumber(106) var lastModifiedAt: Long = 0,
     @ProtoNumber(107) var favoriteModifiedAt: Long? = null,
     // Mihon values start here
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(109) var version: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(110) var notes: String = "",
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(111) var initialized: Boolean = false,
 
     // AM (CUSTOM_INFORMATION) -->
     // Bump values by 200
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(200) var customStatus: Int = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(201) var customTitle: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(202) var customArtist: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(203) var customAuthor: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(204) var customDescription: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(205) var customGenre: List<String>? = null,
     // <-- AM (CUSTOM_INFORMATION)
 
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(206) var excludedScanlators: List<String> = emptyList(),
 
     // AY -->
     // Aniyomi specific values
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(500) var backgroundUrl: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(502) var parentId: Long? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(504) var seasonFlags: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(505) var seasonNumber: Double = -1.0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(506) var seasonSourceOrder: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(507) var fetchType: Int = 1,
     // <-- AY
 
     // J2K specific values (kept for compatibility)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(800) var customTitleJ2K: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(801) var customArtistJ2K: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(802) var customAuthorJ2K: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(804) var customDescriptionJ2K: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(805) var customGenreJ2K: List<String>? = null,
 ) {
     fun getAnimeImpl(): Anime {

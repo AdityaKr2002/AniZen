@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.data.backup.create.creators.ExtensionRepoBackupCreato
 import eu.kanade.tachiyomi.data.backup.create.creators.ExtensionsBackupCreator
 import eu.kanade.tachiyomi.data.backup.create.creators.PreferenceBackupCreator
 import eu.kanade.tachiyomi.data.backup.create.creators.SourcesBackupCreator
-import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
 import eu.kanade.tachiyomi.data.backup.models.BackupAnimeSource
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
@@ -22,6 +21,7 @@ import eu.kanade.tachiyomi.data.backup.models.BackupExtensionRepos
 import eu.kanade.tachiyomi.data.backup.models.BackupPreference
 import eu.kanade.tachiyomi.data.backup.models.BackupSource
 import eu.kanade.tachiyomi.data.backup.models.BackupSourcePreferences
+import eu.kanade.tachiyomi.data.backup.models.LegacyBackup
 import kotlinx.serialization.protobuf.ProtoBuf
 import logcat.LogPriority
 import okio.buffer
@@ -94,7 +94,7 @@ class BackupCreator(
             val backupAnimeExtensionRepo = backupAnimeExtensionRepos(options)
             val backupCustomButton = backupCustomButtons(options)
 
-            val backup = Backup(
+            val backup = LegacyBackup(
                 backupManga = emptyList(),
                 backupCategories = emptyList(),
                 backupSources = emptyList(),
@@ -107,18 +107,9 @@ class BackupCreator(
                 backupCustomButton = backupCustomButton,
                 backupSourcePreferences = backupSourcePreferences(options),
                 backupExtensions = backupExtensions,
-                isLegacy = false,
-
-                // Fill legacy Anizen ranges for older versions/forks
-                backupAnimeAnizen = backupAnime,
-                backupAnimeCategoriesAnizen = backupAnimeCategories,
-                backupAnimeSourcesAnizen = backupAnimeSources,
-                backupExtensionsAnizen = backupExtensions,
-                backupAnimeExtensionRepoAnizen = backupAnimeExtensionRepo,
-                backupCustomButtonAnizen = backupCustomButton,
             )
 
-            val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
+            val byteArray = parser.encodeToByteArray(LegacyBackup.serializer(), backup)
             if (byteArray.isEmpty()) {
                 throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
             }

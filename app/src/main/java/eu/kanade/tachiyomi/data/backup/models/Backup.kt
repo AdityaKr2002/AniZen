@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.backup.models
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
@@ -59,10 +60,16 @@ data class Backup(
 
     // Anizen specific values (Legacy Anizen format range)
     @ProtoNumber(500) val isLegacy: Boolean = true,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(501) val backupAnimeAnizen: List<BackupAnime> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(502) var backupAnimeCategoriesAnizen: List<BackupCategory> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(503) var backupAnimeSourcesAnizen: List<BackupAnimeSource> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(504) var backupExtensionsAnizen: List<BackupExtension> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(505) var backupAnimeExtensionRepoAnizen: List<BackupExtensionRepos> = emptyList(),
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(506) var backupCustomButtonAnizen: List<BackupCustomButtons> = emptyList(),
 )

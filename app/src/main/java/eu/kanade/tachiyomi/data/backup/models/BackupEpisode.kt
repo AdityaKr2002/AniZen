@@ -33,8 +33,11 @@ data class BackupEpisode(
     @ProtoNumber(12) var version: Long = 0,
 
     // AY -->
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(501) var fillermarkAY: Boolean = false,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(502) var summaryAY: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(503) var previewUrlAY: String? = null,
     // <-- AY
 ) {
