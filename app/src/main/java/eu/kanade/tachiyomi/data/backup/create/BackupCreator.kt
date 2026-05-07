@@ -130,28 +130,33 @@ class BackupCreator(
         return animeBackupCreator(anime, options)
     }
 
-    fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
-        return categoriesBackupCreator.backupAnimeCategories(options)
+    suspend fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
+        if (!options.categories) return emptyList()
+        return categoriesBackupCreator()
     }
 
     fun backupAnimeSources(animes: List<BackupAnime>): List<BackupAnimeSource> {
-        return sourcesBackupCreator.backupAnimeSources(animes)
+        return sourcesBackupCreator(animes)
     }
 
     fun backupAppPreferences(options: BackupOptions): List<BackupPreference> {
-        return preferenceBackupCreator.backupAppPreferences(options)
+        if (!options.appSettings) return emptyList()
+        return preferenceBackupCreator.createApp(options.privateSettings)
     }
 
     fun backupSourcePreferences(options: BackupOptions): List<BackupSourcePreferences> {
-        return preferenceBackupCreator.backupSourcePreferences(options)
+        if (!options.sourceSettings) return emptyList()
+        return preferenceBackupCreator.createSource(options.privateSettings)
     }
 
-    fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
-        return extensionRepoBackupCreator.backupAnimeExtensionRepos(options)
+    suspend fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
+        if (!options.extensionRepoSettings) return emptyList()
+        return extensionRepoBackupCreator()
     }
 
-    fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
-        return customButtonBackupCreator.backupCustomButtons(options)
+    suspend fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
+        if (!options.customButton) return emptyList()
+        return customButtonBackupCreator()
     }
 
     fun backupExtensions(options: BackupOptions): List<BackupExtension> {
