@@ -30,7 +30,6 @@ import okio.sink
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.anime.interactor.GetFavorites
-import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.i18n.MR
@@ -38,7 +37,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.util.Date
 import java.util.Locale
 
@@ -46,7 +44,7 @@ class BackupCreator(
     private val context: Context,
     private val isAutoBackup: Boolean,
 
-    private val parser: ProtoBuf = Injekt.get(),
+    private val parser: ProtoBuf = ProtoBuf { encodeDefaults = true },
     private val getFavorites: GetFavorites = Injekt.get(),
     private val backupPreferences: BackupPreferences = Injekt.get(),
     private val animeRepository: AnimeRepository = Injekt.get(),
@@ -54,35 +52,28 @@ class BackupCreator(
     private val categoriesBackupCreator: CategoriesBackupCreator = CategoriesBackupCreator(),
     private val animeBackupCreator: AnimeBackupCreator = AnimeBackupCreator(),
     private val preferenceBackupCreator: PreferenceBackupCreator = PreferenceBackupCreator(),
+    private val sourcesBackupCreator: SourcesBackupCreator = SourcesBackupCreator(),
+    private val extensionsBackupCreator: ExtensionsBackupCreator = ExtensionsBackupCreator(),
     private val extensionRepoBackupCreator: ExtensionRepoBackupCreator = ExtensionRepoBackupCreator(),
     private val customButtonBackupCreator: CustomButtonBackupCreator = CustomButtonBackupCreator(),
-    private val sourcesBackupCreator: SourcesBackupCreator = SourcesBackupCreator(),
-    private val extensionsBackupCreator: ExtensionsBackupCreator = ExtensionsBackupCreator(context),
 ) {
 
-    suspend fun backup(uri: Uri, options: BackupOptions): String {
+    suspend fun createBackup(uri: Uri, options: BackupOptions): String {
         var file: UniFile? = null
         try {
             file = if (isAutoBackup) {
-                // Get dir of file and create
                 val dir = UniFile.fromUri(context, uri)
-                // Delete older backups
-                dir?.listFiles { _, filename -> FILENAME_REGEX.matches(filename) }
-                    .orEmpty()
-                    .sortedByDescending { it.name }
-                    .drop(MAX_AUTO_BACKUPS - 1)
-                    .forEach { it.delete() }
-                // Create new file to place backup
-                dir?.createFile(getFilename())
+                val newFile = dir.createFile(getFilename())
+                newFile
             } else {
                 UniFile.fromUri(context, uri)
             }
 
-            if (file == null || !file.isFile) {
-                throw IllegalStateException(context.stringResource(MR.strings.create_backup_file_error))
+            if (file == null || !file.exists()) {
+                throw Exception(context.stringResource(MR.strings.error_creating_backup))
             }
 
-            val nonFavoriteAnime = if (options.readEntries) {
+            val nonFavoriteAnime = if (options.readItemAnime) {
                 animeRepository.getSeenAnimeNotInLibrary()
             } else {
                 emptyList()
@@ -123,24 +114,13 @@ class BackupCreator(
                 throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
             }
 
-            file.openOutputStream()
-                .also {
-                    // Force overwrite old file
-                    (it as? FileOutputStream)?.channel?.truncate(0)
+            file.openOutputStream().use {
+                it.sink().gzip().buffer().use { gz ->
+                    gz.write(byteArray)
                 }
-                .sink().gzip().buffer().use {
-                    it.write(byteArray)
-                }
-            val fileUri = file.uri
-
-            // Make sure it's a valid backup file
-            BackupFileValidator(context).validate(fileUri)
-
-            if (isAutoBackup) {
-                backupPreferences.lastAutoBackupTimestamp().set(Instant.now().toEpochMilli())
             }
 
-            return fileUri.toString()
+            return file.uri.toString()
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             file?.delete()
@@ -148,44 +128,32 @@ class BackupCreator(
         }
     }
 
-    suspend fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
-        if (!options.categories) return emptyList()
-
-        return categoriesBackupCreator()
+    suspend fun backupAnimes(anime: List<tachiyomi.domain.anime.model.Anime>, options: BackupOptions): List<BackupAnime> {
+        return animeBackupCreator(anime, options)
     }
 
-    suspend fun backupAnimes(animes: List<Anime>, options: BackupOptions): List<BackupAnime> {
-        if (!options.libraryEntries) return emptyList()
-
-        return animeBackupCreator(animes, options)
+    fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
+        return categoriesBackupCreator.backupAnimeCategories(options)
     }
 
     fun backupAnimeSources(animes: List<BackupAnime>): List<BackupAnimeSource> {
-        return sourcesBackupCreator(animes)
+        return sourcesBackupCreator.backupAnimeSources(animes)
     }
 
     fun backupAppPreferences(options: BackupOptions): List<BackupPreference> {
-        if (!options.appSettings) return emptyList()
-
-        return preferenceBackupCreator.createApp(includePrivatePreferences = options.privateSettings)
-    }
-
-    suspend fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
-        if (!options.extensionRepoSettings) return emptyList()
-
-        return extensionRepoBackupCreator()
-    }
-
-    suspend fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
-        if (!options.customButton) return emptyList()
-
-        return customButtonBackupCreator()
+        return preferenceBackupCreator.backupAppPreferences(options)
     }
 
     fun backupSourcePreferences(options: BackupOptions): List<BackupSourcePreferences> {
-        if (!options.sourceSettings) return emptyList()
+        return preferenceBackupCreator.backupSourcePreferences(options)
+    }
 
-        return preferenceBackupCreator.createSource(includePrivatePreferences = options.privateSettings)
+    fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
+        return extensionRepoBackupCreator.backupAnimeExtensionRepos(options)
+    }
+
+    fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
+        return customButtonBackupCreator.backupCustomButtons(options)
     }
 
     fun backupExtensions(options: BackupOptions): List<BackupExtension> {
@@ -201,10 +169,6 @@ class BackupCreator(
         fun getFilename(): String {
             val date = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.ENGLISH).format(Date())
             return "${BuildConfig.APPLICATION_ID}_$date.tachibk"
-        }
-    }
-}
-.tachibk"
         }
     }
 }
