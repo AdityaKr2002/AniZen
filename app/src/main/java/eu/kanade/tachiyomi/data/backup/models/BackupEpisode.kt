@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.backup.models
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 import tachiyomi.domain.episode.model.Episode
@@ -8,7 +9,9 @@ import tachiyomi.domain.episode.model.Episode
 data class BackupEpisode(
     // in 1.x some of these values have different names
     // url is called key in 1.x
+    @EncodeDefault
     @ProtoNumber(1) var url: String = "",
+    @EncodeDefault
     @ProtoNumber(2) var name: String = "",
     @ProtoNumber(3) var scanlator: String? = null,
     @ProtoNumber(4) var seen: Boolean = false,

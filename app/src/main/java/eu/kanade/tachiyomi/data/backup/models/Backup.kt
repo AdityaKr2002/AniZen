@@ -23,17 +23,20 @@ data class LegacyBackup(
 ) {
     fun toBackup(): Backup {
         return Backup(
-            backupPreferences = backupPreferences,
-            backupSourcePreferences = backupSourcePreferences,
-            backupMangaExtensionRepo = backupMangaExtensionRepo,
-
-            isLegacy = false, // Only used for detection
+            backupManga = backupManga,
+            backupCategories = backupCategories,
             backupAnime = backupAnime,
             backupAnimeCategories = backupAnimeCategories,
+            backupSources = backupSources,
             backupAnimeSources = backupAnimeSources,
+            backupPreferences = backupPreferences,
+            backupSourcePreferences = backupSourcePreferences,
             backupExtensions = backupExtensions,
             backupAnimeExtensionRepo = backupAnimeExtensionRepo,
+            backupMangaExtensionRepo = backupMangaExtensionRepo,
             backupCustomButton = backupCustomButton,
+
+            isLegacy = false,
         )
     }
 }
@@ -42,17 +45,24 @@ data class LegacyBackup(
 data class Backup(
     @ProtoNumber(1) val backupManga: List<BackupManga> = emptyList(),
     @ProtoNumber(2) var backupCategories: List<BackupCategory> = emptyList(),
+    @ProtoNumber(3) var backupAnime: List<BackupAnime> = emptyList(),
+    @ProtoNumber(4) var backupAnimeCategories: List<BackupCategory> = emptyList(),
+
     @ProtoNumber(101) var backupSources: List<BackupSource> = emptyList(),
+    @ProtoNumber(103) var backupAnimeSources: List<BackupAnimeSource> = emptyList(),
     @ProtoNumber(104) var backupPreferences: List<BackupPreference> = emptyList(),
     @ProtoNumber(105) var backupSourcePreferences: List<BackupSourcePreferences> = emptyList(),
-    @ProtoNumber(106) var backupMangaExtensionRepo: List<BackupExtensionRepos> = emptyList(),
+    @ProtoNumber(106) var backupExtensions: List<BackupExtension> = emptyList(),
+    @ProtoNumber(107) var backupAnimeExtensionRepo: List<BackupExtensionRepos> = emptyList(),
+    @ProtoNumber(108) var backupMangaExtensionRepo: List<BackupExtensionRepos> = emptyList(),
+    @ProtoNumber(109) var backupCustomButton: List<BackupCustomButtons> = emptyList(),
 
-    // Aniyomi specific values
+    // Anizen specific values (Legacy Anizen format range)
     @ProtoNumber(500) val isLegacy: Boolean = true,
-    @ProtoNumber(501) val backupAnime: List<BackupAnime> = emptyList(),
-    @ProtoNumber(502) var backupAnimeCategories: List<BackupCategory> = emptyList(),
-    @ProtoNumber(503) var backupAnimeSources: List<BackupAnimeSource> = emptyList(),
-    @ProtoNumber(504) var backupExtensions: List<BackupExtension> = emptyList(),
-    @ProtoNumber(505) var backupAnimeExtensionRepo: List<BackupExtensionRepos> = emptyList(),
-    @ProtoNumber(506) var backupCustomButton: List<BackupCustomButtons> = emptyList(),
+    @ProtoNumber(501) val backupAnimeAnizen: List<BackupAnime> = emptyList(),
+    @ProtoNumber(502) var backupAnimeCategoriesAnizen: List<BackupCategory> = emptyList(),
+    @ProtoNumber(503) var backupAnimeSourcesAnizen: List<BackupAnimeSource> = emptyList(),
+    @ProtoNumber(504) var backupExtensionsAnizen: List<BackupExtension> = emptyList(),
+    @ProtoNumber(505) var backupAnimeExtensionRepoAnizen: List<BackupExtensionRepos> = emptyList(),
+    @ProtoNumber(506) var backupCustomButtonAnizen: List<BackupCustomButtons> = emptyList(),
 )
