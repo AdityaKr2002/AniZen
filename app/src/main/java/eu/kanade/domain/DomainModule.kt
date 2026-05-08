@@ -56,6 +56,7 @@ import tachiyomi.domain.anime.interactor.CalculateUserAffinity
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.interactor.ResetViewerFlags
 import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
+import tachiyomi.domain.anime.interactor.SetAnimeSeasonFlags
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.category.interactor.CreateCategoryWithName
 import tachiyomi.domain.category.interactor.DeleteCategory
@@ -142,6 +143,7 @@ class DomainModule : InjektModule {
         addFactory { GetUpcomingAnime(get()) }
         addFactory { ResetViewerFlags(get()) }
         addFactory { SetAnimeEpisodeFlags(get(), get()) }
+        addFactory { SetAnimeSeasonFlags(get()) }
         addFactory { FetchInterval(get()) }
         addFactory { SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
         addFactory { SetAnimeViewerFlags(get()) }

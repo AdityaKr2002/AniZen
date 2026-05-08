@@ -407,6 +407,45 @@ class AnimeScreen(
                     )
                 }
 
+                is AnimeScreenModel.Dialog.SeasonSettingsSheet -> {
+                    eu.kanade.presentation.anime.SeasonSettingsDialog(
+                        onDismissRequest = onDismissRequest,
+                        anime = successState.anime,
+                        onDownloadFilterChanged = screenModel::setSeasonDownloadedFilter,
+                        onUnseenFilterChanged = screenModel::setSeasonUnseenFilter,
+                        onStartedFilterChanged = screenModel::setSeasonStartedFilter,
+                        onCompletedFilterChanged = screenModel::setSeasonCompletedFilter,
+                        onBookmarkedFilterChanged = screenModel::setSeasonBookmarkedFilter,
+                        onFillermarkedFilterChanged = screenModel::setSeasonFillermarkedFilter,
+                        onSortModeChanged = screenModel::setSeasonSorting,
+                        onDisplayGridModeChanged = screenModel::setSeasonDisplayGridMode,
+                        onDisplayGridSizeChanged = screenModel::setSeasonDisplayGridSize,
+                        onOverlayDownloadedChanged = screenModel::setSeasonDownloadOverlay,
+                        onOverlayUnseenChanged = screenModel::setSeasonUnseenOverlay,
+                        onOverlayLocalChanged = screenModel::setSeasonLocalOverlay,
+                        onOverlayLangChanged = screenModel::setSeasonLangOverlay,
+                        onOverlayContinueChanged = screenModel::setSeasonContinueOverlay,
+                        onDisplayModeChanged = screenModel::setSeasonDisplayMode,
+                        onSetAsDefault = screenModel::setSeasonCurrentSettingsAsDefault,
+                    )
+                }
+
+                is AnimeScreenModel.Dialog.EpisodeSettingsSheet -> {
+                    EpisodeSettingsDialog(
+                        onDismissRequest = onDismissRequest,
+                        anime = successState.anime,
+                        onDownloadFilterChanged = screenModel::setDownloadedFilter,
+                        onUnseenFilterChanged = screenModel::setUnseenFilter,
+                        onBookmarkedFilterChanged = screenModel::setBookmarkedFilter,
+                        onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
+                        onSortModeChanged = screenModel::setSorting,
+                        onDisplayModeChanged = screenModel::setDisplayMode,
+                        onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
+                        onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
+                        onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
+                    )
+                }
+
                 is AnimeScreenModel.Dialog.SettingsSheet -> {
                     EpisodeSettingsDialog(
                         onDismissRequest = onDismissRequest,

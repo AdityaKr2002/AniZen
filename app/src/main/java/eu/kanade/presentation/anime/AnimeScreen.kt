@@ -95,6 +95,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.animesource.model.FetchType
+import aniyomi.domain.anime.SeasonDisplayMode
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.getNameForAnimeInfo
@@ -688,25 +689,64 @@ private fun AnimeScreenSmallImpl(
                             }
                             
                             if (state.anime.fetchType == FetchType.Seasons) {
-                                items(
-                                    items = state.processedSeasons,
-                                    key = { season -> season.anime.id },
-                                ) { item ->
-                                    AnimeSeasonListItem(
-                                        anime = state.anime,
-                                        item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                            seasonAnime = item,
-                                            downloadCount = -1L,
-                                            unseenCount = item.unseenCount,
-                                            isLocal = false,
-                                            sourceLanguage = "",
-                                            showContinueOverlay = false
-                                        ),
-                                        containerHeight = 0,
-                                        onSeasonClicked = onSeasonClicked,
-                                        onClickContinueWatching = null,
-                                        listItemModifier = Modifier,
-                                    )
+                                val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) 1 else 3
+                                val seasons = state.processedSeasons
+                                if (columns == 1) {
+                                    items(
+                                        items = seasons,
+                                        key = { season -> season.anime.id },
+                                    ) { item ->
+                                        AnimeSeasonListItem(
+                                            anime = state.anime,
+                                            item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                seasonAnime = item,
+                                                downloadCount = -1L,
+                                                unseenCount = item.unseenCount,
+                                                isLocal = false,
+                                                sourceLanguage = "",
+                                                showContinueOverlay = false,
+                                            ),
+                                            containerHeight = 0,
+                                            onSeasonClicked = onSeasonClicked,
+                                            onClickContinueWatching = null,
+                                            listItemModifier = Modifier,
+                                        )
+                                    }
+                                } else {
+                                    val rows = seasons.chunked(columns)
+                                    rows.forEachIndexed { index, row ->
+                                        item(key = "season-row-$index") {
+                                            Row(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 8.dp)
+                                                    .fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                row.forEach { item ->
+                                                    Box(modifier = Modifier.weight(1f)) {
+                                                        AnimeSeasonListItem(
+                                                            anime = state.anime,
+                                                            item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                                seasonAnime = item,
+                                                                downloadCount = -1L,
+                                                                unseenCount = item.unseenCount,
+                                                                isLocal = false,
+                                                                sourceLanguage = "",
+                                                                showContinueOverlay = false,
+                                                            ),
+                                                            containerHeight = 0,
+                                                            onSeasonClicked = onSeasonClicked,
+                                                            onClickContinueWatching = null,
+                                                            listItemModifier = Modifier,
+                                                        )
+                                                    }
+                                                }
+                                                repeat(columns - row.size) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             } else {
                                 item(key = "episode-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
@@ -1143,25 +1183,64 @@ fun AnimeScreenLargeImpl(
                                     }
                                     
                                     if (state.anime.fetchType == FetchType.Seasons) {
-                                        items(
-                                            items = state.processedSeasons,
-                                            key = { season -> season.anime.id },
-                                        ) { item ->
-                                            AnimeSeasonListItem(
-                                                anime = state.anime,
-                                                item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                    seasonAnime = item,
-                                                    downloadCount = -1L,
-                                                    unseenCount = item.unseenCount,
-                                                    isLocal = false,
-                                                    sourceLanguage = "",
-                                                    showContinueOverlay = false
-                                                ),
-                                                containerHeight = 0,
-                                                onSeasonClicked = onSeasonClicked,
-                                                onClickContinueWatching = null,
-                                                listItemModifier = Modifier,
-                                            )
+                                        val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) 1 else 5
+                                        val seasons = state.processedSeasons
+                                        if (columns == 1) {
+                                            items(
+                                                items = seasons,
+                                                key = { season -> season.anime.id },
+                                            ) { item ->
+                                                AnimeSeasonListItem(
+                                                    anime = state.anime,
+                                                    item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                        seasonAnime = item,
+                                                        downloadCount = -1L,
+                                                        unseenCount = item.unseenCount,
+                                                        isLocal = false,
+                                                        sourceLanguage = "",
+                                                        showContinueOverlay = false,
+                                                    ),
+                                                    containerHeight = 0,
+                                                    onSeasonClicked = onSeasonClicked,
+                                                    onClickContinueWatching = null,
+                                                    listItemModifier = Modifier,
+                                                )
+                                            }
+                                        } else {
+                                            val rows = seasons.chunked(columns)
+                                            rows.forEachIndexed { index, row ->
+                                                item(key = "season-row-large-$index") {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .padding(horizontal = 8.dp)
+                                                            .fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    ) {
+                                                        row.forEach { item ->
+                                                            Box(modifier = Modifier.weight(1f)) {
+                                                                AnimeSeasonListItem(
+                                                                    anime = state.anime,
+                                                                    item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                                        seasonAnime = item,
+                                                                        downloadCount = -1L,
+                                                                        unseenCount = item.unseenCount,
+                                                                        isLocal = false,
+                                                                        sourceLanguage = "",
+                                                                        showContinueOverlay = false,
+                                                                    ),
+                                                                    containerHeight = 0,
+                                                                    onSeasonClicked = onSeasonClicked,
+                                                                    onClickContinueWatching = null,
+                                                                    listItemModifier = Modifier,
+                                                                )
+                                                            }
+                                                        }
+                                                        repeat(columns - row.size) {
+                                                            Spacer(modifier = Modifier.weight(1f))
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     } else {
                                         item(key = "episode-header-large", contentType = AnimeScreenItem.EPISODE_HEADER) {

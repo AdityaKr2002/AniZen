@@ -166,6 +166,7 @@ class AnimeScreenModel(
     private val setCustomAnimeInfo: SetCustomAnimeInfo = Injekt.get(),
     private val getDuplicateLibraryAnime: GetDuplicateLibraryAnime = Injekt.get(),
     private val setAnimeEpisodeFlags: SetAnimeEpisodeFlags = Injekt.get(),
+    private val setAnimeSeasonFlags: SetAnimeSeasonFlags = Injekt.get(),
     private val setAnimeDefaultEpisodeFlags: SetAnimeDefaultEpisodeFlags = Injekt.get(),
     private val setSeenStatus: SetSeenStatus = Injekt.get(),
     private val updateEpisode: UpdateEpisode = Injekt.get(),
@@ -1440,6 +1441,175 @@ class AnimeScreenModel(
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetDisplayMode(anime, mode) }
     }
 
+    // AY -->
+    fun setSeasonDownloadedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_DOWNLOADED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_DOWNLOADED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDownloadedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonUnseenFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_UNSEEN
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_SEEN
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetUnseenFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonStartedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_STARTED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_STARTED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetStartedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonCompletedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_COMPLETED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_COMPLETED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetCompletedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonBookmarkedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_BOOKMARKED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_BOOKMARKED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetBookmarkedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonFillermarkedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_FILLERMARKED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_FILLERMARKED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetFillermarkedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonSorting(sort: Long) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetSortingModeOrFlipOrder(anime, sort)
+        }
+    }
+
+    fun setSeasonDisplayGridMode(mode: SeasonDisplayMode) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetGridMode(anime, mode)
+        }
+    }
+
+    fun setSeasonDisplayGridSize(size: Int) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetGridSize(anime, size)
+        }
+    }
+
+    fun setSeasonDownloadOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDownloadedOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonUnseenOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetUnseenOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonLocalOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetLocalOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonLangOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetLangOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonContinueOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetContinueOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonDisplayMode(mode: Long) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDisplayMode(anime, mode)
+        }
+    }
+
+    fun setSeasonCurrentSettingsAsDefault(applyToExisting: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            libraryPreferences.setSeasonSettingsDefault(anime)
+            snackbarHostState.showSnackbar(
+                message = context.stringResource(AYMR.strings.season_settings_updated),
+            )
+        }
+    }
+    // <-- AY
+
     fun setSorting(sort: Long) {
         val anime = successState?.anime ?: return
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetSortingModeOrFlipOrder(anime, sort) }
@@ -1645,6 +1815,8 @@ class AnimeScreenModel(
         data object ChangeAnimeSkipIntro : Dialog
         data object ClearAnime : Dialog
         data object SettingsSheet : Dialog
+        data object SeasonSettingsSheet : Dialog
+        data object EpisodeSettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
     }
@@ -1659,7 +1831,14 @@ class AnimeScreenModel(
 
     fun dismissDialog() = updateSuccessState { it.copySuccess(dialog = null) }
     fun showDeleteEpisodeDialog(episodes: List<Episode>) = updateSuccessState { it.copySuccess(dialog = Dialog.DeleteEpisodes(episodes)) }
-    fun showSettingsDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.SettingsSheet) }
+    fun showSettingsDialog() {
+        updateSuccessState {
+            when (it.anime.fetchType) {
+                eu.kanade.tachiyomi.animesource.model.FetchType.Seasons -> it.copySuccess(dialog = Dialog.SeasonSettingsSheet)
+                else -> it.copySuccess(dialog = Dialog.EpisodeSettingsSheet)
+            }
+        }
+    }
     fun showTrackDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.TrackSheet) }
     fun showCoverDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.FullCover) }
     fun showEditAnimeInfoDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.EditAnimeInfo(it.anime)) }
