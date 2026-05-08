@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.data.backup.create.creators.PreferenceBackupCreator
 import eu.kanade.tachiyomi.data.backup.create.creators.SourcesBackupCreator
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
-import eu.kanade.tachiyomi.data.backup.models.BackupAnimeSource
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupCustomButtons
 import eu.kanade.tachiyomi.data.backup.models.BackupExtension
@@ -124,7 +123,7 @@ class BackupCreator(
         return categoriesBackupCreator()
     }
 
-    fun backupAnimeSources(animes: List<BackupAnime>): List<BackupAnimeSource> {
+    fun backupAnimeSources(animes: List<BackupAnime>): List<BackupSource> {
         return sourcesBackupCreator(animes)
     }
 

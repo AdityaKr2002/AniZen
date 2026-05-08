@@ -69,43 +69,31 @@ val backupEpisodeMapper = {
         scanlator: String?,
         seen: Boolean,
         bookmark: Boolean,
-        // AY -->
         fillermark: Boolean,
-        // <-- AY
         lastSecondSeen: Long,
-        // AY -->
         totalSeconds: Long,
-        // <-- AY
         episodeNumber: Double,
         sourceOrder: Long,
         dateFetch: Long,
         dateUpload: Long,
+        summary: String?,
+        previewUrl: String?,
         lastModifiedAt: Long,
         version: Long,
         _: Long,
-        // AY -->
-        summary: String?,
-        previewUrl: String?,
-    // <-- AY
     ->
     BackupEpisode(
         url = url,
         name = name,
         episodeNumber = episodeNumber.toFloat(),
         scanlator = scanlator,
-        // AY -->
         summary = summary,
         previewUrl = previewUrl,
-        // <-- AY
         seen = seen,
         bookmark = bookmark,
-        // AY -->
         fillermark = fillermark,
-        // <-- AY
         lastSecondSeen = lastSecondSeen,
-        // AY -->
         totalSeconds = totalSeconds,
-        // <-- AY
         dateFetch = dateFetch,
         dateUpload = dateUpload,
         sourceOrder = sourceOrder,

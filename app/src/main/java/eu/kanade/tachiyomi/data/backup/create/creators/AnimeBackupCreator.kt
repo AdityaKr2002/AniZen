@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.data.backup.create.BackupOptions
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
 import eu.kanade.tachiyomi.data.backup.models.BackupEpisode
 import eu.kanade.tachiyomi.data.backup.models.BackupHistory
-import eu.kanade.tachiyomi.data.backup.models.backupAnimeTrackMapper
+import eu.kanade.tachiyomi.data.backup.models.backupTrackMapper
 import eu.kanade.tachiyomi.data.backup.models.backupEpisodeMapper
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.anime.model.Anime
@@ -39,7 +39,7 @@ class AnimeBackupCreator(
                     mapper = backupEpisodeMapper,
                 )
             }
-                .takeUnless(List<BackupEpisode>::isEmpty)
+                .takeUnless { it.isEmpty() }
                 ?.let { animeObject.episodes = it }
         }
 
@@ -52,7 +52,7 @@ class AnimeBackupCreator(
         }
 
         if (options.tracking) {
-            val tracks = handler.awaitList { anime_syncQueries.getTracksByAnimeId(anime.id, backupAnimeTrackMapper) }
+            val tracks = handler.awaitList { anime_syncQueries.getTracksByAnimeId(anime.id, backupTrackMapper) }
             if (tracks.isNotEmpty()) {
                 animeObject.tracking = tracks
             }
@@ -63,7 +63,7 @@ class AnimeBackupCreator(
             if (historyByAnimeId.isNotEmpty()) {
                 val history = historyByAnimeId.map { history ->
                     val episode = handler.awaitOne { episodesQueries.getEpisodeById(history.episodeId) }
-                    BackupHistory(url = episode.url, lastRead = history.seenAt?.time ?: 0L)
+                    BackupHistory(url = episode.url, lastSeen = history.seenAt?.time ?: 0L)
                 }
                 if (history.isNotEmpty()) {
                     animeObject.history = history

@@ -49,7 +49,6 @@ data class BackupTracking(
             startDate = this@BackupTracking.startedWatchingDate,
             finishDate = this@BackupTracking.finishedWatchingDate,
             remoteUrl = this@BackupTracking.trackingUrl,
-            private = this@BackupTracking.private,
         )
     }
 }
@@ -68,7 +67,6 @@ val backupTrackMapper = {
         remoteUrl: String,
         startDate: Long,
         finishDate: Long,
-        private: Boolean,
     ->
     BackupTracking(
         syncId = syncId.toInt(),
@@ -83,6 +81,5 @@ val backupTrackMapper = {
         startedWatchingDate = startDate,
         finishedWatchingDate = finishDate,
         trackingUrl = remoteUrl,
-        private = private,
     )
 }

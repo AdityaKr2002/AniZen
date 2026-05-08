@@ -73,7 +73,6 @@ data class BackupAnime(
     fun getAnimeImpl(): Anime {
         return Anime.create().copy(
             url = this@BackupAnime.url,
-            // AM (CUSTOM_INFORMATION) -->
             ogTitle = this@BackupAnime.title,
             ogArtist = this@BackupAnime.artist,
             ogAuthor = this@BackupAnime.author,
@@ -81,11 +80,6 @@ data class BackupAnime(
             ogDescription = this@BackupAnime.description,
             ogGenre = this@BackupAnime.genre,
             ogStatus = this@BackupAnime.status.toLong(),
-            // <-- AM (CUSTOM_INFORMATION)
-            thumbnailUrl = this@BackupAnime.thumbnailUrl,
-            // AY -->
-            backgroundUrl = this@BackupAnime.backgroundUrl,
-            // <-- AY
             favorite = this@BackupAnime.favorite,
             source = this@BackupAnime.source,
             dateAdded = this@BackupAnime.dateAdded,
@@ -95,15 +89,10 @@ data class BackupAnime(
             lastModifiedAt = this@BackupAnime.lastModifiedAt,
             favoriteModifiedAt = this@BackupAnime.favoriteModifiedAt,
             version = this@BackupAnime.version,
-            notes = this@BackupAnime.notes,
             initialized = this@BackupAnime.initialized,
-            // AY -->
-            fetchType = this@BackupAnime.fetchType,
             parentId = this@BackupAnime.parentId,
-            seasonFlags = this@BackupAnime.seasonFlags,
             seasonNumber = this@BackupAnime.seasonNumber,
-            seasonSourceOrder = this@BackupAnime.seasonSourceOrder,
-            // <-- AY
+            seasonOrder = this@BackupAnime.seasonSourceOrder,
         )
     }
 
