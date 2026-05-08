@@ -13,12 +13,9 @@ import tachiyomi.domain.anime.model.CustomAnimeInfo
 @Serializable
 data class BackupAnime(
     // in 1.x some of these values have different names
-    @EncodeDefault
     @ProtoNumber(1) var source: Long,
     // url is called key in 1.x
-    @EncodeDefault
     @ProtoNumber(2) var url: String,
-    @EncodeDefault
     @ProtoNumber(3) var title: String = "",
     @ProtoNumber(4) var artist: String? = null,
     @ProtoNumber(5) var author: String? = null,
@@ -74,9 +71,13 @@ data class BackupAnime(
     @ProtoNumber(500) var backgroundUrl: String? = null,
     @ProtoNumber(502) var parentId: Long? = null,
     @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(504) var seasonFlags: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(505) var seasonNumber: Double = -1.0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(506) var seasonSourceOrder: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(507) var fetchType: FetchType = FetchType.Episodes,
     // <-- AY
 

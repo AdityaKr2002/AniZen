@@ -53,6 +53,7 @@ data class Backup(
     @ProtoNumber(106) var backupMangaExtensionRepo: List<BackupExtensionRepos> = emptyList(),
 
     // Aniyomi specific values
+    @EncodeDefault
     @ProtoNumber(500) val isLegacy: Boolean = true,
     @ProtoNumber(501) val backupAnime: List<BackupAnime> = emptyList(),
     @ProtoNumber(502) var backupAnimeCategories: List<BackupCategory> = emptyList(),

@@ -8,11 +8,9 @@ import tachiyomi.domain.track.model.Track
 @Serializable
 data class BackupTracking(
     // in 1.x some of these values have different types or names
-    @EncodeDefault
-    @ProtoNumber(1) var syncId: Int = 0,
+    @ProtoNumber(1) var syncId: Int,
     // LibraryId is not null in 1.x
-    @EncodeDefault
-    @ProtoNumber(2) var libraryId: Long = 0,
+    @ProtoNumber(2) var libraryId: Long,
     @Deprecated("Use mediaId instead", level = DeprecationLevel.WARNING)
     @ProtoNumber(3)
     var mediaIdInt: Int = 0,
@@ -61,7 +59,7 @@ data class BackupTracking(
                 syncId = track.trackerId.toInt(),
                 mediaId = track.remoteId,
                 // forced not null so its compatible with 1.x backup system
-                libraryId = track.libraryId!!,
+                libraryId = track.libraryId ?: 0,
                 title = track.title,
                 // convert to float for 1.x
                 lastEpisodeSeen = track.lastEpisodeSeen.toFloat(),
