@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.DatabaseHandler
+import tachiyomi.data.FetchTypeColumnAdapter
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.anime.model.Anime
@@ -184,7 +185,7 @@ class AnimeRepositoryImpl(
                     updateStrategy = value.updateStrategy?.let(UpdateStrategyColumnAdapter::encode),
                     version = value.version,
                     isSyncing = 0,
-                    fetchType = value.fetchType,
+                    fetchType = value.fetchType?.let(FetchTypeColumnAdapter::encode),
                     parentId = value.parentId,
                     seasonFlags = value.seasonFlags,
                     seasonNumber = value.seasonNumber,
