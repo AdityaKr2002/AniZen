@@ -295,6 +295,8 @@ class LibraryPreferences(
     fun groupLibraryBy() = preferenceStore.getInt("group_anime_library_by", LibraryGroup.BY_DEFAULT)
     // SY <--
 
+    fun useHierarchicalSeasons() = preferenceStore.getBoolean("use_hierarchical_seasons", false)
+
     fun userAffinityMap() = preferenceStore.getString("user_affinity_map", "{}")
     fun lastAffinityUpdate() = preferenceStore.getLong("last_affinity_update", 0L)
 

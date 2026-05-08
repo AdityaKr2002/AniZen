@@ -189,6 +189,7 @@ class AnimeScreenModel(
     private val calculateUserAffinity: CalculateUserAffinity = Injekt.get(),
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getSeasonsByAnimeId: tachiyomi.domain.anime.interactor.GetSeasonsByAnimeId = Injekt.get(),
+    private val getAnimeSeasonsById: tachiyomi.domain.season.interactor.GetAnimeSeasonsById = Injekt.get(),
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
     private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
     private val fetchInterval: FetchInterval = Injekt.get(),
@@ -250,6 +251,9 @@ class AnimeScreenModel(
         hasPromptedToAddBefore: Boolean = this.hasPromptedToAddBefore,
         suggestions: ImmutableList<Anime> = this.suggestions,
         seasons: ImmutableList<Season> = this.seasons,
+        // AY -->
+        processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = this.processedSeasons,
+        // <-- AY
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
@@ -1578,11 +1582,35 @@ class AnimeScreenModel(
                 ?.items.orEmpty()
         }.distinctUntilChanged()
 
-        getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
-            .onEach { seasons ->
-                updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
+        if (libraryPreferences.useHierarchicalSeasons().get()) {
+            screenModelScope.launchIO {
+                animeRepository.getAnimeSeasonsByIdAsFlow(animeId)
+                    .onEach { seasonAnimes ->
+                        val seasons = seasonAnimes.map {
+                            tachiyomi.domain.anime.model.Season(
+                                anime = it.anime,
+                                seasonNumber = it.anime.seasonNumber ?: 0.0,
+                                isPrimary = it.anime.id == animeId,
+                            )
+                        }
+                        updateSuccessState {
+                            it.copySuccess(
+                                seasons = seasons.toImmutableList(),
+                                // AY -->
+                                processedSeasons = seasonAnimes.toImmutableList(),
+                                // <-- AY
+                            )
+                        }
+                    }
+                    .launchIn(this)
             }
-            .launchIn(screenModelScope)
+        } else {
+            getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
+                .onEach { seasons ->
+                    updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
+                }
+                .launchIn(screenModelScope)
+        }
     }
 
     private fun observeMergedAnime() {
@@ -1742,6 +1770,9 @@ class AnimeScreenModel(
             val isSuggestionsLoading: Boolean = true,
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
+            // AY -->
+            val processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = persistentListOf(),
+            // <-- AY
             val availableSeasons: ImmutableList<String> = persistentListOf(),
             val selectedSeason: String? = null,
             val discoveryExpanded: Boolean = false,
@@ -1759,6 +1790,9 @@ class AnimeScreenModel(
                     isRefreshingData: Boolean,
                     dialog: Dialog?,
                     selectedSeason: String? = null,
+                    // AY -->
+                    processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = persistentListOf(),
+                    // <-- AY
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime).toImmutableList()
                     val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
@@ -1976,6 +2010,9 @@ class AnimeScreenModel(
                         episodeToSeason = episodeToSeason,
                         showEpisodeSummary = anime.showSummaries(),
                         showEpisodeThumbnail = anime.showPreviews(),
+                        // AY -->
+                        processedSeasons = processedSeasons,
+                        // <-- AY
                     )
                 }
             }

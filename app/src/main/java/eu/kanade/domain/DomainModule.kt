@@ -1,6 +1,7 @@
 package eu.kanade.domain
 
 import eu.kanade.domain.anime.interactor.SetAnimeViewerFlags
+import eu.kanade.domain.anime.interactor.SyncSeasonsWithSource
 import eu.kanade.domain.anime.interactor.UpdateAnime
 import eu.kanade.domain.download.interactor.DeleteDownload
 import eu.kanade.domain.episode.interactor.SetSeenStatus
@@ -146,6 +147,7 @@ class DomainModule : InjektModule {
         addFactory { SetAnimeViewerFlags(get()) }
         addFactory { NetworkToLocalAnime(get()) }
         addFactory { UpdateAnime(get(), get()) }
+        addFactory { SyncSeasonsWithSource(get(), get(), get(), get()) }
         addFactory { SetAnimeCategories(get()) }
         // addFactory { GetExcludedScanlators(get()) }
         // addFactory { SetExcludedScanlators(get()) }
@@ -170,6 +172,8 @@ class DomainModule : InjektModule {
         addFactory { UpdateEpisode(get()) }
         addFactory { SetSeenStatus(get(), get(), get(), get(), get()) }
         addFactory { ShouldUpdateDbEpisode() }
+        addFactory { tachiyomi.domain.season.interactor.GetAnimeSeasonsById(get()) }
+        addFactory { tachiyomi.domain.season.interactor.ShouldUpdateDbSeason() }
         addFactory { SyncEpisodesWithSource(get(), get(), get(), get(), get(), get(), get()) }
         // addFactory { GetAvailableScanlators(get()) }
         addFactory { FilterEpisodesForDownload(get(), get(), get(), get()) }

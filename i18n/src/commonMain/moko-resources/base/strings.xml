@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="display_mode_season">Season %1$s</string>
     <!-- Generic strings -->
     <string name="on">On</string>
     <string name="off">Off</string>

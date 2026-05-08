@@ -1,5 +1,6 @@
 package tachiyomi.data.anime
 
+import aniyomi.domain.anime.SeasonAnime
 import kotlinx.coroutines.flow.Flow
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
@@ -125,9 +126,13 @@ class AnimeRepositoryImpl(
                 dateAdded = anime.dateAdded,
                 updateStrategy = anime.updateStrategy,
                 version = anime.version,
+                fetchType = anime.fetchType,
                 parentId = anime.parentId,
+                seasonFlags = anime.seasonFlags,
                 seasonNumber = anime.seasonNumber,
                 seasonOrder = anime.seasonOrder,
+                backgroundUrl = anime.backgroundUrl,
+                backgroundLastModified = anime.backgroundLastModified,
             )
             animesQueries.selectLastInsertedRowId()
         }
@@ -179,9 +184,13 @@ class AnimeRepositoryImpl(
                     updateStrategy = value.updateStrategy?.let(UpdateStrategyColumnAdapter::encode),
                     version = value.version,
                     isSyncing = 0,
+                    fetchType = value.fetchType,
                     parentId = value.parentId,
+                    seasonFlags = value.seasonFlags,
                     seasonNumber = value.seasonNumber,
                     seasonOrder = value.seasonOrder,
+                    backgroundUrl = value.backgroundUrl,
+                    backgroundLastModified = value.backgroundLastModified,
                 )
             }
         }
@@ -204,12 +213,22 @@ class AnimeRepositoryImpl(
         return handler.awaitList { libraryViewQueries.seenAnimeNonLibrary(AnimeMapper::mapLibraryAnime) }
     }
 
-    override suspend fun getSeasonsByParentId(parentId: Long): List<Anime> {
-        return handler.awaitList { animesQueries.getSeasonsByParentId(parentId, AnimeMapper::mapAnime) }
+    override suspend fun getAnimeSeasonsById(parentId: Long): List<SeasonAnime> {
+        return handler.awaitList {
+            animeseasonsViewQueries.getAnimeSeasonsById(
+                parentId,
+                AnimeMapper::mapSeasonAnime,
+            )
+        }
     }
 
-    override fun getSeasonsByParentIdAsFlow(parentId: Long): Flow<List<Anime>> {
-        return handler.subscribeToList { animesQueries.getSeasonsByParentId(parentId, AnimeMapper::mapAnime) }
+    override fun getAnimeSeasonsByIdAsFlow(parentId: Long): Flow<List<SeasonAnime>> {
+        return handler.subscribeToList {
+            animeseasonsViewQueries.getAnimeSeasonsById(
+                parentId,
+                AnimeMapper::mapSeasonAnime,
+            )
+        }
     }
     // SY <--
 }
