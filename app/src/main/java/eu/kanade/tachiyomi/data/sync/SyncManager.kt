@@ -171,11 +171,11 @@ class SyncManager(
 
         val newSyncData = backup.copy(
             backupAnime = animeFilteredFavorites,
-            backupAnimeCategories = remoteBackup.backupAnimeCategories,
-            backupAnimeSources = remoteBackup.backupAnimeSources,
+            backupCategories = remoteBackup.backupCategories,
+            backupSources = remoteBackup.backupSources,
             backupPreferences = remoteBackup.backupPreferences,
             backupSourcePreferences = remoteBackup.backupSourcePreferences,
-            backupAnimeExtensionRepo = remoteBackup.backupAnimeExtensionRepo,
+            backupExtensionRepo = remoteBackup.backupExtensionRepo,
             backupExtensions = remoteBackup.backupExtensions,
             backupCustomButton = remoteBackup.backupCustomButton,
         )
@@ -376,5 +376,8 @@ class SyncManager(
                 }
             }
         }
+    }
+}
+     }
     }
 }

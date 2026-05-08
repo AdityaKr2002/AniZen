@@ -39,20 +39,20 @@ abstract class SyncService(
     protected fun mergeSyncData(localSyncData: SyncData, remoteSyncData: SyncData): SyncData {
         val mergedAnimeCategoriesList =
             mergeCategoriesLists(
-                localSyncData.backup?.backupAnimeCategories,
-                remoteSyncData.backup?.backupAnimeCategories,
+                localSyncData.backup?.backupCategories,
+                remoteSyncData.backup?.backupCategories,
             )
 
         val mergedAnimeList = mergeAnimeLists(
             localSyncData.backup?.backupAnime,
             remoteSyncData.backup?.backupAnime,
-            localSyncData.backup?.backupAnimeCategories ?: emptyList(),
-            remoteSyncData.backup?.backupAnimeCategories ?: emptyList(),
+            localSyncData.backup?.backupCategories ?: emptyList(),
+            remoteSyncData.backup?.backupCategories ?: emptyList(),
             mergedAnimeCategoriesList,
         )
 
         val mergedAnimeSourcesList =
-            mergeAnimeSourcesLists(localSyncData.backup?.backupAnimeSources, remoteSyncData.backup?.backupAnimeSources)
+            mergeAnimeSourcesLists(localSyncData.backup?.backupSources, remoteSyncData.backup?.backupSources)
         val mergedPreferencesList =
             mergePreferencesLists(localSyncData.backup?.backupPreferences, remoteSyncData.backup?.backupPreferences)
         val mergedSourcePreferencesList = mergeSourcePreferencesLists(
@@ -63,8 +63,8 @@ abstract class SyncService(
         // Create the merged Backup object
         val mergedBackup = Backup(
             backupAnime = mergedAnimeList,
-            backupAnimeCategories = mergedAnimeCategoriesList,
-            backupAnimeSources = mergedAnimeSourcesList,
+            backupCategories = mergedAnimeCategoriesList,
+            backupSources = mergedAnimeSourcesList,
             backupPreferences = mergedPreferencesList,
             backupSourcePreferences = mergedSourcePreferencesList,
         )

@@ -1,15 +1,13 @@
 package eu.kanade.tachiyomi.data.backup.models
 
+import eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy
 import eu.kanade.tachiyomi.animesource.model.FetchType
-import eu.kanade.tachiyomi.source.model.UpdateStrategy
-import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.protobuf.ProtoNumber
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.CustomAnimeInfo
 
-@Suppress("MagicNumber")
+@Suppress("DEPRECATION")
 @Serializable
 data class BackupAnime(
     // in 1.x some of these values have different names
@@ -38,65 +36,44 @@ data class BackupAnime(
     // @ProtoNumber(102) var brokenHistory, legacy history model with non-compliant proto number
     @ProtoNumber(103) var viewer_flags: Int = 0,
     @ProtoNumber(104) var history: List<BackupHistory> = emptyList(),
-    @ProtoNumber(105) var updateStrategy: UpdateStrategy = UpdateStrategy.ALWAYS_UPDATE,
+    @ProtoNumber(105) var updateStrategy: AnimeUpdateStrategy = AnimeUpdateStrategy.ALWAYS_UPDATE,
     @ProtoNumber(106) var lastModifiedAt: Long = 0,
     @ProtoNumber(107) var favoriteModifiedAt: Long? = null,
+    // Mihon values start here
     @ProtoNumber(109) var version: Long = 0,
-
-    @Transient
-    var notes: String = "",
-    @Transient
-    var initialized: Boolean = false,
+    @ProtoNumber(110) var notes: String = "",
+    @ProtoNumber(111) var initialized: Boolean = false,
 
     // AM (CUSTOM_INFORMATION) -->
-    @Transient
-    var customStatus: Int = 0,
-    @Transient
-    var customTitle: String? = null,
-    @Transient
-    var customArtist: String? = null,
-    @Transient
-    var customAuthor: String? = null,
-    @Transient
-    var customDescription: String? = null,
-    @Transient
-    var customGenre: List<String>? = null,
+    // Bump values by 200
+    @ProtoNumber(200) var customStatus: Int = 0,
+    @ProtoNumber(201) var customTitle: String? = null,
+    @ProtoNumber(202) var customArtist: String? = null,
+    @ProtoNumber(203) var customAuthor: String? = null,
+    @ProtoNumber(204) var customDescription: String? = null,
+    @ProtoNumber(205) var customGenre: List<String>? = null,
     // <-- AM (CUSTOM_INFORMATION)
-
-    @Transient
-    var excludedScanlators: List<String> = emptyList(),
+    // Since ProtoNumber 108 was previously used in the past, we cannot reuse it. May cause issues with aniyomi
+    // AM -->
+    @ProtoNumber(206) var excludedScanlators: List<String> = emptyList(),
+    // <-- AM
 
     // AY -->
     // Aniyomi specific values
     @ProtoNumber(500) var backgroundUrl: String? = null,
+    // @ProtoNumber(501) Broken in aniyomi, do not use
     @ProtoNumber(502) var parentId: Long? = null,
-    @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents.
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    @ProtoNumber(503) var id: Long? = null, // Used to associate seasons with parents. Do not use for anything else.
     @ProtoNumber(504) var seasonFlags: Long = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(505) var seasonNumber: Double = -1.0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(506) var seasonSourceOrder: Long = 0,
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @ProtoNumber(507) var fetchType: FetchType = FetchType.Episodes,
     // <-- AY
-
-    // J2K specific values (kept for compatibility)
-    @Transient
-    var customTitleJ2K: String? = null,
-    @Transient
-    var customArtistJ2K: String? = null,
-    @Transient
-    var customAuthorJ2K: String? = null,
-    @Transient
-    var customDescriptionJ2K: String? = null,
-    @Transient
-    var customGenreJ2K: List<String>? = null,
 ) {
     fun getAnimeImpl(): Anime {
         return Anime.create().copy(
             url = this@BackupAnime.url,
-            // SY -->
+            // AM (CUSTOM_INFORMATION) -->
             ogTitle = this@BackupAnime.title,
             ogArtist = this@BackupAnime.artist,
             ogAuthor = this@BackupAnime.author,
@@ -104,7 +81,11 @@ data class BackupAnime(
             ogDescription = this@BackupAnime.description,
             ogGenre = this@BackupAnime.genre,
             ogStatus = this@BackupAnime.status.toLong(),
-            // SY <--
+            // <-- AM (CUSTOM_INFORMATION)
+            thumbnailUrl = this@BackupAnime.thumbnailUrl,
+            // AY -->
+            backgroundUrl = this@BackupAnime.backgroundUrl,
+            // <-- AY
             favorite = this@BackupAnime.favorite,
             source = this@BackupAnime.source,
             dateAdded = this@BackupAnime.dateAdded,
@@ -114,37 +95,38 @@ data class BackupAnime(
             lastModifiedAt = this@BackupAnime.lastModifiedAt,
             favoriteModifiedAt = this@BackupAnime.favoriteModifiedAt,
             version = this@BackupAnime.version,
+            notes = this@BackupAnime.notes,
+            initialized = this@BackupAnime.initialized,
+            // AY -->
+            fetchType = this@BackupAnime.fetchType,
+            parentId = this@BackupAnime.parentId,
+            seasonFlags = this@BackupAnime.seasonFlags,
+            seasonNumber = this@BackupAnime.seasonNumber,
+            seasonSourceOrder = this@BackupAnime.seasonSourceOrder,
+            // <-- AY
         )
     }
 
-    // SY -->
-    @Suppress("ComplexCondition")
+    // AM (CUSTOM_INFORMATION) -->
     fun getCustomAnimeInfo(): CustomAnimeInfo? {
-        val title = customTitle ?: customTitleJ2K
-        val author = customAuthor ?: customAuthorJ2K
-        val artist = customArtist ?: customArtistJ2K
-        val description = customDescription ?: customDescriptionJ2K
-        val genre = customGenre ?: customGenreJ2K
-        val status = customStatus.takeUnless { it == 0 }?.toLong()
-
-        if (title != null ||
-            artist != null ||
-            author != null ||
-            description != null ||
-            genre != null ||
-            status != null
+        if (customTitle != null ||
+            customArtist != null ||
+            customAuthor != null ||
+            customDescription != null ||
+            customGenre != null ||
+            customStatus != 0
         ) {
             return CustomAnimeInfo(
                 id = 0L,
-                title = title,
-                author = author,
-                artist = artist,
-                description = description,
-                genre = genre,
-                status = status,
+                title = customTitle,
+                author = customAuthor,
+                artist = customArtist,
+                description = customDescription,
+                genre = customGenre,
+                status = customStatus.takeUnless { it == 0 }?.toLong(),
             )
         }
         return null
     }
-    // SY <--
+    // <-- AM (CUSTOM_INFORMATION)
 }

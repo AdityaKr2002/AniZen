@@ -77,26 +77,22 @@ class BackupCreator(
                 emptyList()
             }
             val backupAnime = backupAnimes(getFavorites.await() + nonFavoriteAnime, options)
-            val backupAnimeCategories = backupAnimeCategories(options)
-            val backupAnimeSources = backupAnimeSources(backupAnime)
+            val backupCategories = backupAnimeCategories(options)
+            val backupSources = backupAnimeSources(backupAnime)
             val backupExtensions = backupExtensions(options)
-            val backupAnimeExtensionRepo = backupAnimeExtensionRepos(options)
+            val backupExtensionRepo = backupAnimeExtensionRepos(options)
             val backupCustomButton = backupCustomButtons(options)
 
             val backup = Backup(
-                backupManga = emptyList(),
-                backupCategories = emptyList(),
-                backupSources = emptyList(),
                 backupPreferences = backupAppPreferences(options),
                 backupSourcePreferences = backupSourcePreferences(options),
-                backupMangaExtensionRepo = emptyList(),
 
                 isLegacy = false,
                 backupAnime = backupAnime,
-                backupAnimeCategories = backupAnimeCategories,
-                backupAnimeSources = backupAnimeSources,
+                backupCategories = backupCategories,
+                backupSources = backupSources,
                 backupExtensions = backupExtensions,
-                backupAnimeExtensionRepo = backupAnimeExtensionRepo,
+                backupExtensionRepo = backupExtensionRepo,
                 backupCustomButton = backupCustomButton,
             )
 

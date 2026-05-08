@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.data.backup.models
 
-import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.protobuf.ProtoNumber
 import tachiyomi.domain.episode.model.Episode
 
@@ -15,34 +13,24 @@ data class BackupEpisode(
     @ProtoNumber(3) var scanlator: String? = null,
     @ProtoNumber(4) var seen: Boolean = false,
     @ProtoNumber(5) var bookmark: Boolean = false,
-
-    // AM (FILLERMARK) -->
-    @Transient
-    var fillermark: Boolean = false,
-    // <-- AM (FILLERMARK)
-
-    // lastPageRead is called progress in 1.x
+    // lastSecondSeen is called progress in 1.x
     @ProtoNumber(6) var lastSecondSeen: Long = 0,
+    // AY -->
     @ProtoNumber(16) var totalSeconds: Long = 0,
+    // <-- AY
     @ProtoNumber(7) var dateFetch: Long = 0,
     @ProtoNumber(8) var dateUpload: Long = 0,
     // episodeNumber is called number is 1.x
     @ProtoNumber(9) var episodeNumber: Float = 0F,
     @ProtoNumber(10) var sourceOrder: Long = 0,
-
-    @Transient
-    var summary: String? = null,
-    @Transient
-    var previewUrl: String? = null,
-
     @ProtoNumber(11) var lastModifiedAt: Long = 0,
     @ProtoNumber(12) var version: Long = 0,
 
     // AY -->
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    @ProtoNumber(501) var fillermarkAY: Boolean = false,
-    @ProtoNumber(502) var summaryAY: String? = null,
-    @ProtoNumber(503) var previewUrlAY: String? = null,
+    // Aniyomi specific values
+    @ProtoNumber(501) var fillermark: Boolean = false,
+    @ProtoNumber(502) var summary: String? = null,
+    @ProtoNumber(503) var previewUrl: String? = null,
     // <-- AY
 ) {
     fun toEpisodeImpl(): Episode {
@@ -51,13 +39,19 @@ data class BackupEpisode(
             name = this@BackupEpisode.name,
             episodeNumber = this@BackupEpisode.episodeNumber.toDouble(),
             scanlator = this@BackupEpisode.scanlator,
-            summary = this@BackupEpisode.summaryAY,
-            previewUrl = this@BackupEpisode.previewUrlAY,
+            // AY -->
+            summary = this@BackupEpisode.summary,
+            previewUrl = this@BackupEpisode.previewUrl,
+            // <-- AY
             seen = this@BackupEpisode.seen,
             bookmark = this@BackupEpisode.bookmark,
-            fillermark = this@BackupEpisode.fillermarkAY,
+            // AY -->
+            fillermark = this@BackupEpisode.fillermark,
+            // <-- AY
             lastSecondSeen = this@BackupEpisode.lastSecondSeen,
+            // AY -->
             totalSeconds = this@BackupEpisode.totalSeconds,
+            // <-- AY
             dateFetch = this@BackupEpisode.dateFetch,
             dateUpload = this@BackupEpisode.dateUpload,
             sourceOrder = this@BackupEpisode.sourceOrder,
@@ -75,35 +69,47 @@ val backupEpisodeMapper = {
         scanlator: String?,
         seen: Boolean,
         bookmark: Boolean,
+        // AY -->
         fillermark: Boolean,
+        // <-- AY
         lastSecondSeen: Long,
+        // AY -->
         totalSeconds: Long,
+        // <-- AY
         episodeNumber: Double,
         sourceOrder: Long,
         dateFetch: Long,
         dateUpload: Long,
-        summary: String?,
-        previewUrl: String?,
         lastModifiedAt: Long,
         version: Long,
         _: Long,
+        // AY -->
+        summary: String?,
+        previewUrl: String?,
+    // <-- AY
     ->
     BackupEpisode(
         url = url,
         name = name,
         episodeNumber = episodeNumber.toFloat(),
         scanlator = scanlator,
+        // AY -->
+        summary = summary,
+        previewUrl = previewUrl,
+        // <-- AY
         seen = seen,
         bookmark = bookmark,
+        // AY -->
+        fillermark = fillermark,
+        // <-- AY
         lastSecondSeen = lastSecondSeen,
+        // AY -->
         totalSeconds = totalSeconds,
+        // <-- AY
         dateFetch = dateFetch,
         dateUpload = dateUpload,
         sourceOrder = sourceOrder,
         lastModifiedAt = lastModifiedAt,
         version = version,
-        fillermarkAY = fillermark,
-        summaryAY = summary,
-        previewUrlAY = previewUrl,
     )
 }

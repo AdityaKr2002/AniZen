@@ -75,11 +75,11 @@ class BackupRestorer(
 
         // SY -->
         val backupAnime = backup.backupAnime
-        val backupAnimeCategories = backup.backupAnimeCategories
+        val backupAnimeCategories = backup.backupCategories
         // SY <--
 
         // Store source mapping for error messages
-        val backupAnimeMaps = backup.backupAnimeSources
+        val backupAnimeMaps = backup.backupSources
         animeSourceMapping = backupAnimeMaps.associate { it.sourceId to it.name }
 
         if (options.libraryEntries) {
@@ -92,7 +92,7 @@ class BackupRestorer(
             restoreAmount += 1
         }
         if (options.extensionRepoSettings) {
-            restoreAmount += backup.backupAnimeExtensionRepo.size
+            restoreAmount += backup.backupExtensionRepo.size
         }
         if (options.customButtons) {
             restoreAmount += 1
@@ -120,7 +120,7 @@ class BackupRestorer(
                 restoreAnime(backupAnime, if (options.categories) backupAnimeCategories else emptyList())
             }
             if (options.extensionRepoSettings) {
-                restoreExtensionRepos(backup.backupAnimeExtensionRepo)
+                restoreExtensionRepos(backup.backupExtensionRepo)
             }
             if (options.customButtons) {
                 restoreCustomButtons(backup.backupCustomButton)
