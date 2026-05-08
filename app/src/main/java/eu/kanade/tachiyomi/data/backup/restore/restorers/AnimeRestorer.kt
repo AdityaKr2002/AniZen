@@ -151,9 +151,13 @@ class AnimeRestorer(
                 updateStrategy = UpdateStrategyColumnAdapter.encode(anime.updateStrategy),
                 version = anime.version,
                 isSyncing = 1L,
+                fetchType = FetchTypeColumnAdapter.encode(anime.fetchType),
                 parentId = anime.parentId,
+                seasonFlags = anime.seasonFlags,
                 seasonNumber = anime.seasonNumber,
                 seasonOrder = anime.seasonOrder,
+                backgroundUrl = anime.backgroundUrl,
+                backgroundLastModified = anime.backgroundLastModified,
                 animeId = anime.id,
             )
         }
@@ -312,9 +316,13 @@ class AnimeRestorer(
                 updateStrategy = anime.updateStrategy,
                 calculateInterval = anime.fetchInterval.toLong(),
                 version = anime.version,
+                fetchType = anime.fetchType,
                 parentId = anime.parentId,
+                seasonFlags = anime.seasonFlags,
                 seasonNumber = anime.seasonNumber,
                 seasonOrder = anime.seasonOrder,
+                backgroundUrl = anime.backgroundUrl,
+                backgroundLastModified = anime.backgroundLastModified,
             )
             animesQueries.selectLastInsertedRowId()
         }

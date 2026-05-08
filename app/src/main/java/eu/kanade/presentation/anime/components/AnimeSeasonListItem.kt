@@ -10,7 +10,7 @@ import eu.kanade.presentation.library.components.AnimeCompactGridItem
 import eu.kanade.presentation.library.components.AnimeListItem
 import eu.kanade.presentation.library.components.DownloadsBadge
 import eu.kanade.presentation.library.components.LanguageBadge
-import eu.kanade.presentation.library.components.UnseenBadge
+import eu.kanade.presentation.library.components.UnviewedBadge
 import eu.kanade.presentation.util.formatEpisodeNumber
 import eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem
 import tachiyomi.domain.anime.model.Anime
@@ -45,12 +45,12 @@ fun AnimeSeasonListItem(
                     animeId = itemAnime.id,
                     sourceId = itemAnime.source,
                     isAnimeFavorite = itemAnime.favorite,
-                    url = itemAnime.thumbnailUrl,
+                    ogUrl = itemAnime.thumbnailUrl,
                     lastModified = itemAnime.coverLastModified,
                 ),
                 coverBadgeStart = {
                     DownloadsBadge(count = item.downloadCount)
-                    UnseenBadge(count = item.unseenCount)
+                    UnviewedBadge(count = item.unseenCount)
                 },
                 coverBadgeEnd = {
                     LanguageBadge(
@@ -74,12 +74,12 @@ fun AnimeSeasonListItem(
                     animeId = itemAnime.id,
                     sourceId = itemAnime.source,
                     isAnimeFavorite = itemAnime.favorite,
-                    url = itemAnime.thumbnailUrl,
+                    ogUrl = itemAnime.thumbnailUrl,
                     lastModified = itemAnime.coverLastModified,
                 ),
                 coverBadgeStart = {
                     DownloadsBadge(count = item.downloadCount)
-                    UnseenBadge(count = item.unseenCount)
+                    UnviewedBadge(count = item.unseenCount)
                 },
                 coverBadgeEnd = {
                     LanguageBadge(
@@ -103,12 +103,12 @@ fun AnimeSeasonListItem(
                     animeId = itemAnime.id,
                     sourceId = itemAnime.source,
                     isAnimeFavorite = itemAnime.favorite,
-                    url = itemAnime.thumbnailUrl,
+                    ogUrl = itemAnime.thumbnailUrl,
                     lastModified = itemAnime.coverLastModified,
                 ),
                 badge = {
                     DownloadsBadge(count = item.downloadCount)
-                    UnseenBadge(count = item.unseenCount)
+                    UnviewedBadge(count = item.unseenCount)
                     LanguageBadge(
                         isLocal = item.isLocal,
                         sourceLanguage = item.sourceLanguage,
@@ -121,9 +121,6 @@ fun AnimeSeasonListItem(
                 } else {
                     null
                 },
-                entries = anime.seasonDisplayGridSize,
-                containerHeight = containerHeight,
-                modifier = listItemModifier,
             )
         }
     }
