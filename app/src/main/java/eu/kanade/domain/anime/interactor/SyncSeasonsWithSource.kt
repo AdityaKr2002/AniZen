@@ -5,15 +5,15 @@ import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import tachiyomi.data.anime.toDomainAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
-import tachiyomi.domain.anime.interactor.UpdateAnime
+import eu.kanade.domain.anime.interactor.UpdateAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.NoSeasonsException
+import tachiyomi.domain.anime.model.isLocal
 import tachiyomi.domain.anime.model.toAnimeUpdate
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.season.interactor.GetAnimeSeasonsById
 import tachiyomi.domain.season.interactor.ShouldUpdateDbSeason
 import tachiyomi.domain.season.service.SeasonRecognition
-import tachiyomi.source.local.isLocal
 import java.time.ZonedDateTime
 
 class SyncSeasonsWithSource(
@@ -30,7 +30,7 @@ class SyncSeasonsWithSource(
         manualFetch: Boolean = false,
         fetchWindow: Pair<Long, Long> = Pair(0, 0),
     ): List<Anime> {
-        if (rawSourceSeasons.isEmpty() && !source.isLocal()) {
+        if (rawSourceSeasons.isEmpty() && source.id != 0L) {
             throw NoSeasonsException()
         }
 
@@ -100,7 +100,7 @@ class SyncSeasonsWithSource(
             updatedSeasons.map { it.toAnimeUpdate() }
 
         if (toUpdate.isNotEmpty()) {
-            updateAnime.updateAll(toUpdate)
+            updateAnime.awaitAll(toUpdate)
         }
 
         updateAnime.awaitUpdateLastUpdate(anime.id)

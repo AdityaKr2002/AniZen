@@ -57,6 +57,7 @@ import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -99,6 +100,8 @@ import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeUpdate
+import tachiyomi.domain.anime.model.NoSeasonsException
+import eu.kanade.domain.anime.interactor.SyncSeasonsWithSource
 import tachiyomi.domain.anime.model.SeasonDisplayMode
 import tachiyomi.domain.anime.model.CustomAnimeInfo
 import tachiyomi.domain.anime.model.MergedAnimeReference
@@ -175,7 +178,7 @@ class AnimeScreenModel(
     private val updateEpisode: UpdateEpisode = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get(),
-    private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get(),
+    private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get<SyncSeasonsWithSource>(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
