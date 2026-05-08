@@ -44,6 +44,7 @@ import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.util.AniChartApi
 import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
@@ -174,6 +175,7 @@ class AnimeScreenModel(
     private val updateEpisode: UpdateEpisode = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get(),
+    private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
@@ -639,11 +641,8 @@ class AnimeScreenModel(
     fun fetchAllFromSource(manualFetch: Boolean = true) {
         screenModelScope.launch {
             updateSuccessState { it.copySuccess(isRefreshingData = true) }
-            val fetchFromSourceTasks = listOf(
-                async { fetchAnimeFromSource(manualFetch) },
-                async { fetchEpisodesFromSource(manualFetch) },
-            )
-            fetchFromSourceTasks.awaitAll()
+            fetchAnimeFromSource(manualFetch)
+            fetchEpisodesFromSource(manualFetch)
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
             successState?.let { updateAiringTime(it.anime, it.trackItems, manualFetch) }
         }
@@ -1193,8 +1192,62 @@ class AnimeScreenModel(
         }
     }
 
+    private suspend fun fetchSeasonsFromSource(manualFetch: Boolean = false) {
+        val state = successState ?: return
+        try {
+            withIOContext {
+                val seasons = state.source.getSeasonList(state.anime.toSAnime())
+
+                val newSeasons = syncSeasonsWithSource.await(
+                    seasons,
+                    state.anime,
+                    state.source,
+                    manualFetch,
+                )
+
+                if (libraryPreferences.useHierarchicalSeasons().get()) {
+                    fetchEpisodesFromSeasons(newSeasons, manualFetch)
+                }
+            }
+        } catch (e: Throwable) {
+            val message = if (e is NoSeasonsException) {
+                context.stringResource(MR.strings.no_episodes_error)
+            } else {
+                logcat(LogPriority.ERROR, e)
+                with(context) { e.formattedMessage }
+            }
+
+            screenModelScope.launch {
+                snackbarHostState.showSnackbar(message = message)
+            }
+            val newAnime = animeRepository.getAnimeById(animeId)
+            updateSuccessState { it.copySuccess(anime = newAnime, isRefreshingData = false) }
+        }
+    }
+
+    private suspend fun CoroutineScope.fetchEpisodesFromSeasons(seasons: List<Anime>, manualFetch: Boolean) {
+        val state = successState ?: return
+
+        val fetch: suspend (Anime) -> Unit = { s ->
+            try {
+                val episodes = state.source.getEpisodeList(s.toSAnime())
+                syncEpisodesWithSource.await(episodes, s, state.source, manualFetch)
+            } catch (e: Throwable) {
+                logcat(LogPriority.ERROR, e)
+            }
+        }
+
+        seasons.forEach { fetch(it) }
+    }
+
     private suspend fun fetchEpisodesFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
+
+        if (state.anime.fetchType == FetchType.Seasons) {
+            fetchSeasonsFromSource(manualFetch)
+            return
+        }
+
         try {
             withIOContext {
                 val episodes = state.source.getEpisodeList(state.anime.toSAnime())
@@ -1765,6 +1818,12 @@ class AnimeScreenModel(
                                 isPrimary = it.anime.id == animeId,
                             )
                         }
+
+                        val anime = successState?.anime
+                        if (seasons.isEmpty() && anime?.fetchType == FetchType.Seasons) {
+                            screenModelScope.launch { fetchSeasonsFromSource() }
+                        }
+
                         updateSuccessState {
                             it.copySuccess(
                                 seasons = seasons.toImmutableList(),
@@ -1836,7 +1895,7 @@ class AnimeScreenModel(
     fun showSettingsDialog() {
         updateSuccessState {
             when (it.anime.fetchType) {
-                eu.kanade.tachiyomi.animesource.model.FetchType.Seasons -> it.copySuccess(dialog = Dialog.SeasonSettingsSheet)
+                FetchType.Seasons -> it.copySuccess(dialog = Dialog.SeasonSettingsSheet)
                 else -> it.copySuccess(dialog = Dialog.EpisodeSettingsSheet)
             }
         }

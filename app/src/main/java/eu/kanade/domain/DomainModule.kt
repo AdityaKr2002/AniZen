@@ -149,7 +149,7 @@ class DomainModule : InjektModule {
         addFactory { SetAnimeViewerFlags(get()) }
         addFactory { NetworkToLocalAnime(get()) }
         addFactory { UpdateAnime(get(), get()) }
-        addFactory { SyncSeasonsWithSource(get(), get(), get(), get()) }
+        addFactory { SyncSeasonsWithSource(get(), get(), get(), get(), get()) }
         addFactory { SetAnimeCategories(get()) }
         // addFactory { GetExcludedScanlators(get()) }
         // addFactory { SetExcludedScanlators(get()) }

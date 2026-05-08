@@ -1,16 +1,19 @@
+// AY -->
 package eu.kanade.domain.anime.interactor
 
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import tachiyomi.data.anime.toDomainAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
+import tachiyomi.domain.anime.interactor.UpdateAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.NoSeasonsException
-import tachiyomi.domain.anime.model.isLocal
 import tachiyomi.domain.anime.model.toAnimeUpdate
-import tachiyomi.domain.anime.model.toDomainAnime
 import tachiyomi.domain.anime.repository.AnimeRepository
-import tachiyomi.domain.anime.service.SeasonRecognition
+import tachiyomi.domain.season.interactor.GetAnimeSeasonsById
 import tachiyomi.domain.season.interactor.ShouldUpdateDbSeason
+import tachiyomi.domain.season.service.SeasonRecognition
+import tachiyomi.source.local.isLocal
 import java.time.ZonedDateTime
 
 class SyncSeasonsWithSource(
@@ -18,6 +21,7 @@ class SyncSeasonsWithSource(
     private val animeRepository: AnimeRepository,
     private val networkToLocalAnime: NetworkToLocalAnime,
     private val shouldUpdateDbSeason: ShouldUpdateDbSeason,
+    private val getAnimeSeasonsById: GetAnimeSeasonsById,
 ) {
     suspend fun await(
         rawSourceSeasons: List<SAnime>,
@@ -26,7 +30,7 @@ class SyncSeasonsWithSource(
         manualFetch: Boolean = false,
         fetchWindow: Pair<Long, Long> = Pair(0, 0),
     ): List<Anime> {
-        if (rawSourceSeasons.isEmpty() && !anime.isLocal()) {
+        if (rawSourceSeasons.isEmpty() && !source.isLocal()) {
             throw NoSeasonsException()
         }
 
@@ -39,13 +43,13 @@ class SyncSeasonsWithSource(
                     .copy(parentId = anime.id, seasonOrder = i.toLong())
             }
 
-        val dbSeasons = animeRepository.getAnimeSeasonsById(anime.id)
+        val dbSeasons = getAnimeSeasonsById.await(anime.id)
 
         val newSeasons = mutableListOf<Anime>()
         val updatedSeasons = mutableListOf<Anime>()
-        val removedSeasons = dbSeasons.filterNot { dbSeason ->
+        val removedSeasons = dbSeasons.filterNot { dbSeasonItem ->
             sourceSeasons.any { sourceSeason ->
-                dbSeason.anime.url == sourceSeason.url
+                dbSeasonItem.anime.url == sourceSeason.url
             }
         }
 
@@ -69,7 +73,6 @@ class SyncSeasonsWithSource(
                         ogTitle = season.title,
                         seasonNumber = season.seasonNumber,
                         seasonOrder = season.seasonOrder,
-                        backgroundUrl = season.backgroundUrl,
                     )
                     updatedSeasons.add(toChangeSeason)
                 }
@@ -89,22 +92,20 @@ class SyncSeasonsWithSource(
         }
 
         if (removedSeasons.isNotEmpty()) {
-            val toUpdateRemoved = removedSeasons.map {
-                it.anime.copy(parentId = null).toAnimeUpdate()
-            }
-            animeRepository.updateAll(toUpdateRemoved)
+            val toDeleteIds = removedSeasons.map { it.anime.id }
+            animeRepository.removeParentIdByIds(toDeleteIds)
         }
 
         val toUpdate = newSeasons.map { it.toAnimeUpdate() } +
             updatedSeasons.map { it.toAnimeUpdate() }
 
         if (toUpdate.isNotEmpty()) {
-            updateAnime.awaitAll(toUpdate)
+            updateAnime.updateAll(toUpdate)
         }
 
         updateAnime.awaitUpdateLastUpdate(anime.id)
 
-        // Refetch to get updated IDs for new seasons
-        return animeRepository.getAnimeSeasonsById(anime.id).map { it.anime }
+        return sourceSeasons
     }
 }
+// <-- AY

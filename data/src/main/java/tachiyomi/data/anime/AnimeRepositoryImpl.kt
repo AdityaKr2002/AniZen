@@ -231,5 +231,15 @@ class AnimeRepositoryImpl(
             )
         }
     }
+
+    override suspend fun removeParentIdByIds(ids: List<Long>): Boolean {
+        return try {
+            handler.await { animesQueries.removeParentIdByIds(ids) }
+            true
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e)
+            false
+        }
+    }
     // SY <--
 }

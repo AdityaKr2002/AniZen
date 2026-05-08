@@ -232,3 +232,8 @@ SELECT *
 FROM animes
 WHERE parent_id = :parentId
 ORDER BY season_number ASC;
+
+removeParentIdByIds:
+UPDATE animes
+SET parent_id = NULL
+WHERE _id IN :ids;

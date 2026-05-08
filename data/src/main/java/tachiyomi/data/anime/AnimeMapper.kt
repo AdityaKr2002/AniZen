@@ -278,3 +278,21 @@ fun Anime.toSAnime(): eu.kanade.tachiyomi.source.model.SAnime = eu.kanade.tachiy
     it.thumbnail_url = thumbnailUrl
     it.initialized = initialized
 }
+
+fun eu.kanade.tachiyomi.source.model.SAnime.toDomainAnime(sourceId: Long): Anime {
+    return Anime.create().copy(
+        url = url,
+        ogTitle = title,
+        ogArtist = artist,
+        ogAuthor = author,
+        ogDescription = description,
+        ogGenre = genre?.split(", ")?.map { it.trim() }?.filter { it.isNotBlank() },
+        ogStatus = status.toLong(),
+        ogThumbnailUrl = thumbnail_url,
+        backgroundUrl = background_url,
+        initialized = initialized,
+        source = sourceId,
+        fetchType = fetch_type,
+        seasonNumber = season_number,
+    )
+}
