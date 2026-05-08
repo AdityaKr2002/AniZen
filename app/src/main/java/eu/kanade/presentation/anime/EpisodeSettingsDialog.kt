@@ -217,7 +217,7 @@ private fun ColumnScope.DisplayPage(
     )
 
     val libraryPreferences = uy.kohesive.injekt.Injekt.get<tachiyomi.domain.library.service.LibraryPreferences>()
-    val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get()
+    val useHierarchicalSeasons = (libraryPreferences.useHierarchicalSeasons() as tachiyomi.core.common.preference.Preference<Boolean>).get()
     if (anime != null && useHierarchicalSeasons == false) {
         androidx.compose.material3.HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp),
