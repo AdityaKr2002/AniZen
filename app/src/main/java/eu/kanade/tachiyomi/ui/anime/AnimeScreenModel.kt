@@ -91,12 +91,14 @@ import tachiyomi.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
+import tachiyomi.domain.anime.interactor.SetAnimeSeasonFlags
 import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
 import tachiyomi.domain.anime.interactor.SetCustomAnimeInfo
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeUpdate
+import tachiyomi.domain.anime.model.SeasonDisplayMode
 import tachiyomi.domain.anime.model.CustomAnimeInfo
 import tachiyomi.domain.anime.model.MergedAnimeReference
 import tachiyomi.domain.anime.model.Season
@@ -253,7 +255,7 @@ class AnimeScreenModel(
         suggestions: ImmutableList<Anime> = this.suggestions,
         seasons: ImmutableList<Season> = this.seasons,
         // AY -->
-        processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = this.processedSeasons,
+        processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = this.processedSeasons,
         // <-- AY
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
@@ -1604,7 +1606,7 @@ class AnimeScreenModel(
         screenModelScope.launchNonCancellable {
             libraryPreferences.setSeasonSettingsDefault(anime)
             snackbarHostState.showSnackbar(
-                message = context.stringResource(AYMR.strings.season_settings_updated),
+                message = context.stringResource(MR.strings.season_settings_updated),
             )
         }
     }
@@ -1950,7 +1952,7 @@ class AnimeScreenModel(
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
             // AY -->
-            val processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = persistentListOf(),
+            val processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = persistentListOf(),
             // <-- AY
             val availableSeasons: ImmutableList<String> = persistentListOf(),
             val selectedSeason: String? = null,
@@ -1970,7 +1972,7 @@ class AnimeScreenModel(
                     dialog: Dialog?,
                     selectedSeason: String? = null,
                     // AY -->
-                    processedSeasons: ImmutableList<aniyomi.domain.anime.SeasonAnime> = persistentListOf(),
+                    processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = persistentListOf(),
                     // <-- AY
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime).toImmutableList()

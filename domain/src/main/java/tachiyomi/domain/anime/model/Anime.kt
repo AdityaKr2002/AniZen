@@ -2,7 +2,7 @@ package tachiyomi.domain.anime.model
 
 import eu.kanade.tachiyomi.animesource.model.FetchType;
 import androidx.compose.runtime.Immutable
-import aniyomi.domain.anime.SeasonDisplayMode
+import tachiyomi.domain.anime.model.SeasonDisplayMode
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.anime.interactor.GetCustomAnimeInfo

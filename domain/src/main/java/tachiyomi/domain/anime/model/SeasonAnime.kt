@@ -1,6 +1,5 @@
-package aniyomi.domain.anime
+package tachiyomi.domain.anime.model
 
-import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.library.model.LibraryAnime
 
 data class SeasonAnime(

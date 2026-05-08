@@ -1,15 +1,19 @@
 // AY -->
 package eu.kanade.presentation.anime
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,8 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import aniyomi.domain.anime.SeasonDisplayMode
-import eu.kanade.domain.anime.model.seasonDownloadedFilter
+import androidx.compose.ui.unit.dp
+import tachiyomi.domain.anime.model.SeasonDisplayMode
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.presentation.components.TabbedDialog
 import eu.kanade.presentation.components.TabbedDialogPaddings
@@ -26,7 +30,6 @@ import kotlinx.collections.immutable.persistentListOf
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.aniyomi.AYMR
 import tachiyomi.presentation.core.components.HeadingItem
 import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.RadioItem
@@ -72,12 +75,11 @@ fun SeasonSettingsDialog(
     if (showSetAsDefaultDialog) {
         SetAsDefaultDialog(
             onDismissRequest = { showSetAsDefaultDialog = false },
-            isEpisode = false,
             onConfirmed = onSetAsDefault,
         )
     }
 
-    val downloadedOnly = remember { Injekt.get<BasePreferences>().downloadedOnly.get() }
+    val downloadedOnly = remember { Injekt.get<BasePreferences>().downloadedOnly().get() }
 
     TabbedDialog(
         onDismissRequest = onDismissRequest,
@@ -172,7 +174,7 @@ private fun ColumnScope.SeasonFilterPage(
         onClick = onDownloadFilterChanged,
     )
     TriStateItem(
-        label = stringResource(AYMR.strings.action_filter_unseen),
+        label = stringResource(MR.strings.action_filter_unseen),
         state = unseenFilter,
         onClick = onUnseenFilterChanged,
     )
@@ -192,7 +194,7 @@ private fun ColumnScope.SeasonFilterPage(
         onClick = onBookmarkedFilterChanged,
     )
     TriStateItem(
-        label = stringResource(AYMR.strings.action_filter_fillermarked),
+        label = stringResource(MR.strings.action_filter_fillermarked),
         state = fillermarkedFilter,
         onClick = onFillermarkedFilterChanged,
     )
@@ -206,12 +208,12 @@ private fun ColumnScope.SeasonSortPage(
 ) {
     listOf(
         MR.strings.sort_by_source to Anime.SEASON_SORT_SOURCE,
-        AYMR.strings.sort_by_season_number to Anime.SEASON_SORT_SEASON,
+        MR.strings.sort_by_season_number to Anime.SEASON_SORT_SEASON,
         MR.strings.sort_by_upload_date to Anime.SEASON_SORT_UPLOAD,
         MR.strings.action_sort_alpha to Anime.SEASON_SORT_ALPHABET,
-        AYMR.strings.action_sort_unseen_count to Anime.SEASON_SORT_COUNT,
-        AYMR.strings.action_sort_last_seen to Anime.SEASON_SORT_LAST_SEEN,
-        AYMR.strings.action_sort_episode_fetch_date to Anime.SEASON_SORT_FETCHED,
+        MR.strings.action_sort_unseen_count to Anime.SEASON_SORT_COUNT,
+        MR.strings.action_sort_last_seen to Anime.SEASON_SORT_LAST_SEEN,
+        MR.strings.action_sort_episode_fetch_date to Anime.SEASON_SORT_FETCHED,
     ).map { (titleRes, mode) ->
         SortItem(
             label = stringResource(titleRes),
@@ -259,35 +261,33 @@ private fun ColumnScope.SeasonDisplayPage(
 
     if (displayGridMode == SeasonDisplayMode.List) {
         SliderItem(
+            label = stringResource(MR.strings.pref_library_rows),
             value = displayGridModeSize,
-            valueRange = 0..10,
-            label = stringResource(AYMR.strings.pref_library_rows),
-            valueString = if (displayGridModeSize > 0) {
+            valueText = if (displayGridModeSize > 0) {
                 displayGridModeSize.toString()
             } else {
                 stringResource(MR.strings.label_auto)
             },
             onChange = { displayGridModeSizeChange(it) },
-            pillColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            max = 10,
         )
     } else {
         SliderItem(
-            value = displayGridModeSize,
-            valueRange = 0..10,
             label = stringResource(MR.strings.pref_library_columns),
-            valueString = if (displayGridModeSize > 0) {
+            value = displayGridModeSize,
+            valueText = if (displayGridModeSize > 0) {
                 displayGridModeSize.toString()
             } else {
                 stringResource(MR.strings.label_auto)
             },
             onChange = { displayGridModeSizeChange(it) },
-            pillColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            max = 10,
         )
     }
 
     HeadingItem(MR.strings.overlay_header)
     LabeledCheckbox(
-        label = stringResource(AYMR.strings.action_display_download_badge_anime),
+        label = stringResource(MR.strings.action_display_download_badge_anime),
         checked = overlayDownloaded,
         onCheckedChange = overlayDownloadedChange,
         modifier = Modifier.padding(
@@ -295,7 +295,7 @@ private fun ColumnScope.SeasonDisplayPage(
         ),
     )
     LabeledCheckbox(
-        label = stringResource(AYMR.strings.action_display_unseen_badge),
+        label = stringResource(MR.strings.action_display_unseen_badge),
         checked = overlayUnseen,
         onCheckedChange = overlayUnseenChange,
         modifier = Modifier.padding(
@@ -319,7 +319,7 @@ private fun ColumnScope.SeasonDisplayPage(
         ),
     )
     LabeledCheckbox(
-        label = stringResource(AYMR.strings.action_display_show_continue_watching_button),
+        label = stringResource(MR.strings.action_display_show_continue_watching_button),
         checked = overlayContinue,
         onCheckedChange = overlayContinueChange,
         modifier = Modifier.padding(
@@ -327,10 +327,10 @@ private fun ColumnScope.SeasonDisplayPage(
         ),
     )
 
-    HeadingItem(AYMR.strings.action_display_grid_mode)
+    HeadingItem(MR.strings.action_display_grid_mode)
     listOf(
         MR.strings.show_title to Anime.SEASON_DISPLAY_MODE_SOURCE,
-        AYMR.strings.show_season_number to Anime.SEASON_DISPLAY_MODE_NUMBER,
+        MR.strings.show_season_number to Anime.SEASON_DISPLAY_MODE_NUMBER,
     ).map { (titleRes, mode) ->
         RadioItem(
             label = stringResource(titleRes),
@@ -338,5 +338,46 @@ private fun ColumnScope.SeasonDisplayPage(
             onClick = { displayModeChange(mode) },
         )
     }
+}
+
+@Composable
+private fun SetAsDefaultDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmed: (optionalChecked: Boolean) -> Unit,
+) {
+    var optionalChecked by rememberSaveable { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(text = stringResource(MR.strings.season_settings)) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(text = stringResource(MR.strings.confirm_set_chapter_settings))
+
+                LabeledCheckbox(
+                    label = stringResource(MR.strings.also_set_episode_settings_for_library),
+                    checked = optionalChecked,
+                    onCheckedChange = { optionalChecked = it },
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(MR.strings.action_cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirmed(optionalChecked)
+                    onDismissRequest()
+                },
+            ) {
+                Text(text = stringResource(MR.strings.action_ok))
+            }
+        },
+    )
 }
 // <-- AY

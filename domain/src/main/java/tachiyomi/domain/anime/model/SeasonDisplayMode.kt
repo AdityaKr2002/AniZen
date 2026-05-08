@@ -1,4 +1,4 @@
-package aniyomi.domain.anime
+package tachiyomi.domain.anime.model
 
 sealed interface SeasonDisplayMode {
     data object CompactGrid : SeasonDisplayMode

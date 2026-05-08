@@ -1629,4 +1629,16 @@
     <string name="feed">Feed</string>
     <string name="pref_show_episode_summary">Show episode summary</string>
     <string name="pref_show_episode_thumbnail">Show episode thumbnail</string>
+    <string name="action_filter_fillermarked">Fillermarked</string>
+    <string name="sort_by_season_number">Season number</string>
+    <string name="action_sort_last_seen">Last seen</string>
+    <string name="action_sort_episode_fetch_date">Episode fetch date</string>
+    <string name="pref_library_rows">Rows</string>
+    <string name="action_display_unseen_badge">Unseen badge</string>
+    <string name="action_display_show_continue_watching_button">Show continue watching button</string>
+    <string name="action_display_grid_mode">Grid mode</string>
+    <string name="show_season_number">Show season number</string>
+    <string name="season_settings_updated">Season settings updated</string>
+    <string name="season_settings">Season settings</string>
+    <string name="label_auto">Auto</string>
 </resources>

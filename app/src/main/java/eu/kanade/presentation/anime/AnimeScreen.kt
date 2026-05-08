@@ -95,7 +95,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.animesource.model.FetchType
-import aniyomi.domain.anime.SeasonDisplayMode
+import tachiyomi.domain.anime.model.SeasonDisplayMode
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.getNameForAnimeInfo
@@ -184,7 +184,7 @@ fun AnimeScreen(
     onToggleDiscoveryExpansion: () -> Unit,
     onSeasonSelected: (String?) -> Unit,
     // AY -->
-    onSeasonClicked: (aniyomi.domain.anime.SeasonAnime) -> Unit,
+    onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
     // <-- AY
 ) {
     val sourcePreferences: SourcePreferences by injectLazy()
@@ -376,7 +376,7 @@ private fun AnimeScreenSmallImpl(
     onToggleDiscoveryExpansion: () -> Unit,
     onSeasonSelected: (String?) -> Unit,
     // AY -->
-    onSeasonClicked: (aniyomi.domain.anime.SeasonAnime) -> Unit,
+    onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {
@@ -854,7 +854,7 @@ fun AnimeScreenLargeImpl(
     onToggleDiscoveryExpansion: () -> Unit,
     onSeasonSelected: (String?) -> Unit,
     // AY -->
-    onSeasonClicked: (aniyomi.domain.anime.SeasonAnime) -> Unit,
+    onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {

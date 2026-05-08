@@ -1,7 +1,7 @@
 // AY -->
 package eu.kanade.tachiyomi.ui.anime
 
-import aniyomi.domain.anime.SeasonAnime
+import tachiyomi.domain.anime.model.SeasonAnime
 
 data class AnimeSeasonItem(
     val seasonAnime: SeasonAnime,
