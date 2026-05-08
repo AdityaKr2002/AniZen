@@ -266,5 +266,3 @@ class BackupRestorer(
         return File("")
     }
 }
- }
-}
