@@ -607,21 +607,66 @@ class AnimeScreenModel(
             }
 
             // Reactive stream for all subsequent updates (DB changes, downloads, etc.)
+            val virtualSeasonsFlow = state.map { successState ->
+                (successState as? State.Success)?.suggestionSections
+                    ?.find { it.type == SuggestionSection.Type.Franchise }
+                    ?.items.orEmpty()
+            }.distinctUntilChanged()
+
+            val seasonsFlow = if (libraryPreferences.useHierarchicalSeasons().get()) {
+                val parentId = anime.parentId ?: animeId
+                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
+            } else {
+                getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
+                    .map { seasons ->
+                        seasons.map {
+                            tachiyomi.domain.anime.model.SeasonAnime(
+                                anime = it.anime,
+                                totalCount = 0,
+                                seenCount = 0,
+                                bookmarkCount = 0,
+                                fillermarkCount = 0,
+                                latestUpload = 0,
+                                episodeFetchedAt = 0,
+                                lastSeen = 0,
+                            )
+                        }
+                    }
+            }
+
             combine(
                 getAnimeAndEpisodes.subscribe(animeId).distinctUntilChanged(),
+                seasonsFlow.distinctUntilChanged(),
                 downloadCache.changes,
                 downloadManager.queueState,
-            ) { animeAndEpisodes, _, _ -> animeAndEpisodes }
-                .onEach { (anime, episodes) ->
+            ) { animeAndEpisodes, seasonAnimes, _, _ -> animeAndEpisodes to seasonAnimes }
+                .onEach { (animeAndEpisodes, seasonAnimes) ->
+                    val (anime, episodes) = animeAndEpisodes
                     val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
                         anime.copy(fetchType = FetchType.Episodes)
                     } else {
                         anime
                     }
+
+                    val seasonItems = seasonAnimes.toAnimeSeasonItems(correctedAnime)
+                    val seasons = seasonAnimes.map {
+                        tachiyomi.domain.anime.model.Season(
+                            anime = it.anime,
+                            seasonNumber = it.anime.seasonNumber ?: 0.0,
+                            isPrimary = it.anime.id == animeId,
+                        )
+                    }
+
+                    if (seasons.isEmpty() && correctedAnime.fetchType == FetchType.Seasons) {
+                        screenModelScope.launch { fetchSeasonsFromSource() }
+                    }
+
                     updateSuccessState {
                         it.copySuccess(
                             anime = correctedAnime,
                             episodes = episodes.toEpisodeListItems(correctedAnime),
+                            seasons = seasons.toImmutableList(),
+                            processedSeasonItems = seasonItems.toImmutableList(),
                         )
                     }
                     // If details were just loaded, retry suggestions
@@ -633,7 +678,6 @@ class AnimeScreenModel(
             
             observeDownloads()
             observeTrackers()
-            observeSeasons()
             observeMergedAnime()
 
             screenModelScope.launchIO {
@@ -1828,53 +1872,6 @@ class AnimeScreenModel(
                 updateSuccessState { it.copySuccess(trackItems = trackItems) }
                 updateAiringTime(anime, trackItems, manualFetch = false) 
             }
-        }
-    }
-
-    private fun observeSeasons() {
-        val virtualSeasonsFlow = state.map { successState ->
-            (successState as? State.Success)?.suggestionSections
-                ?.find { it.type == SuggestionSection.Type.Franchise }
-                ?.items.orEmpty()
-        }.distinctUntilChanged()
-
-        if (libraryPreferences.useHierarchicalSeasons().get()) {
-            screenModelScope.launchIO {
-                val anime = getAnime.await(animeId)
-                val parentId = anime?.parentId ?: animeId
-                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
-                    .onEach { seasonAnimes ->
-                        val seasons = seasonAnimes.map {
-                            tachiyomi.domain.anime.model.Season(
-                                anime = it.anime,
-                                seasonNumber = it.anime.seasonNumber ?: 0.0,
-                                isPrimary = it.anime.id == animeId,
-                            )
-                        }
-
-                        val anime = successState?.anime
-                        if (seasons.isEmpty() && anime?.fetchType == FetchType.Seasons) {
-                            screenModelScope.launch { fetchSeasonsFromSource() }
-                        }
-
-                        updateSuccessState {
-                            val currentAnime = it.anime
-                            it.copySuccess(
-                                seasons = seasons.toImmutableList(),
-                                // AY -->
-                                processedSeasonItems = seasonAnimes.toAnimeSeasonItems(currentAnime).toImmutableList(),
-                                // <-- AY
-                            )
-                        }
-                    }
-                    .launchIn(screenModelScope)
-            }
-        } else {
-            getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
-                .onEach { seasons ->
-                    updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
-                }
-                .launchIn(screenModelScope)
         }
     }
 
