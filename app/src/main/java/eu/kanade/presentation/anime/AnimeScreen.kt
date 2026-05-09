@@ -1534,7 +1534,7 @@ private fun SuggestionItem(
     onClick: () -> Unit,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as androidx.compose.runtime.State<Boolean>
     val (entry, ratio) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(anime.id, usePanoramaOverride = globalPanorama)
     val width = remember(entry) { if (entry == eu.kanade.presentation.anime.components.AnimeCover.Panorama) 200.dp else 104.dp }
 
