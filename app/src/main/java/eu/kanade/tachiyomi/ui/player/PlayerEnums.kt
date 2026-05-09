@@ -265,13 +265,6 @@ enum class VideoFilters(
         min = -5,
         max = 5,
     ),
-    BLUR(
-        MR.strings.player_sheets_filters_blur,
-        { it.blurFilter() },
-        "vf_blur",
-        min = 0,
-        max = 100,
-    ),
 }
 
 enum class VideoFilterTheme(

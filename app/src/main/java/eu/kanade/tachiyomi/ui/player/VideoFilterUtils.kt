@@ -26,12 +26,7 @@ import logcat.logcat
 fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
     val property = filter.mpvProperty
     
-    when (property) {
-        "vf_blur" -> {
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
-        }
-        else -> MPVLib.setPropertyInt(property, value)
-    }
+    MPVLib.setPropertyInt(property, value)
 }
 
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
@@ -60,7 +55,6 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
-    val blur = decoderPreferences.blurFilter().get()
     val deband = decoderPreferences.videoDebanding().get()
     val useYuv420p = decoderPreferences.useYUV420P().get()
 
@@ -68,12 +62,6 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
 
     if (deband == Debanding.CPU) {
         cpuFilters.add("deband=1:1:64:16")
-    }
-
-    if (blur > 0) {
-        val luma = blur / 10f
-        // Blur both luma and chroma planes to prevent green artifacts
-        cpuFilters.add("boxblur=$luma:1:$luma:1")
     }
 
     return when {
@@ -97,7 +85,6 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     prefs.gammaFilter().set(theme.gamma)
     prefs.hueFilter().set(theme.hue)
     prefs.sharpenFilter().set(theme.sharpen)
-    prefs.blurFilter().set(0)
     
     // Reset deband
     prefs.debandFilter().set(0)
