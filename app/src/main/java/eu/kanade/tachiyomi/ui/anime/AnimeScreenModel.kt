@@ -261,7 +261,7 @@ class AnimeScreenModel(
         suggestions: ImmutableList<Anime> = this.suggestions,
         seasons: ImmutableList<Season> = this.seasons,
         // AY -->
-        processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = this.processedSeasons,
+        processedSeasonItems: ImmutableList<AnimeSeasonItem> = this.processedSeasonItems,
         // <-- AY
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
@@ -1863,10 +1863,11 @@ class AnimeScreenModel(
                         }
 
                         updateSuccessState {
+                            val currentAnime = it.anime
                             it.copySuccess(
                                 seasons = seasons.toImmutableList(),
                                 // AY -->
-                                processedSeasons = seasonAnimes.toImmutableList(),
+                                processedSeasonItems = seasonAnimes.toAnimeSeasonItems(currentAnime).toImmutableList(),
                                 // <-- AY
                             )
                         }
@@ -1879,6 +1880,22 @@ class AnimeScreenModel(
                     updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
                 }
                 .launchIn(screenModelScope)
+        }
+    }
+
+    private fun List<tachiyomi.domain.anime.model.SeasonAnime>.toAnimeSeasonItems(anime: Anime): List<AnimeSeasonItem> {
+        return map { seasonAnime ->
+            val itemAnime = seasonAnime.anime
+            AnimeSeasonItem(
+                seasonAnime = seasonAnime,
+                downloadCount = downloadManager.getDownloadCount(itemAnime).toLong(),
+                unseenCount = seasonAnime.unseenCount,
+                isLocal = itemAnime.isLocal(),
+                sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
+                showContinueOverlay = anime.seasonContinueOverlay &&
+                    seasonAnime.unseenCount > 0 &&
+                    itemAnime.fetchType == FetchType.Episodes,
+            )
         }
     }
 
@@ -2049,7 +2066,7 @@ class AnimeScreenModel(
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
             // AY -->
-            val processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = persistentListOf(),
+            val processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
             // <-- AY
             val availableSeasons: ImmutableList<String> = persistentListOf(),
             val selectedSeason: String? = null,
@@ -2070,7 +2087,7 @@ class AnimeScreenModel(
                     selectedSeason: String? = null,
                     // AY -->
                     seasons: ImmutableList<tachiyomi.domain.anime.model.Season> = persistentListOf(),
-                    processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = persistentListOf(),
+                    processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
                     // <-- AY
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime).toImmutableList()

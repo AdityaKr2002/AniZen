@@ -708,29 +708,23 @@ private fun AnimeScreenSmallImpl(
                                     } else {
                                         state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 2
                                         }
-                                val seasons = state.processedSeasons
+                                val seasons = state.processedSeasonItems
                                 if (columns == 1) {
                                         items(
                                             items = seasons,
-                                            key = { season -> season.anime.id },
+                                            key = { item -> item.seasonAnime.anime.id },
                                         ) { item ->
                                             AnimeSeasonListItem(
                                                 anime = state.anime,
-                                                item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                    seasonAnime = item,
-                                                    downloadCount = -1L,
-                                                    unseenCount = item.unseenCount,
-                                                    isLocal = false,
-                                                    sourceLanguage = "",
-                                                    showContinueOverlay = state.anime.seasonContinueOverlay,
-                                                ),
+                                                item = item,
                                                 containerHeight = containerHeight,
                                                 onSeasonClicked = onSeasonClicked,
                                                 onClickContinueWatching = {
-                                                    onContinueWatching(item)
+                                                    onContinueWatching(item.seasonAnime)
                                                 },
                                                 listItemModifier = Modifier,
-                                            )                                        }
+                                            )
+                                        }
                                     } else {
                                         val rows = seasons.chunked(columns)
                                         rows.forEachIndexed { index, row ->
@@ -745,20 +739,13 @@ private fun AnimeScreenSmallImpl(
                                                         Box(modifier = Modifier.weight(1f)) {
                                                             AnimeSeasonListItem(
                                                                 anime = state.anime,
-                                                                item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                                    seasonAnime = item,
-                                                                    downloadCount = -1L,
-                                                                    unseenCount = item.unseenCount,
-                                                                    isLocal = false,
-                                                                    sourceLanguage = "",
-                                                                    showContinueOverlay = state.anime.seasonContinueOverlay,
-                                                                    ),
-                                                                    containerHeight = containerHeight,
-                                                                    onSeasonClicked = onSeasonClicked,
-                                                                    onClickContinueWatching = {
-                                                                    onContinueWatching(item)
-                                                                    },
-                                                listItemModifier = Modifier,
+                                                                item = item,
+                                                                containerHeight = containerHeight,
+                                                                onSeasonClicked = onSeasonClicked,
+                                                                onClickContinueWatching = {
+                                                                    onContinueWatching(item.seasonAnime)
+                                                                },
+                                                                listItemModifier = Modifier,
                                                             )
                                                         }
                                                     }
@@ -1226,28 +1213,23 @@ fun AnimeScreenLargeImpl(
                                             } else {
                                                 state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 5
                                             }
-                                            val seasons = state.processedSeasons
+                                            val seasons = state.processedSeasonItems
                                             if (columns == 1) {
                                                 items(
                                                     items = seasons,
-                                                    key = { season -> season.anime.id },
+                                                    key = { item -> item.seasonAnime.anime.id },
                                                 ) { item ->
                                                     AnimeSeasonListItem(
                                                         anime = state.anime,
-                                                        item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                            seasonAnime = item,
-                                                            downloadCount = -1L,
-                                                            unseenCount = item.unseenCount,
-                                                            isLocal = false,
-                                                            sourceLanguage = "",
-                                                            showContinueOverlay = state.anime.seasonContinueOverlay,
-                                                        ),
+                                                        item = item,
                                                         containerHeight = containerHeight,
                                                         onSeasonClicked = onSeasonClicked,
                                                         onClickContinueWatching = {
-                                                            onContinueWatching(item)
+                                                            onContinueWatching(item.seasonAnime)
                                                         },
-                                                        listItemModifier = Modifier,                                                    )                                                }
+                                                        listItemModifier = Modifier,
+                                                    )
+                                                }
                                             } else {
                                                 val rows = seasons.chunked(columns)
                                                 rows.forEachIndexed { index, row ->
@@ -1262,19 +1244,12 @@ fun AnimeScreenLargeImpl(
                                                                 Box(modifier = Modifier.weight(1f)) {
                                                                     AnimeSeasonListItem(
                                                                         anime = state.anime,
-                                                                        item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                                            seasonAnime = item,
-                                                                            downloadCount = -1L,
-                                                                            unseenCount = item.unseenCount,
-                                                                            isLocal = false,
-                                                                            sourceLanguage = "",
-                                                                            showContinueOverlay = state.anime.seasonContinueOverlay,
-                                                                            ),
-                                                                            containerHeight = containerHeight,
-                                                                            onSeasonClicked = onSeasonClicked,
-                                                                            onClickContinueWatching = {
-                                                                            onContinueWatching(item)
-                                                                            },
+                                                                        item = item,
+                                                                        containerHeight = containerHeight,
+                                                                        onSeasonClicked = onSeasonClicked,
+                                                                        onClickContinueWatching = {
+                                                                            onContinueWatching(item.seasonAnime)
+                                                                        },
                                                                         listItemModifier = Modifier,
                                                                     )
                                                                 }
