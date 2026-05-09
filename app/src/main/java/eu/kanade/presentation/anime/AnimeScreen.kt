@@ -346,7 +346,7 @@ private fun AnimeScreenSmallImpl(
     onCopyTagToClipboard: (tag: String) -> Unit,
     onFilterClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueWatching: () -> Unit,
+    onContinueWatching: (tachiyomi.domain.anime.model.SeasonAnime?) -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
     onCoverClicked: () -> Unit,
     onShareClicked: (() -> Unit)?,
@@ -532,7 +532,7 @@ private fun AnimeScreenSmallImpl(
                         onMarkPreviousAsSeenClicked = onMarkPreviousAsSeenClicked,
                         onDownloadEpisode = onDownloadEpisode,
                         onMultiDeleteClicked = onMultiDeleteClicked,
-                        onContinueWatching = onContinueWatching,
+                        onContinueWatching = { onContinueWatching(null) },
                         fillFraction = 1f,
                         alwaysUseExternalPlayer = alwaysUseExternalPlayer,
                     )
@@ -606,7 +606,7 @@ private fun AnimeScreenSmallImpl(
                                         onEditIntervalClicked = onEditIntervalClicked,
                                         onEditNotesClicked = onEditNotesClicked,
                                         onEditCategory = onEditCategoryClicked,
-                                        onContinueWatching = onContinueWatching,
+                                        onContinueWatching = { onContinueWatching(null) },
                                         isWatching = isWatching,
                                         localScore = state.totalScore,
                                         onLocalScoreClicked = onLocalScoreClicked,
@@ -1043,7 +1043,7 @@ fun AnimeScreenLargeImpl(
                             onMarkPreviousAsSeenClicked = onMarkPreviousAsSeenClicked,
                             onDownloadEpisode = onDownloadEpisode,
                             onMultiDeleteClicked = onMultiDeleteClicked,
-                            onContinueWatching = onContinueWatching,
+                            onContinueWatching = { onContinueWatching(null) },
                             fillFraction = 0.5f,
                             alwaysUseExternalPlayer = alwaysUseExternalPlayer,
                         )
@@ -1111,7 +1111,7 @@ fun AnimeScreenLargeImpl(
                                         onEditIntervalClicked = onEditIntervalClicked,
                                         onEditNotesClicked = onEditNotesClicked,
                                         onEditCategory = onEditCategoryClicked,
-                                        onContinueWatching = onContinueWatching,
+                                        onContinueWatching = { onContinueWatching(null) },
                                         isWatching = isWatching,
                                         localScore = state.totalScore,
                                         onLocalScoreClicked = onLocalScoreClicked,
@@ -1245,10 +1245,9 @@ fun AnimeScreenLargeImpl(
                                                         containerHeight = containerHeight,
                                                         onSeasonClicked = onSeasonClicked,
                                                         onClickContinueWatching = {
-                                                            onContinueWatching()
+                                                            onContinueWatching(item)
                                                         },
-                                                        listItemModifier = Modifier,
-                                                    )                                                }
+                                                        listItemModifier = Modifier,                                                    )                                                }
                                             } else {
                                                 val rows = seasons.chunked(columns)
                                                 rows.forEachIndexed { index, row ->
