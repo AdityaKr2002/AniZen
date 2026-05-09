@@ -33,7 +33,6 @@ import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.buildVFChain
-import eu.kanade.tachiyomi.ui.player.checkAndSetCopyMode
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.util.system.DeviceTierManager
 import eu.kanade.tachiyomi.util.system.findActivity
@@ -183,15 +182,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        checkAndSetCopyMode(decoderPreferences)
-        val hwdec = if (decoderPreferences.forceMediaCodecCopy().get()) {
-            "mediacodec-copy"
-        } else if (decoderPreferences.tryHWDecoding().get()) {
-            "auto"
-        } else {
-            "no"
-        }
-        MPVLib.setOptionString("hwdec", hwdec)
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         MPVLib.setOptionString("hwdec-codecs", "all")
         MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("vd-lavc-fast", "yes")
@@ -504,6 +495,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             PlayerStats.isAdaptiveDowngraded.value = true
             
             (context as? PlayerActivity)?.runOnUiThread {
+                (context as? PlayerActivity)?.showToast("Performance: Anime4K downgraded to Balanced")
+            }
+        }
+    }
+}
+layerActivity)?.runOnUiThread {
                 (context as? PlayerActivity)?.showToast("Performance: Anime4K downgraded to Balanced")
             }
         }

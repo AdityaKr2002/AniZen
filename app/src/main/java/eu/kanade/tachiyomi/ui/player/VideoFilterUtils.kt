@@ -32,9 +32,6 @@ fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
         }
         else -> MPVLib.setPropertyInt(property, value)
     }
-
-    // Update copy mode preference based on all filters AFTER applying properties
-    checkAndSetCopyMode(prefs)
 }
 
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
@@ -56,7 +53,6 @@ fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
             }
         }
     }
-    checkAndSetCopyMode(prefs)
 }
 
 fun applyDebandSetting(setting: DebandSettings, value: Int) {
@@ -100,38 +96,6 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
     }
 }
 
-fun checkAndSetCopyMode(prefs: DecoderPreferences) {
-    val requiresCopyMode = 
-        prefs.sharpenFilter().get() > 0 ||
-        prefs.blurFilter().get() > 0 ||
-        prefs.videoDebanding().get() == Debanding.CPU ||
-        prefs.saturationFilter().get() != 0 ||
-        prefs.hueFilter().get() != 0 ||
-        prefs.smoothMotion().get()
-
-    if (requiresCopyMode) {
-        if (!prefs.forceMediaCodecCopy().get()) {
-            prefs.forceMediaCodecCopy().set(true)
-        }
-    } else {
-        if (prefs.forceMediaCodecCopy().get()) {
-            prefs.forceMediaCodecCopy().set(false)
-        }
-    }
-
-    // Optimization: Only update HW decoder if playback is actually active
-    // This prevents triggering decoder re-negotiation (and black screens) while paused.
-    val isPaused = MPVLib.getPropertyBoolean("pause") ?: true
-    if (!isPaused) {
-        if (prefs.forceMediaCodecCopy().get()) {
-            MPVLib.setPropertyString("hwdec", "mediacodec-copy")
-        } else {
-            val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
-            MPVLib.setPropertyString("hwdec", hwdec)
-        }
-    }
-}
-
 fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     prefs.brightnessFilter().set(theme.brightness)
     prefs.contrastFilter().set(theme.contrast)
@@ -163,9 +127,6 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("deband-threshold", 32)
     MPVLib.setPropertyInt("deband-range", 16)
     MPVLib.setPropertyInt("deband-grain", 48)
-
-    // Update copy mode based on new theme values AFTER applying properties
-    checkAndSetCopyMode(prefs)
 }
 
 fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
