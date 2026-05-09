@@ -125,8 +125,13 @@ class AnimeScreen(
 
         val isHttpSource = remember { successState.source is HttpSource }
 
-        LaunchedEffect(successState.anime, screenModel.source) {
-            if (isHttpSource) {
+        LaunchedEffect(successState.isRefreshingData) {
+            if (successState.isRefreshingData) {
+                screenModel.fetchAllFromSource(manualFetch = false)
+            }
+        }
+
+        LaunchedEffect(successState.anime, screenModel.source) {            if (isHttpSource) {
                 try {
                     withIOContext {
                         assistUrl = getAnimeUrl(screenModel.anime, screenModel.source)

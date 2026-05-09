@@ -445,8 +445,13 @@ private fun AnimeScreenSmallImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, isAnySelected) {
-                episodes.fastAny { !it.episode.seen } && !isAnySelected
+            val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
+                if (isAnySelected) return@remember false
+                if (state.anime.fetchType == FetchType.Seasons) {
+                    state.processedSeasons.isEmpty() || state.processedSeasons.fastAny { it.unseenCount > 0 }
+                } else {
+                    episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
+                }
             }
             Scaffold(
                 hazeEnabled = false,
@@ -457,8 +462,12 @@ private fun AnimeScreenSmallImpl(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val isWatching = remember(state.episodes) {
-                            state.episodes.fastAny { it.episode.seen }
+                        val isWatching = remember(state.episodes, state.processedSeasons) {
+                            if (state.anime.fetchType == FetchType.Seasons) {
+                                state.processedSeasons.fastAny { it.seenCount > 0 }
+                            } else {
+                                state.episodes.fastAny { it.episode.seen }
+                            }
                         }
                         ExtendedFloatingActionButton(
                             text = {
@@ -943,8 +952,13 @@ fun AnimeScreenLargeImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, isAnySelected) {
-                episodes.fastAny { !it.episode.seen } && !isAnySelected
+            val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
+                if (isAnySelected) return@remember false
+                if (state.anime.fetchType == FetchType.Seasons) {
+                    state.processedSeasons.isEmpty() || state.processedSeasons.fastAny { it.unseenCount > 0 }
+                } else {
+                    episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
+                }
             }
             Scaffold(
                 hazeEnabled = false,
@@ -955,8 +969,12 @@ fun AnimeScreenLargeImpl(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val isWatching = remember(state.episodes) {
-                            state.episodes.fastAny { it.episode.seen }
+                        val isWatching = remember(state.episodes, state.processedSeasons) {
+                            if (state.anime.fetchType == FetchType.Seasons) {
+                                state.processedSeasons.fastAny { it.seenCount > 0 }
+                            } else {
+                                state.episodes.fastAny { it.episode.seen }
+                            }
                         }
                         ExtendedFloatingActionButton(
                             text = {

@@ -1303,8 +1303,21 @@ class AnimeScreenModel(
         }
     }
 
-    fun getNextUnseenEpisode(): Episode? {
+    suspend fun getNextUnseenEpisode(): Episode? {
         val successState = successState ?: return null
+        if (successState.anime.fetchType == FetchType.Seasons) {
+            val seasons = animeRepository.getAnimeSeasonsById(animeId)
+            val lastSeenSeason = seasons
+                .filter { it.seenCount > 0 }
+                .maxByOrNull { it.lastSeen } ?: seasons.firstOrNull()
+
+            if (lastSeenSeason != null) {
+                val episodes = getAnimeAndEpisodes.awaitChapters(lastSeenSeason.anime.id)
+                return episodes.getNextUnseen(lastSeenSeason.anime, downloadManager)
+            }
+            return null
+        }
+
         return successState.episodes.getNextUnseen(
             anime = successState.anime,
             seasonName = successState.selectedSeason.takeIf { successState.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs },
