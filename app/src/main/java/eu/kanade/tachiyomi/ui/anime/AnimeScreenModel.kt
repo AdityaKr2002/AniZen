@@ -530,6 +530,9 @@ class AnimeScreenModel(
             suggestions = suggestions,
             isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
+            // AY -->
+            processedSeasons = processedSeasons,
+            // <-- AY
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
@@ -1194,13 +1197,14 @@ class AnimeScreenModel(
 
     private suspend fun fetchSeasonsFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
+        val anime = animeRepository.getAnimeById(animeId) ?: state.anime
         try {
             withIOContext {
-                val seasons = state.source.getSeasonList(state.anime.toSAnime())
+                val seasons = state.source.getSeasonList(anime.toSAnime())
 
                 val newSeasons = syncSeasonsWithSource.await(
                     seasons,
-                    state.anime,
+                    anime,
                     state.source,
                     manualFetch,
                 )
@@ -1242,16 +1246,17 @@ class AnimeScreenModel(
 
     private suspend fun fetchEpisodesFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
+        val anime = animeRepository.getAnimeById(animeId) ?: state.anime
 
-        if (state.anime.fetchType == FetchType.Seasons) {
+        if (anime.fetchType == FetchType.Seasons) {
             fetchSeasonsFromSource(manualFetch)
             return
         }
 
         try {
             withIOContext {
-                val episodes = state.source.getEpisodeList(state.anime.toSAnime())
-                val newEpisodes = syncEpisodesWithSource.await(episodes, state.anime, state.source, manualFetch)
+                val episodes = state.source.getEpisodeList(anime.toSAnime())
+                val newEpisodes = syncEpisodesWithSource.await(episodes, anime, state.source, manualFetch)
                 if (manualFetch) downloadNewEpisodes(newEpisodes)
             }
         } catch (e: Throwable) {
@@ -2033,6 +2038,7 @@ class AnimeScreenModel(
                     dialog: Dialog?,
                     selectedSeason: String? = null,
                     // AY -->
+                    seasons: ImmutableList<tachiyomi.domain.anime.model.Season> = persistentListOf(),
                     processedSeasons: ImmutableList<tachiyomi.domain.anime.model.SeasonAnime> = persistentListOf(),
                     // <-- AY
                 ): Success {
@@ -2253,6 +2259,7 @@ class AnimeScreenModel(
                         showEpisodeSummary = anime.showSummaries(),
                         showEpisodeThumbnail = anime.showPreviews(),
                         // AY -->
+                        seasons = seasons,
                         processedSeasons = processedSeasons,
                         // <-- AY
                     )

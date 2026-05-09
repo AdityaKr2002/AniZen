@@ -535,6 +535,11 @@ private fun AnimeScreenSmallImpl(
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             ) { contentPadding ->
                 val topPadding = contentPadding.calculateTopPadding()
+                // AY -->
+                BoxWithConstraints {
+                    val density = LocalDensity.current
+                    val containerHeightPx = with(density) { maxHeight.roundToPx() }
+                    // <-- AY
                 PullRefresh(
                     refreshing = state.isRefreshingData,
                     onRefresh = onRefresh,
@@ -706,7 +711,7 @@ private fun AnimeScreenSmallImpl(
                                                 sourceLanguage = "",
                                                 showContinueOverlay = false,
                                             ),
-                                            containerHeight = 0,
+                                            containerHeight = containerHeightPx,
                                             onSeasonClicked = onSeasonClicked,
                                             onClickContinueWatching = null,
                                             listItemModifier = Modifier,
@@ -734,7 +739,7 @@ private fun AnimeScreenSmallImpl(
                                                                 sourceLanguage = "",
                                                                 showContinueOverlay = false,
                                                             ),
-                                                            containerHeight = 0,
+                                                            containerHeight = containerHeightPx,
                                                             onSeasonClicked = onSeasonClicked,
                                                             onClickContinueWatching = null,
                                                             listItemModifier = Modifier,
@@ -798,6 +803,7 @@ private fun AnimeScreenSmallImpl(
                 }
             }
         }
+    }
     }
 }
 
@@ -1200,7 +1206,7 @@ fun AnimeScreenLargeImpl(
                                                         sourceLanguage = "",
                                                         showContinueOverlay = false,
                                                     ),
-                                                    containerHeight = 0,
+                                                    containerHeight = containerHeightPx,
                                                     onSeasonClicked = onSeasonClicked,
                                                     onClickContinueWatching = null,
                                                     listItemModifier = Modifier,
@@ -1228,7 +1234,7 @@ fun AnimeScreenLargeImpl(
                                                                         sourceLanguage = "",
                                                                         showContinueOverlay = false,
                                                                     ),
-                                                                    containerHeight = 0,
+                                                                    containerHeight = containerHeightPx,
                                                                     onSeasonClicked = onSeasonClicked,
                                                                     onClickContinueWatching = null,
                                                                     listItemModifier = Modifier,
@@ -1294,6 +1300,7 @@ fun AnimeScreenLargeImpl(
                 }
             }
         }
+    }
     }
 }
 
