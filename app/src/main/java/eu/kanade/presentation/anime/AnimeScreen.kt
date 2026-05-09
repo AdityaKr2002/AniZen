@@ -379,6 +379,7 @@ private fun AnimeScreenSmallImpl(
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {
+    val navigator = LocalNavigator.currentOrThrow
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
     val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
@@ -857,6 +858,7 @@ fun AnimeScreenLargeImpl(
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
 ) {
+    val navigator = LocalNavigator.currentOrThrow
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes

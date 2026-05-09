@@ -235,12 +235,12 @@ class AnimeScreen(
                 onLocalScoreClicked = screenModel::showLocalScoreDialog,
                 onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf { successState.anime.favorite },
                 onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
+                onSettingsClicked = screenModel::showSettingsDialog,
                 onSeasonSelected = screenModel::onSeasonSelected,
                 // AY -->
-                onSeasonClicked = { navigator.push(AnimeScreen(it.id)) },
+                onSeasonClicked = { navigator.push(AnimeScreen(it.anime.id)) },
                 // <-- AY
-            )
-
+                )
             val onDismissRequest = {
                 screenModel.dismissDialog()
             }
