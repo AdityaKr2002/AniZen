@@ -201,10 +201,15 @@ class AnimeScreen(
                 onTagSearch = { scope.launch { performGenreSearch(navigator, it, screenModel.source!!) } },
                 onFilterButtonClicked = screenModel::showSettingsDialog,
                 onRefresh = screenModel::fetchAllFromSource,
-                onContinueWatching = {
+                onContinueWatching = { season ->
                     scope.launchIO {
                         val extPlayer = screenModel.alwaysUseExternalPlayer
-                        continueWatching(context, screenModel.getNextUnseenEpisode(), extPlayer)
+                        val episode = if (season != null) {
+                            screenModel.getNextUnseenEpisode(season)
+                        } else {
+                            screenModel.getNextUnseenEpisode()
+                        }
+                        continueWatching(context, episode, extPlayer)
                     }
                 },
                 onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },

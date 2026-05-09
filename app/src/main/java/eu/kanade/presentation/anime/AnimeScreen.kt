@@ -157,7 +157,7 @@ fun AnimeScreen(
     onTagSearch: (String) -> Unit,
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueWatching: () -> Unit,
+    onContinueWatching: (tachiyomi.domain.anime.model.SeasonAnime?) -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
     onCoverClicked: () -> Unit,
     onShareClicked: (() -> Unit)?,
@@ -448,7 +448,7 @@ private fun AnimeScreenSmallImpl(
             val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
                 if (isAnySelected) return@remember false
                 if (state.anime.fetchType == FetchType.Seasons) {
-                    state.processedSeasons.isEmpty() || state.processedSeasons.fastAny { it.unseenCount > 0 }
+                    false
                 } else {
                     episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
                 }
@@ -462,12 +462,8 @@ private fun AnimeScreenSmallImpl(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val isWatching = remember(state.episodes, state.processedSeasons) {
-                            if (state.anime.fetchType == FetchType.Seasons) {
-                                state.processedSeasons.fastAny { it.seenCount > 0 }
-                            } else {
-                                state.episodes.fastAny { it.episode.seen }
-                            }
+                        val isWatching = remember(state.episodes) {
+                            state.episodes.fastAny { it.episode.seen }
                         }
                         ExtendedFloatingActionButton(
                             text = {
@@ -476,7 +472,7 @@ private fun AnimeScreenSmallImpl(
                             icon = {
                                 Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
                             },
-                            onClick = onContinueWatching,
+                            onClick = { onContinueWatching(null) },
                             expanded = episodeListState.shouldExpandFAB(),
                         )
                     }
@@ -731,7 +727,7 @@ private fun AnimeScreenSmallImpl(
                                                 containerHeight = containerHeight,
                                                 onSeasonClicked = onSeasonClicked,
                                                 onClickContinueWatching = {
-                                                    onContinueWatching()
+                                                    onContinueWatching(item)
                                                 },
                                                 listItemModifier = Modifier,
                                             )                                        }
@@ -755,12 +751,14 @@ private fun AnimeScreenSmallImpl(
                                                                     unseenCount = item.unseenCount,
                                                                     isLocal = false,
                                                                     sourceLanguage = "",
-                                                                    showContinueOverlay = false,
-                                                                ),
-                                                                containerHeight = containerHeight,
-                                                                onSeasonClicked = onSeasonClicked,
-                                                                onClickContinueWatching = null,
-                                                                listItemModifier = Modifier,
+                                                                    showContinueOverlay = state.anime.seasonContinueOverlay,
+                                                                    ),
+                                                                    containerHeight = containerHeight,
+                                                                    onSeasonClicked = onSeasonClicked,
+                                                                    onClickContinueWatching = {
+                                                                    onContinueWatching(item)
+                                                                    },
+                                                listItemModifier = Modifier,
                                                             )
                                                         }
                                                     }
@@ -850,7 +848,7 @@ fun AnimeScreenLargeImpl(
     onCopyTagToClipboard: (tag: String) -> Unit,
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueWatching: () -> Unit,
+    onContinueWatching: (tachiyomi.domain.anime.model.SeasonAnime?) -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
     onCoverClicked: () -> Unit,
     onShareClicked: (() -> Unit)?,
@@ -956,7 +954,7 @@ fun AnimeScreenLargeImpl(
             val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
                 if (isAnySelected) return@remember false
                 if (state.anime.fetchType == FetchType.Seasons) {
-                    state.processedSeasons.isEmpty() || state.processedSeasons.fastAny { it.unseenCount > 0 }
+                    false
                 } else {
                     episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
                 }
@@ -970,12 +968,8 @@ fun AnimeScreenLargeImpl(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val isWatching = remember(state.episodes, state.processedSeasons) {
-                            if (state.anime.fetchType == FetchType.Seasons) {
-                                state.processedSeasons.fastAny { it.seenCount > 0 }
-                            } else {
-                                state.episodes.fastAny { it.episode.seen }
-                            }
+                        val isWatching = remember(state.episodes) {
+                            state.episodes.fastAny { it.episode.seen }
                         }
                         ExtendedFloatingActionButton(
                             text = {
@@ -984,7 +978,7 @@ fun AnimeScreenLargeImpl(
                             icon = {
                                 Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
                             },
-                            onClick = onContinueWatching,
+                            onClick = { onContinueWatching(null) },
                             expanded = episodeListState.shouldExpandFAB(),
                         )
                     }
@@ -1275,11 +1269,13 @@ fun AnimeScreenLargeImpl(
                                                                             unseenCount = item.unseenCount,
                                                                             isLocal = false,
                                                                             sourceLanguage = "",
-                                                                            showContinueOverlay = false,
-                                                                        ),
-                                                                        containerHeight = containerHeight,
-                                                                        onSeasonClicked = onSeasonClicked,
-                                                                        onClickContinueWatching = null,
+                                                                            showContinueOverlay = state.anime.seasonContinueOverlay,
+                                                                            ),
+                                                                            containerHeight = containerHeight,
+                                                                            onSeasonClicked = onSeasonClicked,
+                                                                            onClickContinueWatching = {
+                                                                            onContinueWatching(item)
+                                                                            },
                                                                         listItemModifier = Modifier,
                                                                     )
                                                                 }

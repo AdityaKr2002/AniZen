@@ -1303,6 +1303,11 @@ class AnimeScreenModel(
         }
     }
 
+    suspend fun getNextUnseenEpisode(season: tachiyomi.domain.anime.model.SeasonAnime): Episode? {
+        val episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+        return episodes.getNextUnseen(season.anime, downloadManager)
+    }
+
     suspend fun getNextUnseenEpisode(): Episode? {
         val successState = successState ?: return null
         if (successState.anime.fetchType == FetchType.Seasons) {
