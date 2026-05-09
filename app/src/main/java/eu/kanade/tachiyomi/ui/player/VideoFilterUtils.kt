@@ -23,11 +23,16 @@ import `is`.xyz.mpv.MPVLib
 import logcat.LogPriority
 import logcat.logcat
 
-fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
+fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences, manager: Anime4KManager? = null) {
     val property = filter.mpvProperty
     
     when (property) {
-        "vf_sharpen", "vf_blur" -> {
+        "vf_sharpen" -> {
+            if (manager != null) {
+                applyGLSLShaders(prefs, manager)
+            }
+        }
+        "vf_blur" -> {
             MPVLib.setPropertyString("vf", buildVFChain(prefs))
         }
         else -> MPVLib.setPropertyInt(property, value)
@@ -60,7 +65,6 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
-    val sharpen = decoderPreferences.sharpenFilter().get()
     val blur = decoderPreferences.blurFilter().get()
     val deband = decoderPreferences.videoDebanding().get()
     val useYuv420p = decoderPreferences.useYUV420P().get()
@@ -71,18 +75,13 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
         cpuFilters.add("deband=1:1:64:16")
     }
 
-    if (sharpen > 0) {
-        val amount = (sharpen / 100f) * 2.0f
-        cpuFilters.add("unsharp=5:5:$amount:5:5:0")
-    }
-
     if (blur > 0) {
         val luma = blur / 10f
         // Blur both luma and chroma planes to prevent green artifacts
         cpuFilters.add("boxblur=$luma:1:$luma:1")
     }
 
-    return when {
+    val finalChain = when {
         cpuFilters.isNotEmpty() -> {
             // If any filter requires CPU processing, we MUST ensure a stable pixel format 
             // inside the lavfi context.
@@ -94,9 +93,35 @@ fun buildVFChain(decoderPreferences: DecoderPreferences): String {
         }
         else -> ""
     }
+
+    updateHardwareDecoding(decoderPreferences, hasCpuFilters = cpuFilters.isNotEmpty())
+    return finalChain
 }
 
-fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
+private var currentHasShaders = false
+private var currentHasCpuFilters = false
+
+fun updateHardwareDecoding(prefs: DecoderPreferences, hasShaders: Boolean = currentHasShaders, hasCpuFilters: Boolean = currentHasCpuFilters) {
+    currentHasShaders = hasShaders
+    currentHasCpuFilters = hasCpuFilters
+
+    // Optimization: Only update HW decoder if playback is actually active
+    // This prevents triggering decoder re-negotiation (and black screens) while paused.
+    val isPaused = MPVLib.getPropertyBoolean("pause") ?: true
+    if (!isPaused) {
+        // MPV Android Opaque Surface limitation:
+        // To apply GLSL shaders or CPU filters without opengl-pbo (which crashes Mali GPUs), 
+        // we MUST use mediacodec-copy so the shader/CPU can access the pixel data in RAM.
+        if (hasShaders || hasCpuFilters) {
+            MPVLib.setPropertyString("hwdec", "mediacodec-copy")
+        } else {
+            val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
+            MPVLib.setPropertyString("hwdec", hwdec)
+        }
+    }
+}
+
+fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences, manager: Anime4KManager? = null) {
     prefs.brightnessFilter().set(theme.brightness)
     prefs.contrastFilter().set(theme.contrast)
     prefs.saturationFilter().set(theme.saturation)
@@ -121,6 +146,10 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     // Apply VF chain once
     MPVLib.setPropertyString("vf", buildVFChain(prefs))
     
+    if (manager != null) {
+        applyGLSLShaders(prefs, manager)
+    }
+    
     // Reset deband engine properties
     MPVLib.setPropertyBoolean("deband", false)
     MPVLib.setPropertyInt("deband-iterations", 1)
@@ -129,39 +158,47 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("deband-grain", 48)
 }
 
-fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
-    val enabled = prefs.enableAnime4K().get()
+fun applyGLSLShaders(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
+    // 1. Collect Shader Chains
+    val shaderPaths = mutableListOf<String>()
     
-    // DEFENSIVE: Anime4K is incompatible with gpu-next in current builds
+    // Anime4K
+    val anime4kEnabled = prefs.enableAnime4K().get()
     val gpuNext = prefs.gpuNext().get()
-    if (enabled && gpuNext) {
-        logcat("Anime4K", LogPriority.WARN) { "Anime4K is incompatible with gpu-next. Skipping." }
-        if (!isInit) MPVLib.setPropertyString("glsl-shaders", "")
-        return
-    }
-
-    val mode = try {
-        Anime4KManager.Mode.valueOf(prefs.anime4kMode().get())
-    } catch (e: Exception) {
-        Anime4KManager.Mode.OFF
-    }
-    val quality = try {
-        Anime4KManager.Quality.valueOf(prefs.anime4kQuality().get())
-    } catch (e: Exception) {
-        Anime4KManager.Quality.BALANCED
-    }
-
-    // Ensure initialization happened
-    manager.initialize()
-
-    val chain = if (enabled) manager.getShaderChain(mode, quality) else ""
-    logcat("Anime4K", LogPriority.DEBUG) { "Applying Anime4K chain (enabled=$enabled): $chain" }
     
-    if (chain.isNotEmpty()) {
+    if (anime4kEnabled && gpuNext) {
+        logcat("Anime4K", LogPriority.WARN) { "Anime4K is incompatible with gpu-next. Skipping Anime4K." }
+    } else if (anime4kEnabled) {
+        val mode = try { Anime4KManager.Mode.valueOf(prefs.anime4kMode().get()) } catch (e: Exception) { Anime4KManager.Mode.OFF }
+        val quality = try { Anime4KManager.Quality.valueOf(prefs.anime4kQuality().get()) } catch (e: Exception) { Anime4KManager.Quality.BALANCED }
+        
+        manager.initialize()
+        val anime4kChain = manager.getShaderChain(mode, quality)
+        if (anime4kChain.isNotEmpty()) {
+            shaderPaths.add(anime4kChain)
+        }
+    }
+    
+    // Adaptive Sharpen
+    val sharpenIntensity = prefs.sharpenFilter().get()
+    if (sharpenIntensity > 0) {
+        val sharpenPath = manager.getAdaptiveSharpenShader(sharpenIntensity)
+        if (sharpenPath.isNotEmpty()) {
+            shaderPaths.add(sharpenPath)
+        }
+    }
+
+    // 2. Apply combined chain
+    val combinedChain = shaderPaths.joinToString(":")
+    logcat("GLSL", LogPriority.DEBUG) { "Applying GLSL Shaders: $combinedChain" }
+    
+    updateHardwareDecoding(prefs, hasShaders = combinedChain.isNotEmpty())
+    
+    if (combinedChain.isNotEmpty()) {
         if (isInit) {
-            MPVLib.setOptionString("glsl-shaders", chain)
+            MPVLib.setOptionString("glsl-shaders", combinedChain)
         } else {
-            MPVLib.setPropertyString("glsl-shaders", chain)
+            MPVLib.setPropertyString("glsl-shaders", combinedChain)
         }
     } else {
         if (isInit) {
@@ -170,4 +207,9 @@ fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boo
             MPVLib.setPropertyString("glsl-shaders", "")
         }
     }
+}
+
+@Deprecated("Use applyGLSLShaders instead", ReplaceWith("applyGLSLShaders(prefs, manager, isInit)"))
+fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
+    applyGLSLShaders(prefs, manager, isInit)
 }
