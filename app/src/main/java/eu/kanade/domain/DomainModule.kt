@@ -1,6 +1,7 @@
 package eu.kanade.domain
 
 import eu.kanade.domain.anime.interactor.SetAnimeViewerFlags
+import eu.kanade.domain.anime.interactor.SyncSeasonsWithSource
 import eu.kanade.domain.anime.interactor.UpdateAnime
 import eu.kanade.domain.download.interactor.DeleteDownload
 import eu.kanade.domain.episode.interactor.SetSeenStatus
@@ -55,6 +56,7 @@ import tachiyomi.domain.anime.interactor.CalculateUserAffinity
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.interactor.ResetViewerFlags
 import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
+import tachiyomi.domain.anime.interactor.SetAnimeSeasonFlags
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.category.interactor.CreateCategoryWithName
 import tachiyomi.domain.category.interactor.DeleteCategory
@@ -141,11 +143,13 @@ class DomainModule : InjektModule {
         addFactory { GetUpcomingAnime(get()) }
         addFactory { ResetViewerFlags(get()) }
         addFactory { SetAnimeEpisodeFlags(get(), get()) }
+        addFactory { SetAnimeSeasonFlags(get()) }
         addFactory { FetchInterval(get()) }
         addFactory { SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
         addFactory { SetAnimeViewerFlags(get()) }
         addFactory { NetworkToLocalAnime(get()) }
         addFactory { UpdateAnime(get(), get()) }
+        addFactory { SyncSeasonsWithSource(get(), get(), get(), get(), get()) }
         addFactory { SetAnimeCategories(get()) }
         // addFactory { GetExcludedScanlators(get()) }
         // addFactory { SetExcludedScanlators(get()) }
@@ -170,6 +174,9 @@ class DomainModule : InjektModule {
         addFactory { UpdateEpisode(get()) }
         addFactory { SetSeenStatus(get(), get(), get(), get(), get()) }
         addFactory { ShouldUpdateDbEpisode() }
+        addFactory { tachiyomi.domain.season.interactor.GetAnimeSeasonsById(get()) }
+        addFactory { tachiyomi.domain.season.interactor.ShouldUpdateDbSeason() }
+        addFactory { tachiyomi.domain.season.interactor.SetAnimeDefaultSeasonFlags(get(), get(), get()) }
         addFactory { SyncEpisodesWithSource(get(), get(), get(), get(), get(), get(), get()) }
         // addFactory { GetAvailableScanlators(get()) }
         addFactory { FilterEpisodesForDownload(get(), get(), get(), get()) }

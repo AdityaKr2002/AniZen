@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
-data class BackupSource(
-    @ProtoNumber(1) var name: String = "",
-    @ProtoNumber(2) var sourceId: Long,
+data class BackupManga(
+    @ProtoNumber(1) var source: Long = 0,
+    @ProtoNumber(2) var url: String = "",
+    @ProtoNumber(3) var title: String = "",
 )

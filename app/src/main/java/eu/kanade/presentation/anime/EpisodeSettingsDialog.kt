@@ -33,6 +33,8 @@ import tachiyomi.presentation.core.components.RadioItem
 import tachiyomi.presentation.core.components.SortItem
 import tachiyomi.presentation.core.components.TriStateItem
 import tachiyomi.presentation.core.i18n.stringResource
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun EpisodeSettingsDialog(
@@ -216,6 +218,7 @@ private fun ColumnScope.DisplayPage(
         onClick = { onShowSummariesEnabled(showSummariesFlag) },
     )
 
+    val libraryPreferences: tachiyomi.domain.library.service.LibraryPreferences = Injekt.get()
     if (anime != null) {
         androidx.compose.material3.HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp),

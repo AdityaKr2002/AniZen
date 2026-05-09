@@ -1,0 +1,5 @@
+-- Add Animiru-style hierarchical season columns
+ALTER TABLE animes ADD COLUMN fetch_type INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE animes ADD COLUMN season_flags INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE animes ADD COLUMN background_url TEXT;
+ALTER TABLE animes ADD COLUMN background_last_modified INTEGER NOT NULL DEFAULT 0;

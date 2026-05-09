@@ -40,10 +40,12 @@ import tachiyomi.data.Animes
 import tachiyomi.data.Database
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.data.DateColumnAdapter
+import tachiyomi.data.FetchTypeColumnAdapter
 import tachiyomi.data.History
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.source.service.SourceManager
+
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.source.localanime.image.LocalAnimeSourceCoverManager
 import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
@@ -93,12 +95,14 @@ class AppModule(val app: Application) : InjektModule {
                 animesAdapter = Animes.Adapter(
                     genreAdapter = StringListColumnAdapter,
                     update_strategyAdapter = UpdateStrategyColumnAdapter,
+                    fetch_typeAdapter = FetchTypeColumnAdapter,
                 ),
                 activity_logAdapter = Activity_log.Adapter(
                     timestampAdapter = DateColumnAdapter,
                 ),
             )
         }
+
 
         addSingletonFactory<DatabaseHandler> {
             AndroidDatabaseHandler(

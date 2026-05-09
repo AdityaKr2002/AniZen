@@ -5,6 +5,7 @@ import android.net.Uri
 import eu.kanade.tachiyomi.data.backup.BackupDecoder
 import eu.kanade.tachiyomi.data.backup.BackupNotifier
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
+import eu.kanade.tachiyomi.data.backup.models.BackupAnimeSource
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupCustomButtons
 import eu.kanade.tachiyomi.data.backup.models.BackupExtension
@@ -73,14 +74,12 @@ class BackupRestorer(
         val backup = BackupDecoder(context).decode(uri)
 
         // SY -->
-        val backupAnime = backup.backupAnime + backup.backupManga + backup.backupAnimeModern
-        val backupAnimeCategories = backup.backupAnimeCategories + backup.backupCategories + backup.backupCategoriesModern
+        val backupAnime = backup.backupAnime
+        val backupAnimeCategories = backup.backupCategories
         // SY <--
 
         // Store source mapping for error messages
-        val backupAnimeMaps = backup.backupSources + backup.backupMangaSources + backup.backupSourcesModern +
-            backup.backupBrokenAnimeSources.map { it.toBackupSource() } +
-            backup.backupBrokenMangaSources.map { it.toBackupSource() }
+        val backupAnimeMaps = backup.backupSources
         animeSourceMapping = backupAnimeMaps.associate { it.sourceId to it.name }
 
         if (options.libraryEntries) {
@@ -93,7 +92,7 @@ class BackupRestorer(
             restoreAmount += 1
         }
         if (options.extensionRepoSettings) {
-            restoreAmount += (backup.backupAnimeExtensionRepo + backup.backupExtensionRepoModern).size
+            restoreAmount += backup.backupExtensionRepo.size
         }
         if (options.customButtons) {
             restoreAmount += 1
@@ -121,13 +120,13 @@ class BackupRestorer(
                 restoreAnime(backupAnime, if (options.categories) backupAnimeCategories else emptyList())
             }
             if (options.extensionRepoSettings) {
-                restoreExtensionRepos(backup.backupAnimeExtensionRepo + backup.backupExtensionRepoModern)
+                restoreExtensionRepos(backup.backupExtensionRepo)
             }
             if (options.customButtons) {
-                restoreCustomButtons(backup.backupCustomButton + backup.backupCustomButtonModern)
+                restoreCustomButtons(backup.backupCustomButton)
             }
             if (options.extensions) {
-                restoreExtensions(backup.backupExtensions + backup.backupExtensionsModern)
+                restoreExtensions(backup.backupExtensions)
             }
 
             // TODO: optionally trigger online library + tracker update
@@ -200,9 +199,9 @@ class BackupRestorer(
     }
 
     private fun CoroutineScope.restoreExtensionRepos(
-        backupAnimeExtensionRepo: List<BackupExtensionRepos>,
+        backupExtensionRepo: List<BackupExtensionRepos>,
     ) = launch {
-        backupAnimeExtensionRepo
+        backupExtensionRepo
             .forEach {
                 ensureActive()
 

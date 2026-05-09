@@ -98,11 +98,11 @@ class SyncManager(
         val backupAnime = backupCreator.backupAnimes(databaseAnime, backupOptions)
         val backup = Backup(
             backupAnime = backupAnime,
-            backupAnimeCategories = backupCreator.backupAnimeCategories(backupOptions),
+            backupCategories = backupCreator.backupAnimeCategories(backupOptions),
             backupSources = backupCreator.backupAnimeSources(backupAnime),
             backupPreferences = backupCreator.backupAppPreferences(backupOptions),
             backupSourcePreferences = backupCreator.backupSourcePreferences(backupOptions),
-            backupAnimeExtensionRepo = backupCreator.backupAnimeExtensionRepos(backupOptions),
+            backupExtensionRepo = backupCreator.backupAnimeExtensionRepos(backupOptions),
             backupExtensions = backupCreator.backupExtensions(backupOptions),
             backupCustomButton = backupCreator.backupCustomButtons(backupOptions),
         )
@@ -171,11 +171,11 @@ class SyncManager(
 
         val newSyncData = backup.copy(
             backupAnime = animeFilteredFavorites,
-            backupAnimeCategories = remoteBackup.backupAnimeCategories,
+            backupCategories = remoteBackup.backupCategories,
             backupSources = remoteBackup.backupSources,
             backupPreferences = remoteBackup.backupPreferences,
             backupSourcePreferences = remoteBackup.backupSourcePreferences,
-            backupAnimeExtensionRepo = remoteBackup.backupAnimeExtensionRepo,
+            backupExtensionRepo = remoteBackup.backupExtensionRepo,
             backupExtensions = remoteBackup.backupExtensions,
             backupCustomButton = remoteBackup.backupCustomButton,
         )

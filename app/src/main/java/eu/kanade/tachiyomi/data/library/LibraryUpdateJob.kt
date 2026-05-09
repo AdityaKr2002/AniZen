@@ -17,6 +17,9 @@ import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import eu.kanade.domain.anime.interactor.UpdateAnime
+import eu.kanade.domain.anime.interactor.SyncSeasonsWithSource
+import eu.kanade.tachiyomi.animesource.model.FetchType
+import tachiyomi.domain.season.interactor.GetAnimeSeasonsById
 import tachiyomi.domain.anime.model.toSAnime
 import eu.kanade.domain.episode.interactor.SyncEpisodesWithSource
 import eu.kanade.domain.sync.SyncPreferences
@@ -93,6 +96,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val getAnime: GetAnime = Injekt.get()
     private val updateAnime: UpdateAnime = Injekt.get()
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get()
+    private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get()
+    private val getAnimeSeasonsById: GetAnimeSeasonsById = Injekt.get()
     private val getTracks: GetTracks = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val filterEpisodesForDownload: FilterEpisodesForDownload = Injekt.get()
@@ -249,11 +254,32 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             // SY <--
         }
 
+        val includeSeasons = libraryPreferences.useHierarchicalSeasons().get()
+        val lastToUpdateWithSeasons = listToUpdate.flatMap { libAnime ->
+            when (libAnime.anime.fetchType) {
+                FetchType.Seasons -> {
+                    val list = mutableListOf(libAnime)
+                    if (includeSeasons) {
+                        val seasons = getAnimeSeasonsById.await(libAnime.anime.id)
+                        list.addAll(
+                            seasons
+                                .filter { s ->
+                                    s.anime.fetchType == FetchType.Episodes && !s.anime.favorite
+                                }
+                                .map { it.toLibraryAnime() }
+                        )
+                    }
+                    list
+                }
+                FetchType.Episodes -> listOf(libAnime)
+            }
+        }
+
         val restrictions = libraryPreferences.autoUpdateAnimeRestrictions.get()
         val skippedUpdates = mutableListOf<Pair<Anime, String?>>()
         val (_, fetchWindowUpperBound) = fetchInterval.getWindow(ZonedDateTime.now())
 
-        animeToUpdate = listToUpdate
+        animeToUpdate = lastToUpdateWithSeasons
             // SY -->
             .distinctBy { it.anime.id }
             // SY <--
@@ -447,11 +473,15 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             updateAnime.awaitUpdateFromSource(anime, networkAnime, manualFetch = false, coverCache)
         }
 
-        val episodes = source.getEpisodeList(anime.toSAnime())
-
-        // Get anime from database to account for if it was removed during the update and
-        // to get latest data so it doesn't get overwritten later on
         val dbAnime = getAnime.await(anime.id)?.takeIf { it.favorite } ?: return emptyList()
+
+        if (dbAnime.fetchType == FetchType.Seasons) {
+            val seasons = source.getSeasonList(dbAnime.toSAnime())
+            syncSeasonsWithSource.await(seasons, dbAnime, source, false, fetchWindow)
+            return emptyList()
+        }
+
+        val episodes = source.getEpisodeList(anime.toSAnime())
 
         return syncEpisodesWithSource.await(episodes, dbAnime, source, false, fetchWindow)
     }

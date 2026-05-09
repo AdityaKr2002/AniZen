@@ -44,6 +44,7 @@ import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.util.AniChartApi
 import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
@@ -56,6 +57,7 @@ import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -91,12 +93,16 @@ import tachiyomi.domain.track.interactor.GetTracksPerAnime
 import tachiyomi.domain.track.interactor.InsertTrack
 import tachiyomi.domain.track.model.Track
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
+import tachiyomi.domain.anime.interactor.SetAnimeSeasonFlags
 import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
 import tachiyomi.domain.anime.interactor.SetCustomAnimeInfo
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.AnimeUpdate
+import tachiyomi.domain.anime.model.NoSeasonsException
+import eu.kanade.domain.anime.interactor.SyncSeasonsWithSource
+import tachiyomi.domain.anime.model.SeasonDisplayMode
 import tachiyomi.domain.anime.model.CustomAnimeInfo
 import tachiyomi.domain.anime.model.MergedAnimeReference
 import tachiyomi.domain.anime.model.Season
@@ -166,11 +172,14 @@ class AnimeScreenModel(
     private val setCustomAnimeInfo: SetCustomAnimeInfo = Injekt.get(),
     private val getDuplicateLibraryAnime: GetDuplicateLibraryAnime = Injekt.get(),
     private val setAnimeEpisodeFlags: SetAnimeEpisodeFlags = Injekt.get(),
+    private val setAnimeSeasonFlags: SetAnimeSeasonFlags = Injekt.get(),
     private val setAnimeDefaultEpisodeFlags: SetAnimeDefaultEpisodeFlags = Injekt.get(),
+    private val setAnimeDefaultSeasonFlags: tachiyomi.domain.season.interactor.SetAnimeDefaultSeasonFlags = Injekt.get(),
     private val setSeenStatus: SetSeenStatus = Injekt.get(),
     private val updateEpisode: UpdateEpisode = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get(),
+    private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get<SyncSeasonsWithSource>(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
@@ -189,6 +198,7 @@ class AnimeScreenModel(
     private val calculateUserAffinity: CalculateUserAffinity = Injekt.get(),
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getSeasonsByAnimeId: tachiyomi.domain.anime.interactor.GetSeasonsByAnimeId = Injekt.get(),
+    private val getAnimeSeasonsById: tachiyomi.domain.season.interactor.GetAnimeSeasonsById = Injekt.get(),
     private val discoverSeasons: tachiyomi.domain.anime.interactor.DiscoverSeasons = Injekt.get(),
     private val getMergedAnimeById: tachiyomi.domain.anime.interactor.GetMergedAnimeById = Injekt.get(),
     private val fetchInterval: FetchInterval = Injekt.get(),
@@ -250,6 +260,9 @@ class AnimeScreenModel(
         hasPromptedToAddBefore: Boolean = this.hasPromptedToAddBefore,
         suggestions: ImmutableList<Anime> = this.suggestions,
         seasons: ImmutableList<Season> = this.seasons,
+        // AY -->
+        processedSeasonItems: ImmutableList<AnimeSeasonItem> = this.processedSeasonItems,
+        // <-- AY
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
@@ -518,6 +531,9 @@ class AnimeScreenModel(
             suggestions = suggestions,
             isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
+            // AY -->
+            processedSeasons = processedSeasons,
+            // <-- AY
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
@@ -552,6 +568,7 @@ class AnimeScreenModel(
 
             if (!initialAnime.favorite) {
                 setAnimeDefaultEpisodeFlags.await(initialAnime)
+                setAnimeDefaultSeasonFlags.await(initialAnime)
             }
 
             val animeSource = Injekt.get<SourceManager>().getOrStub(initialAnime.source)
@@ -561,15 +578,24 @@ class AnimeScreenModel(
                 TorrentServerUtils.setTrackersList()
             }
 
+            // Force children to Episode fetch type to prevent infinite grids
+            val anime = if (initialAnime.parentId != null && initialAnime.fetchType == FetchType.Seasons) {
+                val updated = initialAnime.copy(fetchType = FetchType.Episodes)
+                updateAnime.await(updated.toAnimeUpdate())
+                updated
+            } else {
+                initialAnime
+            }
+
             // Set initial state from database
             val savedSeason = libraryPreferences.lastSelectedSeason(animeId).get().takeIf { it.isNotEmpty() }
             mutableState.update {
                 State.Success.create(
-                    anime = initialAnime,
+                    anime = anime,
                     source = animeSource,
                     isFromSource = isFromSource,
                     episodes = initialEpisodes,
-                    isRefreshingData = !initialAnime.initialized || initialEpisodes.isEmpty(),
+                    isRefreshingData = !anime.initialized || initialEpisodes.isEmpty(),
                     dialog = null,
                     selectedSeason = savedSeason,
                 )
@@ -582,11 +608,15 @@ class AnimeScreenModel(
                 downloadManager.queueState,
             ) { animeAndEpisodes, _, _ -> animeAndEpisodes }
                 .onEach { (anime, episodes) ->
-                    val oldAnime = successState?.anime
+                    val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
+                        anime.copy(fetchType = FetchType.Episodes)
+                    } else {
+                        anime
+                    }
                     updateSuccessState {
                         it.copySuccess(
-                            anime = anime,
-                            episodes = episodes.toEpisodeListItems(anime),
+                            anime = correctedAnime,
+                            episodes = episodes.toEpisodeListItems(correctedAnime),
                         )
                     }
                     // If details were just loaded, retry suggestions
@@ -613,11 +643,8 @@ class AnimeScreenModel(
                 val needRefreshEpisode = initialEpisodes.isEmpty() || isLocal
 
                 if (needRefreshInfo || needRefreshEpisode) {
-                    val fetchFromSourceTasks = listOf(
-                        async { fetchAnimeFromSource() },
-                        async { fetchEpisodesFromSource() },
-                    )
-                    fetchFromSourceTasks.awaitAll()
+                    if (needRefreshInfo) fetchAnimeFromSource()
+                    fetchEpisodesFromSource()
                 }
             }
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
@@ -632,11 +659,8 @@ class AnimeScreenModel(
     fun fetchAllFromSource(manualFetch: Boolean = true) {
         screenModelScope.launch {
             updateSuccessState { it.copySuccess(isRefreshingData = true) }
-            val fetchFromSourceTasks = listOf(
-                async { fetchAnimeFromSource(manualFetch) },
-                async { fetchEpisodesFromSource(manualFetch) },
-            )
-            fetchFromSourceTasks.awaitAll()
+            fetchAnimeFromSource(manualFetch)
+            fetchEpisodesFromSource(manualFetch)
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
             successState?.let { updateAiringTime(it.anime, it.trackItems, manualFetch) }
         }
@@ -1186,8 +1210,62 @@ class AnimeScreenModel(
         }
     }
 
+    private suspend fun fetchSeasonsFromSource(manualFetch: Boolean = false) {
+        val state = successState ?: return
+        try {
+            withIOContext {
+                val seasons = state.source.getSeasonList(state.anime.toSAnime())
+
+                val newSeasons = syncSeasonsWithSource.await(
+                    seasons,
+                    state.anime,
+                    state.source,
+                    manualFetch,
+                )
+
+                if (libraryPreferences.useHierarchicalSeasons().get()) {
+                    fetchEpisodesFromSeasons(newSeasons, manualFetch)
+                }
+            }
+        } catch (e: Throwable) {
+            val message = if (e is NoSeasonsException) {
+                context.stringResource(MR.strings.no_episodes_error)
+            } else {
+                logcat(LogPriority.ERROR, e)
+                with(context) { e.formattedMessage }
+            }
+
+            screenModelScope.launch {
+                snackbarHostState.showSnackbar(message = message)
+            }
+            val newAnime = animeRepository.getAnimeById(animeId)
+            updateSuccessState { it.copySuccess(anime = newAnime, isRefreshingData = false) }
+        }
+    }
+
+    private suspend fun CoroutineScope.fetchEpisodesFromSeasons(seasons: List<Anime>, manualFetch: Boolean) {
+        val state = successState ?: return
+
+        val fetch: suspend (Anime) -> Unit = { s ->
+            try {
+                val episodes = state.source.getEpisodeList(s.toSAnime())
+                syncEpisodesWithSource.await(episodes, s, state.source, manualFetch)
+            } catch (e: Throwable) {
+                logcat(LogPriority.ERROR, e)
+            }
+        }
+
+        seasons.forEach { fetch(it) }
+    }
+
     private suspend fun fetchEpisodesFromSource(manualFetch: Boolean = false) {
         val state = successState ?: return
+
+        if (state.anime.fetchType == FetchType.Seasons) {
+            fetchSeasonsFromSource(manualFetch)
+            return
+        }
+
         try {
             withIOContext {
                 val episodes = state.source.getEpisodeList(state.anime.toSAnime())
@@ -1227,8 +1305,26 @@ class AnimeScreenModel(
         }
     }
 
-    fun getNextUnseenEpisode(): Episode? {
+    suspend fun getNextUnseenEpisode(season: tachiyomi.domain.anime.model.SeasonAnime): Episode? {
+        val episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+        return episodes.getNextUnseen(season.anime, downloadManager)
+    }
+
+    suspend fun getNextUnseenEpisode(): Episode? {
         val successState = successState ?: return null
+        if (successState.anime.fetchType == FetchType.Seasons) {
+            val seasons = animeRepository.getAnimeSeasonsById(animeId)
+            val lastSeenSeason = seasons
+                .filter { it.seenCount > 0 }
+                .maxByOrNull { it.lastSeen } ?: seasons.firstOrNull()
+
+            if (lastSeenSeason != null) {
+                val episodes = getAnimeAndEpisodes.awaitChapters(lastSeenSeason.anime.id)
+                return episodes.getNextUnseen(lastSeenSeason.anime, downloadManager)
+            }
+            return null
+        }
+
         return successState.episodes.getNextUnseen(
             anime = successState.anime,
             seasonName = successState.selectedSeason.takeIf { successState.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs },
@@ -1436,6 +1532,175 @@ class AnimeScreenModel(
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetDisplayMode(anime, mode) }
     }
 
+    // AY -->
+    fun setSeasonDownloadedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_DOWNLOADED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_DOWNLOADED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDownloadedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonUnseenFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_UNSEEN
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_SEEN
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetUnseenFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonStartedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_STARTED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_STARTED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetStartedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonCompletedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_COMPLETED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_COMPLETED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetCompletedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonBookmarkedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_BOOKMARKED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_BOOKMARKED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetBookmarkedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonFillermarkedFilter(state: TriState) {
+        val anime = successState?.anime ?: return
+
+        val flag = when (state) {
+            TriState.DISABLED -> Anime.SHOW_ALL
+            TriState.ENABLED_IS -> Anime.SEASON_SHOW_FILLERMARKED
+            TriState.ENABLED_NOT -> Anime.SEASON_SHOW_NOT_FILLERMARKED
+        }
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetFillermarkedFilter(anime, flag)
+        }
+    }
+
+    fun setSeasonSorting(sort: Long) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetSortingModeOrFlipOrder(anime, sort)
+        }
+    }
+
+    fun setSeasonDisplayGridMode(mode: SeasonDisplayMode) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetGridMode(anime, mode)
+        }
+    }
+
+    fun setSeasonDisplayGridSize(size: Int) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetGridSize(anime, size)
+        }
+    }
+
+    fun setSeasonDownloadOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDownloadedOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonUnseenOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetUnseenOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonLocalOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetLocalOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonLangOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetLangOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonContinueOverlay(visible: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetContinueOverlay(anime, visible)
+        }
+    }
+
+    fun setSeasonDisplayMode(mode: Long) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            setAnimeSeasonFlags.awaitSetDisplayMode(anime, mode)
+        }
+    }
+
+    fun setSeasonCurrentSettingsAsDefault(applyToExisting: Boolean) {
+        val anime = successState?.anime ?: return
+
+        screenModelScope.launchNonCancellable {
+            libraryPreferences.setSeasonSettingsDefault(anime)
+            snackbarHostState.showSnackbar(
+                message = context.stringResource(MR.strings.season_settings_updated),
+            )
+        }
+    }
+    // <-- AY
+
     fun setSorting(sort: Long) {
         val anime = successState?.anime ?: return
         screenModelScope.launchNonCancellable { setAnimeEpisodeFlags.awaitSetSortingModeOrFlipOrder(anime, sort) }
@@ -1578,11 +1843,60 @@ class AnimeScreenModel(
                 ?.items.orEmpty()
         }.distinctUntilChanged()
 
-        getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
-            .onEach { seasons ->
-                updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
+        if (libraryPreferences.useHierarchicalSeasons().get()) {
+            screenModelScope.launchIO {
+                val anime = getAnime.await(animeId)
+                val parentId = anime?.parentId ?: animeId
+                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
+                    .onEach { seasonAnimes ->
+                        val seasons = seasonAnimes.map {
+                            tachiyomi.domain.anime.model.Season(
+                                anime = it.anime,
+                                seasonNumber = it.anime.seasonNumber ?: 0.0,
+                                isPrimary = it.anime.id == animeId,
+                            )
+                        }
+
+                        val anime = successState?.anime
+                        if (seasons.isEmpty() && anime?.fetchType == FetchType.Seasons) {
+                            screenModelScope.launch { fetchSeasonsFromSource() }
+                        }
+
+                        updateSuccessState {
+                            val currentAnime = it.anime
+                            it.copySuccess(
+                                seasons = seasons.toImmutableList(),
+                                // AY -->
+                                processedSeasonItems = seasonAnimes.toAnimeSeasonItems(currentAnime).toImmutableList(),
+                                // <-- AY
+                            )
+                        }
+                    }
+                    .launchIn(this)
             }
-            .launchIn(screenModelScope)
+        } else {
+            getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
+                .onEach { seasons ->
+                    updateSuccessState { it.copySuccess(seasons = seasons.toImmutableList()) }
+                }
+                .launchIn(screenModelScope)
+        }
+    }
+
+    private fun List<tachiyomi.domain.anime.model.SeasonAnime>.toAnimeSeasonItems(anime: Anime): List<AnimeSeasonItem> {
+        return map { seasonAnime ->
+            val itemAnime = seasonAnime.anime
+            AnimeSeasonItem(
+                seasonAnime = seasonAnime,
+                downloadCount = downloadManager.getDownloadCount(itemAnime).toLong(),
+                unseenCount = seasonAnime.unseenCount,
+                isLocal = itemAnime.isLocal(),
+                sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
+                showContinueOverlay = anime.seasonContinueOverlay &&
+                    seasonAnime.unseenCount > 0 &&
+                    itemAnime.fetchType == FetchType.Episodes,
+            )
+        }
     }
 
     private fun observeMergedAnime() {
@@ -1617,6 +1931,8 @@ class AnimeScreenModel(
         data object ChangeAnimeSkipIntro : Dialog
         data object ClearAnime : Dialog
         data object SettingsSheet : Dialog
+        data object SeasonSettingsSheet : Dialog
+        data object EpisodeSettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
     }
@@ -1631,7 +1947,14 @@ class AnimeScreenModel(
 
     fun dismissDialog() = updateSuccessState { it.copySuccess(dialog = null) }
     fun showDeleteEpisodeDialog(episodes: List<Episode>) = updateSuccessState { it.copySuccess(dialog = Dialog.DeleteEpisodes(episodes)) }
-    fun showSettingsDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.SettingsSheet) }
+    fun showSettingsDialog() {
+        updateSuccessState {
+            when (it.anime.fetchType) {
+                FetchType.Seasons -> it.copySuccess(dialog = Dialog.SeasonSettingsSheet)
+                else -> it.copySuccess(dialog = Dialog.EpisodeSettingsSheet)
+            }
+        }
+    }
     fun showTrackDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.TrackSheet) }
     fun showCoverDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.FullCover) }
     fun showEditAnimeInfoDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.EditAnimeInfo(it.anime)) }
@@ -1742,6 +2065,9 @@ class AnimeScreenModel(
             val isSuggestionsLoading: Boolean = true,
             val suggestionSections: ImmutableList<SuggestionSection> = persistentListOf(),
             val seasons: ImmutableList<Season> = persistentListOf(),
+            // AY -->
+            val processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
+            // <-- AY
             val availableSeasons: ImmutableList<String> = persistentListOf(),
             val selectedSeason: String? = null,
             val discoveryExpanded: Boolean = false,
@@ -1759,6 +2085,10 @@ class AnimeScreenModel(
                     isRefreshingData: Boolean,
                     dialog: Dialog?,
                     selectedSeason: String? = null,
+                    // AY -->
+                    seasons: ImmutableList<tachiyomi.domain.anime.model.Season> = persistentListOf(),
+                    processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
+                    // <-- AY
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime).toImmutableList()
                     val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
@@ -1976,6 +2306,10 @@ class AnimeScreenModel(
                         episodeToSeason = episodeToSeason,
                         showEpisodeSummary = anime.showSummaries(),
                         showEpisodeThumbnail = anime.showPreviews(),
+                        // AY -->
+                        seasons = seasons,
+                        processedSeasons = processedSeasons,
+                        // <-- AY
                     )
                 }
             }

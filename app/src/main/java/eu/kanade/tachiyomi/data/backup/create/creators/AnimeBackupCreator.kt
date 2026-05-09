@@ -1,10 +1,11 @@
 package eu.kanade.tachiyomi.data.backup.create.creators
 
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.data.backup.create.BackupOptions
 import eu.kanade.tachiyomi.data.backup.models.BackupAnime
 import eu.kanade.tachiyomi.data.backup.models.BackupEpisode
 import eu.kanade.tachiyomi.data.backup.models.BackupHistory
-import eu.kanade.tachiyomi.data.backup.models.backupAnimeTrackMapper
+import eu.kanade.tachiyomi.data.backup.models.backupTrackMapper
 import eu.kanade.tachiyomi.data.backup.models.backupEpisodeMapper
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.anime.model.Anime
@@ -38,7 +39,7 @@ class AnimeBackupCreator(
                     mapper = backupEpisodeMapper,
                 )
             }
-                .takeUnless(List<BackupEpisode>::isEmpty)
+                .takeUnless { it.isEmpty() }
                 ?.let { animeObject.episodes = it }
         }
 
@@ -51,7 +52,7 @@ class AnimeBackupCreator(
         }
 
         if (options.tracking) {
-            val tracks = handler.awaitList { anime_syncQueries.getTracksByAnimeId(anime.id, backupAnimeTrackMapper) }
+            val tracks = handler.awaitList { anime_syncQueries.getTracksByAnimeId(anime.id, backupTrackMapper) }
             if (tracks.isNotEmpty()) {
                 animeObject.tracking = tracks
             }
@@ -62,7 +63,7 @@ class AnimeBackupCreator(
             if (historyByAnimeId.isNotEmpty()) {
                 val history = historyByAnimeId.map { history ->
                     val episode = handler.awaitOne { episodesQueries.getEpisodeById(history.episodeId) }
-                    BackupHistory(episode.url, history.seenAt?.time ?: 0L)
+                    BackupHistory(url = episode.url, lastSeen = history.seenAt?.time ?: 0L)
                 }
                 if (history.isNotEmpty()) {
                     animeObject.history = history
@@ -76,22 +77,29 @@ class AnimeBackupCreator(
 
 private fun Anime.toBackupAnime() =
     BackupAnime(
-        id = this.id,
-        url = this.url,
-        title = this.title,
-        artist = this.artist,
-        author = this.author,
-        description = this.description,
-        genre = this.genre.orEmpty(),
-        status = this.status.toInt(),
-        thumbnailUrl = this.thumbnailUrl,
-        favorite = this.favorite,
         source = this.source,
-        dateAdded = this.dateAdded,
-        viewer_flags = this.viewerFlags.toInt(),
-        episodeFlags = this.episodeFlags.toInt(),
-        updateStrategy = this.updateStrategy,
-        lastModifiedAt = this.lastModifiedAt,
-        favoriteModifiedAt = this.favoriteModifiedAt,
-        version = this.version,
-    )
+        url = this.url,
+    ).apply {
+        title = this@toBackupAnime.title
+        artist = this@toBackupAnime.artist
+        author = this@toBackupAnime.author
+        description = this@toBackupAnime.description
+        genre = this@toBackupAnime.genre.orEmpty()
+        status = this@toBackupAnime.status.toInt()
+        thumbnailUrl = this@toBackupAnime.thumbnailUrl
+        favorite = this@toBackupAnime.favorite
+        dateAdded = this@toBackupAnime.dateAdded
+        viewer_flags = this@toBackupAnime.viewerFlags.toInt()
+        episodeFlags = this@toBackupAnime.episodeFlags.toInt()
+        updateStrategy = this@toBackupAnime.updateStrategy
+        lastModifiedAt = this@toBackupAnime.lastModifiedAt
+        favoriteModifiedAt = this@toBackupAnime.favoriteModifiedAt
+        version = this@toBackupAnime.version
+        
+        // AY -->
+        parentId = this@toBackupAnime.parentId
+        seasonNumber = this@toBackupAnime.seasonNumber ?: -1.0
+        seasonSourceOrder = this@toBackupAnime.seasonOrder ?: 0L
+        fetchType = FetchType.Episodes
+        // <-- AY
+    }

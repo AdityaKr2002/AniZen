@@ -125,8 +125,13 @@ class AnimeScreen(
 
         val isHttpSource = remember { successState.source is HttpSource }
 
-        LaunchedEffect(successState.anime, screenModel.source) {
-            if (isHttpSource) {
+        LaunchedEffect(successState.isRefreshingData) {
+            if (successState.isRefreshingData) {
+                screenModel.fetchAllFromSource(manualFetch = false)
+            }
+        }
+
+        LaunchedEffect(successState.anime, screenModel.source) {            if (isHttpSource) {
                 try {
                     withIOContext {
                         assistUrl = getAnimeUrl(screenModel.anime, screenModel.source)
@@ -196,10 +201,15 @@ class AnimeScreen(
                 onTagSearch = { scope.launch { performGenreSearch(navigator, it, screenModel.source!!) } },
                 onFilterButtonClicked = screenModel::showSettingsDialog,
                 onRefresh = screenModel::fetchAllFromSource,
-                onContinueWatching = {
+                onContinueWatching = { season ->
                     scope.launchIO {
                         val extPlayer = screenModel.alwaysUseExternalPlayer
-                        continueWatching(context, screenModel.getNextUnseenEpisode(), extPlayer)
+                        val episode = if (season != null) {
+                            screenModel.getNextUnseenEpisode(season)
+                        } else {
+                            screenModel.getNextUnseenEpisode()
+                        }
+                        continueWatching(context, episode, extPlayer)
                     }
                 },
                 onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
@@ -235,9 +245,12 @@ class AnimeScreen(
                 onLocalScoreClicked = screenModel::showLocalScoreDialog,
                 onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf { successState.anime.favorite },
                 onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
+                onSettingsClicked = screenModel::showSettingsDialog,
                 onSeasonSelected = screenModel::onSeasonSelected,
-            )
-
+                // AY -->
+                onSeasonClicked = { navigator.push(AnimeScreen(it.anime.id)) },
+                // <-- AY
+                )
             val onDismissRequest = {
                 screenModel.dismissDialog()
             }
@@ -401,6 +414,45 @@ class AnimeScreen(
                         onConfirm = { newScore, newStatus ->
                             screenModel.setLocalTrack(score = newScore, status = newStatus)
                         }
+                    )
+                }
+
+                is AnimeScreenModel.Dialog.SeasonSettingsSheet -> {
+                    eu.kanade.presentation.anime.SeasonSettingsDialog(
+                        onDismissRequest = onDismissRequest,
+                        anime = successState.anime,
+                        onDownloadFilterChanged = screenModel::setSeasonDownloadedFilter,
+                        onUnseenFilterChanged = screenModel::setSeasonUnseenFilter,
+                        onStartedFilterChanged = screenModel::setSeasonStartedFilter,
+                        onCompletedFilterChanged = screenModel::setSeasonCompletedFilter,
+                        onBookmarkedFilterChanged = screenModel::setSeasonBookmarkedFilter,
+                        onFillermarkedFilterChanged = screenModel::setSeasonFillermarkedFilter,
+                        onSortModeChanged = screenModel::setSeasonSorting,
+                        onDisplayGridModeChanged = screenModel::setSeasonDisplayGridMode,
+                        onDisplayGridSizeChanged = screenModel::setSeasonDisplayGridSize,
+                        onOverlayDownloadedChanged = screenModel::setSeasonDownloadOverlay,
+                        onOverlayUnseenChanged = screenModel::setSeasonUnseenOverlay,
+                        onOverlayLocalChanged = screenModel::setSeasonLocalOverlay,
+                        onOverlayLangChanged = screenModel::setSeasonLangOverlay,
+                        onOverlayContinueChanged = screenModel::setSeasonContinueOverlay,
+                        onDisplayModeChanged = screenModel::setSeasonDisplayMode,
+                        onSetAsDefault = screenModel::setSeasonCurrentSettingsAsDefault,
+                    )
+                }
+
+                is AnimeScreenModel.Dialog.EpisodeSettingsSheet -> {
+                    EpisodeSettingsDialog(
+                        onDismissRequest = onDismissRequest,
+                        anime = successState.anime,
+                        onDownloadFilterChanged = screenModel::setDownloadedFilter,
+                        onUnseenFilterChanged = screenModel::setUnseenFilter,
+                        onBookmarkedFilterChanged = screenModel::setBookmarkedFilter,
+                        onFillermarkedFilterChanged = screenModel::setFillermarkedFilter,
+                        onSortModeChanged = screenModel::setSorting,
+                        onDisplayModeChanged = screenModel::setDisplayMode,
+                        onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
+                        onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
+                        onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
                     )
                 }
 

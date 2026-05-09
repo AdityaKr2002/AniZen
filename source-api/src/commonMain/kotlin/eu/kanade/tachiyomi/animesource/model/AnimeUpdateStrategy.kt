@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animesource.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Define the update strategy for a single [SAnime].
  * The strategy used will only take effect on the library update.
@@ -7,6 +9,7 @@ package eu.kanade.tachiyomi.animesource.model
  * @since extensions-lib 1.4
  */
 @Suppress("UNUSED")
+@Serializable
 enum class AnimeUpdateStrategy {
     /**
      * Series marked as always update will be included in the library

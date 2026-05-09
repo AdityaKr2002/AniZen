@@ -11,8 +11,8 @@ class BackupExtensionRepos(
     @ProtoNumber(3) var shortName: String?,
     @ProtoNumber(4) var website: String,
     @ProtoNumber(5) var signingKeyFingerprint: String,
-    @ProtoNumber(6) var isVisible: Boolean = true,
-    @ProtoNumber(7) var author: String? = null,
+    @ProtoNumber(100) var isVisible: Boolean = true,
+    @ProtoNumber(101) var author: String? = null,
 )
 
 val backupExtensionReposMapper = { repo: ExtensionRepo ->

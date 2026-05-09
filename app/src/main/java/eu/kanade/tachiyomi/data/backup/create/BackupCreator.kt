@@ -29,15 +29,12 @@ import okio.sink
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.anime.interactor.GetFavorites
-import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.util.Date
 import java.util.Locale
 
@@ -53,50 +50,49 @@ class BackupCreator(
     private val categoriesBackupCreator: CategoriesBackupCreator = CategoriesBackupCreator(),
     private val animeBackupCreator: AnimeBackupCreator = AnimeBackupCreator(),
     private val preferenceBackupCreator: PreferenceBackupCreator = PreferenceBackupCreator(),
-    private val extensionRepoBackupCreator: ExtensionRepoBackupCreator = ExtensionRepoBackupCreator(),
-    private val customButtonBackupCreator: CustomButtonBackupCreator = CustomButtonBackupCreator(),
     private val sourcesBackupCreator: SourcesBackupCreator = SourcesBackupCreator(),
     private val extensionsBackupCreator: ExtensionsBackupCreator = ExtensionsBackupCreator(context),
+    private val extensionRepoBackupCreator: ExtensionRepoBackupCreator = ExtensionRepoBackupCreator(),
+    private val customButtonBackupCreator: CustomButtonBackupCreator = CustomButtonBackupCreator(),
 ) {
 
-    suspend fun backup(uri: Uri, options: BackupOptions): String {
+    suspend fun createBackup(uri: Uri, options: BackupOptions): String {
         var file: UniFile? = null
         try {
             file = if (isAutoBackup) {
-                // Get dir of file and create
                 val dir = UniFile.fromUri(context, uri)
-                // Delete older backups
-                dir?.listFiles { _, filename -> FILENAME_REGEX.matches(filename) }
-                    .orEmpty()
-                    .sortedByDescending { it.name }
-                    .drop(MAX_AUTO_BACKUPS - 1)
-                    .forEach { it.delete() }
-                // Create new file to place backup
                 dir?.createFile(getFilename())
             } else {
                 UniFile.fromUri(context, uri)
             }
 
-            if (file == null || !file.isFile) {
-                throw IllegalStateException(context.stringResource(MR.strings.create_backup_file_error))
+            if (file == null || !file.exists()) {
+                throw Exception(context.stringResource(MR.strings.creating_backup_error))
             }
 
-            val nonFavoriteAnime = if (options.readEntries) {
+            val nonFavoriteAnime = if (options.seenEntries) {
                 animeRepository.getSeenAnimeNotInLibrary()
             } else {
                 emptyList()
             }
             val backupAnime = backupAnimes(getFavorites.await() + nonFavoriteAnime, options)
+            val backupCategories = backupAnimeCategories(options)
+            val backupSources = backupAnimeSources(backupAnime)
+            val backupExtensions = backupExtensions(options)
+            val backupExtensionRepo = backupAnimeExtensionRepos(options)
+            val backupCustomButton = backupCustomButtons(options)
 
             val backup = Backup(
-                backupAnimeModern = backupAnime,
-                backupCategoriesModern = backupAnimeCategories(options),
-                backupSourcesModern = backupAnimeSources(backupAnime),
                 backupPreferences = backupAppPreferences(options),
-                backupExtensionRepoModern = backupAnimeExtensionRepos(options),
-                backupCustomButtonModern = backupCustomButtons(options),
                 backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensionsModern = backupExtensions(options),
+
+                isLegacy = false,
+                backupAnime = backupAnime,
+                backupCategories = backupCategories,
+                backupSources = backupSources,
+                backupExtensions = backupExtensions,
+                backupExtensionRepo = backupExtensionRepo,
+                backupCustomButton = backupCustomButton,
             )
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
@@ -104,24 +100,13 @@ class BackupCreator(
                 throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
             }
 
-            file.openOutputStream()
-                .also {
-                    // Force overwrite old file
-                    (it as? FileOutputStream)?.channel?.truncate(0)
+            file.openOutputStream().use {
+                it.sink().gzip().buffer().use { gz ->
+                    gz.write(byteArray)
                 }
-                .sink().gzip().buffer().use {
-                    it.write(byteArray)
-                }
-            val fileUri = file.uri
-
-            // Make sure it's a valid backup file
-            BackupFileValidator(context).validate(fileUri)
-
-            if (isAutoBackup) {
-                backupPreferences.lastAutoBackupTimestamp().set(Instant.now().toEpochMilli())
             }
 
-            return fileUri.toString()
+            return file.uri.toString()
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             file?.delete()
@@ -129,16 +114,13 @@ class BackupCreator(
         }
     }
 
-    suspend fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
-        if (!options.categories) return emptyList()
-
-        return categoriesBackupCreator()
+    suspend fun backupAnimes(anime: List<tachiyomi.domain.anime.model.Anime>, options: BackupOptions): List<BackupAnime> {
+        return animeBackupCreator(anime, options)
     }
 
-    suspend fun backupAnimes(animes: List<Anime>, options: BackupOptions): List<BackupAnime> {
-        if (!options.libraryEntries) return emptyList()
-
-        return animeBackupCreator(animes, options)
+    suspend fun backupAnimeCategories(options: BackupOptions): List<BackupCategory> {
+        if (!options.categories) return emptyList()
+        return categoriesBackupCreator()
     }
 
     fun backupAnimeSources(animes: List<BackupAnime>): List<BackupSource> {
@@ -147,26 +129,22 @@ class BackupCreator(
 
     fun backupAppPreferences(options: BackupOptions): List<BackupPreference> {
         if (!options.appSettings) return emptyList()
+        return preferenceBackupCreator.createApp(options.privateSettings)
+    }
 
-        return preferenceBackupCreator.createApp(includePrivatePreferences = options.privateSettings)
+    fun backupSourcePreferences(options: BackupOptions): List<BackupSourcePreferences> {
+        if (!options.sourceSettings) return emptyList()
+        return preferenceBackupCreator.createSource(options.privateSettings)
     }
 
     suspend fun backupAnimeExtensionRepos(options: BackupOptions): List<BackupExtensionRepos> {
         if (!options.extensionRepoSettings) return emptyList()
-
         return extensionRepoBackupCreator()
     }
 
     suspend fun backupCustomButtons(options: BackupOptions): List<BackupCustomButtons> {
         if (!options.customButton) return emptyList()
-
         return customButtonBackupCreator()
-    }
-
-    fun backupSourcePreferences(options: BackupOptions): List<BackupSourcePreferences> {
-        if (!options.sourceSettings) return emptyList()
-
-        return preferenceBackupCreator.createSource(includePrivatePreferences = options.privateSettings)
     }
 
     fun backupExtensions(options: BackupOptions): List<BackupExtension> {

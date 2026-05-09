@@ -8,26 +8,30 @@ import tachiyomi.domain.episode.model.Episode
 data class BackupEpisode(
     // in 1.x some of these values have different names
     // url is called key in 1.x
-    @ProtoNumber(1) var url: String = "",
-    @ProtoNumber(2) var name: String = "",
+    @ProtoNumber(1) var url: String,
+    @ProtoNumber(2) var name: String,
     @ProtoNumber(3) var scanlator: String? = null,
     @ProtoNumber(4) var seen: Boolean = false,
     @ProtoNumber(5) var bookmark: Boolean = false,
-    // AM (FILLERMARK) -->
-    @ProtoNumber(15) var fillermark: Boolean = false,
-    // <-- AM (FILLERMARK)
-    // lastPageRead is called progress in 1.x
+    // lastSecondSeen is called progress in 1.x
     @ProtoNumber(6) var lastSecondSeen: Long = 0,
+    // AY -->
     @ProtoNumber(16) var totalSeconds: Long = 0,
+    // <-- AY
     @ProtoNumber(7) var dateFetch: Long = 0,
     @ProtoNumber(8) var dateUpload: Long = 0,
     // episodeNumber is called number is 1.x
     @ProtoNumber(9) var episodeNumber: Float = 0F,
     @ProtoNumber(10) var sourceOrder: Long = 0,
-    @ProtoNumber(17) var summary: String? = null,
-    @ProtoNumber(18) var previewUrl: String? = null,
     @ProtoNumber(11) var lastModifiedAt: Long = 0,
     @ProtoNumber(12) var version: Long = 0,
+
+    // AY -->
+    // Aniyomi specific values
+    @ProtoNumber(501) var fillermark: Boolean = false,
+    @ProtoNumber(502) var summary: String? = null,
+    @ProtoNumber(503) var previewUrl: String? = null,
+    // <-- AY
 ) {
     fun toEpisodeImpl(): Episode {
         return Episode.create().copy(
@@ -35,15 +39,19 @@ data class BackupEpisode(
             name = this@BackupEpisode.name,
             episodeNumber = this@BackupEpisode.episodeNumber.toDouble(),
             scanlator = this@BackupEpisode.scanlator,
+            // AY -->
             summary = this@BackupEpisode.summary,
             previewUrl = this@BackupEpisode.previewUrl,
+            // <-- AY
             seen = this@BackupEpisode.seen,
             bookmark = this@BackupEpisode.bookmark,
-            // AM (FILLERMARK) -->
+            // AY -->
             fillermark = this@BackupEpisode.fillermark,
-            // <-- AM (FILLERMARK)
+            // <-- AY
             lastSecondSeen = this@BackupEpisode.lastSecondSeen,
+            // AY -->
             totalSeconds = this@BackupEpisode.totalSeconds,
+            // <-- AY
             dateFetch = this@BackupEpisode.dateFetch,
             dateUpload = this@BackupEpisode.dateUpload,
             sourceOrder = this@BackupEpisode.sourceOrder,
@@ -61,9 +69,7 @@ val backupEpisodeMapper = {
         scanlator: String?,
         seen: Boolean,
         bookmark: Boolean,
-        // AM (FILLERMARK) -->
         fillermark: Boolean,
-        // <-- AM (FILLERMARK)
         lastSecondSeen: Long,
         totalSeconds: Long,
         episodeNumber: Double,
@@ -85,9 +91,7 @@ val backupEpisodeMapper = {
         previewUrl = previewUrl,
         seen = seen,
         bookmark = bookmark,
-        // AM (FILLERMARK) -->
         fillermark = fillermark,
-        // <-- AM (FILLERMARK)
         lastSecondSeen = lastSecondSeen,
         totalSeconds = totalSeconds,
         dateFetch = dateFetch,

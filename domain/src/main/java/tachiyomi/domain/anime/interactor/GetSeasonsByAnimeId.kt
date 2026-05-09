@@ -19,7 +19,7 @@ class GetSeasonsByAnimeId(
         val anime = animeRepository.getAnimeById(animeId) ?: return emptyList()
         
         // 1. Get real hierarchical seasons from DB
-        val dbSeasons = animeRepository.getSeasonsByParentId(anime.parentId ?: anime.id)
+        val dbSeasons = animeRepository.getAnimeSeasonsById(anime.parentId ?: anime.id).map { it.anime }
         if (dbSeasons.isNotEmpty()) {
             return dbSeasons.map {
                 Season(
@@ -65,17 +65,17 @@ class GetSeasonsByAnimeId(
         val parentId = anime.parentId ?: anime.id
         
         val animeFlow = animeRepository.getAnimeByIdAsFlow(animeId)
-        val dbSeasonsFlow = animeRepository.getSeasonsByParentIdAsFlow(parentId)
+        val dbSeasonsFlow = animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
         val mergedAnimesFlow = animeMergeRepository.subscribeMergedAnimeById(animeId)
         val referencesFlow = animeMergeRepository.subscribeReferencesById(animeId)
 
         val flow = if (virtualSeasonsFlow != null) {
             combine(animeFlow, dbSeasonsFlow, mergedAnimesFlow, referencesFlow, virtualSeasonsFlow) { a, db, merged, refs, virtual ->
-                mapToSeasons(a, db, merged, refs, virtual)
+                mapToSeasons(a, db.map { it.anime }, merged, refs, virtual)
             }
         } else {
             combine(animeFlow, dbSeasonsFlow, mergedAnimesFlow, referencesFlow) { a, db, merged, refs ->
-                mapToSeasons(a, db, merged, refs, emptyList())
+                mapToSeasons(a, db.map { it.anime }, merged, refs, emptyList())
             }
         }
         emitAll(flow)

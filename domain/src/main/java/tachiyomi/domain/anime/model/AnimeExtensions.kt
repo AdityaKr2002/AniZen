@@ -1,5 +1,6 @@
 package tachiyomi.domain.anime.model
 
+import eu.kanade.tachiyomi.animesource.model.SAnime as SAnimeSource
 import eu.kanade.tachiyomi.source.model.SAnime
 
 fun Anime.toSAnime(): SAnime = SAnime.create().also {
@@ -14,7 +15,7 @@ fun Anime.toSAnime(): SAnime = SAnime.create().also {
     it.initialized = initialized
 }
 
-fun SAnime.toDomainAnime(sourceId: Long): Anime {
+fun SAnimeSource.toDomainAnime(sourceId: Long): Anime {
     return Anime.create().copy(
         url = url,
         // SY -->
@@ -23,7 +24,7 @@ fun SAnime.toDomainAnime(sourceId: Long): Anime {
         ogAuthor = author,
         ogThumbnailUrl = thumbnail_url,
         ogDescription = description,
-        ogGenre = getGenres(),
+        ogGenre = genre?.split(", ")?.map { it.trim() },
         ogStatus = status.toLong(),
         // SY <--
         updateStrategy = update_strategy,
@@ -31,3 +32,5 @@ fun SAnime.toDomainAnime(sourceId: Long): Anime {
         source = sourceId,
     )
 }
+
+fun Anime.isLocal(): Boolean = source == 0L

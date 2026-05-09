@@ -295,8 +295,54 @@ class LibraryPreferences(
     fun groupLibraryBy() = preferenceStore.getInt("group_anime_library_by", LibraryGroup.BY_DEFAULT)
     // SY <--
 
+    fun useHierarchicalSeasons() = preferenceStore.getBoolean("use_hierarchical_seasons", false)
+
     fun userAffinityMap() = preferenceStore.getString("user_affinity_map", "{}")
     fun lastAffinityUpdate() = preferenceStore.getLong("last_affinity_update", 0L)
+
+    // AY -->
+    val filterSeasonByDownload = preferenceStore.getLong("pref_filter_season_by_download_v2", Anime.SHOW_ALL)
+    val filterSeasonByUnseen = preferenceStore.getLong("pref_filter_season_by_unseen_v2", Anime.SHOW_ALL)
+    val filterSeasonByStarted = preferenceStore.getLong("pref_filter_season_by_started_v2", Anime.SHOW_ALL)
+    val filterSeasonByCompleted = preferenceStore.getLong("pref_filter_season_by_completed_v2", Anime.SHOW_ALL)
+    val filterSeasonByBookmarked = preferenceStore.getLong("pref_filter_season_by_bookmarked_v2", Anime.SHOW_ALL)
+    val filterSeasonByFillermarked = preferenceStore.getLong("pref_filter_season_by_fillermarked_v2", Anime.SHOW_ALL)
+
+    val sortSeasonBySourceOrNumber = preferenceStore.getLong("pref_sort_season_by_source_or_number_v2", Anime.SEASON_SORT_SEASON)
+    val sortSeasonByAscendingOrDescending = preferenceStore.getLong("pref_sort_season_by_ascending_or_descending_v2", Anime.SEASON_SORT_ASC)
+
+    val seasonDisplayGridMode = preferenceStore.getLong("pref_season_display_grid_mode_v2", 0L)
+    val seasonDisplayGridSize = preferenceStore.getInt("pref_season_display_grid_size_v2", 0)
+
+    val seasonDownloadOverlay = preferenceStore.getBoolean("pref_season_download_overlay_v2", false)
+    val seasonUnseenOverlay = preferenceStore.getBoolean("pref_season_unseen_overlay_v2", true)
+    val seasonLocalOverlay = preferenceStore.getBoolean("pref_season_local_overlay_v2", true)
+    val seasonLangOverlay = preferenceStore.getBoolean("pref_season_lang_overlay_v2", false)
+    val seasonContinueOverlay = preferenceStore.getBoolean("pref_season_continue_overlay_v2", true)
+
+    val seasonDisplayMode = preferenceStore.getLong("pref_season_display_mode_v2", Anime.SEASON_DISPLAY_MODE_NUMBER)
+
+    fun setSeasonSettingsDefault(anime: Anime) {
+        filterSeasonByDownload.set(anime.seasonDownloadedFilterRaw)
+        filterSeasonByUnseen.set(anime.seasonUnseenFilterRaw)
+        filterSeasonByStarted.set(anime.seasonStartedFilterRaw)
+        filterSeasonByCompleted.set(anime.seasonCompletedFilterRaw)
+        filterSeasonByBookmarked.set(anime.seasonBookmarkedFilterRaw)
+        filterSeasonByFillermarked.set(anime.seasonFillermarkedFilterRaw)
+        sortSeasonBySourceOrNumber.set(anime.seasonSorting)
+        sortSeasonByAscendingOrDescending.set(
+            if (anime.seasonSortDescending()) Anime.SEASON_SORT_DESC else Anime.SEASON_SORT_ASC,
+        )
+        seasonDisplayGridMode.set(tachiyomi.domain.anime.model.SeasonDisplayMode.toLong(anime.seasonDisplayGridMode))
+        seasonDisplayGridSize.set(anime.seasonDisplayGridSize)
+        seasonDownloadOverlay.set(anime.seasonDownloadedOverlay)
+        seasonUnseenOverlay.set(anime.seasonUnseenOverlay)
+        seasonLocalOverlay.set(anime.seasonLocalOverlay)
+        seasonLangOverlay.set(anime.seasonLangOverlay)
+        seasonContinueOverlay.set(anime.seasonContinueOverlay)
+        seasonDisplayMode.set(anime.seasonDisplayMode)
+    }
+    // <-- AY
 
     companion object {
         const val DEVICE_ONLY_ON_WIFI = "wifi"
