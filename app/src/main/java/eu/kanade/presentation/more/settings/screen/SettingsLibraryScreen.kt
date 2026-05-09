@@ -275,11 +275,6 @@ object SettingsLibraryScreen : SearchableSettings {
                     pref = libraryPreferences.showEpisodeThumbnail(),
                     title = stringResource(MR.strings.pref_show_episode_thumbnail),
                 ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = libraryPreferences.useHierarchicalSeasons(),
-                    title = "Use hierarchical seasons",
-                    subtitle = "Treat seasons as separate linked entries (Animiru style)",
-                ),
                 Preference.PreferenceItem.ListPreference(
                     pref = libraryPreferences.seasonGroupingMode(),
                     title = "Season grouping",
