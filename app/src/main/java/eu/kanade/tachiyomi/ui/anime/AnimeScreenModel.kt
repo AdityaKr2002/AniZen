@@ -86,7 +86,6 @@ import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.source.NoResultsException
-import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodes
 import tachiyomi.domain.track.interactor.GetTracks
 import eu.kanade.domain.source.service.SourcePreferences
 import tachiyomi.domain.track.interactor.GetTracksPerAnime
@@ -369,7 +368,6 @@ class AnimeScreenModel(
                         val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                             (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
                         
-                        // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
                         val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
 
                         val prevYear = if (prevItem.episode.dateUpload > 0) {
