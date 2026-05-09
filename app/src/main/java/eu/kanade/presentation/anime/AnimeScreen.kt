@@ -710,9 +710,8 @@ private fun AnimeScreenSmallImpl(
                                     val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) {
                                         1
                                     } else {
-                                        state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 3
-                                    }
-                                    val seasons = state.processedSeasons
+                                        state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 2
+                                    }                                    val seasons = state.processedSeasons
                                     if (columns == 1) {
                                         items(
                                             items = seasons,
