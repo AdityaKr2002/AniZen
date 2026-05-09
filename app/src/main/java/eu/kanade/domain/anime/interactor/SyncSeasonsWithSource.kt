@@ -78,6 +78,7 @@ class SyncSeasonsWithSource(
                         ogTitle = season.title,
                         seasonNumber = season.seasonNumber,
                         seasonOrder = season.seasonOrder,
+                        fetchType = eu.kanade.tachiyomi.animesource.model.FetchType.Episodes,
                     )
                     updatedSeasons.add(toChangeSeason)
                 }

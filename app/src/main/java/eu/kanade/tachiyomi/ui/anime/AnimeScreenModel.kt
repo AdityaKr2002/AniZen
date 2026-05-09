@@ -628,8 +628,16 @@ class AnimeScreenModel(
                         anime
                     }
 
-                    val seasonItems = seasonAnimes.toAnimeSeasonItems(correctedAnime)
-                    val seasons = seasonAnimes.map {
+                    val correctedSeasonAnimes = seasonAnimes.map {
+                        if (it.anime.parentId != null && it.anime.fetchType == FetchType.Seasons) {
+                            it.copy(anime = it.anime.copy(fetchType = FetchType.Episodes))
+                        } else {
+                            it
+                        }
+                    }
+
+                    val seasonItems = correctedSeasonAnimes.toAnimeSeasonItems(correctedAnime)
+                    val seasons = correctedSeasonAnimes.map {
                         tachiyomi.domain.anime.model.Season(
                             anime = it.anime,
                             seasonNumber = it.anime.seasonNumber ?: 0.0,
@@ -1786,7 +1794,7 @@ class AnimeScreenModel(
                     
                     range.forEach {
                         val inbetweenItem = processedEpisodes[it]
-                        if (!inbetweenItem.selected) {
+                        if (!it.selected) {
                             selectedEpisodeIds.add(inbetweenItem.id)
                         }
                     }
@@ -1866,7 +1874,7 @@ class AnimeScreenModel(
                 sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
                 showContinueOverlay = anime.seasonContinueOverlay &&
                     seasonAnime.unseenCount > 0 &&
-                    itemAnime.fetchType == FetchType.Episodes,
+                    (itemAnime.fetchType == FetchType.Episodes || itemAnime.parentId != null),
             )
         }
     }
