@@ -689,7 +689,20 @@ private fun AnimeScreenSmallImpl(
                             }
                             
                             if (state.anime.fetchType == FetchType.Seasons) {
-                                val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) 1 else 3
+                                item(key = "season-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                    EpisodeHeader(
+                                        enabled = !isAnySelected,
+                                        episodeCount = state.processedSeasons.size,
+                                        missingEpisodeCount = 0, // seasons don't have missing count yet
+                                        onClick = onFilterClicked,
+                                        fetchType = FetchType.Seasons,
+                                    )
+                                }
+                                val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) {
+                                    1
+                                } else {
+                                    state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 3
+                                }
                                 val seasons = state.processedSeasons
                                 if (columns == 1) {
                                     items(
@@ -1184,7 +1197,20 @@ fun AnimeScreenLargeImpl(
                                     }
                                     
                                     if (state.anime.fetchType == FetchType.Seasons) {
-                                        val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) 1 else 5
+                                        item(key = "season-header-large", contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                            EpisodeHeader(
+                                                enabled = !isAnySelected,
+                                                episodeCount = state.processedSeasons.size,
+                                                missingEpisodeCount = 0,
+                                                onClick = onFilterButtonClicked,
+                                                fetchType = FetchType.Seasons,
+                                            )
+                                        }
+                                        val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) {
+                                            1
+                                        } else {
+                                            state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 5
+                                        }
                                         val seasons = state.processedSeasons
                                         if (columns == 1) {
                                             items(

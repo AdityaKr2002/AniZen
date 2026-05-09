@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.SECONDARY_ALPHA
 import tachiyomi.presentation.core.components.material.padding
@@ -24,6 +25,7 @@ fun EpisodeHeader(
     missingEpisodeCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    fetchType: FetchType = FetchType.Episodes,
 ) {
     Column(
         modifier = modifier
@@ -39,24 +41,32 @@ fun EpisodeHeader(
             text = if (episodeCount == null) {
                 stringResource(MR.strings.episodes)
             } else {
-                pluralStringResource(MR.plurals.anime_num_episodes, count = episodeCount, episodeCount)
+                val pluralCount = when (fetchType) {
+                    FetchType.Seasons -> MR.plurals.anime_num_seasons
+                    FetchType.Episodes -> MR.plurals.anime_num_episodes
+                }
+                pluralStringResource(pluralCount, count = episodeCount, episodeCount)
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
 
-        MissingEpisodesWarning(missingEpisodeCount)
+        MissingEpisodesWarning(fetchType, missingEpisodeCount)
     }
 }
 
 @Composable
-private fun MissingEpisodesWarning(count: Int) {
+private fun MissingEpisodesWarning(fetchType: FetchType, count: Int) {
     if (count == 0) {
         return
     }
 
+    val pluralRes = when (fetchType) {
+        FetchType.Seasons -> MR.plurals.missing_items // fallback since missing_seasons might not exist
+        FetchType.Episodes -> MR.plurals.missing_items
+    }
     Text(
-        text = pluralStringResource(MR.plurals.missing_items, count = count, count),
+        text = pluralStringResource(pluralRes, count = count, count),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         style = MaterialTheme.typography.bodySmall,

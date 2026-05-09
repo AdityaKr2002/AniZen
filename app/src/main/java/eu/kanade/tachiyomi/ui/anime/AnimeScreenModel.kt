@@ -576,15 +576,24 @@ class AnimeScreenModel(
                 TorrentServerUtils.setTrackersList()
             }
 
+            // Force children to Episode fetch type to prevent infinite grids
+            val anime = if (initialAnime.parentId != null && initialAnime.fetchType == FetchType.Seasons) {
+                val updated = initialAnime.copy(fetchType = FetchType.Episodes)
+                updateAnime.await(updated.toAnimeUpdate())
+                updated
+            } else {
+                initialAnime
+            }
+
             // Set initial state from database
             val savedSeason = libraryPreferences.lastSelectedSeason(animeId).get().takeIf { it.isNotEmpty() }
             mutableState.update {
                 State.Success.create(
-                    anime = initialAnime,
+                    anime = anime,
                     source = animeSource,
                     isFromSource = isFromSource,
                     episodes = initialEpisodes,
-                    isRefreshingData = !initialAnime.initialized || initialEpisodes.isEmpty(),
+                    isRefreshingData = !anime.initialized || initialEpisodes.isEmpty(),
                     dialog = null,
                     selectedSeason = savedSeason,
                 )
@@ -597,11 +606,15 @@ class AnimeScreenModel(
                 downloadManager.queueState,
             ) { animeAndEpisodes, _, _ -> animeAndEpisodes }
                 .onEach { (anime, episodes) ->
-                    val oldAnime = successState?.anime
+                    val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
+                        anime.copy(fetchType = FetchType.Episodes)
+                    } else {
+                        anime
+                    }
                     updateSuccessState {
                         it.copySuccess(
-                            anime = anime,
-                            episodes = episodes.toEpisodeListItems(anime),
+                            anime = correctedAnime,
+                            episodes = episodes.toEpisodeListItems(correctedAnime),
                         )
                     }
                     // If details were just loaded, retry suggestions

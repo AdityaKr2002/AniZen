@@ -1641,4 +1641,8 @@
     <string name="season_settings_updated">Season settings updated</string>
     <string name="season_settings">Season settings</string>
     <string name="label_auto">Auto</string>
+    <plural name="anime_num_seasons">
+        <item quantity="one">%1$d season</item>
+        <item quantity="other">%1$d seasons</item>
+    </plural>
 </resources>

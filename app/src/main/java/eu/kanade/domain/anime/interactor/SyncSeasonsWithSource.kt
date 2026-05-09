@@ -41,7 +41,11 @@ class SyncSeasonsWithSource(
             .distinctBy { it.url }
             .mapIndexed { i, sAnime ->
                 networkToLocalAnime.await(sAnime.toDomainAnime(source.id))
-                    .copy(parentId = rootParentId, seasonOrder = i.toLong())
+                    .copy(
+                        parentId = rootParentId,
+                        seasonOrder = i.toLong(),
+                        fetchType = eu.kanade.tachiyomi.animesource.model.FetchType.Episodes,
+                    )
             }
 
         val dbSeasons = getAnimeSeasonsById.await(rootParentId)
