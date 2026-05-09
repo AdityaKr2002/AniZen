@@ -1794,7 +1794,7 @@ class AnimeScreenModel(
                     
                     range.forEach {
                         val inbetweenItem = processedEpisodes[it]
-                        if (!it.selected) {
+                        if (!inbetweenItem.selected) {
                             selectedEpisodeIds.add(inbetweenItem.id)
                         }
                     }
