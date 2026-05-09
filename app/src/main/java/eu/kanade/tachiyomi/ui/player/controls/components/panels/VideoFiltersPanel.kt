@@ -249,6 +249,7 @@ fun FiltersCard() {
                     MPVLib.setPropertyInt("saturation", 0)
                     MPVLib.setPropertyInt("gamma", 0)
                     MPVLib.setPropertyInt("hue", 0)
+                    MPVLib.setPropertyInt("sharpen", 0)
                 },
             ) {
                 Text(text = stringResource(MR.strings.action_reset))

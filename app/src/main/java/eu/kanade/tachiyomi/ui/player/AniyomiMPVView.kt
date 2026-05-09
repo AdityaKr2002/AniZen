@@ -249,7 +249,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         anime4kManager.initialize()
-        applyAnime4K(decoderPreferences, anime4kManager, isInit = true)
+        applyGLSLShaders(decoderPreferences, anime4kManager, isInit = true)
 
         MPVLib.setOptionString("msg-level", "all=" + if (networkPreferences.verboseLogging().get()) "v" else "warn")
 
@@ -487,7 +487,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             
             // Downgrade to Balanced
             decoderPreferences.anime4kQuality().set("BALANCED")
-            applyAnime4K(decoderPreferences, anime4kManager)
+            applyGLSLShaders(decoderPreferences, anime4kManager)
             PlayerStats.isAdaptiveDowngraded.value = true
             
             (context as? PlayerActivity)?.runOnUiThread {
