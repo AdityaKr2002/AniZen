@@ -445,13 +445,8 @@ private fun AnimeScreenSmallImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, state.processedSeasonItems, isAnySelected) {
-                if (isAnySelected) return@remember false
-                if (state.anime.fetchType == FetchType.Seasons) {
-                    false
-                } else {
-                    episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
-                }
+            val isFABVisible = remember(episodes, isAnySelected) {
+                !isAnySelected && episodes.fastAny { !it.episode.seen }
             }
             Scaffold(
                 hazeEnabled = false,
@@ -938,13 +933,8 @@ fun AnimeScreenLargeImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, state.processedSeasonItems, isAnySelected) {
-                if (isAnySelected) return@remember false
-                if (state.anime.fetchType == FetchType.Seasons) {
-                    false
-                } else {
-                    episodes.isEmpty() || episodes.fastAny { !it.episode.seen }
-                }
+            val isFABVisible = remember(episodes, isAnySelected) {
+                !isAnySelected && episodes.fastAny { !it.episode.seen }
             }
             Scaffold(
                 hazeEnabled = false,
