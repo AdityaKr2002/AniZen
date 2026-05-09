@@ -182,6 +182,7 @@ fun AnimeScreen(
     onLocalScoreClicked: () -> Unit,
     onEditIntervalClicked: (() -> Unit)?,
     onToggleDiscoveryExpansion: () -> Unit,
+    onSettingsClicked: (() -> Unit)?,
     onSeasonSelected: (String?) -> Unit,
     // AY -->
     onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
@@ -196,9 +197,6 @@ fun AnimeScreen(
     }
 
     val navigator = LocalNavigator.currentOrThrow
-    val onSettingsClicked: (() -> Unit)? = {
-        navigator.push(SourcePreferencesScreen(state.source.id))
-    }.takeIf { state.source is ConfigurableSource }
 
     val combinedItems = remember(state.suggestionSections) {
         state.suggestionSections.flatMap { it.items }
@@ -212,7 +210,6 @@ fun AnimeScreen(
     if (!isTabletUi) {
         AnimeScreenSmallImpl(
             state = state,
-            isFromSource = state.isFromSource,
             sourcePreferences = sourcePreferences,
             snackbarHostState = snackbarHostState,
             nextUpdate = nextUpdate,
@@ -269,7 +266,6 @@ fun AnimeScreen(
     } else {
         AnimeScreenLargeImpl(
             state = state,
-            isFromSource = state.isFromSource,
             sourcePreferences = sourcePreferences,
             snackbarHostState = snackbarHostState,
             nextUpdate = nextUpdate,
@@ -302,11 +298,12 @@ fun AnimeScreen(
             onDownloadActionClicked = onDownloadActionClicked,
             onEditCategoryClicked = onEditCategoryClicked,
             onEditNotesClicked = onEditNotesClicked,
-            changeAnimeSkipIntro = changeAnimeSkipIntro,
             onMigrateClicked = onMigrateClicked,
             onSuggestionsClicked = onSuggestionsClicked,
+            changeAnimeSkipIntro = changeAnimeSkipIntro,
             onEditInfoClicked = onEditInfoClicked,
             onClearAnimeClicked = onClearAnimeClicked,
+            onMergeClicked = onMergeClicked,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
             onMultiFillermarkClicked = onMultiFillermarkClicked,
             onMultiMarkAsSeenClicked = onMultiMarkAsSeenClicked,
@@ -316,11 +313,10 @@ fun AnimeScreen(
             onEpisodeSelected = onEpisodeSelected,
             onAllEpisodeSelected = onAllEpisodeSelected,
             onInvertSelection = onInvertSelection,
-            onSettingsClicked = onSettingsClicked,
-            onMergeClicked = onMergeClicked,
             onLocalScoreClicked = onLocalScoreClicked,
             onEditIntervalClicked = onEditIntervalClicked,
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
+            onSettingsClicked = onSettingsClicked,
             combinedItems = combinedItems,
         )
     }
@@ -330,7 +326,6 @@ fun AnimeScreen(
 @Composable
 private fun AnimeScreenSmallImpl(
     state: AnimeScreenModel.State.Success,
-    isFromSource: Boolean,
     sourcePreferences: SourcePreferences,
     snackbarHostState: SnackbarHostState,
     nextUpdate: Instant?,
@@ -495,7 +490,6 @@ private fun AnimeScreenSmallImpl(
                     )
                     AnimeToolbar(
                         title = state.anime.title,
-                        isFromSource = isFromSource,
                         titleAlphaProvider = { animatedTitleAlpha },
                         backgroundAlphaProvider = { animatedBgAlpha },
                         hasFilters = state.filterActive,
@@ -810,7 +804,6 @@ private fun AnimeScreenSmallImpl(
 @Composable
 fun AnimeScreenLargeImpl(
     state: AnimeScreenModel.State.Success,
-    isFromSource: Boolean,
     sourcePreferences: SourcePreferences,
     snackbarHostState: SnackbarHostState,
     nextUpdate: Instant?,
@@ -981,7 +974,6 @@ fun AnimeScreenLargeImpl(
                     AnimeToolbar(
                         modifier = Modifier.onSizeChanged { topBarHeight = it.height },
                         title = state.anime.title,
-                        isFromSource = isFromSource,
                         titleAlphaProvider = { if (isAnySelected) 1f else animatedTitleAlpha },
                         backgroundAlphaProvider = { animatedBgAlpha },
                         hasFilters = state.filterActive,
@@ -994,11 +986,11 @@ fun AnimeScreenLargeImpl(
                         onClickMigrate = onMigrateClicked,
                         onClickSuggestions = onSuggestionsClicked.takeIf { suggestionsInOverflow },
                         onClickEditNotes = onEditNotesClicked,
+                        onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
+                        onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
                         onClickSettings = onSettingsClicked,
                         onClickMerge = onMergeClicked,
                         changeAnimeSkipIntro = changeAnimeSkipIntro,
-                        onClickEditInfo = onEditInfoClicked.takeIf { state.anime.favorite },
-                        onClickClearAnime = onClearAnimeClicked.takeIf { state.anime.favorite },
                         actionModeCounter = selectedEpisodeCount,
                         onSelectAll = { onAllEpisodeSelected(true) },
                         onInvertSelection = { onInvertSelection() },
@@ -1063,8 +1055,8 @@ fun AnimeScreenLargeImpl(
                                     mergedSources = state.mergedSources,
                                     isRefreshing = state.isRefreshingData,
                                 )
+
                                 if (showSeasonsSection) {
-                                    val navigator = LocalNavigator.currentOrThrow
                                     AnimeSeasonSection(
                                         seasons = state.seasons,
                                         onSeasonClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(it)) },
