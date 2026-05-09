@@ -172,8 +172,8 @@ class AnimeScreenModel(
     private val setCustomAnimeInfo: SetCustomAnimeInfo = Injekt.get(),
     private val getDuplicateLibraryAnime: GetDuplicateLibraryAnime = Injekt.get(),
     private val setAnimeEpisodeFlags: SetAnimeEpisodeFlags = Injekt.get(),
-    private val setAnimeSeasonFlags: SetAnimeSeasonFlags = Injekt.get(),
     private val setAnimeDefaultEpisodeFlags: SetAnimeDefaultEpisodeFlags = Injekt.get(),
+    private val setAnimeDefaultSeasonFlags: tachiyomi.domain.season.interactor.SetAnimeDefaultSeasonFlags = Injekt.get(),
     private val setSeenStatus: SetSeenStatus = Injekt.get(),
     private val updateEpisode: UpdateEpisode = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
@@ -567,6 +567,7 @@ class AnimeScreenModel(
 
             if (!initialAnime.favorite) {
                 setAnimeDefaultEpisodeFlags.await(initialAnime)
+                setAnimeDefaultSeasonFlags.await(initialAnime)
             }
 
             val animeSource = Injekt.get<SourceManager>().getOrStub(initialAnime.source)

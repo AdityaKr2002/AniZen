@@ -176,6 +176,7 @@ class DomainModule : InjektModule {
         addFactory { ShouldUpdateDbEpisode() }
         addFactory { tachiyomi.domain.season.interactor.GetAnimeSeasonsById(get()) }
         addFactory { tachiyomi.domain.season.interactor.ShouldUpdateDbSeason() }
+        addFactory { tachiyomi.domain.season.interactor.SetAnimeDefaultSeasonFlags(get(), get(), get()) }
         addFactory { SyncEpisodesWithSource(get(), get(), get(), get(), get(), get(), get()) }
         // addFactory { GetAvailableScanlators(get()) }
         addFactory { FilterEpisodesForDownload(get(), get(), get(), get()) }

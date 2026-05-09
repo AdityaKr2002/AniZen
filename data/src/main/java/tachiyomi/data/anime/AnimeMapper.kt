@@ -19,24 +19,18 @@ object AnimeMapper {
         status: Long,
         thumbnailUrl: String?,
         favorite: Boolean,
-        lastUpdate: Long?,
-        nextUpdate: Long?,
+        lastUpdate: Long,
+        nextUpdate: Long,
         initialized: Boolean,
         viewerFlags: Long,
         episodeFlags: Long,
         coverLastModified: Long,
         dateAdded: Long,
-        // SY -->
-        @Suppress("UNUSED_PARAMETER")
-        filteredScanlators: String?,
-        // SY <--
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
         favoriteModifiedAt: Long?,
         version: Long,
-        @Suppress("UNUSED_PARAMETER")
-        isSyncing: Long,
         fetchType: FetchType,
         parentId: Long?,
         seasonFlags: Long,
@@ -47,26 +41,24 @@ object AnimeMapper {
     ): Anime = Anime(
         id = id,
         source = source,
+        url = url,
+        ogArtist = artist,
+        ogAuthor = author,
+        ogDescription = description,
+        ogGenre = genre,
+        ogTitle = title,
+        ogStatus = status,
+        ogThumbnailUrl = thumbnailUrl,
         favorite = favorite,
-        lastUpdate = lastUpdate ?: 0,
-        nextUpdate = nextUpdate ?: 0,
-        fetchInterval = calculateInterval.toInt(),
-        dateAdded = dateAdded,
+        lastUpdate = lastUpdate,
+        nextUpdate = nextUpdate,
+        initialized = initialized,
         viewerFlags = viewerFlags,
         episodeFlags = episodeFlags,
         coverLastModified = coverLastModified,
-        url = url,
-        // SY -->
-        ogTitle = title,
-        ogArtist = artist,
-        ogAuthor = author,
-        ogThumbnailUrl = thumbnailUrl,
-        ogDescription = description,
-        ogGenre = genre,
-        ogStatus = status,
-        // SY <--
+        dateAdded = dateAdded,
         updateStrategy = updateStrategy,
-        initialized = initialized,
+        calculateInterval = calculateInterval.toInt(),
         lastModifiedAt = lastModifiedAt,
         favoriteModifiedAt = favoriteModifiedAt,
         version = version,
@@ -91,23 +83,18 @@ object AnimeMapper {
         status: Long,
         thumbnailUrl: String?,
         favorite: Boolean,
-        lastUpdate: Long?,
-        nextUpdate: Long?,
+        lastUpdate: Long,
+        nextUpdate: Long,
         initialized: Boolean,
         viewerFlags: Long,
         episodeFlags: Long,
         coverLastModified: Long,
         dateAdded: Long,
-        // SY -->
-        @Suppress("UNUSED_PARAMETER")
-        filteredScanlators: String?,
-        // SY <--
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
         favoriteModifiedAt: Long?,
         version: Long,
-        isSyncing: Long,
         fetchType: FetchType,
         parentId: Long?,
         seasonFlags: Long,
@@ -116,17 +103,16 @@ object AnimeMapper {
         backgroundUrl: String?,
         backgroundLastModified: Long,
         totalCount: Long,
-        seenCount: Double,
+        seenCount: Long,
         latestUpload: Long,
         episodeFetchedAt: Long,
         lastSeen: Long,
-        bookmarkCount: Double,
+        bookmarkCount: Long,
         // AM (FILLERMARK) -->
-        fillermarkCount: Double,
+        fillermarkCount: Long,
         // <-- AM (FILLERMARK)
-        category: Long,
-    ): LibraryAnime = LibraryAnime(
-        anime = mapAnime(
+    ): LibraryAnime {
+        val anime = mapAnime(
             id,
             source,
             url,
@@ -145,15 +131,11 @@ object AnimeMapper {
             episodeFlags,
             coverLastModified,
             dateAdded,
-            // SY -->
-            null,
-            // SY <--
             updateStrategy,
             calculateInterval,
             lastModifiedAt,
             favoriteModifiedAt,
             version,
-            isSyncing,
             fetchType,
             parentId,
             seasonFlags,
@@ -161,18 +143,20 @@ object AnimeMapper {
             seasonOrder,
             backgroundUrl,
             backgroundLastModified,
-        ),
-        category = category,
-        totalEpisodes = totalCount,
-        seenCount = seenCount.toLong(),
-        bookmarkCount = bookmarkCount.toLong(),
-        // AM (FILLERMARK) -->
-        fillermarkCount = fillermarkCount.toLong(),
-        // <-- AM (FILLERMARK)
-        latestUpload = latestUpload,
-        episodeFetchedAt = episodeFetchedAt,
-        lastSeen = lastSeen,
-    )
+        )
+        return LibraryAnime(
+            anime = anime,
+            episodeCount = totalCount,
+            seenCount = seenCount,
+            latestUpload = latestUpload,
+            fetchedAt = episodeFetchedAt,
+            lastSeen = lastSeen,
+            bookmarkCount = bookmarkCount,
+            // AM (FILLERMARK) -->
+            fillermarkCount = fillermarkCount,
+            // <-- AM (FILLERMARK)
+        )
+    }
 
     fun mapSeasonAnime(
         id: Long,
@@ -186,24 +170,18 @@ object AnimeMapper {
         status: Long,
         thumbnailUrl: String?,
         favorite: Boolean,
-        lastUpdate: Long?,
-        nextUpdate: Long?,
+        lastUpdate: Long,
+        nextUpdate: Long,
         initialized: Boolean,
         viewerFlags: Long,
         episodeFlags: Long,
         coverLastModified: Long,
         dateAdded: Long,
-        // SY -->
-        @Suppress("UNUSED_PARAMETER")
-        filteredScanlators: String?,
-        // SY <--
         updateStrategy: UpdateStrategy,
         calculateInterval: Long,
         lastModifiedAt: Long,
         favoriteModifiedAt: Long?,
         version: Long,
-        @Suppress("UNUSED_PARAMETER")
-        isSyncing: Long,
         fetchType: FetchType,
         parentId: Long?,
         seasonFlags: Long,
@@ -212,13 +190,13 @@ object AnimeMapper {
         backgroundUrl: String?,
         backgroundLastModified: Long,
         totalCount: Long,
-        seenCount: Double,
+        seenCount: Long,
         latestUpload: Long,
         episodeFetchedAt: Long,
         lastSeen: Long,
-        bookmarkCount: Double,
+        bookmarkCount: Long,
         // AM (FILLERMARK) -->
-        fillermarkCount: Double,
+        fillermarkCount: Long,
         // <-- AM (FILLERMARK)
     ): SeasonAnime = SeasonAnime(
         anime = mapAnime(
@@ -240,15 +218,11 @@ object AnimeMapper {
             episodeFlags,
             coverLastModified,
             dateAdded,
-            // SY -->
-            null,
-            // SY <--
             updateStrategy,
             calculateInterval,
             lastModifiedAt,
             favoriteModifiedAt,
             version,
-            isSyncing,
             fetchType,
             parentId,
             seasonFlags,
@@ -258,9 +232,11 @@ object AnimeMapper {
             backgroundLastModified,
         ),
         totalCount = totalCount,
-        seenCount = seenCount.toLong(),
-        bookmarkCount = bookmarkCount.toLong(),
-        fillermarkCount = fillermarkCount.toLong(),
+        seenCount = seenCount,
+        bookmarkCount = bookmarkCount,
+        // AM (FILLERMARK) -->
+        fillermarkCount = fillermarkCount,
+        // <-- AM (FILLERMARK)
         latestUpload = latestUpload,
         fetchedAt = episodeFetchedAt,
         lastSeen = lastSeen,
