@@ -543,268 +543,271 @@ private fun AnimeScreenSmallImpl(
                 ) {
                     val layoutDirection = LocalLayoutDirection.current
 
-                    VerticalFastScroller(
-                        listState = episodeListState,
-                        topContentPadding = topPadding,
-                        bottomContentPadding = contentPadding.calculateBottomPadding(),
-                        endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
-                    ) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxHeight(),
-                            state = episodeListState,
-                            contentPadding = PaddingValues(
-                                start = contentPadding.calculateStartPadding(layoutDirection),
-                                end = contentPadding.calculateEndPadding(layoutDirection),
-                                bottom = contentPadding.calculateBottomPadding(),
-                            ),
+                    androidx.compose.foundation.layout.BoxWithConstraints {
+                        val containerHeight = with(density) { maxHeight.roundToPx() }
+                        VerticalFastScroller(
+                            listState = episodeListState,
+                            topContentPadding = topPadding,
+                            bottomContentPadding = contentPadding.calculateBottomPadding(),
+                            endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
                         ) {
-                            item(key = "info-box-small", contentType = AnimeScreenItem.INFO_BOX) {
-                                AnimeInfoBox(
-                                    isTabletUi = false,
-                                    appBarPadding = topPadding,
-                                    anime = state.anime,
-                                    totalScore = state.totalScore,
-                                    sourceName = remember { state.source.getNameForAnimeInfo() },
-                                    isStubSource = remember { state.source is StubSource },
-                                    onCoverClick = onCoverClicked,
-                                    doSearch = onSearch,
-                                    mergedSources = state.mergedSources,
-                                    isRefreshing = state.isRefreshingData,
-                                )
-                            }
-                            if (showSeasonsSection) {
-                                item(key = "season-section-small", contentType = "season") {
-                                    val navigator = LocalNavigator.currentOrThrow
-                                    AnimeSeasonSection(
-                                        seasons = state.seasons,
-                                        onSeasonClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(it)) },
-                                        modifier = Modifier.padding(horizontal = 16.dp),
+                            LazyColumn(
+                                modifier = Modifier.fillMaxHeight(),
+                                state = episodeListState,
+                                contentPadding = PaddingValues(
+                                    start = contentPadding.calculateStartPadding(layoutDirection),
+                                    end = contentPadding.calculateEndPadding(layoutDirection),
+                                    bottom = contentPadding.calculateBottomPadding(),
+                                ),
+                            ) {
+                                item(key = "info-box-small", contentType = AnimeScreenItem.INFO_BOX) {
+                                    AnimeInfoBox(
+                                        isTabletUi = false,
+                                        appBarPadding = topPadding,
+                                        anime = state.anime,
+                                        totalScore = state.totalScore,
+                                        sourceName = remember { state.source.getNameForAnimeInfo() },
+                                        isStubSource = remember { state.source is StubSource },
+                                        onCoverClick = onCoverClicked,
+                                        doSearch = onSearch,
+                                        mergedSources = state.mergedSources,
+                                        isRefreshing = state.isRefreshingData,
                                     )
                                 }
-                            }
-                            item(key = "action-row-small", contentType = AnimeScreenItem.ACTION_ROW) {
-                                val isWatching = remember(state.episodes) {
-                                    state.episodes.fastAny { it.episode.seen }
+                                if (showSeasonsSection) {
+                                    item(key = "season-section-small", contentType = "season") {
+                                        val navigator = LocalNavigator.currentOrThrow
+                                        AnimeSeasonSection(
+                                            seasons = state.seasons,
+                                            onSeasonClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(it)) },
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                        )
+                                    }
                                 }
-                                AnimeActionRow(
-                                    favorite = state.anime.favorite,
-                                    trackingCount = state.trackingCount,
-                                    nextUpdate = nextUpdate,
-                                    isUserIntervalMode = state.anime.fetchInterval < 0,
-                                    fetchInterval = state.anime.fetchInterval,
-                                    status = state.anime.status,
-                                    onAddToLibraryClicked = onAddToLibraryClicked,
-                                    onWebViewClicked = onWebViewClicked,
-                                    onWebViewLongClicked = onWebViewLongClicked,
-                                    onTrackingClicked = onTrackingClicked,
-                                    onEditIntervalClicked = onEditIntervalClicked,
-                                    onEditNotesClicked = onEditNotesClicked,
-                                    onEditCategory = onEditCategoryClicked,
-                                    onContinueWatching = onContinueWatching,
-                                    isWatching = isWatching,
-                                    localScore = state.totalScore,
-                                    onLocalScoreClicked = onLocalScoreClicked,
-                                    mainTrackItem = remember(state.trackItems) { state.trackItems.find { it.tracker.id == 999L } ?: state.trackItems.firstOrNull() },
-                                )
-                            }
+                                item(key = "action-row-small", contentType = AnimeScreenItem.ACTION_ROW) {
+                                    val isWatching = remember(state.episodes) {
+                                        state.episodes.fastAny { it.episode.seen }
+                                    }
+                                    AnimeActionRow(
+                                        favorite = state.anime.favorite,
+                                        trackingCount = state.trackingCount,
+                                        nextUpdate = nextUpdate,
+                                        isUserIntervalMode = state.anime.fetchInterval < 0,
+                                        fetchInterval = state.anime.fetchInterval,
+                                        status = state.anime.status,
+                                        onAddToLibraryClicked = onAddToLibraryClicked,
+                                        onWebViewClicked = onWebViewClicked,
+                                        onWebViewLongClicked = onWebViewLongClicked,
+                                        onTrackingClicked = onTrackingClicked,
+                                        onEditIntervalClicked = onEditIntervalClicked,
+                                        onEditNotesClicked = onEditNotesClicked,
+                                        onEditCategory = onEditCategoryClicked,
+                                        onContinueWatching = onContinueWatching,
+                                        isWatching = isWatching,
+                                        localScore = state.totalScore,
+                                        onLocalScoreClicked = onLocalScoreClicked,
+                                        mainTrackItem = remember(state.trackItems) { state.trackItems.find { it.tracker.id == 999L } ?: state.trackItems.firstOrNull() },
+                                    )
+                                }
 
-                            item(key = "description-with-tag-small", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
-                                ExpandableAnimeDescription(
-                                    modifier = Modifier.padding(bottom = 8.dp),
-                                    defaultExpandState = autoExpandDescription,
-                                    description = state.anime.description,
-                                    note = state.anime.note,
-                                    tagsProvider = { state.anime.genre },
-                                    onTagSearch = onTagSearch,
-                                    onCopyTagToClipboard = onCopyTagToClipboard,
-                                )
-                            }
+                                item(key = "description-with-tag-small", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
+                                    ExpandableAnimeDescription(
+                                        modifier = Modifier.padding(bottom = 8.dp),
+                                        defaultExpandState = autoExpandDescription,
+                                        description = state.anime.description,
+                                        note = state.anime.note,
+                                        tagsProvider = { state.anime.genre },
+                                        onTagSearch = onTagSearch,
+                                        onCopyTagToClipboard = onCopyTagToClipboard,
+                                    )
+                                }
 
-                            if (showSuggestions && !suggestionsInOverflow) {
-                                item(key = "discovery-section-small", contentType = "discovery") {
-                                    val navigator = LocalNavigator.currentOrThrow
-                                    Surface(
-                                        modifier = Modifier
-                                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                                            .fillMaxWidth(),
-                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                                        tonalElevation = 2.dp,
-                                    ) {
-                                        Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                                            DiscoveryHeader(
-                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
-                                            )
+                                if (showSuggestions && !suggestionsInOverflow) {
+                                    item(key = "discovery-section-small", contentType = "discovery") {
+                                        val navigator = LocalNavigator.currentOrThrow
+                                        Surface(
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                                .fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                            tonalElevation = 2.dp,
+                                        ) {
+                                            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                                                DiscoveryHeader(
+                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
+                                                )
 
-                                            if (expandSuggestions) {
-                                                if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
-                                                    androidx.compose.foundation.lazy.LazyRow(
-                                                        modifier = Modifier.heightIn(min = 180.dp),
-                                                        contentPadding = PaddingValues(horizontal = 12.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        userScrollEnabled = false,
-                                                    ) {
-                                                        items(5, key = { "skeleton-small-$it" }) {
-                                                            SkeletonAnimeCard()
+                                                if (expandSuggestions) {
+                                                    if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
+                                                        androidx.compose.foundation.lazy.LazyRow(
+                                                            modifier = Modifier.heightIn(min = 180.dp),
+                                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                            userScrollEnabled = false,
+                                                        ) {
+                                                            items(5, key = { "skeleton-small-$it" }) {
+                                                                SkeletonAnimeCard()
+                                                            }
+                                                        }
+                                                    } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
+                                                        Text(
+                                                            text = "No suggestions found for this entry",
+                                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    } else {
+                                                        androidx.compose.foundation.lazy.LazyRow(
+                                                            modifier = Modifier.heightIn(min = 180.dp),
+                                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                        ) {
+                                                            itemsIndexed(
+                                                                items = combinedItems,
+                                                                key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}" },
+                                                            ) { _, anime: tachiyomi.domain.anime.model.Anime ->
+                                                                SuggestionItem(
+                                                                    anime = anime,
+                                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                                )
+                                                            }
                                                         }
                                                     }
-                                                } else if (combinedItems.isEmpty() && !state.isSuggestionsLoading) {
-                                                    Text(
-                                                        text = "No suggestions found for this entry",
-                                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp).heightIn(min = 40.dp),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                } else {
-                                                    androidx.compose.foundation.lazy.LazyRow(
-                                                        modifier = Modifier.heightIn(min = 180.dp),
-                                                        contentPadding = PaddingValues(horizontal = 12.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    ) {
-                                                        itemsIndexed(
-                                                            items = combinedItems,
-                                                            key = { _, anime: tachiyomi.domain.anime.model.Anime -> "suggestion-small-${anime.id}" },
-                                                        ) { _, anime: tachiyomi.domain.anime.model.Anime ->
-                                                            SuggestionItem(
-                                                                anime = anime,
-                                                                onClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(anime.id)) }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
+                                    item(key = "season-selector-small", contentType = "season-selector") {
+                                        SeasonSelector(
+                                            seasons = state.availableSeasons,
+                                            selectedSeason = state.selectedSeason,
+                                            onSeasonSelected = onSeasonSelected,
+                                        )
+                                    }
+                                }
+                                
+                                if (state.anime.fetchType == FetchType.Seasons) {
+                                    item(key = "season-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                        EpisodeHeader(
+                                            enabled = !isAnySelected,
+                                            episodeCount = state.processedSeasons.size,
+                                            missingEpisodeCount = 0, // seasons don't have missing count yet
+                                            onClick = onFilterClicked,
+                                            fetchType = FetchType.Seasons,
+                                        )
+                                    }
+                                    val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) {
+                                        1
+                                    } else {
+                                        state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 3
+                                    }
+                                    val seasons = state.processedSeasons
+                                    if (columns == 1) {
+                                        items(
+                                            items = seasons,
+                                            key = { season -> season.anime.id },
+                                        ) { item ->
+                                            AnimeSeasonListItem(
+                                                anime = state.anime,
+                                                item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                    seasonAnime = item,
+                                                    downloadCount = -1L,
+                                                    unseenCount = item.unseenCount,
+                                                    isLocal = false,
+                                                    sourceLanguage = "",
+                                                    showContinueOverlay = false,
+                                                ),
+                                                containerHeight = containerHeight,
+                                                onSeasonClicked = onSeasonClicked,
+                                                onClickContinueWatching = null,
+                                                listItemModifier = Modifier,
+                                            )
+                                        }
+                                    } else {
+                                        val rows = seasons.chunked(columns)
+                                        rows.forEachIndexed { index, row ->
+                                            item(key = "season-row-$index") {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 8.dp)
+                                                        .fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                ) {
+                                                    row.forEach { item ->
+                                                        Box(modifier = Modifier.weight(1f)) {
+                                                            AnimeSeasonListItem(
+                                                                anime = state.anime,
+                                                                item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
+                                                                    seasonAnime = item,
+                                                                    downloadCount = -1L,
+                                                                    unseenCount = item.unseenCount,
+                                                                    isLocal = false,
+                                                                    sourceLanguage = "",
+                                                                    showContinueOverlay = false,
+                                                                ),
+                                                                containerHeight = containerHeight,
+                                                                onSeasonClicked = onSeasonClicked,
+                                                                onClickContinueWatching = null,
+                                                                listItemModifier = Modifier,
                                                             )
                                                         }
                                                     }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs && state.availableSeasons.size > 1) {
-                                item(key = "season-selector-small", contentType = "season-selector") {
-                                    SeasonSelector(
-                                        seasons = state.availableSeasons,
-                                        selectedSeason = state.selectedSeason,
-                                        onSeasonSelected = onSeasonSelected,
-                                    )
-                                }
-                            }
-                            
-                            if (state.anime.fetchType == FetchType.Seasons) {
-                                item(key = "season-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
-                                    EpisodeHeader(
-                                        enabled = !isAnySelected,
-                                        episodeCount = state.processedSeasons.size,
-                                        missingEpisodeCount = 0, // seasons don't have missing count yet
-                                        onClick = onFilterClicked,
-                                        fetchType = FetchType.Seasons,
-                                    )
-                                }
-                                val columns = if (state.anime.seasonDisplayGridMode == SeasonDisplayMode.List) {
-                                    1
-                                } else {
-                                    state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 3
-                                }
-                                val seasons = state.processedSeasons
-                                if (columns == 1) {
-                                    items(
-                                        items = seasons,
-                                        key = { season -> season.anime.id },
-                                    ) { item ->
-                                        AnimeSeasonListItem(
-                                            anime = state.anime,
-                                            item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                seasonAnime = item,
-                                                downloadCount = -1L,
-                                                unseenCount = item.unseenCount,
-                                                isLocal = false,
-                                                sourceLanguage = "",
-                                                showContinueOverlay = false,
-                                            ),
-                                            containerHeight = 0,
-                                            onSeasonClicked = onSeasonClicked,
-                                            onClickContinueWatching = null,
-                                            listItemModifier = Modifier,
-                                        )
-                                    }
-                                } else {
-                                    val rows = seasons.chunked(columns)
-                                    rows.forEachIndexed { index, row ->
-                                        item(key = "season-row-$index") {
-                                            Row(
-                                                modifier = Modifier
-                                                    .padding(horizontal = 8.dp)
-                                                    .fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            ) {
-                                                row.forEach { item ->
-                                                    Box(modifier = Modifier.weight(1f)) {
-                                                        AnimeSeasonListItem(
-                                                            anime = state.anime,
-                                                            item = eu.kanade.tachiyomi.ui.anime.AnimeSeasonItem(
-                                                                seasonAnime = item,
-                                                                downloadCount = -1L,
-                                                                unseenCount = item.unseenCount,
-                                                                isLocal = false,
-                                                                sourceLanguage = "",
-                                                                showContinueOverlay = false,
-                                                            ),
-                                                            containerHeight = 0,
-                                                            onSeasonClicked = onSeasonClicked,
-                                                            onClickContinueWatching = null,
-                                                            listItemModifier = Modifier,
-                                                        )
+                                                    repeat(columns - row.size) {
+                                                        Spacer(modifier = Modifier.weight(1f))
                                                     }
                                                 }
-                                                repeat(columns - row.size) {
-                                                    Spacer(modifier = Modifier.weight(1f))
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    item(key = "episode-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
+                                        EpisodeHeader(
+                                            enabled = !isAnySelected,
+                                            episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
+                                            missingEpisodeCount = state.missingEpisodeCount,
+                                            onClick = onFilterClicked,
+                                        )
+                                    }
+                                    if (state.airingTime > 0L) {
+                                        item(key = "airing-time-small", contentType = AnimeScreenItem.AIRING_TIME) {
+                                            var timer by remember { mutableLongStateOf(state.airingTime) }
+                                            LaunchedEffect(key1 = timer) {
+                                                if (timer > 0L) {
+                                                    delay(1000L)
+                                                    timer -= 1000L
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-                            } else {
-                                item(key = "episode-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
-                                    EpisodeHeader(
-                                        enabled = !isAnySelected,
-                                        episodeCount = if (state.anime.seasonGroupingMode == LibraryPreferences.SeasonGrouping.Tabs) currentSeasonCount else episodes.size,
-                                        missingEpisodeCount = state.missingEpisodeCount,
-                                        onClick = onFilterClicked,
-                                    )
-                                }
-                                if (state.airingTime > 0L) {
-                                    item(key = "airing-time-small", contentType = AnimeScreenItem.AIRING_TIME) {
-                                        var timer by remember { mutableLongStateOf(state.airingTime) }
-                                        LaunchedEffect(key1 = timer) {
-                                            if (timer > 0L) {
-                                                delay(1000L)
-                                                timer -= 1000L
+                                            if (timer > 0L && showNextEpisodeAirTime && state.anime.status.toInt() != SAnime.COMPLETED) {
+                                                NextEpisodeAiringListItem(
+                                                    title = stringResource(
+                                                        MR.strings.display_mode_episode,
+                                                        formatEpisodeNumber(state.airingEpisodeNumber),
+                                                    ),
+                                                    date = formatTime(state.airingTime, useDayFormat = true),
+                                                )
                                             }
                                         }
-                                        if (timer > 0L && showNextEpisodeAirTime && state.anime.status.toInt() != SAnime.COMPLETED) {
-                                            NextEpisodeAiringListItem(
-                                                title = stringResource(
-                                                    MR.strings.display_mode_episode,
-                                                    formatEpisodeNumber(state.airingEpisodeNumber),
-                                                ),
-                                                date = formatTime(state.airingTime, useDayFormat = true),
-                                            )
-                                        }
                                     }
+                                    sharedEpisodeItems(
+                                        anime = state.anime,
+                                        source = state.source,
+                                        showFileSize = showFileSize,
+                                        showEpisodeSummary = state.showEpisodeSummary,
+                                        showEpisodeThumbnail = state.showEpisodeThumbnail,
+                                        episodes = listItem,
+                                        isAnyEpisodeSelected = episodes.fastAny { it.selected },
+                                        episodeSwipeStartAction = episodeSwipeStartAction,
+                                        episodeSwipeEndAction = episodeSwipeEndAction,
+                                        onEpisodeClicked = onEpisodeClicked,
+                                        onDownloadEpisode = onDownloadEpisode,
+                                        onEpisodeSelected = onEpisodeSelected,
+                                        onEpisodeSwipe = onEpisodeSwipe,
+                                    )
                                 }
-                                sharedEpisodeItems(
-                                    anime = state.anime,
-                                    source = state.source,
-                                    showFileSize = showFileSize,
-                                    showEpisodeSummary = state.showEpisodeSummary,
-                                    showEpisodeThumbnail = state.showEpisodeThumbnail,
-                                    episodes = listItem,
-                                    isAnyEpisodeSelected = episodes.fastAny { it.selected },
-                                    episodeSwipeStartAction = episodeSwipeStartAction,
-                                    episodeSwipeEndAction = episodeSwipeEndAction,
-                                    onEpisodeClicked = onEpisodeClicked,
-                                    onDownloadEpisode = onDownloadEpisode,
-                                    onEpisodeSelected = onEpisodeSelected,
-                                    onEpisodeSwipe = onEpisodeSwipe,
-                                )
                             }
                         }
                     }
@@ -1047,11 +1050,13 @@ fun AnimeScreenLargeImpl(
                         end = insetPadding.calculateEndPadding(layoutDirection),
                     ),
                 ) {
-                    TwoPanelBox(
-                        modifier = Modifier.padding(
-                            start = contentPadding.calculateStartPadding(layoutDirection),
-                            end = contentPadding.calculateEndPadding(layoutDirection),
-                        ),
+                    androidx.compose.foundation.layout.BoxWithConstraints {
+                        val containerHeight = with(density) { maxHeight.roundToPx() }
+                        TwoPanelBox(
+                            modifier = Modifier.padding(
+                                start = contentPadding.calculateStartPadding(layoutDirection),
+                                end = contentPadding.calculateEndPadding(layoutDirection),
+                            ),
                         startContent = {
                             Column(
                                 modifier = Modifier
@@ -1318,6 +1323,7 @@ fun AnimeScreenLargeImpl(
                             }
                         },
                     )
+                    }
                 }
             }
         }
