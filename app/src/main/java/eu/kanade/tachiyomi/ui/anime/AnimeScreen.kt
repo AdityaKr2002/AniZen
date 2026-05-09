@@ -55,6 +55,8 @@ import eu.kanade.tachiyomi.ui.anime.merged.EditMergedSettingsDialog
 import eu.kanade.tachiyomi.ui.anime.notes.AnimeNotesScreen
 import exh.source.MERGED_SOURCE_ID
 import eu.kanade.tachiyomi.ui.anime.track.TrackInfoDialogHomeScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.ui.browse.extension.details.SourcePreferencesScreen
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
