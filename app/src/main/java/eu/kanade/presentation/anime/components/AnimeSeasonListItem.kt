@@ -52,12 +52,7 @@ fun AnimeSeasonListItem(
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
                 },
-                coverBadgeEnd = {
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
-                    )
-                },
+                coverBadgeEnd = {},
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
                 onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
@@ -81,12 +76,7 @@ fun AnimeSeasonListItem(
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
                 },
-                coverBadgeEnd = {
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
-                    )
-                },
+                coverBadgeEnd = {},
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
                 onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
@@ -109,10 +99,6 @@ fun AnimeSeasonListItem(
                 badge = {
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
-                    )
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
