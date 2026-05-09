@@ -711,8 +711,9 @@ private fun AnimeScreenSmallImpl(
                                         1
                                     } else {
                                         state.anime.seasonDisplayGridSize.takeIf { it > 0 } ?: 2
-                                    }                                    val seasons = state.processedSeasons
-                                    if (columns == 1) {
+                                        }
+                                val seasons = state.processedSeasons
+                                if (columns == 1) {
                                         items(
                                             items = seasons,
                                             key = { season -> season.anime.id },
