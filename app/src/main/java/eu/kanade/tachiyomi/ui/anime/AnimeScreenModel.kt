@@ -629,7 +629,7 @@ class AnimeScreenModel(
                         fetchSuggestions(anime)
                     }
                 }
-                .launchIn(this)
+                .launchIn(screenModelScope)
             
             observeDownloads()
             observeTrackers()
@@ -1867,7 +1867,7 @@ class AnimeScreenModel(
                             )
                         }
                     }
-                    .launchIn(this)
+                    .launchIn(screenModelScope)
             }
         } else {
             getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
@@ -1901,7 +1901,7 @@ class AnimeScreenModel(
                     val sources = mergedAnime.map { sourceManager.getOrStub(it.source) }
                     updateSuccessState { it.copySuccess(mergedSources = sources.toImmutableList()) }
                 }
-                .launchIn(this)
+                .launchIn(screenModelScope)
         }
     }
 
