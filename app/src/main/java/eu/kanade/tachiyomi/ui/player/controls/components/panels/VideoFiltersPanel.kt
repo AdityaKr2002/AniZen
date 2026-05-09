@@ -75,7 +75,7 @@ import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.applyDebandMode
 import eu.kanade.tachiyomi.ui.player.applyDebandSetting
 import eu.kanade.tachiyomi.ui.player.applyFilter
-import eu.kanade.tachiyomi.ui.player.applyFilter
+import eu.kanade.tachiyomi.ui.player.applyTheme
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.ui.player.controls.CARDS_MAX_WIDTH
 import eu.kanade.tachiyomi.ui.player.controls.panelCardsColors
