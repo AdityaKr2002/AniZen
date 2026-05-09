@@ -627,7 +627,7 @@ class AnimeScreenModel(
                                 bookmarkCount = 0,
                                 fillermarkCount = 0,
                                 latestUpload = 0,
-                                episodeFetchedAt = 0,
+                                fetchedAt = 0,
                                 lastSeen = 0,
                             )
                         }
