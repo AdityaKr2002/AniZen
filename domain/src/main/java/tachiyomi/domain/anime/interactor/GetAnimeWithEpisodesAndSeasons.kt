@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.CustomAnimeInfo
 import tachiyomi.domain.anime.model.SeasonAnime
@@ -29,8 +30,8 @@ class GetAnimeWithEpisodesAndSeasons(
             val seasonsFlow = if (useHierarchicalSeasons) {
                 animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
             } else {
-                getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow).map { seasons ->
-                    seasons.map {
+                getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow).map { seasonsList ->
+                    seasonsList.map {
                         SeasonAnime(
                             anime = it.anime,
                             totalCount = 0,
