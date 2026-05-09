@@ -445,7 +445,7 @@ private fun AnimeScreenSmallImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
+            val isFABVisible = remember(episodes, state.processedSeasonItems, isAnySelected) {
                 if (isAnySelected) return@remember false
                 if (state.anime.fetchType == FetchType.Seasons) {
                     false
@@ -697,7 +697,7 @@ private fun AnimeScreenSmallImpl(
                                     item(key = "season-header-small", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                         EpisodeHeader(
                                             enabled = !isAnySelected,
-                                            episodeCount = state.processedSeasons.size,
+                                            episodeCount = state.processedSeasonItems.size,
                                             missingEpisodeCount = 0,
                                             onClick = onFilterClicked,
                                             fetchType = FetchType.Seasons,
@@ -938,7 +938,7 @@ fun AnimeScreenLargeImpl(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             val scaffoldInsets = WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-            val isFABVisible = remember(episodes, state.processedSeasons, isAnySelected) {
+            val isFABVisible = remember(episodes, state.processedSeasonItems, isAnySelected) {
                 if (isAnySelected) return@remember false
                 if (state.anime.fetchType == FetchType.Seasons) {
                     false
@@ -1202,7 +1202,7 @@ fun AnimeScreenLargeImpl(
                                             item(key = "season-header-large", contentType = AnimeScreenItem.EPISODE_HEADER) {
                                                 EpisodeHeader(
                                                     enabled = !isAnySelected,
-                                                    episodeCount = state.processedSeasons.size,
+                                                    episodeCount = state.processedSeasonItems.size,
                                                     missingEpisodeCount = 0,
                                                     onClick = onFilterButtonClicked,
                                                     fetchType = FetchType.Seasons,

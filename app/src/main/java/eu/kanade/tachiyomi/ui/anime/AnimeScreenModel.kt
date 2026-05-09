@@ -532,7 +532,7 @@ class AnimeScreenModel(
             isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
             // AY -->
-            processedSeasons = processedSeasons,
+            processedSeasonItems = processedSeasonItems,
             // <-- AY
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
@@ -2308,7 +2308,7 @@ class AnimeScreenModel(
                         showEpisodeThumbnail = anime.showPreviews(),
                         // AY -->
                         seasons = seasons,
-                        processedSeasons = processedSeasons,
+                        processedSeasonItems = processedSeasonItems,
                         // <-- AY
                     )
                 }
