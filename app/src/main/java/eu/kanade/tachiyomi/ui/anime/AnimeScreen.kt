@@ -124,6 +124,7 @@ class AnimeScreen(
         }
 
         val isHttpSource = remember { successState.source is HttpSource }
+        val isConfigurableSource = remember { successState.source is ConfigurableAnimeSource }
 
         LaunchedEffect(successState.isRefreshingData) {
             if (successState.isRefreshingData) {
@@ -245,7 +246,9 @@ class AnimeScreen(
                 onLocalScoreClicked = screenModel::showLocalScoreDialog,
                 onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf { successState.anime.favorite },
                 onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
-                onSettingsClicked = screenModel::showSettingsDialog,
+                onSettingsClicked = {
+                    navigator.push(SourcePreferencesScreen(successState.source.id))
+                }.takeIf { isConfigurableSource },
                 onSeasonSelected = screenModel::onSeasonSelected,
                 // AY -->
                 onSeasonClicked = { navigator.push(AnimeScreen(it.anime.id)) },

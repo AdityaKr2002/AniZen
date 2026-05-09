@@ -1892,7 +1892,7 @@ class AnimeScreenModel(
                 unseenCount = seasonAnime.unseenCount,
                 isLocal = itemAnime.isLocal(),
                 sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
-                showContinueOverlay = anime.seasonContinueOverlay &&
+                showContinueOverlay = (anime.seasonContinueOverlay || anime.seasonFlags == 0L) &&
                     seasonAnime.unseenCount > 0 &&
                     itemAnime.fetchType == FetchType.Episodes,
             )
