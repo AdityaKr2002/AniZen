@@ -13,28 +13,28 @@
 -keep,allowoptimization class mihon.**
 
 # Keep common dependencies used in extensions
--keep,allowoptimization class androidx.preference.** { public protected *; }
--keep,allowoptimization class kotlin.** { public protected *; }
--keep,allowoptimization class kotlinx.coroutines.** { public protected *; }
--keep,allowoptimization class kotlinx.serialization.** { public protected *; }
--keep,allowoptimization class kotlin.time.** { public protected *; }
--keep,allowoptimization class okhttp3.** { public protected *; }
--keep,allowoptimization class okio.** { public protected *; }
--keep,allowoptimization class org.jsoup.** { public protected *; }
--keep,allowoptimization class rx.** { public protected *; }
--keep,allowoptimization class app.cash.quickjs.** { public protected *; }
--keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
--keep,allowoptimization class is.xyz.mpv.** { public protected *; }
--keep,allowoptimization class com.arthenica.** { public protected *; }
+-keep class androidx.preference.** { public protected *; }
+-keep class kotlin.** { public protected *; }
+-keep class kotlinx.coroutines.** { public protected *; }
+-keep class kotlinx.serialization.** { public protected *; }
+-keep class kotlin.time.** { public protected *; }
+-keep class okhttp3.** { public protected *; }
+-keep class okio.** { public protected *; }
+-keep class org.jsoup.** { public protected *; }
+-keep class rx.** { public protected *; }
+-keep class app.cash.quickjs.** { public protected *; }
+-keep class uy.kohesive.injekt.** { public protected *; }
+-keep class is.xyz.mpv.** { public protected *; }
+-keep class com.arthenica.** { public protected *; }
 
 # From extensions-lib
--keep,allowoptimization class eu.kanade.tachiyomi.network.interceptor.RateLimitInterceptorKt { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.network.interceptor.SpecificHostRateLimitInterceptorKt { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.network.NetworkHelper { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.network.OkHttpExtensionsKt { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.network.RequestsKt { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.AppInfo { public protected *; }
--keep,allowoptimization class eu.kanade.tachiyomi.torrentutils.** { public protected *; }
+-keep class eu.kanade.tachiyomi.network.interceptor.RateLimitInterceptorKt { public protected *; }
+-keep class eu.kanade.tachiyomi.network.interceptor.SpecificHostRateLimitInterceptorKt { public protected *; }
+-keep class eu.kanade.tachiyomi.network.NetworkHelper { public protected *; }
+-keep class eu.kanade.tachiyomi.network.OkHttpExtensionsKt { public protected *; }
+-keep class eu.kanade.tachiyomi.network.RequestsKt { public protected *; }
+-keep class eu.kanade.tachiyomi.AppInfo { public protected *; }
+-keep class eu.kanade.tachiyomi.torrentutils.** { public protected *; }
 
 # Debug functions
 -keep,allowoptimization class exh.debug.DebugFunctions { public *; }
