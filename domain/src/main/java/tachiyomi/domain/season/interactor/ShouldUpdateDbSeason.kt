@@ -6,6 +6,7 @@ class ShouldUpdateDbSeason {
     fun await(dbSeason: Anime, sourceSeason: Anime): Boolean {
         return dbSeason.ogTitle != sourceSeason.ogTitle ||
             dbSeason.seasonNumber != sourceSeason.seasonNumber ||
-            dbSeason.seasonOrder != sourceSeason.seasonOrder
+            dbSeason.seasonOrder != sourceSeason.seasonOrder ||
+            dbSeason.parentId != sourceSeason.parentId
     }
 }

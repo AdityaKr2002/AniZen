@@ -625,11 +625,8 @@ class AnimeScreenModel(
                 val needRefreshEpisode = initialEpisodes.isEmpty() || isLocal
 
                 if (needRefreshInfo || needRefreshEpisode) {
-                    val fetchFromSourceTasks = listOf(
-                        async { fetchAnimeFromSource() },
-                        async { fetchEpisodesFromSource() },
-                    )
-                    fetchFromSourceTasks.awaitAll()
+                    if (needRefreshInfo) fetchAnimeFromSource()
+                    fetchEpisodesFromSource()
                 }
             }
             updateSuccessState { it.copySuccess(isRefreshingData = false) }
@@ -1812,7 +1809,9 @@ class AnimeScreenModel(
 
         if (libraryPreferences.useHierarchicalSeasons().get()) {
             screenModelScope.launchIO {
-                animeRepository.getAnimeSeasonsByIdAsFlow(animeId)
+                val anime = getAnime.await(animeId)
+                val parentId = anime?.parentId ?: animeId
+                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
                     .onEach { seasonAnimes ->
                         val seasons = seasonAnimes.map {
                             tachiyomi.domain.anime.model.Season(

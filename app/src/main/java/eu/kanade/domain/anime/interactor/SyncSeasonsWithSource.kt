@@ -36,14 +36,15 @@ class SyncSeasonsWithSource(
 
         val now = ZonedDateTime.now()
 
+        val rootParentId = anime.parentId ?: anime.id
         val sourceSeasons = rawSourceSeasons
             .distinctBy { it.url }
             .mapIndexed { i, sAnime ->
                 networkToLocalAnime.await(sAnime.toDomainAnime(source.id))
-                    .copy(parentId = anime.id, seasonOrder = i.toLong())
+                    .copy(parentId = rootParentId, seasonOrder = i.toLong())
             }
 
-        val dbSeasons = getAnimeSeasonsById.await(anime.id)
+        val dbSeasons = getAnimeSeasonsById.await(rootParentId)
 
         val newSeasons = mutableListOf<Anime>()
         val updatedSeasons = mutableListOf<Anime>()
