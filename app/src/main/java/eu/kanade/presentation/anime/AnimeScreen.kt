@@ -726,14 +726,15 @@ private fun AnimeScreenSmallImpl(
                                                     unseenCount = item.unseenCount,
                                                     isLocal = false,
                                                     sourceLanguage = "",
-                                                    showContinueOverlay = false,
+                                                    showContinueOverlay = state.anime.seasonContinueOverlay,
                                                 ),
                                                 containerHeight = containerHeight,
                                                 onSeasonClicked = onSeasonClicked,
-                                                onClickContinueWatching = null,
+                                                onClickContinueWatching = {
+                                                    onContinueWatching()
+                                                },
                                                 listItemModifier = Modifier,
-                                            )
-                                        }
+                                            )                                        }
                                     } else {
                                         val rows = seasons.chunked(columns)
                                         rows.forEachIndexed { index, row ->
@@ -1245,14 +1246,15 @@ fun AnimeScreenLargeImpl(
                                                             unseenCount = item.unseenCount,
                                                             isLocal = false,
                                                             sourceLanguage = "",
-                                                            showContinueOverlay = false,
+                                                            showContinueOverlay = state.anime.seasonContinueOverlay,
                                                         ),
                                                         containerHeight = containerHeight,
                                                         onSeasonClicked = onSeasonClicked,
-                                                        onClickContinueWatching = null,
+                                                        onClickContinueWatching = {
+                                                            onContinueWatching()
+                                                        },
                                                         listItemModifier = Modifier,
-                                                    )
-                                                }
+                                                    )                                                }
                                             } else {
                                                 val rows = seasons.chunked(columns)
                                                 rows.forEachIndexed { index, row ->
