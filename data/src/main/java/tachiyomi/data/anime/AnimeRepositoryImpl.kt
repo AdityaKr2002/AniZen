@@ -56,19 +56,11 @@ class AnimeRepositoryImpl(
     }
 
     override suspend fun getLibraryAnime(): List<LibraryAnime> {
-        return handler.awaitList { libraryViewQueries.library { _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category ->
-            AnimeMapper.mapLibraryAnime(
-                _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category,
-            )
-        } }
+        return handler.awaitList { libraryViewQueries.library(AnimeMapper::mapLibraryAnime) }
     }
 
     override fun getLibraryAnimeAsFlow(): Flow<List<LibraryAnime>> {
-        return handler.subscribeToList { libraryViewQueries.library { _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category ->
-            AnimeMapper.mapLibraryAnime(
-                _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category,
-            )
-        } }
+        return handler.subscribeToList { libraryViewQueries.library(AnimeMapper::mapLibraryAnime) }
     }
 
     override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Anime>> {
@@ -219,22 +211,15 @@ class AnimeRepositoryImpl(
     }
 
     override suspend fun getSeenAnimeNotInLibraryView(): List<LibraryAnime> {
-        return handler.awaitList { libraryViewQueries.seenAnimeNonLibrary { _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category ->
-            AnimeMapper.mapLibraryAnime(
-                _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount, category,
-            )
-        } }
+        return handler.awaitList { libraryViewQueries.seenAnimeNonLibrary(AnimeMapper::mapLibraryAnime) }
     }
 
     override suspend fun getAnimeSeasonsById(parentId: Long): List<SeasonAnime> {
         return handler.awaitList {
             animeseasonsViewQueries.getAnimeSeasonsById(
                 parentId,
-            ) { _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount ->
-                AnimeMapper.mapSeasonAnime(
-                    _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount,
-                )
-            }
+                AnimeMapper::mapSeasonAnime,
+            )
         }
     }
 
@@ -242,11 +227,8 @@ class AnimeRepositoryImpl(
         return handler.subscribeToList {
             animeseasonsViewQueries.getAnimeSeasonsById(
                 parentId,
-            ) { _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount ->
-                AnimeMapper.mapSeasonAnime(
-                    _id, source, url, artist, author, description, genre, title, status, thumbnail_url, favorite, last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added, filtered_scanlators, update_strategy, calculate_interval, last_modified_at, favorite_modified_at, version, is_syncing, fetch_type, parent_id, season_flags, season_number, season_order, background_url, background_last_modified, totalCount, seenCount, latestUpload, episodeFetchedAt, lastSeen, bookmarkCount, fillermarkCount,
-                )
-            }
+                AnimeMapper::mapSeasonAnime,
+            )
         }
     }
 
