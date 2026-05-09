@@ -60,11 +60,7 @@ fun AnimeSeasonListItem(
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
-                    { onClickContinueWatching(item.seasonAnime) }
-                } else {
-                    null
-                },
+                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
             )
         }
         SeasonDisplayMode.CompactGrid, SeasonDisplayMode.CoverOnlyGrid -> {
@@ -89,11 +85,7 @@ fun AnimeSeasonListItem(
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
-                    { onClickContinueWatching(item.seasonAnime) }
-                } else {
-                    null
-                },
+                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
             )
         }
         SeasonDisplayMode.List -> {
@@ -116,11 +108,9 @@ fun AnimeSeasonListItem(
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
-                    { onClickContinueWatching(item.seasonAnime) }
-                } else {
-                    null
-                },
+                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                entries = anime.seasonDisplayGridSize,
+                containerHeight = containerHeight,
             )
         }
     }
