@@ -532,7 +532,7 @@ class AnimeScreenModel(
             isSuggestionsLoading = isSuggestionsLoading,
             seasons = seasons,
             // AY -->
-            processedSeasons = processedSeasons,
+            processedSeasonItems = processedSeasonItems,
             // <-- AY
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
@@ -1892,7 +1892,7 @@ class AnimeScreenModel(
                 unseenCount = seasonAnime.unseenCount,
                 isLocal = itemAnime.isLocal(),
                 sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
-                showContinueOverlay = anime.seasonContinueOverlay &&
+                showContinueOverlay = (anime.seasonContinueOverlay || anime.seasonFlags == 0L) &&
                     seasonAnime.unseenCount > 0 &&
                     itemAnime.fetchType == FetchType.Episodes,
             )
@@ -2308,7 +2308,7 @@ class AnimeScreenModel(
                         showEpisodeThumbnail = anime.showPreviews(),
                         // AY -->
                         seasons = seasons,
-                        processedSeasons = processedSeasons,
+                        processedSeasonItems = processedSeasonItems,
                         // <-- AY
                     )
                 }

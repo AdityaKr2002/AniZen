@@ -55,6 +55,8 @@ import eu.kanade.tachiyomi.ui.anime.merged.EditMergedSettingsDialog
 import eu.kanade.tachiyomi.ui.anime.notes.AnimeNotesScreen
 import exh.source.MERGED_SOURCE_ID
 import eu.kanade.tachiyomi.ui.anime.track.TrackInfoDialogHomeScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.ui.browse.extension.details.SourcePreferencesScreen
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialog
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateDialogScreenModel
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
@@ -124,6 +126,7 @@ class AnimeScreen(
         }
 
         val isHttpSource = remember { successState.source is HttpSource }
+        val isConfigurableSource = remember { successState.source is ConfigurableAnimeSource }
 
         LaunchedEffect(successState.isRefreshingData) {
             if (successState.isRefreshingData) {
@@ -245,7 +248,9 @@ class AnimeScreen(
                 onLocalScoreClicked = screenModel::showLocalScoreDialog,
                 onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf { successState.anime.favorite },
                 onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
-                onSettingsClicked = screenModel::showSettingsDialog,
+                onSettingsClicked = {
+                    navigator.push(SourcePreferencesScreen(successState.source.id))
+                }.takeIf { isConfigurableSource },
                 onSeasonSelected = screenModel::onSeasonSelected,
                 // AY -->
                 onSeasonClicked = { navigator.push(AnimeScreen(it.anime.id)) },

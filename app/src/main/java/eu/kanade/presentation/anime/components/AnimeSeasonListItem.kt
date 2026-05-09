@@ -52,15 +52,14 @@ fun AnimeSeasonListItem(
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
                 },
-                coverBadgeEnd = {
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
-                    )
-                },
+                coverBadgeEnd = {},
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
             )
         }
         SeasonDisplayMode.CompactGrid, SeasonDisplayMode.CoverOnlyGrid -> {
@@ -77,15 +76,14 @@ fun AnimeSeasonListItem(
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
                 },
-                coverBadgeEnd = {
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
-                    )
-                },
+                coverBadgeEnd = {},
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
             )
         }
         SeasonDisplayMode.List -> {
@@ -101,14 +99,14 @@ fun AnimeSeasonListItem(
                 badge = {
                     DownloadsBadge(count = item.downloadCount)
                     UnviewedBadge(count = item.unseenCount)
-                    LanguageBadge(
-                        isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
-                    )
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
                 entries = anime.seasonDisplayGridSize,
                 containerHeight = containerHeight,
             )
