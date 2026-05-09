@@ -369,6 +369,7 @@ class AnimeScreenModel(
                         val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                             (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
                         
+                        // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
                         val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
 
                         val prevYear = if (prevItem.episode.dateUpload > 0) {
