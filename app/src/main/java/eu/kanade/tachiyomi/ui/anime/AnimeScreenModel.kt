@@ -150,6 +150,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.domain.episode.model.applyFilters
+import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodesAndSeasons
 
 class AnimeScreenModel(
     private val context: Context,
@@ -167,7 +168,7 @@ class AnimeScreenModel(
     private val downloadManager: DownloadManager = Injekt.get(),
     private val downloadCache: DownloadCache = Injekt.get(),
     private val downloadProvider: eu.kanade.tachiyomi.data.download.DownloadProvider = Injekt.get(),
-    private val getAnimeAndEpisodes: GetAnimeWithEpisodes = Injekt.get(),
+    private val getAnimeAndEpisodesAndSeasons: GetAnimeWithEpisodesAndSeasons = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val setCustomAnimeInfo: SetCustomAnimeInfo = Injekt.get(),
     private val getDuplicateLibraryAnime: GetDuplicateLibraryAnime = Injekt.get(),
@@ -368,7 +369,6 @@ class AnimeScreenModel(
                         val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
                             (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
                         
-                        // Fallback: If date is same or missing (0), use sourceOrder + number restart as a strong signal
                         val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
 
                         val prevYear = if (prevItem.episode.dateUpload > 0) {
@@ -563,7 +563,7 @@ class AnimeScreenModel(
 
     init {
         screenModelScope.launchIO {
-            val initialAnime = getAnimeAndEpisodes.awaitManga(animeId)
+            val initialAnime = getAnimeAndEpisodesAndSeasons.awaitAnime(animeId)
 
             // Force children to Episode fetch type to prevent infinite grids
             val anime = if (initialAnime.parentId != null && initialAnime.fetchType == FetchType.Seasons) {
@@ -575,7 +575,7 @@ class AnimeScreenModel(
             }
 
             val initialEpisodes = if (anime.fetchType != FetchType.Seasons) {
-                getAnimeAndEpisodes.awaitChapters(animeId).toEpisodeListItems(anime)
+                getAnimeAndEpisodesAndSeasons.awaitEpisodes(animeId).toEpisodeListItems(anime)
             } else {
                 emptyList()
             }
@@ -613,35 +613,16 @@ class AnimeScreenModel(
                     ?.items.orEmpty()
             }.distinctUntilChanged()
 
-            val seasonsFlow = if (libraryPreferences.useHierarchicalSeasons().get()) {
-                val parentId = anime.parentId ?: animeId
-                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
-            } else {
-                getSeasonsByAnimeId.subscribe(animeId, virtualSeasonsFlow)
-                    .map { seasons ->
-                        seasons.map {
-                            tachiyomi.domain.anime.model.SeasonAnime(
-                                anime = it.anime,
-                                totalCount = 0,
-                                seenCount = 0,
-                                bookmarkCount = 0,
-                                fillermarkCount = 0,
-                                latestUpload = 0,
-                                fetchedAt = 0,
-                                lastSeen = 0,
-                            )
-                        }
-                    }
-            }
-
             combine(
-                getAnimeAndEpisodes.subscribe(animeId).distinctUntilChanged(),
-                seasonsFlow.distinctUntilChanged(),
+                getAnimeAndEpisodesAndSeasons.subscribe(
+                    id = animeId,
+                    useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get(),
+                    virtualSeasonsFlow = virtualSeasonsFlow,
+                ).distinctUntilChanged(),
                 downloadCache.changes,
                 downloadManager.queueState,
-            ) { animeAndEpisodes, seasonAnimes, _, _ -> animeAndEpisodes to seasonAnimes }
-                .onEach { (animeAndEpisodes, seasonAnimes) ->
-                    val (anime, episodes) = animeAndEpisodes
+            ) { triple, _, _ -> triple }
+                .onEach { (anime, episodes, seasonAnimes) ->
                     val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
                         anime.copy(fetchType = FetchType.Episodes)
                     } else {
@@ -1127,7 +1108,7 @@ class AnimeScreenModel(
                     val tracks = getTracks.await(anime.id)
                     var localTrack = tracks.find { it.trackerId == TrackerManager.LOCAL }
                     if (localTrack == null) {
-                        val episodes = getAnimeAndEpisodes.awaitChapters(anime.id)
+                        val episodes = getAnimeAndEpisodesAndSeasons.awaitEpisodes(anime.id)
                         val seenCount = episodes.count { it.seen }
                         val dbTrack = eu.kanade.tachiyomi.data.database.models.Track.create(TrackerManager.LOCAL).apply {
                             this.anime_id = anime.id
@@ -1336,13 +1317,13 @@ class AnimeScreenModel(
     }
 
     suspend fun getNextUnseenEpisode(season: tachiyomi.domain.anime.model.SeasonAnime): Episode? {
-        var episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+        var episodes = getAnimeAndEpisodesAndSeasons.awaitEpisodes(season.anime.id)
         if (episodes.isEmpty()) {
             val source = sourceManager.getOrStub(season.anime.source)
             try {
                 val fetched = source.getEpisodeList(season.anime.toSAnime())
                 syncEpisodesWithSource.await(fetched, season.anime, source, false)
-                episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+                episodes = getAnimeAndEpisodesAndSeasons.awaitEpisodes(season.anime.id)
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e)
             }
@@ -1884,7 +1865,7 @@ class AnimeScreenModel(
                 unseenCount = seasonAnime.unseenCount,
                 isLocal = itemAnime.isLocal(),
                 sourceLanguage = sourceManager.getOrStub(itemAnime.source).lang,
-                showContinueOverlay = (anime.seasonContinueOverlay || anime.seasonFlags == 0L) &&
+                showContinueOverlay = anime.seasonContinueOverlay &&
                     seasonAnime.unseenCount > 0 &&
                     itemAnime.fetchType == FetchType.Episodes,
             )
@@ -2012,13 +1993,13 @@ class AnimeScreenModel(
         val state = successState ?: return
         screenModelScope.launchIO {
             if (deleteDownloads) {
-                val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
+                val episodes = getAnimeAndEpisodesAndSeasons.awaitEpisodes(animeId)
                 deleteEpisodes(episodes)
             }
 
             if (deleteFromDatabase) {
                 removeHistory.await(animeId)
-                val episodes = getAnimeAndEpisodes.awaitChapters(animeId)
+                val episodes = getAnimeAndEpisodesAndSeasons.awaitEpisodes(animeId)
                 setSeenStatus.await(seen = false, episodes = episodes.toTypedArray())
             }
 

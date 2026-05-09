@@ -21,7 +21,7 @@ import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.SyncEpisodeProgressWithTrack
 import eu.kanade.domain.track.interactor.TrackEpisode
-import eu.kanade.tachiyomi.ui.player.utils.TrackSelect
+import eu.kanade.tachiyomi.ui.player.util.TrackSelect
 import mihon.data.repository.ExtensionRepoRepositoryImpl
 import mihon.domain.episode.interactor.FilterEpisodesForDownload
 import mihon.domain.extensionrepo.interactor.CreateExtensionRepo
@@ -49,6 +49,7 @@ import tachiyomi.domain.anime.interactor.FetchInterval
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.GetAnimeByUrlAndSourceId
 import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodes
+import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodesAndSeasons
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
 import tachiyomi.domain.anime.interactor.GetFavorites
 import tachiyomi.domain.anime.interactor.GetLibraryAnime
@@ -137,6 +138,7 @@ class DomainModule : InjektModule {
         addFactory { GetLibraryAnime(get()) }
         addFactory { CalculateUserAffinity(get(), get(), get()) }
         addFactory { GetAnimeWithEpisodes(get(), get(), get()) }
+        addFactory { GetAnimeWithEpisodesAndSeasons(get(), get(), get(), get()) }
         addFactory { GetAnimeByUrlAndSourceId(get()) }
         addFactory { GetAnime(get()) }
         addFactory { GetNextEpisodes(get(), get(), get(), get()) }
@@ -165,7 +167,7 @@ class DomainModule : InjektModule {
         addFactory { GetTracksPerAnime(get()) }
         addFactory { GetTracks(get()) }
         addFactory { InsertTrack(get()) }
-        addFactory { SyncEpisodeProgressWithTrack(get(), get(), get()) }
+        addFactory { SyncEpisodeProgressWithTrack(get(), get()) }
 
         addSingletonFactory<EpisodeRepository> { EpisodeRepositoryImpl(get()) }
         addFactory { GetEpisode(get()) }
@@ -200,7 +202,7 @@ class DomainModule : InjektModule {
         addSingletonFactory<UpdatesRepository> { UpdatesRepositoryImpl(get()) }
         addFactory { GetUpdates(get()) }
 
-        addSingletonFactory<SourceRepository> { SourceRepositoryImpl(get(), get()) }
+        addSingletonFactory<SourceRepository> { SourceRepositoryImpl(get()) }
         addSingletonFactory<StubSourceRepository> { StubSourceRepositoryImpl(get()) }
         addFactory { GetEnabledSources(get(), get()) }
         addFactory { GetLanguagesWithSources(get(), get()) }
