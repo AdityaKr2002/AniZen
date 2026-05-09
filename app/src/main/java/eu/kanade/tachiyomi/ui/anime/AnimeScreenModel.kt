@@ -564,19 +564,6 @@ class AnimeScreenModel(
     init {
         screenModelScope.launchIO {
             val initialAnime = getAnimeAndEpisodes.awaitManga(animeId)
-            val initialEpisodes = getAnimeAndEpisodes.awaitChapters(animeId).toEpisodeListItems(initialAnime)
-
-            if (!initialAnime.favorite) {
-                setAnimeDefaultEpisodeFlags.await(initialAnime)
-                setAnimeDefaultSeasonFlags.await(initialAnime)
-            }
-
-            val animeSource = Injekt.get<SourceManager>().getOrStub(initialAnime.source)
-            if (animeSource.isSourceForTorrents()) {
-                TorrentServerService.start()
-                TorrentServerService.wait(10)
-                TorrentServerUtils.setTrackersList()
-            }
 
             // Force children to Episode fetch type to prevent infinite grids
             val anime = if (initialAnime.parentId != null && initialAnime.fetchType == FetchType.Seasons) {
@@ -587,6 +574,24 @@ class AnimeScreenModel(
                 initialAnime
             }
 
+            val initialEpisodes = if (anime.fetchType != FetchType.Seasons) {
+                getAnimeAndEpisodes.awaitChapters(animeId).toEpisodeListItems(anime)
+            } else {
+                emptyList()
+            }
+
+            if (!anime.favorite) {
+                setAnimeDefaultEpisodeFlags.await(anime)
+                setAnimeDefaultSeasonFlags.await(anime)
+            }
+
+            val animeSource = Injekt.get<SourceManager>().getOrStub(anime.source)
+            if (animeSource.isSourceForTorrents()) {
+                TorrentServerService.start()
+                TorrentServerService.wait(10)
+                TorrentServerUtils.setTrackersList()
+            }
+
             // Set initial state from database
             val savedSeason = libraryPreferences.lastSelectedSeason(animeId).get().takeIf { it.isNotEmpty() }
             mutableState.update {
@@ -595,7 +600,7 @@ class AnimeScreenModel(
                     source = animeSource,
                     isFromSource = isFromSource,
                     episodes = initialEpisodes,
-                    isRefreshingData = !anime.initialized || initialEpisodes.isEmpty(),
+                    isRefreshingData = !anime.initialized || (initialEpisodes.isEmpty() && anime.fetchType != FetchType.Seasons),
                     dialog = null,
                     selectedSeason = savedSeason,
                 )
@@ -1222,10 +1227,6 @@ class AnimeScreenModel(
                     state.source,
                     manualFetch,
                 )
-
-                if (libraryPreferences.useHierarchicalSeasons().get()) {
-                    fetchEpisodesFromSeasons(newSeasons, manualFetch)
-                }
             }
         } catch (e: Throwable) {
             val message = if (e is NoSeasonsException) {
@@ -1241,21 +1242,6 @@ class AnimeScreenModel(
             val newAnime = animeRepository.getAnimeById(animeId)
             updateSuccessState { it.copySuccess(anime = newAnime, isRefreshingData = false) }
         }
-    }
-
-    private suspend fun CoroutineScope.fetchEpisodesFromSeasons(seasons: List<Anime>, manualFetch: Boolean) {
-        val state = successState ?: return
-
-        val fetch: suspend (Anime) -> Unit = { s ->
-            try {
-                val episodes = state.source.getEpisodeList(s.toSAnime())
-                syncEpisodesWithSource.await(episodes, s, state.source, manualFetch)
-            } catch (e: Throwable) {
-                logcat(LogPriority.ERROR, e)
-            }
-        }
-
-        seasons.forEach { fetch(it) }
     }
 
     private suspend fun fetchEpisodesFromSource(manualFetch: Boolean = false) {
@@ -1306,7 +1292,17 @@ class AnimeScreenModel(
     }
 
     suspend fun getNextUnseenEpisode(season: tachiyomi.domain.anime.model.SeasonAnime): Episode? {
-        val episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+        var episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+        if (episodes.isEmpty()) {
+            val source = sourceManager.getOrStub(season.anime.source)
+            try {
+                val fetched = source.getEpisodeList(season.anime.toSAnime())
+                syncEpisodesWithSource.await(fetched, season.anime, source, false)
+                episodes = getAnimeAndEpisodes.awaitChapters(season.anime.id)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e)
+            }
+        }
         return episodes.getNextUnseen(season.anime, downloadManager)
     }
 
@@ -1319,8 +1315,7 @@ class AnimeScreenModel(
                 .maxByOrNull { it.lastSeen } ?: seasons.firstOrNull()
 
             if (lastSeenSeason != null) {
-                val episodes = getAnimeAndEpisodes.awaitChapters(lastSeenSeason.anime.id)
-                return episodes.getNextUnseen(lastSeenSeason.anime, downloadManager)
+                return getNextUnseenEpisode(lastSeenSeason)
             }
             return null
         }
