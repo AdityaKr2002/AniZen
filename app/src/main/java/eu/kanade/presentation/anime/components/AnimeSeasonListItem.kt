@@ -55,12 +55,16 @@ fun AnimeSeasonListItem(
                 coverBadgeEnd = {
                     LanguageBadge(
                         isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
+                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
                     )
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
             )
         }
         SeasonDisplayMode.CompactGrid, SeasonDisplayMode.CoverOnlyGrid -> {
@@ -80,12 +84,16 @@ fun AnimeSeasonListItem(
                 coverBadgeEnd = {
                     LanguageBadge(
                         isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
+                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
                     )
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
             )
         }
         SeasonDisplayMode.List -> {
@@ -103,12 +111,16 @@ fun AnimeSeasonListItem(
                     UnviewedBadge(count = item.unseenCount)
                     LanguageBadge(
                         isLocal = item.isLocal,
-                        sourceLanguage = item.sourceLanguage,
+                        sourceLanguage = item.sourceLanguage.takeIf { it != "all" } ?: "",
                     )
                 },
                 onLongClick = { onSeasonClicked(item.seasonAnime) },
                 onClick = { onSeasonClicked(item.seasonAnime) },
-                onClickContinueWatching = onClickContinueWatching?.let { { it(item.seasonAnime) } },
+                onClickContinueWatching = if (onClickContinueWatching != null && item.showContinueOverlay) {
+                    { onClickContinueWatching(item.seasonAnime) }
+                } else {
+                    null
+                },
                 entries = anime.seasonDisplayGridSize,
                 containerHeight = containerHeight,
             )
