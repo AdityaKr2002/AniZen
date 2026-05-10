@@ -181,27 +181,18 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
-        
-        // --- ATOMIC PERFORMANCE PATH (mpvRex parity) ---
         MPVLib.setOptionString("profile", "fast")
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("gpu-api", "opengl")
+        
+        // Performance Path: Direct Rendering + High-Quality 16-bit Pipeline (mpvRex Parity)
         MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("fbo-format", "auto")
-        MPVLib.setOptionString("opengl-early-flush", "yes")
+        MPVLib.setOptionString("fbo-format", "rgba16f")
+        MPVLib.setOptionString("opengl-pbo", "yes")
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
         
-        // Force Single-Pass: Disable everything that mandates an FBO
-        MPVLib.setOptionString("vf", "") 
-        MPVLib.setOptionString("deband", "no")
-        MPVLib.setOptionString("dither", "no")
-        MPVLib.setOptionString("icc-profile-auto", "no")
-        MPVLib.setOptionString("scale", "bilinear")
-        MPVLib.setOptionString("cscale", "bilinear")
-        MPVLib.setOptionString("dscale", "bilinear")
-        
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec" else "no")
-        // ----------------------------------------------
-        
+        if (decoderPreferences.useYUV420P().get()) {
+            MPVLib.setOptionString("vf", "format=yuv420p")
+        }
+
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
         // Force detect refresh rate
