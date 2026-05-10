@@ -306,35 +306,33 @@ fun DebandCard() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
-                    key("deband-mode-${mode.name}") {
-                        val isSelected = debandMode == mode
-                        IconToggleButton(
-                            checked = isSelected,
-                            onCheckedChange = {
-                                decoderPreferences.videoDebanding().set(mode)
-                                applyDebandMode(mode, decoderPreferences)
-                            }
-                        ) {
-                            val icon = when (mode) {
-                                Debanding.None -> Icons.Default.NotInterested
-                                Debanding.CPU -> Icons.Default.Memory
-                                Debanding.GPU -> Icons.Default.Gradient
-                            }
-                            Icon(icon, null)
+                    IconToggleButton(
+                        checked = debandMode == mode,
+                        onCheckedChange = {
+                            decoderPreferences.videoDebanding().set(mode)
+                            applyDebandMode(mode, decoderPreferences)
                         }
+                    ) {
+                        val icon = when (mode) {
+                            Debanding.None -> Icons.Default.NotInterested
+                            Debanding.CPU -> Icons.Default.Memory
+                            Debanding.GPU -> Icons.Default.Gradient
+                        }
+                        Icon(icon, null)
                     }
                 }
-                Text(text = debandMode.name)
+                
+                Text(text = stringResource(debandMode.titleRes))
                 
                 Spacer(Modifier.weight(1f))
                 
                 TextButton(onClick = {
                     decoderPreferences.videoDebanding().set(Debanding.None)
                     applyDebandMode(Debanding.None, decoderPreferences)
-                    DebandSettings.entries.forEach { 
-                        val pref = it.preference(decoderPreferences)
+                    DebandSettings.entries.forEach { setting ->
+                        val pref = setting.preference(decoderPreferences)
                         pref.delete()
-                        applyDebandSetting(it, pref.get()) 
+                        MPVLib.setPropertyInt(setting.mpvProperty, pref.get())
                     }
                 }) {
                     Text(stringResource(MR.strings.action_reset))

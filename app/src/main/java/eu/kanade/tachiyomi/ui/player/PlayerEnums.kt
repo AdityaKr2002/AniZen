@@ -138,10 +138,12 @@ fun getDecoderFromValue(value: String?): Decoder {
     return Decoder.entries.firstOrNull { it.value == value } ?: Decoder.Auto
 }
 
-enum class Debanding {
-    None,
-    CPU,
-    GPU,
+enum class Debanding(
+    val titleRes: StringResource,
+) {
+    None(MR.strings.player_sheets_deband_none),
+    CPU(MR.strings.player_sheets_deband_cpu),
+    GPU(MR.strings.player_sheets_deband_gpu),
 }
 
 enum class Sheets {

@@ -31,10 +31,10 @@ class DecoderPreferences(
     fun gammaFilter() = preferenceStore.getInt("pref_player_filter_gamma")
     fun hueFilter() = preferenceStore.getInt("pref_player_filter_hue")
     fun sharpenFilter() = preferenceStore.getInt("pref_player_filter_sharpen")
-    fun debandFilter() = preferenceStore.getInt("pref_player_filter_deband")
-    fun grainFilter() = preferenceStore.getInt("pref_player_filter_grain")
-    fun debandThreshold() = preferenceStore.getInt("pref_player_filter_deband_threshold")
-    fun debandRange() = preferenceStore.getInt("pref_player_filter_deband_range")
+    fun debandFilter() = preferenceStore.getInt("pref_player_filter_deband", 1)
+    fun grainFilter() = preferenceStore.getInt("pref_player_filter_grain", 32)
+    fun debandThreshold() = preferenceStore.getInt("pref_player_filter_deband_threshold", 48)
+    fun debandRange() = preferenceStore.getInt("pref_player_filter_deband_range", 16)
 
     fun videoFilterTheme() = preferenceStore.getInt("pref_video_filter_theme", 0)
 }
