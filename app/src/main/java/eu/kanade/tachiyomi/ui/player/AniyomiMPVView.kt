@@ -183,10 +183,8 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // Performance Path: Force direct rendering and high-quality 16-bit pipeline
+        // Performance Path: Force direct rendering to match mpvRex
         MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("fbo-format", "rgba16f")
-        MPVLib.setOptionString("opengl-pbo", "yes")
         
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
         
