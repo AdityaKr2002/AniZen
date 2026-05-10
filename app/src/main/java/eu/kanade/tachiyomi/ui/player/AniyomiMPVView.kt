@@ -281,9 +281,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         MPVLib.setOptionString("speed", playerPreferences.playerSpeed().get().toString())
-        // workaround for <https://github.com/mpv-player/mpv/issues/14651>
-        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
-
+        
         setupSubtitlesOptions()
         setupAudioOptions()
     }
@@ -439,6 +437,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         // If we have more than 10 delayed frames in a short window and using High quality
         if (delayedFrames > 10 && decoderPreferences.anime4kQuality().get() == "HIGH") {
+            logcat("Performance", LogPriority.WARN) { "High frame drops ($delayedFrames) detected. Downgrading Anime4K quality." }
+            
+            // Downgrade to Balanced
+            decoderPreferences.anime4kQuality().set("BALANCED")
+            applyAnime4K(decoderPreferences, anime4kManager)
+            PlayerStats.isAdaptiveDowngraded.value = true
+            
+            (context as? PlayerActivity)?.runOnUiThread {
+                (context as? PlayerActivity)?.showToast("Performance: Anime4K downgraded to Balanced")
+            }
+        }
+    }
+}
+mes > 10 && decoderPreferences.anime4kQuality().get() == "HIGH") {
             logcat("Performance", LogPriority.WARN) { "High frame drops ($delayedFrames) detected. Downgrading Anime4K quality." }
             
             // Downgrade to Balanced
