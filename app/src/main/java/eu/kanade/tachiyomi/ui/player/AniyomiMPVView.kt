@@ -176,34 +176,25 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // Force gpu-next for better pass-merging
-        setVo("gpu-next")
+        // Revert to legacy gpu for single-pass merge
+        setVo("gpu")
 
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
 
-        // --- NUCLEAR SINGLE-PASS PATH (Target: 3ms) ---
+        // --- VERIFIED DIRECT PATH (mpvRex Parity) ---
         MPVLib.setOptionString("hwdec", "mediacodec") // Pure mediacodec for OES trigger
-        MPVLib.setOptionString("fbo-format", "rgba16f")
-        MPVLib.setOptionString("gpu-dumb-mode", "yes") // Bypass FBO-forcing logic
-        MPVLib.setOptionString("dither", "no")
-        MPVLib.setOptionString("correct-downscaling", "no")
-        MPVLib.setOptionString("linear-downscaling", "no")
-        MPVLib.setOptionString("sigmoid-upscaling", "no")
-        MPVLib.setOptionString("hdr-compute-peak", "no")
-
-        // Re-apply essential speed flags
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("opengl-early-flush", "yes")
         MPVLib.setOptionString("opengl-pbo", "yes")
         MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
-        // ----------------------------------------------
+        // --------------------------------------------
 
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
-        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()        
-        // Force detect refresh rate
+        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()        // Force detect refresh rate
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
         } else {
