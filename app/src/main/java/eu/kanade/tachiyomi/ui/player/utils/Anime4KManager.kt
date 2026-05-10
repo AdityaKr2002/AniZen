@@ -178,36 +178,4 @@ class Anime4KManager(private val context: Context) {
     private fun getShaderPath(fileName: String): String {
         return File(shaderDir, fileName).absolutePath
     }
-
-    /**
-     * Get the Unsharp Mask GLSL shader path, dynamically writing the intensity value
-     */
-    fun getAdaptiveSharpenShader(intensity: Int): String {
-        if (intensity <= 0) return ""
-        
-        if (!isInitialized) {
-            initialize()
-        }
-        
-        val dir = shaderDir ?: return ""
-        val templateFile = File(dir, "UnsharpMask.glsl")
-        if (!templateFile.exists()) return ""
-        
-        // Map 1-100 to 0.0 - 2.0 where 50 is 1.0
-        val amount = intensity / 50f
-        
-        val activeFile = File(dir, "UnsharpMask_active.glsl")
-        
-        try {
-            val content = templateFile.readText()
-            val newContent = content.replace(
-                "#define SHARPEN_AMOUNT 1.0",
-                "#define SHARPEN_AMOUNT $amount"
-            )
-            activeFile.writeText(newContent)
-            return activeFile.absolutePath
-        } catch (e: Exception) {
-            return ""
-        }
-    }
 }

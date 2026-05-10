@@ -258,9 +258,9 @@ fun FiltersCard() {
             VideoFilters.entries.forEach { filter ->
                 key("filter-${filter.name}") {
                     val value by filter.preference(decoderPreferences).collectAsState()
-                    // Draw tick marks (dots) if the range is small enough (e.g. Sharpening: -5 to 5)
+                    // Draw tick marks (dots) if the range is small enough (e.g. Sharpening: -20 to 20)
                     val range = filter.max - filter.min
-                    val steps = if (range <= 20) range - 1 else 0
+                    val steps = if (range <= 40) range - 1 else 0
 
                     SliderItem(
                         label = stringResource(filter.titleRes),

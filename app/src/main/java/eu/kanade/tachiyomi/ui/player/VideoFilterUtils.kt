@@ -32,16 +32,16 @@ fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
     when (mode) {
         Debanding.None -> {
-            MPVLib.setPropertyBoolean("deband", false)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "no")
+            MPVLib.command(arrayOf("vf", "remove", "@deband"))
         }
         Debanding.CPU -> {
-            MPVLib.setPropertyBoolean("deband", false)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "no")
+            MPVLib.command(arrayOf("vf", "add", "@deband:gradfun=radius=12"))
         }
         Debanding.GPU -> {
-            MPVLib.setPropertyBoolean("deband", true)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "yes")
+            MPVLib.command(arrayOf("vf", "remove", "@deband"))
             // Apply current GPU settings
             DebandSettings.entries.forEach {
                 MPVLib.setPropertyInt(it.mpvProperty, it.preference(prefs).get())
@@ -55,26 +55,12 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
-    val deband = decoderPreferences.videoDebanding().get()
     val useYuv420p = decoderPreferences.useYUV420P().get()
 
-    val cpuFilters = mutableListOf<String>()
-
-    if (deband == Debanding.CPU) {
-        cpuFilters.add("deband=1:1:64:16")
-    }
-
-    return when {
-        cpuFilters.isNotEmpty() -> {
-            // If any filter requires CPU processing, we MUST ensure a stable pixel format 
-            // inside the lavfi context.
-            "lavfi=[format=yuv420p,${cpuFilters.joinToString(",")}]"
-        }
-        useYuv420p -> {
-            // Use native mpv filter instead of lavfi wrapper for better performance
-            "format=yuv420p"
-        }
-        else -> ""
+    return if (useYuv420p) {
+        "format=yuv420p"
+    } else {
+        ""
     }
 }
 
