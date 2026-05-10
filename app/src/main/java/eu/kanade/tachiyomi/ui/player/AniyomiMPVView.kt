@@ -182,7 +182,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
+        // Performance Path: Force direct rendering and 8-bit pipeline to match mpvRex
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        MPVLib.setOptionString("fbo-format", "rgba8")
+        MPVLib.setOptionString("opengl-pbo", "yes")
+        
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
@@ -214,6 +219,14 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             // Interpolation requires display-resample
             MPVLib.setOptionString("video-sync", "display-resample")
             MPVLib.setOptionString("interpolation", "yes")
+            
+            // Sync Surface to display refresh rate
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                holder.surface?.let {
+                    it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
+                }
+            }
+
             val mode = decoderPreferences.interpolationMode().get()
             MPVLib.setOptionString("tscale", mode.value)
         } else {
@@ -437,20 +450,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         // If we have more than 10 delayed frames in a short window and using High quality
         if (delayedFrames > 10 && decoderPreferences.anime4kQuality().get() == "HIGH") {
-            logcat("Performance", LogPriority.WARN) { "High frame drops ($delayedFrames) detected. Downgrading Anime4K quality." }
-            
-            // Downgrade to Balanced
-            decoderPreferences.anime4kQuality().set("BALANCED")
-            applyAnime4K(decoderPreferences, anime4kManager)
-            PlayerStats.isAdaptiveDowngraded.value = true
-            
-            (context as? PlayerActivity)?.runOnUiThread {
-                (context as? PlayerActivity)?.showToast("Performance: Anime4K downgraded to Balanced")
-            }
-        }
-    }
-}
-mes > 10 && decoderPreferences.anime4kQuality().get() == "HIGH") {
             logcat("Performance", LogPriority.WARN) { "High frame drops ($delayedFrames) detected. Downgrading Anime4K quality." }
             
             // Downgrade to Balanced
