@@ -176,28 +176,33 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // Force standard gpu for maximum pass-merging on mobile
-        setVo("gpu")
+        // Force gpu-next for better pass-merging
+        setVo("gpu-next")
 
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
 
-        // --- DIRECT PATH TRIAL (Target: 3ms) ---
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("gpu-api", "opengl")
-        MPVLib.setOptionString("hwdec", "mediacodec")
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("fbo-format", "auto")
+        // --- NUCLEAR SINGLE-PASS PATH (Target: 3ms) ---
+        MPVLib.setOptionString("hwdec", "mediacodec") // Pure mediacodec for OES trigger
+        MPVLib.setOptionString("fbo-format", "rgba16f")
+        MPVLib.setOptionString("gpu-dumb-mode", "yes") // Bypass FBO-forcing logic
+        MPVLib.setOptionString("dither", "no")
+        MPVLib.setOptionString("correct-downscaling", "no")
+        MPVLib.setOptionString("linear-downscaling", "no")
+        MPVLib.setOptionString("sigmoid-upscaling", "no")
+        MPVLib.setOptionString("hdr-compute-peak", "no")
+
+        // Re-apply essential speed flags
         MPVLib.setOptionString("opengl-early-flush", "yes")
+        MPVLib.setOptionString("opengl-pbo", "yes")
         MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
-        // ----------------------------------------
+        // ----------------------------------------------
 
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
-        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        
+        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()        
         // Force detect refresh rate
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
