@@ -329,9 +329,13 @@ fun DebandCard() {
                 Spacer(Modifier.weight(1f))
                 
                 TextButton(onClick = {
-                    decoderPreferences.videoDebanding().delete()
-                    DebandSettings.entries.forEach { it.preference(decoderPreferences).delete() }
+                    decoderPreferences.videoDebanding().set(Debanding.None)
                     applyDebandMode(Debanding.None, decoderPreferences)
+                    DebandSettings.entries.forEach { 
+                        val pref = it.preference(decoderPreferences)
+                        pref.delete()
+                        applyDebandSetting(it, pref.get()) 
+                    }
                 }) {
                     Text(stringResource(MR.strings.action_reset))
                 }
