@@ -183,12 +183,16 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // Performance Path: Direct Rendering + High-Quality 16-bit Pipeline (mpvRex Parity)
+        // --- VERIFIED PERFORMANCE PATH (mpvRex Parity) ---
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
         MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("fbo-format", "rgba16f")
         MPVLib.setOptionString("opengl-pbo", "yes")
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
-        
+        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
+        // ------------------------------------------------
+
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
