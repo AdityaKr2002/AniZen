@@ -176,22 +176,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        val useAnime4K = decoderPreferences.enableAnime4K().get()
-        // Anime4K is incompatible with gpu-next
-        setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
-        
+        // Force standard gpu for maximum pass-merging on mobile
+        setVo("gpu")
+
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
-        
-        // --- VERIFIED PERFORMANCE PATH (mpvRex Parity) ---
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("fbo-format", "rgba16f")
-        MPVLib.setOptionString("opengl-pbo", "yes")
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec" else "no")
-        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
-        // ------------------------------------------------
 
-        if (decoderPreferences.useYUV420P().get()) {
+        // --- DIRECT PATH TRIAL (Target: 3ms) ---
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
+        MPVLib.setOptionString("hwdec", "mediacodec")
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        MPVLib.setOptionString("fbo-format", "auto")
+        MPVLib.setOptionString("opengl-early-flush", "yes")
+        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
+        // ----------------------------------------
+
+        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
