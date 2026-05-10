@@ -184,6 +184,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
+        // Fast paths for hardware decoding. 
+        // vd-lavc-dr (Direct Rendering) is set to 'auto' to allow libmpv to negotiate the best path.
+        MPVLib.setOptionString("vd-lavc-dr", "auto")
+        
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
         // Force detect refresh rate
