@@ -192,7 +192,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
         // ----------------------------------------
 
-        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
+        if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
