@@ -183,12 +183,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("profile", "fast")
         
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
-        MPVLib.setOptionString("hwdec-codecs", "all")
-        
-        // Fast paths for hardware decoding. 
-        // vd-lavc-dr (Direct Rendering) is essential for 3-5ms frame timings.
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("vd-lavc-fast", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
@@ -273,10 +267,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         applyPlaybackStrategy()
 
-        // Let FFmpeg and Android MediaCodec auto-negotiate thread counts and hardware frame buffers.
-        // Forcing these values causes instability across fragmented Android GPU/VPU drivers.
-        MPVLib.setOptionString("vd-lavc-threads", "0") // Auto
-        
         // Stability and compatibility safeguards
         // Let MPV auto-negotiate the GPU context for maximum compatibility
         
