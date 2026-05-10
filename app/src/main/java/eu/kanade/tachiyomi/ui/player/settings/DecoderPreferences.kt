@@ -32,8 +32,8 @@ class DecoderPreferences(
     fun hueFilter() = preferenceStore.getInt("pref_player_filter_hue")
     fun sharpenFilter() = preferenceStore.getInt("pref_player_filter_sharpen")
     fun debandFilter() = preferenceStore.getInt("pref_player_filter_deband", 1)
-    fun grainFilter() = preferenceStore.getInt("pref_player_filter_grain", 32)
-    fun debandThreshold() = preferenceStore.getInt("pref_player_filter_deband_threshold", 48)
+    fun grainFilter() = preferenceStore.getInt("pref_player_filter_grain", 0)
+    fun debandThreshold() = preferenceStore.getInt("pref_player_filter_deband_threshold", 32)
     fun debandRange() = preferenceStore.getInt("pref_player_filter_deband_range", 16)
 
     fun videoFilterTheme() = preferenceStore.getInt("pref_video_filter_theme", 0)

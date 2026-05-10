@@ -229,19 +229,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
 
         // Initialize Debanding
-        when (val mode = decoderPreferences.videoDebanding().get()) {
-            Debanding.None -> MPVLib.setOptionString("deband", "no")
-            Debanding.CPU -> {
-                // Handled in buildVFChain via gradfun
-            }
-            Debanding.GPU -> {
-                MPVLib.setOptionString("deband", "yes")
-                MPVLib.setOptionString("deband-iterations", decoderPreferences.debandFilter().get().toString())
-                MPVLib.setOptionString("deband-threshold", decoderPreferences.debandThreshold().get().toString())
-                MPVLib.setOptionString("deband-range", decoderPreferences.debandRange().get().toString())
-                MPVLib.setOptionString("deband-grain", decoderPreferences.grainFilter().get().toString())
-            }
-        }
+        applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
 
         val vfChain = buildVFChain(decoderPreferences)
         if (vfChain.isNotEmpty()) {
