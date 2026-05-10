@@ -417,7 +417,7 @@ private fun AnimeScreenSmallImpl(
     val expandSuggestions = sourcePreferences.relatedAnimeExpand().collectAsState().value
     val suggestionsInOverflow = sourcePreferences.relatedAnimeInOverflow().collectAsState().value
 
-    val isAnySelected by remember {
+    val isAnySelected by remember(episodes) {
         derivedStateOf { episodes.fastAny { it.selected } }
     }
 
@@ -898,7 +898,7 @@ fun AnimeScreenLargeImpl(
     val expandSuggestions = sourcePreferences.relatedAnimeExpand().collectAsState().value
     val suggestionsInOverflow = sourcePreferences.relatedAnimeInOverflow().collectAsState().value
 
-    val isAnySelected by remember {
+    val isAnySelected by remember(episodes) {
         derivedStateOf { episodes.fastAny { it.selected } }
     }
     val insetPadding = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal).asPaddingValues()
