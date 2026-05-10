@@ -185,6 +185,11 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         MPVLib.setOptionString("hwdec-codecs", "all")
         
+        // Fast paths for hardware decoding. 
+        // vd-lavc-dr (Direct Rendering) is essential for 3-5ms frame timings.
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        MPVLib.setOptionString("vd-lavc-fast", "yes")
+        
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
         // Force detect refresh rate
@@ -225,6 +230,11 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("scale", "ewa_lanczossharp")
             MPVLib.setOptionString("cscale", "mitchell")
             MPVLib.setOptionString("dscale", "mitchell")
+        } else {
+            // Match 'fast' profile by forcing efficient scalers
+            MPVLib.setOptionString("scale", "bilinear")
+            MPVLib.setOptionString("cscale", "bilinear")
+            MPVLib.setOptionString("dscale", "bilinear")
         }
 
 

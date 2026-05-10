@@ -12,7 +12,7 @@ class DecoderPreferences(
     fun tryHWDecoding() = preferenceStore.getBoolean("pref_try_hwdec", true)
     fun gpuNext() = preferenceStore.getBoolean("pref_gpu_next", false)
     fun videoDebanding() = preferenceStore.getEnum("pref_video_debanding", Debanding.None)
-    fun useYUV420P() = preferenceStore.getBoolean("use_yuv420p", true)
+    fun useYUV420P() = preferenceStore.getBoolean("use_yuv420p", false)
     fun highQualityScaling() = preferenceStore.getBoolean("pref_high_quality_scaling", false)
     fun smoothMotion() = preferenceStore.getBoolean("pref_smooth_motion", false)
     fun interpolationMode() = preferenceStore.getEnum("pref_interpolation_mode", InterpolationMode.Oversample)
