@@ -181,12 +181,16 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
+        
+        // --- ATOMIC PERFORMANCE PATH (mpvRex parity) ---
         MPVLib.setOptionString("profile", "fast")
-        
-        // Performance Path: Force direct rendering to match mpvRex
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
         MPVLib.setOptionString("vd-lavc-dr", "yes")
-        
+        MPVLib.setOptionString("fbo-format", "auto")
+        MPVLib.setOptionString("opengl-early-flush", "yes")
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
+        // ----------------------------------------------
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
