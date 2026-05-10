@@ -189,7 +189,17 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("fbo-format", "auto")
         MPVLib.setOptionString("opengl-early-flush", "yes")
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,no" else "no")
+        
+        // Force Single-Pass: Disable everything that mandates an FBO
+        MPVLib.setOptionString("vf", "") 
+        MPVLib.setOptionString("deband", "no")
+        MPVLib.setOptionString("dither", "no")
+        MPVLib.setOptionString("icc-profile-auto", "no")
+        MPVLib.setOptionString("scale", "bilinear")
+        MPVLib.setOptionString("cscale", "bilinear")
+        MPVLib.setOptionString("dscale", "bilinear")
+        
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec" else "no")
         // ----------------------------------------------
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
