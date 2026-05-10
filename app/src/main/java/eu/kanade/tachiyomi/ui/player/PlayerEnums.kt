@@ -138,10 +138,12 @@ fun getDecoderFromValue(value: String?): Decoder {
     return Decoder.entries.firstOrNull { it.value == value } ?: Decoder.Auto
 }
 
-enum class Debanding {
-    None,
-    CPU,
-    GPU,
+enum class Debanding(
+    val titleRes: StringResource,
+) {
+    None(MR.strings.pref_debanding_none),
+    CPU(MR.strings.pref_debanding_cpu),
+    GPU(MR.strings.pref_debanding_gpu),
 }
 
 enum class Sheets {
@@ -261,16 +263,9 @@ enum class VideoFilters(
     SHARPEN(
         MR.strings.player_sheets_filters_sharpen,
         { it.sharpenFilter() },
-        "vf_sharpen",
-        min = 0,
-        max = 100,
-    ),
-    BLUR(
-        MR.strings.player_sheets_filters_blur,
-        { it.blurFilter() },
-        "vf_blur",
-        min = 0,
-        max = 100,
+        "sharpen",
+        min = -20,
+        max = 20,
     ),
 }
 
@@ -293,7 +288,7 @@ enum class VideoFilterTheme(
         description = "Vivid colors and sharper edges, best for modern anime.",
         contrast = 5,
         saturation = 20,
-        sharpen = 15,
+        sharpen = 2,
     ),
     Cinema(
         MR.strings.player_sheets_filters_theme_cinema,

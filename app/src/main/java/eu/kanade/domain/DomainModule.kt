@@ -34,6 +34,7 @@ import mihon.domain.extensionrepo.interactor.UpdateExtensionRepo
 import mihon.domain.extensionrepo.repository.ExtensionRepoRepository
 import mihon.domain.extensionrepo.service.ExtensionRepoService
 import mihon.domain.upcoming.interactor.GetUpcomingAnime
+import tachiyomi.data.anime.AnimeMergeRepositoryImpl
 import tachiyomi.data.anime.AnimeRepositoryImpl
 import tachiyomi.data.category.CategoryRepositoryImpl
 import tachiyomi.data.custombutton.CustomButtonRepositoryImpl
@@ -49,14 +50,19 @@ import tachiyomi.domain.anime.interactor.FetchInterval
 import tachiyomi.domain.anime.interactor.GetAnime
 import tachiyomi.domain.anime.interactor.GetAnimeByUrlAndSourceId
 import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodes
+import tachiyomi.domain.anime.interactor.GetAnimeWithEpisodesAndSeasons
+import tachiyomi.domain.anime.interactor.GetCustomAnimeInfo
 import tachiyomi.domain.anime.interactor.GetDuplicateLibraryAnime
 import tachiyomi.domain.anime.interactor.GetFavorites
 import tachiyomi.domain.anime.interactor.GetLibraryAnime
 import tachiyomi.domain.anime.interactor.CalculateUserAffinity
+import tachiyomi.domain.anime.interactor.GetMergedReferencesById
+import tachiyomi.domain.anime.interactor.GetSeasonsByAnimeId
 import tachiyomi.domain.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.anime.interactor.ResetViewerFlags
 import tachiyomi.domain.anime.interactor.SetAnimeEpisodeFlags
 import tachiyomi.domain.anime.interactor.SetAnimeSeasonFlags
+import tachiyomi.domain.anime.repository.AnimeMergeRepository
 import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.category.interactor.CreateCategoryWithName
 import tachiyomi.domain.category.interactor.DeleteCategory
@@ -80,6 +86,7 @@ import tachiyomi.domain.custombuttons.repository.CustomButtonRepository
 import tachiyomi.domain.episode.interactor.GetEpisode
 import tachiyomi.domain.episode.interactor.GetEpisodeByUrlAndAnimeId
 import tachiyomi.domain.episode.interactor.GetEpisodesByAnimeId
+import tachiyomi.domain.episode.interactor.GetMergedEpisodesByAnimeId
 import tachiyomi.domain.episode.interactor.SetAnimeDefaultEpisodeFlags
 import tachiyomi.domain.episode.interactor.ShouldUpdateDbEpisode
 import tachiyomi.domain.episode.interactor.UpdateEpisode
@@ -132,11 +139,15 @@ class DomainModule : InjektModule {
         // KMK <--
 
         addSingletonFactory<AnimeRepository> { AnimeRepositoryImpl(get()) }
+        addSingletonFactory<AnimeMergeRepository> { AnimeMergeRepositoryImpl(get()) }
         addFactory { GetDuplicateLibraryAnime(get()) }
         addFactory { GetFavorites(get()) }
         addFactory { GetLibraryAnime(get()) }
         addFactory { CalculateUserAffinity(get(), get(), get()) }
         addFactory { GetAnimeWithEpisodes(get(), get(), get()) }
+        addFactory { GetCustomAnimeInfo(get()) }
+        addFactory { GetSeasonsByAnimeId(get(), get()) }
+        addFactory { GetAnimeWithEpisodesAndSeasons(get(), get(), get(), get()) }
         addFactory { GetAnimeByUrlAndSourceId(get()) }
         addFactory { GetAnime(get()) }
         addFactory { GetNextEpisodes(get(), get(), get(), get()) }
@@ -151,6 +162,7 @@ class DomainModule : InjektModule {
         addFactory { UpdateAnime(get(), get()) }
         addFactory { SyncSeasonsWithSource(get(), get(), get(), get(), get()) }
         addFactory { SetAnimeCategories(get()) }
+        addFactory { GetMergedReferencesById(get()) }
         // addFactory { GetExcludedScanlators(get()) }
         // addFactory { SetExcludedScanlators(get()) }
 
@@ -170,6 +182,7 @@ class DomainModule : InjektModule {
         addSingletonFactory<EpisodeRepository> { EpisodeRepositoryImpl(get()) }
         addFactory { GetEpisode(get()) }
         addFactory { GetEpisodesByAnimeId(get()) }
+        addFactory { GetMergedEpisodesByAnimeId(get(), get()) }
         addFactory { GetEpisodeByUrlAndAnimeId(get()) }
         addFactory { UpdateEpisode(get()) }
         addFactory { SetSeenStatus(get(), get(), get(), get(), get()) }

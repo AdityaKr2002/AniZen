@@ -76,7 +76,6 @@ import eu.kanade.tachiyomi.ui.player.applyDebandMode
 import eu.kanade.tachiyomi.ui.player.applyDebandSetting
 import eu.kanade.tachiyomi.ui.player.applyFilter
 import eu.kanade.tachiyomi.ui.player.applyTheme
-import eu.kanade.tachiyomi.ui.player.checkAndSetCopyMode
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.ui.player.controls.CARDS_MAX_WIDTH
 import eu.kanade.tachiyomi.ui.player.controls.panelCardsColors
@@ -239,41 +238,18 @@ fun FiltersCard() {
         colors = panelCardsColors(),
     ) {
         Column {
-            val forceCopy by decoderPreferences.forceMediaCodecCopy().collectAsState()
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = MaterialTheme.padding.medium),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(MR.strings.player_sheets_filters_force_copy),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Switch(
-                    checked = forceCopy,
-                    onCheckedChange = {
-                        decoderPreferences.forceMediaCodecCopy().set(it)
-                        checkAndSetCopyMode(decoderPreferences)
-                    }
-                )
-            }
-
             TextButton(
                 onClick = {
                     VideoFilters.entries.forEach {
                         it.preference(decoderPreferences).delete()
                     }
-                    decoderPreferences.forceMediaCodecCopy().delete()
                     MPVLib.setPropertyString("vf", "")
                     MPVLib.setPropertyInt("brightness", 0)
                     MPVLib.setPropertyInt("contrast", 0)
                     MPVLib.setPropertyInt("saturation", 0)
                     MPVLib.setPropertyInt("gamma", 0)
                     MPVLib.setPropertyInt("hue", 0)
-                    checkAndSetCopyMode(decoderPreferences)
+                    MPVLib.setPropertyInt("sharpen", 0)
                 },
             ) {
                 Text(text = stringResource(MR.strings.action_reset))
@@ -282,6 +258,10 @@ fun FiltersCard() {
             VideoFilters.entries.forEach { filter ->
                 key("filter-${filter.name}") {
                     val value by filter.preference(decoderPreferences).collectAsState()
+                    // Draw tick marks (dots) if the range is small enough (e.g. Sharpening: -20 to 20)
+                    val range = filter.max - filter.min
+                    val steps = if (range <= 40) range - 1 else 0
+
                     SliderItem(
                         label = stringResource(filter.titleRes),
                         value = value.toFloat(),
@@ -292,6 +272,7 @@ fun FiltersCard() {
                         },
                         max = filter.max.toFloat(),
                         min = filter.min.toFloat(),
+                        steps = steps,
                     )
                 }
             }
@@ -325,32 +306,34 @@ fun DebandCard() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
-                    key("deband-mode-${mode.name}") {
-                        val isSelected = debandMode == mode
-                        IconToggleButton(
-                            checked = isSelected,
-                            onCheckedChange = {
-                                decoderPreferences.videoDebanding().set(mode)
-                                applyDebandMode(mode, decoderPreferences)
-                            }
-                        ) {
-                            val icon = when (mode) {
-                                Debanding.None -> Icons.Default.NotInterested
-                                Debanding.CPU -> Icons.Default.Memory
-                                Debanding.GPU -> Icons.Default.Gradient
-                            }
-                            Icon(icon, null)
+                    IconToggleButton(
+                        checked = debandMode == mode,
+                        onCheckedChange = {
+                            decoderPreferences.videoDebanding().set(mode)
+                            applyDebandMode(mode, decoderPreferences)
                         }
+                    ) {
+                        val icon = when (mode) {
+                            Debanding.None -> Icons.Default.NotInterested
+                            Debanding.CPU -> Icons.Default.Memory
+                            Debanding.GPU -> Icons.Default.Gradient
+                        }
+                        Icon(icon, null)
                     }
                 }
-                Text(text = debandMode.name)
+                
+                Text(text = stringResource(debandMode.titleRes))
                 
                 Spacer(Modifier.weight(1f))
                 
                 TextButton(onClick = {
-                    decoderPreferences.videoDebanding().delete()
-                    DebandSettings.entries.forEach { it.preference(decoderPreferences).delete() }
+                    decoderPreferences.videoDebanding().set(Debanding.None)
                     applyDebandMode(Debanding.None, decoderPreferences)
+                    DebandSettings.entries.forEach { setting ->
+                        val pref = setting.preference(decoderPreferences)
+                        pref.delete()
+                        MPVLib.setPropertyInt(setting.mpvProperty, pref.get())
+                    }
                 }) {
                     Text(stringResource(MR.strings.action_reset))
                 }

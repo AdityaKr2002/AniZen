@@ -33,7 +33,6 @@ import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.applyAnime4K
 import eu.kanade.tachiyomi.ui.player.buildVFChain
-import eu.kanade.tachiyomi.ui.player.checkAndSetCopyMode
 import eu.kanade.tachiyomi.ui.player.utils.Anime4KManager
 import eu.kanade.tachiyomi.util.system.DeviceTierManager
 import eu.kanade.tachiyomi.util.system.findActivity
@@ -183,20 +182,13 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        checkAndSetCopyMode(decoderPreferences)
-        val hwdec = if (decoderPreferences.forceMediaCodecCopy().get()) {
-            "mediacodec-copy"
-        } else if (decoderPreferences.tryHWDecoding().get()) {
-            "auto"
-        } else {
-            "no"
-        }
-        MPVLib.setOptionString("hwdec", hwdec)
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         MPVLib.setOptionString("hwdec-codecs", "all")
+        
+        // Fast paths for hardware decoding. 
+        // vd-lavc-dr (Direct Rendering) is essential for 3-5ms frame timings.
         MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("vd-lavc-fast", "yes")
-        MPVLib.setOptionString("vd-lavc-threads", "0")
-        MPVLib.setOptionString("opengl-pbo", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
@@ -238,23 +230,16 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("scale", "ewa_lanczossharp")
             MPVLib.setOptionString("cscale", "mitchell")
             MPVLib.setOptionString("dscale", "mitchell")
+        } else {
+            // Match 'fast' profile by forcing efficient scalers
+            MPVLib.setOptionString("scale", "bilinear")
+            MPVLib.setOptionString("cscale", "bilinear")
+            MPVLib.setOptionString("dscale", "bilinear")
         }
 
 
         // Initialize Debanding
-        when (val mode = decoderPreferences.videoDebanding().get()) {
-            Debanding.None -> MPVLib.setOptionString("deband", "no")
-            Debanding.CPU -> {
-                // Handled in buildVFChain via gradfun
-            }
-            Debanding.GPU -> {
-                MPVLib.setOptionString("deband", "yes")
-                MPVLib.setOptionString("deband-iterations", decoderPreferences.debandFilter().get().toString())
-                MPVLib.setOptionString("deband-threshold", decoderPreferences.debandThreshold().get().toString())
-                MPVLib.setOptionString("deband-range", decoderPreferences.debandRange().get().toString())
-                MPVLib.setOptionString("deband-grain", decoderPreferences.grainFilter().get().toString())
-            }
-        }
+        applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
 
         val vfChain = buildVFChain(decoderPreferences)
         if (vfChain.isNotEmpty()) {

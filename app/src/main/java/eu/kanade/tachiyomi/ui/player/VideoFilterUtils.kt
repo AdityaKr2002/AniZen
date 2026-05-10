@@ -26,37 +26,28 @@ import logcat.logcat
 fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
     val property = filter.mpvProperty
     
-    when (property) {
-        "vf_sharpen", "vf_blur" -> {
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
-        }
-        else -> MPVLib.setPropertyInt(property, value)
-    }
-
-    // Update copy mode preference based on all filters AFTER applying properties
-    checkAndSetCopyMode(prefs)
+    MPVLib.setPropertyInt(property, value)
 }
 
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
     when (mode) {
         Debanding.None -> {
-            MPVLib.setPropertyBoolean("deband", false)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "no")
+            MPVLib.command(arrayOf("vf", "remove", "@deband"))
         }
         Debanding.CPU -> {
-            MPVLib.setPropertyBoolean("deband", false)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "no")
+            MPVLib.command(arrayOf("vf", "add", "@deband:gradfun=radius=12"))
         }
         Debanding.GPU -> {
-            MPVLib.setPropertyBoolean("deband", true)
-            MPVLib.setPropertyString("vf", buildVFChain(prefs))
+            MPVLib.setOptionString("deband", "yes")
+            MPVLib.command(arrayOf("vf", "remove", "@deband"))
             // Apply current GPU settings
             DebandSettings.entries.forEach {
                 MPVLib.setPropertyInt(it.mpvProperty, it.preference(prefs).get())
             }
         }
     }
-    checkAndSetCopyMode(prefs)
 }
 
 fun applyDebandSetting(setting: DebandSettings, value: Int) {
@@ -64,71 +55,12 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
-    val sharpen = decoderPreferences.sharpenFilter().get()
-    val blur = decoderPreferences.blurFilter().get()
-    val deband = decoderPreferences.videoDebanding().get()
     val useYuv420p = decoderPreferences.useYUV420P().get()
 
-    val cpuFilters = mutableListOf<String>()
-
-    if (deband == Debanding.CPU) {
-        cpuFilters.add("deband=1:1:64:16")
-    }
-
-    if (sharpen > 0) {
-        val amount = (sharpen / 100f) * 2.0f
-        cpuFilters.add("unsharp=5:5:$amount:5:5:0")
-    }
-
-    if (blur > 0) {
-        val luma = blur / 10f
-        // Blur both luma and chroma planes to prevent green artifacts
-        cpuFilters.add("boxblur=$luma:1:$luma:1")
-    }
-
-    return when {
-        cpuFilters.isNotEmpty() -> {
-            // If any filter requires CPU processing, we MUST ensure a stable pixel format 
-            // inside the lavfi context.
-            "lavfi=[format=yuv420p,${cpuFilters.joinToString(",")}]"
-        }
-        useYuv420p -> {
-            // Use native mpv filter instead of lavfi wrapper for better performance
-            "format=yuv420p"
-        }
-        else -> ""
-    }
-}
-
-fun checkAndSetCopyMode(prefs: DecoderPreferences) {
-    val requiresCopyMode = 
-        prefs.sharpenFilter().get() > 0 ||
-        prefs.blurFilter().get() > 0 ||
-        prefs.videoDebanding().get() == Debanding.CPU ||
-        prefs.saturationFilter().get() != 0 ||
-        prefs.hueFilter().get() != 0 ||
-        prefs.smoothMotion().get()
-
-    if (requiresCopyMode) {
-        if (!prefs.forceMediaCodecCopy().get()) {
-            prefs.forceMediaCodecCopy().set(true)
-        }
+    return if (useYuv420p) {
+        "format=yuv420p"
     } else {
-        if (prefs.forceMediaCodecCopy().get()) {
-            prefs.forceMediaCodecCopy().set(false)
-        }
-    }
-
-    // Optimization: Only update HW decoder if playback is actually active
-    // This prevents triggering decoder re-negotiation (and black screens) while paused.
-    val isPaused = MPVLib.getPropertyBoolean("pause") ?: true
-    if (!isPaused) {
-        if (prefs.forceMediaCodecCopy().get()) {
-            MPVLib.setPropertyString("hwdec", "mediacodec-copy")
-        } else {
-            val hwdec = if (prefs.tryHWDecoding().get()) "auto" else "no"
-            MPVLib.setPropertyString("hwdec", hwdec)
-        }
+        ""
     }
 }
 
@@ -139,7 +71,6 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     prefs.gammaFilter().set(theme.gamma)
     prefs.hueFilter().set(theme.hue)
     prefs.sharpenFilter().set(theme.sharpen)
-    prefs.blurFilter().set(0)
     
     // Reset deband
     prefs.debandFilter().set(0)
@@ -153,6 +84,7 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("saturation", theme.saturation)
     MPVLib.setPropertyInt("gamma", theme.gamma)
     MPVLib.setPropertyInt("hue", theme.hue)
+    MPVLib.setPropertyInt("sharpen", theme.sharpen)
     
     // Apply VF chain once
     MPVLib.setPropertyString("vf", buildVFChain(prefs))
@@ -163,9 +95,6 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("deband-threshold", 32)
     MPVLib.setPropertyInt("deband-range", 16)
     MPVLib.setPropertyInt("deband-grain", 48)
-
-    // Update copy mode based on new theme values AFTER applying properties
-    checkAndSetCopyMode(prefs)
 }
 
 fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
