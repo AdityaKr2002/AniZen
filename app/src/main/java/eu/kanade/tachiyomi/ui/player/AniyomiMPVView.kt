@@ -176,17 +176,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        val useAnime4K = decoderPreferences.enableAnime4K().get()
-        // Match Anikku baseline
-        setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
+        // FORCE LEGACY GPU FOR SINGLE-PASS MERGE (As seen in target logs)
+        setVo("gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
-        // --- PERFORMANCE MULTIPLIER (Verified Direct Rendering) ---
+        // --- MASTER PERFORMANCE ALIGNMENT (Target: 2.8ms Single Pass) ---
+        // Using mediacodec-copy + vd-lavc-dr=yes is the most reliable way to 
+        // collapse 'Combining Planes' into 'Output' on Adreno drivers.
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec-copy" else "no")
         MPVLib.setOptionString("vd-lavc-dr", "yes")
-        // -----------------------------------------------------------
+        MPVLib.setOptionString("vd-lavc-film-grain", "gpu") // GPU is faster than CPU for grain
+        MPVLib.setOptionString("opengl-early-flush", "yes")
+        // ----------------------------------------------------------------
 
         when (decoderPreferences.videoDebanding().get()) {
             Debanding.None -> {}
@@ -287,7 +290,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         MPVLib.setOptionString("speed", playerPreferences.playerSpeed().get().toString())
-        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
         
         setupSubtitlesOptions()
         setupAudioOptions()
