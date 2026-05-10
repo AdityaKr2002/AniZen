@@ -224,13 +224,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("scale", "ewa_lanczossharp")
             MPVLib.setOptionString("cscale", "mitchell")
             MPVLib.setOptionString("dscale", "mitchell")
-        } else {
-            // Match 'fast' profile by forcing efficient scalers
-            MPVLib.setOptionString("scale", "bilinear")
-            MPVLib.setOptionString("cscale", "bilinear")
-            MPVLib.setOptionString("dscale", "bilinear")
         }
-
 
         // Initialize Debanding
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
@@ -395,32 +389,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         "user-data/aniyomi/seek_by_with_text" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/aniyomi/seek_to_with_text" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/aniyomi/launch_int_picker" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-
-        "video-sync" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-        "tscale" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-        "video-codec" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-        "video-params/pixelformat" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-        "video-params/colorlevels" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-        "video-params/primaries" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
-
-        "video-params/w" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "video-params/h" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "video-out-params/w" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "video-out-params/h" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "dwidth" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "dheight" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "video-bitrate" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "vo-delayed-frame-count" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-        "vo-passes" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
-
-        "estimated-vf-fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "video-params/fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "video-out-params/fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "container-fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "display-fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "estimated-display-fps" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
-        "mistime" to MPVLib.mpvFormat.MPV_FORMAT_DOUBLE,
     )
 
     private fun setupAudioOptions() {
