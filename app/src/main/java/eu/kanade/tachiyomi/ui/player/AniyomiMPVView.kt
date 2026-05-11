@@ -172,25 +172,21 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // PURE ANIKKU INITIALIZATION (Target: 2.8ms Single Pass)
+        // 100% ANIKKU ARCHITECTURAL PARITY (Target: 2.8ms Single Pass)
         setVo(if (decoderPreferences.gpuNext().get()) "gpu-next" else "gpu")
+        
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
+        
+        // Let MPV negotiate the OES Zero-Copy path naturally (no conflicting flags)
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
-        // Gated High-Performance defaults
-        MPVLib.setOptionString("scale", "bilinear")
-        MPVLib.setOptionString("cscale", "bilinear")
-        MPVLib.setOptionString("dscale", "bilinear")
-        MPVLib.setOptionString("dither", "no")
-
         when (decoderPreferences.videoDebanding().get()) {
             Debanding.None -> {}
             Debanding.CPU -> MPVLib.setOptionString("vf", "gradfun=radius=12")
             Debanding.GPU -> MPVLib.setOptionString("deband", "yes")
         }
 
-        // Only apply yuv420p if explicitly needed to avoid pass-split
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
@@ -225,6 +221,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("tscale", mode.value)
         } else {
             MPVLib.setOptionString("video-sync", "audio")
+        }
+
+        if (decoderPreferences.highQualityScaling().get()) {
+            MPVLib.setOptionString("scale", "ewa_lanczossharp")
+            MPVLib.setOptionString("cscale", "mitchell")
+            MPVLib.setOptionString("dscale", "mitchell")
         }
 
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
