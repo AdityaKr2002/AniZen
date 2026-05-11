@@ -49,7 +49,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     private val playerPreferences: PlayerPreferences by injectLazy()
     private val decoderPreferences: DecoderPreferences by injectLazy()
-    private val subtitlePreferences: SubtitlesPreferences by injectLazy()
+    private val subtitlePreferences: SubtitlePreferences by injectLazy()
     private val audioPreferences: AudioPreferences by injectLazy()
     private val advancedPreferences: AdvancedPlayerPreferences by injectLazy()
     private val networkPreferences: NetworkPreferences by injectLazy()
