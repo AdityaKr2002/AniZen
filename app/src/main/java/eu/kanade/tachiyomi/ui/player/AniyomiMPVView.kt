@@ -180,7 +180,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         
         // PURE DIRECT OES PATH (Collapses planes and scaling)
         MPVLib.setOptionString("hwdec", "mediacodec") 
-        MPVLib.setOptionString("gpu-dumb-mode", "yes") // Mandatory for single-pass output
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("scale", "bilinear")
         MPVLib.setOptionString("cscale", "bilinear")
         MPVLib.setOptionString("dscale", "bilinear")
