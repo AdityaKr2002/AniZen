@@ -172,23 +172,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // 100% ANIKKU ARCHITECTURAL PARITY (Target: 2.8ms Single Pass)
+        // 100% GITHUB ANIKKU ARCHITECTURE (Target: 2.8ms Single Pass)
         setVo(if (decoderPreferences.gpuNext().get()) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
-        
-        // Let MPV negotiate the OES Zero-Copy path naturally (no conflicting flags)
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
+        // Gated Defaults to avoid pass-splitting
+        MPVLib.setOptionString("scale", "bilinear")
+        MPVLib.setOptionString("cscale", "bilinear")
+        MPVLib.setOptionString("dscale", "bilinear")
+        MPVLib.setOptionString("dither", "no")
+
         when (decoderPreferences.videoDebanding().get()) {
             Debanding.None -> {}
             Debanding.CPU -> MPVLib.setOptionString("vf", "gradfun=radius=12")
             Debanding.GPU -> MPVLib.setOptionString("deband", "yes")
-        }
-
-        if (decoderPreferences.useYUV420P().get()) {
-            MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
@@ -223,33 +223,22 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("video-sync", "audio")
         }
 
-        if (decoderPreferences.highQualityScaling().get()) {
-            MPVLib.setOptionString("scale", "ewa_lanczossharp")
-            MPVLib.setOptionString("cscale", "mitchell")
-            MPVLib.setOptionString("dscale", "mitchell")
+        // Apply filters directly to avoid helper-function overhead
+        if (decoderPreferences.useYUV420P().get()) {
+            MPVLib.setOptionString("vf", "format=yuv420p")
         }
 
-        applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
-        
-        val vfChain = buildVFChain(decoderPreferences)
-        if (vfChain.isNotEmpty()) {
-            MPVLib.setOptionString("vf", vfChain)
+        if (decoderPreferences.enableAnime4K().get()) {
+            anime4kManager.initialize()
+            applyAnime4K(decoderPreferences, anime4kManager, isInit = true)
         }
-
-        anime4kManager.initialize()
-        applyAnime4K(decoderPreferences, anime4kManager, isInit = true)
 
         MPVLib.setOptionString("msg-level", "all=" + if (networkPreferences.verboseLogging().get()) "v" else "warn")
         MPVLib.setPropertyBoolean("input-default-bindings", true)
         MPVLib.setOptionString("keep-open", "yes")
-        MPVLib.setOptionString("tls-verify", "yes")
-        MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("ytdl", "no")
         MPVLib.setOptionString("cookies", "yes")
-
         MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-pause", "yes")
-        MPVLib.setOptionString("cache-on-disk", "no")
         MPVLib.setOptionString("demuxer-thread", "yes")
 
         val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
@@ -259,14 +248,13 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         applyPlaybackStrategy()
         
         MPVLib.setOptionString("hr-seek", "default")
-        MPVLib.setOptionString("hr-seek-framedrop", "yes")
         MPVLib.setOptionString("sub-auto", "fuzzy")
         
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
 
-        // GATE FILTERS: Only set non-zero values to avoid forcing FBO passes
+        // Only apply non-zero filters
         VideoFilters.entries.forEach {
             val value = it.preference(decoderPreferences).get()
             if (value != 0 && !it.mpvProperty.startsWith("vf_")) {
@@ -368,7 +356,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     private fun setupSubtitlesOptions() {
         MPVLib.setOptionString("sub-delay", (subtitlePreferences.subtitlesDelay().get() / 1000.0).toString())
         MPVLib.setOptionString("sub-speed", subtitlePreferences.subtitlesSpeed().get().toString())
-        MPVLib.setOptionString("secondary-sub-delay", (subtitlePreferences.subtitlesSecondaryDelay().get() / 1000.0).toString())
+        MPVLib.setOptionString("secondary-sub-delay", (subtitlePreferences.subtitlesSecondarySecondaryDelay().get() / 1000.0).toString())
         MPVLib.setOptionString("sub-font", subtitlePreferences.subtitleFont().get())
         if (subtitlePreferences.overrideSubsASS().get()) {
             MPVLib.setOptionString("sub-ass-override", "force")
