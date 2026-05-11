@@ -49,7 +49,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     private val playerPreferences: PlayerPreferences by injectLazy()
     private val decoderPreferences: DecoderPreferences by injectLazy()
-    private val subtitlePreferences: SubtitlePreferences by injectLazy()
+    private val subtitlePreferences: SubtitlesPreferences by injectLazy()
     private val audioPreferences: AudioPreferences by injectLazy()
     private val advancedPreferences: AdvancedPlayerPreferences by injectLazy()
     private val networkPreferences: NetworkPreferences by injectLazy()
@@ -172,15 +172,17 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // PURE ANIKKU BASELINE (Force legacy gpu for single-pass merge)
+        // FORCE EGL ALIGNMENT (Essential for single-pass merge)
         setVo("gpu")
+        MPVLib.setOptionString("gpu-context", "android")
+        MPVLib.setOptionString("gpu-api", "opengl")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // PURE DIRECT OES PATH (Collapses planes and scaling)
+        // PURE OES ZERO-COPY TRIGGER (No DR/PBO to avoid pass-splitting)
         MPVLib.setOptionString("hwdec", "mediacodec") 
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        MPVLib.setOptionString("fbo-format", "rgba16f")
         MPVLib.setOptionString("scale", "bilinear")
         MPVLib.setOptionString("cscale", "bilinear")
         MPVLib.setOptionString("dscale", "bilinear")
@@ -228,7 +230,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
 
-        // RESTORE ANIKKU VF LOGIC (Conditional format)
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
