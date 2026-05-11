@@ -264,8 +264,8 @@ enum class VideoFilters(
         MR.strings.player_sheets_filters_sharpen,
         { it.sharpenFilter() },
         "sharpen",
-        min = -20,
-        max = 20,
+        min = -5,
+        max = 5,
     ),
 }
 
