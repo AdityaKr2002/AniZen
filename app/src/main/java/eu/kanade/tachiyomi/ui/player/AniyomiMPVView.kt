@@ -107,9 +107,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     val videoH: Int?
         get() = getPropertyInt("video-params/h")
 
-    /**
-     * Returns the video aspect ratio. Rotation is taken into account.
-     */
     fun getVideoOutAspect(): Double? {
         return getPropertyDouble("video-params/aspect")?.let {
             if (it < 0.001) return 0.0
@@ -168,7 +165,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     }
 
     fun shrinkCache() {
-        // Shrink to 64MB to release memory when backgrounded
         val shrinkBytes = 64 * 1024 * 1024L
         MPVLib.setPropertyString("demuxer-max-bytes", "$shrinkBytes")
         MPVLib.setPropertyString("demuxer-max-back-bytes", "$shrinkBytes")
@@ -176,31 +172,18 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // FORCE LEGACY GPU FOR SINGLE-PASS MERGE (As seen in target logs)
+        // FORCE LEGACY GPU FOR SINGLE-PASS (Target: 2.8ms)
         setVo("gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // --- MASTER PERFORMANCE ALIGNMENT (Target: 2.8ms Single Pass) ---
-        // Using mediacodec-copy + vd-lavc-dr=yes is the most reliable way to 
-        // collapse 'Combining Planes' into 'Output' on Adreno drivers.
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec-copy" else "no")
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
-        MPVLib.setOptionString("vd-lavc-film-grain", "gpu") // GPU is faster than CPU for grain
-        MPVLib.setOptionString("opengl-early-flush", "yes")
-        // ----------------------------------------------------------------
-
-        when (decoderPreferences.videoDebanding().get()) {
-            Debanding.None -> {}
-            Debanding.CPU -> MPVLib.setOptionString("vf", "gradfun=radius=12")
-            Debanding.GPU -> MPVLib.setOptionString("deband", "yes")
-        }
-
-        if (decoderPreferences.useYUV420P().get()) {
-            MPVLib.setOptionString("vf", "format=yuv420p")
-        }
-
+        // PURE OES ZERO-COPY PATH
+        MPVLib.setOptionString("hwdec", "mediacodec") 
+        MPVLib.setOptionString("scale", "bilinear")
+        MPVLib.setOptionString("cscale", "bilinear")
+        MPVLib.setOptionString("dscale", "bilinear")
+        
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
         // Force detect refresh rate
@@ -240,14 +223,9 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("video-sync", "audio")
         }
 
-        if (decoderPreferences.highQualityScaling().get()) {
-            MPVLib.setOptionString("scale", "ewa_lanczossharp")
-            MPVLib.setOptionString("cscale", "mitchell")
-            MPVLib.setOptionString("dscale", "mitchell")
-        }
-
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
 
+        // SINGLE VF CHAIN (Avoid breaking Direct Rendering)
         val vfChain = buildVFChain(decoderPreferences)
         if (vfChain.isNotEmpty()) {
             MPVLib.setOptionString("vf", vfChain)
@@ -290,6 +268,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         }
 
         MPVLib.setOptionString("speed", playerPreferences.playerSpeed().get().toString())
+        MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
         
         setupSubtitlesOptions()
         setupAudioOptions()
