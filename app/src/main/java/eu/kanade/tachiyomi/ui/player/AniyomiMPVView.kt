@@ -172,17 +172,20 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // FORCE LEGACY GPU FOR SINGLE-PASS (Target: 2.8ms)
+        // PURE ANIKKU BASELINE (Force legacy gpu for single-pass merge)
         setVo("gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // PURE OES ZERO-COPY PATH
+        // PURE DIRECT OES PATH (Collapses planes and scaling)
         MPVLib.setOptionString("hwdec", "mediacodec") 
+        MPVLib.setOptionString("gpu-dumb-mode", "yes") // Mandatory for single-pass output
         MPVLib.setOptionString("scale", "bilinear")
         MPVLib.setOptionString("cscale", "bilinear")
         MPVLib.setOptionString("dscale", "bilinear")
+        MPVLib.setOptionString("dither", "no")
+        MPVLib.setOptionString("opengl-early-flush", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         
@@ -225,7 +228,11 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
 
-        // SINGLE VF CHAIN (Avoid breaking Direct Rendering)
+        // RESTORE ANIKKU VF LOGIC (Conditional format)
+        if (decoderPreferences.useYUV420P().get()) {
+            MPVLib.setOptionString("vf", "format=yuv420p")
+        }
+
         val vfChain = buildVFChain(decoderPreferences)
         if (vfChain.isNotEmpty()) {
             MPVLib.setOptionString("vf", vfChain)
