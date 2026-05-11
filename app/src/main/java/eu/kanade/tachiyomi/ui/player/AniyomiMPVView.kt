@@ -172,26 +172,21 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        // FORCE EGL ALIGNMENT (Essential for single-pass merge)
-        setVo("gpu")
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("gpu-api", "opengl")
+        val useAnime4K = decoderPreferences.enableAnime4K().get()
+        setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
         
-        // PURE OES ZERO-COPY TRIGGER (No DR/PBO to avoid pass-splitting)
-        MPVLib.setOptionString("hwdec", "mediacodec") 
-        MPVLib.setOptionString("fbo-format", "rgba16f")
+        // PURE DIRECT OES MERGE
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec" else "no")
+        MPVLib.setOptionString("vd-lavc-dr", "yes")
         MPVLib.setOptionString("scale", "bilinear")
         MPVLib.setOptionString("cscale", "bilinear")
         MPVLib.setOptionString("dscale", "bilinear")
         MPVLib.setOptionString("dither", "no")
-        MPVLib.setOptionString("opengl-early-flush", "yes")
         
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        
-        // Force detect refresh rate
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
         } else {
@@ -210,30 +205,22 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             } else {
                 displayRefreshRate
             }
-
             MPVLib.setOptionString("display-fps", targetFPS.toString())
             MPVLib.setOptionString("override-display-fps", targetFPS.toString())
             MPVLib.setOptionString("video-sync", "display-resample")
             MPVLib.setOptionString("interpolation", "yes")
-            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                holder.surface?.let {
-                    it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
-                }
+                holder.surface?.let { it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE) }
             }
-
             val mode = decoderPreferences.interpolationMode().get()
             MPVLib.setOptionString("tscale", mode.value)
         } else {
             MPVLib.setOptionString("video-sync", "audio")
         }
 
+        // Consolidated Filter Application
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
-
-        if (decoderPreferences.useYUV420P().get()) {
-            MPVLib.setOptionString("vf", "format=yuv420p")
-        }
-
+        
         val vfChain = buildVFChain(decoderPreferences)
         if (vfChain.isNotEmpty()) {
             MPVLib.setOptionString("vf", vfChain)
@@ -269,9 +256,11 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
 
+        // Only set non-zero filters to avoid forcing FBO
         VideoFilters.entries.forEach {
-            if (!it.mpvProperty.startsWith("vf_")) {
-                MPVLib.setOptionString(it.mpvProperty, it.preference(decoderPreferences).get().toString())
+            val value = it.preference(decoderPreferences).get()
+            if (value != 0 && !it.mpvProperty.startsWith("vf_")) {
+                MPVLib.setOptionString(it.mpvProperty, value.toString())
             }
         }
 
@@ -298,10 +287,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     }
 
     fun onKey(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_MULTIPLE || KeyEvent.isModifierKey(event.keyCode)) {
-            return false
-        }
-
+        if (event.action == KeyEvent.ACTION_MULTIPLE || KeyEvent.isModifierKey(event.keyCode)) return false
         var mapped = KeyMapping.map.get(event.keyCode)
         if (mapped == null) {
             if (!event.isPrintingKey) return false
@@ -309,15 +295,12 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             if (ch.and(KeyCharacterMap.COMBINING_ACCENT) != 0) return false
             mapped = ch.toChar().toString()
         }
-
         if (event.repeatCount > 0) return true
-
         val mod: MutableList<String> = mutableListOf()
         event.isShiftPressed && mod.add("shift")
         event.isCtrlPressed && mod.add("ctrl")
         event.isAltPressed && mod.add("alt")
         event.isMetaPressed && mod.add("meta")
-
         val action = if (event.action == KeyEvent.ACTION_DOWN) "keydown" else "keyup"
         mod.add(mapped)
         MPVLib.command(arrayOf(action, mod.joinToString("+")))
