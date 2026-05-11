@@ -172,20 +172,29 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
 
     override fun initOptions(vo: String) {
         initialized = true
-        val useAnime4K = decoderPreferences.enableAnime4K().get()
-        setVo(if (decoderPreferences.gpuNext().get() && !useAnime4K) "gpu-next" else "gpu")
-        
+        // PURE ANIKKU INITIALIZATION (Target: 2.8ms Single Pass)
+        setVo(if (decoderPreferences.gpuNext().get()) "gpu-next" else "gpu")
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
-        // PURE DIRECT OES MERGE
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec" else "no")
-        MPVLib.setOptionString("vd-lavc-dr", "yes")
+        // Gated High-Performance defaults
         MPVLib.setOptionString("scale", "bilinear")
         MPVLib.setOptionString("cscale", "bilinear")
         MPVLib.setOptionString("dscale", "bilinear")
         MPVLib.setOptionString("dither", "no")
-        
+
+        when (decoderPreferences.videoDebanding().get()) {
+            Debanding.None -> {}
+            Debanding.CPU -> MPVLib.setOptionString("vf", "gradfun=radius=12")
+            Debanding.GPU -> MPVLib.setOptionString("deband", "yes")
+        }
+
+        // Only apply yuv420p if explicitly needed to avoid pass-split
+        if (decoderPreferences.useYUV420P().get()) {
+            MPVLib.setOptionString("vf", "format=yuv420p")
+        }
+
         val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
         val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.refreshRate ?: 60f
@@ -218,7 +227,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("video-sync", "audio")
         }
 
-        // Consolidated Filter Application
         applyDebandMode(decoderPreferences.videoDebanding().get(), decoderPreferences)
         
         val vfChain = buildVFChain(decoderPreferences)
@@ -256,7 +264,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
 
-        // Only set non-zero filters to avoid forcing FBO
+        // GATE FILTERS: Only set non-zero values to avoid forcing FBO passes
         VideoFilters.entries.forEach {
             val value = it.preference(decoderPreferences).get()
             if (value != 0 && !it.mpvProperty.startsWith("vf_")) {
