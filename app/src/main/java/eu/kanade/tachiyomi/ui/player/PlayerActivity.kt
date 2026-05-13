@@ -273,11 +273,11 @@ class PlayerActivity : BaseActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
-        setupPlayerMPV()
+        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         registerSecureActivity(this)
-        super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        setupPlayerMPV()
 
         setupPlayerAudio()
         setupMediaSession()

@@ -215,7 +215,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             MPVLib.setOptionString("video-sync", "display-resample")
             MPVLib.setOptionString("interpolation", "yes")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                holder.surface?.let { it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE) }
+                holder.surface?.let {
+                    if (it.isValid) {
+                        it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
+                    } else {
+                        holder.addCallback(object : android.view.SurfaceHolder.Callback {
+                            override fun surfaceCreated(h: android.view.SurfaceHolder) {
+                                h.removeCallback(this)
+                                if (h.surface?.isValid == true) {
+                                    h.surface.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
+                                }
+                            }
+
+                            override fun surfaceChanged(h: android.view.SurfaceHolder, f: Int, w: Int, hi: Int) {}
+                            override fun surfaceDestroyed(h: android.view.SurfaceHolder) {}
+                        })
+                    }
+                }
             }
             val mode = decoderPreferences.interpolationMode().get()
             MPVLib.setOptionString("tscale", mode.value)
