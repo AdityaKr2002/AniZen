@@ -540,8 +540,7 @@ data class BrowseSourceScreen(
             else -> {}
         }
 
-        // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
-        // It selects items in batches of 60 and uses 'safe boundary access' to trigger Paging 3 fetches.
+        // Search query observer: Handles text and genre search events.
         LaunchedEffect(Unit) {
             queryEvent.receiveAsFlow()
                 .collectLatest {
