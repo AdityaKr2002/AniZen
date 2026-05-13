@@ -422,7 +422,11 @@ class BrowseSourceScreenModel(
                     list.add(anime)
                 }
             }
-            state.copy(selection = newSelection, lastSelectedIndex = if (newSelection.isNotEmpty()) index else null)
+            state.copy(
+                selection = newSelection,
+                isSelectAllMode = false,
+                lastSelectedIndex = if (newSelection.isNotEmpty()) index else null,
+            )
         }
     }
 
@@ -439,7 +443,11 @@ class BrowseSourceScreenModel(
                     }
                 }
             }
-            state.copy(selection = newSelection, lastSelectedIndex = toIndex)
+            state.copy(
+                selection = newSelection,
+                isSelectAllMode = false,
+                lastSelectedIndex = toIndex,
+            )
         }
     }
 
@@ -463,10 +471,11 @@ class BrowseSourceScreenModel(
 
     fun updateSelection(animeList: List<Anime>) {
         mutableState.update { state ->
+            if (!state.isSelectAllMode) return@update state
             val currentIds = state.selection.map { it.id }.toSet()
             val newItems = animeList.filter { it.id !in currentIds }
             if (newItems.isEmpty()) return@update state
-            
+
             state.copy(selection = state.selection.addAll(newItems))
         }
     }

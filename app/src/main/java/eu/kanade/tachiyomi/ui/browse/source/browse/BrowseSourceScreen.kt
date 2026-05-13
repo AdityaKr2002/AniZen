@@ -343,12 +343,14 @@ data class BrowseSourceScreen(
                 }
 
                 snapshotFlow { 
+                    if (!state.isSelectAllMode) return@snapshotFlow null
                     val target = state.targetCount
                     val current = state.selection.size
                     val total = animeList.itemCount
                     Triple(target, current, total)
                 }
-                .collectLatest { (target, current, total) ->
+                .collectLatest { data ->
+                    val (target, current, total) = data ?: return@collectLatest
                     // Expand selection to available items, capped at the current targetCount.
                     val snapshot = animeList.itemSnapshotList
                     val loadedItems = snapshot.items.filterNotNull()
@@ -540,8 +542,7 @@ data class BrowseSourceScreen(
             else -> {}
         }
 
-        // Reactive Selection Engine: Observes load state to expand selection in 'Select All' mode.
-        // It selects items in batches of 60 and uses 'safe boundary access' to trigger Paging 3 fetches.
+        // Search query observer: Handles text and genre search events.
         LaunchedEffect(Unit) {
             queryEvent.receiveAsFlow()
                 .collectLatest {
