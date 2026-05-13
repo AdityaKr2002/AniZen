@@ -278,13 +278,23 @@ object ExtensionLoader {
             return LoadResult.Untrusted(extension)
         }
 
-        val isNsfw = appInfo.metaData.getInt(METADATA_NSFW) == 1
+        val isNsfw = when (val v = appInfo.metaData?.get(METADATA_NSFW)) {
+            is Int -> v == 1
+            is Boolean -> v
+            is String -> v.toBoolean() || v == "1"
+            else -> false
+        }
         if (!loadNsfwSource && isNsfw) {
             logcat(LogPriority.WARN) { "NSFW extension $pkgName not allowed" }
             return LoadResult.Error
         }
 
-        val isTorrent = appInfo.metaData.getInt(METADATA_TORRENT) == 1
+        val isTorrent = when (val v = appInfo.metaData?.get(METADATA_TORRENT)) {
+            is Int -> v == 1
+            is Boolean -> v
+            is String -> v.toBoolean() || v == "1"
+            else -> false
+        }
 
         val classLoader = try {
             ChildFirstPathClassLoader(appInfo.sourceDir, null, context.classLoader)
@@ -389,7 +399,10 @@ object ExtensionLoader {
             isNsfw = isNsfw,
             isTorrent = isTorrent,
             sources = sources,
-            pkgFactory = appInfo.metaData.getString(METADATA_SOURCE_FACTORY),
+            pkgFactory = when (val v = appInfo.metaData?.get(METADATA_SOURCE_FACTORY)) {
+                is String -> v
+                else -> null
+            },
             icon = appInfo.loadIcon(pkgManager),
             isShared = extensionInfo.isShared,
             signatureHash = signatures.last(),
