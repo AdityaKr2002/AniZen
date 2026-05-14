@@ -120,6 +120,10 @@ data object UpdatesTab : Tab {
             navigateUp = navigateUp,
         )
 
+        LaunchedEffect(state.selectionMode) {
+            HomeScreen.showBottomNav(!state.selectionMode)
+        }
+
         LaunchedEffect(Unit) {
             screenModel.events.collectLatest { event ->
                 when (event) {

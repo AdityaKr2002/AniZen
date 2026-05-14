@@ -21,6 +21,7 @@ class HistoryScreenModelStateProvider : PreviewParameterProvider<HistoryScreenMo
                         seenAt = Date(),
                         ogTitle = "Anime Title",
                         episodeNumber = 1.0,
+                        seen = false,
                         watchDuration = 0L,
                         coverData = tachiyomi.domain.anime.model.AnimeCover(
                             animeId = 1L,

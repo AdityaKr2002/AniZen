@@ -90,6 +90,7 @@ import eu.kanade.presentation.anime.components.NextEpisodeAiringListItem
 import eu.kanade.presentation.components.relativeDateTimeText
 import eu.kanade.presentation.theme.DynamicTachiyomiTheme
 import eu.kanade.presentation.util.formatEpisodeNumber
+import eu.kanade.tachiyomi.util.lang.formatTime
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.data.download.model.Download
@@ -1472,37 +1473,6 @@ private fun onEpisodeItemClick(
         episodeItem.selected -> onToggleSelection(false)
         isAnyEpisodeSelected -> onToggleSelection(true)
         else -> onEpisodeClicked(episodeItem.episode, false)
-    }
-}
-
-private fun formatTime(milliseconds: Long, useDayFormat: Boolean = false): String {
-    return if (useDayFormat) {
-        String.format(
-            "Airing in %02dd %02dh %02dm %02ds",
-            TimeUnit.MILLISECONDS.toDays(milliseconds),
-            TimeUnit.MILLISECONDS.toHours(milliseconds) -
-                TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(milliseconds)),
-            TimeUnit.MILLISECONDS.toMinutes(milliseconds) -
-                TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(milliseconds)),
-            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)),
-        )
-    } else if (milliseconds > 3600000L) {
-        String.format(
-            "%d:%02d:%02d",
-            TimeUnit.MILLISECONDS.toHours(milliseconds),
-            TimeUnit.MILLISECONDS.toMinutes(milliseconds) -
-                TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(milliseconds)),
-            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)),
-        )
-    } else {
-        String.format(
-            "%d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(milliseconds),
-            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds)),
-        )
     }
 }
 

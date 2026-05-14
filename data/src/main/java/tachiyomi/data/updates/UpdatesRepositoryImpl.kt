@@ -51,6 +51,7 @@ class UpdatesRepositoryImpl(
         animeTitle: String,
         episodeId: Long,
         episodeName: String,
+        episodeNumber: Double,
         scanlator: String?,
         seen: Boolean,
         bookmark: Boolean,
@@ -72,6 +73,7 @@ class UpdatesRepositoryImpl(
         // SY <--
         episodeId = episodeId,
         episodeName = episodeName,
+        episodeNumber = episodeNumber,
         scanlator = scanlator,
         seen = seen,
         bookmark = bookmark,

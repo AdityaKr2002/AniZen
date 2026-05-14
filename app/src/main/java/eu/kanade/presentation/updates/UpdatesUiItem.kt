@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,7 @@ import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.anime.components.DotSeparatorText
 import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeDownloadIndicator
+import eu.kanade.tachiyomi.util.lang.formatTime
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.util.relativeTimeSpanString
 import eu.kanade.tachiyomi.R
@@ -324,6 +326,16 @@ private fun UpdatesUiItem(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!update.seen) {
+                    Icon(
+                        imageVector = Icons.Filled.Circle,
+                        contentDescription = stringResource(MR.strings.unseen),
+                        modifier = Modifier
+                            .height(8.dp)
+                            .padding(end = 4.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 var textHeight by remember { mutableIntStateOf(0) }
                 if (update.bookmark) {
                     Icon(
@@ -346,6 +358,22 @@ private fun UpdatesUiItem(
                     modifier = Modifier
                         .weight(weight = 1f, fill = false),
                 )
+
+                val watchProgress = update.lastSecondSeen
+                    .takeIf { !update.seen && it > 0L }
+                    ?.let {
+                        "${formatTime(it)} / ${formatTime(update.totalSeconds)}"
+                    }
+                if (watchProgress != null) {
+                    DotSeparatorText()
+                    Text(
+                        text = watchProgress,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA),
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
                 val fileSize = updatesItem.fileSize
                 if (fileSize != null) {
