@@ -132,24 +132,33 @@ class UpdatesScreenModel(
 
     private fun List<UpdatesItem>.toUiModel(expandedState: Set<String>): List<UpdatesUiModel> {
         val uiModels = mutableListOf<UpdatesUiModel>()
-        var i = 0
-        while (i < this.size) {
-            val item = this[i]
-            val date = item.update.dateFetch.toLocalDate()
-            uiModels.add(UpdatesUiModel.Header(date))
-
-            val dayItems = mutableListOf<UpdatesItem>()
-            while (i < this.size && this[i].update.dateFetch.toLocalDate() == date) {
-                dayItems.add(this[i])
-                i++
+        
+        // Group all updates by anime
+        val animeGroups = this.groupBy { it.update.animeId }
+        
+        // Find the latest fetch date for each anime group
+        val animeLatestDate = animeGroups.mapValues { (_, items) ->
+            items.maxOf { it.update.dateFetch }.toLocalDate()
+        }
+        
+        // Group these anime blocks by their latest fetch date
+        val dateGroups = animeLatestDate.entries
+            .groupBy { it.value } // Group by LocalDate
+            .mapValues { entry -> 
+                entry.value.map { it.key } // List of animeIds for this date
             }
+            .toSortedMap(compareByDescending { it })
 
-            val groupedByAnime = dayItems.groupBy { it.update.animeId }
-            groupedByAnime.forEach { (animeId, items) ->
+        dateGroups.forEach { (date, animeIds) ->
+            uiModels.add(UpdatesUiModel.Header(date))
+            
+            animeIds.forEach { animeId ->
+                val items = animeGroups[animeId]!!
                 val animeItems = items.sortedWith(
                     compareBy<UpdatesItem> { it.update.seen }
                         .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber },
                 )
+                
                 val isExpandable = animeItems.size > 1
                 animeItems.forEachIndexed { index, updatesItem ->
                     val position = when {
@@ -515,4 +524,4 @@ data class UpdatesItem(
 )
 
 /** String to identify which anime's update on which day it is collapsing */
-fun UpdatesWithRelations.groupByDateAndAnime() = "${dateFetch.toLocalDate().toEpochDay()}-$animeId"
+fun UpdatesWithRelations.groupByDateAndAnime() = animeId.toString()
