@@ -9,6 +9,7 @@ SELECT
     animes.favorite,
     animes.cover_last_modified,
     episodes.episode_number AS episodeNumber,
+    episodes.seen,
     history.last_seen AS seenAt,
     history.time_watch AS watchDuration,
     max_last_seen.last_seen AS maxSeenAt,
@@ -37,6 +38,7 @@ source,
 favorite,
 cover_last_modified,
 episodeNumber,
+seen,
 seenAt,
 watchDuration
 FROM historyView
@@ -56,6 +58,7 @@ source,
 favorite,
 cover_last_modified,
 episodeNumber,
+seen,
 seenAt,
 watchDuration
 FROM historyView

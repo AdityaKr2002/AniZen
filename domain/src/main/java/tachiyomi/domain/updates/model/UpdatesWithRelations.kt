@@ -11,6 +11,7 @@ data class UpdatesWithRelations(
     // SY <--
     val episodeId: Long,
     val episodeName: String,
+    val episodeNumber: Double,
     val scanlator: String?,
     val seen: Boolean,
     val bookmark: Boolean,

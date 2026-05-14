@@ -13,6 +13,7 @@ data class HistoryWithRelations(
     val ogTitle: String,
     // SY <--
     val episodeNumber: Double,
+    val seen: Boolean,
     val seenAt: Date?,
     val watchDuration: Long,
     val coverData: AnimeCover,

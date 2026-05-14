@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,19 +78,31 @@ fun HistoryItem(
                 style = textStyle,
             )
             val seenAt = remember { history.seenAt?.toTimestampString() ?: "" }
-            Text(
-                text = if (history.episodeNumber > -1) {
-                    stringResource(
-                        MR.strings.recent_anime_time,
-                        formatEpisodeNumber(history.episodeNumber),
-                        seenAt,
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!history.seen) {
+                    Icon(
+                        imageVector = Icons.Filled.Circle,
+                        contentDescription = stringResource(MR.strings.unseen),
+                        modifier = Modifier
+                            .height(8.dp)
+                            .padding(end = 4.dp),
+                        tint = MaterialTheme.colorScheme.primary,
                     )
-                } else {
-                    seenAt
-                },
-                modifier = Modifier.padding(top = 4.dp),
-                style = textStyle,
-            )
+                }
+                Text(
+                    text = if (history.episodeNumber > -1) {
+                        stringResource(
+                            MR.strings.recent_anime_time,
+                            formatEpisodeNumber(history.episodeNumber),
+                            seenAt,
+                        )
+                    } else {
+                        seenAt
+                    },
+                    modifier = Modifier.padding(top = 4.dp),
+                    style = textStyle,
+                )
+            }
         }
 
         IconButton(onClick = onClickDelete) {

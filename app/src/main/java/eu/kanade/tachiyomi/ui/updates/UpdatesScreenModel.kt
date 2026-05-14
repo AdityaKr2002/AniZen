@@ -146,7 +146,10 @@ class UpdatesScreenModel(
 
             val groupedByAnime = dayItems.groupBy { it.update.animeId }
             groupedByAnime.forEach { (animeId, items) ->
-                val animeItems = items.reversed()
+                val animeItems = items.sortedWith(
+                    compareBy<UpdatesItem> { it.update.seen }
+                        .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber },
+                )
                 val isExpandable = animeItems.size > 1
                 animeItems.forEachIndexed { index, updatesItem ->
                     val position = when {

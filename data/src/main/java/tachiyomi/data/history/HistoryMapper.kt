@@ -28,6 +28,7 @@ object HistoryMapper {
         isFavorite: Boolean,
         coverLastModified: Long,
         episodeNumber: Double,
+        seen: Boolean,
         seenAt: Date?,
         watchDuration: Long,
     ): HistoryWithRelations = HistoryWithRelations(
@@ -38,6 +39,7 @@ object HistoryMapper {
         ogTitle = title,
         // SY <--
         episodeNumber = episodeNumber,
+        seen = seen,
         seenAt = seenAt,
         watchDuration = watchDuration,
         coverData = AnimeCover(
