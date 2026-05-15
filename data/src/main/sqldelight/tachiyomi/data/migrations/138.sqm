@@ -1,0 +1,91 @@
+DROP VIEW IF EXISTS updatesView;
+
+CREATE VIEW updatesView AS
+SELECT
+    animes._id AS animeId,
+    animes.title AS animeTitle,
+    episodes._id AS episodeId,
+    episodes.name AS episodeName,
+    episodes.episode_number AS episodeNumber,
+    episodes.scanlator,
+    episodes.seen,
+    episodes.bookmark,
+    -- AM (FILLERMARK) -->
+    episodes.fillermark,
+    -- <-- AM (FILLERMARK)
+    episodes.last_second_seen,
+    episodes.total_seconds AS totalSeconds,
+    animes.source,
+    animes.favorite,
+    animes.thumbnail_url AS thumbnailUrl,
+    animes.cover_last_modified AS coverLastModified,
+    episodes.date_upload AS dateUpload,
+    episodes.date_fetch AS datefetch
+FROM animes JOIN episodes
+ON animes._id = episodes.anime_id
+WHERE favorite = 1 AND source <> 6969
+AND date_fetch > date_added
+UNION
+SELECT
+    animes._id AS animeId,
+    animes.title AS animeTitle,
+    episodes._id AS episodeId,
+    episodes.name AS episodeName,
+    episodes.episode_number AS episodeNumber,
+    episodes.scanlator,
+    episodes.seen,
+    episodes.bookmark,
+    -- AM (FILLERMARK) -->
+    episodes.fillermark,
+    -- <-- AM (FILLERMARK)
+    episodes.last_second_seen,
+    episodes.total_seconds AS totalSeconds,
+    animes.source,
+    animes.favorite,
+    animes.thumbnail_url AS thumbnailUrl,
+    animes.cover_last_modified AS coverLastModified,
+    episodes.date_upload AS dateUpload,
+    episodes.date_fetch AS datefetch
+FROM animes
+LEFT JOIN (
+    SELECT merged.anime_id,merged.merge_id
+    FROM merged
+    GROUP BY merged.merge_id
+) AS ME
+ON ME.merge_id = animes._id
+JOIN episodes
+ON animes._id = episodes.anime_id
+WHERE favorite = 1 AND source = 6969
+AND date_fetch > date_added
+ORDER BY datefetch DESC;
+
+DROP VIEW IF EXISTS historyView;
+
+CREATE VIEW historyView AS
+SELECT
+    history._id AS id,
+    animes._id AS animeId,
+    episodes._id AS episodeId,
+    animes.title,
+    animes.thumbnail_url AS thumbnailUrl,
+    animes.source,
+    animes.favorite,
+    animes.cover_last_modified,
+    episodes.episode_number AS episodeNumber,
+    episodes.seen,
+    history.last_seen AS seenAt,
+    history.time_watch AS watchDuration,
+    max_last_seen.last_seen AS maxSeenAt,
+    max_last_seen.episode_id AS maxSeenAtEpisodeId
+FROM animes
+JOIN episodes
+ON animes._id = episodes.anime_id
+JOIN history
+ON episodes._id = history.episode_id
+JOIN (
+    SELECT episodes.anime_id,episodes._id AS episode_id, MAX(history.last_seen) AS last_seen
+    FROM episodes JOIN history
+    ON episodes._id = history.episode_id
+    GROUP BY episodes.anime_id
+) AS max_last_seen
+ON episodes.anime_id = max_last_seen.anime_id;
