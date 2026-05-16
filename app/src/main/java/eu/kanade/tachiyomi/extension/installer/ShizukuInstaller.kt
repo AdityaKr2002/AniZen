@@ -89,8 +89,21 @@ class ShizukuInstaller(private val service: Service) : Installer(service) {
     }
 
     private fun exec(command: String, stdin: InputStream? = null): ShellResult {
-        @Suppress("DEPRECATION")
-        val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+        val process = try {
+            val newProcessMethod = Shizuku::class.java.getDeclaredMethod(
+                "newProcess",
+                Array<String>::class.java,
+                Array<String>::class.java,
+                String::class.java,
+            )
+            newProcessMethod.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            newProcessMethod.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to invoke Shizuku.newProcess via reflection" }
+            throw e
+        }
+
         if (stdin != null) {
             process.outputStream.use { stdin.copyTo(it) }
         }
