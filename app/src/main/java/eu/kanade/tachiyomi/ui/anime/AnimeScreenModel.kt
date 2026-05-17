@@ -352,17 +352,12 @@ class AnimeScreenModel(
                     } else if (currentIsSpecial != prevIsSpecial) {
                         // Split when switching between special/extra and regular content
                         true
-                    } else if (currentIsSpecial && currentHasKeywords != prevHasKeywords) {
-                        // Split between explicit Specials (keywords) and implicit Extras
-                        true
-                    } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
-                        // Split only when titles explicitly change to a DIFFERENT season
-                        true
-                    } else if (prevExplicit == null && currentExplicit != null) {
-                        // Split when we find an explicit season name after having none
+                    } else if (currentExplicit != prevExplicit) {
+                        // Split whenever the explicit season name changes (including null transitions)
+                        // This prevents Extras with no season name from being sticky to a previous season.
                         true
                     } else {
-                        // Otherwise, stay in the same block (ignores number resets and non-season titles)
+                        // Otherwise, stay in the same block (ignores number resets for regular episodes)
                         false
                     }
 
@@ -378,10 +373,11 @@ class AnimeScreenModel(
                 var implicitSeasonCount = 0
                 blocks.forEach { block ->
                     var explicitSeasonName: String? = null
-                    var hasKeywords = false
+                    var hasSpecials = false
                     for (item in block.episodes) {
+                        // Check for explicit "Special" or "OVA" type keywords
                         if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
-                            hasKeywords = true
+                            hasSpecials = true
                         }
                         if (explicitSeasonName == null) {
                             val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -389,7 +385,7 @@ class AnimeScreenModel(
                         }
                     }
                     
-                    val seasonName = if (hasKeywords) {
+                    val seasonName = if (hasSpecials) {
                         "Specials"
                     } else if (explicitSeasonName != null) {
                         explicitSeasonName
@@ -2083,11 +2079,9 @@ class AnimeScreenModel(
                         for (index in chronological.indices) {
                             val item = chronological[index]
                             val prevItem = chronological.getOrNull(index - 1)
-                            
+
                             val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                            val currentHasKeywords = EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)
-                            val prevHasKeywords = prevItem?.let { EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode) }
                             val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                             val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
@@ -2096,17 +2090,12 @@ class AnimeScreenModel(
                             } else if (currentIsSpecial != prevIsSpecial) {
                                 // Split when switching between special/extra and regular content
                                 true
-                            } else if (currentIsSpecial && currentHasKeywords != prevHasKeywords) {
-                                // Split between explicit Specials (keywords) and implicit Extras
-                                true
-                            } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
-                                // Split only when titles explicitly change to a DIFFERENT season
-                                true
-                            } else if (prevExplicit == null && currentExplicit != null) {
-                                // Split when we find an explicit season name after having none
+                            } else if (currentExplicit != prevExplicit) {
+                                // Split whenever the explicit season name changes (including null transitions)
+                                // This prevents Extras with no season name from being sticky to a previous season.
                                 true
                             } else {
-                                // Otherwise, stay in the same block (ignores number resets and non-season titles)
+                                // Otherwise, stay in the same block (ignores number resets for regular episodes)
                                 false
                             }
 
@@ -2122,18 +2111,19 @@ class AnimeScreenModel(
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
-                            var hasKeywords = false
+                            var hasSpecials = false
                             for (item in block.episodes) {
+                                // Check for explicit "Special" or "OVA" type keywords
                                 if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
-                                    hasKeywords = true
+                                    hasSpecials = true
                                 }
                                 if (explicitSeasonName == null) {
                                     val name = EpisodeSeasonUtils.getSeasonName(item.episode)
                                     if (name != "Season 0") explicitSeasonName = name
                                 }
                             }
-                            
-                            val seasonName = if (hasKeywords) {
+
+                            val seasonName = if (hasSpecials) {
                                 "Specials"
                             } else if (explicitSeasonName != null) {
                                 explicitSeasonName
