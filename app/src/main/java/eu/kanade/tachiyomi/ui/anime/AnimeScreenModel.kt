@@ -355,16 +355,7 @@ class AnimeScreenModel(
                         currentExplicit != prevExplicit
                     } else {
                         // Fallback for episodes without "S1/S2" in title
-                        val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
-                                        item.episode.episodeNumber < prevItem.episode.episodeNumber
-                        
-                        val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-
-                        if (currentIsSpecial) {
-                            numRestart
-                        } else {
-                            numRestart || sameDateRestart
-                        }
+                        false
                     }
 
                     if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
@@ -2098,16 +2089,7 @@ class AnimeScreenModel(
                                 currentExplicit != prevExplicit
                             } else {
                                 // Fallback for episodes without "S1/S2" in title
-                                val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
-                                                item.episode.episodeNumber < prevItem.episode.episodeNumber
-                                
-                                val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-                                
-                                if (currentIsSpecial) {
-                                    numRestart
-                                } else {
-                                    numRestart || sameDateRestart
-                                }
+                                false
                             }
 
                             if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
