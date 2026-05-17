@@ -73,6 +73,11 @@ import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_NETW
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_ONLY_ON_WIFI
 import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.libraryUpdateError.interactor.DeleteLibraryUpdateErrors
+import tachiyomi.domain.libraryUpdateError.interactor.InsertLibraryUpdateErrors
+import tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError
+import tachiyomi.domain.libraryUpdateErrorMessage.interactor.InsertLibraryUpdateErrorMessages
+import tachiyomi.domain.libraryUpdateErrorMessage.model.LibraryUpdateErrorMessage
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
@@ -98,9 +103,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get()
     private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get()
     private val getAnimeSeasonsById: GetAnimeSeasonsById = Injekt.get()
-    private val deleteLibraryUpdateErrors: DeleteLibraryUpdateErrors = Injekt.get()
-    private val insertLibraryUpdateErrors: InsertLibraryUpdateErrors = Injekt.get()
-    private val insertLibraryUpdateErrorMessages: InsertLibraryUpdateErrorMessages = Injekt.get()
+    private val deleteLibraryUpdateErrors: DeleteLibraryUpdateErrors = Injekt.get<DeleteLibraryUpdateErrors>()
+    private val insertLibraryUpdateErrors: InsertLibraryUpdateErrors = Injekt.get<InsertLibraryUpdateErrors>()
+    private val insertLibraryUpdateErrorMessages: InsertLibraryUpdateErrorMessages = Injekt.get<InsertLibraryUpdateErrorMessages>()
     private val getTracks: GetTracks = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val filterEpisodesForDownload: FilterEpisodesForDownload = Injekt.get()
@@ -569,11 +574,11 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private suspend fun writeErrorToDB(error: Pair<Anime, String?>) {
         val errorMessage = error.second ?: context.stringResource(MR.strings.unknown_error)
         val errorMessageId = insertLibraryUpdateErrorMessages.insert(
-            tachiyomi.domain.libraryUpdateErrorMessage.model.LibraryUpdateErrorMessage(-1L, errorMessage),
+            LibraryUpdateErrorMessage(-1L, errorMessage),
         )
 
         insertLibraryUpdateErrors.upsert(
-            tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError(id = -1L, animeId = error.first.id, messageId = errorMessageId),
+            LibraryUpdateError(id = -1L, animeId = error.first.id, messageId = errorMessageId, lastUpdate = 0L),
         )
     }
 
@@ -581,13 +586,13 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val libraryErrors = errors.groupBy({ it.second }, { it.first })
         val errorMessages = insertLibraryUpdateErrorMessages.insertAll(
             libraryUpdateErrorMessages = libraryErrors.keys.map { errorMessage ->
-                tachiyomi.domain.libraryUpdateErrorMessage.model.LibraryUpdateErrorMessage(-1L, errorMessage.orEmpty())
+                LibraryUpdateErrorMessage(-1L, errorMessage.orEmpty())
             },
         )
-        val errorList = mutableListOf<tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError>()
-        errorMessages.forEach {
-            libraryErrors[it.second]?.forEach { anime ->
-                errorList.add(tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError(id = -1L, animeId = anime.id, messageId = it.first))
+        val errorList = mutableListOf<LibraryUpdateError>()
+        errorMessages.forEach { (messageId, message) ->
+            libraryErrors[message]?.forEach { anime ->
+                errorList.add(LibraryUpdateError(id = -1L, animeId = anime.id, messageId = messageId, lastUpdate = 0L))
             }
         }
         insertLibraryUpdateErrors.insertAll(errorList)
