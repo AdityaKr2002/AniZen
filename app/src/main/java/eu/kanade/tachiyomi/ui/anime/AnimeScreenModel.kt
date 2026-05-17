@@ -429,20 +429,9 @@ class AnimeScreenModel(
                     if (next != null) {
                         val higher = if (anime.sortDescending()) item else next
                         val lower = if (anime.sortDescending()) next else item
-                        
-                        // Only show gap if episodes are in the same season AND numbers are increasing/sequential
-                        val sameSeason = mapping[item.episode.id] == mapping[next.episode.id]
-                        val isReset = if (anime.sortDescending()) {
-                            item.episode.episodeNumber < next.episode.episodeNumber
-                        } else {
-                            item.episode.episodeNumber > next.episode.episodeNumber
-                        }
-
-                        if (sameSeason && !isReset) {
-                            val gap = calculateChapterGap(higher.episode, lower.episode)
-                            if (gap > 0) {
-                                items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
-                            }
+                        val gap = calculateChapterGap(higher.episode, lower.episode)
+                        if (gap > 0) {
+                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
                         }
                     }
                 }
@@ -2199,20 +2188,9 @@ class AnimeScreenModel(
                             if (next != null) {
                                 val higher = if (anime.sortDescending()) item else next
                                 val lower = if (anime.sortDescending()) next else item
-
-                                // Only show gap if episodes are in the same season AND numbers are increasing/sequential
-                                val sameSeason = episodeToSeason[item.episode.id] == episodeToSeason[next.episode.id]
-                                val isReset = if (anime.sortDescending()) {
-                                    item.episode.episodeNumber < next.episode.episodeNumber
-                                } else {
-                                    item.episode.episodeNumber > next.episode.episodeNumber
-                                }
-
-                                if (sameSeason && !isReset) {
-                                    val gap = calculateChapterGap(higher.episode, lower.episode)
-                                    if (gap > 0) {
-                                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
-                                    }
+                                val gap = calculateChapterGap(higher.episode, lower.episode)
+                                if (gap > 0) {
+                                    episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
                                 }
                             }
                         }
