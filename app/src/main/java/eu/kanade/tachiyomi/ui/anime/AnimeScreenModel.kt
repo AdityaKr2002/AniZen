@@ -350,11 +350,14 @@ class AnimeScreenModel(
                     } else if (currentIsSpecial != prevIsSpecial) {
                         // Split when switching between special and regular content
                         true
-                    } else if (currentExplicit != null || prevExplicit != null) {
-                        // If titles explicitly mention seasons, split whenever they change
-                        currentExplicit != prevExplicit
+                    } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
+                        // Split only when titles explicitly change to a DIFFERENT season
+                        true
+                    } else if (prevExplicit == null && currentExplicit != null) {
+                        // Split when we find an explicit season name after having none
+                        true
                     } else {
-                        // Fallback for episodes without "S1/S2" in title
+                        // Otherwise, stay in the same block (ignores number resets and non-season titles)
                         false
                     }
 
@@ -372,7 +375,7 @@ class AnimeScreenModel(
                     var explicitSeasonName: String? = null
                     var hasSpecials = false
                     for (item in block.episodes) {
-                        if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                        if (EpisodeSeasonUtils.isSpecial(item.episode)) {
                             hasSpecials = true
                         }
                         if (explicitSeasonName == null) {
@@ -385,8 +388,6 @@ class AnimeScreenModel(
                         "Specials"
                     } else if (explicitSeasonName != null) {
                         explicitSeasonName
-                    } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                        "Extras"
                     } else {
                         implicitSeasonCount++
                         "Season $implicitSeasonCount"
@@ -2084,11 +2085,14 @@ class AnimeScreenModel(
                             } else if (currentIsSpecial != prevIsSpecial) {
                                 // Split when switching between special and regular content
                                 true
-                            } else if (currentExplicit != null || prevExplicit != null) {
-                                // If titles explicitly mention seasons, split whenever they change
-                                currentExplicit != prevExplicit
+                            } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
+                                // Split only when titles explicitly change to a DIFFERENT season
+                                true
+                            } else if (prevExplicit == null && currentExplicit != null) {
+                                // Split when we find an explicit season name after having none
+                                true
                             } else {
-                                // Fallback for episodes without "S1/S2" in title
+                                // Otherwise, stay in the same block (ignores number resets and non-season titles)
                                 false
                             }
 
@@ -2106,7 +2110,7 @@ class AnimeScreenModel(
                             var explicitSeasonName: String? = null
                             var hasSpecials = false
                             for (item in block.episodes) {
-                                if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                                if (EpisodeSeasonUtils.isSpecial(item.episode)) {
                                     hasSpecials = true
                                 }
                                 if (explicitSeasonName == null) {
@@ -2119,8 +2123,6 @@ class AnimeScreenModel(
                                 "Specials"
                             } else if (explicitSeasonName != null) {
                                 explicitSeasonName
-                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                                "Extras"
                             } else {
                                 implicitSeasonCount++
                                 "Season $implicitSeasonCount"
