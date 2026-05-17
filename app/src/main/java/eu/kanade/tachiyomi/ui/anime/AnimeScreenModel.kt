@@ -400,6 +400,9 @@ class AnimeScreenModel(
                         "Season $implicitSeasonCount"
                     }
                     
+                    if (!seasonsList.contains(seasonName)) {
+                        seasonsList.add(seasonName)
+                    }
                     block.episodes.forEach { item ->
                         mapping[item.episode.id] = seasonName
                     }
@@ -413,9 +416,8 @@ class AnimeScreenModel(
                     // 1. Season Header (Must be BEFORE the item)
                     val seasonName = mapping[item.episode.id]
                     if (seasonName != null && seasonName != lastSeasonHeader) {
-                        items.add(EpisodeList.Season(seasonName))
-                        if (!seasonsList.contains(seasonName)) {
-                            seasonsList.add(seasonName)
+                        if (seasonsList.size > 1) {
+                            items.add(EpisodeList.Season(seasonName))
                         }
                         lastSeasonHeader = seasonName
                     }
@@ -2142,6 +2144,9 @@ class AnimeScreenModel(
                                 "Season $implicitSeasonCount"
                             }
                             
+                            if (!availableSeasonsList.contains(seasonName)) {
+                                availableSeasonsList.add(seasonName)
+                            }
                             block.episodes.forEach { item ->
                                 episodeToSeason[item.episode.id] = seasonName
                             }
@@ -2155,9 +2160,8 @@ class AnimeScreenModel(
                             // 1. Season Header (Must be BEFORE the item)
                             val seasonName = episodeToSeason[item.episode.id]
                             if (seasonName != null && seasonName != lastSeasonHeader) {
-                                episodeListItems.add(EpisodeList.Season(seasonName))
-                                if (!availableSeasonsList.contains(seasonName)) {
-                                    availableSeasonsList.add(seasonName)
+                                if (availableSeasonsList.size > 1) {
+                                    episodeListItems.add(EpisodeList.Season(seasonName))
                                 }
                                 lastSeasonHeader = seasonName
                             }
