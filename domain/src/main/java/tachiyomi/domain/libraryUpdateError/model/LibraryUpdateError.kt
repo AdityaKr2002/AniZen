@@ -6,4 +6,5 @@ data class LibraryUpdateError(
     val id: Long,
     val animeId: Long,
     val messageId: Long,
+    val lastUpdate: Long,
 ) : Serializable

@@ -98,6 +98,9 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val syncEpisodesWithSource: SyncEpisodesWithSource = Injekt.get()
     private val syncSeasonsWithSource: SyncSeasonsWithSource = Injekt.get()
     private val getAnimeSeasonsById: GetAnimeSeasonsById = Injekt.get()
+    private val deleteLibraryUpdateErrors: DeleteLibraryUpdateErrors = Injekt.get()
+    private val insertLibraryUpdateErrors: InsertLibraryUpdateErrors = Injekt.get()
+    private val insertLibraryUpdateErrorMessages: InsertLibraryUpdateErrorMessages = Injekt.get()
     private val getTracks: GetTracks = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val filterEpisodesForDownload: FilterEpisodesForDownload = Injekt.get()
@@ -120,6 +123,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 return Result.retry()
             }
         }
+
+        deleteLibraryUpdateErrors.cleanUnrelevantMangaErrors()
 
         try {
             setForeground(getForegroundInfo())
@@ -400,6 +405,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             // Convert to the anime that contains new episodes
                                             newUpdates.add(anime to newEpisodes.toTypedArray())
                                         }
+                                        clearErrorFromDB(anime.id)
                                     } catch (e: Throwable) {
                                         val errorMessage = when (e) {
                                             is NoResultsException -> context.stringResource(
@@ -411,6 +417,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             )
                                             else -> e.message
                                         }
+                                        writeErrorToDB(anime to errorMessage)
                                         failedUpdates.add(anime to errorMessage)
                                     }
                                 }
@@ -553,6 +560,37 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             }
         } catch (_: Exception) {}
         return File("")
+    }
+
+    private suspend fun clearErrorFromDB(animeId: Long) {
+        deleteLibraryUpdateErrors.deleteMangaError(animeId)
+    }
+
+    private suspend fun writeErrorToDB(error: Pair<Anime, String?>) {
+        val errorMessage = error.second ?: context.stringResource(MR.strings.unknown_error)
+        val errorMessageId = insertLibraryUpdateErrorMessages.insert(
+            tachiyomi.domain.libraryUpdateErrorMessage.model.LibraryUpdateErrorMessage(-1L, errorMessage),
+        )
+
+        insertLibraryUpdateErrors.upsert(
+            tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError(id = -1L, animeId = error.first.id, messageId = errorMessageId),
+        )
+    }
+
+    private suspend fun writeErrorsToDB(errors: List<Pair<Anime, String?>>) {
+        val libraryErrors = errors.groupBy({ it.second }, { it.first })
+        val errorMessages = insertLibraryUpdateErrorMessages.insertAll(
+            libraryUpdateErrorMessages = libraryErrors.keys.map { errorMessage ->
+                tachiyomi.domain.libraryUpdateErrorMessage.model.LibraryUpdateErrorMessage(-1L, errorMessage.orEmpty())
+            },
+        )
+        val errorList = mutableListOf<tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError>()
+        errorMessages.forEach {
+            libraryErrors[it.second]?.forEach { anime ->
+                errorList.add(tachiyomi.domain.libraryUpdateError.model.LibraryUpdateError(id = -1L, animeId = anime.id, messageId = it.first))
+            }
+        }
+        insertLibraryUpdateErrors.insertAll(errorList)
     }
 
     companion object {
