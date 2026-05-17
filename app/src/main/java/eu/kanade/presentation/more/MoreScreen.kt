@@ -199,7 +199,7 @@ fun MoreScreen(
                         onClick = onClickStats
                     )
                     MoreItem(
-                        title = stringResource(SYMR.strings.label_library_update_errors, 0),
+                        title = stringResource(SYMR.strings.option_label_library_update_errors),
                         icon = Icons.Outlined.Info,
                         onClick = onClickLibraryUpdateErrors
                     )

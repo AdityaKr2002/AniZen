@@ -9,4 +9,5 @@ data class LibraryUpdateErrorWithRelations(
     val animeCover: AnimeCover,
     val errorId: Long,
     val messageId: Long,
+    val lastUpdate: Long,
 )

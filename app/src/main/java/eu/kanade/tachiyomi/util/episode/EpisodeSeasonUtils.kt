@@ -5,7 +5,7 @@ import tachiyomi.domain.episode.model.Episode
 object EpisodeSeasonUtils {
     // Added |_ to delimiters to support patterns like _s1e1_
     private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[|_)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|_|$)""")
-    private val specialKeywordsRegex = Regex("""(?i)\b(ova|ona|movie|pv|trailer|bonus|recap|summary|prologue)\b""")
+    private val specialKeywordsRegex = Regex("""(?i)\b(ova|ona|movie|pv|trailer|bonus|recap|summary|prologue|extra|special|omake|teaser|clip|interview|preview)\b""")
 
 
     /**
@@ -63,8 +63,8 @@ object EpisodeSeasonUtils {
         fun getPriority(s: String): Int {
             return when {
                 s.startsWith("Season", ignoreCase = true) -> 0
-                s.contains("Special", ignoreCase = true) -> 1
-                s.contains("Extra", ignoreCase = true) -> 2
+                s.contains("Extra", ignoreCase = true) -> 1
+                s.contains("Special", ignoreCase = true) -> 2
                 else -> 3
             }
         }

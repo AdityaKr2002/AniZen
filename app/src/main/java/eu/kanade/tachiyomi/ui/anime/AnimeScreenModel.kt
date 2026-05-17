@@ -331,57 +331,34 @@ class AnimeScreenModel(
                 val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
                 
                 data class EpisodeBlock(
-                    val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
-                    var year: Int? = null
+                    val episodes: MutableList<EpisodeList.Item> = mutableListOf()
                 )
                 val blocks = mutableListOf<EpisodeBlock>()
                 var currentBlock = EpisodeBlock()
-                val cal = Calendar.getInstance()
                 
                 for (index in chronological.indices) {
                     val item = chronological[index]
                     val prevItem = chronological.getOrNull(index - 1)
                     
-                    val itemYear = if (item.episode.dateUpload > 0) {
-                        cal.timeInMillis = item.episode.dateUpload
-                        cal.get(Calendar.YEAR)
-                    } else null
-
                     val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                     val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+                    val currentHasKeywords = EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)
+                    val prevHasKeywords = prevItem?.let { EpisodeSeasonUtils.hasSpecialKeywords(it.episode) || EpisodeSeasonUtils.isSeasonZero(it.episode) }
                     val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                     val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
                     val isNewBlock = if (prevItem == null) {
                         true
                     } else if (currentIsSpecial != prevIsSpecial) {
-                        // Split when switching between special and regular content
+                        // Split when switching between special/extra and regular content
                         true
-                    } else if (currentExplicit != null || prevExplicit != null) {
-                        // If titles explicitly mention seasons, split whenever they change
-                        currentExplicit != prevExplicit
+                    } else if (currentExplicit != prevExplicit) {
+                        // Split whenever the explicit season name changes (including null transitions)
+                        // This prevents Extras with no season name from being sticky to a previous season.
+                        true
                     } else {
-                        // Fallback for episodes without "S1/S2" in title
-                        val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
-                                        item.episode.episodeNumber < prevItem.episode.episodeNumber
-                        
-                        val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
-                            (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
-                        
-                        val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-
-                        val prevYear = if (prevItem.episode.dateUpload > 0) {
-                            cal.timeInMillis = prevItem.episode.dateUpload
-                            cal.get(Calendar.YEAR)
-                        } else null
-                        
-                        val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
-                        
-                        if (currentIsSpecial) {
-                            numRestart
-                        } else {
-                            numRestart || timeJump || yearChange || sameDateRestart
-                        }
+                        // Otherwise, stay in the same block (ignores number resets for regular episodes)
+                        false
                     }
 
                     if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
@@ -389,12 +366,10 @@ class AnimeScreenModel(
                         currentBlock = EpisodeBlock()
                     }
                     currentBlock.episodes.add(item)
-                    if (currentBlock.year == null) currentBlock.year = itemYear
                 }
                 if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
                 // Step 3: Assign season names to blocks
-                var implicitSeasonCount = 0
                 blocks.forEach { block ->
                     var explicitSeasonName: String? = null
                     var hasSpecials = false
@@ -408,21 +383,17 @@ class AnimeScreenModel(
                         }
                     }
                     
-                    val seasonName = if (hasSpecials) {
-                        "Specials"
-                    } else if (explicitSeasonName != null) {
+                    val seasonName = if (explicitSeasonName != null) {
                         explicitSeasonName
-                    } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                        "Extras"
+                    } else if (hasSpecials) {
+                        "Specials"
                     } else {
-                        implicitSeasonCount++
-                        if (block.year != null) {
-                            "Season $implicitSeasonCount (${block.year})"
-                        } else {
-                            "Season $implicitSeasonCount"
-                        }
+                        "Extras"
                     }
                     
+                    if (!seasonsList.contains(seasonName)) {
+                        seasonsList.add(seasonName)
+                    }
                     block.episodes.forEach { item ->
                         mapping[item.episode.id] = seasonName
                     }
@@ -436,9 +407,8 @@ class AnimeScreenModel(
                     // 1. Season Header (Must be BEFORE the item)
                     val seasonName = mapping[item.episode.id]
                     if (seasonName != null && seasonName != lastSeasonHeader) {
-                        items.add(EpisodeList.Season(seasonName))
-                        if (!seasonsList.contains(seasonName)) {
-                            seasonsList.add(seasonName)
+                        if (seasonsList.size > 1) {
+                            items.add(EpisodeList.Season(seasonName))
                         }
                         lastSeasonHeader = seasonName
                     }
@@ -2096,21 +2066,14 @@ class AnimeScreenModel(
                         val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
                         
                         data class EpisodeBlock(
-                            val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
-                            var year: Int? = null
+                            val episodes: MutableList<EpisodeList.Item> = mutableListOf()
                         )
                         val blocks = mutableListOf<EpisodeBlock>()
                         var currentBlock = EpisodeBlock()
-                        val cal = Calendar.getInstance()
                         
                         for (index in chronological.indices) {
                             val item = chronological[index]
                             val prevItem = chronological.getOrNull(index - 1)
-                            
-                            val itemYear = if (item.episode.dateUpload > 0) {
-                                cal.timeInMillis = item.episode.dateUpload
-                                cal.get(Calendar.YEAR)
-                            } else null
 
                             val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
@@ -2120,33 +2083,15 @@ class AnimeScreenModel(
                             val isNewBlock = if (prevItem == null) {
                                 true
                             } else if (currentIsSpecial != prevIsSpecial) {
-                                // Split when switching between special and regular content
+                                // Split when switching between special/extra and regular content
                                 true
-                            } else if (currentExplicit != null || prevExplicit != null) {
-                                // If titles explicitly mention seasons, split whenever they change
-                                currentExplicit != prevExplicit
+                            } else if (currentExplicit != prevExplicit) {
+                                // Split whenever the explicit season name changes (including null transitions)
+                                // This prevents Extras with no season name from being sticky to a previous season.
+                                true
                             } else {
-                                // Fallback for episodes without "S1/S2" in title
-                                val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
-                                                item.episode.episodeNumber < prevItem.episode.episodeNumber
-                                
-                                val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
-                                    (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
-
-                                val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-                                
-                                val prevYear = if (prevItem.episode.dateUpload > 0) {
-                                    cal.timeInMillis = prevItem.episode.dateUpload
-                                    cal.get(Calendar.YEAR)
-                                } else null
-                                
-                                val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
-                                
-                                if (currentIsSpecial) {
-                                    numRestart
-                                } else {
-                                    numRestart || timeJump || yearChange || sameDateRestart
-                                }
+                                // Otherwise, stay in the same block (ignores number resets for regular episodes)
+                                false
                             }
 
                             if (isNewBlock && currentBlock.episodes.isNotEmpty()) {
@@ -2154,12 +2099,10 @@ class AnimeScreenModel(
                                 currentBlock = EpisodeBlock()
                             }
                             currentBlock.episodes.add(item)
-                            if (currentBlock.year == null) currentBlock.year = itemYear
                         }
                         if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
                         // Step 3: Assign season names to blocks
-                        var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
                             var hasSpecials = false
@@ -2172,22 +2115,18 @@ class AnimeScreenModel(
                                     if (name != "Season 0") explicitSeasonName = name
                                 }
                             }
-                            
-                            val seasonName = if (hasSpecials) {
-                                "Specials"
-                            } else if (explicitSeasonName != null) {
+
+                            val seasonName = if (explicitSeasonName != null) {
                                 explicitSeasonName
-                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                                "Extras"
+                            } else if (hasSpecials) {
+                                "Specials"
                             } else {
-                                implicitSeasonCount++
-                                if (block.year != null) {
-                                    "Season $implicitSeasonCount (${block.year})"
-                                } else {
-                                    "Season $implicitSeasonCount"
-                                }
+                                "Extras"
                             }
-                            
+
+                            if (!availableSeasonsList.contains(seasonName)) {
+                                availableSeasonsList.add(seasonName)
+                            }
                             block.episodes.forEach { item ->
                                 episodeToSeason[item.episode.id] = seasonName
                             }
@@ -2201,9 +2140,8 @@ class AnimeScreenModel(
                             // 1. Season Header (Must be BEFORE the item)
                             val seasonName = episodeToSeason[item.episode.id]
                             if (seasonName != null && seasonName != lastSeasonHeader) {
-                                episodeListItems.add(EpisodeList.Season(seasonName))
-                                if (!availableSeasonsList.contains(seasonName)) {
-                                    availableSeasonsList.add(seasonName)
+                                if (availableSeasonsList.size > 1) {
+                                    episodeListItems.add(EpisodeList.Season(seasonName))
                                 }
                                 lastSeasonHeader = seasonName
                             }

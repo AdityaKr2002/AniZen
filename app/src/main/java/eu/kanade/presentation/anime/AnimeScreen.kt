@@ -382,8 +382,8 @@ private fun AnimeScreenSmallImpl(
     val navigator = LocalNavigator.currentOrThrow
     val episodeListState = rememberLazyListState()
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
-        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode, state.availableSeasons) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null || state.availableSeasons.size <= 1) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false
@@ -393,7 +393,7 @@ private fun AnimeScreenSmallImpl(
                     is EpisodeList.Season -> {
                         currentSeason = item.name
                         inSelectedSeason = currentSeason == state.selectedSeason
-                        false 
+                        false
                     }
                     is EpisodeList.Item -> inSelectedSeason
                     is EpisodeList.MissingCount -> inSelectedSeason
@@ -867,8 +867,8 @@ fun AnimeScreenLargeImpl(
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val episodes = state.processedEpisodes
-    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode) {
-        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null) {
+    val listItem = remember(state.episodeListItems, state.selectedSeason, state.anime.seasonGroupingMode, state.availableSeasons) {
+        if (state.anime.seasonGroupingMode != LibraryPreferences.SeasonGrouping.Tabs || state.selectedSeason == null || state.availableSeasons.size <= 1) {
             state.episodeListItems
         } else {
             var inSelectedSeason = false

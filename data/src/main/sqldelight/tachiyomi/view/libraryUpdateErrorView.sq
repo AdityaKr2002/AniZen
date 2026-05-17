@@ -7,10 +7,12 @@ SELECT
     animes.thumbnail_url AS thumbnailUrl,
     animes.cover_last_modified AS coverLastModified,
     libraryUpdateError._id AS errorId,
-    libraryUpdateError.message_id AS messageId
+    libraryUpdateError.message_id AS messageId,
+    libraryUpdateError.last_update AS lastUpdate
 FROM animes JOIN libraryUpdateError
 ON animes._id = libraryUpdateError.anime_id
-WHERE favorite = 1;
+WHERE favorite = 1
+ORDER BY lastUpdate DESC;
 
 errors:
 SELECT *

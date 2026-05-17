@@ -1,0 +1,37 @@
+-- Create libraryUpdateErrorMessage table if not exists
+CREATE TABLE IF NOT EXISTS libraryUpdateErrorMessage (
+    _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    message TEXT NOT NULL UNIQUE
+);
+
+-- Create libraryUpdateError table if not exists
+CREATE TABLE IF NOT EXISTS libraryUpdateError (
+    _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    anime_id INTEGER NOT NULL UNIQUE,
+    message_id INTEGER NOT NULL
+);
+
+-- Add last_update column to libraryUpdateError
+-- Use a subquery to check if column exists before adding (standard SQLite trick)
+-- Actually, we can just try to add it and ignore error if it fails? No, migrations must succeed.
+-- Since it wasn't in any previous migration, we safely add it.
+ALTER TABLE libraryUpdateError ADD COLUMN last_update INTEGER NOT NULL DEFAULT 0;
+
+-- Re-create the view
+DROP VIEW IF EXISTS libraryUpdateErrorView;
+
+CREATE VIEW libraryUpdateErrorView AS
+SELECT
+    animes._id AS animeId,
+    animes.title AS animeTitle,
+    animes.source,
+    animes.favorite,
+    animes.thumbnail_url AS thumbnailUrl,
+    animes.cover_last_modified AS coverLastModified,
+    libraryUpdateError._id AS errorId,
+    libraryUpdateError.message_id AS messageId,
+    libraryUpdateError.last_update AS lastUpdate
+FROM animes JOIN libraryUpdateError
+ON animes._id = libraryUpdateError.anime_id
+WHERE favorite = 1
+ORDER BY lastUpdate DESC;
