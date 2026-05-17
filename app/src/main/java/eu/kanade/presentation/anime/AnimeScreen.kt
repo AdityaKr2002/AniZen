@@ -393,7 +393,7 @@ private fun AnimeScreenSmallImpl(
                     is EpisodeList.Season -> {
                         currentSeason = item.name
                         inSelectedSeason = currentSeason == state.selectedSeason
-                        false 
+                        false
                     }
                     is EpisodeList.Item -> inSelectedSeason
                     is EpisodeList.MissingCount -> inSelectedSeason

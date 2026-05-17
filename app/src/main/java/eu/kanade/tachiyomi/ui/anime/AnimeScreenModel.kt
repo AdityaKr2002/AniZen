@@ -370,12 +370,10 @@ class AnimeScreenModel(
                 if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
                 // Step 3: Assign season names to blocks
-                var implicitSeasonCount = 0
                 blocks.forEach { block ->
                     var explicitSeasonName: String? = null
                     var hasSpecials = false
                     for (item in block.episodes) {
-                        // Check for explicit "Special" or "OVA" type keywords
                         if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                             hasSpecials = true
                         }
@@ -385,15 +383,12 @@ class AnimeScreenModel(
                         }
                     }
                     
-                    val seasonName = if (hasSpecials) {
-                        "Specials"
-                    } else if (explicitSeasonName != null) {
+                    val seasonName = if (explicitSeasonName != null) {
                         explicitSeasonName
-                    } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                        "Extras"
+                    } else if (hasSpecials) {
+                        "Specials"
                     } else {
-                        implicitSeasonCount++
-                        "Season $implicitSeasonCount"
+                        "Extras"
                     }
                     
                     if (!seasonsList.contains(seasonName)) {
@@ -434,9 +429,20 @@ class AnimeScreenModel(
                     if (next != null) {
                         val higher = if (anime.sortDescending()) item else next
                         val lower = if (anime.sortDescending()) next else item
-                        val gap = calculateChapterGap(higher.episode, lower.episode)
-                        if (gap > 0) {
-                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                        
+                        // Only show gap if episodes are in the same season AND numbers are increasing/sequential
+                        val sameSeason = mapping[item.episode.id] == mapping[next.episode.id]
+                        val isReset = if (anime.sortDescending()) {
+                            item.episode.episodeNumber < next.episode.episodeNumber
+                        } else {
+                            item.episode.episodeNumber > next.episode.episodeNumber
+                        }
+
+                        if (sameSeason && !isReset) {
+                            val gap = calculateChapterGap(higher.episode, lower.episode)
+                            if (gap > 0) {
+                                items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                            }
                         }
                     }
                 }
@@ -2108,12 +2114,10 @@ class AnimeScreenModel(
                         if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
                         // Step 3: Assign season names to blocks
-                        var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
                             var hasSpecials = false
                             for (item in block.episodes) {
-                                // Check for explicit "Special" or "OVA" type keywords
                                 if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
                                     hasSpecials = true
                                 }
@@ -2123,17 +2127,14 @@ class AnimeScreenModel(
                                 }
                             }
 
-                            val seasonName = if (hasSpecials) {
-                                "Specials"
-                            } else if (explicitSeasonName != null) {
+                            val seasonName = if (explicitSeasonName != null) {
                                 explicitSeasonName
-                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
-                                "Extras"
+                            } else if (hasSpecials) {
+                                "Specials"
                             } else {
-                                implicitSeasonCount++
-                                "Season $implicitSeasonCount"
+                                "Extras"
                             }
-                            
+
                             if (!availableSeasonsList.contains(seasonName)) {
                                 availableSeasonsList.add(seasonName)
                             }
@@ -2198,9 +2199,20 @@ class AnimeScreenModel(
                             if (next != null) {
                                 val higher = if (anime.sortDescending()) item else next
                                 val lower = if (anime.sortDescending()) next else item
-                                val gap = calculateChapterGap(higher.episode, lower.episode)
-                                if (gap > 0) {
-                                    episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+
+                                // Only show gap if episodes are in the same season AND numbers are increasing/sequential
+                                val sameSeason = episodeToSeason[item.episode.id] == episodeToSeason[next.episode.id]
+                                val isReset = if (anime.sortDescending()) {
+                                    item.episode.episodeNumber < next.episode.episodeNumber
+                                } else {
+                                    item.episode.episodeNumber > next.episode.episodeNumber
+                                }
+
+                                if (sameSeason && !isReset) {
+                                    val gap = calculateChapterGap(higher.episode, lower.episode)
+                                    if (gap > 0) {
+                                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                                    }
                                 }
                             }
                         }

@@ -63,8 +63,8 @@ object EpisodeSeasonUtils {
         fun getPriority(s: String): Int {
             return when {
                 s.startsWith("Season", ignoreCase = true) -> 0
-                s.contains("Special", ignoreCase = true) -> 1
-                s.contains("Extra", ignoreCase = true) -> 2
+                s.contains("Extra", ignoreCase = true) -> 1
+                s.contains("Special", ignoreCase = true) -> 2
                 else -> 3
             }
         }

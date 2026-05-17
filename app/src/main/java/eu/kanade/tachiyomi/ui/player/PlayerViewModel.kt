@@ -1272,9 +1272,13 @@ class PlayerViewModel @JvmOverloads constructor(
             if (savedSeason.isNotEmpty()) {
                 episodesForPlayer = episodesForPlayer.filter {
                     val domainEp = it.toDomainEpisode()!!
-                    EpisodeSeasonUtils.getSeasonName(domainEp) == savedSeason ||
-                        (savedSeason == "Specials" && (EpisodeSeasonUtils.hasSpecialKeywords(domainEp) || EpisodeSeasonUtils.isSeasonZero(domainEp))) ||
-                        (savedSeason == "Extras" && EpisodeSeasonUtils.isSpecial(domainEp))
+                    val epSeason = EpisodeSeasonUtils.getSeasonName(domainEp)
+                    val effectiveSeason = when {
+                        epSeason != null && epSeason != "Season 0" -> epSeason
+                        EpisodeSeasonUtils.hasSpecialKeywords(domainEp) || EpisodeSeasonUtils.isSeasonZero(domainEp) -> "Specials"
+                        else -> "Extras"
+                    }
+                    effectiveSeason == savedSeason
                 }
             }
         }
