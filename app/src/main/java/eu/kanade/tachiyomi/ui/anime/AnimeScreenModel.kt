@@ -342,13 +342,18 @@ class AnimeScreenModel(
                     
                     val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                     val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+                    val currentHasKeywords = EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)
+                    val prevHasKeywords = prevItem?.let { EpisodeSeasonUtils.hasSpecialKeywords(it.episode) || EpisodeSeasonUtils.isSeasonZero(it.episode) }
                     val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                     val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
                     val isNewBlock = if (prevItem == null) {
                         true
                     } else if (currentIsSpecial != prevIsSpecial) {
-                        // Split when switching between special and regular content
+                        // Split when switching between special/extra and regular content
+                        true
+                    } else if (currentIsSpecial && currentHasKeywords != prevHasKeywords) {
+                        // Split between explicit Specials (keywords) and implicit Extras
                         true
                     } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
                         // Split only when titles explicitly change to a DIFFERENT season
@@ -373,10 +378,10 @@ class AnimeScreenModel(
                 var implicitSeasonCount = 0
                 blocks.forEach { block ->
                     var explicitSeasonName: String? = null
-                    var hasSpecials = false
+                    var hasKeywords = false
                     for (item in block.episodes) {
-                        if (EpisodeSeasonUtils.isSpecial(item.episode)) {
-                            hasSpecials = true
+                        if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                            hasKeywords = true
                         }
                         if (explicitSeasonName == null) {
                             val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -384,10 +389,12 @@ class AnimeScreenModel(
                         }
                     }
                     
-                    val seasonName = if (hasSpecials) {
+                    val seasonName = if (hasKeywords) {
                         "Specials"
                     } else if (explicitSeasonName != null) {
                         explicitSeasonName
+                    } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
+                        "Extras"
                     } else {
                         implicitSeasonCount++
                         "Season $implicitSeasonCount"
@@ -2077,13 +2084,18 @@ class AnimeScreenModel(
                             
                             val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
+                            val currentHasKeywords = EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)
+                            val prevHasKeywords = prevItem?.let { EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode) }
                             val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
                             val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
                             val isNewBlock = if (prevItem == null) {
                                 true
                             } else if (currentIsSpecial != prevIsSpecial) {
-                                // Split when switching between special and regular content
+                                // Split when switching between special/extra and regular content
+                                true
+                            } else if (currentIsSpecial && currentHasKeywords != prevHasKeywords) {
+                                // Split between explicit Specials (keywords) and implicit Extras
                                 true
                             } else if (currentExplicit != null && prevExplicit != null && currentExplicit != prevExplicit) {
                                 // Split only when titles explicitly change to a DIFFERENT season
@@ -2108,10 +2120,10 @@ class AnimeScreenModel(
                         var implicitSeasonCount = 0
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
-                            var hasSpecials = false
+                            var hasKeywords = false
                             for (item in block.episodes) {
-                                if (EpisodeSeasonUtils.isSpecial(item.episode)) {
-                                    hasSpecials = true
+                                if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                                    hasKeywords = true
                                 }
                                 if (explicitSeasonName == null) {
                                     val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -2119,10 +2131,12 @@ class AnimeScreenModel(
                                 }
                             }
                             
-                            val seasonName = if (hasSpecials) {
+                            val seasonName = if (hasKeywords) {
                                 "Specials"
                             } else if (explicitSeasonName != null) {
                                 explicitSeasonName
+                            } else if (block.episodes.all { EpisodeSeasonUtils.isSpecial(it.episode) }) {
+                                "Extras"
                             } else {
                                 implicitSeasonCount++
                                 "Season $implicitSeasonCount"
