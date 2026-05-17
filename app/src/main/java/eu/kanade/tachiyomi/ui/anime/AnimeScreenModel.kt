@@ -141,7 +141,6 @@ import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.Serializable
-import java.util.Calendar
 import kotlin.math.floor
 
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
@@ -331,22 +330,15 @@ class AnimeScreenModel(
                 val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
                 
                 data class EpisodeBlock(
-                    val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
-                    var year: Int? = null
+                    val episodes: MutableList<EpisodeList.Item> = mutableListOf()
                 )
                 val blocks = mutableListOf<EpisodeBlock>()
                 var currentBlock = EpisodeBlock()
-                val cal = Calendar.getInstance()
                 
                 for (index in chronological.indices) {
                     val item = chronological[index]
                     val prevItem = chronological.getOrNull(index - 1)
                     
-                    val itemYear = if (item.episode.dateUpload > 0) {
-                        cal.timeInMillis = item.episode.dateUpload
-                        cal.get(Calendar.YEAR)
-                    } else null
-
                     val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                     val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                     val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
@@ -365,22 +357,12 @@ class AnimeScreenModel(
                         val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
                                         item.episode.episodeNumber < prevItem.episode.episodeNumber
                         
-                        val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
-                            (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
-                        
                         val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
 
-                        val prevYear = if (prevItem.episode.dateUpload > 0) {
-                            cal.timeInMillis = prevItem.episode.dateUpload
-                            cal.get(Calendar.YEAR)
-                        } else null
-                        
-                        val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
-                        
                         if (currentIsSpecial) {
                             numRestart
                         } else {
-                            numRestart || timeJump || yearChange || sameDateRestart
+                            numRestart || sameDateRestart
                         }
                     }
 
@@ -389,7 +371,6 @@ class AnimeScreenModel(
                         currentBlock = EpisodeBlock()
                     }
                     currentBlock.episodes.add(item)
-                    if (currentBlock.year == null) currentBlock.year = itemYear
                 }
                 if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
@@ -416,11 +397,7 @@ class AnimeScreenModel(
                         "Extras"
                     } else {
                         implicitSeasonCount++
-                        if (block.year != null) {
-                            "Season $implicitSeasonCount (${block.year})"
-                        } else {
-                            "Season $implicitSeasonCount"
-                        }
+                        "Season $implicitSeasonCount"
                     }
                     
                     block.episodes.forEach { item ->
@@ -2096,22 +2073,15 @@ class AnimeScreenModel(
                         val chronological = if (isSourceDescending) sourceOrdered.reversed() else sourceOrdered
                         
                         data class EpisodeBlock(
-                            val episodes: MutableList<EpisodeList.Item> = mutableListOf(),
-                            var year: Int? = null
+                            val episodes: MutableList<EpisodeList.Item> = mutableListOf()
                         )
                         val blocks = mutableListOf<EpisodeBlock>()
                         var currentBlock = EpisodeBlock()
-                        val cal = Calendar.getInstance()
                         
                         for (index in chronological.indices) {
                             val item = chronological[index]
                             val prevItem = chronological.getOrNull(index - 1)
                             
-                            val itemYear = if (item.episode.dateUpload > 0) {
-                                cal.timeInMillis = item.episode.dateUpload
-                                cal.get(Calendar.YEAR)
-                            } else null
-
                             val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
                             val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
@@ -2130,22 +2100,12 @@ class AnimeScreenModel(
                                 val numRestart = item.episode.episodeNumber >= 0 && prevItem.episode.episodeNumber >= 0 && 
                                                 item.episode.episodeNumber < prevItem.episode.episodeNumber
                                 
-                                val timeJump = item.episode.dateUpload > 0 && prevItem.episode.dateUpload > 0 && 
-                                    (item.episode.dateUpload - prevItem.episode.dateUpload) > 1000L * 60 * 60 * 24 * 60 // 60 days
-
                                 val sameDateRestart = (item.episode.dateUpload == prevItem.episode.dateUpload || item.episode.dateUpload <= 0) && numRestart
-                                
-                                val prevYear = if (prevItem.episode.dateUpload > 0) {
-                                    cal.timeInMillis = prevItem.episode.dateUpload
-                                    cal.get(Calendar.YEAR)
-                                } else null
-                                
-                                val yearChange = itemYear != null && prevYear != null && itemYear > prevYear
                                 
                                 if (currentIsSpecial) {
                                     numRestart
                                 } else {
-                                    numRestart || timeJump || yearChange || sameDateRestart
+                                    numRestart || sameDateRestart
                                 }
                             }
 
@@ -2154,7 +2114,6 @@ class AnimeScreenModel(
                                 currentBlock = EpisodeBlock()
                             }
                             currentBlock.episodes.add(item)
-                            if (currentBlock.year == null) currentBlock.year = itemYear
                         }
                         if (currentBlock.episodes.isNotEmpty()) blocks.add(currentBlock)
 
@@ -2181,11 +2140,7 @@ class AnimeScreenModel(
                                 "Extras"
                             } else {
                                 implicitSeasonCount++
-                                if (block.year != null) {
-                                    "Season $implicitSeasonCount (${block.year})"
-                                } else {
-                                    "Season $implicitSeasonCount"
-                                }
+                                "Season $implicitSeasonCount"
                             }
                             
                             block.episodes.forEach { item ->
