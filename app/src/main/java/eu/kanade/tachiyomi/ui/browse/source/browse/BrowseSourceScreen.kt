@@ -140,8 +140,7 @@ data class BrowseSourceScreen(
             )
         }
 
-        val pagingFlow by screenModel.animePagerFlowFlow.collectAsState()
-        val animeList = pagingFlow.collectAsLazyPagingItems()
+        val animeList = screenModel.animePagerFlowFlow.collectAsLazyPagingItems()
 
         if (screenModel.source is StubSource) {
             eu.kanade.presentation.browse.BrowseSourceScreen(
@@ -186,7 +185,7 @@ data class BrowseSourceScreen(
                         selectedCount = state.selection.size,
                         onUnselectAll = screenModel::clearSelection,
                         onSelectAll = {
-                            val items = animeList.itemSnapshotList.items.filterNotNull().map { it.value }
+                            val items = animeList.itemSnapshotList.items.filterNotNull()
                             if (items.isNotEmpty()) {
                                 screenModel.selectAll(items)
                             }
@@ -564,5 +563,7 @@ data class BrowseSourceScreen(
     sealed class SearchType(val txt: String) {
         class Text(txt: String) : SearchType(txt)
         class Genre(txt: String) : SearchType(txt)
+    }
+}
     }
 }
