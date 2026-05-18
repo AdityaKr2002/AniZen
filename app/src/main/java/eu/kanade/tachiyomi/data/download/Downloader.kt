@@ -426,7 +426,9 @@ class Downloader(
     private fun detectEngineType(video: Video): String {
         return when {
             video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent") -> "Torrent"
-            video.videoUrl.contains(".m3u8") -> "HLS"
+            video.videoUrl.contains(".m3u8") || 
+            video.videoUrl.contains("/oppai/") || 
+            video.videoUrl.contains("/proxy/oppai/") -> "HLS"
             video.videoUrl.contains(".mpd") || 
             (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || 
             video.audioTracks.isNotEmpty() -> "DASH"
@@ -663,6 +665,7 @@ class Downloader(
         builder.removeAll("Sec-Fetch-Mode")
         builder.removeAll("Sec-Fetch-Site")
         builder.removeAll("Sec-Fetch-User")
+        builder.removeAll("X-Requested-With")
         return builder.build()
     }
 
