@@ -51,7 +51,7 @@ fun BrowseSourceCompactGrid(
             key = { index -> "source-compact-grid-${animeList.peek(index)?.value?.id ?: "placeholder"}-$index" },
             contentType = { index -> if (animeList.peek(index) != null) "anime" else "placeholder" },
         ) { index ->
-            val anime by animeList[index]?.collectAsState() ?: return@items
+            val anime = animeList[index] ?: return@items
             onBatchIncrement(index)
 
             val currentOnAnimeClick = remember(onAnimeClick, anime, index) { 
@@ -103,5 +103,8 @@ internal fun BrowseSourceCompactGridItem(
         onClick = onClick,
         isSelected = isSelected,
         usePanorama = usePanorama,
+    )
+}
+ma,
     )
 }
