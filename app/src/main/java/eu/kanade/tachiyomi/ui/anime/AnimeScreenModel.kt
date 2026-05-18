@@ -2,7 +2,9 @@
 package eu.kanade.tachiyomi.ui.anime
 
 import android.content.Context
-import androidx.compose.material3.SnackbarDuration
+import android.content.Intent
+import android.provider.DocumentsContract
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Immutable
@@ -1966,6 +1968,21 @@ class AnimeScreenModel(
     fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copySuccess(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
     fun showAnimeSkipIntroDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ChangeAnimeSkipIntro) }
     fun showClearAnimeDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ClearAnime) }
+
+    fun openAnimeFolder(currentSource: Source?, currentAnime: Anime?) {
+        try {
+            if (currentAnime == null || currentSource == null || currentSource is StubSource) return
+
+            val animeDir = downloadProvider.findAnimeDir(currentAnime.title, currentSource) ?: return
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(animeDir.uri, DocumentsContract.Document.MIME_TYPE_DIR)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e)
+        }
+    }
 
     fun showSetAnimeFetchIntervalDialog() {
         val anime = successState?.anime ?: return

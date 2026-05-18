@@ -205,6 +205,14 @@ fun AnimeToolbar(
                                         ),
                                     )
                                 }
+                                if (onClickOpenAnimeFolder != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(KMR.strings.action_open_folder),
+                                            onClick = onClickOpenAnimeFolder,
+                                        ),
+                                    )
+                                }
                                 if (onClickClearAnime != null) {
                                     add(
                                         AppBar.OverflowAction(
