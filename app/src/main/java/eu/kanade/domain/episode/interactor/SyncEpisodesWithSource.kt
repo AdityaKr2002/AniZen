@@ -98,7 +98,6 @@ class SyncEpisodesWithSource(
             episode = episode.copy(episodeNumber = episodeNumber)
 
             val dbEpisode = dbEpisodes.find { it.url == episode.url }
-                ?: dbEpisodes.find { it.isRecognizedNumber && it.episodeNumber == episode.episodeNumber }
 
             if (dbEpisode == null) {
                 val toAddEpisode = if (episode.dateUpload == 0L) {
@@ -128,7 +127,6 @@ class SyncEpisodesWithSource(
                         downloadManager.renameEpisode(source, anime, dbEpisode, episode)
                     }
                     var toChangeEpisode = dbEpisode.copy(
-                        url = episode.url,
                         name = episode.name,
                         episodeNumber = episode.episodeNumber,
                         scanlator = episode.scanlator,

@@ -276,19 +276,7 @@ class AnimeScreenModel(
         val processedEpisodes = if (anime === this.anime && !episodesChanged) {
             this.processedEpisodes
         } else {
-            episodes.applyFilters(anime)
-                .let { filtered ->
-                    // Pro-Level Deduplication: Ensure unique episodes by number or URL.
-                    // This handles Hierarchical Seasons and messy extension APIs.
-                    filtered.distinctBy { 
-                        if (it.episode.isRecognizedNumber && it.episode.episodeNumber >= 0) {
-                            it.episode.episodeNumber 
-                        } else {
-                            it.episode.url 
-                        }
-                    }
-                }
-                .toImmutableList()
+            episodes.applyFilters(anime).toImmutableList()
         }
 
         val missingEpisodeCount = if (processedEpisodes.size == this.processedEpisodes.size && !episodesChanged) {
