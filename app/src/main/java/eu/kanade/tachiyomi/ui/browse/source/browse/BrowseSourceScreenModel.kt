@@ -43,7 +43,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flattenMerge
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
@@ -173,28 +172,30 @@ class BrowseSourceScreenModel(
      */
     private val hideInLibraryItems = sourcePreferences.hideInAnimeLibraryItems().get()
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val animePagerFlowFlow = combine(
-        state.map { it.listing }.distinctUntilChanged(),
-        state.map { it.favoriteIds }.distinctUntilChanged(),
-    ) { listing, favoriteIds ->
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                prefetchDistance = 5,
-                initialLoadSize = 40,
-            ),
-        ) {
-            getRemoteAnime.subscribe(sourceId, listing.query ?: "", listing.filters)
-        }.flow.map { pagingData ->
-            pagingData.map { sAnime ->
-                val domainAnime = sAnime.toDomainAnime(sourceId)
-                networkToLocalAnime.getLocal(domainAnime).let { local ->
-                    local.copy(favorite = favoriteIds.contains(local.id))
+    val animePagerFlowFlow = state.map { it.listing }
+        .distinctUntilChanged()
+        .map { listing ->
+            Pager(
+                PagingConfig(
+                    pageSize = 20,
+                    prefetchDistance = 5,
+                    initialLoadSize = 40,
+                ),
+            ) {
+                getRemoteAnime.subscribe(sourceId, listing.query ?: "", listing.filters)
+            }.flow.map { pagingData ->
+                pagingData.map {
+                    val localAnime = networkToLocalAnime.getLocal(it.toDomainAnime(sourceId))
+                    getAnime.subscribe(localAnime.url, localAnime.source)
+                        .filterNotNull()
+                        .distinctUntilChanged()
+                        .stateIn(ioCoroutineScope, SharingStarted.WhileSubscribed(5000), localAnime)
                 }
-            }.filter { !hideInLibraryItems || !it.favorite }
+                    .filter { !hideInLibraryItems || !it.value.favorite }
+            }.cachedIn(ioCoroutineScope)
+                .cachedIn(screenModelScope)
         }
-    }.flattenMerge(1)
-        .cachedIn(screenModelScope)
+        .stateIn(screenModelScope, SharingStarted.Lazily, emptyFlow())
 
     fun getColumnsPreference(orientation: Int): GridCells {
         val isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE

@@ -22,7 +22,7 @@ import tachiyomi.presentation.core.util.plus
 
 @Composable
 fun BrowseSourceList(
-    animeList: LazyPagingItems<Anime>,
+    animeList: LazyPagingItems<StateFlow<Anime>>,
     entries: Int,
     contentPadding: PaddingValues,
     onAnimeClick: (Anime, Int) -> Unit,
@@ -45,10 +45,10 @@ fun BrowseSourceList(
 
         items(
             count = animeList.itemCount,
-            key = { index -> "source-list-${animeList.peek(index)?.id ?: "placeholder"}-$index" },
+            key = { index -> "source-list-${animeList.peek(index)?.value?.id ?: "placeholder"}-$index" },
             contentType = { index -> if (animeList.peek(index) != null) "anime" else "placeholder" },
         ) { index ->
-            val anime = animeList[index] ?: return@items
+            val anime by animeList[index]?.collectAsState() ?: return@items
             onBatchIncrement(index)
 
             val currentOnAnimeClick = remember(onAnimeClick, anime, index) { 

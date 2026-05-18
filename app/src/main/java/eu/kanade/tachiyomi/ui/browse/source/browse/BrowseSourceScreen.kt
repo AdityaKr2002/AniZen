@@ -140,7 +140,8 @@ data class BrowseSourceScreen(
             )
         }
 
-        val animeList = screenModel.animePagerFlowFlow.collectAsLazyPagingItems()
+        val pagingFlow by screenModel.animePagerFlowFlow.collectAsState()
+        val animeList = pagingFlow.collectAsLazyPagingItems()
 
         if (screenModel.source is StubSource) {
             eu.kanade.presentation.browse.BrowseSourceScreen(
@@ -185,13 +186,13 @@ data class BrowseSourceScreen(
                         selectedCount = state.selection.size,
                         onUnselectAll = screenModel::clearSelection,
                         onSelectAll = {
-                            val items = animeList.itemSnapshotList.items.filterNotNull()
+                            val items = animeList.itemSnapshotList.items.filterNotNull().map { it.value }
                             if (items.isNotEmpty()) {
                                 screenModel.selectAll(items)
                             }
                         },
                         onInvertSelection = {
-                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull())
+                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull().map { it.value })
                         },
                     )
 
@@ -355,7 +356,7 @@ data class BrowseSourceScreen(
                     val loadedItems = snapshot.items.filterNotNull()
                     
                     if (loadedItems.size > current) {
-                        val nextBatch = loadedItems.take(target)
+                        val nextBatch = loadedItems.take(target).map { it.value }
                         if (nextBatch.size > current) {
                             screenModel.updateSelection(nextBatch)
                         }
@@ -403,7 +404,7 @@ data class BrowseSourceScreen(
                 onAnimeLongClick = { anime, index ->
                     val lastIndex = state.lastSelectedIndex
                     if (state.selectionMode && lastIndex != null) {
-                        val items = animeList.itemSnapshotList.items.filterNotNull()
+                        val items = animeList.itemSnapshotList.items.mapNotNull { it?.value }
                         screenModel.selectRange(items, lastIndex, index)
                     } else {
                         screenModel.toggleSelection(anime, index)
