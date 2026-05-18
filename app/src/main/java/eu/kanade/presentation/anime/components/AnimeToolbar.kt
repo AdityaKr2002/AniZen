@@ -61,6 +61,7 @@ fun AnimeToolbar(
     // SY -->
     onClickEditInfo: (() -> Unit)?,
     onClickClearAnime: (() -> Unit)?,
+    onClickOpenAnimeFolder: (() -> Unit)?,
     onClickMerge: (() -> Unit)?,
     // SY <--
     // Anime only
