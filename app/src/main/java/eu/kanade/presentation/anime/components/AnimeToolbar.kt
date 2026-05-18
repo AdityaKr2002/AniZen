@@ -61,6 +61,7 @@ fun AnimeToolbar(
     // SY -->
     onClickEditInfo: (() -> Unit)?,
     onClickClearAnime: (() -> Unit)?,
+    onClickOpenAnimeFolder: (() -> Unit)?,
     onClickMerge: (() -> Unit)?,
     // SY <--
     // Anime only
@@ -202,6 +203,14 @@ fun AnimeToolbar(
                                         AppBar.OverflowAction(
                                             title = stringResource(MR.strings.action_edit_info),
                                             onClick = onClickEditInfo,
+                                        ),
+                                    )
+                                }
+                                if (onClickOpenAnimeFolder != null) {
+                                    add(
+                                        AppBar.OverflowAction(
+                                            title = stringResource(KMR.strings.action_open_folder),
+                                            onClick = onClickOpenAnimeFolder,
                                         ),
                                     )
                                 }

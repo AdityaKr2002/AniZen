@@ -233,6 +233,7 @@ class AnimeScreen(
                 changeAnimeSkipIntro = screenModel::showAnimeSkipIntroDialog.takeIf { successState.anime.favorite },
                 onEditInfoClicked = screenModel::showEditAnimeInfoDialog,
                 onClearAnimeClicked = screenModel::showClearAnimeDialog,
+                onOpenAnimeFolderClicked = { screenModel.openAnimeFolder(successState.source, successState.anime) },
                 onMergeClicked = screenModel::showEditMergedSettings.takeIf { successState.source.id == MERGED_SOURCE_ID },
                 onMultiBookmarkClicked = screenModel::bookmarkEpisodes,
                 // AM (FILLERMARK) -->

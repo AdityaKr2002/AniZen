@@ -2,6 +2,8 @@
 package eu.kanade.tachiyomi.ui.anime
 
 import android.content.Context
+import android.content.Intent
+import android.provider.DocumentsContract
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -10,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import tachiyomi.domain.source.model.StubSource
 import eu.kanade.core.util.addOrRemove
 import eu.kanade.core.util.insertSeparators
 import eu.kanade.domain.anime.interactor.SetAnimeViewerFlags
@@ -312,8 +315,23 @@ class AnimeScreenModel(
             val seasonsList = mutableListOf<String>()
             val mapping = mutableMapOf<Long, String>()
             
-            val groupingMode = anime.seasonGroupingMode
+            var groupingMode = anime.seasonGroupingMode
             // Handle Seasons
+            if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
+                // Only activate grouping if:
+                // 1. There are 2 or more distinct seasons (e.g., S1 and S2)
+                // 2. OR there is at least one explicit season AND some special/extra content (e.g., S1 and OVA)
+                val explicitSeasons = processedEpisodes
+                    .mapNotNull { EpisodeSeasonUtils.getSeasonName(it.episode) }
+                    .distinct()
+                val explicitSeasonCount = explicitSeasons.size
+                val hasSpecialsOrExtras = processedEpisodes.any { EpisodeSeasonUtils.isSpecial(it.episode) }
+                
+                if (explicitSeasonCount < 2 && !(explicitSeasonCount >= 1 && hasSpecialsOrExtras)) {
+                    groupingMode = LibraryPreferences.SeasonGrouping.Disabled
+                }
+            }
+
             if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                 // Step 1: Detect if source provides episodes in descending order (newest first)
                 val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
@@ -1951,6 +1969,21 @@ class AnimeScreenModel(
     fun showMigrateDialog(duplicate: Anime) = updateSuccessState { it.copySuccess(dialog = Dialog.Migrate(newAnime = it.anime, oldAnime = duplicate)) }
     fun showAnimeSkipIntroDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ChangeAnimeSkipIntro) }
     fun showClearAnimeDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ClearAnime) }
+
+    fun openAnimeFolder(currentSource: Source?, currentAnime: Anime?) {
+        try {
+            if (currentAnime == null || currentSource == null || currentSource is StubSource) return
+
+            val animeDir = downloadProvider.findAnimeDir(currentAnime.title, currentSource) ?: return
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(animeDir.uri, DocumentsContract.Document.MIME_TYPE_DIR)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e)
+        }
+    }
 
     fun showSetAnimeFetchIntervalDialog() {
         val anime = successState?.anime ?: return

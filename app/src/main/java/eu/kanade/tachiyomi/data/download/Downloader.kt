@@ -265,8 +265,24 @@ class Downloader(
     }
 
     fun updateQueue(downloads: List<Download>) {
+        val wasRunning = isRunning
+
+        if (downloads.isEmpty()) {
+            clearQueue()
+            stop()
+            return
+        }
+
+        if (wasRunning) {
+            pause()
+        }
+
         _queueState.value = downloads
         store.addAll(downloads)
+
+        if (wasRunning) {
+            start()
+        }
     }
 
     fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
@@ -410,7 +426,9 @@ class Downloader(
     private fun detectEngineType(video: Video): String {
         return when {
             video.videoUrl.startsWith("magnet") || video.videoUrl.endsWith(".torrent") -> "Torrent"
-            video.videoUrl.contains(".m3u8") -> "HLS"
+            video.videoUrl.contains(".m3u8") || 
+            video.videoUrl.contains("/oppai/") || 
+            video.videoUrl.contains("/proxy/oppai/") -> "HLS"
             video.videoUrl.contains(".mpd") || 
             (video.videoUrl.contains("/playback/") && !video.videoUrl.contains(".mp4")) || 
             video.audioTracks.isNotEmpty() -> "DASH"
@@ -642,6 +660,12 @@ class Downloader(
         if (builder.get("User-Agent") == null) {
             builder.add("User-Agent", networkHelper.defaultUserAgentProvider())
         }
+        // PRO-LEVEL: Strip internal security headers that break cross-origin CDN requests
+        builder.removeAll("Sec-Fetch-Dest")
+        builder.removeAll("Sec-Fetch-Mode")
+        builder.removeAll("Sec-Fetch-Site")
+        builder.removeAll("Sec-Fetch-User")
+        builder.removeAll("X-Requested-With")
         return builder.build()
     }
 
