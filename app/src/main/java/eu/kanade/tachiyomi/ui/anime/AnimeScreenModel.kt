@@ -297,8 +297,16 @@ class AnimeScreenModel(
             val seasonsList = mutableListOf<String>()
             val mapping = mutableMapOf<Long, String>()
             
-            val groupingMode = anime.seasonGroupingMode
+            var groupingMode = anime.seasonGroupingMode
             // Handle Seasons
+            if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
+                // Only activate grouping if at least one episode has an explicit season name in its title
+                val hasExplicitSeason = processedEpisodes.any { EpisodeSeasonUtils.getSeasonName(it.episode) != null }
+                if (!hasExplicitSeason) {
+                    groupingMode = LibraryPreferences.SeasonGrouping.Disabled
+                }
+            }
+
             if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                 // Step 1: Detect if source provides episodes in descending order (newest first)
                 val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
