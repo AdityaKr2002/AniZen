@@ -73,7 +73,7 @@ class SyncEpisodesWithSource(
             sourceEpisodes.any { sourceEpisode ->
                 dbEpisode.url == sourceEpisode.url
             }
-        }
+        }.toMutableList()
 
         // Used to not set upload date of older episodes
         // to a higher value than newer episodes
