@@ -22,7 +22,7 @@ import tachiyomi.presentation.core.util.plus
 
 @Composable
 fun BrowseSourceList(
-    animeList: LazyPagingItems<StateFlow<Anime>>,
+    animeList: LazyPagingItems<Anime>,
     entries: Int,
     contentPadding: PaddingValues,
     onAnimeClick: (Anime, Int) -> Unit,
@@ -110,8 +110,5 @@ internal fun BrowseSourceListItem(
         entries = entries,
         containerHeight = containerHeight,
         usePanorama = usePanorama,
-    )
-}
-ma,
     )
 }

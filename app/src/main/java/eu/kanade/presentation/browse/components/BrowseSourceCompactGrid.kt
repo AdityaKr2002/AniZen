@@ -22,7 +22,7 @@ import tachiyomi.presentation.core.util.plus
 
 @Composable
 fun BrowseSourceCompactGrid(
-    animeList: LazyPagingItems<StateFlow<Anime>>,
+    animeList: LazyPagingItems<Anime>,
     columns: GridCells,
     contentPadding: PaddingValues,
     onAnimeClick: (Anime, Int) -> Unit,
@@ -103,8 +103,5 @@ internal fun BrowseSourceCompactGridItem(
         onClick = onClick,
         isSelected = isSelected,
         usePanorama = usePanorama,
-    )
-}
-ma,
     )
 }

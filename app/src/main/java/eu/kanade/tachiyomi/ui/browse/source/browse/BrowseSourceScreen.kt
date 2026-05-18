@@ -355,7 +355,7 @@ data class BrowseSourceScreen(
                     val loadedItems = snapshot.items.filterNotNull()
                     
                     if (loadedItems.size > current) {
-                        val nextBatch = loadedItems.take(target).map { it.value }
+                        val nextBatch = loadedItems.take(target)
                         if (nextBatch.size > current) {
                             screenModel.updateSelection(nextBatch)
                         }
