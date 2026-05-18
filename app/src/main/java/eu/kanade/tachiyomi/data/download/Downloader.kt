@@ -265,8 +265,24 @@ class Downloader(
     }
 
     fun updateQueue(downloads: List<Download>) {
+        val wasRunning = isRunning
+
+        if (downloads.isEmpty()) {
+            clearQueue()
+            stop()
+            return
+        }
+
+        if (wasRunning) {
+            pause()
+        }
+
         _queueState.value = downloads
         store.addAll(downloads)
+
+        if (wasRunning) {
+            start()
+        }
     }
 
     fun queueEpisodes(anime: Anime, episodes: List<Episode>, autoStart: Boolean, alt: Boolean = false, video: Video? = null) {
@@ -642,6 +658,11 @@ class Downloader(
         if (builder.get("User-Agent") == null) {
             builder.add("User-Agent", networkHelper.defaultUserAgentProvider())
         }
+        // PRO-LEVEL: Strip internal security headers that break cross-origin CDN requests
+        builder.removeAll("Sec-Fetch-Dest")
+        builder.removeAll("Sec-Fetch-Mode")
+        builder.removeAll("Sec-Fetch-Site")
+        builder.removeAll("Sec-Fetch-User")
         return builder.build()
     }
 
