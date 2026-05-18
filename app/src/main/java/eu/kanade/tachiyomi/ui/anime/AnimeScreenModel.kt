@@ -300,13 +300,16 @@ class AnimeScreenModel(
             var groupingMode = anime.seasonGroupingMode
             // Handle Seasons
             if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
-                // Only activate grouping if at least two distinct seasons are found in episode titles
-                val explicitSeasonCount = processedEpisodes
+                // Only activate grouping if:
+                // 1. There are 2 or more distinct seasons (e.g., S1 and S2)
+                // 2. OR there is at least one explicit season AND some special/extra content (e.g., S1 and OVA)
+                val explicitSeasons = processedEpisodes
                     .mapNotNull { EpisodeSeasonUtils.getSeasonName(it.episode) }
                     .distinct()
-                    .size
+                val explicitSeasonCount = explicitSeasons.size
+                val hasSpecialsOrExtras = processedEpisodes.any { EpisodeSeasonUtils.isSpecial(it.episode) }
                 
-                if (explicitSeasonCount < 2) {
+                if (explicitSeasonCount < 2 && !(explicitSeasonCount >= 1 && hasSpecialsOrExtras)) {
                     groupingMode = LibraryPreferences.SeasonGrouping.Disabled
                 }
             }
