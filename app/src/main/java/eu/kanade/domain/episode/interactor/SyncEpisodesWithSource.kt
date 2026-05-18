@@ -97,19 +97,7 @@ class SyncEpisodesWithSource(
             )
             episode = episode.copy(episodeNumber = episodeNumber)
 
-            // Find by URL first. If not found, try to find by recognized episode number
-            // This prevents duplicates when an extension changes its URL format.
-            val matchingDbEpisodes = dbEpisodes.filter {
-                it.url == episode.url || (it.isRecognizedNumber && it.episodeNumber == episode.episodeNumber)
-            }
-            
-            val dbEpisode = matchingDbEpisodes.firstOrNull()
-
-            // If there are multiple matches (e.g., old URL and new URL for the same episode),
-            // schedule the extras for deletion to clean up the database.
-            if (matchingDbEpisodes.size > 1) {
-                removedEpisodes.addAll(matchingDbEpisodes.drop(1))
-            }
+            val dbEpisode = dbEpisodes.find { it.url == episode.url }
 
             if (dbEpisode == null) {
                 val toAddEpisode = if (episode.dateUpload == 0L) {
