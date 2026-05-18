@@ -191,7 +191,7 @@ data class BrowseSourceScreen(
                             }
                         },
                         onInvertSelection = {
-                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull().map { it.value })
+                            screenModel.invertSelection(animeList.itemSnapshotList.items.filterNotNull())
                         },
                     )
 
@@ -563,7 +563,5 @@ data class BrowseSourceScreen(
     sealed class SearchType(val txt: String) {
         class Text(txt: String) : SearchType(txt)
         class Genre(txt: String) : SearchType(txt)
-    }
-}
     }
 }
