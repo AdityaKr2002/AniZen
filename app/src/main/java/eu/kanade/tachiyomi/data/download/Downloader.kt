@@ -450,7 +450,7 @@ class Downloader(
     }
 
     private suspend fun downloadEpisode(download: Download) {
-        val animeDir = provider.getAnimeDir(download.anime.title, download.source)
+        val animeDir = provider.getAnimeDir(download.anime.ogTitle, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         
         // Sandbox Storage: Protected from OS Cache cleanup
@@ -520,10 +520,10 @@ class Downloader(
             }
 
             val videoFile = when (download.engineType) {
-                "Torrent" -> torrentDownload(download, sandboxDir, videoFilename)
-                "HLS" -> nativeHlsDownload(download, sandboxDir, videoFilename)
+                "Torrent" -> torrentDownload(download, sandboxDir, videoFilename, destDir)
+                "HLS" -> nativeHlsDownload(download, sandboxDir, videoFilename, destDir)
                 "DASH" -> UniFile.fromFile(nativeDashMuxDownload(download, sandboxDir, videoFilename))!!
-                else -> internalDownload(download, sandboxDir, videoFilename)
+                else -> internalDownload(download, sandboxDir, videoFilename, destDir)
             }
 
             finalizeDownload(download, videoFile, animeDir, episodeDirname)
@@ -719,7 +719,7 @@ class Downloader(
         return builder.build()
     }
 
-    private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): UniFile {
+    private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String, destDir: UniFile? = null): UniFile {
         val video = download.video!!
         
         // Scheme Validation: OkHttp only supports http/https
@@ -835,17 +835,26 @@ class Downloader(
             download.progress = 0
             notifyProgress(download)
 
-            java.io.FileOutputStream(finalFile).use { outStream ->
-                val outChannel = outStream.channel
+            var mergedBytes = 0L
+            var lastUpdate = System.currentTimeMillis()
+
+            val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.$finalExt"
+            val destFile = destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
+
+            destFile.openOutputStream().use { outStream ->
+                val outChannel = if (outStream is java.io.FileOutputStream) outStream.channel else Channels.newChannel(outStream)
                 val partFiles = (0 until threadCount).map { File(sandboxDir, "$filename.part$it") }
                 mergeChannels(partFiles, outChannel, download)
             }
-            return UniFile.fromFile(finalFile)!!
+            return destFile
         } else {
             // Robust Single-Threaded/Unknown Size Downloader
+            val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.$finalExt"
+            val destFile = destDir?.findFile(finalName) ?: destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
+            
             download.partProgress.clear()
             retry {
-                val start = if (finalFile.exists()) finalFile.length() else 0L
+                val start = destFile.length()
                 if (size > 0) download.partProgress[0] = (start.toFloat() / size).coerceIn(0f, 1f)
                 
                 val reqBuilder = Request.Builder().url(video.videoUrl).headers(headers)
@@ -856,11 +865,11 @@ class Downloader(
 
                     // Handle 200 OK when 206 was requested (server doesn't support Range)
                     val isResuming = start > 0 && res.code == 206
-                    val append = isResuming
                     val actualStart = if (isResuming) start else 0L
                     
                     val source = res.body?.source() ?: throw IOException("Empty body")
-                    java.io.FileOutputStream(finalFile, append).use { out ->
+                    // Use append mode if resuming
+                    destFile.openOutputStream(isResuming).use { out ->
                         val buffer = BufferPool.obtain()
                         try {
                             var read: Int
@@ -888,11 +897,11 @@ class Downloader(
                     }
                 }
             }
-            return UniFile.fromFile(finalFile)!!
+            return destFile
         }
     }
 
-    private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): UniFile {
+    private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String, destDir: UniFile? = null): UniFile {
         val video = download.video!!
         val client = networkHelper.downloadClient
         val headers = getHeaders(video)
@@ -1021,12 +1030,18 @@ class Downloader(
     val totalMergeSize = segments.indices.sumOf { File(sandboxDir, "seg_$it.part").length() }
     checkFreeSpace(sandboxDir, totalMergeSize)
 
-    java.io.FileOutputStream(finalFile).use { outStream ->
-        val outChannel = outStream.channel
+    var mergedBytes = 0L
+    var lastMergeUpdate = System.currentTimeMillis()
+
+    val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.ts"
+    val destFile = destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
+
+    destFile.openOutputStream().use { outStream ->
+        val outChannel = if (outStream is java.io.FileOutputStream) outStream.channel else Channels.newChannel(outStream)
         val partFiles = segments.indices.map { File(sandboxDir, "seg_$it.part") }
         mergeChannels(partFiles, outChannel, download, totalMergeSize)
     }
-    return UniFile.fromFile(finalFile)!!
+    return destFile
 }
 
     private fun isPackageInstalled(packageName: String): Boolean {
@@ -1374,7 +1389,7 @@ class Downloader(
         }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, index)
         download.video!!.videoUrl = torrentUrl
-        return internalDownload(download, sandboxDir, filename)
+        return internalDownload(download, sandboxDir, filename, destDir)
     }
 
     companion object {
