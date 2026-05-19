@@ -1374,7 +1374,7 @@ class Downloader(
         }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, index)
         download.video!!.videoUrl = torrentUrl
-        return internalDownload(download, sandboxDir, filename, destDir)
+        return internalDownload(download, sandboxDir, filename)
     }
 
     companion object {
