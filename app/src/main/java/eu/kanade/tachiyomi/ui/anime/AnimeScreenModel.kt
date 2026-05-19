@@ -377,7 +377,7 @@ class AnimeScreenModel(
                     var explicitSeasonName: String? = null
                     var hasSpecials = false
                     for (item in block.episodes) {
-                        if (EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                        if (EpisodeSeasonUtils.isSpecial(item.episode)) {
                             hasSpecials = true
                         }
                         if (explicitSeasonName == null) {
