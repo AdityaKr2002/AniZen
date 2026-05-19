@@ -318,21 +318,6 @@ class AnimeScreenModel(
             var groupingMode = anime.seasonGroupingMode
             // Handle Seasons
             if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
-                // Only activate grouping if:
-                // 1. There are 2 or more distinct seasons (e.g., S1 and S2)
-                // 2. OR there is special/extra content present (always group specials)
-                val explicitSeasons = processedEpisodes
-                    .mapNotNull { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                    .distinct()
-                val explicitSeasonCount = explicitSeasons.size
-                val hasSpecialsOrExtras = processedEpisodes.any { EpisodeSeasonUtils.isSpecial(it.episode) }
-                
-                if (explicitSeasonCount < 2 && !hasSpecialsOrExtras) {
-                    groupingMode = LibraryPreferences.SeasonGrouping.Disabled
-                }
-            }
-
-            if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                 // Step 1: Detect if source provides episodes in descending order (newest first)
                 val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
                 
@@ -2082,18 +2067,6 @@ class AnimeScreenModel(
                     
                     var groupingMode = anime.seasonGroupingMode
                     // Handle Seasons
-                    if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
-                        val explicitSeasons = processedEpisodes
-                            .mapNotNull { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                            .distinct()
-                        val explicitSeasonCount = explicitSeasons.size
-                        val hasSpecialsOrExtras = processedEpisodes.any { EpisodeSeasonUtils.isSpecial(it.episode) }
-                        
-                        if (explicitSeasonCount < 2 && !hasSpecialsOrExtras) {
-                            groupingMode = LibraryPreferences.SeasonGrouping.Disabled
-                        }
-                    }
-
                     if (groupingMode != LibraryPreferences.SeasonGrouping.Disabled) {
                         // Step 1: Detect if source provides episodes in descending order (newest first)
                         val sourceOrdered = processedEpisodes.sortedBy { it.episode.sourceOrder }
