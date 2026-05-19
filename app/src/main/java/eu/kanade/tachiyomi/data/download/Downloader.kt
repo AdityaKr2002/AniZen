@@ -72,6 +72,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAdder
 import kotlin.coroutines.coroutineContext
@@ -112,6 +113,18 @@ class Downloader(
             val downloads = store.restore()
             addAllToQueue(downloads)
             sweepOrphanedFiles(downloads) // Fire the janitor on startup
+        }
+    }
+
+    private fun isLocalFile(file: UniFile): Boolean {
+        return file.uri.scheme == "file" || file.filePath != null
+    }
+
+    private fun getLocalFile(file: UniFile): File? {
+        return when {
+            file.uri.scheme == "file" -> File(file.uri.path!!)
+            file.filePath != null -> File(file.filePath!!)
+            else -> null
         }
     }
 
@@ -446,6 +459,13 @@ class Downloader(
             throw IOException("Failed to create sandbox directory: ${sandboxDir.absolutePath}")
         }
 
+        // Prepare Destination Directory (Atomic _tmp approach) early to allow direct merging
+        val tmpEpisodeDirname = episodeDirname + TMP_DIR_SUFFIX
+        var destDir = animeDir.findFile(tmpEpisodeDirname)
+        if (destDir == null) {
+            destDir = animeDir.createDirectory(tmpEpisodeDirname)!!
+        }
+
         val videoFilename = DiskUtil.buildValidFilename(download.episode.name)
 
         notifier.onProgressChange(download)
@@ -457,8 +477,17 @@ class Downloader(
 
             // RECOVERY: Handle interrupted FINALIZING state
             if (download.status == Download.State.FINALIZING && mergedFile.exists()) {
-                finalizeDownload(download, mergedFile, animeDir, episodeDirname)
+                finalizeDownload(download, UniFile.fromFile(mergedFile)!!, animeDir, episodeDirname)
                 return
+            }
+            
+            // RECOVERY: Handle interrupted MERGING state
+            // If .part files exist in sandbox, the destination file is likely corrupted/incomplete
+            val hasSandboxParts = sandboxDir.listFiles()?.any { it.name.contains(".part") } == true
+            if (download.status == Download.State.MERGING && hasSandboxParts) {
+                logcat(LogPriority.WARN) { "Recovery: Interrupted merge detected for ${download.episode.name}. Cleaning destination." }
+                destDir.findFile("$videoFilename.$finalExt")?.delete()
+                destDir.findFile("$videoFilename.ts")?.delete()
             }
 
             download.status = Download.State.DOWNLOADING
@@ -484,10 +513,10 @@ class Downloader(
             }
 
             val videoFile = when (download.engineType) {
-                "Torrent" -> torrentDownload(download, sandboxDir, videoFilename)
-                "HLS" -> nativeHlsDownload(download, sandboxDir, videoFilename)
-                "DASH" -> nativeDashMuxDownload(download, sandboxDir, videoFilename)
-                else -> internalDownload(download, sandboxDir, videoFilename)
+                "Torrent" -> torrentDownload(download, sandboxDir, videoFilename, destDir)
+                "HLS" -> nativeHlsDownload(download, sandboxDir, videoFilename, destDir)
+                "DASH" -> UniFile.fromFile(nativeDashMuxDownload(download, sandboxDir, videoFilename))!!
+                else -> internalDownload(download, sandboxDir, videoFilename, destDir)
             }
 
             // Download soft subtitles
@@ -566,7 +595,7 @@ class Downloader(
         }
     }
 
-    private suspend fun finalizeDownload(download: Download, sandboxFile: File, publicDir: UniFile, filename: String) {
+    private suspend fun finalizeDownload(download: Download, videoFile: UniFile, publicDir: UniFile, filename: String) {
         download.status = Download.State.FINALIZING
         download.progress = 0
         notifyProgress(download)
@@ -578,56 +607,47 @@ class Downloader(
         // Create temporary episode directory
         val tmpFilename = filename + TMP_DIR_SUFFIX
         var destDir = publicDir.findFile(tmpFilename)
-        if (destDir != null && destDir.isFile) {
-            destDir.delete()
-            destDir = publicDir.createDirectory(tmpFilename)!!
-        } else if (destDir == null) {
+        if (destDir == null) {
             destDir = publicDir.createDirectory(tmpFilename)!!
         }
 
-        // CRITICAL: Prevent file bloating by deleting existing partial files from failed runs
+        // Check if the file is already in the destination (e.g. direct merge)
         var destFile = destDir.findFile(finalName)
-        if (destFile != null) destFile.delete()
         
-        // Also delete any corrupt tmp file from previous buggy versions
-        destDir.findFile("$videoFilename.tmp")?.delete()
+        val isAlreadyAtDestination = destFile != null && destFile.uri == videoFile.uri
+        
+        if (!isAlreadyAtDestination) {
+            // CRITICAL: Prevent file bloating
+            if (destFile != null) destFile.delete()
+            destDir.findFile("$videoFilename.tmp")?.delete()
 
-        // Create the file with the final extension immediately so SAF assigns the correct video MIME type
-        destFile = destDir.createFile(finalName)!!
-
-        java.io.FileInputStream(sandboxFile).use { input ->
-            destFile.openOutputStream().use { output ->
-                val buffer = ByteArray(8 * 1024 * 1024) // 8MB buffer for speed
-                var bytesCopied = 0L
-                val totalBytes = sandboxFile.length()
-                var read: Int
-                var lastUpdate = System.currentTimeMillis()
-                
-                while (input.read(buffer).also { read = it } != -1) {
-                    coroutineContext.ensureActive()
-                    output.write(buffer, 0, read)
-                    bytesCopied += read
-                    
-                    val now = System.currentTimeMillis()
-                    if (now - lastUpdate > 1000 || bytesCopied == totalBytes) {
-                        download.progress = ((bytesCopied.toDouble() / totalBytes) * 100).toInt()
-                        notifier.onProgressChange(download)
-                        store.update(download)
-                        lastUpdate = now
-                    }
+            // FAST-PATH: Instant Rename if both are on local storage
+            val localSource = getLocalFile(videoFile)
+            val localDestDir = getLocalFile(destDir)
+            
+            if (localSource != null && localDestDir != null) {
+                val localDestFile = File(localDestDir, finalName)
+                if (localSource.renameTo(localDestFile)) {
+                    logcat(LogPriority.INFO) { "Finalize: Instant rename success: ${localSource.name} -> ${localDestFile.name}" }
+                } else {
+                    // Fallback to byte copy if rename fails
+                    copyUniFile(videoFile, destDir.createFile(finalName)!!, download)
                 }
+            } else {
+                // SAF Path: Direct byte-by-byte copy
+                copyUniFile(videoFile, destDir.createFile(finalName)!!, download)
             }
         }
 
         // Pro-Active: Move soft subtitles to the destination directory
-        val sandboxDir = sandboxFile.parentFile
-        val baseName = sandboxFile.nameWithoutExtension
-        sandboxDir?.listFiles()?.forEach { file ->
-            if (file.nameWithoutExtension.startsWith(baseName) && file.name != sandboxFile.name && 
+        val sandboxDir = getLocalFile(videoFile)?.parentFile ?: File(context.getExternalFilesDir("downloads"), filename)
+        val baseName = videoFilename
+        sandboxDir.listFiles()?.forEach { file ->
+            if (file.nameWithoutExtension.startsWith(baseName) && file.name != videoFile.name && 
                 !file.name.endsWith(".part") && !file.name.endsWith(".tmp")) {
                 val subFile = destDir.createFile(file.name)
                 if (subFile != null) {
-                    java.io.FileInputStream(file).use { input ->
+                    file.inputStream().use { input ->
                         subFile.openOutputStream().use { output ->
                             input.copyTo(output)
                         }
@@ -641,18 +661,44 @@ class Downloader(
         finalDir?.delete() // Cleanup if somehow exists
         destDir.renameTo(filename)
         
-        sandboxFile.parentFile?.deleteRecursively()
+        if (isLocalFile(videoFile)) {
+            getLocalFile(videoFile)?.parentFile?.deleteRecursively()
+        }
 
         download.status = Download.State.DOWNLOADED
         notifyProgress(download)
         
-        // KMK -->
         _queueState.update { it - download }
         store.remove(download)
         notifier.dismissProgress(download)
-        // KMK <--
 
         cache.addEpisode(filename, publicDir, download.anime)
+    }
+
+    private suspend fun copyUniFile(source: UniFile, dest: UniFile, download: Download) {
+        source.openInputStream().use { input ->
+            dest.openOutputStream().use { output ->
+                val buffer = ByteArray(8 * 1024 * 1024)
+                var bytesCopied = 0L
+                val totalBytes = source.length()
+                var read: Int
+                var lastUpdate = System.currentTimeMillis()
+                
+                while (input.read(buffer).also { read = it } != -1) {
+                    coroutineContext.ensureActive()
+                    output.write(buffer, 0, read)
+                    bytesCopied += read
+                    
+                    val now = System.currentTimeMillis()
+                    if (now - lastUpdate > 1000 || bytesCopied == totalBytes) {
+                        download.progress = ((bytesCopied.toDouble() / totalBytes.coerceAtLeast(1L)) * 100).toInt()
+                        notifier.onProgressChange(download)
+                        store.update(download)
+                        lastUpdate = now
+                    }
+                }
+            }
+        }
     }
 
     private fun getHeaders(video: Video): Headers {
@@ -669,7 +715,7 @@ class Downloader(
         return builder.build()
     }
 
-    private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String): File {
+    private suspend fun internalDownload(download: Download, sandboxDir: File, filename: String, destDir: UniFile? = null): UniFile {
         val video = download.video!!
         
         // Scheme Validation: OkHttp only supports http/https
@@ -717,6 +763,7 @@ class Downloader(
         
         download.activeThreads = threadCount
 
+        val finalExt = if (download.video?.videoUrl?.contains(".mp4") == true) "mp4" else "mkv"
         val finalFile = File(sandboxDir, "$filename.tmp")
         val downloadedBytes = LongAdder()
 
@@ -787,42 +834,23 @@ class Downloader(
             var mergedBytes = 0L
             var lastUpdate = System.currentTimeMillis()
 
-            java.io.FileOutputStream(finalFile).use { outStream ->
-                val outChannel = outStream.channel
-                for (i in 0 until threadCount) {
-                    val partFile = File(sandboxDir, "$filename.part$i")
-                    if (partFile.exists()) {
-                        java.io.FileInputStream(partFile).use { inStream ->
-                            val inChannel = inStream.channel
-                            val pSize = inChannel.size()
-                            var remaining = pSize
-                            var position = 0L
-                            while (remaining > 0) {
-                                coroutineContext.ensureActive()
-                                val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
-                                val transferred = inChannel.transferTo(position, toTransfer, outChannel)
-                                if (transferred <= 0) break
-                                position += transferred
-                                remaining -= transferred
-                                mergedBytes += transferred
+            val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.$finalExt"
+            val destFile = destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
 
-                                val now = System.currentTimeMillis()
-                                if (now - lastUpdate > 500) {
-                                    download.progress = ((mergedBytes.toDouble() / download.totalSize) * 100).toInt()
-                                    notifier.onProgressChange(download)
-                                    lastUpdate = now
-                                }
-                            }
-                        }
-                        partFile.delete()
-                    }
-                }
+            destFile.openOutputStream().use { outStream ->
+                val outChannel = if (outStream is java.io.FileOutputStream) outStream.channel else Channels.newChannel(outStream)
+                val partFiles = (0 until threadCount).map { File(sandboxDir, "$filename.part$it") }
+                mergeChannels(partFiles, outChannel, download)
             }
+            return destFile
         } else {
             // Robust Single-Threaded/Unknown Size Downloader
+            val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.$finalExt"
+            val destFile = destDir?.findFile(finalName) ?: destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
+            
             download.partProgress.clear()
             retry {
-                val start = if (finalFile.exists()) finalFile.length() else 0L
+                val start = destFile.length()
                 if (size > 0) download.partProgress[0] = (start.toFloat() / size).coerceIn(0f, 1f)
                 
                 val reqBuilder = Request.Builder().url(video.videoUrl).headers(headers)
@@ -833,11 +861,11 @@ class Downloader(
 
                     // Handle 200 OK when 206 was requested (server doesn't support Range)
                     val isResuming = start > 0 && res.code == 206
-                    val append = isResuming
                     val actualStart = if (isResuming) start else 0L
                     
                     val source = res.body?.source() ?: throw IOException("Empty body")
-                    java.io.FileOutputStream(finalFile, append).use { out ->
+                    // Use append mode if resuming
+                    destFile.openOutputStream(isResuming).use { out ->
                         val buffer = BufferPool.obtain()
                         try {
                             var read: Int
@@ -865,11 +893,11 @@ class Downloader(
                     }
                 }
             }
+            return destFile
         }
-        return finalFile
     }
 
-    private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String): File {
+    private suspend fun nativeHlsDownload(download: Download, sandboxDir: File, filename: String, destDir: UniFile? = null): UniFile {
         val video = download.video!!
         val client = networkHelper.downloadClient
         val headers = getHeaders(video)
@@ -1001,39 +1029,15 @@ class Downloader(
     var mergedBytes = 0L
     var lastMergeUpdate = System.currentTimeMillis()
 
-    java.io.FileOutputStream(finalFile).use { outStream ->
-        val outChannel = outStream.channel
-        for (i in segments.indices) {
-            val segmentFile = File(sandboxDir, "seg_$i.part")
-            if (segmentFile.exists()) {
-                java.io.FileInputStream(segmentFile).use { inStream ->
-                    val inChannel = inStream.channel
-                    val size = inChannel.size()
-                    var remaining = size
-                    var position = 0L
-                    while (remaining > 0) {
-                        coroutineContext.ensureActive()
-                        val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
-                        val transferred = inChannel.transferTo(position, toTransfer, outChannel)
-                        if (transferred <= 0) break
-                        position += transferred
-                        remaining -= transferred
-                        mergedBytes += transferred
+    val finalName = "${DiskUtil.buildValidFilename(download.episode.name)}.ts"
+    val destFile = destDir?.createFile(finalName) ?: UniFile.fromFile(finalFile)!!
 
-                        val now = System.currentTimeMillis()
-                        if (now - lastMergeUpdate > 500 && totalMergeSize > 0) {
-                            download.progress = ((mergedBytes.toDouble() / totalMergeSize) * 100).toInt()
-                            download.updateSpeed(downloadedBytes.sum()) // Keep speed updated during merge
-                            notifier.onProgressChange(download)
-                            lastMergeUpdate = now
-                        }
-                    }
-                }
-                segmentFile.delete()
-            }
-        }
+    destFile.openOutputStream().use { outStream ->
+        val outChannel = if (outStream is java.io.FileOutputStream) outStream.channel else Channels.newChannel(outStream)
+        val partFiles = segments.indices.map { File(sandboxDir, "seg_$it.part") }
+        mergeChannels(partFiles, outChannel, download, totalMergeSize)
     }
-    return finalFile
+    return destFile
 }
 
     private fun isPackageInstalled(packageName: String): Boolean {
@@ -1172,15 +1176,88 @@ class Downloader(
         }
     }
 
+    private suspend fun mergeChannels(
+        partFiles: List<File>,
+        outChannel: java.nio.channels.WritableByteChannel,
+        download: Download,
+        totalSizeOverride: Long = -1L
+    ) {
+        val totalMergeSize = if (totalSizeOverride > 0) totalSizeOverride else partFiles.sumOf { it.length() }
+        var mergedBytes = 0L
+        var lastUpdate = System.currentTimeMillis()
+
+        partFiles.forEach { partFile ->
+            if (partFile.exists()) {
+                java.io.FileInputStream(partFile).use { inStream ->
+                    val inChannel = inStream.channel
+                    val size = inChannel.size()
+                    var remaining = size
+                    var position = 0L
+                    
+                    while (remaining > 0) {
+                        coroutineContext.ensureActive()
+                        val toTransfer = Math.min(remaining, 4L * 1024 * 1024)
+                        
+                        // SAF COMPATIBILITY: SAF OutputStreams wrapped in Channels might not support transferTo
+                        // We attempt transferTo first, then fallback to a manually managed buffer to avoid IPC overhead
+                        try {
+                            val transferred = inChannel.transferTo(position, toTransfer, outChannel)
+                            if (transferred <= 0) {
+                                // Fallback: Manual Buffered Copy
+                                val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
+                                inChannel.position(position)
+                                while (inChannel.read(buffer) > 0) {
+                                    buffer.flip()
+                                    outChannel.write(buffer)
+                                    buffer.clear()
+                                }
+                                break
+                            }
+                            position += transferred
+                            remaining -= transferred
+                            mergedBytes += transferred
+                        } catch (e: Exception) {
+                            // Fallback on any Channel exception (e.g. UnsupportedOperation)
+                            val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
+                            inChannel.position(position)
+                            while (inChannel.read(buffer) > 0) {
+                                buffer.flip()
+                                outChannel.write(buffer)
+                                buffer.clear()
+                            }
+                            mergedBytes += (size - position)
+                            break
+                        }
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdate > 500 && totalMergeSize > 0) {
+                            download.progress = ((mergedBytes.toDouble() / totalMergeSize) * 100).toInt()
+                            notifier.onProgressChange(download)
+                            lastUpdate = now
+                        }
+                    }
+                }
+                partFile.delete()
+            }
+        }
+    }
+
     private suspend fun ffmpegDownload(
         download: Download,
         sandboxDir: java.io.File,
         filename: String,
     ): java.io.File {
         val video = download.video!!
-        val tmpFile = java.io.File(context.cacheDir, "$filename.tmp")
+        // PRO-LEVEL: Use sandboxDir for temp file to allow instant rename to final sandbox output
+        val tmpFile = java.io.File(sandboxDir, "$filename.ffmpeg.tmp")
         val uniFile = UniFile.fromFile(tmpFile) ?: throw IOException("Failed to create temporary file for FFmpeg")
         val ffmpegFilename = uniFile.toFFmpegString(context)
+
+        // PRE-FLIGHT: DASH/FFmpeg muxing requires space for [Raw Audio + Raw Video + Muxed Output]
+        // We check for ~1.5x the total size as a safety margin for the muxing operation
+        if (download.totalSize > 0) {
+            checkFreeSpace(sandboxDir, (download.totalSize * 1.5).toLong())
+        }
 
         val headers = video.headers ?: download.source.headers
         val headerOptions = headers.joinToString("", "-headers '", "'") {
@@ -1231,8 +1308,12 @@ class Downloader(
                 {
                     if (it.returnCode.isValueSuccess) {
                         val finalFile = java.io.File(sandboxDir, "$filename.mkv")
-                        tmpFile.copyTo(finalFile, overwrite = true)
-                        tmpFile.delete()
+                        // INSTANT: renameTo works because both are in sandboxDir
+                        if (!tmpFile.renameTo(finalFile)) {
+                            // Backup: Copy if rename fails (unlikely)
+                            tmpFile.copyTo(finalFile, overwrite = true)
+                            tmpFile.delete()
+                        }
                         continuation.resume(finalFile)
                     } else {
                         if (it.returnCode.isValueCancel) {
@@ -1277,7 +1358,7 @@ class Downloader(
     }
 
     private suspend fun nativeDashMuxDownload(download: Download, sandboxDir: java.io.File, filename: String): java.io.File = ffmpegDownload(download, sandboxDir, filename)
-    private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String): File {
+    private suspend fun torrentDownload(download: Download, sandboxDir: File, filename: String, destDir: UniFile? = null): UniFile {
         retry {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             TorrentServerService.start()
@@ -1304,7 +1385,7 @@ class Downloader(
         }
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, index)
         download.video!!.videoUrl = torrentUrl
-        return internalDownload(download, sandboxDir, filename)
+        return internalDownload(download, sandboxDir, filename, destDir)
     }
 
     companion object {

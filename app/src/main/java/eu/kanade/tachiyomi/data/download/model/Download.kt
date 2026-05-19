@@ -35,6 +35,7 @@ data class Download(
     val statusFlow = _statusFlow.asStateFlow()
     var status: State = State.NOT_DOWNLOADED
         set(value) {
+            if (field == value) return
             field = value
             _statusFlow.update { value }
         }
@@ -46,6 +47,8 @@ data class Download(
     val progressFlow = progressStateFlow.asStateFlow()
     var progress: Int = 0
         set(value) {
+            // PRO-LEVEL: Prevent StateFlow flood by only updating on actual integer changes
+            if (field == value) return
             field = value
             progressStateFlow.update { value }
         }
@@ -66,9 +69,11 @@ data class Download(
     @Transient val segmentProgress = ConcurrentHashMap<Int, Boolean>()
     @Transient var lastNotifiedTime: Long = 0L
     
+    // PERFORMANCE: Atomic accumulators for lock-free metric updates
+    private val totalBytesAccumulator = AtomicLong(0)
     private var lastUpdateTime: Long = System.currentTimeMillis()
     private val lastBytesRead = AtomicLong(0)
-    private val speedSamples = mutableListOf<Double>()
+    private val speedSamples = java.util.concurrent.CopyOnWriteArrayList<Double>()
 
     /**
      * Updates the status of the download
@@ -77,6 +82,8 @@ data class Download(
         if (contentLength > 0) {
             totalSize = contentLength
         }
+        totalBytesAccumulator.set(bytesRead)
+        
         val newProgress = when {
             totalSize > 0 -> (100 * bytesRead / totalSize).toInt()
             totalSegments > 0 -> (100 * downloadedSegments / totalSegments).toInt()
@@ -92,6 +99,7 @@ data class Download(
      * Updates only the speed of the download
      */
     fun updateSpeed(bytesRead: Long) {
+        totalBytesAccumulator.set(bytesRead)
         calculateSpeed(bytesRead)
     }
 
@@ -107,46 +115,47 @@ data class Download(
         segmentProgress.clear()
         lastUpdateTime = System.currentTimeMillis()
         lastBytesRead.set(0)
+        totalBytesAccumulator.set(0)
         speedSamples.clear()
     }
 
     private fun calculateSpeed(bytesRead: Long) {
-        synchronized(this) {
-            val now = System.currentTimeMillis()
-            val timeDiff = (now - lastUpdateTime) / 1000.0
-            if (timeDiff >= 0.5) { // Update every 500ms for smoothness
-                val bytesDiff = bytesRead - lastBytesRead.get()
-                val currentSpeed = bytesDiff / timeDiff
-                
-                // Moving Average (Last 5 samples) for 1DM+ style smoothness
-                speedSamples.add(currentSpeed)
-                if (speedSamples.size > 5) speedSamples.removeAt(0)
-                val smoothSpeed = speedSamples.average()
+        val now = System.currentTimeMillis()
+        val timeDiff = (now - lastUpdateTime) / 1000.0
+        
+        // SMOOTHING: Only calculate metrics every 500ms to avoid CPU thrashing
+        if (timeDiff >= 0.5) { 
+            val bytesDiff = bytesRead - lastBytesRead.get()
+            val currentSpeed = bytesDiff / timeDiff
+            
+            // Lock-free sampling using CopyOnWriteArrayList and Atomic updates
+            speedSamples.add(currentSpeed)
+            if (speedSamples.size > 5) speedSamples.removeAt(0)
+            val smoothSpeed = speedSamples.average()
 
-                speed = when {
-                    smoothSpeed > 1024 * 1024 -> "%.2f MB/s".format(smoothSpeed / (1024 * 1024))
-                    smoothSpeed > 1024 -> "%.1f KB/s".format(smoothSpeed / 1024)
-                    else -> "${smoothSpeed.toLong()} B/s"
-                }
-
-                // Update Downloaded Size String
-                downloadedSize = formatSize(bytesRead)
-                if (totalSize > 0) {
-                    downloadedSize += " / " + formatSize(totalSize)
-                }
-
-                // Calculate ETA
-                if (totalSize > 0 && smoothSpeed > 0) {
-                    val remainingBytes = totalSize - bytesRead
-                    val remainingSeconds = (remainingBytes / smoothSpeed).toLong()
-                    eta = formatRemainingTime(remainingSeconds)
-                } else {
-                    eta = ""
-                }
-
-                lastUpdateTime = now
-                lastBytesRead.set(bytesRead)
+            speed = when {
+                smoothSpeed > 1024 * 1024 -> "%.2f MB/s".format(smoothSpeed / (1024 * 1024))
+                smoothSpeed > 1024 -> "%.1f KB/s".format(smoothSpeed / 1024)
+                else -> "${smoothSpeed.toLong()} B/s"
             }
+
+            // Update Downloaded Size String
+            downloadedSize = formatSize(bytesRead)
+            if (totalSize > 0) {
+                downloadedSize += " / " + formatSize(totalSize)
+            }
+
+            // Calculate ETA
+            if (totalSize > 0 && smoothSpeed > 0) {
+                val remainingBytes = totalSize - bytesRead
+                val remainingSeconds = (remainingBytes / smoothSpeed).toLong()
+                eta = formatRemainingTime(remainingSeconds)
+            } else {
+                eta = ""
+            }
+
+            lastUpdateTime = now
+            lastBytesRead.set(bytesRead)
         }
     }
 
