@@ -575,6 +575,7 @@ class AnimeScreenModel(
                     isRefreshingData = !anime.initialized || (initialEpisodes.isEmpty() && anime.fetchType != FetchType.Seasons),
                     dialog = null,
                     selectedSeason = savedSeason,
+                    skipDupeEpisodes = libraryPreferences.skipDupeEpisodes().get(),
                 )
             }
 
@@ -2057,8 +2058,9 @@ class AnimeScreenModel(
                     seasons: ImmutableList<tachiyomi.domain.anime.model.Season> = persistentListOf(),
                     processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
                     // <-- AY
+                    skipDupeEpisodes: Boolean = false,
                 ): Success {
-                    val processedEpisodes = episodes.applyFilters(anime, libraryPreferences.skipDupeEpisodes().get()).toImmutableList()
+                    val processedEpisodes = episodes.applyFilters(anime, skipDupeEpisodes).toImmutableList()
                     val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
                     
                     val episodeListItems = mutableListOf<EpisodeList>()

@@ -278,7 +278,7 @@ object SettingsLibraryScreen : SearchableSettings {
                 // SY -->
                 Preference.PreferenceItem.SwitchPreference(
                     pref = libraryPreferences.skipDupeEpisodes(),
-                    title = stringResource(MR.strings.pref_skip_dupe_episodes),
+                    title = stringResource(AMR.strings.pref_skip_dupe_episodes),
                 ),
                 // SY <--
                 Preference.PreferenceItem.ListPreference(

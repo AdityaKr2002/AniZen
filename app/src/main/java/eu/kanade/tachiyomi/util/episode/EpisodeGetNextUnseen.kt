@@ -40,7 +40,7 @@ fun List<EpisodeList.Item>.getNextUnseen(
     seasonName: String? = null,
     episodeToSeason: Map<Long, String> = emptyMap(),
 ): Episode? {
-    return applyFilters(anime)
+    return applyFilters(anime, false)
         .let { episodes ->
             if (seasonName != null) {
                 episodes.filter { episodeToSeason[it.episode.id] == seasonName }
