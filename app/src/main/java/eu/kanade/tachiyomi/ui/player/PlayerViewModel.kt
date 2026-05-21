@@ -464,7 +464,7 @@ class PlayerViewModel @JvmOverloads constructor(
     fun onFinishLoadingTracks(force: Boolean = false) {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
         if (activity.player.sid == -1 || (preferredSubtitle != null && activity.player.sid != preferredSubtitle.id)) {
-            preferredSubtitle?.let {
+            (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
                 activity.player.sid = it.id
                 activity.player.secondarySid = -1
             }
@@ -472,7 +472,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
         if (activity.player.aid == -1 || (preferredAudio != null && activity.player.aid != preferredAudio.id)) {
-            preferredAudio?.let {
+            (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
                 activity.player.aid = it.id
             }
         }

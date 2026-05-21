@@ -1494,10 +1494,9 @@ class PlayerActivity : BaseActivity() {
         val audioTracks = viewModel.currentVideo.value?.audioTracks?.takeIf { it.isNotEmpty() }
         val subtitleTracks = viewModel.currentVideo.value?.subtitleTracks?.takeIf { it.isNotEmpty() }
 
-        // If no external audio or subtitle tracks are present, loadTracks() won't be
-        // called and we need to call onFinishLoadingTracks() manually
+        // If no external audio or subtitle tracks are present, loadTracks() will still be
+        // called for internal tracks. We don't need to call onFinishLoadingTracks() here.
         if (audioTracks == null && subtitleTracks == null) {
-            viewModel.onFinishLoadingTracks(force = true)
             return
         }
 
