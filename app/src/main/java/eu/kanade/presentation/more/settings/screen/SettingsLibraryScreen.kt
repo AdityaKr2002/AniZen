@@ -275,6 +275,12 @@ object SettingsLibraryScreen : SearchableSettings {
                     pref = libraryPreferences.showEpisodeThumbnail(),
                     title = stringResource(MR.strings.pref_show_episode_thumbnail),
                 ),
+                // SY -->
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = libraryPreferences.skipDupeEpisodes(),
+                    title = stringResource(MR.strings.pref_skip_dupe_episodes),
+                ),
+                // SY <--
                 Preference.PreferenceItem.ListPreference(
                     pref = libraryPreferences.seasonGroupingMode(),
                     title = "Season grouping",

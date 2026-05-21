@@ -114,8 +114,7 @@ class GetMergedEpisodesByAnimeId(
                             // check if the chapter is not already there
                             it.isRecognizedNumber &&
                                 it.episodeNumber == chapter.episodeNumber &&
-                                // allow multiple chapters of the same number from the same source
-                                it.animeId != chapter.animeId
+                                it.scanlator == chapter.scanlator
                         }
                         if (existingChapterIndex == -1) {
                             sortedEpisodeList.add(oldChapterIndex + 1, chapter)

@@ -294,7 +294,7 @@ class AnimeScreenModel(
         val processedEpisodes = if (anime === this.anime && !episodesChanged) {
             this.processedEpisodes
         } else {
-            episodes.applyFilters(anime).toImmutableList()
+            episodes.applyFilters(anime, libraryPreferences.skipDupeEpisodes().get()).toImmutableList()
         }
 
         val missingEpisodeCount = if (processedEpisodes.size == this.processedEpisodes.size && !episodesChanged) {
@@ -2058,7 +2058,7 @@ class AnimeScreenModel(
                     processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
                     // <-- AY
                 ): Success {
-                    val processedEpisodes = episodes.applyFilters(anime).toImmutableList()
+                    val processedEpisodes = episodes.applyFilters(anime, libraryPreferences.skipDupeEpisodes().get()).toImmutableList()
                     val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
                     
                     val episodeListItems = mutableListOf<EpisodeList>()

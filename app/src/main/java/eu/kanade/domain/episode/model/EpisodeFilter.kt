@@ -13,7 +13,7 @@ import tachiyomi.source.localanime.isLocal
  * Applies the view filters to the list of episodes obtained from the database.
  * @return an observable of the list of episodes filtered and sorted.
  */
-fun List<Episode>.applyFilters(anime: Anime, downloadManager: DownloadManager): List<Episode> {
+fun List<Episode>.applyFilters(anime: Anime, downloadManager: DownloadManager, skipDupeEpisodes: Boolean): List<Episode> {
     val isLocalAnime = anime.isLocal()
     val unseenFilter = anime.unseenFilter
     val downloadedFilter = anime.downloadedFilter
@@ -22,7 +22,21 @@ fun List<Episode>.applyFilters(anime: Anime, downloadManager: DownloadManager): 
     val fillermarkedFilter = anime.fillermarkedFilter
     // <-- AM (FILLERMARK)
 
-    return filter { episode -> applyFilter(unseenFilter) { !episode.seen } }
+    val episodes = if (skipDupeEpisodes) {
+        groupBy { if (it.isRecognizedNumber) it.episodeNumber to it.scanlator else it.id }
+            .map { (_, episodes) ->
+                episodes.maxWithOrNull(
+                    compareBy<Episode> { it.bookmark }
+                        .thenBy { it.seen }
+                        .thenBy { it.lastSecondSeen }
+                        .thenBy { it.dateFetch }
+                )!!
+            }
+    } else {
+        this
+    }
+
+    return episodes.filter { episode -> applyFilter(unseenFilter) { !episode.seen } }
         .filter { episode -> applyFilter(bookmarkedFilter) { episode.bookmark } }
         // AM (FILLERMARK) -->
         .filter { episode -> applyFilter(fillermarkedFilter) { episode.fillermark } }
@@ -47,7 +61,7 @@ fun List<Episode>.applyFilters(anime: Anime, downloadManager: DownloadManager): 
  * Applies the view filters to the list of episodes obtained from the database.
  * @return an observable of the list of episodes filtered and sorted.
  */
-fun List<EpisodeList.Item>.applyFilters(anime: Anime): Sequence<EpisodeList.Item> {
+fun List<EpisodeList.Item>.applyFilters(anime: Anime, skipDupeEpisodes: Boolean): Sequence<EpisodeList.Item> {
     val isLocalAnime = anime.isLocal()
     val unseenFilter = anime.unseenFilter
     val downloadedFilter = anime.downloadedFilter
@@ -55,7 +69,22 @@ fun List<EpisodeList.Item>.applyFilters(anime: Anime): Sequence<EpisodeList.Item
     // AM (FILLERMARK) -->
     val fillermarkedFilter = anime.fillermarkedFilter
     // <-- AM (FILLERMARK)
-    return asSequence()
+
+    val episodes = if (skipDupeEpisodes) {
+        groupBy { if (it.episode.isRecognizedNumber) it.episode.episodeNumber to it.episode.scanlator else it.episode.id }
+            .map { (_, episodes) ->
+                episodes.maxWithOrNull(
+                    compareBy<EpisodeList.Item> { it.episode.bookmark }
+                        .thenBy { it.episode.seen }
+                        .thenBy { it.episode.lastSecondSeen }
+                        .thenBy { it.episode.dateFetch }
+                )!!
+            }
+    } else {
+        this
+    }
+
+    return episodes.asSequence()
         .filter { (episode) -> applyFilter(unseenFilter) { !episode.seen } }
         .filter { (episode) -> applyFilter(bookmarkedFilter) { episode.bookmark } }
         // AM (FILLERMARK) -->

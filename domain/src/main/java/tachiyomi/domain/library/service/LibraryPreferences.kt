@@ -127,6 +127,10 @@ class LibraryPreferences(
     fun filterCategories() = preferenceStore.getBoolean("pref_filter_library_categories", false)
 
     fun libraryReadDuplicateChapters() = preferenceStore.getBoolean("pref_library_mark_duplicate_chapters", false)
+
+    // SY -->
+    fun skipDupeEpisodes() = preferenceStore.getBoolean("pref_skip_dupe_episodes", false)
+    // SY <--
     // SY <--
 
     fun filterTracking(id: Int) = preferenceStore.getEnum(
