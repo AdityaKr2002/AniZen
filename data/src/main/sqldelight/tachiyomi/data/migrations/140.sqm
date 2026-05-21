@@ -1,0 +1,9 @@
+-- Delete duplicate episodes, keeping the one with the maximum _id
+DELETE FROM episodes
+WHERE _id NOT IN (
+    SELECT MAX(_id)
+    FROM episodes
+    GROUP BY anime_id, url
+);
+
+CREATE UNIQUE INDEX episodes_anime_id_url_index ON episodes(anime_id, url);
