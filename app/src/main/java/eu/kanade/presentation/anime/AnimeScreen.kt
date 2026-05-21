@@ -1592,11 +1592,11 @@ private fun LazyListScope.sharedEpisodeItems(
 ) {
     itemsIndexed(
         items = episodes,
-        key = { _, item ->
+        key = { index, item ->
             when (item) {
                 is EpisodeList.Item -> "anime-ep-${item.episode.id}"
                 is EpisodeList.MissingCount -> "anime-ms-${item.id}"
-                is EpisodeList.Season -> "anime-sn-${item.name}"
+                is EpisodeList.Season -> "anime-sn-${item.name}-$index"
             }
         },
     ) { _, item ->
