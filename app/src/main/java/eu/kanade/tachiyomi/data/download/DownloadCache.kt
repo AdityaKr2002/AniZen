@@ -185,7 +185,7 @@ class DownloadCache(
 
         val sourceDir = rootDownloadsDir.sourceDirs[anime.source]
         if (sourceDir != null) {
-            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.title)]
+            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.ogTitle)]
             if (animeDir != null) {
                 return animeDir.episodeDirs.size
             }
@@ -214,7 +214,7 @@ class DownloadCache(
 
         return rootDownloadsDir.sourceDirs[anime.source]?.animeDirs?.get(
             provider.getAnimeDirName(
-                anime.title,
+                anime.ogTitle,
             ),
         )?.dir?.size() ?: 0
     }
@@ -230,7 +230,7 @@ class DownloadCache(
 
         val sourceDir = rootDownloadsDir.sourceDirs[anime.source]
         if (sourceDir != null) {
-            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.title)]
+            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.ogTitle)]
             if (animeDir != null) {
                 return animeDir.episodeDirs
             }
@@ -257,7 +257,7 @@ class DownloadCache(
             }
 
             // Retrieve the cached anime directory or cache a new one
-            val animeDirName = provider.getAnimeDirName(anime.title)
+            val animeDirName = provider.getAnimeDirName(anime.ogTitle)
             var animeDir = sourceDir.animeDirs[animeDirName]
             if (animeDir == null) {
                 animeDir = AnimeDirectory(animeUniFile)
@@ -280,7 +280,7 @@ class DownloadCache(
     suspend fun removeEpisode(episode: Episode, anime: Anime) {
         rootDownloadsDirMutex.withLock {
             val sourceDir = rootDownloadsDir.sourceDirs[anime.source] ?: return
-            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.title)] ?: return
+            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.ogTitle)] ?: return
             provider.getValidEpisodeDirNames(episode.name, episode.scanlator).forEach {
                 if (it in animeDir.episodeDirs) {
                     animeDir.episodeDirs -= it
@@ -300,7 +300,7 @@ class DownloadCache(
     suspend fun removeEpisodes(episodes: List<Episode>, anime: Anime) {
         rootDownloadsDirMutex.withLock {
             val sourceDir = rootDownloadsDir.sourceDirs[anime.source] ?: return
-            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.title)] ?: return
+            val animeDir = sourceDir.animeDirs[provider.getAnimeDirName(anime.ogTitle)] ?: return
             episodes.forEach { episode ->
                 provider.getValidEpisodeDirNames(episode.name, episode.scanlator).forEach {
                     if (it in animeDir.episodeDirs) {
@@ -321,7 +321,7 @@ class DownloadCache(
     suspend fun removeAnime(anime: Anime) {
         rootDownloadsDirMutex.withLock {
             val sourceDir = rootDownloadsDir.sourceDirs[anime.source] ?: return
-            val animeDirName = provider.getAnimeDirName(anime.title)
+            val animeDirName = provider.getAnimeDirName(anime.ogTitle)
             if (sourceDir.animeDirs.containsKey(animeDirName)) {
                 sourceDir.animeDirs -= animeDirName
             }
@@ -512,5 +512,8 @@ private object UniFileAsStringSerializer : KSerializer<UniFile?> {
         } else {
             decoder.decodeNull()
         }
+    }
+}
+}
     }
 }

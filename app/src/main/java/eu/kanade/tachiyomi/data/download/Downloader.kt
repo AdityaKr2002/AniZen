@@ -450,7 +450,7 @@ class Downloader(
     }
 
     private suspend fun downloadEpisode(download: Download) {
-        val animeDir = provider.getAnimeDir(download.anime.title, download.source)
+        val animeDir = provider.getAnimeDir(download.anime.ogTitle, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         
         // Sandbox Storage: Protected from OS Cache cleanup
