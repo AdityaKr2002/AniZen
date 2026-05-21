@@ -77,6 +77,8 @@ import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.ui.player.utils.AniSkipApi
 import eu.kanade.tachiyomi.ui.player.utils.ChapterUtils.Companion.getStringRes
+import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore
+import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import eu.kanade.tachiyomi.ui.player.utils.TrackSelect
 import eu.kanade.tachiyomi.ui.reader.SaveImageNotifier
 import eu.kanade.tachiyomi.util.editCover
@@ -1502,6 +1504,14 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
             }
 
+            val preloadedVideo = pendingPreloadedVideo
+            pendingPreloadedVideo = null
+            val defaultSelector = if (hosterIndex == -1) {
+                DefaultStreamPreferenceStore(playerPreferences).getEffectiveSelector(currentAnime.value?.id)
+            } else {
+                ""
+            }
+
             try {
                 coroutineScope {
                     hosterList.mapIndexed { hosterIdx, hoster ->
@@ -1510,39 +1520,55 @@ class PlayerViewModel @JvmOverloads constructor(
 
                             _hosterState.updateAt(hosterIdx, hosterState)
 
-                            if (hosterState is HosterState.Ready) {
-                                if (hosterIdx == hosterIndex) {
-                                    hosterState.videoList.getOrNull(videoIndex)?.let {
-                                        hasFoundPreferredVideo.set(true)
-                                        val success = loadVideo(source, it, hosterIndex, videoIndex)
-                                        if (!success) {
-                                            hasFoundPreferredVideo.set(false)
-                                        }
-                                    }
-                                }
-
-                                val prefIndex = hosterState.videoList.indexOfFirst { it.preferred }
-                                if (prefIndex != -1 && hosterIndex == -1) {
-                                    if (hasFoundPreferredVideo.compareAndSet(false, true)) {
-                                        if (selectedHosterVideoIndex.value == Pair(-1, -1)) {
-                                            val success =
-                                                loadVideo(
-                                                    source,
-                                                    hosterState.videoList[prefIndex],
-                                                    hosterIdx,
-                                                    prefIndex,
-                                                )
-                                            if (!success) {
-                                                hasFoundPreferredVideo.set(false)
-                                            }
-                                        }
+                            if (hosterState is HosterState.Ready && hosterIdx == hosterIndex && videoIndex >= 0) {
+                                hosterState.videoList.getOrNull(videoIndex)?.let { video ->
+                                    if (tryAcquireAndLoadVideo(source, video, hosterIndex, videoIndex, hasFoundPreferredVideo)) {
+                                        return@async
                                     }
                                 }
                             }
                         }
                     }.awaitAll()
 
+                    if (!hasFoundPreferredVideo.get() && hosterIndex == -1) {
+                        val states = hosterState.value
+
+                        // 1) Pre-resolved next-episode stream from preload
+                        if (preloadedVideo != null) {
+                            DefaultStreamSelector.findVideoInHosters(states, preloadedVideo)?.let { (hIdx, vIdx) ->
+                                val ready = states[hIdx] as? HosterState.Ready
+                                val video = ready?.videoList?.getOrNull(vIdx)
+                                if (video != null && tryAcquireAndLoadVideo(source, video, hIdx, vIdx, hasFoundPreferredVideo)) {
+                                    logcat { "Loaded pre-resolved stream for episode" }
+                                }
+                            }
+                        }
+
+                        // 2) User-saved default (strict then relaxed) — always before extension sort order
+                        if (!hasFoundPreferredVideo.get() && defaultSelector.isNotBlank()) {
+                            val strictRanked = DefaultStreamSelector.findRankedInHosters(defaultSelector, states)
+                            tryLoadRankedVideos(source, states, strictRanked, hasFoundPreferredVideo)
+                            if (!hasFoundPreferredVideo.get()) {
+                                val relaxedRanked = DefaultStreamSelector.findRankedInHostersRelaxed(defaultSelector, states)
+                                    .filter { it !in strictRanked }
+                                tryLoadRankedVideos(source, states, relaxedRanked, hasFoundPreferredVideo)
+                            }
+                        }
+
+                        // 3) Extension preferred — only when user has no saved default
+                        if (!hasFoundPreferredVideo.get() && defaultSelector.isBlank()) {
+                            tryLoadExtensionPreferred(source, states, hasFoundPreferredVideo)
+                        }
+                    }
+
                     if (hasFoundPreferredVideo.compareAndSet(false, true)) {
+                        if (defaultSelector.isNotBlank()) {
+                            logcat { "Saved default not found or failed to load; skipping Torrentio auto-pick" }
+                            updateIsLoadingEpisode(false)
+                            isLoading.value = false
+                            return@coroutineScope
+                        }
+
                         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
                         if (hosterIdx == -1) {
                             updateIsLoadingEpisode(false)
@@ -1580,6 +1606,58 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     private var loadingJob: Job? = null
+
+    private suspend fun tryAcquireAndLoadVideo(
+        source: AnimeSource,
+        video: Video,
+        hosterIndex: Int,
+        videoIndex: Int,
+        hasFoundPreferredVideo: AtomicBoolean,
+    ): Boolean {
+        if (!hasFoundPreferredVideo.compareAndSet(false, true)) return false
+        if (hosterIndex == -1 && videoIndex == -1 && selectedHosterVideoIndex.value != Pair(-1, -1)) {
+            hasFoundPreferredVideo.set(false)
+            return false
+        }
+        val success = loadVideo(source, video, hosterIndex, videoIndex)
+        if (!success) {
+            hasFoundPreferredVideo.set(false)
+        }
+        return success
+    }
+
+    private suspend fun tryLoadRankedVideos(
+        source: AnimeSource,
+        hosterStates: List<HosterState>,
+        ranked: List<Pair<Int, Int>>,
+        hasFoundPreferredVideo: AtomicBoolean,
+    ) {
+        for ((hosterIdx, videoIdx) in ranked) {
+            if (hasFoundPreferredVideo.get()) return
+            val ready = hosterStates.getOrNull(hosterIdx) as? HosterState.Ready ?: continue
+            val video = ready.videoList.getOrNull(videoIdx) ?: continue
+            if (tryAcquireAndLoadVideo(source, video, hosterIdx, videoIdx, hasFoundPreferredVideo)) {
+                return
+            }
+        }
+    }
+
+    private suspend fun tryLoadExtensionPreferred(
+        source: AnimeSource,
+        hosterStates: List<HosterState>,
+        hasFoundPreferredVideo: AtomicBoolean,
+    ) {
+        hosterStates.forEachIndexed { hosterIdx, state ->
+            if (hasFoundPreferredVideo.get()) return
+            if (state !is HosterState.Ready) return@forEachIndexed
+            val prefIndex = state.videoList.indexOfFirst { it.preferred }
+            if (prefIndex == -1) return@forEachIndexed
+            val video = state.videoList[prefIndex]
+            if (tryAcquireAndLoadVideo(source, video, hosterIdx, prefIndex, hasFoundPreferredVideo)) {
+                return
+            }
+        }
+    }
 
     private suspend fun loadVideo(source: AnimeSource?, video: Video, hosterIndex: Int, videoIndex: Int): Boolean {
         val selectedHosterState = (_hosterState.value[hosterIndex] as? HosterState.Ready) ?: return false
@@ -1687,7 +1765,23 @@ class PlayerViewModel @JvmOverloads constructor(
         return true
     }
 
+    fun setDefaultStreamSelector(hosterIndex: Int, videoIndex: Int) {
+        val video = (_hosterState.value.getOrNull(hosterIndex) as? HosterState.Ready)
+            ?.videoList
+            ?.getOrNull(videoIndex)
+            ?: return
+        DefaultStreamPreferenceStore(playerPreferences).setSelector(
+            animeId = currentAnime.value?.id,
+            selector = DefaultStreamSelector.selectorFor(video),
+        )
+    }
+
+    fun getEffectiveDefaultStreamSelector(): String {
+        return DefaultStreamPreferenceStore(playerPreferences).getEffectiveSelector(currentAnime.value?.id)
+    }
+
     fun onVideoClicked(hosterIndex: Int, videoIndex: Int) {
+        setDefaultStreamSelector(hosterIndex, videoIndex)
         val hosterState = _hosterState.value[hosterIndex] as? HosterState.Ready
         val video = hosterState?.videoList
             ?.getOrNull(videoIndex)
@@ -1720,6 +1814,13 @@ class PlayerViewModel @JvmOverloads constructor(
                 isLoading.value = false
                 setIsStopped(true)
             }
+        }
+    }
+
+    fun ensureHosterExpanded(index: Int) {
+        if (index !in _hosterExpandedList.value.indices) return
+        if (!_hosterExpandedList.value[index]) {
+            _hosterExpandedList.updateAt(index, true)
         }
     }
 
@@ -1771,12 +1872,12 @@ class PlayerViewModel @JvmOverloads constructor(
         cancelPreload()
 
         return withIOContext {
+            val meta = preloadedMeta
             try {
                 val currentEpisode =
                     currentEpisode.value
                         ?: throw ExceptionWithStringResource("No episode loaded", MR.strings.no_episode_loaded)
                 
-                val meta = preloadedMeta
                 val isMetaStateValid = nextEpisodeState.value == PreloadState.MetadataReady || nextEpisodeState.value == PreloadState.BufferReady
                 
                 if (isMetaStateValid && meta != null && isMetaValid(meta) && episodeId == meta.episodeId) {
@@ -1801,7 +1902,7 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
                 logcat(LogPriority.ERROR, e) { e.message ?: "Error getting links" }
             } finally {
-                // Always reset preload state after any attempt to load an episode
+                pendingPreloadedVideo = meta?.video
                 _nextEpisodeState.value = PreloadState.None
                 preloadedMeta = null
             }
@@ -1886,6 +1987,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _nextEpisodeState = MutableStateFlow(PreloadState.None)
     val nextEpisodeState = _nextEpisodeState.asStateFlow()
     private var preloadedMeta: PreloadedMeta? = null
+    private var pendingPreloadedVideo: Video? = null
     private var preloadJob: Job? = null
     private var lastPreloadFailAt = 0L
 
@@ -1896,6 +1998,7 @@ class PlayerViewModel @JvmOverloads constructor(
         System.currentTimeMillis() - lastPreloadFailAt > 60_000 // 1 minute backoff
 
     fun cancelPreload() {
+        pendingPreloadedVideo = null
         preloadJob?.cancel()
         preloadJob = null
     }
@@ -1937,7 +2040,20 @@ class PlayerViewModel @JvmOverloads constructor(
                 val enableBuffering = playerPreferences.intelligentBufferHandoff().get()
                 val enableSelfHealing = playerPreferences.selfHealingLinks().get()
                 
-                if (enableBuffering || enableSelfHealing) {
+                val defaultSelector = DefaultStreamPreferenceStore(playerPreferences)
+                    .getEffectiveSelector(anime.id)
+
+                if (defaultSelector.isNotBlank()) {
+                    _nextEpisodeState.value = PreloadState.PreloadingBuffer
+                    logcat { "Preload: Resolving saved default stream for episode=$nextEpisodeId" }
+                    try {
+                        resolvedVideo = HosterLoader.resolveDefaultStream(source, hosterList, defaultSelector)
+                    } catch (e: Exception) {
+                        logcat(LogPriority.WARN, e) { "Preload: Default stream resolution failed" }
+                    }
+                }
+
+                if (resolvedVideo == null && defaultSelector.isBlank() && (enableBuffering || enableSelfHealing)) {
                     _nextEpisodeState.value = PreloadState.PreloadingBuffer
                     logcat { "Preload: Resolving best video for episode=$nextEpisodeId" }
                     try {

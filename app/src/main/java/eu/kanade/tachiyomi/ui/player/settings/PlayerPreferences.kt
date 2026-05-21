@@ -20,6 +20,16 @@ class PlayerPreferences(
     )
 
     fun preferredQuality() = preferenceStore.getString("pref_preferred_quality", "1080")
+    fun defaultStreamSelector() = preferenceStore.getString("pref_default_stream_selector", "")
+
+    /** Remember a separate default stream per anime (tap in Qualities sheet). */
+    fun perAnimeDefaultStream() = preferenceStore.getBoolean("pref_per_anime_default_stream", true)
+
+    /** Scroll the Qualities list to the saved default when the sheet opens. */
+    fun autoScrollDefaultStream() = preferenceStore.getBoolean("pref_auto_scroll_default_stream", true)
+
+    /** Encoded map of anime id → stream fingerprint. */
+    fun perAnimeDefaultStreamData() = preferenceStore.getString("pref_per_anime_default_stream_data", "")
 
     // Controls
 

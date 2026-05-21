@@ -4,8 +4,10 @@ import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.base.BasePreferences
@@ -29,6 +31,8 @@ import eu.kanade.tachiyomi.ui.player.WEB_VIDEO_CASTER
 import eu.kanade.tachiyomi.ui.player.X_PLAYER
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore
+import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.LocalHttpServerHolder
 import eu.kanade.tachiyomi.util.LocalHttpServerService
 import kotlinx.collections.immutable.persistentListOf
@@ -194,9 +198,19 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
 
     @Composable
     private fun getHosterGroup(playerPreferences: PlayerPreferences): Preference.PreferenceGroup {
+        val context = LocalContext.current
         val showFailure = playerPreferences.showFailedHosters()
         val showEmpty = playerPreferences.showEmptyHosters()
         val preferredQuality = playerPreferences.preferredQuality()
+        val perAnimeDefaultStream = playerPreferences.perAnimeDefaultStream()
+        val autoScrollDefaultStream = playerPreferences.autoScrollDefaultStream()
+        val streamStore = remember(playerPreferences) { DefaultStreamPreferenceStore(playerPreferences) }
+        val perAnimeData by playerPreferences.perAnimeDefaultStreamData().collectAsState()
+        val globalDefault by playerPreferences.defaultStreamSelector().collectAsState()
+        var clearGeneration by remember { mutableIntStateOf(0) }
+        val savedCount = remember(perAnimeData, globalDefault, clearGeneration) {
+            streamStore.savedAnimeCount() + if (globalDefault.isNotBlank()) 1 else 0
+        }
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.pref_hosters),
@@ -212,12 +226,31 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     ),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
+                    pref = perAnimeDefaultStream,
+                    title = stringResource(MR.strings.pref_default_stream_per_anime),
+                    subtitle = stringResource(MR.strings.pref_default_stream_per_anime_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = autoScrollDefaultStream,
+                    title = stringResource(MR.strings.pref_default_stream_auto_scroll),
+                    subtitle = stringResource(MR.strings.pref_default_stream_auto_scroll_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
                     pref = showFailure,
                     title = stringResource(MR.strings.pref_hosters_show_failure),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = showEmpty,
                     title = stringResource(MR.strings.pref_hosters_show_empty),
+                ),
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(MR.strings.pref_default_stream_clear),
+                    subtitle = stringResource(MR.strings.pref_default_stream_clear_summary, savedCount),
+                    onClick = {
+                        streamStore.clearAll()
+                        clearGeneration++
+                        context.toast(MR.strings.pref_default_stream_cleared)
+                    },
                 ),
             ),
         )

@@ -246,6 +246,13 @@
     <string name="pref_hosters">Hosters</string>
     <string name="pref_hosters_show_failure">Display failed hosters</string>
     <string name="pref_hosters_show_empty">Display empty hosters</string>
+    <string name="pref_default_stream_per_anime">Remember default stream per anime</string>
+    <string name="pref_default_stream_per_anime_summary">Each series keeps its own preferred link. Works across one or many extensions.</string>
+    <string name="pref_default_stream_auto_scroll">Auto-scroll to default in Qualities</string>
+    <string name="pref_default_stream_auto_scroll_summary">When you open Qualities, jump to the saved default for this anime.</string>
+    <string name="pref_default_stream_clear">Clear saved stream defaults</string>
+    <string name="pref_default_stream_clear_summary">Removes all per-anime and global saved stream choices (%d series).</string>
+    <string name="pref_default_stream_cleared">Saved stream defaults cleared</string>
 
     <string name="pref_player_fullscreen">Show content in display cutout</string>
     <string name="pref_player_hide_controls">Hide player controls when opening the player</string>
