@@ -1497,7 +1497,7 @@ class PlayerActivity : BaseActivity() {
         // If no external audio or subtitle tracks are present, loadTracks() won't be
         // called and we need to call onFinishLoadingTracks() manually
         if (audioTracks == null && subtitleTracks == null) {
-            viewModel.onFinishLoadingTracks(force = true)
+            viewModel.onFinishLoadingTracks()
             return
         }
 
@@ -1507,6 +1507,8 @@ class PlayerActivity : BaseActivity() {
         subtitleTracks?.forEach { sub ->
             executeMPVCommand(arrayOf("sub-add", sub.url, "auto", sub.lang))
         }
+
+        viewModel.isLoadingTracks.update { _ -> false }
     }
 
     private fun setupChapters() {

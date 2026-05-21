@@ -451,7 +451,7 @@ class PlayerViewModel @JvmOverloads constructor(
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
 
-            if (isLoadingTracks.value) {
+            if (!isLoadingTracks.value) {
                 onFinishLoadingTracks()
             }
         }
@@ -461,30 +461,21 @@ class PlayerViewModel @JvmOverloads constructor(
      * When all subtitle/audio tracks are loaded, select the preferred one based on preferences,
      * or select the first one in the list if trackSelect fails.
      */
-    fun onFinishLoadingTracks(force: Boolean = false) {
-        val subtitleTracksList = subtitleTracks.value
-        val audioTracksList = audioTracks.value
-
-        val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracksList)
-        (preferredSubtitle ?: subtitleTracksList.firstOrNull())?.let {
-            if (activity.player.sid != it.id) {
-                activity.player.sid = it.id
-            }
+    fun onFinishLoadingTracks() {
+        val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
+        (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
+            activity.player.sid = it.id
             activity.player.secondarySid = -1
         }
 
-        val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracksList, subtitle = false)
-        (preferredAudio ?: audioTracksList.getOrNull(1))?.let {
-            if (activity.player.aid != it.id) {
-                activity.player.aid = it.id
-            }
+        val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
+        (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
+            activity.player.aid = it.id
         }
 
-        if (force || subtitleTracksList.isNotEmpty() || audioTracksList.size > 1) {
-            isLoadingTracks.update { _ -> false }
-            updateIsLoadingEpisode(false)
-            setPausedState()
-        }
+        isLoadingTracks.update { _ -> true }
+        updateIsLoadingEpisode(false)
+        setPausedState()
     }
 
     @Immutable
