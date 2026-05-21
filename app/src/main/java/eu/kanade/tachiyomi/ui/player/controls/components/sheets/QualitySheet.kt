@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.ui.player.controls.components.sheets
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -31,10 +33,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.player.components.PlayerSheet
 import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
@@ -71,6 +80,14 @@ fun HosterState.Ready.getChangedAt(index: Int, newVideo: Video, newState: Video.
     )
 }
 
+private data class DefaultScrollTarget(
+    val hosterIndex: Int,
+    val videoIndex: Int,
+)
+
+private val DefaultHighlightShape = RoundedCornerShape(14.dp)
+private const val HostExpandSettleMs = 200L
+
 @Composable
 fun QualitySheet(
     isLoadingHosters: Boolean,
@@ -79,6 +96,10 @@ fun QualitySheet(
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
+    onEnsureHosterExpanded: (Int) -> Unit = {},
+    defaultStreamSelector: String,
+    autoScrollToDefault: Boolean = true,
+    sheetActive: Boolean = true,
     displayHosters: Pair<Boolean, Boolean>,
     onDismissRequest: () -> Unit,
     dismissSheet: Boolean,
@@ -132,6 +153,16 @@ fun QualitySheet(
                     targetOffsetY = { it / 2 },
                 ),
             ) {
+                val defaultVideoByHoster = remember(hosterState, defaultStreamSelector) {
+                    buildDefaultVideoByHosterIndex(hosterState, defaultStreamSelector)
+                }
+
+                EnsureDefaultHostersExpanded(
+                    sheetActive = sheetActive,
+                    defaultVideoByHoster = defaultVideoByHoster,
+                    onEnsureHosterExpanded = onEnsureHosterExpanded,
+                )
+
                 if (hosterState.size == 1 &&
                     hosterState.first().name == Hoster.NO_HOSTER_LIST &&
                     hosterState.first() is HosterState.Ready
@@ -141,6 +172,9 @@ fun QualitySheet(
                         videoState = (hosterState.first() as HosterState.Ready).videoState,
                         selectedVideoIndex = selectedVideoIndex.second,
                         onClickVideo = onClickVideo,
+                        defaultStreamSelector = defaultStreamSelector,
+                        autoScrollToDefault = autoScrollToDefault,
+                        sheetActive = sheetActive,
                         modifier = modifier.padding(paddingValues = qualitySheetPadding),
                     )
                 } else {
@@ -150,6 +184,11 @@ fun QualitySheet(
                         selectedVideoIndex = selectedVideoIndex,
                         onClickHoster = onClickHoster,
                         onClickVideo = onClickVideo,
+                        onEnsureHosterExpanded = onEnsureHosterExpanded,
+                        defaultStreamSelector = defaultStreamSelector,
+                        defaultVideoByHoster = defaultVideoByHoster,
+                        autoScrollToDefault = autoScrollToDefault,
+                        sheetActive = sheetActive,
                         displayHosters = displayHosters,
                         modifier = modifier.padding(paddingValues = qualitySheetPadding),
                     )
@@ -159,28 +198,168 @@ fun QualitySheet(
     }
 }
 
+private fun buildDefaultVideoByHosterIndex(
+    hosterState: List<HosterState>,
+    defaultStreamSelector: String,
+): Map<Int, Int> {
+    if (defaultStreamSelector.isBlank()) return emptyMap()
+    return hosterState.mapIndexedNotNull { hosterIdx, state ->
+        if (state !is HosterState.Ready) return@mapIndexedNotNull null
+        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector)
+        if (videoIdx >= 0) hosterIdx to videoIdx else null
+    }.toMap()
+}
+
+private fun findDefaultVideoIndex(
+    videos: List<Video>,
+    defaultStreamSelector: String,
+): Int = DefaultStreamSelector.findBestMatchIndex(defaultStreamSelector, videos)
+
+/** Lazy list index for a video row when hosters use flattened header + per-video items. */
+@Composable
+private fun EnsureDefaultHostersExpanded(
+    sheetActive: Boolean,
+    defaultVideoByHoster: Map<Int, Int>,
+    onEnsureHosterExpanded: (Int) -> Unit,
+) {
+    LaunchedEffect(sheetActive, defaultVideoByHoster) {
+        if (!sheetActive) return@LaunchedEffect
+        defaultVideoByHoster.keys.forEach { hosterIndex ->
+            onEnsureHosterExpanded(hosterIndex)
+        }
+    }
+}
+
+private fun computeFlatVideoLazyIndex(
+    hosters: List<IndexedValue<HosterState>>,
+    expandedState: List<Boolean>,
+    targetHosterIndex: Int,
+    targetVideoIndex: Int,
+): Int {
+    var lazyIndex = 0
+    for ((hosterIdx, hoster) in hosters) {
+        if (hosterIdx == targetHosterIndex) {
+            if (hoster !is HosterState.Ready) return -1
+            if (expandedState.getOrNull(hosterIdx) != true) return -1
+            return lazyIndex + 1 + targetVideoIndex
+        }
+        lazyIndex++
+        if (hoster is HosterState.Ready && expandedState.getOrNull(hosterIdx) == true) {
+            lazyIndex += hoster.videoList.size
+        }
+    }
+    return -1
+}
+
+@Composable
+private fun ScrollToDefaultEffect(
+    target: DefaultScrollTarget?,
+    autoScrollToDefault: Boolean,
+    sheetActive: Boolean,
+    flatHosters: List<IndexedValue<HosterState>>,
+    expandedState: List<Boolean>,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    onEnsureHosterExpanded: (Int) -> Unit,
+) {
+    LaunchedEffect(sheetActive, target, autoScrollToDefault, flatHosters, expandedState) {
+        if (!sheetActive || !autoScrollToDefault || target == null || target.videoIndex < 0) {
+            return@LaunchedEffect
+        }
+
+        if (target.hosterIndex >= 0 && expandedState.getOrNull(target.hosterIndex) != true) {
+            onEnsureHosterExpanded(target.hosterIndex)
+            snapshotFlow { expandedState.getOrNull(target.hosterIndex) == true }
+                .filter { it }
+                .first()
+            delay(HostExpandSettleMs)
+        }
+
+        val lazyIndex = if (target.hosterIndex < 0) {
+            target.videoIndex
+        } else {
+            computeFlatVideoLazyIndex(
+                hosters = flatHosters,
+                expandedState = expandedState,
+                targetHosterIndex = target.hosterIndex,
+                targetVideoIndex = target.videoIndex,
+            )
+        }
+        if (lazyIndex < 0) return@LaunchedEffect
+
+        snapshotFlow { listState.layoutInfo.totalItemsCount }
+            .filter { it > lazyIndex }
+            .first()
+
+        listState.scrollToItem(lazyIndex)
+    }
+}
+
 @Composable
 fun QualitySheetVideoContent(
     videoList: List<Video>,
     videoState: List<Video.State>,
     selectedVideoIndex: Int,
     onClickVideo: (Int, Int) -> Unit,
+    defaultStreamSelector: String = "",
+    autoScrollToDefault: Boolean = true,
+    sheetActive: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(modifier = modifier.fillMaxWidth()) {
+    val listState = rememberLazyListState()
+    val defaultVideoIndex = remember(videoList, defaultStreamSelector) {
+        findDefaultVideoIndex(videoList, defaultStreamSelector)
+    }
+    val scrollTarget = remember(defaultVideoIndex) {
+        if (defaultVideoIndex >= 0) {
+            DefaultScrollTarget(hosterIndex = -1, videoIndex = defaultVideoIndex)
+        } else {
+            null
+        }
+    }
+
+    ScrollToDefaultEffect(
+        target = scrollTarget,
+        autoScrollToDefault = autoScrollToDefault,
+        sheetActive = sheetActive,
+        flatHosters = emptyList(),
+        expandedState = emptyList(),
+        listState = listState,
+        onEnsureHosterExpanded = {},
+    )
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxWidth(),
+    ) {
         itemsIndexed(
             items = videoList,
-            key = { index, video -> "video-$index-${video.url.hashCode()}" }
+            key = { index, video -> "video-$index-${video.url.hashCode()}" },
         ) { videoIdx, video ->
             VideoTrack(
                 video = video,
                 videoState = videoState[videoIdx],
                 selected = selectedVideoIndex == videoIdx,
+                defaultSelected = videoIdx == defaultVideoIndex,
                 onClick = { onClickVideo(0, videoIdx) },
                 noHoster = true,
             )
         }
     }
+}
+
+private fun findDefaultScrollTarget(
+    hosterState: List<HosterState>,
+    defaultStreamSelector: String,
+): DefaultScrollTarget? {
+    if (defaultStreamSelector.isBlank()) return null
+    for ((hosterIdx, state) in hosterState.withIndex()) {
+        if (state !is HosterState.Ready) continue
+        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector)
+        if (videoIdx >= 0) {
+            return DefaultScrollTarget(hosterIndex = hosterIdx, videoIndex = videoIdx)
+        }
+    }
+    return null
 }
 
 @Composable
@@ -190,6 +369,11 @@ fun QualitySheetHosterContent(
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
+    onEnsureHosterExpanded: (Int) -> Unit = {},
+    defaultStreamSelector: String = "",
+    defaultVideoByHoster: Map<Int, Int> = emptyMap(),
+    autoScrollToDefault: Boolean = true,
+    sheetActive: Boolean = true,
     displayHosters: Pair<Boolean, Boolean>,
     modifier: Modifier = Modifier,
 ) {
@@ -205,13 +389,40 @@ fun QualitySheetHosterContent(
         state is HosterState.Ready && state.videoList.isEmpty()
     }
 
-    LazyColumn(modifier = modifier.fillMaxWidth()) {
+    val listState = rememberLazyListState()
+    val scrollTarget = remember(hosterState, defaultStreamSelector) {
+        findDefaultScrollTarget(hosterState, defaultStreamSelector)
+    }
+
+    val flatHostersForScroll = remember(validHosters, failedHosters, emptyHosters, displayHosters) {
+        buildList {
+            addAll(validHosters)
+            if (displayHosters.first) addAll(failedHosters)
+            if (displayHosters.second) addAll(emptyHosters)
+        }
+    }
+
+    ScrollToDefaultEffect(
+        target = scrollTarget,
+        autoScrollToDefault = autoScrollToDefault,
+        sheetActive = sheetActive,
+        flatHosters = flatHostersForScroll,
+        expandedState = expandedState,
+        listState = listState,
+        onEnsureHosterExpanded = onEnsureHosterExpanded,
+    )
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxWidth(),
+    ) {
         hosterContent(
             hosters = validHosters,
             expandedState = expandedState,
             selectedVideoIndex = selectedVideoIndex,
             onClickHoster = onClickHoster,
             onClickVideo = onClickVideo,
+            defaultVideoByHoster = defaultVideoByHoster,
         )
 
         if (displayHosters.first) {
@@ -221,6 +432,7 @@ fun QualitySheetHosterContent(
                 selectedVideoIndex = selectedVideoIndex,
                 onClickHoster = onClickHoster,
                 onClickVideo = onClickVideo,
+                defaultVideoByHoster = defaultVideoByHoster,
             )
         }
 
@@ -231,6 +443,7 @@ fun QualitySheetHosterContent(
                 selectedVideoIndex = selectedVideoIndex,
                 onClickHoster = onClickHoster,
                 onClickVideo = onClickVideo,
+                defaultVideoByHoster = defaultVideoByHoster,
             )
         }
     }
@@ -242,38 +455,34 @@ internal fun LazyListScope.hosterContent(
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
+    defaultVideoByHoster: Map<Int, Int>,
 ) {
     hosters.forEach { (hosterIdx, hoster) ->
         val isExpanded = expandedState.getOrNull(hosterIdx) ?: false
+        val defaultVideoIdx = defaultVideoByHoster[hosterIdx] ?: -1
 
-        item(key = "hoster-$hosterIdx-${hoster.name}") {
+        item(key = "hoster-header-$hosterIdx-${hoster.name}") {
             HosterTrack(
                 hoster = hoster,
                 selected = selectedVideoIndex.first == hosterIdx,
                 isExpanded = isExpanded,
                 onClick = { onClickHoster(hosterIdx) },
             )
+        }
 
-            AnimatedVisibility(
-                visible = hoster is HosterState.Ready && isExpanded,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
-            ) {
-                (hoster as? HosterState.Ready)?.let {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        it.videoList.forEachIndexed { videoIdx, video ->
-                            VideoTrack(
-                                video = video,
-                                videoState = hoster.videoState[videoIdx],
-                                selected = selectedVideoIndex == Pair(hosterIdx, videoIdx),
-                                onClick = { onClickVideo(hosterIdx, videoIdx) },
-                                noHoster = false,
-                            )
-                        }
-                    }
-                }
+        if (hoster is HosterState.Ready && isExpanded) {
+            itemsIndexed(
+                items = hoster.videoList,
+                key = { videoIdx, video -> "video-$hosterIdx-$videoIdx-${video.videoUrl.hashCode()}" },
+            ) { videoIdx, video ->
+                VideoTrack(
+                    video = video,
+                    videoState = hoster.videoState[videoIdx],
+                    selected = selectedVideoIndex == Pair(hosterIdx, videoIdx),
+                    defaultSelected = videoIdx == defaultVideoIdx,
+                    onClick = { onClickVideo(hosterIdx, videoIdx) },
+                    noHoster = false,
+                )
             }
         }
     }
@@ -350,39 +559,69 @@ fun VideoTrack(
     video: Video,
     videoState: Video.State,
     selected: Boolean,
+    defaultSelected: Boolean,
     onClick: () -> Unit,
     noHoster: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    val primary = MaterialTheme.colorScheme.primary
+    val highlightModifier = if (defaultSelected) {
+        Modifier
+            .clip(DefaultHighlightShape)
+            .background(
+                color = primary.copy(alpha = 0.14f),
+                shape = DefaultHighlightShape,
+            )
+            .border(
+                width = 2.dp,
+                color = primary,
+                shape = DefaultHighlightShape,
+            )
+    } else {
+        Modifier
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            .padding(vertical = MaterialTheme.padding.extraSmall)
+            .then(highlightModifier)
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = MaterialTheme.padding.small,
+                vertical = if (noHoster) MaterialTheme.padding.small else MaterialTheme.padding.extraSmall,
+            ),
     ) {
-        if (noHoster) {
-            VideoText(
-                video = video,
-                selected = selected,
-                noHoster = true,
-                modifier = Modifier.weight(1f),
-            )
-            VideoIcon(
-                videoState = videoState,
-                noHoster = true,
-            )
-        } else {
-            VideoIcon(
-                videoState = videoState,
-                noHoster = false,
-            )
-            VideoText(
-                video = video,
-                selected = selected,
-                noHoster = false,
-                modifier = Modifier.weight(1f),
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            if (noHoster) {
+                VideoText(
+                    video = video,
+                    selected = selected,
+                    defaultSelected = defaultSelected,
+                    noHoster = true,
+                    modifier = Modifier.weight(1f),
+                )
+                VideoIcon(
+                    videoState = videoState,
+                    noHoster = true,
+                )
+            } else {
+                VideoIcon(
+                    videoState = videoState,
+                    noHoster = false,
+                )
+                VideoText(
+                    video = video,
+                    selected = selected,
+                    defaultSelected = defaultSelected,
+                    noHoster = false,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }
@@ -420,20 +659,25 @@ private fun VideoIcon(
 private fun VideoText(
     video: Video,
     selected: Boolean,
+    defaultSelected: Boolean,
     noHoster: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Text(
         text = video.videoTitle,
-        fontStyle = if (selected) FontStyle.Italic else FontStyle.Normal,
-        fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Normal,
+        fontStyle = if (selected && !defaultSelected) FontStyle.Italic else FontStyle.Normal,
+        fontWeight = when {
+            defaultSelected -> FontWeight.Bold
+            selected -> FontWeight.SemiBold
+            else -> FontWeight.Normal
+        },
         style = MaterialTheme.typography.bodyMedium,
-        color = if (selected) MaterialTheme.colorScheme.primary else Color.Unspecified,
+        color = when {
+            defaultSelected -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurface
+        },
         maxLines = 6,
         overflow = TextOverflow.Ellipsis,
-        modifier = modifier
-            .padding(
-                vertical = if (noHoster) MaterialTheme.padding.small else MaterialTheme.padding.extraSmall,
-            ),
+        modifier = modifier,
     )
 }

@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.getChangedAt
+import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -77,6 +78,42 @@ class HosterLoader {
          * @param hosterList the list of hosters
          * @return the video, or null if no valid video was found
          */
+        suspend fun resolveDefaultStream(
+            source: AnimeSource,
+            hosterList: List<Hoster>,
+            defaultSelector: String,
+        ): Video? {
+            if (defaultSelector.isBlank()) return null
+            val hosterStates = MutableList<HosterState>(hosterList.size) { HosterState.Idle("") }
+            return try {
+                withContext(Dispatchers.IO) {
+                    hosterList.mapIndexed { hosterIdx, hoster ->
+                        async {
+                            val hosterState = EpisodeLoader.loadHosterVideos(source, hoster)
+                            hosterStates[hosterIdx] = hosterState
+                        }
+                    }.awaitAll()
+
+                    val strictRanked = DefaultStreamSelector.findRankedInHosters(defaultSelector, hosterStates)
+                    val ranked = strictRanked +
+                        DefaultStreamSelector.findRankedInHostersRelaxed(defaultSelector, hosterStates)
+                            .filter { it !in strictRanked }
+
+                    for ((hosterIdx, videoIdx) in ranked.distinct()) {
+                        val ready = hosterStates[hosterIdx] as? HosterState.Ready ?: continue
+                        val video = ready.videoList.getOrNull(videoIdx) ?: continue
+                        val resolved = getResolvedVideo(source, video)
+                        if (resolved?.videoUrl?.isNotEmpty() == true) {
+                            return@withContext resolved
+                        }
+                    }
+                    null
+                }
+            } catch (e: CancellationException) {
+                throw e
+            }
+        }
+
         suspend fun getBestVideo(source: AnimeSource, hosterList: List<Hoster>): Video? {
             val hosterStates = MutableList<HosterState>(hosterList.size) { HosterState.Idle("") }
 

@@ -74,6 +74,8 @@ fun PlayerSheets(
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
+    defaultStreamSelector: String,
+    autoScrollToDefault: Boolean,
     displayHosters: Pair<Boolean, Boolean>,
 
     // chapters sheet
@@ -153,6 +155,10 @@ fun PlayerSheets(
                 selectedVideoIndex = selectedVideoIndex,
                 onClickHoster = onClickHoster,
                 onClickVideo = onClickVideo,
+                onEnsureHosterExpanded = viewModel::ensureHosterExpanded,
+                defaultStreamSelector = defaultStreamSelector,
+                autoScrollToDefault = autoScrollToDefault,
+                sheetActive = sheetShown == Sheets.QualityTracks,
                 displayHosters = displayHosters,
                 onDismissRequest = onDismissRequest,
                 dismissSheet = dismissSheet,

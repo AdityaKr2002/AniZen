@@ -628,6 +628,19 @@ fun PlayerControls(
         val hosterState by viewModel.hosterState.collectAsState()
         val expandedState by viewModel.hosterExpandedList.collectAsState()
         val selectedHosterVideoIndex by viewModel.selectedHosterVideoIndex.collectAsState()
+        val currentAnime by viewModel.currentAnime.collectAsState()
+        val perAnimeDefaultStream by playerPreferences.perAnimeDefaultStream().collectAsState()
+        val perAnimeDefaultStreamData by playerPreferences.perAnimeDefaultStreamData().collectAsState()
+        val globalDefaultStream by playerPreferences.defaultStreamSelector().collectAsState()
+        val autoScrollDefaultStream by playerPreferences.autoScrollDefaultStream().collectAsState()
+        val defaultStreamSelector = remember(
+            currentAnime?.id,
+            perAnimeDefaultStream,
+            perAnimeDefaultStreamData,
+            globalDefaultStream,
+        ) {
+            viewModel.getEffectiveDefaultStreamSelector()
+        }
         val decoder by viewModel.currentDecoder.collectAsState()
         val speed by viewModel.playbackSpeed.collectAsState()
         val sleepTimerTimeRemaining by viewModel.remainingTime.collectAsState()
@@ -654,6 +667,8 @@ fun PlayerControls(
             selectedVideoIndex = selectedHosterVideoIndex,
             onClickHoster = viewModel::onHosterClicked,
             onClickVideo = viewModel::onVideoClicked,
+            defaultStreamSelector = defaultStreamSelector,
+            autoScrollToDefault = autoScrollDefaultStream,
             displayHosters = Pair(showFailedHosters, emptyHosters),
 
             chapter = currentChapter?.toSegment(),
