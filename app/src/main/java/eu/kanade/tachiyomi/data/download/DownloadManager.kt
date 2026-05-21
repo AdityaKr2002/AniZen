@@ -183,7 +183,7 @@ class DownloadManager(
      */
     fun buildVideo(source: Source, anime: Anime, episode: Episode): Video {
         val episodeDir =
-            provider.findEpisodeDir(episode.name, episode.scanlator, if (source.isLocal()) anime.url else anime.title, source)
+            provider.findEpisodeDir(episode.name, episode.scanlator, if (source.isLocal()) anime.url else anime.ogTitle, source)
 
         val files = if (source.isLocal() && episodeDir?.isFile == true) {
             listOf(episodeDir)
@@ -364,14 +364,14 @@ class DownloadManager(
             if (removeQueued) {
                 downloader.removeFromQueue(anime)
             }
-            provider.findAnimeDir(anime.title, source)?.delete()
+            provider.findAnimeDir(anime.ogTitle, source)?.delete()
             cache.removeAnime(anime)
 
             // KMK -->
             // Clean up sandbox for this anime
             val sandboxRoot = context.getExternalFilesDir("downloads")
             if (sandboxRoot != null && sandboxRoot.exists()) {
-                val animeDirname = provider.getAnimeDirName(anime.title)
+                val animeDirname = provider.getAnimeDirName(anime.ogTitle)
                 // Since sandbox doesn't have an anime subfolder structure usually based on our implementation,
                 // we should at least try to clean up if we had any logic for it.
                 // But according to downloadEpisode, we use episodeDirname directly under sandboxRoot.
@@ -449,7 +449,7 @@ class DownloadManager(
      */
     suspend fun renameEpisode(source: Source, anime: Anime, oldEpisode: Episode, newEpisode: Episode) {
         val oldNames = provider.getValidEpisodeDirNames(oldEpisode.name, oldEpisode.scanlator)
-        val animeDir = provider.getAnimeDir(anime.title, source)
+        val animeDir = provider.getAnimeDir(anime.ogTitle, source)
 
         // Assume there's only 1 version of the episode name formats present
         val oldFolder = oldNames.asSequence()
