@@ -461,21 +461,27 @@ class PlayerViewModel @JvmOverloads constructor(
      * When all subtitle/audio tracks are loaded, select the preferred one based on preferences,
      * or select the first one in the list if trackSelect fails.
      */
-    fun onFinishLoadingTracks() {
+    fun onFinishLoadingTracks(force: Boolean = false) {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
-        (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            activity.player.sid = it.id
-            activity.player.secondarySid = -1
+        if (activity.player.sid == -1 || (preferredSubtitle != null && activity.player.sid != preferredSubtitle.id)) {
+            preferredSubtitle?.let {
+                activity.player.sid = it.id
+                activity.player.secondarySid = -1
+            }
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
-        (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
-            activity.player.aid = it.id
+        if (activity.player.aid == -1 || (preferredAudio != null && activity.player.aid != preferredAudio.id)) {
+            preferredAudio?.let {
+                activity.player.aid = it.id
+            }
         }
 
-        isLoadingTracks.update { _ -> false }
-        updateIsLoadingEpisode(false)
-        setPausedState()
+        if (force || subtitleTracks.value.isNotEmpty() || audioTracks.value.size > 1) {
+            isLoadingTracks.update { _ -> false }
+            updateIsLoadingEpisode(false)
+            setPausedState()
+        }
     }
 
     @Immutable
