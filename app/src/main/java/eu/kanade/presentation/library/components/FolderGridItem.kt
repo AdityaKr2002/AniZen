@@ -1,7 +1,6 @@
 package eu.kanade.presentation.library.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,11 +16,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,8 +29,10 @@ import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.tachiyomi.ui.library.LibraryDisplayItem
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import tachiyomi.domain.library.model.LibraryDisplayMode
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import tachiyomi.presentation.core.util.collectAsState
+import eu.kanade.domain.ui.UiPreferences
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun FolderGridItem(
@@ -40,99 +41,110 @@ fun FolderGridItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     showTitle: Boolean = true,
+    usePanorama: Boolean? = null,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     val items = folder.items
     val count = items.size
 
     val isCompact = displayMode is LibraryDisplayMode.CompactGrid || displayMode is LibraryDisplayMode.CoverOnlyGrid
 
-    Column(
-        modifier = Modifier
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
+    // Get the correct ratio based on panorama settings
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalUsePanorama by uiPreferences.panoramaCover().collectAsState()
+    val effectiveUsePanorama = usePanorama ?: globalUsePanorama
+    val ratio = if (effectiveUsePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
+
+    GridItemSelectable(
+        isSelected = false, // Folders don't support multi-select in the main grid yet
+        onClick = onClick,
+        onLongClick = onLongClick,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(6.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (count > 0) {
-                val previewItems = items.take(4)
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(ratio)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (count > 0) {
+                    val previewItems = items.take(4)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                            if (previewItems.size > 0) FolderPreviewCover(previewItems[0])
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                                if (previewItems.size > 0) FolderPreviewCover(previewItems[0], effectiveUsePanorama)
+                            }
+                            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                                if (previewItems.size > 1) FolderPreviewCover(previewItems[1], effectiveUsePanorama)
+                            }
                         }
-                        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                            if (previewItems.size > 1) FolderPreviewCover(previewItems[1])
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                            if (previewItems.size > 2) FolderPreviewCover(previewItems[2])
-                        }
-                        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                            if (previewItems.size > 3) {
-                                if (count > 4) {
-                                    FolderPreviewMore(count - 3)
-                                } else {
-                                    FolderPreviewCover(previewItems[3])
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                                if (previewItems.size > 2) FolderPreviewCover(previewItems[2], effectiveUsePanorama)
+                            }
+                            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                                if (previewItems.size > 3) {
+                                    if (count > 4) {
+                                        FolderPreviewMore(count - 3)
+                                    } else {
+                                        FolderPreviewCover(previewItems[3], effectiveUsePanorama)
+                                    }
                                 }
                             }
                         }
                     }
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.Folder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxSize(0.5f)
+                    )
                 }
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.Folder,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxSize(0.5f)
-                )
-            }
 
-            if (isCompact && showTitle) {
-                CoverTextOverlay(
+                if (isCompact && showTitle) {
+                    CoverTextOverlay(
+                        title = folder.folder.name,
+                        onClickContinueWatching = null,
+                    )
+                }
+            }
+            if (!isCompact && showTitle) {
+                GridItemTitle(
                     title = folder.folder.name,
-                    onClickContinueWatching = null,
+                    style = MaterialTheme.typography.bodySmall,
+                    minLines = 2,
+                    modifier = Modifier.padding(
+                        top = 4.dp,
+                        bottom = CommonAnimeItemDefaults.GridVerticalSpacer,
+                    ),
                 )
             }
-        }
-        if (!isCompact && showTitle) {
-            Text(
-                text = folder.folder.name,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp),
-            )
         }
     }
 }
 
 @Composable
-private fun FolderPreviewCover(item: LibraryItem) {
+private fun FolderPreviewCover(item: LibraryItem, usePanorama: Boolean) {
     val anime = item.libraryAnime.anime
-    eu.kanade.presentation.anime.components.AnimeCover.Book(
+    val ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
+    
+    // We use the cover invoker directly for better control
+    val coverEntry = if (usePanorama) AnimeCover.Panorama else AnimeCover.Book
+    
+    coverEntry(
         data = tachiyomi.domain.anime.model.AnimeCover(
             animeId = anime.id,
             sourceId = anime.source,
@@ -140,11 +152,10 @@ private fun FolderPreviewCover(item: LibraryItem) {
             ogUrl = anime.thumbnailUrl,
             lastModified = anime.coverLastModified,
         ),
-        modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(4.dp)),
-        shape = RectangleShape,
+        modifier = Modifier.fillMaxSize(),
+        shape = RoundedCornerShape(4.dp),
         shouldExtractColor = false,
+        ratio = ratio,
     )
 }
 

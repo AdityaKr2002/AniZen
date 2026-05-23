@@ -308,7 +308,7 @@ private fun AnimeGridCover(
 }
 
 @Composable
-private fun GridItemTitle(
+internal fun GridItemTitle(
     title: String,
     style: TextStyle,
     minLines: Int,
@@ -331,7 +331,7 @@ private fun GridItemTitle(
  * Wrapper for grid items to handle selection state, click and long click.
  */
 @Composable
-private fun GridItemSelectable(
+internal fun GridItemSelectable(
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
