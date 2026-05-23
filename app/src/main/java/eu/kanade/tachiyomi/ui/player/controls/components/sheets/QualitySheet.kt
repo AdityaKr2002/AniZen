@@ -98,6 +98,7 @@ fun QualitySheet(
     onClickVideo: (Int, Int) -> Unit,
     onEnsureHosterExpanded: (Int) -> Unit = {},
     defaultStreamSelector: String,
+    highlightDefaultStream: Boolean = true,
     autoScrollToDefault: Boolean = true,
     sheetActive: Boolean = true,
     displayHosters: Pair<Boolean, Boolean>,
@@ -153,15 +154,18 @@ fun QualitySheet(
                     targetOffsetY = { it / 2 },
                 ),
             ) {
-                val defaultVideoByHoster = remember(hosterState, defaultStreamSelector) {
-                    buildDefaultVideoByHosterIndex(hosterState, defaultStreamSelector)
+                val effectiveSelector = if (highlightDefaultStream) defaultStreamSelector else ""
+                val defaultVideoByHoster = remember(hosterState, effectiveSelector) {
+                    buildDefaultVideoByHosterIndex(hosterState, effectiveSelector)
                 }
 
-                EnsureDefaultHostersExpanded(
-                    sheetActive = sheetActive,
-                    defaultVideoByHoster = defaultVideoByHoster,
-                    onEnsureHosterExpanded = onEnsureHosterExpanded,
-                )
+                if (autoScrollToDefault) {
+                    EnsureDefaultHostersExpanded(
+                        sheetActive = sheetActive,
+                        defaultVideoByHoster = defaultVideoByHoster,
+                        onEnsureHosterExpanded = onEnsureHosterExpanded,
+                    )
+                }
 
                 if (hosterState.size == 1 &&
                     hosterState.first().name == Hoster.NO_HOSTER_LIST &&
@@ -172,7 +176,8 @@ fun QualitySheet(
                         videoState = (hosterState.first() as HosterState.Ready).videoState,
                         selectedVideoIndex = selectedVideoIndex.second,
                         onClickVideo = onClickVideo,
-                        defaultStreamSelector = defaultStreamSelector,
+                        defaultStreamSelector = effectiveSelector,
+                        highlightDefaultStream = highlightDefaultStream,
                         autoScrollToDefault = autoScrollToDefault,
                         sheetActive = sheetActive,
                         modifier = modifier.padding(paddingValues = qualitySheetPadding),
@@ -185,7 +190,8 @@ fun QualitySheet(
                         onClickHoster = onClickHoster,
                         onClickVideo = onClickVideo,
                         onEnsureHosterExpanded = onEnsureHosterExpanded,
-                        defaultStreamSelector = defaultStreamSelector,
+                        defaultStreamSelector = effectiveSelector,
+                        highlightDefaultStream = highlightDefaultStream,
                         defaultVideoByHoster = defaultVideoByHoster,
                         autoScrollToDefault = autoScrollToDefault,
                         sheetActive = sheetActive,
@@ -301,13 +307,14 @@ fun QualitySheetVideoContent(
     selectedVideoIndex: Int,
     onClickVideo: (Int, Int) -> Unit,
     defaultStreamSelector: String = "",
+    highlightDefaultStream: Boolean = true,
     autoScrollToDefault: Boolean = true,
     sheetActive: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val defaultVideoIndex = remember(videoList, defaultStreamSelector) {
-        findDefaultVideoIndex(videoList, defaultStreamSelector)
+    val defaultVideoIndex = remember(videoList, defaultStreamSelector, highlightDefaultStream) {
+        if (!highlightDefaultStream) -1 else findDefaultVideoIndex(videoList, defaultStreamSelector)
     }
     val scrollTarget = remember(defaultVideoIndex) {
         if (defaultVideoIndex >= 0) {
@@ -339,7 +346,7 @@ fun QualitySheetVideoContent(
                 video = video,
                 videoState = videoState[videoIdx],
                 selected = selectedVideoIndex == videoIdx,
-                defaultSelected = videoIdx == defaultVideoIndex,
+                defaultSelected = highlightDefaultStream && videoIdx == defaultVideoIndex,
                 onClick = { onClickVideo(0, videoIdx) },
                 noHoster = true,
             )
@@ -371,6 +378,7 @@ fun QualitySheetHosterContent(
     onClickVideo: (Int, Int) -> Unit,
     onEnsureHosterExpanded: (Int) -> Unit = {},
     defaultStreamSelector: String = "",
+    highlightDefaultStream: Boolean = true,
     defaultVideoByHoster: Map<Int, Int> = emptyMap(),
     autoScrollToDefault: Boolean = true,
     sheetActive: Boolean = true,
@@ -423,6 +431,7 @@ fun QualitySheetHosterContent(
             onClickHoster = onClickHoster,
             onClickVideo = onClickVideo,
             defaultVideoByHoster = defaultVideoByHoster,
+            highlightDefaultStream = highlightDefaultStream,
         )
 
         if (displayHosters.first) {
@@ -433,6 +442,7 @@ fun QualitySheetHosterContent(
                 onClickHoster = onClickHoster,
                 onClickVideo = onClickVideo,
                 defaultVideoByHoster = defaultVideoByHoster,
+                highlightDefaultStream = highlightDefaultStream,
             )
         }
 
@@ -444,6 +454,7 @@ fun QualitySheetHosterContent(
                 onClickHoster = onClickHoster,
                 onClickVideo = onClickVideo,
                 defaultVideoByHoster = defaultVideoByHoster,
+                highlightDefaultStream = highlightDefaultStream,
             )
         }
     }
@@ -456,10 +467,11 @@ internal fun LazyListScope.hosterContent(
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
     defaultVideoByHoster: Map<Int, Int>,
+    highlightDefaultStream: Boolean = true,
 ) {
     hosters.forEach { (hosterIdx, hoster) ->
         val isExpanded = expandedState.getOrNull(hosterIdx) ?: false
-        val defaultVideoIdx = defaultVideoByHoster[hosterIdx] ?: -1
+        val defaultVideoIdx = if (highlightDefaultStream) defaultVideoByHoster[hosterIdx] ?: -1 else -1
 
         item(key = "hoster-header-$hosterIdx-${hoster.name}") {
             HosterTrack(
@@ -479,7 +491,7 @@ internal fun LazyListScope.hosterContent(
                     video = video,
                     videoState = hoster.videoState[videoIdx],
                     selected = selectedVideoIndex == Pair(hosterIdx, videoIdx),
-                    defaultSelected = videoIdx == defaultVideoIdx,
+                                defaultSelected = highlightDefaultStream && videoIdx == defaultVideoIdx,
                     onClick = { onClickVideo(hosterIdx, videoIdx) },
                     noHoster = false,
                 )

@@ -247,7 +247,9 @@
     <string name="pref_hosters_show_failure">Display failed hosters</string>
     <string name="pref_hosters_show_empty">Display empty hosters</string>
     <string name="pref_default_stream_per_anime">Remember default stream per anime</string>
-    <string name="pref_default_stream_per_anime_summary">Each series keeps its own preferred link. Works across one or many extensions.</string>
+    <string name="pref_default_stream_per_anime_summary">Off disables saving, auto-load, and highlight. On: tap a stream in Qualities to set each series default.</string>
+    <string name="pref_default_stream_highlight">Highlight default in Qualities</string>
+    <string name="pref_default_stream_highlight_summary">Show a bordered row for your saved default stream.</string>
     <string name="pref_default_stream_auto_scroll">Auto-scroll to default in Qualities</string>
     <string name="pref_default_stream_auto_scroll_summary">When you open Qualities, jump to the saved default for this anime.</string>
     <string name="pref_default_stream_clear">Clear saved stream defaults</string>

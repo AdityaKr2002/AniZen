@@ -1,6 +1,7 @@
 package eu.kanade.presentation.anime.components
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -76,6 +78,7 @@ fun AnimeEpisodeListItem(
     seen: Boolean,
     bookmark: Boolean,
     fillermark: Boolean,
+    isAutoFiller: Boolean = false,
     summary: String?,
     previewUrl: String?,
     selected: Boolean,
@@ -124,9 +127,18 @@ fun AnimeEpisodeListItem(
         swipeThreshold = swipeActionThreshold,
         backgroundUntilSwipeThreshold = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
+        val backgroundModifier = if (isAutoFiller) {
+            Modifier
+                .padding(vertical = 4.dp, horizontal = 4.dp)
+                .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                .border(2.dp, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))
+        } else {
+            Modifier.selectedBackground(selected)
+        }
+        
         Row(
             modifier = Modifier
-                .selectedBackground(selected)
+                .then(backgroundModifier)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -140,6 +152,7 @@ fun AnimeEpisodeListItem(
                     date = date,
                     watchProgress = watchProgress,
                     fillermark = fillermark,
+                    isAutoFiller = isAutoFiller,
                     scanlator = scanlator,
                     seen = seen,
                     bookmark = bookmark,
@@ -177,14 +190,25 @@ fun AnimeEpisodeListItem(
                             )
 
                             if (previewUrl == null) {
-                                BookmarkDownloadIcons(
-                                    bookmark = bookmark,
-                                    downloadIndicatorEnabled = downloadIndicatorEnabled,
-                                    downloadStateProvider = downloadStateProvider,
-                                    downloadProgressProvider = downloadProgressProvider,
-                                    onDownloadClick = onDownloadClick,
-                                    fileSize = fileSize,
-                                )
+                                Column(horizontalAlignment = Alignment.End) {
+                                    BookmarkDownloadIcons(
+                                        bookmark = bookmark,
+                                        downloadIndicatorEnabled = downloadIndicatorEnabled,
+                                        downloadStateProvider = downloadStateProvider,
+                                        downloadProgressProvider = downloadProgressProvider,
+                                        onDownloadClick = onDownloadClick,
+                                        fileSize = fileSize,
+                                    )
+                                    if (isAutoFiller) {
+                                        Text(
+                                            text = "FILLER",
+                                            color = MaterialTheme.colorScheme.tertiary,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -210,14 +234,25 @@ fun AnimeEpisodeListItem(
                     )
 
                     if (previewUrl != null) {
-                        BookmarkDownloadIcons(
-                            bookmark = bookmark,
-                            downloadIndicatorEnabled = downloadIndicatorEnabled,
-                            downloadStateProvider = downloadStateProvider,
-                            downloadProgressProvider = downloadProgressProvider,
-                            onDownloadClick = onDownloadClick,
-                            fileSize = fileSize,
-                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            BookmarkDownloadIcons(
+                                bookmark = bookmark,
+                                downloadIndicatorEnabled = downloadIndicatorEnabled,
+                                downloadStateProvider = downloadStateProvider,
+                                downloadProgressProvider = downloadProgressProvider,
+                                onDownloadClick = onDownloadClick,
+                                fileSize = fileSize,
+                            )
+                            if (isAutoFiller) {
+                                Text(
+                                    text = "FILLER",
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -231,6 +266,7 @@ private fun RowScope.SimpleEpisodeListItemImpl(
     date: String?,
     watchProgress: String?,
     fillermark: Boolean,
+    isAutoFiller: Boolean,
     scanlator: String?,
     seen: Boolean,
     bookmark: Boolean,
@@ -262,14 +298,25 @@ private fun RowScope.SimpleEpisodeListItemImpl(
         )
     }
 
-    BookmarkDownloadIcons(
-        bookmark = bookmark,
-        downloadIndicatorEnabled = downloadIndicatorEnabled,
-        downloadStateProvider = downloadStateProvider,
-        downloadProgressProvider = downloadProgressProvider,
-        onDownloadClick = onDownloadClick,
-        fileSize = fileSize,
-    )
+    Column(horizontalAlignment = Alignment.End) {
+        BookmarkDownloadIcons(
+            bookmark = bookmark,
+            downloadIndicatorEnabled = downloadIndicatorEnabled,
+            downloadStateProvider = downloadStateProvider,
+            downloadProgressProvider = downloadProgressProvider,
+            onDownloadClick = onDownloadClick,
+            fileSize = fileSize,
+        )
+        if (isAutoFiller) {
+            Text(
+                text = "FILLER",
+                color = MaterialTheme.colorScheme.tertiary,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
 }
 
 @Composable

@@ -132,6 +132,7 @@ import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
 import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
+import eu.kanade.tachiyomi.data.filler.AnimeFillerListFetcher
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.i18n.MR
 import tachiyomi.source.localanime.isLocal
@@ -179,6 +180,7 @@ class PlayerViewModel @JvmOverloads constructor(
     private val trackSelect: TrackSelect = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     uiPreferences: UiPreferences = Injekt.get(),
+    private val animeFillerListFetcher: AnimeFillerListFetcher = AnimeFillerListFetcher(),
 ) : ViewModel() {
 
     private val _currentPlaylist = MutableStateFlow<List<Episode>>(emptyList())
@@ -332,6 +334,8 @@ class PlayerViewModel @JvmOverloads constructor(
     private val _primaryButton = MutableStateFlow<CustomButton?>(null)
     val primaryButton = _primaryButton.asStateFlow()
 
+    private var fillerEpisodes: Set<Float> = emptySet()
+
     init {
         viewModelScope.launchIO {
             try {
@@ -349,6 +353,17 @@ class PlayerViewModel @JvmOverloads constructor(
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e)
                 _customButtons.update { _ -> CustomButtonFetchState.Error(e.message ?: "Unable to fetch buttons") }
+            }
+        }
+        viewModelScope.launchIO {
+            try {
+                currentAnime.collect { anime ->
+                    if (anime != null && fillerEpisodes.isEmpty()) {
+                        fillerEpisodes = animeFillerListFetcher.getFillerEpisodes(anime.title)
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore
             }
         }
     }
@@ -1299,12 +1314,38 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     private fun getAdjacentEpisodeId(previous: Boolean): Long {
-        val newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
+        val skipFiller = playerPreferences.skipFillerEpisodes().get()
+        var newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
+        val playlist = currentPlaylist.value
+
+        var skippedCount = 0
+        val skippedNames = mutableListOf<String>()
+
+        while (newIndex in playlist.indices) {
+            val candidate = playlist[newIndex]
+            val isFiller = candidate.fillermark || fillerEpisodes.contains(candidate.episode_number)
+            if (skipFiller && isFiller) {
+                skippedCount++
+                skippedNames.add(candidate.name)
+                newIndex = if (previous) newIndex - 1 else newIndex + 1
+            } else {
+                break
+            }
+        }
+
+        if (skippedCount > 0 && skipFiller) {
+            val epString = if (skippedNames.size <= 3) skippedNames.joinToString(", ") else "${skippedNames.take(3).joinToString(", ")} and ${skippedCount - 3} more"
+            viewModelScope.launch {
+                withUIContext {
+                    activity.showToast("Skipped filler ep $epString")
+                }
+            }
+        }
 
         return when {
-            previous && getCurrentEpisodeIndex() == 0 -> -1L
-            !previous && currentPlaylist.value.lastIndex == getCurrentEpisodeIndex() -> -1L
-            else -> currentPlaylist.value.getOrNull(newIndex)?.id ?: -1L
+            previous && newIndex < 0 -> -1L
+            !previous && newIndex > playlist.lastIndex -> -1L
+            else -> playlist.getOrNull(newIndex)?.id ?: -1L
         }
     }
 

@@ -96,6 +96,7 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
             ),
             getDisplayGroup(playerPreferences = playerPreferences),
             getIntroSkipGroup(playerPreferences = playerPreferences),
+            getFillerSkipGroup(playerPreferences = playerPreferences),
             if (deviceSupportsPip) getPipGroup(playerPreferences = playerPreferences) else null,
             getExternalPlayerGroup(
                 playerPreferences = playerPreferences,
@@ -203,13 +204,14 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
         val showEmpty = playerPreferences.showEmptyHosters()
         val preferredQuality = playerPreferences.preferredQuality()
         val perAnimeDefaultStream = playerPreferences.perAnimeDefaultStream()
+        val showDefaultStreamHighlight = playerPreferences.showDefaultStreamHighlight()
         val autoScrollDefaultStream = playerPreferences.autoScrollDefaultStream()
+        val perAnimeDefaultStreamEnabled by perAnimeDefaultStream.collectAsState()
         val streamStore = remember(playerPreferences) { DefaultStreamPreferenceStore(playerPreferences) }
         val perAnimeData by playerPreferences.perAnimeDefaultStreamData().collectAsState()
-        val globalDefault by playerPreferences.defaultStreamSelector().collectAsState()
         var clearGeneration by remember { mutableIntStateOf(0) }
-        val savedCount = remember(perAnimeData, globalDefault, clearGeneration) {
-            streamStore.savedAnimeCount() + if (globalDefault.isNotBlank()) 1 else 0
+        val savedCount = remember(perAnimeData, clearGeneration) {
+            streamStore.savedAnimeCount()
         }
 
         return Preference.PreferenceGroup(
@@ -231,9 +233,16 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                     subtitle = stringResource(MR.strings.pref_default_stream_per_anime_summary),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
+                    pref = showDefaultStreamHighlight,
+                    title = stringResource(MR.strings.pref_default_stream_highlight),
+                    subtitle = stringResource(MR.strings.pref_default_stream_highlight_summary),
+                    enabled = perAnimeDefaultStreamEnabled,
+                ),
+                Preference.PreferenceItem.SwitchPreference(
                     pref = autoScrollDefaultStream,
                     title = stringResource(MR.strings.pref_default_stream_auto_scroll),
                     subtitle = stringResource(MR.strings.pref_default_stream_auto_scroll_summary),
+                    enabled = perAnimeDefaultStreamEnabled,
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     pref = showFailure,
@@ -372,6 +381,21 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                 Preference.PreferenceItem.InfoPreference(
                     title = stringResource(MR.strings.pref_category_player_aniskip_info),
                     enabled = isIntroSkipEnabled,
+                ),
+            ),
+        )
+    }
+
+    @Composable
+    private fun getFillerSkipGroup(playerPreferences: PlayerPreferences): Preference.PreferenceGroup {
+        val skipFiller = playerPreferences.skipFillerEpisodes()
+
+        return Preference.PreferenceGroup(
+            title = "Filler Skip",
+            preferenceItems = persistentListOf(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = skipFiller,
+                    title = "Skip filler episodes detected by this feature",
                 ),
             ),
         )

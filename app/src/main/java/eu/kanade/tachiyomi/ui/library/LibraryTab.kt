@@ -72,6 +72,16 @@ import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.injectLazy
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import eu.kanade.domain.ui.UiPreferences
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import eu.kanade.presentation.library.components.FolderOverlay
+import eu.kanade.presentation.library.components.FolderContextMenu
+import tachiyomi.domain.library.model.LibraryFolder
+
 
 data object LibraryTab : Tab {
 
@@ -101,8 +111,21 @@ data object LibraryTab : Tab {
         val screenModel = rememberScreenModel { LibraryScreenModel() }
         val settingsScreenModel = rememberScreenModel { LibrarySettingsScreenModel() }
         val state by screenModel.state.collectAsState()
+        val collapseFolders by settingsScreenModel.libraryPreferences.collapseFolders().collectAsStatePref()
+
+        // Folder overlay state: which folder is tapped to show the full overlay
+        var folderOverlayItem by remember { mutableStateOf<LibraryDisplayItem.Folder?>(null) }
+        var folderLongClickItem by remember { mutableStateOf<LibraryDisplayItem.Folder?>(null) }
+        // Context menu state: which anime had long-press to add to folder
+        var folderContextAnimeList by remember { mutableStateOf<List<LibraryAnime>?>(null) }
+        // Active category folders for context menu
+        val activeCategoryFolders = remember(state.folders, screenModel.activeCategoryIndex, state.categories) {
+            val activeCategoryId = state.categories.getOrNull(screenModel.activeCategoryIndex)?.id
+            if (activeCategoryId != null) state.folders.filter { it.categoryId == activeCategoryId } else emptyList()
+        }
 
         val snackbarHostState = remember { SnackbarHostState() }
+
 
         val onClickRefresh: (Category?) -> Boolean = { category ->
             // SY -->
@@ -211,6 +234,9 @@ data object LibraryTab : Tab {
                     onClickCollectRecommendations = {
                         // TODO: Implement bulk recommendations
                     },
+                    onFolderClicked = {
+                        folderContextAnimeList = state.selection
+                    },
                 )
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -233,13 +259,13 @@ data object LibraryTab : Tab {
                 }
                 else -> {
                     LibraryContent(
-                        categories = state.categories.toImmutableList(),
+                        categories = if (state.searchQuery.isNullOrEmpty()) state.categories.toImmutableList() else persistentListOf(Category(0, "Search Results", 0, 0, false)),
                         searchQuery = state.searchQuery,
                         selection = state.selection.toImmutableList(),
                         contentPadding = contentPadding,
-                        currentPage = { screenModel.activeCategoryIndex },
+                        currentPage = { if (state.searchQuery.isNullOrEmpty()) screenModel.activeCategoryIndex else 0 },
                         hasActiveFilters = state.hasActiveFilters,
-                        showPageTabs = state.showCategoryTabs || !state.searchQuery.isNullOrEmpty(),
+                        showPageTabs = state.showCategoryTabs && state.searchQuery.isNullOrEmpty(),
                         onChangeCurrentPage = { screenModel.activeCategoryIndex = it },
                         onAnimeClicked = { navigator.push(AnimeScreen(it)) },
                         onContinueWatchingClicked = { it: LibraryAnime ->
@@ -255,9 +281,9 @@ data object LibraryTab : Tab {
                         },
                         onRefresh = onClickRefresh,
                         onGlobalSearchClicked = {
-                            navigator.push(
-                                GlobalSearchScreen(screenModel.state.value.searchQuery ?: ""),
-                            )
+                            val currentQuery = screenModel.state.value.searchQuery ?: ""
+                            screenModel.search(null)
+                            navigator.push(GlobalSearchScreen(currentQuery))
                         },
                         getNumberOfAnimeForCategory = { state.getAnimeCountForCategory(it) },
                         getDisplayMode = { screenModel.getDisplayMode() },
@@ -266,10 +292,184 @@ data object LibraryTab : Tab {
                                 it,
                             )
                         },
-                        getAnimeLibraryForPage = { state.getAnimelibItemsByPage(it).toImmutableList() },
+                        getAnimeLibraryForPage = { page ->
+                            if (!state.searchQuery.isNullOrEmpty()) {
+                                val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
+                                state.categories.forEach { cat ->
+                                    val catItems = state.library[cat] ?: emptyList()
+                                    if (catItems.isNotEmpty()) {
+                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Header(cat.name))
+                                        val processedFolderIds = mutableSetOf<Long>()
+                                        val grouped = catItems.groupBy { it.libraryAnime.folderId }
+                                        for (item in catItems) {
+                                            if (!collapseFolders) {
+                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                            } else {
+                                                val folderId = item.libraryAnime.folderId
+                                                if (folderId == null) {
+                                                    displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                                } else if (processedFolderIds.add(folderId)) {
+                                                    val folder = state.folders.find { it.id == folderId }
+                                                    val folderItems = grouped[folderId] ?: emptyList()
+                                                    if (folder != null) {
+                                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
+                                                    } else {
+                                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                                        processedFolderIds.remove(folderId)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                displayItems.toImmutableList()
+                            } else {
+                                val items = state.getAnimelibItemsByPage(page)
+                                if (!collapseFolders) {
+                                    items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList()
+                                } else {
+                                    val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
+                                    val processedFolderIds = mutableSetOf<Long>()
+                                    val grouped = items.groupBy { it.libraryAnime.folderId }
+    
+                                    for (item in items) {
+                                        val folderId = item.libraryAnime.folderId
+                                        if (folderId == null) {
+                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                        } else if (processedFolderIds.add(folderId)) {
+                                            val folder = state.folders.find { it.id == folderId }
+                                            val folderItems = grouped[folderId] ?: emptyList()
+                                            if (folder != null) {
+                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
+                                            } else {
+                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                                processedFolderIds.remove(folderId)
+                                            }
+                                        }
+                                    }
+                                    displayItems.toImmutableList()
+                                }
+                            }
+                        },
+                        onFolderClick = { folderItem ->
+                            folderOverlayItem = folderItem
+                        },
+                        onFolderLongClick = { folderItem ->
+                            folderLongClickItem = folderItem
+                        },
                     )
                 }
             }
+        }
+
+        val uiPreferences = remember { Injekt.get<UiPreferences>() }
+        val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref()
+        val libraryMode by uiPreferences.libraryPanoramaMode().collectAsStatePref()
+        val effectivePanorama = remember(globalPanorama, libraryMode) { libraryMode.resolve(globalPanorama) }
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val displayMode by screenModel.getDisplayMode()
+        val columns by screenModel.getColumnsPreferenceForCurrentOrientation(isLandscape)
+
+        // Folder Overlay - shown when a folder card is tapped
+        folderOverlayItem?.let { folderDisplayItem ->
+            val filteredItems = state.getAnimelibItemsByPage(screenModel.activeCategoryIndex)
+            val currentFolderItems = remember(filteredItems, folderDisplayItem.folder.id) {
+                filteredItems.filter { it.libraryAnime.folderId == folderDisplayItem.folder.id }
+            }
+
+            FolderOverlay(
+                folder = folderDisplayItem.folder,
+                items = currentFolderItems,
+                displayMode = displayMode,
+                columns = columns,
+                usePanorama = effectivePanorama,
+                onDismiss = { folderOverlayItem = null },
+                onRenameFolder = { newName ->
+                    screenModel.renameFolder(folderDisplayItem.folder.id, newName)
+                },
+                onDeleteFolder = {
+                    screenModel.deleteFolder(folderDisplayItem.folder.id)
+                    folderOverlayItem = null
+                },
+                onClickAnime = { libraryItem ->
+                    navigator.push(AnimeScreen(libraryItem.libraryAnime.anime.id))
+                    folderOverlayItem = null
+                },
+                onLongClickAnime = { libraryItem ->
+                    folderContextAnimeList = listOf(libraryItem.libraryAnime)
+                },
+                onFolderActionClicked = { items ->
+                    folderContextAnimeList = items.map { it.libraryAnime }
+                },
+                onDownloadClicked = { items ->
+                    screenModel.runDownloadAction(eu.kanade.presentation.anime.DownloadAction.UNSEEN_EPISODES, items.map { it.libraryAnime.anime })
+                },
+                onDeleteAnimeClicked = { items ->
+                    screenModel.openDeleteAnimeDialog(items.map { it.libraryAnime.anime })
+                },
+                onMarkAsSeenClicked = { items ->
+                    screenModel.markSeen(items.map { it.libraryAnime }, true)
+                },
+                onMarkAsUnseenClicked = { items ->
+                    screenModel.markSeen(items.map { it.libraryAnime }, false)
+                },
+                onClickFilter = screenModel::showSettingsDialog,
+                onClickContinueWatching = { it: tachiyomi.domain.library.model.LibraryAnime ->
+                    scope.launchIO {
+                        val episode = screenModel.getNextUnseenEpisode(it.anime)
+                        if (episode != null) openEpisode(episode)
+                    }
+                    Unit
+                }.takeIf { state.showAnimeContinueButton },
+            )
+        }
+
+        folderLongClickItem?.let { folderDisplayItem ->
+            eu.kanade.presentation.library.components.FolderActionDialog(
+                folder = folderDisplayItem.folder,
+                onDismiss = { folderLongClickItem = null },
+                onRenameFolder = { newName ->
+                    screenModel.renameFolder(folderDisplayItem.folder.id, newName)
+                    folderLongClickItem = null
+                },
+                onDeleteFolder = {
+                    screenModel.deleteFolder(folderDisplayItem.folder.id)
+                    folderLongClickItem = null
+                },
+            )
+        }
+
+        // Folder Context Menu – shown for adding anime to a folder
+        folderContextAnimeList?.let { animeList ->
+            val activeCategoryId = state.categories.getOrNull(screenModel.activeCategoryIndex)?.id
+            val title = if (animeList.size == 1) animeList.first().anime.title else "${animeList.size} items selected"
+            val currentFolderId = if (animeList.size == 1) animeList.first().folderId else null
+
+            FolderContextMenu(
+                animeTitle = title,
+                currentFolderId = currentFolderId,
+                folders = activeCategoryFolders,
+                onDismiss = { folderContextAnimeList = null },
+                onAddToFolder = { folderId ->
+                    if (activeCategoryId != null) {
+                        screenModel.addAnimeToFolder(
+                            animeIds = animeList.map { it.anime.id },
+                            categoryId = activeCategoryId,
+                            folderId = folderId,
+                        )
+                    }
+                    folderContextAnimeList = null
+                    screenModel.clearSelection()
+                },
+                onCreateNewFolder = {
+                    if (activeCategoryId != null) {
+                        screenModel.createFolder(activeCategoryId, animeList.map { it.anime.id })
+                    }
+                    folderContextAnimeList = null
+                    screenModel.clearSelection()
+                },
+            )
         }
 
         val onDismissRequest = screenModel::closeDialog

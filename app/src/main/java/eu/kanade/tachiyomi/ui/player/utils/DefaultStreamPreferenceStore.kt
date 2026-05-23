@@ -13,26 +13,25 @@ class DefaultStreamPreferenceStore(
 
     fun autoScrollEnabled(): Preference<Boolean> = playerPreferences.autoScrollDefaultStream()
 
+    fun highlightEnabled(): Preference<Boolean> = playerPreferences.showDefaultStreamHighlight()
+
+    fun isFeatureEnabled(): Boolean = playerPreferences.perAnimeDefaultStream().get()
+
     fun getEffectiveSelector(animeId: Long?): String {
-        val global = playerPreferences.defaultStreamSelector().get()
-        if (!playerPreferences.perAnimeDefaultStream().get() || animeId == null) {
-            return global
-        }
-        return getPerAnimeMap()[animeId] ?: global
+        if (!isFeatureEnabled()) return ""
+        if (animeId == null) return ""
+        return getPerAnimeMap()[animeId].orEmpty()
     }
 
     fun setSelector(animeId: Long?, selector: String) {
-        if (playerPreferences.perAnimeDefaultStream().get() && animeId != null) {
-            val map = getPerAnimeMap().toMutableMap()
-            if (selector.isBlank()) {
-                map.remove(animeId)
-            } else {
-                map[animeId] = selector
-            }
-            savePerAnimeMap(map)
+        if (!isFeatureEnabled() || animeId == null) return
+        val map = getPerAnimeMap().toMutableMap()
+        if (selector.isBlank()) {
+            map.remove(animeId)
         } else {
-            playerPreferences.defaultStreamSelector().set(selector)
+            map[animeId] = selector
         }
+        savePerAnimeMap(map)
     }
 
     fun clearAll() {

@@ -75,6 +75,7 @@ fun PlayerSheets(
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
     defaultStreamSelector: String,
+    highlightDefaultStream: Boolean = true,
     autoScrollToDefault: Boolean,
     displayHosters: Pair<Boolean, Boolean>,
 
@@ -157,6 +158,7 @@ fun PlayerSheets(
                 onClickVideo = onClickVideo,
                 onEnsureHosterExpanded = viewModel::ensureHosterExpanded,
                 defaultStreamSelector = defaultStreamSelector,
+                highlightDefaultStream = highlightDefaultStream,
                 autoScrollToDefault = autoScrollToDefault,
                 sheetActive = sheetShown == Sheets.QualityTracks,
                 displayHosters = displayHosters,

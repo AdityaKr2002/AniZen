@@ -22,11 +22,14 @@ class PlayerPreferences(
     fun preferredQuality() = preferenceStore.getString("pref_preferred_quality", "1080")
     fun defaultStreamSelector() = preferenceStore.getString("pref_default_stream_selector", "")
 
-    /** Remember a separate default stream per anime (tap in Qualities sheet). */
+    /** Master switch: save/load default stream per anime (tap in Qualities). */
     fun perAnimeDefaultStream() = preferenceStore.getBoolean("pref_per_anime_default_stream", true)
 
     /** Scroll the Qualities list to the saved default when the sheet opens. */
     fun autoScrollDefaultStream() = preferenceStore.getBoolean("pref_auto_scroll_default_stream", true)
+
+    /** Show bordered highlight on the saved default row in Qualities. */
+    fun showDefaultStreamHighlight() = preferenceStore.getBoolean("pref_show_default_stream_highlight", true)
 
     /** Encoded map of anime id → stream fingerprint. */
     fun perAnimeDefaultStreamData() = preferenceStore.getString("pref_per_anime_default_stream_data", "")
@@ -71,6 +74,10 @@ class PlayerPreferences(
     fun waitingTimeIntroSkip() = preferenceStore.getInt("pref_waiting_time_aniskip", 5)
     fun aniSkipEnabled() = preferenceStore.getBoolean("pref_enable_ani_skip", false)
     fun disableAniSkipOnChapters() = preferenceStore.getBoolean("pref_disabled_ani_skip_chapters", true)
+
+    // Filler skip
+    
+    fun skipFillerEpisodes() = preferenceStore.getBoolean("pref_skip_filler_episodes", false)
 
     // PiP
 
