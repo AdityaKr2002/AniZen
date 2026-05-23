@@ -151,9 +151,9 @@ fun AnimeCompactGridItem(
  * Title overlay for [AnimeCompactGridItem]
  */
 @Composable
-private fun BoxScope.CoverTextOverlay(
+internal fun BoxScope.CoverTextOverlay(
     title: String,
-    onClickContinueWatching: (() -> Unit)? = null,
+    onClickContinueWatching: (() -> Unit)?,
 ) {
     val gradient = remember {
         Brush.verticalGradient(

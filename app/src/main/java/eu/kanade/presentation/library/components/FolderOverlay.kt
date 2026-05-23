@@ -245,10 +245,10 @@ fun FolderOverlay(
 
                             val onClick: (tachiyomi.domain.library.model.LibraryAnime) -> Unit = {
                                 if (selectedItems.isNotEmpty()) {
-                                    if (selectedItems.contains(it.id)) {
-                                        selectedItems = selectedItems - it.id
+                                    selectedItems = if (selectedItems.contains(it.id)) {
+                                        selectedItems - it.id
                                     } else {
-                                        selectedItems = selectedItems + it.id
+                                        selectedItems + it.id
                                     }
                                 } else {
                                     val libItem = items.find { item -> item.libraryAnime.id == it.id }
@@ -256,8 +256,11 @@ fun FolderOverlay(
                                 }
                             }
                             val onLongClick: (tachiyomi.domain.library.model.LibraryAnime) -> Unit = {
-                                val libItem = items.find { item -> item.libraryAnime.id == it.id }
-                                if (libItem != null) onLongClickAnime(libItem)
+                                selectedItems = if (selectedItems.contains(it.id)) {
+                                    selectedItems - it.id
+                                } else {
+                                    selectedItems + it.id
+                                }
                             }
                             
                             val onClickContinueWatchingGrid: ((tachiyomi.domain.library.model.LibraryAnime) -> Unit)? = 

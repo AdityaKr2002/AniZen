@@ -124,8 +124,10 @@ fun LibraryCompactGrid(
                 is LibraryDisplayItem.Folder -> {
                     FolderGridItem(
                         folder = displayItem,
+                        displayMode = tachiyomi.domain.library.model.LibraryDisplayMode.CompactGrid,
                         onClick = { onFolderClick?.invoke(displayItem) },
                         onLongClick = { onFolderLongClick?.invoke(displayItem) },
+                        showTitle = showTitle,
                     )
                 }
                 is LibraryDisplayItem.Header -> {
@@ -140,43 +142,3 @@ fun LibraryCompactGrid(
     }
 }
 
-@Composable
-fun FolderGridItem(
-    folder: LibraryDisplayItem.Folder,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Column(
-        modifier = Modifier
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(6.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Folder,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxSize(0.5f)
-            )
-        }
-        Text(
-            text = folder.folder.name,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-    }
-}

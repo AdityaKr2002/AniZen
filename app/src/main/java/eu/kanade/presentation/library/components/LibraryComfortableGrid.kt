@@ -107,6 +107,7 @@ internal fun LibraryComfortableGrid(
                 is LibraryDisplayItem.Folder -> {
                     FolderGridItem(
                         folder = displayItem,
+                        displayMode = tachiyomi.domain.library.model.LibraryDisplayMode.ComfortableGrid,
                         onClick = { onFolderClick?.invoke(displayItem) },
                         onLongClick = { onFolderLongClick?.invoke(displayItem) },
                     )
