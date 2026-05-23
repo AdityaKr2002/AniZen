@@ -1,5 +1,6 @@
 package eu.kanade.presentation.library.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -107,6 +108,10 @@ fun FolderOverlay(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = true),
     ) {
+        BackHandler(enabled = selectedItems.isNotEmpty()) {
+            selectedItems = emptySet()
+        }
+
         val animScale = remember { androidx.compose.animation.core.Animatable(0.9f) }
         val animAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
         
