@@ -1140,7 +1140,7 @@ class PlayerViewModel @JvmOverloads constructor(
             val playlist = currentPlaylist.value
             val actualNextEpisodeIndex = playlist.indexOfFirst { it.id == nextEpisodeId }
             if (actualNextEpisodeIndex > nextEpisodeIndex) {
-                activity.showToast(activity.stringResource(AMR.strings.player_filler_skipped))
+                activity.showToast(activity.stringResource(MR.strings.player_filler_skipped))
             }
         }
 

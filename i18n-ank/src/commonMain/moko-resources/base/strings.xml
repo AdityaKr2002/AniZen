@@ -208,12 +208,6 @@
     <string name="pref_auto_track_when_watching">Auto track when watching</string>
     <string name="pref_auto_track_when_watching_summary">Automatically track anime in local tracker when watching, even if not in library</string>
 
-    <!-- Filler -->
-    <string name="pref_category_filler">Filler Skip</string>
-    <string name="pref_skip_filler_episodes">Skip Filler Episodes</string>
-    <string name="pref_skip_filler_episodes_summary">Skip filler episodes detected by this feature</string>
-    <string name="player_filler_skipped">Filler episode skipped</string>
-
     <!-- Advanced Settings -->
     <string name="clean_up_downloaded_episodes">Clean up downloaded episodes</string>
     <string name="delete_unused_episodes">Delete non-existent, partially downloaded, and seen episodes folders</string>
