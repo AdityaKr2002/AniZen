@@ -112,18 +112,31 @@ fun FolderOverlay(
             selectedItems = emptySet()
         }
 
-        val animScale = remember { androidx.compose.animation.core.Animatable(0.9f) }
-        val animAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
-        
+        var animationStarted by remember { mutableStateOf(false) }
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            launch { animAlpha.animateTo(1f, animationSpec = androidx.compose.animation.core.tween(150)) }
-            launch { animScale.animateTo(1f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) }
+            animationStarted = true
         }
+
+        val animAlpha by animateFloatAsState(
+            targetValue = if (animationStarted) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(150),
+            label = "alpha",
+        )
+        val animScale by animateFloatAsState(
+            targetValue = if (animationStarted) 1f else 0.9f,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            label = "scale",
+        )
+
+        val displayItems = remember(items) { items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList() }
+        val selectedAnime = remember(selectedItems, items) { items.map { it.libraryAnime }.filter { it.id in selectedItems }.toImmutableList() }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.85f * animAlpha.value))
+                .drawBehind {
+                    drawRect(color = Color.Black.copy(alpha = 0.85f * animAlpha))
+                }
                 .clickable(onClick = onDismiss),
         ) {
             Surface(
@@ -132,9 +145,9 @@ fun FolderOverlay(
                     .padding(vertical = 48.dp)
                     .align(Alignment.Center)
                     .graphicsLayer {
-                        scaleX = animScale.value
-                        scaleY = animScale.value
-                        alpha = animAlpha.value
+                        scaleX = animScale
+                        scaleY = animScale
+                        alpha = animAlpha
                     }
                     .clickable(enabled = false) {}, // consume clicks to prevent dismiss
                 shape = RoundedCornerShape(16.dp),
@@ -246,8 +259,6 @@ fun FolderOverlay(
                                 .weight(1f, fill = false)
                         ) {
                             val containerHeight = constraints.maxHeight
-                            val displayItems = remember(items) { items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList() }
-                            val selectedAnime = remember(selectedItems, items) { items.map { it.libraryAnime }.filter { it.id in selectedItems }.toImmutableList() }
 
                             val onClick: (tachiyomi.domain.library.model.LibraryAnime) -> Unit = {
                                 if (selectedItems.isNotEmpty()) {
