@@ -698,19 +698,23 @@ class LibraryScreenModel(
     }
 
     fun toggleFavoriteSelection() {
-        val selection = state.value.selection
-        val allFavorite = selection.all { it.anime.favorite }
+        val selection = state.value.selection.map { it.anime }
+        toggleFavorite(selection)
+        clearSelection()
+    }
+
+    fun toggleFavorite(animes: List<Anime>) {
+        val allFavorite = animes.all { it.favorite }
         val newFavorite = !allFavorite
         screenModelScope.launchNonCancellable {
-            val animeUpdates = selection.map {
-                it.anime.copy(
+            val animeUpdates = animes.map {
+                it.copy(
                     favorite = newFavorite,
                     dateAdded = if (newFavorite) java.time.Instant.now().toEpochMilli() else 0,
                 ).toAnimeUpdate()
             }
             updateAnime.awaitAll(animeUpdates)
         }
-        clearSelection()
     }
 
     /**

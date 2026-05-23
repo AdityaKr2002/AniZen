@@ -404,8 +404,8 @@ data object LibraryTab : Tab {
                 onFolderActionClicked = { items ->
                     folderContextAnimeList = items.map { it.libraryAnime }
                 },
-                onDownloadClicked = { items ->
-                    screenModel.runDownloadAction(eu.kanade.presentation.anime.DownloadAction.UNSEEN_EPISODES, items.map { it.libraryAnime.anime })
+                onDownloadClicked = { items, action ->
+                    screenModel.runDownloadAction(action, items.map { it.libraryAnime.anime })
                 },
                 onDeleteAnimeClicked = { items ->
                     screenModel.openDeleteAnimeDialog(items.map { it.libraryAnime.anime })
@@ -415,6 +415,9 @@ data object LibraryTab : Tab {
                 },
                 onMarkAsUnseenClicked = { items ->
                     screenModel.markSeen(items.map { it.libraryAnime }, false)
+                },
+                onFavoriteClicked = { items ->
+                    screenModel.toggleFavorite(items.map { it.libraryAnime.anime })
                 },
                 onClickFilter = screenModel::showSettingsDialog,
                 onClickContinueWatching = { it: tachiyomi.domain.library.model.LibraryAnime ->

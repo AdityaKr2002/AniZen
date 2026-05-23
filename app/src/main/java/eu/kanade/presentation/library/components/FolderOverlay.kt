@@ -72,10 +72,11 @@ fun FolderOverlay(
     onClickAnime: (eu.kanade.tachiyomi.ui.library.LibraryItem) -> Unit,
     onLongClickAnime: (eu.kanade.tachiyomi.ui.library.LibraryItem) -> Unit,
     onFolderActionClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
-    onDownloadClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
+    onDownloadClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>, eu.kanade.presentation.anime.DownloadAction) -> Unit,
     onDeleteAnimeClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
     onMarkAsSeenClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
     onMarkAsUnseenClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
+    onFavoriteClicked: (List<eu.kanade.tachiyomi.ui.library.LibraryItem>) -> Unit,
     onClickContinueWatching: ((tachiyomi.domain.library.model.LibraryAnime) -> Unit)? = null,
     onClickFilter: (() -> Unit)? = null,
 ) {
@@ -346,15 +347,23 @@ fun FolderOverlay(
                         }
 
                         if (selectedItems.isNotEmpty()) {
-                            eu.kanade.presentation.anime.components.AnimeBottomActionMenu(
+                            eu.kanade.presentation.anime.components.LibraryBottomActionMenu(
                                 modifier = Modifier.padding(top = 12.dp),
-                                selected = selectedAnime.map { it.anime },
-                                onMultiDownloadClicked = { onDownloadClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
-                                onMultiDeleteClicked = { onDeleteAnimeClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
-                                onMultiMarkAsSeenClicked = { onMarkAsSeenClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
-                                onMultiMarkAsUnseenClicked = { onMarkAsUnseenClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
-                                onAddToFolderClicked = { onFolderActionClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
-                                onRemoveFromFolderClicked = {
+                                visible = selectedItems.isNotEmpty(),
+                                onChangeCategoryClicked = { /* Not needed for folder view */ },
+                                onMarkAsSeenClicked = { onMarkAsSeenClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
+                                onMarkAsUnseenClicked = { onMarkAsUnseenClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
+                                onFavoriteClicked = { onFavoriteClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
+                                onDownloadClicked = { action -> 
+                                    onDownloadClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }, action) 
+                                },
+                                onDeleteClicked = { onDeleteAnimeClicked(items.filter { selectedItems.contains(it.libraryAnime.id) }) },
+                                onMigrateClicked = { /* Bulk migrate from folder? */ },
+                                onMergeClicked = { },
+                                onSelectionUpdateClicked = { },
+                                onClickCollectRecommendations = { },
+                                onClickResetInfo = { },
+                                onFolderClicked = {
                                     val selectedLibraryItems = items.filter { selectedItems.contains(it.libraryAnime.id) }
                                     onFolderActionClicked(selectedLibraryItems)
                                     selectedItems = emptySet()
