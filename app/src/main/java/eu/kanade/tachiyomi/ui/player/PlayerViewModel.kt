@@ -1131,8 +1131,20 @@ class PlayerViewModel @JvmOverloads constructor(
             return
         }
 
+        val nextEpisodeId = getAdjacentEpisodeId(previous = previous)
+        val currentEpisodeIndex = getCurrentEpisodeIndex()
+        val nextEpisodeIndex = if (previous) currentEpisodeIndex - 1 else currentEpisodeIndex + 1
+
+        if (!previous && playerPreferences.skipFillerEpisodes().get() && nextEpisodeId != -1L) {
+            val playlist = currentPlaylist.value
+            val actualNextEpisodeIndex = playlist.indexOfFirst { it.id == nextEpisodeId }
+            if (actualNextEpisodeIndex > nextEpisodeIndex) {
+                activity.showToast(activity.stringResource(MR.strings.player_filler_skipped))
+            }
+        }
+
         activity.changeEpisode(
-            episodeId = getAdjacentEpisodeId(previous = previous),
+            episodeId = nextEpisodeId,
             autoPlay = autoPlay,
         )
     }
@@ -1314,8 +1326,15 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     private fun getAdjacentEpisodeId(previous: Boolean): Long {
-        val newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
         val playlist = currentPlaylist.value
+        val skipFiller = playerPreferences.skipFillerEpisodes().get()
+        var newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
+
+        if (!previous && skipFiller) {
+            while (newIndex <= playlist.lastIndex && fillerEpisodes.contains(playlist[newIndex].episodeNumber.toFloat())) {
+                newIndex++
+            }
+        }
 
         return when {
             previous && newIndex < 0 -> -1L
