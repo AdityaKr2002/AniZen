@@ -793,6 +793,7 @@ private fun AnimeScreenSmallImpl(
                                         showEpisodeSummary = state.showEpisodeSummary,
                                         showEpisodeThumbnail = state.showEpisodeThumbnail,
                                         episodes = listItem,
+                                        fillerEpisodes = state.fillerEpisodes,
                                         isAnyEpisodeSelected = episodes.fastAny { it.selected },
                                         episodeSwipeStartAction = episodeSwipeStartAction,
                                         episodeSwipeEndAction = episodeSwipeEndAction,

@@ -60,8 +60,3 @@ data class LibraryItem(
     }
 }
 
-sealed interface LibraryDisplayItem {
-    data class Anime(val libraryItem: LibraryItem) : LibraryDisplayItem
-    data class Folder(val folder: tachiyomi.domain.library.model.LibraryFolder, val items: List<LibraryItem>) : LibraryDisplayItem
-    data class Header(val name: String) : LibraryDisplayItem
-}

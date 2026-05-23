@@ -173,6 +173,22 @@ class LibraryScreenModel(
                 }
         }
 
+        libraryPreferences.libraryFolders().changes()
+            .onEach { folderSet ->
+                val folders = folderSet.mapNotNull { 
+                    val parts = it.split("|")
+                    if (parts.size == 3) {
+                        tachiyomi.domain.library.model.LibraryFolder(
+                            id = parts[0].toLongOrNull() ?: return@mapNotNull null,
+                            categoryId = parts[1].toLongOrNull() ?: return@mapNotNull null,
+                            name = parts[2]
+                        )
+                    } else null
+                }
+                mutableState.update { state -> state.copy(folders = folders) }
+            }
+            .launchIn(screenModelScope)
+
         combine(
             libraryPreferences.categoryTabs().changes(),
             libraryPreferences.categoryNumberOfItems().changes(),
@@ -467,28 +483,35 @@ class LibraryScreenModel(
             getLibraryAnime.subscribe(),
             getAnimelibItemPreferencesFlow(),
             getSourcesWithFavoriteCount.subscribe(),
+            libraryPreferences.animeFolderMap().changes(),
             downloadCache.changes.debounce(500L),
-        ) { libraryMangaList, prefs, sources, _ ->
+        ) { libraryMangaList, prefs, sources, folderMapStringSet, _ ->
+            val folderMap = folderMapStringSet.mapNotNull { 
+                val parts = it.split("|")
+                if (parts.size == 2) parts[0].toLongOrNull()?.to(parts[1].toLongOrNull()) else null
+            }.mapNotNull { if (it.first != null && it.second != null) it.first!! to it.second!! else null }.toMap()
+
             libraryMangaList
                 .map { libraryManga ->
+                    val mangaWithFolder = libraryManga.copy(folderId = folderMap[libraryManga.id])
                     // Display mode based on user preference: take it from global library setting or category
                     LibraryItem(
-                        libraryManga,
+                        mangaWithFolder,
                         downloadCount = if (prefs.downloadBadge) {
-                            downloadManager.getDownloadCount(libraryManga.anime).toLong()
+                            downloadManager.getDownloadCount(mangaWithFolder.anime).toLong()
                         } else {
                             0
                         },
-                        unseenCount = libraryManga.unseenCount,
-                        isLocal = if (prefs.localBadge) libraryManga.anime.isLocal() else false,
+                        unseenCount = mangaWithFolder.unseenCount,
+                        isLocal = if (prefs.localBadge) mangaWithFolder.anime.isLocal() else false,
                         sourceLanguage = if (prefs.languageBadge || prefs.showLanguageIcon) {
-                            sourceManager.getOrStub(libraryManga.anime.source).lang
+                            sourceManager.getOrStub(mangaWithFolder.anime.source).lang
                         } else {
                             ""
                         },
                         showSourceIcon = prefs.showSourceIcon,
                         showLanguageIcon = prefs.showLanguageIcon,
-                        domainSource = sources.find { it.first.id == libraryManga.anime.source }?.first,
+                        domainSource = sources.find { it.first.id == mangaWithFolder.anime.source }?.first,
                     )
                 }
                 .groupBy { it.libraryAnime.category }
@@ -1063,8 +1086,67 @@ class LibraryScreenModel(
         }.filterValues { it.isNotEmpty() }.toSortedMap(compareBy { it.order })
     }
 
+    fun createFolder(animeIds: List<Long>, categoryId: Long, folderName: String) {
+        screenModelScope.launchIO {
+            val id = System.currentTimeMillis()
+            val newFolderStr = "$id|$categoryId|$folderName"
+            val currentFolders = libraryPreferences.libraryFolders().get().toMutableSet()
+            currentFolders.add(newFolderStr)
+            libraryPreferences.libraryFolders().set(currentFolders)
+
+            addAnimeToFolder(animeIds, categoryId, id)
+        }
+    }
+
+    fun renameFolder(folderId: Long, newName: String) {
+        screenModelScope.launchIO {
+            val folders = libraryPreferences.libraryFolders().get().toMutableSet()
+            val folderStr = folders.find { it.startsWith("$folderId|") } ?: return@launchIO
+            val parts = folderStr.split("|")
+            if (parts.size == 3) {
+                folders.remove(folderStr)
+                folders.add("$folderId|${parts[1]}|$newName")
+                libraryPreferences.libraryFolders().set(folders)
+            }
+        }
+    }
+
+    fun deleteFolder(folderId: Long) {
+        screenModelScope.launchIO {
+            val folders = libraryPreferences.libraryFolders().get().toMutableSet()
+            val folderStr = folders.find { it.startsWith("$folderId|") }
+            if (folderStr != null) {
+                folders.remove(folderStr)
+                libraryPreferences.libraryFolders().set(folders)
+            }
+
+            val map = libraryPreferences.animeFolderMap().get().toMutableSet()
+            val toRemove = map.filter { it.endsWith("|$folderId") }
+            if (toRemove.isNotEmpty()) {
+                map.removeAll(toRemove.toSet())
+                libraryPreferences.animeFolderMap().set(map)
+            }
+        }
+    }
+
+    fun addAnimeToFolder(animeIds: List<Long>, categoryId: Long, folderId: Long?) {
+        screenModelScope.launchIO {
+            val map = libraryPreferences.animeFolderMap().get().toMutableSet()
+            for (animeId in animeIds) {
+                // remove existing mapping for this anime
+                val existing = map.find { it.startsWith("$animeId|") }
+                if (existing != null) map.remove(existing)
+                
+                if (folderId != null) {
+                    map.add("$animeId|$folderId")
+                }
+            }
+            libraryPreferences.animeFolderMap().set(map)
+        }
+    }
+
     @Immutable
-    private data class ItemPreferences(
+    data class ItemPreferences(
         val downloadBadge: Boolean,
         val localBadge: Boolean,
         val languageBadge: Boolean,
@@ -1100,6 +1182,7 @@ class LibraryScreenModel(
         // KMK <--
         // SY -->
         val groupType: Int = LibraryGroup.BY_DEFAULT,        // SY <--
+        val folders: List<tachiyomi.domain.library.model.LibraryFolder> = emptyList(),
     ) {
         private val libraryCount by lazy {
             library.values

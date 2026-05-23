@@ -301,6 +301,12 @@ class LibraryPreferences(
 
     fun useHierarchicalSeasons() = preferenceStore.getBoolean("use_hierarchical_seasons", true)
 
+    fun collapseFolders() = preferenceStore.getBoolean("collapse_library_folders", true)
+    
+    fun libraryFolders() = preferenceStore.getStringSet("library_folders_set", emptySet())
+    
+    fun animeFolderMap() = preferenceStore.getStringSet("anime_to_folder_map", emptySet())
+
     fun userAffinityMap() = preferenceStore.getString("user_affinity_map", "{}")
     fun lastAffinityUpdate() = preferenceStore.getLong("last_affinity_update", 0L)
 
