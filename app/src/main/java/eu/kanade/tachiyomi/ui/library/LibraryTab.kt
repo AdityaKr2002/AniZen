@@ -537,8 +537,8 @@ data object LibraryTab : Tab {
             }
         }
 
-        LaunchedEffect(state.selectionMode, state.dialog) {
-            HomeScreen.showBottomNav(!state.selectionMode)
+        LaunchedEffect(state.selectionMode, state.dialog, state.openFolderId) {
+            HomeScreen.showBottomNav(!state.selectionMode && state.openFolderId == null)
         }
 
         LaunchedEffect(state.isLoading) {
