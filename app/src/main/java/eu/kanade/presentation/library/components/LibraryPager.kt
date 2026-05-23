@@ -42,10 +42,12 @@ fun LibraryPager(
     onGlobalSearchClicked: () -> Unit,
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
-    getLibraryForPage: (Int) -> ImmutableList<LibraryItem>,
+    getLibraryForPage: (Int) -> ImmutableList<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>,
     onClickAnime: (LibraryAnime) -> Unit,
     onLongClickAnime: (LibraryAnime, Long) -> Unit,
     onClickContinueWatching: ((LibraryAnime) -> Unit)?,
+    onFolderClick: ((eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder) -> Unit)? = null,
+    onFolderLongClick: ((eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder) -> Unit)? = null,
     ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -93,6 +95,8 @@ fun LibraryPager(
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
                         usePanorama = effectivePanorama,
+                        onFolderClick = onFolderClick,
+                        onFolderLongClick = onFolderLongClick,
                     )
                 }
                 LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
@@ -108,6 +112,8 @@ fun LibraryPager(
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
                         usePanorama = effectivePanorama,
+                        onFolderClick = onFolderClick,
+                        onFolderLongClick = onFolderLongClick,
                     )
                 }
                 LibraryDisplayMode.ComfortableGrid -> {
@@ -122,6 +128,8 @@ fun LibraryPager(
                         searchQuery = searchQuery,
                         onGlobalSearchClicked = onGlobalSearchClicked,
                         usePanorama = effectivePanorama,
+                        onFolderClick = onFolderClick,
+                        onFolderLongClick = onFolderLongClick,
                     )
                 }
                 else -> {}

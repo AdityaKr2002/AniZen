@@ -60,7 +60,9 @@ fun LibraryContent(
     getNumberOfAnimeForCategory: (Category) -> Int?,
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
-    getAnimeLibraryForPage: (Int) -> ImmutableList<LibraryItem>,
+    getAnimeLibraryForPage: (Int) -> ImmutableList<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>,
+    onFolderClick: ((eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder) -> Unit)? = null,
+    onFolderLongClick: ((eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder) -> Unit)? = null,
 ) {
     val uiPreferences = remember { Injekt.get<UiPreferences>() }
     val containerStyles by uiPreferences.containerStyles().collectAsState()
@@ -135,6 +137,8 @@ fun LibraryContent(
                     onClickAnime = onClickAnime,
                     onLongClickAnime = onToggleRangeSelection,
                     onClickContinueWatching = onContinueWatchingClicked,
+                    onFolderClick = onFolderClick,
+                    onFolderLongClick = onFolderLongClick,
                 )
             }
 
