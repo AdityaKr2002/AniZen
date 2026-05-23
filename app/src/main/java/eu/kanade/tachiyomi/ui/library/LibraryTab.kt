@@ -4,35 +4,45 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
-import androidx.compose.ui.res.painterResource
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.anime.components.LibraryBottomActionMenu
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.library.DeleteLibraryAnimeDialog
 import eu.kanade.presentation.library.LibrarySettingsDialog
+import eu.kanade.presentation.library.components.FolderContextMenu
+import eu.kanade.presentation.library.components.FolderOverlay
 import eu.kanade.presentation.library.components.LibraryContent
 import eu.kanade.presentation.library.components.LibraryToolbar
 import eu.kanade.presentation.more.onboarding.GETTING_STARTED_URL
@@ -47,7 +57,7 @@ import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
-import mihon.feature.migration.config.MigrationConfigScreen
+import eu.kanade.tachiyomi.ui.player.PlayerActivity
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
@@ -56,6 +66,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import mihon.feature.migration.config.MigrationConfigScreen
 import tachiyomi.core.common.i18n.stringResource as stringResourceCommon
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.anime.model.Anime
@@ -71,17 +82,10 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.source.localanime.isLocal
-import uy.kohesive.injekt.injectLazy
+import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import eu.kanade.domain.ui.UiPreferences
-import tachiyomi.presentation.core.util.collectAsState as collectAsStatePref
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import eu.kanade.presentation.library.components.FolderOverlay
-import eu.kanade.presentation.library.components.FolderContextMenu
-import tachiyomi.domain.library.model.LibraryFolder
-
+import uy.kohesive.injekt.injectLazy
 
 data object LibraryTab : Tab {
 
@@ -167,208 +171,6 @@ data object LibraryTab : Tab {
         }
 
         val defaultTitle = stringResource(MR.strings.label_library)
-
-        Scaffold(
-            topBar = { scrollBehavior ->
-                val title = state.getToolbarTitle(
-                    defaultTitle = defaultTitle,
-                    defaultCategoryTitle = stringResource(MR.strings.label_default),
-                    page = screenModel.activeCategoryIndex,
-                )
-                val tabVisible = state.showCategoryTabs && state.categories.size > 1
-                LibraryToolbar(
-                    hasActiveFilters = state.hasActiveFilters,
-                    selectedCount = state.selection.size,
-                    title = title,
-                    onClickUnselectAll = screenModel::clearSelection,
-                    onClickSelectAll = { screenModel.selectAll(screenModel.activeCategoryIndex) },
-                    onClickInvertSelection = {
-                        screenModel.invertSelection(
-                            screenModel.activeCategoryIndex,
-                        )
-                    },
-                    onClickFilter = screenModel::showSettingsDialog,
-                    onClickRefresh = {
-                        state.categories.getOrNull(screenModel.activeCategoryIndex)?.let {
-                            onClickRefresh(it)
-                        } ?: false
-                    },
-                    onClickGlobalUpdate = { onClickRefresh(null) },
-                    onClickOpenRandomEntry = {
-                        scope.launch {
-                            val randomItem = screenModel.getRandomAnimelibItemForCurrentCategory()
-                            if (randomItem != null) {
-                                navigator.push(AnimeScreen(randomItem.libraryAnime.anime.id))
-                            } else {
-                                snackbarHostState.showSnackbar(
-                                    context.stringResourceCommon(MR.strings.information_no_entries_found),
-                                )
-                            }
-                        }
-                    },
-                    onClickSyncNow = {
-                        if (!SyncDataJob.isRunning(context)) {
-                            SyncDataJob.startNow(context)
-                        } else {
-                            context.toast(SYMR.strings.sync_in_progress)
-                        }
-                    },
-                    searchQuery = state.searchQuery,
-                    onSearchQueryChange = screenModel::search,
-                    scrollBehavior = scrollBehavior.takeIf { !tabVisible }, // For scroll overlay when no tab
-                )
-            },
-            bottomBar = {
-                LibraryBottomActionMenu(
-                    visible = state.selectionMode,
-                    onChangeCategoryClicked = screenModel::openChangeCategoryDialog,
-                    onMarkAsSeenClicked = { screenModel.markSeenSelection(true) },
-                    onMarkAsUnseenClicked = { screenModel.markSeenSelection(false) },
-                    onFavoriteClicked = { screenModel.toggleFavoriteSelection() },
-                    onDownloadClicked = screenModel::runDownloadActionSelection
-                        .takeIf { state.selection.fastAll { !it.anime.isLocal() } },
-                    onDeleteClicked = screenModel::openDeleteAnimeDialog,
-                    onMigrateClicked = {
-                        val animeIds = state.selection.map { it.anime.id }
-                        navigator.push(MigrationConfigScreen(animeIds))
-                    },
-                    onMergeClicked = {
-                        // TODO: Implement bulk merge? For now just show for single
-                    },
-                    onSelectionUpdateClicked = {
-                        screenModel.updateSelection()
-                    },
-                    onClickResetInfo = screenModel::resetInfo.takeIf { state.showResetInfo },
-                    onClickCollectRecommendations = {
-                        // TODO: Implement bulk recommendations
-                    },
-                    onFolderClicked = {
-                        folderContextAnimeList = state.selection
-                    },
-                )
-            },
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        ) { contentPadding ->
-            when {
-                state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
-                state.searchQuery.isNullOrEmpty() && !state.hasActiveFilters && state.isLibraryEmpty -> {
-                    val handler = LocalUriHandler.current
-                    EmptyScreen(
-                        stringRes = MR.strings.information_empty_library,
-                        modifier = Modifier.padding(contentPadding),
-                        actions = persistentListOf(
-                            EmptyScreenAction(
-                                stringRes = MR.strings.getting_started_guide,
-                                icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                                onClick = { handler.openUri(GETTING_STARTED_URL) },
-                            ),
-                        ),
-                    )
-                }
-                else -> {
-                    LibraryContent(
-                        categories = if (state.searchQuery.isNullOrEmpty()) state.categories.toImmutableList() else persistentListOf(Category(0, "Search Results", 0, 0, false)),
-                        searchQuery = state.searchQuery,
-                        selection = state.selection.toImmutableList(),
-                        contentPadding = contentPadding,
-                        currentPage = { if (state.searchQuery.isNullOrEmpty()) screenModel.activeCategoryIndex else 0 },
-                        hasActiveFilters = state.hasActiveFilters,
-                        showPageTabs = state.showCategoryTabs && state.searchQuery.isNullOrEmpty(),
-                        onChangeCurrentPage = { screenModel.activeCategoryIndex = it },
-                        onAnimeClicked = { navigator.push(AnimeScreen(it)) },
-                        onContinueWatchingClicked = { it: LibraryAnime ->
-                            scope.launchIO {
-                                val episode = screenModel.getNextUnseenEpisode(it.anime)
-                                if (episode != null) openEpisode(episode)
-                            }
-                            Unit
-                        }.takeIf { state.showAnimeContinueButton },
-                        onToggleSelection = screenModel::toggleSelection,
-                        onToggleRangeSelection = { anime, categoryId ->
-                            screenModel.toggleRangeSelection(anime, categoryId)
-                        },
-                        onRefresh = onClickRefresh,
-                        onGlobalSearchClicked = {
-                            val currentQuery = screenModel.state.value.searchQuery ?: ""
-                            screenModel.search(null)
-                            navigator.push(GlobalSearchScreen(currentQuery))
-                        },
-                        getNumberOfAnimeForCategory = { state.getAnimeCountForCategory(it) },
-                        getDisplayMode = { screenModel.getDisplayMode() },
-                        getColumnsForOrientation = {
-                            screenModel.getColumnsPreferenceForCurrentOrientation(
-                                it,
-                            )
-                        },
-                        getAnimeLibraryForPage = { page ->
-                            if (!state.searchQuery.isNullOrEmpty()) {
-                                val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
-                                state.categories.forEach { cat ->
-                                    val catItems = state.library[cat] ?: emptyList()
-                                    if (catItems.isNotEmpty()) {
-                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Header(cat.name))
-                                        val processedFolderIds = mutableSetOf<Long>()
-                                        val grouped = catItems.groupBy { it.libraryAnime.folderId }
-                                        for (item in catItems) {
-                                            if (!collapseFolders) {
-                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                            } else {
-                                                val folderId = item.libraryAnime.folderId
-                                                if (folderId == null) {
-                                                    displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                                } else if (processedFolderIds.add(folderId)) {
-                                                    val folder = state.folders.find { it.id == folderId }
-                                                    val folderItems = grouped[folderId] ?: emptyList()
-                                                    if (folder != null) {
-                                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
-                                                    } else {
-                                                        displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                                        processedFolderIds.remove(folderId)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                displayItems.toImmutableList()
-                            } else {
-                                val items = state.getAnimelibItemsByPage(page)
-                                if (!collapseFolders) {
-                                    items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList()
-                                } else {
-                                    val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
-                                    val processedFolderIds = mutableSetOf<Long>()
-                                    val grouped = items.groupBy { it.libraryAnime.folderId }
-    
-                                    for (item in items) {
-                                        val folderId = item.libraryAnime.folderId
-                                        if (folderId == null) {
-                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                        } else if (processedFolderIds.add(folderId)) {
-                                            val folder = state.folders.find { it.id == folderId }
-                                            val folderItems = grouped[folderId] ?: emptyList()
-                                            if (folder != null) {
-                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
-                                            } else {
-                                                displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                                processedFolderIds.remove(folderId)
-                                            }
-                                        }
-                                    }
-                                    displayItems.toImmutableList()
-                                }
-                            }
-                        },
-                        onFolderClick = { folderItem ->
-                            screenModel.setOpenFolder(folderItem.folder.id)
-                        },
-                        onFolderLongClick = { folderItem ->
-                            folderLongClickItem = folderItem
-                        },
-                    )
-                }
-            }
-        }
 
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
         val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref()
@@ -536,8 +338,12 @@ data object LibraryTab : Tab {
                                                         displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
                                                     } else if (processedFolderIds.add(folderId)) {
                                                         val folder = state.folders.find { it.id == folderId }
+                                                        val folderItems = grouped[folderId] ?: emptyList()
                                                         if (folder != null) {
-                                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, grouped[folderId] ?: emptyList()))
+                                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
+                                                        } else {
+                                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                                            processedFolderIds.remove(folderId)
                                                         }
                                                     }
                                                 }
@@ -546,27 +352,31 @@ data object LibraryTab : Tab {
                                     }
                                     displayItems.toImmutableList()
                                 } else {
-                                    val category = state.categories.getOrNull(page) ?: return@getAnimeLibraryForPage emptyList()
-                                    val catItems = state.library[category] ?: emptyList()
-                                    val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
-                                    val processedFolderIds = mutableSetOf<Long>()
-                                    val grouped = catItems.groupBy { it.libraryAnime.folderId }
-                                    for (item in catItems) {
-                                        if (!collapseFolders) {
-                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
-                                        } else {
+                                    val items = state.getAnimelibItemsByPage(page)
+                                    if (!collapseFolders) {
+                                        items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList()
+                                    } else {
+                                        val displayItems = mutableListOf<eu.kanade.tachiyomi.ui.library.LibraryDisplayItem>()
+                                        val processedFolderIds = mutableSetOf<Long>()
+                                        val grouped = items.groupBy { it.libraryAnime.folderId }
+        
+                                        for (item in items) {
                                             val folderId = item.libraryAnime.folderId
                                             if (folderId == null) {
                                                 displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
                                             } else if (processedFolderIds.add(folderId)) {
                                                 val folder = state.folders.find { it.id == folderId }
+                                                val folderItems = grouped[folderId] ?: emptyList()
                                                 if (folder != null) {
-                                                    displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, grouped[folderId] ?: emptyList()))
+                                                    displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Folder(folder, folderItems))
+                                                } else {
+                                                    displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(item))
+                                                    processedFolderIds.remove(folderId)
                                                 }
                                             }
                                         }
+                                        displayItems.toImmutableList()
                                     }
-                                    displayItems.toImmutableList()
                                 }
                             },
                         )
