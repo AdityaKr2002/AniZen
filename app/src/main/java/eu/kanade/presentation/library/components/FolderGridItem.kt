@@ -81,10 +81,10 @@ fun FolderGridItem(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 0) FolderPreviewCover(previewItems[0])
+                                if (previewItems.size > 0) FolderPreviewCover(previewItems[0], effectiveUsePanorama)
                             }
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 1) FolderPreviewCover(previewItems[1])
+                                if (previewItems.size > 1) FolderPreviewCover(previewItems[1], effectiveUsePanorama)
                             }
                         }
                         Row(
@@ -92,14 +92,14 @@ fun FolderGridItem(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 2) FolderPreviewCover(previewItems[2])
+                                if (previewItems.size > 2) FolderPreviewCover(previewItems[2], effectiveUsePanorama)
                             }
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                                 if (previewItems.size > 3) {
                                     if (count > 4) {
                                         FolderPreviewMore(count - 3)
                                     } else {
-                                        FolderPreviewCover(previewItems[3])
+                                        FolderPreviewCover(previewItems[3], effectiveUsePanorama)
                                     }
                                 }
                             }
@@ -137,13 +137,14 @@ fun FolderGridItem(
 }
 
 @Composable
-private fun BoxScope.FolderPreviewCover(item: LibraryItem) {
+private fun FolderPreviewCover(item: LibraryItem, usePanorama: Boolean) {
     val anime = item.libraryAnime.anime
-    val (coverEntry, ratio) = AnimeCover.getEntry(anime.id, usePanoramaOverride = true)
+    val ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
+    val coverEntry = if (usePanorama) AnimeCover.Panorama else AnimeCover.Book
     
     coverEntry(
         data = anime,
-        modifier = Modifier.align(Alignment.Center),
+        modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(4.dp),
         shouldExtractColor = false,
         ratio = ratio,
@@ -151,13 +152,12 @@ private fun BoxScope.FolderPreviewCover(item: LibraryItem) {
 }
 
 @Composable
-private fun BoxScope.FolderPreviewMore(moreCount: Int) {
+private fun FolderPreviewMore(moreCount: Int) {
     Box(
         modifier = Modifier
-            .fillMaxSize(0.8f)
+            .fillMaxSize()
             .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-            .align(Alignment.Center),
+            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
