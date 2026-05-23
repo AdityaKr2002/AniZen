@@ -391,12 +391,12 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
         val skipFillerEpisodes = playerPreferences.skipFillerEpisodes()
 
         return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_category_filler),
+            title = stringResource(AMR.strings.pref_category_filler),
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.SwitchPreference(
                     pref = skipFillerEpisodes,
-                    title = stringResource(MR.strings.pref_skip_filler_episodes),
-                    subtitle = stringResource(MR.strings.pref_skip_filler_episodes_summary),
+                    title = stringResource(AMR.strings.pref_skip_filler_episodes),
+                    subtitle = stringResource(AMR.strings.pref_skip_filler_episodes_summary),
                 ),
             ),
         )
