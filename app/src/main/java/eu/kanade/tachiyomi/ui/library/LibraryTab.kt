@@ -114,7 +114,7 @@ data object LibraryTab : Tab {
         val collapseFolders by settingsScreenModel.libraryPreferences.collapseFolders().collectAsStatePref()
 
         // Folder overlay state: which folder is tapped to show the full overlay
-        var folderOverlayItem by remember { mutableStateOf<LibraryDisplayItem.Folder?>(null) }
+        val openFolderId = state.openFolderId
         var folderLongClickItem by remember { mutableStateOf<LibraryDisplayItem.Folder?>(null) }
         // Context menu state: which anime had long-press to add to folder
         var folderContextAnimeList by remember { mutableStateOf<List<LibraryAnime>?>(null) }
@@ -122,6 +122,14 @@ data object LibraryTab : Tab {
         val activeCategoryFolders = remember(state.folders, screenModel.activeCategoryIndex, state.categories) {
             val activeCategoryId = state.categories.getOrNull(screenModel.activeCategoryIndex)?.id
             if (activeCategoryId != null) state.folders.filter { it.categoryId == activeCategoryId } else emptyList()
+        }
+
+        val openFolderItem = remember(openFolderId, state.folders, state.library, screenModel.activeCategoryIndex) {
+            if (openFolderId == null) return@remember null
+            val folder = state.folders.find { it.id == openFolderId } ?: return@remember null
+            val filteredItems = state.getAnimelibItemsByPage(screenModel.activeCategoryIndex)
+            val currentFolderItems = filteredItems.filter { it.libraryAnime.folderId == openFolderId }
+            LibraryDisplayItem.Folder(folder, currentFolderItems)
         }
 
         val snackbarHostState = remember { SnackbarHostState() }
@@ -352,7 +360,7 @@ data object LibraryTab : Tab {
                             }
                         },
                         onFolderClick = { folderItem ->
-                            folderOverlayItem = folderItem
+                            screenModel.setOpenFolder(folderItem.folder.id)
                         },
                         onFolderLongClick = { folderItem ->
                             folderLongClickItem = folderItem
@@ -372,25 +380,20 @@ data object LibraryTab : Tab {
         val columns by screenModel.getColumnsPreferenceForCurrentOrientation(isLandscape)
 
         // Folder Overlay - shown when a folder card is tapped
-        folderOverlayItem?.let { folderDisplayItem ->
-            val filteredItems = state.getAnimelibItemsByPage(screenModel.activeCategoryIndex)
-            val currentFolderItems = remember(filteredItems, folderDisplayItem.folder.id) {
-                filteredItems.filter { it.libraryAnime.folderId == folderDisplayItem.folder.id }
-            }
-
+        openFolderItem?.let { folderDisplayItem ->
             FolderOverlay(
                 folder = folderDisplayItem.folder,
-                items = currentFolderItems,
+                items = folderDisplayItem.items,
                 displayMode = displayMode,
                 columns = columns,
                 usePanorama = effectivePanorama,
-                onDismiss = { folderOverlayItem = null },
+                onDismiss = { screenModel.setOpenFolder(null) },
                 onRenameFolder = { newName ->
                     screenModel.renameFolder(folderDisplayItem.folder.id, newName)
                 },
                 onDeleteFolder = {
                     screenModel.deleteFolder(folderDisplayItem.folder.id)
-                    folderOverlayItem = null
+                    screenModel.setOpenFolder(null)
                 },
                 onClickAnime = { libraryItem ->
                     navigator.push(AnimeScreen(libraryItem.libraryAnime.anime.id))
@@ -515,9 +518,10 @@ data object LibraryTab : Tab {
             null -> {}
         }
 
-        BackHandler(enabled = state.selectionMode || state.searchQuery != null) {
+        BackHandler(enabled = state.selectionMode || state.searchQuery != null || state.openFolderId != null) {
             when {
                 state.selectionMode -> screenModel.clearSelection()
+                state.openFolderId != null -> screenModel.setOpenFolder(null)
                 state.searchQuery != null -> screenModel.search(null)
             }
         }

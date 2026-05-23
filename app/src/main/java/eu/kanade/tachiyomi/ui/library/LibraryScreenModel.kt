@@ -908,6 +908,10 @@ class LibraryScreenModel(
         mutableState.update { it.copy(searchQuery = query) }
     }
 
+    fun setOpenFolder(folderId: Long?) {
+        mutableState.update { it.copy(openFolderId = folderId) }
+    }
+
     fun openChangeCategoryDialog() {
         screenModelScope.launchIO {
             // Create a copy of selected anime
@@ -1195,6 +1199,7 @@ class LibraryScreenModel(
         // SY -->
         val groupType: Int = LibraryGroup.BY_DEFAULT,        // SY <--
         val folders: List<tachiyomi.domain.library.model.LibraryFolder> = emptyList(),
+        val openFolderId: Long? = null,
     ) {
         private val libraryCount by lazy {
             library.values
