@@ -81,7 +81,22 @@ fun FolderOverlay(
     onClickFilter: (() -> Unit)? = null,
 ) {
     val visible = folder != null
+    var cachedFolder by remember { mutableStateOf<LibraryFolder?>(null) }
+    var cachedItems by remember { mutableStateOf<List<LibraryItem>>(emptyList()) }
+
+    if (folder != null) {
+        cachedFolder = folder
+        cachedItems = items
+    }
+
     var selectedItems by remember { mutableStateOf(emptySet<Long>()) }
+
+    androidx.compose.runtime.LaunchedEffect(folder?.id) {
+        selectedItems = emptySet()
+    }
+
+    val folder = cachedFolder
+    val items = cachedItems
 
     val displayItems = remember(items) { items.map { eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Anime(it) }.toImmutableList() }
     val selectedAnime = remember(selectedItems, items) { items.map { it.libraryAnime }.filter { it.id in selectedItems }.toImmutableList() }
