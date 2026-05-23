@@ -11,7 +11,7 @@ class AnimeFillerListFetcher(
     private val networkHelper: NetworkHelper = Injekt.get(),
 ) {
     private val baseUrl = "https://www.animefillerlist.com"
-    private val cache = mutableMapOf<String, Set<Float>>()
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, Set<Float>>()
 
     suspend fun getFillerEpisodes(animeTitle: String): Set<Float> = withIOContext {
         val titleClean = animeTitle.trim()
