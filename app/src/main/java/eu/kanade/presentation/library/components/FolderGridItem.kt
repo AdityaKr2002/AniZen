@@ -2,6 +2,7 @@ package eu.kanade.presentation.library.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,8 +66,16 @@ fun FolderGridItem(
         ) {
             if (count > 0) {
                 val previewItems = items.take(4)
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Row(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                         Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                             if (previewItems.size > 0) FolderPreviewCover(previewItems[0])
                         }
@@ -73,7 +83,10 @@ fun FolderGridItem(
                             if (previewItems.size > 1) FolderPreviewCover(previewItems[1])
                         }
                     }
-                    Row(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                         Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                             if (previewItems.size > 2) FolderPreviewCover(previewItems[2])
                         }
@@ -127,7 +140,9 @@ private fun FolderPreviewCover(item: LibraryItem) {
             ogUrl = anime.thumbnailUrl,
             lastModified = anime.coverLastModified,
         ),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(4.dp)),
         shape = RectangleShape,
         shouldExtractColor = false,
     )
@@ -138,7 +153,8 @@ private fun FolderPreviewMore(moreCount: Int) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)),
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
