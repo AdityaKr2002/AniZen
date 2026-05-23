@@ -127,18 +127,9 @@ fun AnimeEpisodeListItem(
         swipeThreshold = swipeActionThreshold,
         backgroundUntilSwipeThreshold = MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
-        val backgroundModifier = if (isAutoFiller) {
-            Modifier
-                .padding(vertical = 4.dp, horizontal = 4.dp)
-                .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                .border(2.dp, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))
-        } else {
-            Modifier.selectedBackground(selected)
-        }
-        
         Row(
             modifier = Modifier
-                .then(backgroundModifier)
+                .selectedBackground(selected)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -199,15 +190,6 @@ fun AnimeEpisodeListItem(
                                         onDownloadClick = onDownloadClick,
                                         fileSize = fileSize,
                                     )
-                                    if (isAutoFiller) {
-                                        Text(
-                                            text = "FILLER",
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            modifier = Modifier.padding(top = 4.dp)
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -230,6 +212,7 @@ fun AnimeEpisodeListItem(
                         date = date,
                         watchProgress = watchProgress,
                         fillermark = fillermark,
+                        isAutoFiller = isAutoFiller,
                         scanlator = scanlator,
                     )
 
@@ -243,15 +226,6 @@ fun AnimeEpisodeListItem(
                                 onDownloadClick = onDownloadClick,
                                 fileSize = fileSize,
                             )
-                            if (isAutoFiller) {
-                                Text(
-                                    text = "FILLER",
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
                         }
                     }
                 }
@@ -294,6 +268,7 @@ private fun RowScope.SimpleEpisodeListItemImpl(
             date = date,
             watchProgress = watchProgress,
             fillermark = fillermark,
+            isAutoFiller = isAutoFiller,
             scanlator = scanlator,
         )
     }
@@ -307,15 +282,6 @@ private fun RowScope.SimpleEpisodeListItemImpl(
             onDownloadClick = onDownloadClick,
             fileSize = fileSize,
         )
-        if (isAutoFiller) {
-            Text(
-                text = "FILLER",
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
     }
 }
 
@@ -370,6 +336,7 @@ private fun EpisodeInformation(
     date: String?,
     watchProgress: String?,
     fillermark: Boolean,
+    isAutoFiller: Boolean,
     scanlator: String?,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -396,6 +363,16 @@ private fun EpisodeInformation(
                 Spacer(modifier = Modifier.width(2.dp))
             }
             if (date != null) {
+                if (isAutoFiller) {
+                    Text(
+                        text = "f ",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        ),
+                    )
+                }
                 Text(
                     text = date,
                     maxLines = 1,

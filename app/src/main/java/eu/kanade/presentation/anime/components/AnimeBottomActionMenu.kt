@@ -255,6 +255,7 @@ fun LibraryBottomActionMenu(
     onClickCollectRecommendations: (() -> Unit)?,
     onClickResetInfo: (() -> Unit)?,
     // SY <--
+    onFolderClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -348,6 +349,15 @@ fun LibraryBottomActionMenu(
                         expanded = overflowMenuOpen,
                         onDismissRequest = { overflowMenuOpen = false },
                     ) {
+                        if (onFolderClicked != null) {
+                            DropdownMenuItem(
+                                text = { Text(text = "Create folder") },
+                                onClick = {
+                                    overflowMenuOpen = false
+                                    onFolderClicked()
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text(text = stringResource(MR.strings.action_update)) },
                             onClick = {
