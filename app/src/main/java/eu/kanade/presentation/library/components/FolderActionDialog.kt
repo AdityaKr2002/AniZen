@@ -50,128 +50,115 @@ fun FolderActionDialog(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showRenameDialog) {
-        var newName by remember { mutableStateOf(folder.name) }
+        var name by remember { mutableStateOf(folder.name) }
+        val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
-            title = { Text("Rename Folder") },
-            text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text("Folder name") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        if (newName.isNotBlank()) {
-                            onRenameFolder(newName.trim())
-                            showRenameDialog = false
-                            onDismiss()
-                        }
-                    }),
-                )
-            },
             confirmButton = {
-                TextButton(onClick = {
-                    if (newName.isNotBlank()) {
-                        onRenameFolder(newName.trim())
+                TextButton(
+                    enabled = name.isNotBlank() && name != folder.name,
+                    onClick = {
+                        onRenameFolder(name.trim())
                         showRenameDialog = false
                         onDismiss()
-                    }
-                }) {
-                    Text("Rename")
+                    },
+                ) {
+                    Text(text = stringResource(MR.strings.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRenameDialog = false }) {
-                    Text("Cancel")
+                    Text(text = stringResource(MR.strings.action_cancel))
                 }
             },
+            title = {
+                Text(text = stringResource(MR.strings.action_rename_category))
+            },
+            text = {
+                OutlinedTextField(
+                    modifier = Modifier.androidx.compose.ui.focus.focusRequester(focusRequester),
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(text = stringResource(MR.strings.name)) },
+                    singleLine = true,
+                )
+            },
         )
+        androidx.compose.runtime.LaunchedEffect(focusRequester) {
+            kotlinx.coroutines.delay(100)
+            focusRequester.requestFocus()
+        }
     }
 
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Folder") },
-            text = {
-                Text("Delete \"${folder.name}\"? Anime inside will not be deleted and will return to the main library.")
-            },
             confirmButton = {
                 TextButton(onClick = {
                     onDeleteFolder()
                     showDeleteDialog = false
                     onDismiss()
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(text = stringResource(MR.strings.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(text = stringResource(MR.strings.action_cancel))
                 }
+            },
+            title = {
+                Text(text = "Delete Folder")
+            },
+            text = {
+                Text(text = "Delete \"${folder.name}\"? Anime inside will not be deleted and will return to the main library.")
             },
         )
     }
 
-    Dialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.8f),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp,
-        ) {
-            Column(
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .clickable { showRenameDialog = true }
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable { showRenameDialog = true }
-                        .padding(bottom = 12.dp),
-                ) {
-                    Text(
-                        text = folder.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Rename",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                    ) {
-                        Text(text = stringResource(MR.strings.action_cancel))
-                    }
-
-                    TextButton(
-                        onClick = { showDeleteDialog = true },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text(text = "Delete")
-                    }
-                }
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Rename",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
             }
-        }
-    }
+        },
+        text = {
+            HorizontalDivider()
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { showDeleteDialog = true },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Text(text = "Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(MR.strings.action_cancel))
+            }
+        },
+    )
 }
