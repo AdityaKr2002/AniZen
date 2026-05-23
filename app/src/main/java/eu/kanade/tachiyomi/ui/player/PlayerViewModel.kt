@@ -1332,7 +1332,7 @@ class PlayerViewModel @JvmOverloads constructor(
         var newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
 
         if (!previous && skipFiller) {
-            while (newIndex <= playlist.lastIndex && fillerEpisodes.contains(playlist[newIndex].episode_number)) {
+            while (newIndex <= playlist.lastIndex && (fillerEpisodes.contains(playlist[newIndex].episode_number) || playlist[newIndex].fillermark)) {
                 newIndex++
             }
         }
