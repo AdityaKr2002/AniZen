@@ -491,7 +491,7 @@ internal fun LazyListScope.hosterContent(
                     video = video,
                     videoState = hoster.videoState[videoIdx],
                     selected = selectedVideoIndex == Pair(hosterIdx, videoIdx),
-                                defaultSelected = highlightDefaultStream && videoIdx == defaultVideoIdx,
+                                      defaultSelected = highlightDefaultStream && videoIdx == defaultVideoIdx,
                     onClick = { onClickVideo(hosterIdx, videoIdx) },
                     noHoster = false,
                 )

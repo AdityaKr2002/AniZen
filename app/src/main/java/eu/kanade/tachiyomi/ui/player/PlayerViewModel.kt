@@ -1314,33 +1314,8 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     private fun getAdjacentEpisodeId(previous: Boolean): Long {
-        val skipFiller = playerPreferences.skipFillerEpisodes().get()
-        var newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
+        val newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
         val playlist = currentPlaylist.value
-
-        var skippedCount = 0
-        val skippedNames = mutableListOf<String>()
-
-        while (newIndex in playlist.indices) {
-            val candidate = playlist[newIndex]
-            val isFiller = candidate.fillermark || fillerEpisodes.contains(candidate.episode_number)
-            if (skipFiller && isFiller) {
-                skippedCount++
-                skippedNames.add(candidate.name)
-                newIndex = if (previous) newIndex - 1 else newIndex + 1
-            } else {
-                break
-            }
-        }
-
-        if (skippedCount > 0 && skipFiller) {
-            val epString = if (skippedNames.size <= 3) skippedNames.joinToString(", ") else "${skippedNames.take(3).joinToString(", ")} and ${skippedCount - 3} more"
-            viewModelScope.launch {
-                withUIContext {
-                    activity.showToast("Skipped filler ep $epString")
-                }
-            }
-        }
 
         return when {
             previous && newIndex < 0 -> -1L

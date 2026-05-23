@@ -96,7 +96,6 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
             ),
             getDisplayGroup(playerPreferences = playerPreferences),
             getIntroSkipGroup(playerPreferences = playerPreferences),
-            getFillerSkipGroup(playerPreferences = playerPreferences),
             if (deviceSupportsPip) getPipGroup(playerPreferences = playerPreferences) else null,
             getExternalPlayerGroup(
                 playerPreferences = playerPreferences,
@@ -381,21 +380,6 @@ object PlayerSettingsPlayerScreen : SearchableSettings {
                 Preference.PreferenceItem.InfoPreference(
                     title = stringResource(MR.strings.pref_category_player_aniskip_info),
                     enabled = isIntroSkipEnabled,
-                ),
-            ),
-        )
-    }
-
-    @Composable
-    private fun getFillerSkipGroup(playerPreferences: PlayerPreferences): Preference.PreferenceGroup {
-        val skipFiller = playerPreferences.skipFillerEpisodes()
-
-        return Preference.PreferenceGroup(
-            title = "Filler Skip",
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = skipFiller,
-                    title = "Skip filler episodes detected by this feature",
                 ),
             ),
         )

@@ -269,6 +269,7 @@ class AnimeScreenModel(
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
+        fillerEpisodes: Set<Float> = this.fillerEpisodes,
         showEpisodeSummary: Boolean = anime.showSummaries(),
         showEpisodeThumbnail: Boolean = anime.showPreviews(),
     ): State.Success {
@@ -510,6 +511,7 @@ class AnimeScreenModel(
             availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
             episodeToSeason = episodeToSeason,
+            fillerEpisodes = fillerEpisodes,
             showEpisodeSummary = showEpisodeSummary,
             showEpisodeThumbnail = showEpisodeThumbnail,
         )
@@ -662,6 +664,7 @@ class AnimeScreenModel(
             successState?.anime?.let { currentAnime ->
                 if (currentAnime.initialized) {
                     fetchSuggestions(currentAnime)
+                    fetchFillerEpisodes(currentAnime)
                 }
             }
         }
@@ -1171,6 +1174,19 @@ class AnimeScreenModel(
 
     private fun moveAnimeToCategory(category: Category?) {
         moveAnimeToCategory(listOfNotNull(category?.id))
+    }
+
+    private fun fetchFillerEpisodes(anime: Anime) {
+        screenModelScope.launchIO {
+            try {
+                val fillerList = eu.kanade.tachiyomi.data.filler.AnimeFillerListFetcher().getFillerEpisodes(anime.title)
+                if (fillerList.isNotEmpty()) {
+                    updateSuccessState { it.copySuccess(fillerEpisodes = fillerList) }
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e)
+            }
+        }
     }
 
     private fun observeDownloads() {
@@ -2042,6 +2058,7 @@ class AnimeScreenModel(
             val discoveryExpanded: Boolean = false,
             val mergedSources: ImmutableList<Source> = persistentListOf(),
             val episodeToSeason: Map<Long, String> = emptyMap(),
+            val fillerEpisodes: Set<Float> = emptySet(),
             val showEpisodeSummary: Boolean = true,
             val showEpisodeThumbnail: Boolean = true,
         ) : State {
