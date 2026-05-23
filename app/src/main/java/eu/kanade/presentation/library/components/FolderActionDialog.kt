@@ -30,10 +30,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import eu.kanade.presentation.components.AdaptiveSheet
 import tachiyomi.domain.library.model.LibraryFolder
 import tachiyomi.i18n.MR
@@ -51,7 +54,7 @@ fun FolderActionDialog(
 
     if (showRenameDialog) {
         var name by remember { mutableStateOf(folder.name) }
-        val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+        val focusRequester = remember { FocusRequester() }
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
             confirmButton = {
@@ -76,7 +79,7 @@ fun FolderActionDialog(
             },
             text = {
                 OutlinedTextField(
-                    modifier = Modifier.androidx.compose.ui.focus.focusRequester(focusRequester),
+                    modifier = Modifier.focusRequester(focusRequester),
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(text = stringResource(MR.strings.name)) },

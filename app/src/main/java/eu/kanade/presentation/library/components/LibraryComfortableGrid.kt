@@ -113,6 +113,7 @@ internal fun LibraryComfortableGrid(
                         usePanorama = usePanorama ?: false,
                     )
                 }
+                is LibraryDisplayItem.Header -> {
                     Text(
                         text = displayItem.name,
                         style = MaterialTheme.typography.titleMedium,
