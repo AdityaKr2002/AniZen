@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
@@ -174,6 +175,12 @@ fun FolderOverlay(
                                 )
                             }
                         } else {
+                            IconButton(onClick = onDismiss) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                    contentDescription = "Back",
+                                )
+                            }
                             Text(
                                 text = folder.name,
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -203,12 +210,6 @@ fun FolderOverlay(
                                         tint = MaterialTheme.colorScheme.primary,
                                     )
                                 }
-                            }
-                            IconButton(onClick = onDismiss) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Close,
-                                    contentDescription = "Close",
-                                )
                             }
                         }
                     }
