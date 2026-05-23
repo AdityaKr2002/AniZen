@@ -394,7 +394,6 @@ data object LibraryTab : Tab {
                 },
                 onClickAnime = { libraryItem ->
                     navigator.push(AnimeScreen(libraryItem.libraryAnime.anime.id))
-                    folderOverlayItem = null
                 },
                 onLongClickAnime = { libraryItem ->
                     folderContextAnimeList = listOf(libraryItem.libraryAnime)
