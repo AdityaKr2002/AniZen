@@ -128,9 +128,9 @@ fun LibraryCompactGrid(
                         onClick = { onFolderClick?.invoke(displayItem) },
                         onLongClick = { onFolderLongClick?.invoke(displayItem) },
                         showTitle = showTitle,
+                        usePanorama = usePanorama ?: false,
                     )
                 }
-                is LibraryDisplayItem.Header -> {
                     Text(
                         text = displayItem.name,
                         style = MaterialTheme.typography.titleMedium,

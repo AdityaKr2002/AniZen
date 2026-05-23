@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,7 +28,6 @@ import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.tachiyomi.ui.library.LibraryDisplayItem
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import tachiyomi.domain.library.model.LibraryDisplayMode
-import tachiyomi.presentation.core.util.collectAsState
 import eu.kanade.domain.ui.UiPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -41,21 +39,16 @@ fun FolderGridItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     showTitle: Boolean = true,
-    usePanorama: Boolean? = null,
+    usePanorama: Boolean = false,
 ) {
     val items = folder.items
     val count = items.size
 
     val isCompact = displayMode is LibraryDisplayMode.CompactGrid || displayMode is LibraryDisplayMode.CoverOnlyGrid
-
-    // Get the correct ratio based on panorama settings
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val globalUsePanorama by uiPreferences.panoramaCover().collectAsState()
-    val effectiveUsePanorama = usePanorama ?: globalUsePanorama
-    val ratio = if (effectiveUsePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
+    val ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
 
     GridItemSelectable(
-        isSelected = false, // Folders don't support multi-select in the main grid yet
+        isSelected = false,
         onClick = onClick,
         onLongClick = onLongClick,
     ) {
@@ -81,10 +74,10 @@ fun FolderGridItem(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 0) FolderPreviewCover(previewItems[0], effectiveUsePanorama)
+                                if (previewItems.size > 0) FolderPreviewCover(previewItems[0], usePanorama)
                             }
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 1) FolderPreviewCover(previewItems[1], effectiveUsePanorama)
+                                if (previewItems.size > 1) FolderPreviewCover(previewItems[1], usePanorama)
                             }
                         }
                         Row(
@@ -92,14 +85,14 @@ fun FolderGridItem(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                                if (previewItems.size > 2) FolderPreviewCover(previewItems[2], effectiveUsePanorama)
+                                if (previewItems.size > 2) FolderPreviewCover(previewItems[2], usePanorama)
                             }
                             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                                 if (previewItems.size > 3) {
                                     if (count > 4) {
                                         FolderPreviewMore(count - 3)
                                     } else {
-                                        FolderPreviewCover(previewItems[3], effectiveUsePanorama)
+                                        FolderPreviewCover(previewItems[3], usePanorama)
                                     }
                                 }
                             }
@@ -139,7 +132,6 @@ fun FolderGridItem(
 @Composable
 private fun FolderPreviewCover(item: LibraryItem, usePanorama: Boolean) {
     val anime = item.libraryAnime.anime
-    val ratio = if (usePanorama) AnimeCover.Panorama.ratio else AnimeCover.Book.ratio
     val coverEntry = if (usePanorama) AnimeCover.Panorama else AnimeCover.Book
     
     coverEntry(
@@ -147,7 +139,7 @@ private fun FolderPreviewCover(item: LibraryItem, usePanorama: Boolean) {
         modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(4.dp),
         shouldExtractColor = false,
-        ratio = ratio,
+        ratio = coverEntry.ratio,
     )
 }
 
