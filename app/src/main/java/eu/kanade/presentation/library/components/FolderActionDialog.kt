@@ -1,6 +1,7 @@
 package eu.kanade.presentation.library.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.components.AdaptiveSheet
 import tachiyomi.domain.library.model.LibraryFolder
@@ -116,61 +119,62 @@ fun FolderActionDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(top = 16.dp, bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = folder.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            )
-            
-            HorizontalDivider()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clickable { showRenameDialog = true }
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Rename",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
 
-            FolderActionItem(
-                label = "Rename",
-                icon = Icons.Outlined.Edit,
-                onClick = { showRenameDialog = true },
-            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-            FolderActionItem(
-                label = "Delete",
-                icon = Icons.Outlined.Delete,
-                isDestructive = true,
-                onClick = { showDeleteDialog = true },
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(text = stringResource(MR.strings.action_cancel))
+                }
 
-            Spacer(modifier = Modifier.size(8.dp))
+                TextButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.weight(1f),
+                    colors = IconButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Delete")
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun FolderActionItem(
-    label: String,
-    icon: ImageVector,
-    isDestructive: Boolean = false,
-    onClick: () -> Unit,
-) {
-    val color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = color,
-            modifier = Modifier.size(24.dp),
-        )
-        Spacer(modifier = Modifier.width(24.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = color,
-        )
     }
 }

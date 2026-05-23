@@ -135,6 +135,7 @@ import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.data.filler.AnimeFillerListFetcher
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.ank.AMR
 import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -1139,7 +1140,7 @@ class PlayerViewModel @JvmOverloads constructor(
             val playlist = currentPlaylist.value
             val actualNextEpisodeIndex = playlist.indexOfFirst { it.id == nextEpisodeId }
             if (actualNextEpisodeIndex > nextEpisodeIndex) {
-                activity.showToast(activity.stringResource(MR.strings.player_filler_skipped))
+                activity.showToast(activity.stringResource(AMR.strings.player_filler_skipped))
             }
         }
 
@@ -1331,7 +1332,7 @@ class PlayerViewModel @JvmOverloads constructor(
         var newIndex = if (previous) getCurrentEpisodeIndex() - 1 else getCurrentEpisodeIndex() + 1
 
         if (!previous && skipFiller) {
-            while (newIndex <= playlist.lastIndex && fillerEpisodes.contains(playlist[newIndex].episodeNumber.toFloat())) {
+            while (newIndex <= playlist.lastIndex && fillerEpisodes.contains(playlist[newIndex].episode_number)) {
                 newIndex++
             }
         }
