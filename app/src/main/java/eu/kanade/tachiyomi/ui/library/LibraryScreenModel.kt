@@ -608,6 +608,11 @@ class LibraryScreenModel(
     fun runDownloadActionSelection(action: DownloadAction) {
         val selection = state.value.selection
         val animes = selection.map { it.anime }.toList()
+        runDownloadAction(action, animes)
+        clearSelection()
+    }
+
+    fun runDownloadAction(action: DownloadAction, animes: List<Anime>) {
         when (action) {
             DownloadAction.NEXT_1_EPISODE -> downloadUnseenEpisodes(animes, 1)
             DownloadAction.NEXT_5_EPISODES -> downloadUnseenEpisodes(animes, 5)
@@ -615,7 +620,6 @@ class LibraryScreenModel(
             DownloadAction.NEXT_25_EPISODES -> downloadUnseenEpisodes(animes, 25)
             DownloadAction.UNSEEN_EPISODES -> downloadUnseenEpisodes(animes, null)
         }
-        clearSelection()
     }
 
     /**
@@ -678,15 +682,19 @@ class LibraryScreenModel(
      */
     fun markSeenSelection(seen: Boolean) {
         val animes = state.value.selection.toList()
+        markSeen(animes, seen)
+        clearSelection()
+    }
+
+    fun markSeen(items: List<LibraryAnime>, seen: Boolean) {
         screenModelScope.launchNonCancellable {
-            animes.forEach { anime ->
+            items.forEach { anime ->
                 setSeenStatus.await(
                     anime = anime.anime,
                     seen = seen,
                 )
             }
         }
-        clearSelection()
     }
 
     fun toggleFavoriteSelection() {
@@ -927,7 +935,11 @@ class LibraryScreenModel(
 
     fun openDeleteAnimeDialog() {
         val nimeList = state.value.selection.map { it.anime }
-        mutableState.update { it.copy(dialog = Dialog.DeleteAnime(nimeList)) }
+        openDeleteAnimeDialog(nimeList)
+    }
+
+    fun openDeleteAnimeDialog(animes: List<Anime>) {
+        mutableState.update { it.copy(dialog = Dialog.DeleteAnime(animes)) }
     }
 
     fun closeDialog() {

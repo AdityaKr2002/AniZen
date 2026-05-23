@@ -462,9 +462,13 @@ data object LibraryTab : Tab {
                     folderContextAnimeList = null
                     screenModel.clearSelection()
                 },
-                onCreateNewFolder = {
+                onCreateNewFolder = { folderName ->
                     if (activeCategoryId != null) {
-                        screenModel.createFolder(activeCategoryId, animeList.map { it.anime.id })
+                        screenModel.createFolder(
+                            animeIds = animeList.map { it.anime.id },
+                            categoryId = activeCategoryId,
+                            folderName = folderName,
+                        )
                     }
                     folderContextAnimeList = null
                     screenModel.clearSelection()

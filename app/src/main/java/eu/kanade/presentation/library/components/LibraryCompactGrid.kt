@@ -48,8 +48,8 @@ fun LibraryCompactGrid(
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
     usePanorama: Boolean? = null,
-    onFolderClick: ((LibraryDisplayItem.Folder) -> Unit)?,
-    onFolderLongClick: ((LibraryDisplayItem.Folder) -> Unit)?,
+    onFolderClick: ((LibraryDisplayItem.Folder) -> Unit)? = null,
+    onFolderLongClick: ((LibraryDisplayItem.Folder) -> Unit)? = null,
 ) {
     val selectedIds = remember(selection) { selection.map { it.id }.toSet() }
 

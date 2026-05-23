@@ -1380,7 +1380,7 @@ private fun EpisodeItemWrapper(
                 seen = item.episode.seen,
                 bookmark = item.episode.bookmark,
                 fillermark = item.episode.fillermark,
-                isAutoFiller = fillerEpisodes.contains(item.episode.episodeNumber),
+                isAutoFiller = fillerEpisodes.contains(item.episode.episodeNumber.toFloat()),
                 summary = item.episode.summary.takeIf { showEpisodeSummary },
                 previewUrl = item.episode.previewUrl.takeIf { showEpisodeThumbnail },
                 selected = item.selected,

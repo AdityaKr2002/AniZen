@@ -23,8 +23,8 @@ fun LibraryCoverOnlyGrid(
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
     usePanorama: Boolean? = null,
-    onFolderClick: ((LibraryDisplayItem.Folder) -> Unit)?,
-    onFolderLongClick: ((LibraryDisplayItem.Folder) -> Unit)?,
+    onFolderClick: ((LibraryDisplayItem.Folder) -> Unit)? = null,
+    onFolderLongClick: ((LibraryDisplayItem.Folder) -> Unit)? = null,
 ) {
     // Reuse the existing CompactGrid implementation but hide the title.
     LibraryCompactGrid(
