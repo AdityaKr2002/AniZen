@@ -9,13 +9,15 @@ import tachiyomi.domain.episode.interactor.GetEpisodesByAnimeId
 import tachiyomi.domain.episode.interactor.UpdateEpisode
 import tachiyomi.domain.episode.model.toEpisodeUpdate
 import tachiyomi.domain.track.interactor.InsertTrack
-import tachiyomi.domain.track.model.Track
+import eu.kanade.domain.track.service.TrackPreferences
+import eu.kanade.domain.track.model.Track
 import kotlin.math.max
 
 class SyncEpisodeProgressWithTrack(
     private val updateEpisode: UpdateEpisode,
     private val insertTrack: InsertTrack,
     private val getEpisodesByAnimeId: GetEpisodesByAnimeId,
+    private val trackPreferences: TrackPreferences,
 ) {
 
     suspend fun await(
@@ -32,7 +34,7 @@ class SyncEpisodeProgressWithTrack(
             .map { it.copy(seen = true).toEpisodeUpdate() }
 
         if (service !is EnhancedTracker) {
-            if (episodeUpdates.isNotEmpty()) {
+            if (trackPreferences.autoSyncFromTrackers().get() && episodeUpdates.isNotEmpty()) {
                 try {
                     updateEpisode.awaitAll(episodeUpdates)
                 } catch (e: Throwable) {

@@ -177,7 +177,7 @@ class DomainModule : InjektModule {
         addFactory { GetTracksPerAnime(get()) }
         addFactory { GetTracks(get()) }
         addFactory { InsertTrack(get()) }
-        addFactory { SyncEpisodeProgressWithTrack(get(), get(), get()) }
+        addFactory { SyncEpisodeProgressWithTrack(get(), get(), get(), get()) }
 
         addSingletonFactory<EpisodeRepository> { EpisodeRepositoryImpl(get()) }
         addFactory { GetEpisode(get()) }
