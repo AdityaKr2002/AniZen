@@ -10,7 +10,7 @@ import tachiyomi.domain.episode.interactor.UpdateEpisode
 import tachiyomi.domain.episode.model.toEpisodeUpdate
 import tachiyomi.domain.track.interactor.InsertTrack
 import eu.kanade.domain.track.service.TrackPreferences
-import eu.kanade.domain.track.model.Track
+import tachiyomi.domain.track.model.Track
 import kotlin.math.max
 
 class SyncEpisodeProgressWithTrack(
