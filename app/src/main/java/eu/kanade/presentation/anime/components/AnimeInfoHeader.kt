@@ -236,8 +236,6 @@ fun AnimeActionRow(
     onEditCategory: (() -> Unit)?,
     onContinueWatching: () -> Unit,
     isWatching: Boolean,
-    localScore: Double? = null,
-    onLocalScoreClicked: (() -> Unit)? = null,
     mainTrackItem: eu.kanade.tachiyomi.ui.anime.track.TrackItem? = null,
     modifier: Modifier = Modifier,
 ) {

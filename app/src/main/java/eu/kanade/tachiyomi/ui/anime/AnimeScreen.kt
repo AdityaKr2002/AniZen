@@ -246,7 +246,6 @@ class AnimeScreen(
                 onEpisodeSelected = screenModel::toggleSelection,
                 onAllEpisodeSelected = screenModel::toggleAllSelection,
                 onInvertSelection = screenModel::invertSelection,
-                onLocalScoreClicked = screenModel::showLocalScoreDialog,
                 onEditIntervalClicked = screenModel::showSetAnimeFetchIntervalDialog.takeIf { successState.anime.favorite },
                 onToggleDiscoveryExpansion = screenModel::toggleDiscoveryExpansion,
                 onSettingsClicked = {
@@ -412,16 +411,7 @@ class AnimeScreen(
                     )
                 }
 
-                is AnimeScreenModel.Dialog.LocalScorePicker -> {
-                    LocalScoreDialog(
-                        score = dialog.score,
-                        status = dialog.status,
-                        onDismissRequest = screenModel::dismissDialog,
-                        onConfirm = { newScore, newStatus ->
-                            screenModel.setLocalTrack(score = newScore, status = newStatus)
-                        }
-                    )
-                }
+
 
                 is AnimeScreenModel.Dialog.SeasonSettingsSheet -> {
                     eu.kanade.presentation.anime.SeasonSettingsDialog(

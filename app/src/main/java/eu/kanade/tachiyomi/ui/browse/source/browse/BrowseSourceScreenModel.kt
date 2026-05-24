@@ -372,7 +372,7 @@ class BrowseSourceScreenModel(
                 new = new.removeCovers(coverCache)
             } else {
                 setAnimeDefaultEpisodeFlags.await(anime)
-                if (trackPreferences.autoAddTrack().get()) {
+                if (trackPreferences.trackOnAddingToLibrary().get()) {
                     addTracks.bindEnhancedTrackers(anime, source)
                 }
             }

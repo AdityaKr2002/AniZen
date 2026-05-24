@@ -738,24 +738,7 @@ class LibraryScreenModel(
                 }
                 updateAnime.awaitAll(toDelete)
 
-                // SY -->
-                if (trackPreferences.autoTrackWhenWatching().get()) {
-                    animeToDelete.forEach { anime ->
-                        val tracks = getTracks.await(anime.id)
-                        val localTrack = tracks.find { it.trackerId == TrackerManager.LOCAL }
-                        if (localTrack != null) {
-                            when {
-                                // If never started, delete track
-                                localTrack.lastEpisodeSeen == 0.0 -> deleteTrack.await(anime.id, TrackerManager.LOCAL)
-                                // If already completed, leave it as completed
-                                localTrack.status == eu.kanade.tachiyomi.data.track.local.LocalTracker.COMPLETED -> {}
-                                // Otherwise, mark as dropped (including movies with progress)
-                                else -> insertTrack.await(localTrack.copy(status = eu.kanade.tachiyomi.data.track.local.LocalTracker.DROPPED))
-                            }
-                        }
-                    }
-                }
-                // SY <--
+
             }
 
             if (deleteEpisodes) {

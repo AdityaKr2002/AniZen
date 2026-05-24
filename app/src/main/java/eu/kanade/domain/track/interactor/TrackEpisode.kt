@@ -33,22 +33,6 @@ class TrackEpisode(
         withNonCancellableContext {
             val tracks = getTracks.await(animeId)
             if (tracks.isEmpty()) {
-                if (trackPreferences.autoTrackWhenWatching().get()) {
-                    val anime = getAnime.await(animeId) ?: return@withNonCancellableContext
-                    val episodes = getEpisodesByAnimeId.await(animeId)
-                    val localTrack = eu.kanade.tachiyomi.data.database.models.Track.create(TrackerManager.LOCAL).apply {
-                        this.anime_id = animeId
-                        this.title = anime.title
-                        this.last_episode_seen = episodeNumber
-                        this.total_episodes = episodes.size.toLong()
-                        this.status = if (episodeNumber >= episodes.size && episodes.isNotEmpty()) {
-                            eu.kanade.tachiyomi.data.track.local.LocalTracker.COMPLETED
-                        } else {
-                            eu.kanade.tachiyomi.data.track.local.LocalTracker.WATCHING
-                        }
-                    }.toDomainTrack(idRequired = false)!!
-                    insertTrack.await(localTrack)
-                }
                 return@withNonCancellableContext
             }
 
@@ -86,18 +70,6 @@ class TrackEpisode(
         withNonCancellableContext {
             val tracks = getTracks.await(animeId)
             if (tracks.isEmpty()) {
-                if (trackPreferences.autoTrackWhenWatching().get()) {
-                    val anime = getAnime.await(animeId) ?: return@withNonCancellableContext
-                    val episodes = getEpisodesByAnimeId.await(animeId)
-                    val localTrack = eu.kanade.tachiyomi.data.database.models.Track.create(TrackerManager.LOCAL).apply {
-                        this.anime_id = animeId
-                        this.title = anime.title
-                        this.last_episode_seen = 0.0
-                        this.total_episodes = episodes.size.toLong()
-                        this.status = status
-                    }.toDomainTrack(idRequired = false)!!
-                    insertTrack.await(localTrack)
-                }
                 return@withNonCancellableContext
             }
 

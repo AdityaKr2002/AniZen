@@ -595,16 +595,13 @@ class PlayerViewModel @JvmOverloads constructor(
         onSecondReached(pos.toInt(), duration.value.toInt())
         _pos.update { pos }
         
-        // SY -->
-        if (pos > 15f && !hasTriggeredWatching && !incognitoMode && trackPreferences.autoTrackWhenWatching().get()) {
+        if (pos > 15f && !hasTriggeredWatching && !incognitoMode) {
             hasTriggeredWatching = true
             val anime = currentAnime.value ?: return
             viewModelScope.launchNonCancellable {
                 logActivity.await(anime.source, ActivityLog.TYPE_PLAY, animeId = anime.id)
-                trackEpisode.trackStatus(activity, anime.id, eu.kanade.tachiyomi.data.track.local.LocalTracker.WATCHING)
             }
         }
-        // SY <--
     }
 
     fun updateReadAhead(value: Long) {
