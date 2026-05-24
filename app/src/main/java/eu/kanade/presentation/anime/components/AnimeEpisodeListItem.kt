@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -98,7 +99,10 @@ fun AnimeEpisodeListItem(
     modifier: Modifier = Modifier,
 ) {
     val downloadState = downloadStateProvider()
-    val start = remember(episodeSwipeStartAction, seen, bookmark, fillermark, downloadState, onEpisodeSwipe) {
+    val fillermarkIcon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_24dp)
+    val fillermarkBorderIcon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_border_24dp)
+
+    val start = remember(episodeSwipeStartAction, seen, bookmark, fillermark, downloadState, onEpisodeSwipe, fillermarkIcon, fillermarkBorderIcon) {
         getSwipeAction(
             action = episodeSwipeStartAction,
             seen = seen,
@@ -107,9 +111,11 @@ fun AnimeEpisodeListItem(
             downloadState = downloadState,
             background = MaterialTheme.colorScheme.primaryContainer,
             onSwipe = { onEpisodeSwipe(episodeSwipeStartAction) },
+            fillermarkIcon = fillermarkIcon,
+            fillermarkBorderIcon = fillermarkBorderIcon,
         )
     }
-    val end = remember(episodeSwipeEndAction, seen, bookmark, fillermark, downloadState, onEpisodeSwipe) {
+    val end = remember(episodeSwipeEndAction, seen, bookmark, fillermark, downloadState, onEpisodeSwipe, fillermarkIcon, fillermarkBorderIcon) {
         getSwipeAction(
             action = episodeSwipeEndAction,
             seen = seen,
@@ -118,6 +124,8 @@ fun AnimeEpisodeListItem(
             downloadState = downloadState,
             background = MaterialTheme.colorScheme.primaryContainer,
             onSwipe = { onEpisodeSwipe(episodeSwipeEndAction) },
+            fillermarkIcon = fillermarkIcon,
+            fillermarkBorderIcon = fillermarkBorderIcon,
         )
     }
 
@@ -516,7 +524,6 @@ private fun BookmarkDownloadIcons(
 }
 
 // AM (FILLERMARK) -->
-@Composable
 // <-- AM (FILLERMARK)
 private fun getSwipeAction(
     action: LibraryPreferences.EpisodeSwipeAction,
@@ -528,6 +535,8 @@ private fun getSwipeAction(
     downloadState: Download.State,
     background: Color,
     onSwipe: () -> Unit,
+    fillermarkIcon: ImageVector,
+    fillermarkBorderIcon: ImageVector,
 ): me.saket.swipe.SwipeAction? {
     return when (action) {
         LibraryPreferences.EpisodeSwipeAction.ToggleSeen -> swipeAction(
@@ -544,11 +553,7 @@ private fun getSwipeAction(
         )
         // AM (FILLERMARK) -->
         LibraryPreferences.EpisodeSwipeAction.ToggleFillermark -> {
-            val icon = if (!fillermark) {
-                ImageVector.vectorResource(id = R.drawable.ic_fillermark_24dp)
-            } else {
-                ImageVector.vectorResource(id = R.drawable.ic_fillermark_border_24dp)
-            }
+            val icon = if (!fillermark) fillermarkIcon else fillermarkBorderIcon
             swipeAction(
                 icon = icon,
                 background = background,
