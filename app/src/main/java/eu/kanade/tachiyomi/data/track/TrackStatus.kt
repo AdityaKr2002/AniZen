@@ -97,6 +97,7 @@ enum class TrackStatus(val int: Long, @StringRes val res: Int) {
                         Simkl.NOT_INTERESTING -> DROPPED
                         else -> null
                     }
+                }
                 else -> null
             }
         }
