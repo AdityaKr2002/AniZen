@@ -1595,6 +1595,13 @@ private fun LazyListScope.sharedEpisodeItems(
                 is EpisodeList.Season -> "anime-sn-${item.name}-$index"
             }
         },
+        contentType = { _, item ->
+            when (item) {
+                is EpisodeList.Item -> "episode"
+                is EpisodeList.MissingCount -> "missing-count"
+                is EpisodeList.Season -> "season"
+            }
+        },
     ) { _, item ->
         EpisodeItemWrapper(
             item = item,
