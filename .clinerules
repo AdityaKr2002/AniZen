@@ -1,0 +1,26 @@
+# AniZen AI Agent Rules
+
+## 1. Response Efficiency & Token Conservation
+* **Strict Conciseness:** Skip conversational preambles, greetings, apologies, and filler text.
+* **Direct Answers:** Provide the code or direct solution first. Do not explain line-by-line what the code does unless explicitly requested.
+* **High-Signal Diffs:** Prefer surgical, idiomatic diffs for edits and reviews.
+* **Batch Operations:** Perform search, read, or command operations in parallel (batching) to minimize chat turns and context bloat.
+
+## 2. Command Execution & Git Protocol
+* **Non-Interactive Commands:** All shell/git commands MUST be non-interactive (e.g., use `GIT_EDITOR=true` for rebases, `git commit -m` with `--no-edit`).
+* **No Speculative Probing:** For local FTP or BDIX servers, do not use web search. Use `curl -s` via shell to probe directories directly.
+
+## 3. Database Migration Alert
+* **SQLDelight Rule:** If any database schema file (`.sq`) or database view definition is modified, a corresponding migration file (`.sqm`) MUST be created. Warn the user immediately if a migration file is missing for any schema change.
+
+## 4. AniZen Project Context
+* **Architecture:** Multi-module Clean Architecture (Android/Compose).
+  * `app` module: UI (Compose/Voyager)
+  * `domain` module: Business logic
+  * `data` module: DB (SQLDelight) and Network
+* **Core Packages:**
+  * Downloader: `eu.kanade.tachiyomi.data.download`
+  * Player: `eu.kanade.tachiyomi.ui.player`
+  * Trackers: `eu.kanade.tachiyomi.data.track`
+* **Technical Constraints:** Dynamic FPS (120/144Hz), 8+ thread parallel decoding, Precision.INEXACT scaling, multi-threaded internal HTTP download engine.
+* **External APIs:** Always prefer `context7` for documentation and `conductor` for track/work management.
