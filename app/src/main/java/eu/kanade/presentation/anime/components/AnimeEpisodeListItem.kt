@@ -101,6 +101,8 @@ fun AnimeEpisodeListItem(
     val downloadState = downloadStateProvider()
     val fillermarkIcon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_24dp)
     val fillermarkBorderIcon = ImageVector.vectorResource(id = R.drawable.ic_fillermark_border_24dp)
+    // Hoist @Composable color read out of remember lambdas
+    val swipeBackground = MaterialTheme.colorScheme.primaryContainer
 
     val start = remember(episodeSwipeStartAction, seen, bookmark, fillermark, downloadState, onEpisodeSwipe, fillermarkIcon, fillermarkBorderIcon) {
         getSwipeAction(
@@ -109,7 +111,7 @@ fun AnimeEpisodeListItem(
             bookmark = bookmark,
             fillermark = fillermark,
             downloadState = downloadState,
-            background = MaterialTheme.colorScheme.primaryContainer,
+            background = swipeBackground,
             onSwipe = { onEpisodeSwipe(episodeSwipeStartAction) },
             fillermarkIcon = fillermarkIcon,
             fillermarkBorderIcon = fillermarkBorderIcon,
@@ -122,7 +124,7 @@ fun AnimeEpisodeListItem(
             bookmark = bookmark,
             fillermark = fillermark,
             downloadState = downloadState,
-            background = MaterialTheme.colorScheme.primaryContainer,
+            background = swipeBackground,
             onSwipe = { onEpisodeSwipe(episodeSwipeEndAction) },
             fillermarkIcon = fillermarkIcon,
             fillermarkBorderIcon = fillermarkBorderIcon,
