@@ -178,8 +178,6 @@ class UiPreferences(
 
     fun showSeasonsSection() = preferenceStore.getBoolean("pref_show_seasons_section", false)
 
-    fun animeItemSpacing() = preferenceStore.getInt("pref_anime_item_spacing", 15)
-
     fun panoramaCover() = preferenceStore.getBoolean("pref_panorama_cover", false)
 
     fun libraryPanoramaMode() = getPanoramaMode("pref_library_panorama_mode", "pref_library_panorama")

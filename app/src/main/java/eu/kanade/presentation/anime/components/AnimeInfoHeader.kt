@@ -243,9 +243,6 @@ fun AnimeActionRow(
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
-    val uiPreferences = remember { uy.kohesive.injekt.Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
-    val topPadding by uiPreferences.animeItemSpacing().collectAsState()
-
     val nextUpdateDays = remember(nextUpdate) {
         return@remember if (nextUpdate != null) {
             val now = Instant.now()
@@ -256,7 +253,7 @@ fun AnimeActionRow(
     }
 
     Column(
-        modifier = modifier.padding(start = 16.dp, top = topPadding.dp, end = 16.dp, bottom = 4.dp),
+        modifier = modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Surface(

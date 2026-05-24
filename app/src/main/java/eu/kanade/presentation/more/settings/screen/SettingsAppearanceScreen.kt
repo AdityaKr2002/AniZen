@@ -46,7 +46,8 @@ object SettingsAppearanceScreen : SearchableSettings {
 
         return listOf(
             getThemeGroup(uiPreferences = uiPreferences),
-            getDisplayGroup(uiPreferences = uiPreferences),
+            getLayoutNavigationGroup(uiPreferences = uiPreferences),
+            getVisualCustomizationGroup(uiPreferences = uiPreferences),
         )
     }
 
@@ -116,7 +117,7 @@ object SettingsAppearanceScreen : SearchableSettings {
     }
 
     @Composable
-    private fun getDisplayGroup(
+    private fun getLayoutNavigationGroup(
         uiPreferences: UiPreferences,
     ): Preference.PreferenceGroup {
         val context = LocalContext.current
@@ -129,13 +130,8 @@ object SettingsAppearanceScreen : SearchableSettings {
             UiPreferences.dateFormat(dateFormat).format(now)
         }
 
-        val animeItemSpacingPref = uiPreferences.animeItemSpacing()
-        val animeItemSpacing by animeItemSpacingPref.collectAsState()
-
-        val dynamicAnimeTheme by uiPreferences.dynamicAnimeTheme().collectAsState()
-
         return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_category_display),
+            title = stringResource(MR.strings.pref_category_layout_navigation),
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.TextPreference(
                     title = stringResource(MR.strings.pref_app_language),
@@ -188,6 +184,24 @@ object SettingsAppearanceScreen : SearchableSettings {
                     ),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
+                    pref = uiPreferences.animatedTransitions(),
+                    title = stringResource(MR.strings.pref_animated_transitions),
+                    subtitle = stringResource(MR.strings.pref_animated_transitions_summary),
+                ),
+            ),
+        )
+    }
+
+    @Composable
+    private fun getVisualCustomizationGroup(
+        uiPreferences: UiPreferences,
+    ): Preference.PreferenceGroup {
+        val dynamicAnimeTheme by uiPreferences.dynamicAnimeTheme().collectAsState()
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.pref_category_visual_customization),
+            preferenceItems = persistentListOf(
+                Preference.PreferenceItem.SwitchPreference(
                     pref = uiPreferences.dynamicAnimeTheme(),
                     title = "Dynamic Anime Theme",
                     subtitle = "Adapts app colors to the current anime cover",
@@ -229,21 +243,6 @@ object SettingsAppearanceScreen : SearchableSettings {
                     pref = uiPreferences.showSeasonsSection(),
                     title = "Show seasons section",
                     subtitle = stringResource(tachiyomi.i18n.kmk.KMR.strings.pref_show_seasons_section_warning),
-                ),
-                Preference.PreferenceItem.SliderPreference(
-                    value = animeItemSpacing,
-                    min = 0,
-                    max = 80,
-                    title = "Anime action row spacing",
-                    subtitle = "Adjust vertical spacing between cover and action buttons",
-                    onValueChangeFinished = {
-                        animeItemSpacingPref.set(it)
-                    },
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.animatedTransitions(),
-                    title = stringResource(MR.strings.pref_animated_transitions),
-                    subtitle = stringResource(MR.strings.pref_animated_transitions_summary),
                 ),
             ),
         )
