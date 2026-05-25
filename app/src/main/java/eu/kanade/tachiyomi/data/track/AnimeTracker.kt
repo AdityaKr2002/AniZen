@@ -5,6 +5,7 @@ import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.tachiyomi.data.database.models.Track
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.ImmutableList
@@ -113,6 +114,8 @@ interface AnimeTracker {
             withUIContext { Injekt.get<Application>().toast(e.message) }
         }
     }
+
+    suspend fun fetchCastByTitle(remoteId: Long, mediaType: String): List<Credit>? = null
 
     fun getStatusForAnime(status: Long): StringResource?
 }

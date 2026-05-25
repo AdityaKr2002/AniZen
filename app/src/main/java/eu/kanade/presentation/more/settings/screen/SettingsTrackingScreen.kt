@@ -85,6 +85,7 @@ object SettingsTrackingScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val context = LocalContext.current
+        val scope = rememberCoroutineScope()
         val trackPreferences = remember { Injekt.get<TrackPreferences>() }
         val trackerManager = remember { Injekt.get<TrackerManager>() }
         val sourceManager = remember { Injekt.get<SourceManager>() }
@@ -102,6 +103,12 @@ object SettingsTrackingScreen : SearchableSettings {
                 }
                 is LogoutDialog -> {
                     TrackingLogoutDialog(
+                        tracker = tracker,
+                        onDismissRequest = { dialog = null },
+                    )
+                }
+                is ApiKeyDialog -> {
+                    TrackingApiKeyDialog(
                         tracker = tracker,
                         onDismissRequest = { dialog = null },
                     )
@@ -201,6 +208,42 @@ object SettingsTrackingScreen : SearchableSettings {
                             )
                         },
                         logout = { dialog = LogoutDialog(trackerManager.simkl) },
+                    ),
+                    Preference.PreferenceItem.TrackerPreference(
+                        title = trackerManager.trakt.name,
+                        tracker = trackerManager.trakt,
+                        login = {
+                            context.openInBrowser(
+                                eu.kanade.tachiyomi.data.track.trakt.TraktApi.authUrl(),
+                                forceDefaultBrowser = true,
+                            )
+                        },
+                        logout = { dialog = LogoutDialog(trackerManager.trakt) },
+                    ),
+                    Preference.PreferenceItem.TrackerPreference(
+                        title = trackerManager.tmdb.name,
+                        tracker = trackerManager.tmdb,
+                        login = {
+                            val currentApiKey = trackPreferences.trackApiKey(trackerManager.tmdb).get()
+                            if (currentApiKey.isBlank()) {
+                                dialog = ApiKeyDialog(trackerManager.tmdb)
+                            } else {
+                                scope.launchIO {
+                                    try {
+                                        val authUrl = trackerManager.tmdb.getAuthUrl()
+                                        context.openInBrowser(
+                                            authUrl,
+                                            forceDefaultBrowser = true,
+                                        )
+                                    } catch (e: Exception) {
+                                        withUIContext {
+                                            context.toast(e.message ?: "Error logging in")
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        logout = { dialog = LogoutDialog(trackerManager.tmdb) },
                     ),
                     Preference.PreferenceItem.TrackerPreference(
                         title = trackerManager.bangumi.name,
@@ -402,3 +445,90 @@ private data class LoginDialog(
 private data class LogoutDialog(
     val tracker: Tracker,
 )
+
+private data class ApiKeyDialog(
+    val tracker: Tracker,
+)
+
+@Composable
+private fun TrackingApiKeyDialog(
+    tracker: Tracker,
+    onDismissRequest: () -> Unit,
+) {
+    val context = LocalContext.current
+    val trackPreferences = remember { Injekt.get<TrackPreferences>() }
+    val networkHelper = remember { Injekt.get<eu.kanade.tachiyomi.network.NetworkHelper>() }
+    val scope = rememberCoroutineScope()
+
+    var apiKey by remember { mutableStateOf(TextFieldValue(trackPreferences.trackApiKey(tracker).get())) }
+    var processing by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "TMDB API Key",
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onDismissRequest) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = stringResource(MR.strings.action_close),
+                    )
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = apiKey,
+                    onValueChange = { apiKey = it },
+                    label = { Text(text = "API Key") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !processing && apiKey.text.isNotBlank(),
+                onClick = {
+                    scope.launchIO {
+                        processing = true
+                        try {
+                            // Validate API key by requesting /3/configuration
+                            val url = "https://api.themoviedb.org/3/configuration?api_key=${apiKey.text}"
+                            val req = okhttp3.Request.Builder().url(url).get().build()
+                            val resp = networkHelper.client.newCall(req).execute()
+                            val ok = try {
+                                resp.use { r -> r.isSuccessful && r.body.string().contains("images") }
+                            } catch (_: Exception) {
+                                false
+                            }
+
+                            if (ok) {
+                                trackPreferences.trackApiKey(tracker).set(apiKey.text)
+                                withUIContext {
+                                    onDismissRequest()
+                                    context.toast(MR.strings.login_success)
+                                }
+                            } else {
+                                withUIContext { context.toast("Invalid TMDB API Key") }
+                            }
+                        } catch (_: Exception) {
+                            withUIContext { context.toast("Error validating key") }
+                        } finally {
+                            processing = false
+                        }
+                    }
+                },
+            ) {
+                val label = if (processing) "Saving..." else "Save"
+                Text(text = label)
+            }
+        },
+    )
+}
+

@@ -1,5 +1,6 @@
 package tachiyomi.domain.anime.model
 
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 
@@ -32,6 +33,7 @@ data class AnimeUpdate(
     val seasonOrder: Long? = null,
     val backgroundUrl: String? = null,
     val backgroundLastModified: Long? = null,
+    val cast: List<Credit>? = null,
     // SY -->
     val filteredScanlators: List<String>? = null,
     // SY <--
@@ -69,5 +71,6 @@ fun Anime.toAnimeUpdate(): AnimeUpdate {
         seasonOrder = seasonOrder,
         backgroundUrl = backgroundUrl,
         backgroundLastModified = backgroundLastModified,
+        cast = cast,
     )
 }

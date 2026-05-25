@@ -621,6 +621,14 @@ private fun AnimeScreenSmallImpl(
                                     )
                                 }
 
+                                // Cast Row — placed below tags
+                                val castSmall = state.anime.cast
+                                if (!castSmall.isNullOrEmpty()) {
+                                    item(key = "cast-row-small", contentType = AnimeScreenItem.CAST) {
+                                        eu.kanade.presentation.anime.components.CastRow(cast = castSmall)
+                                    }
+                                }
+
                                 if (showSuggestions && !suggestionsInOverflow) {
                                     item(key = "discovery-section-small", contentType = "discovery") {
                                         Surface(
@@ -1103,6 +1111,12 @@ fun AnimeScreenLargeImpl(
                                         onTagSearch = onTagSearch,
                                         onCopyTagToClipboard = onCopyTagToClipboard,
                                     )
+
+                                    // Cast Row — placed below tags
+                                    val castLarge = state.anime.cast
+                                    if (!castLarge.isNullOrEmpty()) {
+                                        eu.kanade.presentation.anime.components.CastRow(cast = castLarge)
+                                    }
 
                                     if (showSuggestions && !suggestionsInOverflow) {
                                         Surface(

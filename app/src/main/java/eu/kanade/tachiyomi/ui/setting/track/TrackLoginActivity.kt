@@ -13,6 +13,35 @@ class TrackLoginActivity : BaseOAuthLoginActivity() {
             "myanimelist-auth" -> handleMyAnimeList(data)
             "shikimori-auth" -> handleShikimori(data)
             "simkl-auth" -> handleSimkl(data)
+            "trakt-auth" -> handleTrakt(data)
+            "tmdb-auth" -> handleTmdb(data)
+        }
+    }
+
+    private fun handleTmdb(data: Uri) {
+        val requestToken = data.getQueryParameter("request_token")
+        val approved = data.getQueryParameter("approved")
+        if (requestToken != null && approved == "true") {
+            lifecycleScope.launchIO {
+                trackerManager.tmdb.login(requestToken)
+                returnToSettings()
+            }
+        } else {
+            trackerManager.tmdb.logout()
+            returnToSettings()
+        }
+    }
+
+    private fun handleTrakt(data: Uri) {
+        val code = data.getQueryParameter("code")
+        if (code != null) {
+            lifecycleScope.launchIO {
+                trackerManager.trakt.login(code)
+                returnToSettings()
+            }
+        } else {
+            trackerManager.trakt.logout()
+            returnToSettings()
         }
     }
 
