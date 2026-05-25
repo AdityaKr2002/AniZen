@@ -7,7 +7,11 @@ import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
 import eu.kanade.tachiyomi.data.track.DeletableTracker
+import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
+import eu.kanade.tachiyomi.animesource.model.Credit
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktIds
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktMovie
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktOAuth
@@ -142,6 +146,16 @@ class Trakt(
         if (track.total_episodes == 1L) return true
         val url = track.tracking_url
         return url.contains("/movies/", ignoreCase = true)
+    }
+
+    override suspend fun fetchCastByTitle(remoteId: Long, mediaType: String): List<Credit>? {
+        return try {
+            val tmdbId = api.getTmdbId(remoteId, mediaType) ?: return null
+            val tmdbTracker = Injekt.get<TrackerManager>().tmdb
+            tmdbTracker.fetchCastByTitle(tmdbId, mediaType)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     override suspend fun searchAnime(query: String): List<TrackSearch> {

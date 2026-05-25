@@ -294,7 +294,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
                     )
                 }
             }
-            list.take(30)
+            list
         } catch (e: Exception) {
             logcat(LogPriority.WARN, e) { "TMDB fetchCast failed for id=$remoteId" }
             null

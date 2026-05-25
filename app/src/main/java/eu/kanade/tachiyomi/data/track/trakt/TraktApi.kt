@@ -458,4 +458,22 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
             0L
         }
     }
+
+    fun getTmdbId(traktId: Long, mediaType: String): Long? {
+        val path = if (mediaType == "movie") "movies" else "shows"
+        val request = Request.Builder()
+            .url("$baseUrl/$path/$traktId")
+            .applyTraktHeaders(includeContentType = false)
+            .get()
+            .build()
+        return try {
+            val response = publicClient.newCall(request).execute()
+            val body = response.body.string()
+            val obj = json.parseToJsonElement(body).jsonObject
+            val ids = obj["ids"]?.jsonObject
+            ids?.get("tmdb")?.jsonPrimitive?.longOrNull
+        } catch (_: Exception) {
+            null
+        }
+    }
 }
