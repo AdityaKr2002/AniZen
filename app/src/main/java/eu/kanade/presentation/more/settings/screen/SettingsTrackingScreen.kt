@@ -203,6 +203,31 @@ object SettingsTrackingScreen : SearchableSettings {
                         logout = { dialog = LogoutDialog(trackerManager.simkl) },
                     ),
                     Preference.PreferenceItem.TrackerPreference(
+                        title = trackerManager.trakt.name,
+                        tracker = trackerManager.trakt,
+                        login = {
+                            context.openInBrowser(
+                                eu.kanade.tachiyomi.data.track.trakt.TraktApi.authUrl(),
+                                forceDefaultBrowser = true,
+                            )
+                        },
+                        logout = { dialog = LogoutDialog(trackerManager.trakt) },
+                    ),
+                    Preference.PreferenceItem.TrackerPreference(
+                        title = trackerManager.tmdb.name,
+                        tracker = trackerManager.tmdb,
+                        login = {
+                            scope.launchIO {
+                                val authUrl = trackerManager.tmdb.getAuthUrl()
+                                context.openInBrowser(
+                                    authUrl,
+                                    forceDefaultBrowser = true,
+                                )
+                            }
+                        },
+                        logout = { dialog = LogoutDialog(trackerManager.tmdb) },
+                    ),
+                    Preference.PreferenceItem.TrackerPreference(
                         title = trackerManager.bangumi.name,
                         tracker = trackerManager.bangumi,
                         login = {
