@@ -617,6 +617,7 @@ private fun AnimeScreenSmallImpl(
                                         note = state.anime.note,
                                         tagsProvider = { state.anime.genre },
                                         onTagSearch = onTagSearch,
+                                        onCopyTagToClipboard = onCopyTagToClipboard,
                                     )
                                 }
 
