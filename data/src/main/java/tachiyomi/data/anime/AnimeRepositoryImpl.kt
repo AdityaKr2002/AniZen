@@ -134,6 +134,7 @@ class AnimeRepositoryImpl(
                 seasonOrder = anime.seasonOrder,
                 backgroundUrl = anime.backgroundUrl,
                 backgroundLastModified = anime.backgroundLastModified,
+                cast = anime.cast?.let(tachiyomi.data.CreditListColumnAdapter::encode),
             )
             animesQueries.selectLastInsertedRowId()
         }
@@ -192,6 +193,7 @@ class AnimeRepositoryImpl(
                     seasonOrder = value.seasonOrder,
                     backgroundUrl = value.backgroundUrl,
                     backgroundLastModified = value.backgroundLastModified,
+                    cast = value.cast?.let(tachiyomi.data.CreditListColumnAdapter::encode),
                 )
             }
         }

@@ -40,6 +40,7 @@ object AnimeMapper {
         seasonOrder: Long?,
         backgroundUrl: String?,
         backgroundLastModified: Long,
+        cast: String?,
     ): Anime = Anime(
         id = id,
         source = source,
@@ -71,6 +72,7 @@ object AnimeMapper {
         seasonOrder = seasonOrder,
         backgroundUrl = backgroundUrl,
         backgroundLastModified = backgroundLastModified,
+        cast = cast?.let(tachiyomi.data.CreditListColumnAdapter::decode),
     )
 
     fun mapLibraryAnime(
@@ -148,6 +150,7 @@ object AnimeMapper {
             seasonOrder,
             backgroundUrl,
             backgroundLastModified,
+            cast,
         )
         return LibraryAnime(
             anime = anime,
@@ -195,6 +198,7 @@ object AnimeMapper {
         seasonOrder: Long?,
         backgroundUrl: String?,
         backgroundLastModified: Long,
+        cast: String?,
         totalCount: Long,
         seenCount: Double,
         latestUpload: Long,
@@ -236,6 +240,7 @@ object AnimeMapper {
             seasonOrder,
             backgroundUrl,
             backgroundLastModified,
+            cast,
         ),
         totalCount = totalCount,
         seenCount = seenCount.toLong(),

@@ -1,5 +1,6 @@
 package tachiyomi.domain.anime.model
 
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.animesource.model.FetchType;
 import androidx.compose.runtime.Immutable
 import tachiyomi.domain.anime.model.SeasonDisplayMode
@@ -48,6 +49,7 @@ data class Anime(
     val seasonOrder: Long? = null,
     val backgroundUrl: String? = null,
     val backgroundLastModified: Long = 0,
+    val cast: List<Credit>? = null,
     val customAnimeInfo: CustomAnimeInfo? = null,
 ) : Serializable {
 

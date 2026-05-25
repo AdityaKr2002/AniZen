@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -258,6 +259,45 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
             } else {
                 api.deleteTvRating(track.remote_id)
             }
+        }
+    }
+
+    override suspend fun fetchCastByTitle(remoteId: Long, mediaType: String): List<Credit>? {
+        return try {
+            val json = api.getCredits(remoteId, mediaType)
+            val list = mutableListOf<Credit>()
+            json.optJSONArray("cast")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val p = arr.getJSONObject(i)
+                    list.add(
+                        Credit(
+                            name = p.optString("name"),
+                            role = null,
+                            character = p.optString("character").ifBlank { null },
+                            image_url = p.optString("profile_path", null)
+                                ?.let { TmdbApi.IMAGE_BASE + it },
+                        ),
+                    )
+                }
+            }
+            json.optJSONArray("crew")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val p = arr.getJSONObject(i)
+                    list.add(
+                        Credit(
+                            name = p.optString("name"),
+                            role = p.optString("job").ifBlank { null },
+                            character = null,
+                            image_url = p.optString("profile_path", null)
+                                ?.let { TmdbApi.IMAGE_BASE + it },
+                        ),
+                    )
+                }
+            }
+            list.take(30)
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN, e) { "TMDB fetchCast failed for id=$remoteId" }
+            null
         }
     }
 
