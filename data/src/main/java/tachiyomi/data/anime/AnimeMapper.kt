@@ -108,6 +108,7 @@ object AnimeMapper {
         seasonOrder: Long?,
         backgroundUrl: String?,
         backgroundLastModified: Long,
+        cast: String?,
         totalCount: Long,
         seenCount: Double,
         latestUpload: Long,

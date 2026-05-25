@@ -72,35 +72,3 @@ object CreditListColumnAdapter {
     }
 }
 
-object CreditListColumnAdapter {
-    fun encode(value: List<Credit>): String {
-        val arr = JSONArray()
-        value.forEach { c ->
-            arr.put(JSONObject().apply {
-                put("name", c.name)
-                c.role?.let { put("role", it) }
-                c.character?.let { put("character", it) }
-                c.image_url?.let { put("image_url", it) }
-            })
-        }
-        return arr.toString()
-    }
-
-    fun decode(databaseValue: String): List<Credit> {
-        if (databaseValue.isEmpty()) return emptyList()
-        return try {
-            val arr = JSONArray(databaseValue)
-            (0 until arr.length()).map { i ->
-                val obj = arr.getJSONObject(i)
-                Credit(
-                    name = obj.optString("name", ""),
-                    role = obj.optString("role", null),
-                    character = obj.optString("character", null),
-                    image_url = obj.optString("image_url", null),
-                )
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-}
