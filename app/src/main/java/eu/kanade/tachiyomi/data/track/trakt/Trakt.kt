@@ -41,8 +41,8 @@ class Trakt(
         const val PLAN_TO_WATCH = 5L
 
         // Replace these with your app credentials (user provided values are filled here)
-        const val CLIENT_ID = "8c0053aa008708d212e8d6651194866455110802f33c8ba82c5e7ee5f15d3a16"
-        private const val CLIENT_SECRET = "24b1314e8a6f0176eb6c4249c72381e7aa1ef91f64743293676476a461fb20d4"
+        const val CLIENT_ID = "b11cdc911e0a7b3c211d1afe4f3487f0e145a905d3369c0a42d5b5d2326e93c7"
+        private const val CLIENT_SECRET = "c3677fd800bdfe3e51ba93b77c159487f08c13fc9bda388d52e67992e6f89dbd"
         const val REDIRECT_URI = "anizen://trakt-auth"
         const val SCOPES = "public"
     }
