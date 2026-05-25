@@ -1,1 +1,1 @@
-ALTER TABLE animes ADD COLUMN cast TEXT;
+ALTER TABLE animes ADD COLUMN cast_members TEXT;

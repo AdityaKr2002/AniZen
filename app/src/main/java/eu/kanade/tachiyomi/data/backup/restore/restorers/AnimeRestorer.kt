@@ -160,7 +160,7 @@ class AnimeRestorer(
                 seasonOrder = anime.seasonOrder,
                 backgroundUrl = anime.backgroundUrl,
                 backgroundLastModified = anime.backgroundLastModified,
-                cast = anime.cast?.let(CreditListColumnAdapter::encode),
+                castMembers = anime.cast?.let(CreditListColumnAdapter::encode),
                 animeId = anime.id,
             )
         }
@@ -326,7 +326,7 @@ class AnimeRestorer(
                 seasonOrder = anime.seasonOrder,
                 backgroundUrl = anime.backgroundUrl,
                 backgroundLastModified = anime.backgroundLastModified,
-                cast = anime.cast?.let(CreditListColumnAdapter::encode),
+                castMembers = anime.cast?.let(CreditListColumnAdapter::encode),
             )
             animesQueries.selectLastInsertedRowId()
         }
