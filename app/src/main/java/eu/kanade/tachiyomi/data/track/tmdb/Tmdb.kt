@@ -3,13 +3,10 @@ package eu.kanade.tachiyomi.data.track.tmdb
 import android.graphics.Color
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.animesource.model.Credit
-import eu.kanade.tachiyomi.data.database.models.anime.AnimeTrack
+import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
-import eu.kanade.tachiyomi.data.track.model.AnimeTrackSearch
-import eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata
-import eu.kanade.tachiyomi.data.track.model.TrackMangaMetadata
+import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import logcat.LogPriority
@@ -17,10 +14,8 @@ import okhttp3.OkHttpClient
 import org.json.JSONObject
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.aniyomi.AYMR
 import java.util.Locale
-import tachiyomi.domain.track.anime.model.AnimeTrack as DomainAnimeTrack
-import tachiyomi.domain.track.manga.model.MangaTrack as DomainMangaTrack
+import tachiyomi.domain.track.model.Track as DomainTrack
 
 @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
@@ -52,11 +47,11 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
 
     override fun getScoreList(): ImmutableList<String> = SCORE_LIST
 
-    override fun displayScore(track: DomainAnimeTrack): String {
+    override fun displayScore(track: DomainTrack): String {
         return track.score.toInt().toString()
     }
 
-    private suspend fun add(track: AnimeTrack): AnimeTrack {
+    private suspend fun add(track: Track): Track {
         if (sessionId.isNotBlank()) {
             try {
                 val mediaType = if (track.tracking_url.contains("/tv/")) "tv" else "movie"
@@ -69,7 +64,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         return track
     }
 
-    override suspend fun update(track: AnimeTrack, didWatchEpisode: Boolean): AnimeTrack {
+    override suspend fun update(track: Track, didWatchEpisode: Boolean): Track {
         if (track.status != COMPLETED) {
             if (didWatchEpisode) {
                 if (track.last_episode_seen.toLong() == track.total_episodes && track.total_episodes > 0) {
@@ -100,7 +95,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         return track
     }
 
-    override suspend fun bind(track: AnimeTrack, hasSeenEpisodes: Boolean): AnimeTrack {
+    override suspend fun bind(track: Track, hasSeenEpisodes: Boolean): Track {
         val remoteTrack = findLibAnime(track)
         return if (remoteTrack != null) {
             track.copyPersonalFrom(remoteTrack)
@@ -124,7 +119,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         }
     }
 
-    private suspend fun findLibAnime(track: AnimeTrack): AnimeTrack? {
+    private suspend fun findLibAnime(track: Track): Track? {
         // Emulate findLibAnime using account_states
         if (track.remote_id != 0L && sessionId.isNotBlank()) {
             try {
@@ -146,7 +141,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
                 val defaultEpisodes: Long = if (isMovie) 1 else 100
                 val totalEpisodes = detail.additional.optLong("number_of_episodes", defaultEpisodes)
 
-                return AnimeTrack.create(this@Tmdb.id).apply {
+                return TrackSearch.create(this@Tmdb.id).apply {
                     remote_id = track.remote_id
                     title = detail.title
                     score = when {
@@ -170,11 +165,11 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         return null
     }
 
-    override suspend fun searchAnime(query: String): List<AnimeTrackSearch> {
+    override suspend fun searchAnime(query: String): List<TrackSearch> {
         val results = api.searchMulti(query)
         return results.filter { it.mediaType == "tv" || it.mediaType == "movie" }.map { r ->
             val isTv = r.mediaType == "tv"
-            AnimeTrackSearch.create(this@Tmdb.id).apply {
+            TrackSearch.create(this@Tmdb.id).apply {
                 remote_id = r.id
                 title = r.title
                 tracking_url =
@@ -186,7 +181,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         }.distinctBy { it.remote_id }
     }
 
-    override suspend fun refresh(track: AnimeTrack): AnimeTrack {
+    override suspend fun refresh(track: Track): Track {
         findLibAnime(track)?.let { remoteTrack ->
             track.score = remoteTrack.score
             track.total_episodes = remoteTrack.total_episodes
@@ -203,8 +198,8 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
     }
 
     override fun getStatusForAnime(status: Long): StringResource? = when (status) {
-        WATCHING -> AYMR.strings.watching
-        PLAN_TO_WATCH -> AYMR.strings.plan_to_watch
+        WATCHING -> MR.strings.watching
+        PLAN_TO_WATCH -> MR.strings.plan_to_watch
         COMPLETED -> MR.strings.completed
         else -> null
     }
@@ -250,66 +245,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         trackPreferences.trackApiKey(this).delete()
     }
 
-    override suspend fun getAnimeMetadata(track: DomainAnimeTrack): TrackAnimeMetadata? {
-        val query = track.title
-        val lang = Locale.getDefault().toLanguageTag()
-        val results = api.searchMulti(query, lang)
-        val first = results.firstOrNull() ?: return null
-        val detail = try {
-            api.getMovie(first.id, lang)
-        } catch (_: Exception) {
-            api.getTv(first.id, lang)
-        }
-        val poster = detail.posterPath?.let { TmdbApi.IMAGE_BASE + it }
-
-        val authors = try {
-            val creditsJson = api.getCredits(detail.id, first.mediaType, lang)
-            val crewArr = creditsJson.optJSONArray("crew")
-            val directors = mutableListOf<String>()
-            if (crewArr != null) {
-                for (i in 0 until crewArr.length()) {
-                    val item = crewArr.getJSONObject(i)
-                    if (item.optString("job") == "Director") {
-                        directors.add(item.optString("name"))
-                    }
-                }
-            }
-            directors.joinToString(", ").ifEmpty { null }
-        } catch (_: Exception) {
-            null
-        }
-
-        val artists = try {
-            val companiesArr = detail.additional.optJSONArray("production_companies")
-            val companies = mutableListOf<String>()
-            if (companiesArr != null) {
-                for (i in 0 until companiesArr.length()) {
-                    val item = companiesArr.getJSONObject(i)
-                    companies.add(item.optString("name"))
-                }
-            }
-            companies.joinToString(", ").ifEmpty { null }
-        } catch (_: Exception) {
-            null
-        }
-
-        val enrichedDescription = detail.overview.ifEmpty { null }
-
-        return TrackAnimeMetadata(
-            remoteId = detail.id,
-            title = detail.title,
-            thumbnailUrl = poster,
-            description = enrichedDescription,
-            authors = authors,
-            artists = artists,
-        )
-    }
-
-    override suspend fun getMangaMetadata(track: DomainMangaTrack): TrackMangaMetadata? {
-        throw NotImplementedError("Not implemented.")
-    }
-
-    private suspend fun updateRating(track: AnimeTrack, mediaType: String) {
+    private suspend fun updateRating(track: Track, mediaType: String) {
         if (track.score > 0) {
             if (mediaType == "movie") {
                 api.addMovieRating(track.remote_id, track.score)
@@ -325,46 +261,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
         }
     }
 
-    override suspend fun fetchCastByTitle(title: String?): List<Credit>? {
-        if (title.isNullOrBlank()) return null
-
-        return try {
-            val first = api.searchMulti(title).firstOrNull() ?: return null
-            val creditsJson = api.getCredits(first.id, first.mediaType)
-
-            val credits = mutableListOf<Credit>()
-
-            val castArr = creditsJson.optJSONArray("cast")
-            if (castArr != null) {
-                for (i in 0 until castArr.length()) {
-                    val item = castArr.getJSONObject(i)
-                    val name = item.optString("name")
-                    val character = item.optString("character").ifEmpty { null }
-                    var image: String? = item.optString("profile_path", null)
-                    if (!image.isNullOrBlank()) image = TmdbApi.IMAGE_BASE + image
-                    credits.add(Credit(name = name, role = "Cast", character = character, image_url = image))
-                }
-            }
-
-            val crewArr = creditsJson.optJSONArray("crew")
-            if (crewArr != null) {
-                for (i in 0 until crewArr.length()) {
-                    val item = crewArr.getJSONObject(i)
-                    val name = item.optString("name")
-                    val job = item.optString("job").ifEmpty { null }
-                    var image: String? = item.optString("profile_path", null)
-                    if (!image.isNullOrBlank()) image = TmdbApi.IMAGE_BASE + image
-                    credits.add(Credit(name = name, role = job, image_url = image))
-                }
-            }
-
-            credits.ifEmpty { null }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    override suspend fun register(item: AnimeTrack, animeId: Long) {
+    override suspend fun register(item: Track, animeId: Long) {
         if (item.remote_id == 0L) {
             val url = item.tracking_url
             if (url.isNotBlank()) {
@@ -419,9 +316,5 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
             }
         }
         super.register(item, animeId)
-    }
-
-    override fun isAvailableForUse(): Boolean {
-        return apiKey.isNotBlank()
     }
 }

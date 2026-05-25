@@ -3,13 +3,11 @@ package eu.kanade.tachiyomi.data.track.trakt
 import android.graphics.Color
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.data.database.models.anime.AnimeTrack
+import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
-import eu.kanade.tachiyomi.data.track.DeletableAnimeTracker
-import eu.kanade.tachiyomi.data.track.model.AnimeTrackSearch
-import eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata
-import eu.kanade.tachiyomi.data.track.model.TrackMangaMetadata
+import eu.kanade.tachiyomi.data.track.DeletableTracker
+import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktIds
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktMovie
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktOAuth
@@ -23,19 +21,17 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import tachiyomi.domain.track.manga.model.MangaTrack
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.aniyomi.AYMR
 import uy.kohesive.injekt.injectLazy
 import kotlin.math.roundToInt
-import tachiyomi.domain.track.anime.model.AnimeTrack as DomainAnimeTrack
+import tachiyomi.domain.track.model.Track as DomainTrack
 
 /**
  * Trakt.tv tracker implementation (anime / shows / movies).
  */
 class Trakt(
     id: Long,
-) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableAnimeTracker {
+) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableTracker {
 
     companion object {
         const val WATCHING = 1L
@@ -63,7 +59,6 @@ class Trakt(
     override val name: String = "Trakt"
     override val id: Long = 201L
     override val supportsReadingDates: Boolean = true
-    override val supportsPrivateTracking: Boolean = false
 
     override fun getLogo() = R.drawable.ic_tracker_trakt
     override fun getLogoColor() = Color.rgb(255, 69, 0)
@@ -74,11 +69,11 @@ class Trakt(
 
     override fun getStatusForAnime(status: Long): StringResource? {
         return when (status) {
-            WATCHING -> AYMR.strings.watching
+            WATCHING -> MR.strings.watching
             COMPLETED -> MR.strings.completed
             ON_HOLD -> MR.strings.on_hold
             DROPPED -> MR.strings.dropped
-            PLAN_TO_WATCH -> AYMR.strings.plan_to_watch
+            PLAN_TO_WATCH -> MR.strings.plan_to_watch
             else -> null
         }
     }
@@ -91,13 +86,13 @@ class Trakt(
         return persistentListOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
     }
 
-    override fun get10PointScore(track: DomainAnimeTrack): Double {
+    override fun get10PointScore(track: DomainTrack): Double {
         return track.score
     }
 
     override fun indexToScore(index: Int): Double = index.toDouble()
 
-    override fun displayScore(track: DomainAnimeTrack): String = track.score.toString()
+    override fun displayScore(track: DomainTrack): String = track.score.toString()
 
     init {
         // Restore persisted token (if any) and set auth on interceptor so api calls use it.
@@ -125,7 +120,7 @@ class Trakt(
         }
     }
 
-    private fun ensureTotalEpisodes(track: AnimeTrack) {
+    private fun ensureTotalEpisodes(track: Track) {
         if (track.total_episodes > 0 || track.remote_id == 0L) return
         if (isMovieTrack(track)) {
             // Some older movie entries might have been stored without explicitly setting episode count.
@@ -143,13 +138,13 @@ class Trakt(
         }
     }
 
-    private fun isMovieTrack(track: AnimeTrack): Boolean {
+    private fun isMovieTrack(track: Track): Boolean {
         if (track.total_episodes == 1L) return true
         val url = track.tracking_url
         return url.contains("/movies/", ignoreCase = true)
     }
 
-    override suspend fun searchAnime(query: String): List<AnimeTrackSearch> {
+    override suspend fun searchAnime(query: String): List<TrackSearch> {
         return api.search(query).mapNotNull { result ->
             when (result.type) {
                 "show" -> result.show?.toTrackSearch()
@@ -163,7 +158,7 @@ class Trakt(
         return TraktIds(trakt = remoteId, slug = "", imdb = null, tmdb = null)
     }
 
-    override suspend fun update(track: AnimeTrack, didWatchEpisode: Boolean): AnimeTrack {
+    override suspend fun update(track: Track, didWatchEpisode: Boolean): Track {
         if (track.remote_id == 0L) return track
         ensureTotalEpisodes(track)
         applyLocalStatus(track, didWatchEpisode)
@@ -174,7 +169,7 @@ class Trakt(
         }
     }
 
-    override suspend fun delete(track: DomainAnimeTrack) {
+    override suspend fun delete(track: DomainTrack) {
         // Best-effort removal using the domain model fields.
         try {
             val rid = track.remoteId
@@ -191,7 +186,7 @@ class Trakt(
         }
     }
 
-    override suspend fun bind(track: AnimeTrack, hasSeenEpisodes: Boolean): AnimeTrack {
+    override suspend fun bind(track: Track, hasSeenEpisodes: Boolean): Track {
         // Try to find the item in the user's watched/collection. If found, copy progress into the track.
         try {
             val remoteId = track.remote_id
@@ -215,7 +210,7 @@ class Trakt(
         return update(track, didWatchEpisode = hasSeenEpisodes)
     }
 
-    override suspend fun refresh(track: AnimeTrack): AnimeTrack {
+    override suspend fun refresh(track: Track): Track {
         try {
             val remoteId = track.remote_id
             if (remoteId == 0L) return track
@@ -299,43 +294,10 @@ class Trakt(
         super.logout()
     }
 
-    override suspend fun getMangaMetadata(track: MangaTrack): TrackMangaMetadata? =
-        throw NotImplementedError("Not implemented.")
-
-    override suspend fun getAnimeMetadata(track: DomainAnimeTrack): TrackAnimeMetadata? {
-        // Try to fetch show metadata from Trakt. If not available, fall back to movie metadata.
-        val remote = track.remoteId
-        if (remote == 0L) return null
-
-        return try {
-            // Prefer public (no-cookie) metadata for UI lazy loads to avoid auth/cookie issues and be faster.
-            api.getShowMetadataPublic(remote)
-                ?: api.getMovieMetadataPublic(remote)
-                // Fallback to authenticated variants if public variants fail or require auth.
-                ?: api.getShowMetadata(remote)
-                ?: api.getMovieMetadata(remote)
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    override suspend fun fetchCastByTitle(title: String?): List<eu.kanade.tachiyomi.animesource.model.Credit>? {
-        if (title.isNullOrBlank()) return null
-        return try {
-            // Search Trakt for the title and use the first show result to fetch cast.
-            val results = api.search(title)
-            val showResult = results.firstOrNull { it.type == "show" }?.show
-            val traktId = showResult?.ids?.trakt ?: return null
-            api.getShowCast(traktId)
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun TraktShow.toTrackSearch(): AnimeTrackSearch =
+    private fun TraktShow.toTrackSearch(): TrackSearch =
         createTrackSearch(ids.trakt, title, overview, images?.poster, ids.slug, isMovie = false)
 
-    private fun TraktMovie.toTrackSearch(): AnimeTrackSearch =
+    private fun TraktMovie.toTrackSearch(): TrackSearch =
         createTrackSearch(ids.trakt, title, overview, images?.poster, ids.slug, isMovie = true)
 
     private fun createTrackSearch(
@@ -345,16 +307,16 @@ class Trakt(
         posterEl: JsonElement?,
         slug: String,
         isMovie: Boolean,
-    ): AnimeTrackSearch {
+    ): TrackSearch {
         val path = if (isMovie) "movies" else "shows"
         val slugOrId = slug.takeIf { it.isNotBlank() } ?: remoteId.toString()
-        return AnimeTrackSearch.create(this@Trakt.id).apply {
+        return TrackSearch.create(this@Trakt.id).apply {
             this.remote_id = remoteId
             this.title = title
-            summary = overview ?: ""
-            cover_url = extractPosterUrl(posterEl)
-            total_episodes = if (isMovie) 1L else 0L
-            tracking_url = "https://trakt.tv/$path/$slugOrId"
+            this.summary = overview ?: ""
+            this.cover_url = extractPosterUrl(posterEl)
+            this.total_episodes = if (isMovie) 1L else 0L
+            this.tracking_url = "https://trakt.tv/$path/$slugOrId"
         }
     }
 
@@ -377,7 +339,7 @@ class Trakt(
         }
     }
 
-    private fun applyLocalStatus(track: AnimeTrack, didWatchEpisode: Boolean) {
+    private fun applyLocalStatus(track: Track, didWatchEpisode: Boolean) {
         if (!didWatchEpisode || track.status == COMPLETED) return
         track.status = if (track.total_episodes > 0 && track.last_episode_seen.toLong() == track.total_episodes) {
             COMPLETED
@@ -386,7 +348,7 @@ class Trakt(
         }
     }
 
-    private fun updateMovieTrack(track: AnimeTrack): AnimeTrack {
+    private fun updateMovieTrack(track: Track): Track {
         val ids = idsFromRemoteId(track.remote_id)
         runCatching {
             if (track.last_episode_seen.toLong() >= 1L) {
@@ -403,7 +365,7 @@ class Trakt(
         return track
     }
 
-    private fun updateShowTrack(track: AnimeTrack): AnimeTrack {
+    private fun updateShowTrack(track: Track): Track {
         val traktId = track.remote_id
         val (seasonParam, episodeParam) = resolveSeasonEpisode(track.last_episode_seen)
         runCatching {

@@ -32,33 +32,6 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         client.newBuilder().cookieJar(CookieJar.NO_COOKIES).build()
     }
 
-    /**
-     * Normalize Trakt image fields into a single URL string.
-     * Handles cases:
-     * - JsonObject with sized keys ("full", "medium", "thumb")
-     * - JsonArray of URL strings
-     * - Primitive string
-     */
-    private fun extractImageUrl(el: JsonElement?): String? {
-        val raw = when (el) {
-            null -> null
-            is JsonObject -> el["full"]?.jsonPrimitive?.contentOrNull
-                ?: el["medium"]?.jsonPrimitive?.contentOrNull
-                ?: el["thumb"]?.jsonPrimitive?.contentOrNull
-                ?: el.entries.firstOrNull()?.value?.let { extractImageUrl(it) }
-            is JsonArray -> el.firstOrNull()?.jsonPrimitive?.contentOrNull
-            else -> el.jsonPrimitive.contentOrNull
-        }?.trim().takeUnless { it.isNullOrBlank() } ?: return null
-
-        return when {
-            raw.startsWith("//") -> "https:$raw"
-            raw.startsWith("http://") || raw.startsWith("https://") -> raw
-            raw.startsWith("/") -> raw
-            raw.contains('.') -> "https://$raw"
-            else -> raw
-        }
-    }
-
     companion object {
         fun authUrl(): android.net.Uri =
             "https://trakt.tv/oauth/authorize".toUri().buildUpon()
@@ -273,11 +246,6 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         return response.isSuccessful
     }
 
-    /**
-     * Check if a movie already has history entries for the authenticated user.
-     * Uses GET /sync/history/movies/{id} which returns an array of history entries when present.
-     */
-
     fun loginOAuth(code: String, clientId: String, clientSecret: String, redirectUri: String): TraktOAuth? {
         val bodyJson = """
             {
@@ -454,67 +422,6 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
     }
 
     /**
-     * Fetch show metadata (title, overview, poster) from Trakt.
-     */
-    fun getShowMetadata(traktId: Long): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
-        val request = Request.Builder()
-            .url("$baseUrl/shows/$traktId?extended=full,images")
-            .applyTraktHeaders(includeContentType = false)
-            .get()
-            .build()
-        val response = authClient.newCall(request).execute()
-        val body = response.body.string()
-        return try {
-            val obj = json.parseToJsonElement(body).jsonObject
-            val title = obj["title"]?.jsonPrimitive?.contentOrNull
-            val overview = obj["overview"]?.jsonPrimitive?.contentOrNull
-            val images = obj["images"]?.jsonObject
-            val poster = extractImageUrl(images?.get("poster"))
-            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
-                remoteId = traktId,
-                title = title,
-                thumbnailUrl = poster,
-                description = overview,
-                authors = null,
-                artists = null,
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Public variant of getShowMetadata that uses a no-cookie client (no auth) and can be used
-     * as a fallback when search results don't include images. Uses the same /shows/{id}?extended=full endpoint.
-     */
-    fun getShowMetadataPublic(traktId: Long): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
-        val request = Request.Builder()
-            .url("$baseUrl/shows/$traktId?extended=full,images")
-            .applyTraktHeaders(includeContentType = false)
-            .get()
-            .build()
-        val response = publicClient.newCall(request).execute()
-        val body = response.body.string()
-        return try {
-            val obj = json.parseToJsonElement(body).jsonObject
-            val title = obj["title"]?.jsonPrimitive?.contentOrNull
-            val overview = obj["overview"]?.jsonPrimitive?.contentOrNull
-            val images = obj["images"]?.jsonObject
-            val poster = extractImageUrl(images?.get("poster"))
-            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
-                remoteId = traktId,
-                title = title,
-                thumbnailUrl = poster,
-                description = overview,
-                authors = null,
-                artists = null,
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
      * Return total episode count for a show by summing episodes across seasons.
      * Uses the seasons endpoint with embedded episodes. Uses a no-cookie client for public requests.
      */
@@ -549,114 +456,6 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
             total
         } catch (_: Exception) {
             0L
-        }
-    }
-
-    /**
-     * Fetch movie metadata (title, overview, poster) from Trakt.
-     */
-    fun getMovieMetadata(traktId: Long): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
-        val request = Request.Builder()
-            .url("$baseUrl/movies/$traktId?extended=full,images")
-            .applyTraktHeaders(includeContentType = false)
-            .get()
-            .build()
-        val response = authClient.newCall(request).execute()
-        val body = response.body.string()
-        return try {
-            val obj = json.parseToJsonElement(body).jsonObject
-            val title = obj["title"]?.jsonPrimitive?.contentOrNull
-            val overview = obj["overview"]?.jsonPrimitive?.contentOrNull
-            val images = obj["images"]?.jsonObject
-            val poster = extractImageUrl(images?.get("poster"))
-            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
-                remoteId = traktId,
-                title = title,
-                thumbnailUrl = poster,
-                description = overview,
-                authors = null,
-                artists = null,
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Public variant of getMovieMetadata that uses a no-cookie client (no auth) and can be used
-     * as a fallback when search results don't include images. Uses the same /movies/{id}?extended=full,images endpoint.
-     */
-    fun getMovieMetadataPublic(traktId: Long): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
-        val request = Request.Builder()
-            .url("$baseUrl/movies/$traktId?extended=full,images")
-            .applyTraktHeaders(includeContentType = false)
-            .get()
-            .build()
-        val response = publicClient.newCall(request).execute()
-        val body = response.body.string()
-        return try {
-            val obj = json.parseToJsonElement(body).jsonObject
-            val title = obj["title"]?.jsonPrimitive?.contentOrNull
-            val overview = obj["overview"]?.jsonPrimitive?.contentOrNull
-            val images = obj["images"]?.jsonObject
-            val poster = extractImageUrl(images?.get("poster"))
-            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
-                remoteId = traktId,
-                title = title,
-                thumbnailUrl = poster,
-                description = overview,
-                authors = null,
-                artists = null,
-            )
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Fetch cast for a show (best-effort). Maps to Credit objects with name, role and image_url.
-     */
-    fun getShowCast(traktId: Long): List<eu.kanade.tachiyomi.animesource.model.Credit>? {
-        val request = Request.Builder()
-            .url("$baseUrl/shows/$traktId/people?extended=images")
-            .applyTraktHeaders(includeContentType = false)
-            .get()
-            .build()
-        // Use no-cookie client for public people/cast endpoint to avoid auth/cookie-related 403s.
-        val response = publicClient.newCall(request).execute()
-        val body = response.body.string()
-        return try {
-            val root = json.parseToJsonElement(body).jsonObject
-            val castArr = root["cast"]?.jsonArray ?: return null
-            castArr.mapNotNull { el ->
-                try {
-                    val obj = el.jsonObject
-                    val person = obj["person"]?.jsonObject
-                    val character = obj["character"]?.jsonPrimitive?.contentOrNull
-                    val name = person?.get("name")?.jsonPrimitive?.contentOrNull
-                    val imagesEl = person?.get("images")
-                    var imageUrl: String? = null
-                    try {
-                        val headshotEl = imagesEl?.jsonObject?.get("headshot") ?: imagesEl?.jsonArray?.firstOrNull()
-                            ?: imagesEl?.jsonPrimitive
-                        imageUrl = extractImageUrl(headshotEl)
-                        // Prepend scheme if API returns protocol-relative URLs.
-                        imageUrl = imageUrl?.let { u -> if (u.startsWith("http")) u else "https://$u" }
-                    } catch (_: Exception) {
-                    }
-                    if (name.isNullOrBlank()) return@mapNotNull null
-                    eu.kanade.tachiyomi.animesource.model.Credit(
-                        name = name,
-                        role = character,
-                        character = character,
-                        image_url = imageUrl,
-                    )
-                } catch (_: Exception) {
-                    null
-                }
-            }
-        } catch (_: Exception) {
-            null
         }
     }
 }
