@@ -15,13 +15,19 @@ class GetSeasonsByAnimeId(
     private val animeMergeRepository: AnimeMergeRepository,
 ) {
 
-    suspend fun await(animeId: Long, virtualSeasons: List<Anime> = emptyList()): List<Season> {
+    suspend fun await(
+        animeId: Long, 
+        virtualSeasons: List<Anime> = emptyList(),
+        useHierarchicalSeasons: Boolean = true,
+    ): List<Season> {
         val anime = animeRepository.getAnimeById(animeId) ?: return emptyList()
         
         // 1. Get real hierarchical seasons from DB
-        val dbSeasons = animeRepository.getAnimeSeasonsById(anime.parentId ?: anime.id).map { it.anime }
-        if (dbSeasons.isNotEmpty()) {
-            return dbSeasons.map {
+        val parentId = if (useHierarchicalSeasons) (anime.parentId ?: anime.id) else anime.id
+        val dbSeasons = animeRepository.getAnimeSeasonsById(parentId).map { it.anime }
+        val pool = (listOf(anime) + dbSeasons).distinctBy { it.id }
+        if (pool.size > 1) {
+            return pool.map {
                 Season(
                     anime = it,
                     seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
@@ -39,7 +45,7 @@ class GetSeasonsByAnimeId(
                 Season(
                     anime = mergedAnime,
                     seasonNumber = mergedAnime.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, mergedAnime.title),
-                    isPrimary = ref?.isInfoAnime ?: false
+                    isPrimary = ref?.isInfoAnime ?: (mergedAnime.id == anime.id)
                 )
             }.sortedBy { it.seasonNumber }
         }
@@ -60,9 +66,13 @@ class GetSeasonsByAnimeId(
         return listOf(Season(anime, SeasonRecognition.parseSeasonNumber(anime.title, anime.title), true))
     }
 
-    fun subscribe(animeId: Long, virtualSeasonsFlow: Flow<List<Anime>>? = null): Flow<List<Season>> = flow {
+    fun subscribe(
+        animeId: Long, 
+        virtualSeasonsFlow: Flow<List<Anime>>? = null,
+        useHierarchicalSeasons: Boolean = true,
+    ): Flow<List<Season>> = flow {
         val anime = animeRepository.getAnimeById(animeId) ?: return@flow
-        val parentId = anime.parentId ?: anime.id
+        val parentId = if (useHierarchicalSeasons) (anime.parentId ?: anime.id) else anime.id
         
         val animeFlow = animeRepository.getAnimeByIdAsFlow(animeId)
         val dbSeasonsFlow = animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
@@ -90,9 +100,12 @@ class GetSeasonsByAnimeId(
     ): List<Season> {
         if (anime == null) return emptyList()
         
+        // Always ensure the current anime is part of the pool
+        val pool = (listOf(anime) + dbSeasons).distinctBy { it.id }
+
         // 1. Prioritize Hierarchical Seasons
-        if (dbSeasons.isNotEmpty()) {
-            return dbSeasons.map {
+        if (pool.size > 1) {
+            return pool.map {
                 Season(
                     anime = it,
                     seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
@@ -108,7 +121,7 @@ class GetSeasonsByAnimeId(
                 Season(
                     anime = mergedAnime,
                     seasonNumber = mergedAnime.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, mergedAnime.title),
-                    isPrimary = ref?.isInfoAnime ?: false
+                    isPrimary = ref?.isInfoAnime ?: (mergedAnime.id == anime.id)
                 )
             }.sortedBy { it.seasonNumber }
         }

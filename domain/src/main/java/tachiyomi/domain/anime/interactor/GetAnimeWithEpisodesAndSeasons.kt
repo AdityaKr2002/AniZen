@@ -25,14 +25,19 @@ class GetAnimeWithEpisodesAndSeasons(
         virtualSeasonsFlow: Flow<List<Anime>>? = null,
     ): Flow<Triple<Anime, List<Episode>, List<SeasonAnime>>> {
         return animeRepository.getAnimeByIdAsFlow(id).flatMapLatest { anime ->
-            val parentId = anime.parentId ?: id
-            val seasonsFlow = if (useHierarchicalSeasons) {
-                animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
-            } else {
-                getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow).map { seasonsList ->
-                    seasonsList.map {
+            val parentId = if (useHierarchicalSeasons) (anime.parentId ?: id) else id
+            
+            val dbSeasonsFlow = animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
+            val seasonsListFlow = getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow, useHierarchicalSeasons)
+
+            val combinedSeasonsFlow = combine(dbSeasonsFlow, seasonsListFlow) { dbSeasons, seasonsList ->
+                seasonsList.map { season ->
+                    val dbSeason = dbSeasons.find { it.anime.id == season.anime.id }
+                    if (dbSeason != null) {
+                        dbSeason
+                    } else {
                         SeasonAnime(
-                            anime = it.anime,
+                            anime = season.anime,
                             totalCount = 0,
                             seenCount = 0,
                             bookmarkCount = 0,
@@ -47,7 +52,7 @@ class GetAnimeWithEpisodesAndSeasons(
 
             combine(
                 episodeRepository.getEpisodeByAnimeIdAsFlow(id, applyScanlatorFilter),
-                seasonsFlow,
+                combinedSeasonsFlow,
                 getCustomAnimeInfo.subscribe(id),
             ) { episodes, seasons, customInfo ->
                 Triple(anime.copy(customAnimeInfo = customInfo), episodes, seasons)
@@ -63,8 +68,28 @@ class GetAnimeWithEpisodesAndSeasons(
         return episodeRepository.getEpisodeByAnimeId(id, applyScanlatorFilter)
     }
 
-    suspend fun awaitSeasons(id: Long): List<SeasonAnime> {
+    suspend fun awaitSeasons(id: Long, useHierarchicalSeasons: Boolean = true): List<SeasonAnime> {
         val anime = animeRepository.getAnimeById(id)
-        return animeRepository.getAnimeSeasonsById(anime.parentId ?: id)
+        val parentId = if (useHierarchicalSeasons) (anime.parentId ?: id) else id
+        val dbSeasons = animeRepository.getAnimeSeasonsById(parentId)
+        val seasonsList = getSeasonsByAnimeId.await(id, emptyList(), useHierarchicalSeasons)
+
+        return seasonsList.map { season ->
+            val dbSeason = dbSeasons.find { it.anime.id == season.anime.id }
+            if (dbSeason != null) {
+                dbSeason
+            } else {
+                SeasonAnime(
+                    anime = season.anime,
+                    totalCount = 0,
+                    seenCount = 0,
+                    bookmarkCount = 0,
+                    fillermarkCount = 0,
+                    latestUpload = 0,
+                    fetchedAt = 0,
+                    lastSeen = 0,
+                )
+            }
+        }
     }
 }
