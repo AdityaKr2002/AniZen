@@ -226,8 +226,18 @@ object SeasonRecognition {
 
         val rootTitle = getRootTitle(animeTitle)
         
-        // 1. Clean name for matching
-        var cleanSeasonName = seasonName.lowercase()
+        // 1. Identification Check (BEFORE stripping tags)
+        val rawLower = seasonName.lowercase()
+        val formatTagValue = when {
+            rawLower.contains(Regex("""\b(?:movie|film|theatrical)\b""")) -> -2.0
+            rawLower.contains(Regex("""\b(?:ova|oav)\b""")) -> -3.0
+            rawLower.contains(Regex("""\b(?:ona)\b""")) -> -4.0
+            rawLower.contains(Regex("""\b(?:special|omake|extra|recap|summary|reawakening|re-awakening|preview)\b""")) -> -5.0
+            else -> null
+        }
+
+        // 2. Clean name for matching
+        var cleanSeasonName = rawLower
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
             .trim()
@@ -245,7 +255,7 @@ object SeasonRecognition {
         
         matchingContext = matchingContext.replace(Regex("""\b\d{3,4}p?\b"""), "").trim()
 
-        // 2. Dual-Layer Detection (Season + Part)
+        // 3. Dual-Layer Detection (Season + Part)
         var season: Double? = null
         var part: Double? = null
 
@@ -311,11 +321,8 @@ object SeasonRecognition {
             return s + p
         }
 
-        // 3. Format tags
-        if (cleanSeasonName.contains(Regex("""\b(?:movie|film|theatrical)\b""", RegexOption.IGNORE_CASE))) return -2.0
-        if (cleanSeasonName.contains(Regex("""\b(?:ova|oav)\b""", RegexOption.IGNORE_CASE))) return -3.0
-        if (cleanSeasonName.contains(Regex("""\b(?:ona)\b""", RegexOption.IGNORE_CASE))) return -4.0
-        if (cleanSeasonName.contains(Regex("""\b(?:special|omake|extra|recap|summary|reawakening|re-awakening|preview)\b""", RegexOption.IGNORE_CASE))) return -5.0
+        // 4. Return format tag if found earlier
+        if (formatTagValue != null) return formatTagValue
         
         // Final check anchored to "Season" or "Part"
         if (cleanSeasonName.contains(Regex("""(?i)final\s+(?:season|part|chapter)""")) || 

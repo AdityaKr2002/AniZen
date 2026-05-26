@@ -160,10 +160,18 @@ private fun SeasonItem(
     } else {
         // MOVIES, OVAS, SPECIALS -> Show the Unique Name
         val fullTitle = season.anime.title
-        if (fullTitle.contains(":")) {
+        val subtitle = if (fullTitle.contains(":")) {
             fullTitle.substringAfter(":").trim()
         } else {
             fullTitle
+        }
+        
+        when (seasonNum) {
+            -2.0 -> if (subtitle.contains("Movie", ignoreCase = true)) subtitle else "Movie: $subtitle"
+            -3.0 -> if (subtitle.contains("OVA", ignoreCase = true)) subtitle else "OVA: $subtitle"
+            -4.0 -> if (subtitle.contains("ONA", ignoreCase = true)) subtitle else "ONA: $subtitle"
+            -5.0 -> if (subtitle.contains("Special", ignoreCase = true)) subtitle else "Special: $subtitle"
+            else -> subtitle
         }
     }
 

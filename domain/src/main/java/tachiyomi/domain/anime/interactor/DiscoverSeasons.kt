@@ -59,9 +59,9 @@ class DiscoverSeasons(
                     return@filter false
                 }
 
-                // 3. Main Season Lock: Allow main seasons, movies, and OVAs.
+                // 3. Main Season Lock: Allow seasons, movies, OVAs, and Specials.
                 val seasonNum = SeasonRecognition.parseSeasonNumber(anime.title, candidateFullTitle)
-                if (seasonNum < -4.0) return@filter false
+                if (seasonNum < -5.0) return@filter false
                 
                 true
             }.take(15)
