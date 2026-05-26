@@ -1666,4 +1666,6 @@
     <string name="romaji">Romaji</string>
     <string name="english">English</string>
     <string name="native_title">Native</string>
+    <string name="relation_prequel">Prequel</string>
+    <string name="relation_sequel">Sequel</string>
 </resources>

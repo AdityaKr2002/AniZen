@@ -29,7 +29,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tachiyomi.presentation.core.util.collectAsState
-import androidx.compose.runtime.collectAsState
+import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.i18n.MR
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import uy.kohesive.injekt.Injekt
@@ -60,7 +61,7 @@ fun PrequelSequelBox(
     ) {
         if (prequel != null) {
             RelationBanner(
-                relationName = "PREQUEL",
+                relationName = stringResource(MR.strings.relation_prequel),
                 edge = prequel,
                 preferredLanguage = preferredLanguage,
                 onRelationClick = onRelationClick,
@@ -69,7 +70,7 @@ fun PrequelSequelBox(
         }
         if (sequel != null) {
             RelationBanner(
-                relationName = "SEQUEL",
+                relationName = stringResource(MR.strings.relation_sequel),
                 edge = sequel,
                 preferredLanguage = preferredLanguage,
                 onRelationClick = onRelationClick,
@@ -98,14 +99,14 @@ private fun RelationBanner(
     Box(
         modifier = modifier
             .height(68.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onRelationClick(title) }
             .border(
                 width = 2.dp,
                 color = themeColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(4.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .clickable { onRelationClick(title) }
     ) {
         // Background Image
         AsyncImage(

@@ -99,21 +99,7 @@ object SeasonRecognition {
         return diceCoefficient(sig1, sig2)
     }
 
-    /**
-     * Checks if one title is an acronym of the other (e.g. "MT" vs "Mushoku Tensei")
-     */
-    fun isAcronymMatch(original: String, candidate: String): Boolean {
-        val (short, long) = if (original.length < candidate.length) original to candidate else candidate to original
-        if (short.length < 2 || short.any { it.isWhitespace() }) return false
-        
-        val acronym = getSignatureWords(long)
-            .sortedBy { long.indexOf(it) } // Keep original order
-            .mapNotNull { it.firstOrNull() }
-            .joinToString("")
-            .lowercase()
-            
-        return acronym.contains(short.lowercase())
-    }
+
 
     fun diceCoefficient(s1: String, s2: String): Double {
         val str1 = s1.lowercase().replace(Regex("""\s+"""), "")
@@ -225,6 +211,9 @@ object SeasonRecognition {
         "slime" to "that time i got reincarnated as a slime"
     )
 
+    /**
+     * Checks if one title is an acronym of the other (e.g. "MT" vs "Mushoku Tensei")
+     */
     fun isAcronymMatch(query: String, candidate: String): Boolean {
         val q = query.lowercase().trim()
         val c = candidate.lowercase().trim()
@@ -239,7 +228,19 @@ object SeasonRecognition {
             .mapNotNull { it.firstOrNull() }
             .joinToString("")
         
-        return generated == q
+        if (generated == q) return true
+
+        // 3. Fallback to substring matching on signature-based acronym
+        val (short, long) = if (query.length < candidate.length) query to candidate else candidate to query
+        if (short.length < 2 || short.any { it.isWhitespace() }) return false
+        
+        val acronym = getSignatureWords(long)
+            .sortedBy { long.indexOf(it) } // Keep original order
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+            .lowercase()
+            
+        return acronym.contains(short.lowercase())
     }
 
     fun getAlphanumeric(title: String): String {
