@@ -16,27 +16,34 @@ class DiscoverSeasons(
         
         val originalFullTitle = anime.title
         val rootTitle = SeasonRecognition.getRootTitle(originalFullTitle)
+        val ogTitle = anime.ogTitle.takeIf { it.isNotBlank() } ?: originalFullTitle
         
         if (rootTitle.length < 3) return emptyList()
         
         return try {
-            val searchResult = source.getSearchAnime(1, rootTitle, source.getFilterList())
+            // Try searching for root title and original title for better coverage
+            val searchQueries = listOf(rootTitle, ogTitle).distinctBy { SeasonRecognition.getAlphanumeric(it) }
+            val allResults = searchQueries.flatMap { query ->
+                source.getSearchAnime(1, query, source.getFilterList()).animes
+            }.distinctBy { it.url.trimEnd('/') }
             
             // 1. Strict Word Coverage Lock
             val originalWordSet = SeasonRecognition.getWordSet(rootTitle)
             if (originalWordSet.isEmpty()) return emptyList()
 
-            val candidates = searchResult.animes.filter { sAnime ->
+            val candidates = allResults.filter { sAnime ->
                 val candidateFullTitle = sAnime.title
                 
                 // NO-TOLERANCE FILTERS
                 if (SeasonRecognition.isUnrelated(originalFullTitle, candidateFullTitle)) return@filter false
                 
-                // 1. Signature Word Coverage Lock
+                // 1. Signature Word Coverage Lock (Alphanumeric normalization)
                 val originalSignature = SeasonRecognition.getSignatureWords(rootTitle)
+                val candidateAlpha = SeasonRecognition.getAlphanumeric(candidateFullTitle)
+                
                 if (originalSignature.isNotEmpty()) {
                     val allWordsContained = originalSignature.all { sigWord ->
-                        candidateFullTitle.contains(sigWord, ignoreCase = true)
+                        candidateAlpha.contains(SeasonRecognition.getAlphanumeric(sigWord))
                     }
                     if (!allWordsContained) return@filter false
                 }
@@ -47,23 +54,22 @@ class DiscoverSeasons(
                 val isAcronym = SeasonRecognition.isAcronymMatch(rootTitle, candidateFullTitle)
                 
                 // Final Decision: Must pass signature check AND one of the similarity checks
-                // Tightened thresholds from 0.4 to 0.7 to prevent random matches
-                if (dice < 0.7 && tokenSort < 0.7 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
+                // Relaxed slightly to 0.6 to allow space-less matches (Dandadan)
+                if (dice < 0.6 && tokenSort < 0.6 && !isAcronym && !candidateAlpha.contains(SeasonRecognition.getAlphanumeric(rootTitle))) {
                     return@filter false
                 }
 
                 // 3. Main Season Lock: Allow main seasons, movies, and OVAs.
-                // Exclude generic specials (-5.0) to keep the seasons bar focused.
                 val seasonNum = SeasonRecognition.parseSeasonNumber(anime.title, candidateFullTitle)
                 if (seasonNum < -4.0) return@filter false
                 
                 true
-            }.take(10)
+            }.take(15)
 
             val verified = candidates
                 .filter { it.url.trimEnd('/') != anime.url.trimEnd('/') } // Filter out the current anime
                 .map { it.toDomainAnime(anime.source) }
-                .distinctBy { it.url.trimEnd('/') } // Deduplicate by URL instead of placeholder ID
+                .distinctBy { it.url.trimEnd('/') }
 
             verified.sortedBy { sAnime ->
                 SeasonRecognition.parseSeasonNumber(anime.title, sAnime.title)
