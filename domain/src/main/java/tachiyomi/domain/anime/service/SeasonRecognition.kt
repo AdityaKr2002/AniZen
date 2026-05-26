@@ -231,16 +231,15 @@ object SeasonRecognition {
         if (generated == q) return true
 
         // 3. Fallback to substring matching on signature-based acronym
-        val (short, long) = if (query.length < candidate.length) query to candidate else candidate to query
+        val (short, long) = if (q.length < c.length) q to c else c to q
         if (short.length < 2 || short.any { it.isWhitespace() }) return false
         
         val acronym = getSignatureWords(long)
             .sortedBy { long.indexOf(it) } // Keep original order
             .mapNotNull { it.firstOrNull() }
             .joinToString("")
-            .lowercase()
             
-        return acronym.contains(short.lowercase())
+        return acronym.contains(short)
     }
 
     fun getAlphanumeric(title: String): String {
