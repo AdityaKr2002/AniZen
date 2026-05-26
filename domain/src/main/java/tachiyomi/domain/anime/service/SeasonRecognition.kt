@@ -225,18 +225,59 @@ object SeasonRecognition {
         
         matchingContext = matchingContext.replace(Regex("""\b\d{3,4}p?\b"""), "").trim()
 
-        // 2. Try Explicit Detection
-        ordinals.find(matchingContext)?.let { return it.groups[1]?.value?.toDoubleOrNull() ?: 1.0 }
-        parts.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
-        textOrdinals.find(matchingContext)?.let { 
-            val word = it.groups[1]?.value?.lowercase()
-            return textOrdinalMap[word] ?: 1.0
+        // 2. Dual-Layer Detection (Season + Part)
+        var season: Double? = null
+        var part: Double? = null
+
+        // Try to find Season
+        ordinals.find(matchingContext)?.let { 
+            if (it.value.contains("season", ignoreCase = true)) {
+                season = it.groups[1]?.value?.toDoubleOrNull()
+            } else if (it.value.contains("part", ignoreCase = true) || it.value.contains("cour", ignoreCase = true)) {
+                part = it.groups[1]?.value?.toDoubleOrNull()
+            }
         }
-        romanNumerals.find(matchingContext)?.let {
-            val roman = it.groups[1]?.value?.uppercase()
-            return romanMap[roman] ?: -1.0
+
+        if (season == null) {
+            basic.find(matchingContext)?.let { 
+                season = it.groups[1]?.value?.toDoubleOrNull()
+            }
         }
-        basic.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
+
+        // Try to find Part if not already found via ordinals
+        if (part == null) {
+            parts.find(matchingContext)?.let {
+                part = it.groups[1]?.value?.toDoubleOrNull()
+            }
+        }
+
+        // Roman Numerals fallback for Season
+        if (season == null) {
+            romanNumerals.find(matchingContext)?.let {
+                val roman = it.groups[1]?.value?.uppercase()
+                season = romanMap[roman]
+            }
+        }
+
+        // Handle text ordinals
+        if (season == null || part == null) {
+            textOrdinals.findAll(matchingContext).forEach { match ->
+                val word = match.groups[1]?.value?.lowercase()
+                val value = textOrdinalMap[word] ?: 1.0
+                if (match.value.contains("season", ignoreCase = true)) {
+                    if (season == null) season = value
+                } else {
+                    if (part == null) part = value
+                }
+            }
+        }
+
+        // Combine Season and Part
+        if (season != null || part != null) {
+            val s = season ?: 1.0 // Default to Season 1 if only Part is found
+            val p = (part ?: 0.0) / 100.0
+            return s + p
+        }
 
         // 3. Format tags
         if (cleanSeasonName.contains(Regex("""\b(?:movie|film|theatrical)\b""", RegexOption.IGNORE_CASE))) return -2.0
