@@ -12,12 +12,12 @@ object SeasonRecognition {
     /**
      * Ordinal support: 2nd season, 3rd season, etc.
      */
-    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part|cour|volume|arc|chapter)""", RegexOption.IGNORE_CASE)
+    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part|cour|volume|arc|chapter|year|semester)""", RegexOption.IGNORE_CASE)
 
     /**
      * Part support: Part 1, Part 2
      */
-    private val parts = Regex("""(?<=\bpart) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
+    private val parts = Regex("""(?<=\bpart|semester|cour) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
 
     /**
      * Format tags support
@@ -186,9 +186,9 @@ object SeasonRecognition {
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
             // 2. Remove explicit season/part keywords and everything after them
-            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
-            .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
-            .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
+            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc|Year|Semester)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
+            .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter|Year|Semester).*"""), "")
+            .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter|Year|Semester).*"""), "")
             // 3. Remove Roman numeral + Subtitle combos (e.g. "Mushoku Tensei II: Jobless...")
             .replace(Regex("""\s+(?:II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\s*[:\-\–\—].*""", RegexOption.IGNORE_CASE), "")
             // 4. Remove bare numbers (2-10) or Roman numerals (II-XX) at the very end
@@ -231,10 +231,14 @@ object SeasonRecognition {
 
         // Try to find Season
         ordinals.find(matchingContext)?.let { 
-            if (it.value.contains("season", ignoreCase = true)) {
-                season = it.groups[1]?.value?.toDoubleOrNull()
-            } else if (it.value.contains("part", ignoreCase = true) || it.value.contains("cour", ignoreCase = true)) {
-                part = it.groups[1]?.value?.toDoubleOrNull()
+            val matchedText = it.value.lowercase()
+            when {
+                matchedText.contains("season") || matchedText.contains("year") -> {
+                    season = it.groups[1]?.value?.toDoubleOrNull()
+                }
+                matchedText.contains("part") || matchedText.contains("cour") || matchedText.contains("semester") -> {
+                    part = it.groups[1]?.value?.toDoubleOrNull()
+                }
             }
         }
 
@@ -264,7 +268,8 @@ object SeasonRecognition {
             textOrdinals.findAll(matchingContext).forEach { match ->
                 val word = match.groups[1]?.value?.lowercase()
                 val value = textOrdinalMap[word] ?: 1.0
-                if (match.value.contains("season", ignoreCase = true)) {
+                val matchedText = match.value.lowercase()
+                if (matchedText.contains("season") || matchedText.contains("year")) {
                     if (season == null) season = value
                 } else {
                     if (part == null) part = value

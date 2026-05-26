@@ -30,7 +30,8 @@ class GetSeasonsByAnimeId(
             return pool.map {
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
+                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
@@ -56,7 +57,8 @@ class GetSeasonsByAnimeId(
             return all.map { 
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
+                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
@@ -108,7 +110,8 @@ class GetSeasonsByAnimeId(
             return pool.map {
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
+                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
