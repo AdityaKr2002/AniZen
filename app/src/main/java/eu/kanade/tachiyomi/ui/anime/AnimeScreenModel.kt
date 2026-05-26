@@ -254,6 +254,7 @@ class AnimeScreenModel(
         trackItems: List<TrackItem> = this.trackItems,
         relations: ImmutableList<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> = this.relations,
         hasFetchedRelations: Boolean = this.hasFetchedRelations,
+        hasFetchedRelations: Boolean = this.hasFetchedRelations,
         suggestionSections: ImmutableList<SuggestionSection> = this.suggestionSections,
         isSuggestionsLoading: Boolean = this.isSuggestionsLoading,
         dialog: Dialog? = this.dialog,
