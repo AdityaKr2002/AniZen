@@ -591,7 +591,7 @@ class AnimeScreenModel(
             val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
             val installedExtensions = extensionManager.installedExtensionsFlow.value
             val extension = installedExtensions.find { ext -> ext.sources.any { it.id == initialAnime.source } }
-            val isHierarchicalSupported = (extension?.libVersion ?: 0.0) >= 16.0
+            val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
             val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get() && isHierarchicalSupported
 
             combine(

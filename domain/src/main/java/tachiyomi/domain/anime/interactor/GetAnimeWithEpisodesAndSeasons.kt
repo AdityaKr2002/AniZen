@@ -34,10 +34,10 @@ class GetAnimeWithEpisodesAndSeasons(
                 seasonsList.map { season ->
                     val dbSeason = dbSeasons.find { it.anime.id == season.anime.id }
                     if (dbSeason != null) {
-                        dbSeason
+                        dbSeason.copy(anime = dbSeason.anime.copy(seasonNumber = season.seasonNumber))
                     } else {
                         SeasonAnime(
-                            anime = season.anime,
+                            anime = season.anime.copy(seasonNumber = season.seasonNumber),
                             totalCount = 0,
                             seenCount = 0,
                             bookmarkCount = 0,
@@ -77,10 +77,10 @@ class GetAnimeWithEpisodesAndSeasons(
         return seasonsList.map { season ->
             val dbSeason = dbSeasons.find { it.anime.id == season.anime.id }
             if (dbSeason != null) {
-                dbSeason
+                dbSeason.copy(anime = dbSeason.anime.copy(seasonNumber = season.seasonNumber))
             } else {
                 SeasonAnime(
-                    anime = season.anime,
+                    anime = season.anime.copy(seasonNumber = season.seasonNumber),
                     totalCount = 0,
                     seenCount = 0,
                     bookmarkCount = 0,
