@@ -2012,6 +2012,7 @@ class AnimeScreenModel(
             val trackItems: ImmutableList<TrackItem> = persistentListOf(),
             val relations: ImmutableList<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> = persistentListOf(),
             val hasFetchedRelations: Boolean = false,
+            val hasFetchedRelations: Boolean = false,
             val nextAiringEpisode: Pair<Int, Long> = Pair(anime.nextEpisodeToAir, anime.nextEpisodeAiringAt),
             val suggestions: ImmutableList<Anime> = persistentListOf(),
             val isSuggestionsLoading: Boolean = true,
