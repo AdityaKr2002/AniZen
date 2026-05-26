@@ -588,10 +588,16 @@ class AnimeScreenModel(
                     ?.items.orEmpty()
             }.distinctUntilChanged()
 
+            val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
+            val installedExtensions = extensionManager.installedExtensionsFlow.value
+            val extension = installedExtensions.find { ext -> ext.sources.any { it.id == initialAnime.source } }
+            val isHierarchicalSupported = (extension?.libVersion ?: 0.0) >= 16.0
+            val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get() && isHierarchicalSupported
+
             combine(
                 getAnimeAndEpisodesAndSeasons.subscribe(
                     id = animeId,
-                    useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get(),
+                    useHierarchicalSeasons = useHierarchicalSeasons,
                     virtualSeasonsFlow = virtualSeasonsFlow,
                 ).distinctUntilChanged(),
                 downloadCache.changes,
