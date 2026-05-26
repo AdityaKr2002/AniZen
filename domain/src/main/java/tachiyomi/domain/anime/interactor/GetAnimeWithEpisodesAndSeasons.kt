@@ -18,6 +18,17 @@ class GetAnimeWithEpisodesAndSeasons(
     private val getSeasonsByAnimeId: GetSeasonsByAnimeId,
 ) {
 
+    private fun isHierarchicalSupported(sourceId: Long): Boolean {
+        return try {
+            val extensionManager = uy.kohesive.injekt.Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
+            val installedExtensions = extensionManager.installedExtensionsFlow.value
+            val extension = installedExtensions.find { ext -> ext.sources.any { it.id == sourceId } }
+            (extension?.libVersion ?: 0.0) >= 16.0
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun subscribe(
         id: Long,
         applyScanlatorFilter: Boolean = false,
@@ -25,10 +36,13 @@ class GetAnimeWithEpisodesAndSeasons(
         virtualSeasonsFlow: Flow<List<Anime>>? = null,
     ): Flow<Triple<Anime, List<Episode>, List<SeasonAnime>>> {
         return animeRepository.getAnimeByIdAsFlow(id).flatMapLatest { anime ->
-            val parentId = if (useHierarchicalSeasons) (anime.parentId ?: id) else id
+            val isHierarchicalSupported = isHierarchicalSupported(anime.source)
+            val effectiveHierarchical = useHierarchicalSeasons && isHierarchicalSupported
+            
+            val parentId = if (effectiveHierarchical) (anime.parentId ?: id) else id
             
             val dbSeasonsFlow = animeRepository.getAnimeSeasonsByIdAsFlow(parentId)
-            val seasonsListFlow = getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow, useHierarchicalSeasons)
+            val seasonsListFlow = getSeasonsByAnimeId.subscribe(id, virtualSeasonsFlow, effectiveHierarchical)
 
             val combinedSeasonsFlow = combine(dbSeasonsFlow, seasonsListFlow) { dbSeasons, seasonsList ->
                 seasonsList.map { season ->
@@ -70,9 +84,12 @@ class GetAnimeWithEpisodesAndSeasons(
 
     suspend fun awaitSeasons(id: Long, useHierarchicalSeasons: Boolean = true): List<SeasonAnime> {
         val anime = animeRepository.getAnimeById(id)
-        val parentId = if (useHierarchicalSeasons) (anime.parentId ?: id) else id
+        val isHierarchicalSupported = isHierarchicalSupported(anime.source)
+        val effectiveHierarchical = useHierarchicalSeasons && isHierarchicalSupported
+        
+        val parentId = if (effectiveHierarchical) (anime.parentId ?: id) else id
         val dbSeasons = animeRepository.getAnimeSeasonsById(parentId)
-        val seasonsList = getSeasonsByAnimeId.await(id, emptyList(), useHierarchicalSeasons)
+        val seasonsList = getSeasonsByAnimeId.await(id, emptyList(), effectiveHierarchical)
 
         return seasonsList.map { season ->
             val dbSeason = dbSeasons.find { it.anime.id == season.anime.id }

@@ -47,7 +47,8 @@ class DiscoverSeasons(
                 val isAcronym = SeasonRecognition.isAcronymMatch(rootTitle, candidateFullTitle)
                 
                 // Final Decision: Must pass signature check AND one of the similarity checks
-                if (dice < 0.4 && tokenSort < 0.4 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
+                // Tightened thresholds from 0.4 to 0.7 to prevent random matches
+                if (dice < 0.7 && tokenSort < 0.7 && !isAcronym && !candidateFullTitle.contains(rootTitle, ignoreCase = true)) {
                     return@filter false
                 }
 
