@@ -498,6 +498,7 @@ class AnimeScreenModel(
             trackItems = trackItems.toImmutableList(),
             relations = relations,
             hasFetchedRelations = hasFetchedRelations,
+            hasFetchedRelations = hasFetchedRelations,
             suggestionSections = suggestionSections,
             dialog = dialog,
             isRefreshingData = isRefreshingData,
