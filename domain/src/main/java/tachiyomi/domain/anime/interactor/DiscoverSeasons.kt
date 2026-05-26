@@ -7,9 +7,13 @@ import tachiyomi.domain.anime.repository.AnimeRepository
 import tachiyomi.domain.anime.service.SeasonRecognition
 import tachiyomi.domain.source.service.SourceManager
 
+import kotlinx.coroutines.flow.firstOrNull
+import tachiyomi.domain.source.interactor.GetRelatedAnime
+
 class DiscoverSeasons(
     private val sourceManager: SourceManager,
     private val animeRepository: AnimeRepository,
+    private val getRelatedAnime: GetRelatedAnime,
 ) {
     suspend fun await(anime: Anime): List<Anime> {
         val source = sourceManager.get(anime.source) as? AnimeCatalogueSource ?: return emptyList()
@@ -21,19 +25,31 @@ class DiscoverSeasons(
         if (rootTitle.length < 3) return emptyList()
         
         return try {
-            // Try searching for root title and original title for better coverage
+            // 1. Get explicit relations from the extension (Highest Confidence)
+            val explicitRelations = getRelatedAnime.subscribe(anime).firstOrNull()?.second.orEmpty()
+                .map { it.toDomainAnime(anime.source) }
+
+            // 2. Try searching for root title and original title for better coverage
             val searchQueries = listOf(rootTitle, ogTitle).distinctBy { SeasonRecognition.getAlphanumeric(it) }
-            val allResults = searchQueries.flatMap { query ->
+            val searchResults = searchQueries.flatMap { query ->
                 source.getSearchAnime(1, query, source.getFilterList()).animes
-            }.distinctBy { it.url.trimEnd('/') }
+            }.map { it.toDomainAnime(anime.source) }
             
-            // 1. Strict Word Coverage Lock
+            // 3. Pool and Filter
+            val allResults = (explicitRelations + searchResults)
+                .filter { it.url.trimEnd('/') != anime.url.trimEnd('/') } // Filter out the current anime
+                .distinctBy { it.url.trimEnd('/') }
+            
             val originalWordSet = SeasonRecognition.getWordSet(rootTitle)
             if (originalWordSet.isEmpty()) return emptyList()
 
             val candidates = allResults.filter { sAnime ->
                 val candidateFullTitle = sAnime.title
                 
+                // If it came from explicit relations, we trust it more
+                val isExplicit = explicitRelations.any { it.url == sAnime.url }
+                if (isExplicit) return@filter true
+
                 // NO-TOLERANCE FILTERS
                 if (SeasonRecognition.isUnrelated(originalFullTitle, candidateFullTitle)) return@filter false
                 
@@ -54,7 +70,6 @@ class DiscoverSeasons(
                 val isAcronym = SeasonRecognition.isAcronymMatch(rootTitle, candidateFullTitle)
                 
                 // Final Decision: Must pass signature check AND one of the similarity checks
-                // Relaxed slightly to 0.6 to allow space-less matches (Dandadan)
                 if (dice < 0.6 && tokenSort < 0.6 && !isAcronym && !candidateAlpha.contains(SeasonRecognition.getAlphanumeric(rootTitle))) {
                     return@filter false
                 }
@@ -64,14 +79,9 @@ class DiscoverSeasons(
                 if (seasonNum < -5.0) return@filter false
                 
                 true
-            }.take(15)
+            }.take(20)
 
-            val verified = candidates
-                .filter { it.url.trimEnd('/') != anime.url.trimEnd('/') } // Filter out the current anime
-                .map { it.toDomainAnime(anime.source) }
-                .distinctBy { it.url.trimEnd('/') }
-
-            verified.sortedBy { sAnime ->
+            candidates.sortedBy { sAnime ->
                 SeasonRecognition.parseSeasonNumber(anime.title, sAnime.title)
             }
         } catch (e: Exception) {

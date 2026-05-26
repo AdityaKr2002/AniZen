@@ -215,8 +215,39 @@ object SeasonRecognition {
         return cleaned
     }
 
+    private val acronymMap = mapOf(
+        "mt" to "mushoku tensei",
+        "cote" to "classroom of the elite",
+        "aot" to "attack on titan",
+        "sao" to "sword art online",
+        "danmachi" to "is it wrong to try to pick up girls in a dungeon",
+        "ten-sura" to "that time i got reincarnated as a slime",
+        "slime" to "that time i got reincarnated as a slime"
+    )
+
+    fun isAcronymMatch(query: String, candidate: String): Boolean {
+        val q = query.lowercase().trim()
+        val c = candidate.lowercase().trim()
+        
+        // 1. Predefined map
+        if (acronymMap[q]?.let { c.contains(it) } == true) return true
+        if (acronymMap[c]?.let { q.contains(it) } == true) return true
+
+        // 2. Generate acronym from candidate
+        val generated = c.split(" ", "-", ":")
+            .filter { it.length > 1 }
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+        
+        return generated == q
+    }
+
     fun getAlphanumeric(title: String): String {
-        return title.lowercase().replace(Regex("""[^a-z0-9]"""), "")
+        return title.lowercase()
+            .replace(Regex("""\bno\.\s*"""), "")
+            .replace(Regex("""#\s*"""), "")
+            .replace(Regex("""number\s*"""), "")
+            .replace(Regex("""[^a-z0-9]"""), "")
     }
 
     fun parseSeasonNumber(animeTitle: String, seasonName: String, existingNumber: Double? = null): Double {
@@ -228,6 +259,9 @@ object SeasonRecognition {
         
         // 1. Identification Check (BEFORE stripping tags)
         val rawLower = seasonName.lowercase()
+            .replace(Regex("""\bno\.\s*"""), "#")
+            .replace(Regex("""\bnumber\s*"""), "#")
+
         val formatTagValue = when {
             rawLower.contains(Regex("""\b(?:movie|film|theatrical)\b""")) -> -2.0
             rawLower.contains(Regex("""\b(?:ova|oav)\b""")) -> -3.0
@@ -259,7 +293,7 @@ object SeasonRecognition {
         var season: Double? = null
         var part: Double? = null
 
-        // Try to find Season
+        // Try to find Season (Priority)
         ordinals.find(matchingContext)?.let { 
             val matchedText = it.value.lowercase()
             when {
@@ -330,23 +364,23 @@ object SeasonRecognition {
             return 99.0
         }
 
-        // 4. Strict Identity Logic (Normalization)
+        // 5. Strict Identity Logic (Normalization)
         val rootAlpha = getAlphanumeric(rootTitle)
         val candidateAlpha = getAlphanumeric(seasonName)
         
-        if (rootAlpha == candidateAlpha) {
+        if (rootAlpha == candidateAlpha && rootAlpha.isNotEmpty()) {
             return 1.0
         }
 
-        // 5. Number Extraction from context
-        if (matchingContext.isNotEmpty()) {
+        // 6. Number Extraction from context (Only if root title is matched)
+        if (matchingContext.isNotEmpty() && candidateAlpha.contains(rootAlpha)) {
             val numberInSubtitle = number.find(matchingContext)
             if (numberInSubtitle != null) {
                 return getSeasonNumberFromMatch(numberInSubtitle)
             }
         }
 
-        // 6. No number found? It's a related Special/Side-story, not Season 2.
+        // 7. No number found? It's a related Special/Side-story, not Season 2.
         return -5.0
     }
 

@@ -179,7 +179,9 @@ private fun SeasonItem(
     val width = if (entry == AnimeCover.Panorama) 200.dp else 104.dp
 
     Column(
-        modifier = Modifier.width(width),
+        modifier = Modifier
+            .width(width)
+            .clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         androidx.compose.foundation.layout.Box {
@@ -197,19 +199,21 @@ private fun SeasonItem(
                         .padding(4.dp),
                 ) {
                     Badge(
-                        text = "Current",
-                        color = MaterialTheme.colorScheme.secondary,
-                        textColor = MaterialTheme.colorScheme.onSecondary
+                        text = stringResource(MR.strings.selected),
+                        color = MaterialTheme.colorScheme.primary,
+                        textColor = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
         }
         Text(
             text = seasonLabel,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = if (season.isPrimary) FontWeight.Bold else FontWeight.Normal,
+            ),
             maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (season.isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
