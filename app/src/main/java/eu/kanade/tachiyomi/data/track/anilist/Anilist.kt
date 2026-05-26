@@ -220,6 +220,10 @@ class Anilist(id: Long) :
         return track
     }
 
+    suspend fun getAnimeRelations(trackId: Long): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> {
+        return api.getRelations(trackId.toInt())
+    }
+
     override suspend fun login(username: String, password: String) = login(password)
 
     suspend fun login(token: String) {

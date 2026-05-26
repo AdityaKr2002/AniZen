@@ -1660,4 +1660,10 @@
     <string name="pref_skip_filler_episodes">Skip Filler Episodes</string>
     <string name="pref_skip_filler_episodes_summary">Skip filler episodes detected by this feature</string>
     <string name="player_filler_skipped">Filler episode skipped</string>
+    <!-- Anime relations -->
+    <string name="pref_anime_relations">Anime relations</string>
+    <string name="pref_relation_title_language">Preferred title for Prequel &amp; Sequel</string>
+    <string name="romaji">Romaji</string>
+    <string name="english">English</string>
+    <string name="native_title">Native</string>
 </resources>
