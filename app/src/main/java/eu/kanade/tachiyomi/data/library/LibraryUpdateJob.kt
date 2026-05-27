@@ -264,12 +264,18 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             // SY <--
         }
 
-        val includeSeasons = libraryPreferences.useHierarchicalSeasons().get()
+        val includeSeasonsGlobal = libraryPreferences.useHierarchicalSeasons().get()
+        val extensionManager = Injekt.get<ExtensionManager>()
+        val installedExtensions = extensionManager.installedExtensionsFlow.value
+        
         val lastToUpdateWithSeasons = listToUpdate.flatMap { libAnime ->
             when (libAnime.anime.fetchType) {
                 FetchType.Seasons -> {
                     val list = mutableListOf(libAnime)
-                    if (includeSeasons) {
+                    val extension = installedExtensions.find { ext -> ext.sources.any { it.id == libAnime.anime.source } }
+                    val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
+                    
+                    if (includeSeasonsGlobal && isHierarchicalSupported) {
                         val seasons = getAnimeSeasonsById.await(libAnime.anime.id)
                         list.addAll(
                             seasons

@@ -588,18 +588,31 @@ class AnimeScreenModel(
                     ?.items.orEmpty()
             }.distinctUntilChanged()
 
+            val extensionManager = Injekt.get<ExtensionManager>()
+            val installedExtensions = extensionManager.installedExtensionsFlow.value
+            val extension = installedExtensions.find { ext -> ext.sources.any { it.id == initialAnime.source } }
+            val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
+            val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get() && isHierarchicalSupported
+
             combine(
                 getAnimeAndEpisodesAndSeasons.subscribe(
                     id = animeId,
-                    useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get(),
+                    useHierarchicalSeasons = useHierarchicalSeasons,
                     virtualSeasonsFlow = virtualSeasonsFlow,
                 ).distinctUntilChanged(),
                 downloadCache.changes,
                 downloadManager.queueState,
             ) { triple, _, _ -> triple }
                 .onEach { (anime, episodes, seasonAnimes) ->
+                    val hasHierarchicalSeasons = seasonAnimes.isNotEmpty() || anime.parentId != null
+                    
                     val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
-                        anime.copy(fetchType = FetchType.Episodes)
+                        anime.copy(
+                            fetchType = FetchType.Episodes,
+                            seasonGroupingMode = if (hasHierarchicalSeasons) LibraryPreferences.SeasonGrouping.Disabled else anime.seasonGroupingMode
+                        )
+                    } else if (hasHierarchicalSeasons) {
+                        anime.copy(seasonGroupingMode = LibraryPreferences.SeasonGrouping.Disabled)
                     } else {
                         anime
                     }
