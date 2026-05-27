@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="display_mode_season">Season %1$s</string>
+    <string name="display_mode_season_part">Season %1$s Part %2$s</string>
     <!-- Generic strings -->
     <string name="on">On</string>
     <string name="off">Off</string>
@@ -1659,4 +1660,12 @@
     <string name="pref_skip_filler_episodes">Skip Filler Episodes</string>
     <string name="pref_skip_filler_episodes_summary">Skip filler episodes detected by this feature</string>
     <string name="player_filler_skipped">Filler episode skipped</string>
+    <!-- Anime relations -->
+    <string name="pref_anime_relations">Anime relations</string>
+    <string name="pref_relation_title_language">Preferred title for Prequel &amp; Sequel</string>
+    <string name="romaji">Romaji</string>
+    <string name="english">English</string>
+    <string name="native_title">Native</string>
+    <string name="relation_prequel">Prequel</string>
+    <string name="relation_sequel">Sequel</string>
 </resources>

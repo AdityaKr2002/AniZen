@@ -1,5 +1,6 @@
 package eu.kanade.presentation.anime.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlin.math.roundToInt
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.library.components.AnimeComfortableGridItem
@@ -140,33 +142,37 @@ private fun SeasonItem(
     season: Season,
     onClick: () -> Unit,
 ) {
-    val seasonLabel = remember(season.seasonNumber, season.anime.title) {
+    val seasonNum = season.seasonNumber
+    val seasonLabel = if (seasonNum > 0.0) {
+        val major = seasonNum.toInt()
+        val minor = ((seasonNum - major) * 100).roundToInt()
+        if (minor > 0) {
+            stringResource(
+                MR.strings.display_mode_season_part,
+                major.toString(),
+                minor.toString(),
+            )
+        } else {
+            stringResource(
+                MR.strings.display_mode_season,
+                major.toString(),
+            )
+        }
+    } else {
+        // MOVIES, OVAS, SPECIALS -> Show the Unique Name
         val fullTitle = season.anime.title
+        val subtitle = if (fullTitle.contains(":")) {
+            fullTitle.substringAfter(":").trim()
+        } else {
+            fullTitle
+        }
         
-        when {
-            // 1. STRICT TV SEASONS -> "Season X"
-            // This keeps your timeline clean as requested.
-            season.seasonNumber > 0 -> {
-                val num = if (season.seasonNumber % 1.0 == 0.0) 
-                    season.seasonNumber.toInt().toString() 
-                else 
-                    season.seasonNumber.toString()
-                "Season $num"
-            }
-            
-            // 2. MOVIES, OVAS, SPECIALS -> Show the Unique Name
-            else -> {
-                // Smart Clean: Remove the "Parent Name" part if it exists to avoid redundancy.
-                // But NEVER return a generic "Movie" label.
-                
-                // Heuristic: If there is a colon, take what's after the FIRST colon, not the last.
-                // This preserves complex subtitles like "Heaven's Feel - I. Presage Flower"
-                if (fullTitle.contains(":")) {
-                    fullTitle.substringAfter(":").trim()
-                } else {
-                    fullTitle // No colon? Show the full name (e.g., "Spirited Away")
-                }
-            }
+        when (seasonNum) {
+            -2.0 -> if (subtitle.contains("Movie", ignoreCase = true)) subtitle else "Movie: $subtitle"
+            -3.0 -> if (subtitle.contains("OVA", ignoreCase = true)) subtitle else "OVA: $subtitle"
+            -4.0 -> if (subtitle.contains("ONA", ignoreCase = true)) subtitle else "ONA: $subtitle"
+            -5.0 -> if (subtitle.contains("Special", ignoreCase = true)) subtitle else "Special: $subtitle"
+            else -> subtitle
         }
     }
 
@@ -174,7 +180,9 @@ private fun SeasonItem(
     val width = if (entry == AnimeCover.Panorama) 200.dp else 104.dp
 
     Column(
-        modifier = Modifier.width(width),
+        modifier = Modifier
+            .width(width)
+            .clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         androidx.compose.foundation.layout.Box {
@@ -192,19 +200,21 @@ private fun SeasonItem(
                         .padding(4.dp),
                 ) {
                     Badge(
-                        text = "Current",
-                        color = MaterialTheme.colorScheme.secondary,
-                        textColor = MaterialTheme.colorScheme.onSecondary
+                        text = stringResource(MR.strings.selected),
+                        color = MaterialTheme.colorScheme.primary,
+                        textColor = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
         }
         Text(
             text = seasonLabel,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = if (season.isPrimary) FontWeight.Bold else FontWeight.Normal,
+            ),
             maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (season.isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         )
     }
 }

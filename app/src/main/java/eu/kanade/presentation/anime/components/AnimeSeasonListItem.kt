@@ -3,6 +3,7 @@ package eu.kanade.presentation.anime.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import kotlin.math.roundToInt
 import tachiyomi.domain.anime.model.SeasonAnime
 import tachiyomi.domain.anime.model.SeasonDisplayMode
 import eu.kanade.presentation.library.components.AnimeComfortableGridItem
@@ -28,11 +29,22 @@ fun AnimeSeasonListItem(
     listItemModifier: Modifier = Modifier,
 ) {
     val itemAnime = item.seasonAnime.anime
-    val title = if (anime.seasonDisplayMode == Anime.SEASON_DISPLAY_MODE_NUMBER) {
-        stringResource(
-            MR.strings.display_mode_season,
-            formatEpisodeNumber(itemAnime.seasonNumber ?: 0.0),
-        )
+    val seasonNum = itemAnime.seasonNumber ?: 0.0
+    val title = if (anime.seasonDisplayMode == Anime.SEASON_DISPLAY_MODE_NUMBER || seasonNum > 0.0) {
+        val major = seasonNum.toInt()
+        val minor = ((seasonNum - major) * 100).roundToInt()
+        if (minor > 0) {
+            stringResource(
+                MR.strings.display_mode_season_part,
+                major.toString(),
+                minor.toString(),
+            )
+        } else {
+            stringResource(
+                MR.strings.display_mode_season,
+                major.toString(),
+            )
+        }
     } else {
         itemAnime.title
     }

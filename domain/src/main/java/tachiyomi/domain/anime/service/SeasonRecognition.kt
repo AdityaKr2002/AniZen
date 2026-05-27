@@ -12,12 +12,26 @@ object SeasonRecognition {
     /**
      * Ordinal support: 2nd season, 3rd season, etc.
      */
-    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part|cour|volume|arc|chapter)""", RegexOption.IGNORE_CASE)
+    private val ordinals = Regex("""(\d+)(?:st|nd|rd|th)\s+(?:season|part|cour|volume|arc|chapter|year|semester|piece)""", RegexOption.IGNORE_CASE)
 
     /**
      * Part support: Part 1, Part 2
      */
-    private val parts = Regex("""(?<=\bpart) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
+    private val parts = Regex("""(?<=\bpart|semester|cour|piece|chapter) *$NUMBER_PATTERN""", RegexOption.IGNORE_CASE)
+
+    /**
+     * Japanese Part indicators
+     */
+    private val jpParts = mapOf(
+        "zenpen" to 0.1, // First Part
+        "chuuhen" to 0.2, // Middle Part
+        "kouhen" to 0.3, // Last Part
+        "zen" to 0.1,
+        "kou" to 0.3,
+        "1st cour" to 0.1,
+        "2nd cour" to 0.2
+    )
+    private val jpPartsRegex = Regex("""\b(?:zenpen|chuuhen|kouhen|zen|kou|1st cour|2nd cour)\b""", RegexOption.IGNORE_CASE)
 
     /**
      * Format tags support
@@ -85,21 +99,7 @@ object SeasonRecognition {
         return diceCoefficient(sig1, sig2)
     }
 
-    /**
-     * Checks if one title is an acronym of the other (e.g. "MT" vs "Mushoku Tensei")
-     */
-    fun isAcronymMatch(original: String, candidate: String): Boolean {
-        val (short, long) = if (original.length < candidate.length) original to candidate else candidate to original
-        if (short.length < 2 || short.any { it.isWhitespace() }) return false
-        
-        val acronym = getSignatureWords(long)
-            .sortedBy { long.indexOf(it) } // Keep original order
-            .mapNotNull { it.firstOrNull() }
-            .joinToString("")
-            .lowercase()
-            
-        return acronym.contains(short.lowercase())
-    }
+
 
     fun diceCoefficient(s1: String, s2: String): Double {
         val str1 = s1.lowercase().replace(Regex("""\s+"""), "")
@@ -181,22 +181,73 @@ object SeasonRecognition {
     }
 
     fun getRootTitle(title: String): String {
-        return title
+        val cleaned = title
             // 1. Remove common tags and extra info first (e.g. "(TV)", "[BD]")
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
             // 2. Remove explicit season/part keywords and everything after them
-            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
-            .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
-            .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter).*"""), "")
+            .replace(Regex("""(?i)\s*[:\-\–\—]?\s*(?:Season|S|Part|Cour|Vol|Volume|Chapter|Arc|Year|Semester|Piece)\s*(?:\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX).*"""), "")
+            .replace(Regex("""(?i)\s*\d+(?:st|nd|rd|th)\s+(?:Season|Part|Cour|Volume|Arc|Chapter|Year|Semester|Piece).*"""), "")
+            .replace(Regex("""(?i)\s*(?:First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Season|Part|Cour|Volume|Arc|Chapter|Year|Semester|Piece).*"""), "")
             // 3. Remove Roman numeral + Subtitle combos (e.g. "Mushoku Tensei II: Jobless...")
             .replace(Regex("""\s+(?:II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)\s*[:\-\–\—].*""", RegexOption.IGNORE_CASE), "")
             // 4. Remove bare numbers (2-10) or Roman numerals (II-XX) at the very end
             .replace(Regex("""\s+(?:[2-9]|10|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX)$""", RegexOption.IGNORE_CASE), "")
-            // 5. Special handling for "Final" to avoid titles like "Final Fantasy"
+            // 5. Special handling for "Final"
             .replace(Regex("""(?i)\s+(?:Final\s+Season|Final\s+Part|The\s+Final\s+Season|The\s+Final\s+Part|Conclusion|Ending)$"""), "")
             .replace(Regex("""\s+"""), " ")
             .trim()
+            
+        return cleaned
+    }
+
+    private val acronymMap = mapOf(
+        "mt" to "mushoku tensei",
+        "cote" to "classroom of the elite",
+        "aot" to "attack on titan",
+        "sao" to "sword art online",
+        "danmachi" to "is it wrong to try to pick up girls in a dungeon",
+        "ten-sura" to "that time i got reincarnated as a slime",
+        "slime" to "that time i got reincarnated as a slime"
+    )
+
+    /**
+     * Checks if one title is an acronym of the other (e.g. "MT" vs "Mushoku Tensei")
+     */
+    fun isAcronymMatch(query: String, candidate: String): Boolean {
+        val q = query.lowercase().trim()
+        val c = candidate.lowercase().trim()
+        
+        // 1. Predefined map
+        if (acronymMap[q]?.let { c.contains(it) } == true) return true
+        if (acronymMap[c]?.let { q.contains(it) } == true) return true
+
+        // 2. Generate acronym from candidate
+        val generated = c.split(" ", "-", ":")
+            .filter { it.length > 1 }
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+        
+        if (generated == q) return true
+
+        // 3. Fallback to substring matching on signature-based acronym
+        val (short, long) = if (q.length < c.length) q to c else c to q
+        if (short.length < 2 || short.any { it.isWhitespace() }) return false
+        
+        val acronym = getSignatureWords(long)
+            .sortedBy { long.indexOf(it) } // Keep original order
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+            
+        return acronym.contains(short)
+    }
+
+    fun getAlphanumeric(title: String): String {
+        return title.lowercase()
+            .replace(Regex("""\bno\.\s*"""), "")
+            .replace(Regex("""#\s*"""), "")
+            .replace(Regex("""number\s*"""), "")
+            .replace(Regex("""[^a-z0-9]"""), "")
     }
 
     fun parseSeasonNumber(animeTitle: String, seasonName: String, existingNumber: Double? = null): Double {
@@ -206,8 +257,21 @@ object SeasonRecognition {
 
         val rootTitle = getRootTitle(animeTitle)
         
-        // 1. Clean name for matching
-        var cleanSeasonName = seasonName.lowercase()
+        // 1. Identification Check (BEFORE stripping tags)
+        val rawLower = seasonName.lowercase()
+            .replace(Regex("""\bno\.\s*"""), "#")
+            .replace(Regex("""\bnumber\s*"""), "#")
+
+        val formatTagValue = when {
+            rawLower.contains(Regex("""\b(?:movie|film|theatrical)\b""")) -> -2.0
+            rawLower.contains(Regex("""\b(?:ova|oav)\b""")) -> -3.0
+            rawLower.contains(Regex("""\b(?:ona)\b""")) -> -4.0
+            rawLower.contains(Regex("""\b(?:special|omake|extra|recap|summary|reawakening|re-awakening|preview)\b""")) -> -5.0
+            else -> null
+        }
+
+        // 2. Clean name for matching
+        var cleanSeasonName = rawLower
             .replace(Regex("""(?i)\s*\[(?:1080p|720p|480p|BD|DVD|Web|Eng-Sub|Softsubs)\]"""), "")
             .replace(Regex("""(?i)\s+\(?(?:TV|OAV|OVA|ONA|Special|Movie|BD|Remux)\)?.*"""), "")
             .trim()
@@ -225,24 +289,74 @@ object SeasonRecognition {
         
         matchingContext = matchingContext.replace(Regex("""\b\d{3,4}p?\b"""), "").trim()
 
-        // 2. Try Explicit Detection
-        ordinals.find(matchingContext)?.let { return it.groups[1]?.value?.toDoubleOrNull() ?: 1.0 }
-        parts.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
-        textOrdinals.find(matchingContext)?.let { 
-            val word = it.groups[1]?.value?.lowercase()
-            return textOrdinalMap[word] ?: 1.0
-        }
-        romanNumerals.find(matchingContext)?.let {
-            val roman = it.groups[1]?.value?.uppercase()
-            return romanMap[roman] ?: -1.0
-        }
-        basic.find(matchingContext)?.let { return getSeasonNumberFromMatch(it) }
+        // 3. Dual-Layer Detection (Season + Part)
+        var season: Double? = null
+        var part: Double? = null
 
-        // 3. Format tags
-        if (cleanSeasonName.contains(Regex("""\b(?:movie|film|theatrical)\b""", RegexOption.IGNORE_CASE))) return -2.0
-        if (cleanSeasonName.contains(Regex("""\b(?:ova|oav)\b""", RegexOption.IGNORE_CASE))) return -3.0
-        if (cleanSeasonName.contains(Regex("""\b(?:ona)\b""", RegexOption.IGNORE_CASE))) return -4.0
-        if (cleanSeasonName.contains(Regex("""\b(?:special|omake|extra|recap|summary|reawakening|re-awakening|preview)\b""", RegexOption.IGNORE_CASE))) return -5.0
+        // Try to find Season (Priority)
+        ordinals.find(matchingContext)?.let { 
+            val matchedText = it.value.lowercase()
+            when {
+                matchedText.contains("season") || matchedText.contains("year") -> {
+                    season = it.groups[1]?.value?.toDoubleOrNull()
+                }
+                matchedText.contains("part") || matchedText.contains("cour") || matchedText.contains("semester") || matchedText.contains("piece") -> {
+                    part = it.groups[1]?.value?.toDoubleOrNull()
+                }
+            }
+        }
+
+        if (season == null) {
+            basic.find(matchingContext)?.let { 
+                season = it.groups[1]?.value?.toDoubleOrNull()
+            }
+        }
+
+        // Try to find Part if not already found via ordinals
+        if (part == null) {
+            parts.find(matchingContext)?.let {
+                part = it.groups[1]?.value?.toDoubleOrNull()
+            }
+        }
+
+        // Japanese Parts fallback
+        if (part == null) {
+            jpPartsRegex.find(cleanSeasonName)?.let {
+                part = jpParts[it.value.lowercase()]?.times(10.0)
+            }
+        }
+
+        // Roman Numerals fallback for Season
+        if (season == null) {
+            romanNumerals.find(matchingContext)?.let {
+                val roman = it.groups[1]?.value?.uppercase()
+                season = romanMap[roman]
+            }
+        }
+
+        // Handle text ordinals
+        if (season == null || part == null) {
+            textOrdinals.findAll(matchingContext).forEach { match ->
+                val word = match.groups[1]?.value?.lowercase()
+                val value = textOrdinalMap[word] ?: 1.0
+                val matchedText = match.value.lowercase()
+                if (matchedText.contains("season") || matchedText.contains("year")) {
+                    if (season == null) season = value
+                } else {
+                    if (part == null) part = value
+                }
+            }
+        }
+
+        // Combine Season and Part
+        if (season != null || part != null) {
+            val s = season ?: 1.0 // Default to Season 1 if only Part is found
+            val p = (part ?: 0.0) / 100.0
+            return s + p
+        }
+
+        // 4. Return format tag if found earlier
+        if (formatTagValue != null) return formatTagValue
         
         // Final check anchored to "Season" or "Part"
         if (cleanSeasonName.contains(Regex("""(?i)final\s+(?:season|part|chapter)""")) || 
@@ -250,23 +364,23 @@ object SeasonRecognition {
             return 99.0
         }
 
-        // 4. Strict Identity Logic
-        val fullRoot = rootTitle.lowercase().replace(Regex("""[^a-z0-9]"""), "")
-        val fullCandidate = seasonName.lowercase().replace(Regex("""[^a-z0-9]"""), "")
+        // 5. Strict Identity Logic (Normalization)
+        val rootAlpha = getAlphanumeric(rootTitle)
+        val candidateAlpha = getAlphanumeric(seasonName)
         
-        if (fullRoot == fullCandidate) {
+        if (rootAlpha == candidateAlpha && rootAlpha.isNotEmpty()) {
             return 1.0
         }
 
-        // 5. Number Extraction from context
-        if (matchingContext.length > 1) {
+        // 6. Number Extraction from context (Only if root title is matched)
+        if (matchingContext.isNotEmpty() && candidateAlpha.contains(rootAlpha)) {
             val numberInSubtitle = number.find(matchingContext)
             if (numberInSubtitle != null) {
                 return getSeasonNumberFromMatch(numberInSubtitle)
             }
         }
 
-        // 6. No number found? It's a related Special/Side-story, not Season 2.
+        // 7. No number found? It's a related Special/Side-story, not Season 2.
         return -5.0
     }
 

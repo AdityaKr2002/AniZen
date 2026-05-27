@@ -605,6 +605,11 @@ private fun AnimeScreenSmallImpl(
                                         onTagSearch = onTagSearch,
                                         onCopyTagToClipboard = onCopyTagToClipboard,
                                     )
+                                    
+                                    eu.kanade.presentation.anime.components.PrequelSequelBox(
+                                        relations = state.relations,
+                                        onRelationClick = { onSearch(it, true) }
+                                    )
                                 }
 
                                 // Cast Row — placed below tags
@@ -1088,6 +1093,11 @@ fun AnimeScreenLargeImpl(
                                         tagsProvider = { state.anime.genre },
                                         onTagSearch = onTagSearch,
                                         onCopyTagToClipboard = onCopyTagToClipboard,
+                                    )
+                                    
+                                    eu.kanade.presentation.anime.components.PrequelSequelBox(
+                                        relations = state.relations,
+                                        onRelationClick = { onSearch(it, true) }
                                     )
 
                                     // Cast Row — placed below tags

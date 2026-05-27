@@ -90,7 +90,7 @@ class SYDomainModule : InjektModule {
         addFactory { GetMergedEpisodesByAnimeId(get(), get()) }
         addFactory { GetSeasonsByAnimeId(get(), get()) }
         addFactory { DeleteSeason(get()) }
-        addFactory { DiscoverSeasons(get(), get()) }
+        addFactory { DiscoverSeasons(get(), get(), get()) }
 //        addFactory { InsertMergedReference(get()) }
         addFactory { UpdateMergedSettings(get()) }
         addFactory { DeleteByMergeId(get()) }

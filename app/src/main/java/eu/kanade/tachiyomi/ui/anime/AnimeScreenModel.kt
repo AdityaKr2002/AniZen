@@ -252,6 +252,8 @@ class AnimeScreenModel(
         anime: Anime = this.anime,
         episodes: List<EpisodeList.Item> = this.episodes,
         trackItems: List<TrackItem> = this.trackItems,
+        relations: ImmutableList<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> = this.relations,
+        hasFetchedRelations: Boolean = this.hasFetchedRelations,
         suggestionSections: ImmutableList<SuggestionSection> = this.suggestionSections,
         isSuggestionsLoading: Boolean = this.isSuggestionsLoading,
         dialog: Dialog? = this.dialog,
@@ -493,6 +495,8 @@ class AnimeScreenModel(
             episodeListItems = episodeListItems,
             missingEpisodeCount = missingEpisodeCount,
             trackItems = trackItems.toImmutableList(),
+            relations = relations,
+            hasFetchedRelations = hasFetchedRelations,
             suggestionSections = suggestionSections,
             dialog = dialog,
             isRefreshingData = isRefreshingData,
@@ -1802,6 +1806,25 @@ class AnimeScreenModel(
             }.distinctUntilChanged().collectLatest { trackItems -> 
                 updateSuccessState { it.copySuccess(trackItems = trackItems) }
                 updateAiringTime(anime, trackItems, manualFetch = false) 
+                
+                val anilistTrackItem = trackItems.find { it.tracker is eu.kanade.tachiyomi.data.track.anilist.Anilist && it.track != null }
+                if (anilistTrackItem != null) {
+                    val tracker = anilistTrackItem.tracker as eu.kanade.tachiyomi.data.track.anilist.Anilist
+                    val remoteId = anilistTrackItem.track!!.remoteId
+                    val alreadyFetched = successState?.hasFetchedRelations == true
+                    if (!alreadyFetched) {
+                        updateSuccessState { it.copySuccess(hasFetchedRelations = true) }
+                        screenModelScope.launchIO {
+                            try {
+                                val relations = tracker.getAnimeRelations(remoteId)
+                                updateSuccessState { it.copySuccess(relations = relations.toImmutableList()) }
+                            } catch (e: Exception) {
+                                logcat(LogPriority.ERROR, e)
+                                updateSuccessState { it.copySuccess(hasFetchedRelations = false) }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1990,6 +2013,8 @@ class AnimeScreenModel(
             val dialog: Dialog? = null,
             val hasPromptedToAddBefore: Boolean = false,
             val trackItems: ImmutableList<TrackItem> = persistentListOf(),
+            val relations: ImmutableList<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> = persistentListOf(),
+            val hasFetchedRelations: Boolean = false,
             val nextAiringEpisode: Pair<Int, Long> = Pair(anime.nextEpisodeToAir, anime.nextEpisodeAiringAt),
             val suggestions: ImmutableList<Anime> = persistentListOf(),
             val isSuggestionsLoading: Boolean = true,

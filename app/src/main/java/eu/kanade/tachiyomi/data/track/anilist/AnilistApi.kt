@@ -250,6 +250,54 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
         return findLibAnime(track, userId) ?: throw Exception("Could not find anime")
     }
 
+    suspend fun getRelations(mediaId: Int): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> {
+        return withIOContext {
+            val query = """
+            |query (${'$'}mediaId: Int!) {
+                |Media(id: ${'$'}mediaId, type: ANIME) {
+                    |relations {
+                        |edges {
+                            |relationType(version: 2)
+                            |node {
+                                |id
+                                |title {
+                                    |userPreferred
+                                    |romaji
+                                    |english
+                                    |native
+                                |}
+                                |coverImage {
+                                    |large
+                                |}
+                            |}
+                        |}
+                    |}
+                |}
+            |}
+            |
+            """.trimMargin()
+            val payload = buildJsonObject {
+                put("query", query)
+                putJsonObject("variables") {
+                    put("mediaId", mediaId)
+                }
+            }
+            with(json) {
+                client.newCall(
+                    POST(
+                        API_URL,
+                        body = payload.toString().toRequestBody(jsonMime),
+                    ),
+                )
+                    .awaitSuccess()
+                    .parseAs<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationResult>()
+                    .data.Media?.relations?.edges?.filter { 
+                        it.relationType == "PREQUEL" || it.relationType == "SEQUEL" 
+                    } ?: emptyList()
+            }
+        }
+    }
+
     fun createOAuth(token: String): ALOAuth {
         return ALOAuth(token, "Bearer", System.currentTimeMillis() + 31536000000, 31536000000)
     }
