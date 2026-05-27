@@ -607,6 +607,7 @@ private fun AnimeScreenSmallImpl(
                                     )
                                     
                                     eu.kanade.presentation.anime.components.PrequelSequelBox(
+                                        anime = state.anime,
                                         relations = state.relations,
                                         onRelationClick = { onSearch(it, true) }
                                     )
@@ -1096,6 +1097,7 @@ fun AnimeScreenLargeImpl(
                                     )
                                     
                                     eu.kanade.presentation.anime.components.PrequelSequelBox(
+                                        anime = state.anime,
                                         relations = state.relations,
                                         onRelationClick = { onSearch(it, true) }
                                     )

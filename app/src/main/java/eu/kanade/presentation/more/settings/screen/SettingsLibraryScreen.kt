@@ -66,7 +66,6 @@ object SettingsLibraryScreen : SearchableSettings {
             getGlobalUpdateGroup(allAnimeCategories, libraryPreferences),
             getBehaviorGroup(libraryPreferences),
             getEpisodeSwipeActionsGroup(libraryPreferences),
-            getAnimeRelationsGroup(libraryPreferences),
         )
     }
 
@@ -344,21 +343,5 @@ object SettingsLibraryScreen : SearchableSettings {
         )
     }
 
-    @Composable
-    private fun getAnimeRelationsGroup(libraryPreferences: LibraryPreferences): Preference.PreferenceGroup {
-        return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_anime_relations),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.ListPreference(
-                    pref = libraryPreferences.relationTitleLanguage(),
-                    title = stringResource(MR.strings.pref_relation_title_language),
-                    entries = persistentMapOf(
-                        "romaji" to stringResource(MR.strings.romaji),
-                        "english" to stringResource(MR.strings.english),
-                        "native" to stringResource(MR.strings.native_title),
-                    ),
-                ),
-            ),
-        )
-    }
+
 }

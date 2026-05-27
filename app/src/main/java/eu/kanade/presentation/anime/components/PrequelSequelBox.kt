@@ -35,21 +35,30 @@ import tachiyomi.i18n.MR
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import tachiyomi.domain.library.service.LibraryPreferences
+import tachiyomi.domain.anime.model.Anime
+import tachiyomi.domain.source.service.SourceManager
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import coil3.compose.AsyncImage
 import eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge
 
 @Composable
 fun PrequelSequelBox(
+    anime: Anime,
     relations: List<ALRelationEdge>,
     onRelationClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (relations.isEmpty()) return
 
-    val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
-    val preferredLanguage by libraryPreferences.relationTitleLanguage().collectAsState()
+    val sourceManager = remember { Injekt.get<SourceManager>() }
+    val source = remember(anime.source) { sourceManager.get(anime.source) as? ConfigurableSource }
+    val preferredLanguage = remember(source) {
+        val prefs = source?.getSourcePreferences()
+        prefs?.getString("preferred_title_language", null)
+            ?: prefs?.getString("pref_title_language", null)
+            ?: prefs?.getString("title_language", null)
+            ?: "romaji"
+    }
 
     val prequel = relations.find { it.relationType == "PREQUEL" }
     val sequel = relations.find { it.relationType == "SEQUEL" }
@@ -190,6 +199,7 @@ private fun PrequelSequelBoxPreview() {
 
     MaterialTheme {
         PrequelSequelBox(
+            anime = Anime.create(),
             relations = dummyRelations,
             onRelationClick = {}
         )

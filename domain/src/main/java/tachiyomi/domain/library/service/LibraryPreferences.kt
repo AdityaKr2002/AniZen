@@ -351,10 +351,7 @@ class LibraryPreferences(
         seasonLangOverlay.set(anime.seasonLangOverlay)
         seasonContinueOverlay.set(anime.seasonContinueOverlay)
         seasonDisplayMode.set(anime.seasonDisplayMode)
-    }
     // <-- AY
-
-    fun relationTitleLanguage() = preferenceStore.getString("pref_relation_title_language", "english")
 
     companion object {
         const val DEVICE_ONLY_ON_WIFI = "wifi"
