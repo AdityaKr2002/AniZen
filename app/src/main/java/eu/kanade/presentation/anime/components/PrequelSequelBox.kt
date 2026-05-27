@@ -35,6 +35,7 @@ import tachiyomi.i18n.MR
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.source.service.SourceManager
 import eu.kanade.tachiyomi.source.ConfigurableSource
