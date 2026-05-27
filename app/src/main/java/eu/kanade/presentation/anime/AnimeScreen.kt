@@ -80,7 +80,6 @@ import eu.kanade.presentation.anime.components.AnimeBottomActionMenu
 import eu.kanade.presentation.anime.components.AnimeEpisodeListItem
 import eu.kanade.presentation.anime.components.AnimeInfoBox
 import eu.kanade.presentation.anime.components.AnimeSeasonListItem
-import eu.kanade.presentation.anime.components.AnimeSeasonSection
 import eu.kanade.presentation.anime.components.AnimeToolbar
 import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeHeader
@@ -1074,13 +1073,6 @@ fun AnimeScreenLargeImpl(
                                         isRefreshing = state.isRefreshingData,
                                     )
 
-                                    if (showSeasonsSection) {
-                                        AnimeSeasonSection(
-                                            seasons = state.seasons,
-                                            onSeasonClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(it)) },
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                        )
-                                    }
                                     val isWatching = remember(state.episodes) {
                                         state.episodes.fastAny { it.episode.seen }
                                     }
@@ -1659,6 +1651,17 @@ private fun SeasonSelector(
                         style = MaterialTheme.typography.labelLarge,
                     )
                 },
+                shape = androidx.compose.foundation.shape.CircleShape,
+                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+                border = null,
+            )
+        }
+    }
+}
+   },
                 shape = androidx.compose.foundation.shape.CircleShape,
                 colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,

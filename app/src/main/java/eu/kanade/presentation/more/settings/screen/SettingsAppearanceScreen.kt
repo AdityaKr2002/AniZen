@@ -239,11 +239,6 @@ object SettingsAppearanceScreen : SearchableSettings {
                         ContainerStyle.BROWSE to "Browse (Sources/Extensions)",
                     ).toImmutableMap(),
                 ),
-                Preference.PreferenceItem.SwitchPreference(
-                    pref = uiPreferences.showSeasonsSection(),
-                    title = "Show seasons section",
-                    subtitle = stringResource(tachiyomi.i18n.kmk.KMR.strings.pref_show_seasons_section_warning),
-                ),
             ),
         )
     }

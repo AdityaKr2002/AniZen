@@ -163,7 +163,6 @@ class AnimeScreen(
                 alwaysUseExternalPlayer = screenModel.alwaysUseExternalPlayer,
                 showFileSize = screenModel.showFileSize,
                 autoExpandDescription = autoExpandDescription,
-                showSeasonsSection = showSeasonsSection,
                 onBackClicked = { navigator.pop() },
                 onEpisodeClicked = { episode, alt ->
                     scope.launchIO {
