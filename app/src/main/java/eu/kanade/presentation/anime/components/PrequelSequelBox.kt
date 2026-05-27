@@ -55,10 +55,12 @@ fun PrequelSequelBox(
     val source = remember(anime.source) { sourceManager.get(anime.source) as? ConfigurableSource }
     val preferredLanguage = remember(source) {
         val prefs = source?.getSourcePreferences()
-        prefs?.getString("preferred_title_language", null)
+        val rawLang = prefs?.getString("preferred_title_language", null)
+            ?: prefs?.getString("preferred_title_lang", null)
             ?: prefs?.getString("pref_title_language", null)
             ?: prefs?.getString("title_language", null)
             ?: "romaji"
+        rawLang.lowercase()
     }
 
     val prequel = relations.find { it.relationType == "PREQUEL" }
@@ -103,7 +105,7 @@ private fun RelationBanner(
     
     val title = when (preferredLanguage) {
         "english" -> edge.node.title.english ?: edge.node.title.romaji ?: edge.node.title.userPreferred
-        "native" -> edge.node.title.native ?: edge.node.title.romaji ?: edge.node.title.userPreferred
+        "native", "japanese" -> edge.node.title.native ?: edge.node.title.romaji ?: edge.node.title.userPreferred
         else -> edge.node.title.romaji ?: edge.node.title.userPreferred
     }
 
