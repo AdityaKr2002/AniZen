@@ -31,7 +31,6 @@ import eu.kanade.tachiyomi.data.track.TrackStatus
 import eu.kanade.tachiyomi.source.UnmeteredSource
 import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
-import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
 import eu.kanade.tachiyomi.util.system.isConnectedToWifi
@@ -266,17 +265,13 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         }
 
         val includeSeasonsGlobal = libraryPreferences.useHierarchicalSeasons().get()
-        val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
-        val installedExtensions = extensionManager.installedExtensionsFlow.value
         
         val lastToUpdateWithSeasons = listToUpdate.flatMap { libAnime ->
             when (libAnime.anime.fetchType) {
                 FetchType.Seasons -> {
                     val list = mutableListOf(libAnime)
-                    val extension = installedExtensions.find { ext -> ext.sources.any { it.id == libAnime.anime.source } }
-                    val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
                     
-                    if (includeSeasonsGlobal && isHierarchicalSupported) {
+                    if (includeSeasonsGlobal) {
                         val seasons = getAnimeSeasonsById.await(libAnime.anime.id)
                         list.addAll(
                             seasons

@@ -48,7 +48,6 @@ import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.animesource.model.FetchType
-import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.util.AniChartApi
 import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
@@ -589,11 +588,7 @@ class AnimeScreenModel(
                     ?.items.orEmpty()
             }.distinctUntilChanged()
 
-            val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
-            val installedExtensions = extensionManager.installedExtensionsFlow.value
-            val extension = installedExtensions.find { ext -> ext.sources.any { it.id == initialAnime.source } }
-            val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
-            val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get() && isHierarchicalSupported
+            val useHierarchicalSeasons = libraryPreferences.useHierarchicalSeasons().get()
 
             combine(
                 getAnimeAndEpisodesAndSeasons.subscribe(
