@@ -351,6 +351,7 @@ class LibraryPreferences(
         seasonLangOverlay.set(anime.seasonLangOverlay)
         seasonContinueOverlay.set(anime.seasonContinueOverlay)
         seasonDisplayMode.set(anime.seasonDisplayMode)
+    }
     // <-- AY
 
     companion object {
