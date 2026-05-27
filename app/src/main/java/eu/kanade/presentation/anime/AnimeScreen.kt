@@ -334,7 +334,6 @@ private fun AnimeScreenSmallImpl(
     alwaysUseExternalPlayer: Boolean,
     showFileSize: Boolean,
     autoExpandDescription: Boolean,
-    showSeasonsSection: Boolean,
     onBackClicked: () -> Unit,
     onEpisodeClicked: (Episode, Boolean) -> Unit,
     onDownloadEpisode: ((List<EpisodeList.Item>, EpisodeDownloadAction) -> Unit)?,
@@ -574,15 +573,6 @@ private fun AnimeScreenSmallImpl(
                                         mergedSources = state.mergedSources,
                                         isRefreshing = state.isRefreshingData,
                                     )
-                                }
-                                if (showSeasonsSection) {
-                                    item(key = "season-section-small", contentType = "season") {
-                                        AnimeSeasonSection(
-                                            seasons = state.seasons,
-                                            onSeasonClick = { navigator.push(eu.kanade.tachiyomi.ui.anime.AnimeScreen(it)) },
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                        )
-                                    }
                                 }
                                 item(key = "action-row-small", contentType = AnimeScreenItem.ACTION_ROW) {
                                     val isWatching = remember(state.episodes) {
@@ -826,7 +816,6 @@ fun AnimeScreenLargeImpl(
     alwaysUseExternalPlayer: Boolean,
     showFileSize: Boolean,
     autoExpandDescription: Boolean,
-    showSeasonsSection: Boolean,
     onBackClicked: () -> Unit,
     onEpisodeClicked: (Episode, Boolean) -> Unit,
     onDownloadEpisode: ((List<EpisodeList.Item>, EpisodeDownloadAction) -> Unit)?,
@@ -1661,14 +1650,4 @@ private fun SeasonSelector(
         }
     }
 }
-   },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-                border = null,
-            )
-        }
-    }
-}
+

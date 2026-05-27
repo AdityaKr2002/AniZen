@@ -48,6 +48,7 @@ import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
 import eu.kanade.tachiyomi.animesource.model.FetchType
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.util.AniChartApi
 import eu.kanade.tachiyomi.util.episode.EpisodeSeasonUtils
 import eu.kanade.tachiyomi.util.episode.getNextUnseen
@@ -607,12 +608,12 @@ class AnimeScreenModel(
                     val hasHierarchicalSeasons = seasonAnimes.isNotEmpty() || anime.parentId != null
                     
                     val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
-                        anime.copy(
-                            fetchType = FetchType.Episodes,
-                            seasonGroupingMode = if (hasHierarchicalSeasons) LibraryPreferences.SeasonGrouping.Disabled else anime.seasonGroupingMode
-                        )
+                        val a = anime.copy(fetchType = FetchType.Episodes)
+                        if (hasHierarchicalSeasons) {
+                            a.copy(episodeFlags = (a.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK.inv()) or Anime.EPISODE_SEASON_GROUP_OFF)
+                        } else a
                     } else if (hasHierarchicalSeasons) {
-                        anime.copy(seasonGroupingMode = LibraryPreferences.SeasonGrouping.Disabled)
+                        anime.copy(episodeFlags = (anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK.inv()) or Anime.EPISODE_SEASON_GROUP_OFF)
                     } else {
                         anime
                     }

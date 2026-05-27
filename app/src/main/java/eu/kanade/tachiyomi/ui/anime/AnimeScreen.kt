@@ -146,7 +146,6 @@ class AnimeScreen(
         }
 
         val autoExpandDescription by uiPreferences.autoExpandAnimeDescription().collectAsState()
-        val showSeasonsSection by uiPreferences.showSeasonsSection().collectAsState()
 
         val vibrantColors by CoverColorObserver.vibrantColors.collectAsState()
         val vibrantColor = vibrantColors[successState.anime.id] ?: successState.anime.asAnimeCover().vibrantCoverColor
