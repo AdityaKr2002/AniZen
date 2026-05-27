@@ -220,8 +220,14 @@ class Anilist(id: Long) :
         return track
     }
 
+    private val relationsCache = java.util.concurrent.ConcurrentHashMap<Long, List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge>>()
+
     suspend fun getAnimeRelations(trackId: Long): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> {
-        return api.getRelations(trackId.toInt())
+        val cached = relationsCache[trackId]
+        if (cached != null) return cached
+        val fetched = api.getRelations(trackId.toInt())
+        relationsCache[trackId] = fetched
+        return fetched
     }
 
     override suspend fun login(username: String, password: String) = login(password)
@@ -242,6 +248,7 @@ class Anilist(id: Long) :
         super.logout()
         trackPreferences.trackToken(this).delete()
         interceptor.setAuth(null)
+        relationsCache.clear()
     }
 
     fun saveOAuth(alOAuth: ALOAuth?) {
