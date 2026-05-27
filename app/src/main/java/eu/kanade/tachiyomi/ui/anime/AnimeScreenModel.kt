@@ -589,7 +589,7 @@ class AnimeScreenModel(
                     ?.items.orEmpty()
             }.distinctUntilChanged()
 
-            val extensionManager = Injekt.get<ExtensionManager>()
+            val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
             val installedExtensions = extensionManager.installedExtensionsFlow.value
             val extension = installedExtensions.find { ext -> ext.sources.any { it.id == initialAnime.source } }
             val isHierarchicalSupported = (extension?.versionCode ?: 0L) >= 16L
@@ -611,7 +611,9 @@ class AnimeScreenModel(
                         val a = anime.copy(fetchType = FetchType.Episodes)
                         if (hasHierarchicalSeasons) {
                             a.copy(episodeFlags = (a.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK.inv()) or Anime.EPISODE_SEASON_GROUP_OFF)
-                        } else a
+                        } else {
+                            a
+                        }
                     } else if (hasHierarchicalSeasons) {
                         anime.copy(episodeFlags = (anime.episodeFlags and Anime.EPISODE_SEASON_GROUP_MASK.inv()) or Anime.EPISODE_SEASON_GROUP_OFF)
                     } else {

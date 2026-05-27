@@ -266,7 +266,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         }
 
         val includeSeasonsGlobal = libraryPreferences.useHierarchicalSeasons().get()
-        val extensionManager = Injekt.get<ExtensionManager>()
+        val extensionManager = Injekt.get<eu.kanade.tachiyomi.extension.ExtensionManager>()
         val installedExtensions = extensionManager.installedExtensionsFlow.value
         
         val lastToUpdateWithSeasons = listToUpdate.flatMap { libAnime ->
