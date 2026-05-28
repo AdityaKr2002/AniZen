@@ -25,13 +25,11 @@ class GetSeasonsByAnimeId(
         // 1. Get real hierarchical seasons from DB
         val parentId = if (useHierarchicalSeasons) (anime.parentId ?: anime.id) else anime.id
         val dbSeasons = animeRepository.getAnimeSeasonsById(parentId).map { it.anime }
-        val pool = (listOf(anime) + dbSeasons).distinctBy { it.id }
-        if (pool.size > 1) {
-            return pool.map {
+        if (dbSeasons.isNotEmpty()) {
+            return dbSeasons.map {
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
-                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
@@ -46,7 +44,7 @@ class GetSeasonsByAnimeId(
                 Season(
                     anime = mergedAnime,
                     seasonNumber = mergedAnime.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, mergedAnime.title),
-                    isPrimary = ref?.isInfoAnime ?: (mergedAnime.id == anime.id)
+                    isPrimary = ref?.isInfoAnime ?: false
                 )
             }.sortedBy { it.seasonNumber }
         }
@@ -57,8 +55,7 @@ class GetSeasonsByAnimeId(
             return all.map { 
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
-                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
@@ -102,16 +99,12 @@ class GetSeasonsByAnimeId(
     ): List<Season> {
         if (anime == null) return emptyList()
         
-        // Always ensure the current anime is part of the pool
-        val pool = (listOf(anime) + dbSeasons).distinctBy { it.id }
-
         // 1. Prioritize Hierarchical Seasons
-        if (pool.size > 1) {
-            return pool.map {
+        if (dbSeasons.isNotEmpty()) {
+            return dbSeasons.map {
                 Season(
                     anime = it,
-                    seasonNumber = it.seasonNumber.takeIf { num -> num != null && num != 0.0 }
-                        ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
+                    seasonNumber = it.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, it.title),
                     isPrimary = it.id == anime.id
                 )
             }.sortedBy { it.seasonNumber }
@@ -124,7 +117,7 @@ class GetSeasonsByAnimeId(
                 Season(
                     anime = mergedAnime,
                     seasonNumber = mergedAnime.seasonNumber ?: SeasonRecognition.parseSeasonNumber(anime.title, mergedAnime.title),
-                    isPrimary = ref?.isInfoAnime ?: (mergedAnime.id == anime.id)
+                    isPrimary = ref?.isInfoAnime ?: false
                 )
             }.sortedBy { it.seasonNumber }
         }
