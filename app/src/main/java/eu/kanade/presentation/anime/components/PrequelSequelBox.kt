@@ -59,6 +59,10 @@ fun PrequelSequelBox(
             ?: prefs?.getString("preferred_title_lang", null)
             ?: prefs?.getString("pref_title_language", null)
             ?: prefs?.getString("title_language", null)
+            ?: prefs?.getString("preferred_title", null)
+            ?: prefs?.getString("pref_title", null)
+            ?: prefs?.getString("preferred_title_style", null)
+            ?: prefs?.getString("title_format", null)
             ?: "romaji"
         rawLang.lowercase()
     }
