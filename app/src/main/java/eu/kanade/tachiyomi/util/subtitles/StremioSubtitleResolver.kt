@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.Request
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -23,11 +24,17 @@ object StremioSubtitleResolver {
     /**
      * Resolves a Stremio JSON URL into a list of direct subtitle tracks.
      */
-    suspend fun resolve(track: Track): List<Track> {
+    suspend fun resolve(track: Track, headers: Headers? = null): List<Track> {
         if (!isStremioUrl(track.url)) return listOf(track)
 
         return try {
-            val request = Request.Builder().url(track.url).build()
+            val requestBuilder = Request.Builder().url(track.url)
+            if (headers != null) {
+                requestBuilder.headers(headers)
+            } else {
+                requestBuilder.header("User-Agent", Injekt.get<NetworkHelper>().defaultUserAgentProvider())
+            }
+            val request = requestBuilder.build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return listOf(track)
                 val body = response.body?.string() ?: return listOf(track)

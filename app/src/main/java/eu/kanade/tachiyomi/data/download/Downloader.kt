@@ -550,14 +550,16 @@ class Downloader(
         if (video.subtitleTracks.isEmpty()) return
 
         val client = networkHelper.client
+        val headers = getHeaders(video)
         coroutineScope {
             video.subtitleTracks.forEach { originalTrack ->
                 launch {
-                    val resolvedTracks = StremioSubtitleResolver.resolve(originalTrack)
+                    val resolvedTracks = StremioSubtitleResolver.resolve(originalTrack, headers)
                     resolvedTracks.forEach { track ->
+                        val cleanUrl = track.url.substringBefore("?")
                         val subExt = when {
-                            track.url.endsWith(".vtt") -> "vtt"
-                            track.url.endsWith(".ass") -> "ass"
+                            cleanUrl.endsWith(".vtt", ignoreCase = true) -> "vtt"
+                            cleanUrl.endsWith(".ass", ignoreCase = true) -> "ass"
                             else -> "srt"
                         }
                         val filename = "${videoFilename}.${track.lang}.$subExt"
@@ -583,7 +585,7 @@ class Downloader(
                         }
 
                         retry(times = 3) {
-                            val req = Request.Builder().url(track.url).build()
+                            val req = Request.Builder().url(track.url).headers(headers).build()
                             client.newCall(req).execute().use { res ->
                                 if (!res.isSuccessful) throw IOException("Failed to download subtitle: ${res.code}")
                                 res.body?.byteStream()?.use { input ->
