@@ -1437,7 +1437,6 @@ class PlayerActivity : BaseActivity() {
         setMpvMediaTitle()
         setupPlayerOrientation()
         setupChapters()
-        addExternalSubtitles()
         setupTracks()
         viewModel.restoreAspectRatio()
 
@@ -1464,29 +1463,6 @@ class PlayerActivity : BaseActivity() {
         updateDiscordRPC(exitingPlayer = false)
     }
 
-    private fun addExternalSubtitles() {
-        val anime = viewModel.currentAnime.value ?: return
-        val episode = viewModel.currentEpisode.value ?: return
-        val source = viewModel.currentSource.value ?: return
-
-        val episodeDir = downloadProvider.findEpisodeDir(episode.name, episode.scanlator, anime.title, source)
-        if (episodeDir == null || !episodeDir.exists()) return
-
-        val videoFilename = DiskUtil.buildValidFilename(episode.name)
-        val subExtensions = listOf("srt", "ass", "vtt")
-
-        episodeDir.listFiles()?.forEach { file ->
-            val filename = file.name ?: return@forEach
-            val extension = filename.substringAfterLast(".", "")
-            if (subExtensions.contains(extension.lowercase()) && filename.startsWith(videoFilename)) {
-                val path = file.uri.openContentFd(this)
-                if (path != null) {
-                    MPVLib.command(arrayOf("sub-add", path, "auto", filename))
-                }
-            }
-        }
-    }
-
     private fun setupTracks() {
         if (player.isExiting) return
         viewModel.isLoadingTracks.update { _ -> true }
@@ -1502,10 +1478,22 @@ class PlayerActivity : BaseActivity() {
         }
 
         audioTracks?.forEach { audio ->
-            executeMPVCommand(arrayOf("audio-add", audio.url, "auto", audio.lang))
+            val resolvedUrl = Uri.parse(audio.url).resolveUri(this) ?: audio.url
+            executeMPVCommand(arrayOf("audio-add", resolvedUrl, "auto", audio.lang))
         }
+        val videoFilename = DiskUtil.buildValidFilename(viewModel.currentEpisode.value?.name ?: "")
         subtitleTracks?.forEach { sub ->
-            executeMPVCommand(arrayOf("sub-add", sub.url, "auto", sub.lang))
+            val resolvedUrl = Uri.parse(sub.url).resolveUri(this) ?: sub.url
+            val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                sub.lang.removePrefix(videoFilename).trimStart('.')
+            } else {
+                sub.lang
+            }
+            if (cleanLang.isNotEmpty()) {
+                executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang, cleanLang))
+            } else {
+                executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang))
+            }
         }
 
         viewModel.isLoadingTracks.update { _ -> false }
