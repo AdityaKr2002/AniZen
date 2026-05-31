@@ -182,8 +182,7 @@ class Downloader(
                 } 
                 
                 if (download == null) {
-                    val hasPending = queueState.value.any { it.status == Download.State.DOWNLOADING || it.status == Download.State.QUEUE }
-                    if (!hasPending) break
+                    if (activeDownloads.isEmpty()) break
                     delay(500)
                     continue
                 }
@@ -213,11 +212,12 @@ class Downloader(
             }
 
             _isRunningFlow.value = false
-            val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
-            if (!hasPending) {
+            if (queueState.value.none { it.status == Download.State.QUEUE || it.status == Download.State.DOWNLOADING }) {
                 notifier.onComplete()
-                DownloadJob.stop(context)
+            } else {
+                notifier.onPaused()
             }
+            DownloadJob.stop(context)
         }
         return true
     }
@@ -227,9 +227,9 @@ class Downloader(
         downloaderJob?.cancel()
         downloaderJob = null
         activeDownloads.clear()
-        val hasPending = queueState.value.any { it.status != Download.State.DOWNLOADED }
+        val hasMoreToDownload = queueState.value.any { it.status == Download.State.QUEUE || it.status == Download.State.DOWNLOADING }
         if (reason != null) notifier.onWarning(reason)
-        else if (hasPending) notifier.onPaused()
+        else if (hasMoreToDownload) notifier.onPaused()
         else {
             notifier.onComplete()
             notifier.dismissAll()
