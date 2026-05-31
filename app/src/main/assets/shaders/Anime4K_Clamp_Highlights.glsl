@@ -26,6 +26,7 @@
 //!BIND HOOKED
 //!SAVE STATSMAX
 //!COMPONENTS 1
+precision mediump float;
 
 #define KERNELSIZE 5 //Kernel size, must be an positive odd integer.
 #define KERNELHALFSIZE 2 //Half of the kernel size without remainder. Must be equal to trunc(KERNELSIZE/2).
@@ -53,6 +54,7 @@ vec4 hook() {
 //!BIND STATSMAX
 //!SAVE STATSMAX
 //!COMPONENTS 1
+precision mediump float;
 
 #define KERNELSIZE 5 //Kernel size, must be an positive odd integer.
 #define KERNELHALFSIZE 2 //Half of the kernel size without remainder. Must be equal to trunc(KERNELSIZE/2).
@@ -74,6 +76,7 @@ vec4 hook() {
 //!HOOK PREKERNEL
 //!BIND HOOKED
 //!BIND STATSMAX
+precision mediump float;
 
 float get_luma(vec4 rgba) {
 	return dot(vec4(0.299, 0.587, 0.114, 0.0), rgba);

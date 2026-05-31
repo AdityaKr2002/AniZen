@@ -29,6 +29,7 @@
 //!HEIGHT MAIN.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (MAIN_texOff(vec2(x_off, y_off)))
 vec4 hook() {
     vec4 result = mat4(-0.050913796, -0.05115213, -0.0205767, -0.26266688, -0.12883802, 0.107968464, 0.03389763, -0.70179373, 0.0030511466, 0.07718592, -0.06562523, -0.060305536, 0.0, 0.0, 0.0, 0.0) * go_0(-1.0, -1.0);
@@ -51,6 +52,7 @@ vec4 hook() {
 //!HEIGHT MAIN.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (MAIN_texOff(vec2(x_off, y_off)))
 vec4 hook() {
     vec4 result = mat4(0.04816902, 0.030087546, 0.019183155, -0.08234757, 0.09378316, -0.047217257, -0.04757087, -0.16541782, -0.043394983, 0.05779227, 0.018105166, 0.03222583, 0.0, 0.0, 0.0, 0.0) * go_0(-1.0, -1.0);
@@ -74,6 +76,7 @@ vec4 hook() {
 //!HEIGHT conv2d_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -127,6 +130,7 @@ vec4 hook() {
 //!HEIGHT conv2d_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -180,6 +184,7 @@ vec4 hook() {
 //!HEIGHT conv2d_1_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_1_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_1_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_1_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -233,6 +238,7 @@ vec4 hook() {
 //!HEIGHT conv2d_1_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_1_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_1_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_1_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -286,6 +292,7 @@ vec4 hook() {
 //!HEIGHT conv2d_2_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_2_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -339,6 +346,7 @@ vec4 hook() {
 //!HEIGHT conv2d_2_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_2_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -392,6 +400,7 @@ vec4 hook() {
 //!HEIGHT conv2d_2_tf.h
 //!COMPONENTS 4
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 #define go_0(x_off, y_off) (max((conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
 #define go_1(x_off, y_off) (max((conv2d_2_tf1_texOff(vec2(x_off, y_off))), 0.0))
 #define go_2(x_off, y_off) (max(-(conv2d_2_tf_texOff(vec2(x_off, y_off))), 0.0))
@@ -446,6 +455,7 @@ vec4 hook() {
 //!WIDTH conv2d_last_tf.w 2 *
 //!HEIGHT conv2d_last_tf.h 2 *
 //!WHEN OUTPUT.w MAIN.w / 1.200 > OUTPUT.h MAIN.h / 1.200 > *
+precision mediump float;
 vec4 hook() {
     vec2 f0 = fract(conv2d_last_tf_pos * conv2d_last_tf_size);
     ivec2 i0 = ivec2(f0 * vec2(2.0));
