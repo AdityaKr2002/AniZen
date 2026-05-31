@@ -148,7 +148,10 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         val (maxMb, maxBackMb, readahead) = when (tier) {
             DeviceTierManager.Tier.LOW -> Triple(64, 32, 60)
             DeviceTierManager.Tier.MID -> Triple(128, 64, 120)
-            DeviceTierManager.Tier.HIGH -> Triple(192, 128, 180)
+            DeviceTierManager.Tier.HIGH -> {
+                MPVLib.setOptionString("hwdec-extra-frames", "24")
+                Triple(192, 128, 180)
+            }
         }
 
         currentMaxBytes = maxMb * 1024 * 1024L
@@ -179,11 +182,13 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setOptionString("profile", "fast")
         MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
-        // Gated Defaults to avoid pass-splitting
-        MPVLib.setOptionString("scale", "bilinear")
-        MPVLib.setOptionString("cscale", "bilinear")
-        MPVLib.setOptionString("dscale", "bilinear")
-        MPVLib.setOptionString("dither", "no")
+        // Gated Defaults with HQ toggle
+        val isHighQuality = decoderPreferences.highQualityScaling().get()
+        val scaler = if (isHighQuality) "spline36" else "bilinear"
+        MPVLib.setOptionString("scale", scaler)
+        MPVLib.setOptionString("cscale", scaler)
+        MPVLib.setOptionString("dscale", scaler)
+        MPVLib.setOptionString("dither", if (isHighQuality) "fruit" else "no")
 
         when (decoderPreferences.videoDebanding().get()) {
             Debanding.None -> {}
