@@ -174,13 +174,49 @@ class InfrastructureScreenModel(
         val className = source::class.java.simpleName.lowercase()
         val pkg = source::class.java.name.lowercase()
         
-        return className.contains("api") || 
+        // Basic name heuristics
+        val nameMatch = className.contains("api") || 
                className.contains("json") || 
                className.contains("graphql") ||
                name.contains("api") || 
                name.contains("json") ||
                pkg.contains("api") ||
                pkg.contains("json")
+
+        if (nameMatch) return true
+
+        // Advanced detection: Check if source has a 'json' field or uses serialization
+        return try {
+            val isParsed = source::class.java.name.contains("Parsed")
+            if (isParsed) return false
+
+            source::class.java.declaredFields.any { 
+                it.type.name.contains("kotlinx.serialization.json.Json") ||
+                it.name.contains("json")
+            } || source::class.java.methods.any { 
+                it.name.contains("parseAs") || it.returnType.name.contains("Json")
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun detectSearchSupport(source: HttpSource): Boolean {
+        // 1. If it has filters, it likely supports search
+        try {
+            if (source.getFilterList().isNotEmpty()) return true
+        } catch (e: Exception) {}
+
+        // 2. Check if searchAnimeRequest is overridden from AnimeHttpSource
+        // Since it's abstract in base, we check if it's implemented in a non-abstract way
+        // that doesn't just throw UnsupportedOperationException (heuristic)
+        return try {
+            val method = source::class.java.getMethod("searchAnimeRequest", Int::class.java, String::class.java, eu.kanade.tachiyomi.animesource.model.AnimeFilterList::class.java)
+            val declaringClass = method.declaringClass.name
+            !declaringClass.contains("AnimeHttpSource") && !declaringClass.contains("HttpSource")
+        } catch (e: Exception) {
+            true // Fallback to true if we can't tell
+        }
     }
 
     private suspend fun probeNode(source: HttpSource): SourceNode {
@@ -248,7 +284,7 @@ class InfrastructureScreenModel(
                 isApi = detectIsApi(source),
                 mtSupport = false,
                 latestSupport = source.supportsLatest,
-                searchSupport = true
+                searchSupport = detectSearchSupport(source)
             ),
             uptimeScore = if (status == NodeStatus.OPERATIONAL) 1.0 else 0.0
         )
