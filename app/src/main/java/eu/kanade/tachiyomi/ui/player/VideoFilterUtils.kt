@@ -27,6 +27,7 @@ fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
     val property = filter.mpvProperty
     
     MPVLib.setPropertyInt(property, value)
+    updateDecoderState(prefs)
 }
 
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
@@ -48,10 +49,29 @@ fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
             }
         }
     }
+    updateDecoderState(prefs)
 }
 
 fun applyDebandSetting(setting: DebandSettings, value: Int) {
     MPVLib.setPropertyInt(setting.mpvProperty, value)
+}
+
+fun updateDecoderState(prefs: DecoderPreferences) {
+    if (!prefs.tryHWDecoding().get()) return
+    
+    val anime4kEnabled = prefs.enableAnime4K().get()
+    val gpuDeband = prefs.videoDebanding().get() == Debanding.GPU
+    
+    // If high-intensity shaders are active, we must use a copy-back decoder
+    // to allow the GPU to process the frames before display.
+    // mediacodec (HW+) often bypasses the shader pipeline on many devices.
+    if (anime4kEnabled || gpuDeband) {
+        logcat("Decoder", LogPriority.INFO) { "High-intensity filters active. Switching to HW (Copy)." }
+        MPVLib.setPropertyString("hwdec", "mediacodec-copy")
+    } else {
+        logcat("Decoder", LogPriority.INFO) { "Filters inactive. Restoring HW+ (Direct)." }
+        MPVLib.setPropertyString("hwdec", "mediacodec")
+    }
 }
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
@@ -138,4 +158,5 @@ fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boo
             MPVLib.setPropertyString("glsl-shaders", "")
         }
     }
+    updateDecoderState(prefs)
 }
