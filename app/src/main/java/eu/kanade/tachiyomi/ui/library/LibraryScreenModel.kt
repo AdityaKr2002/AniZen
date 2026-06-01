@@ -102,6 +102,7 @@ class LibraryScreenModel(
     private val context: android.content.Context = Injekt.get(),
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
+    private val getAnime: tachiyomi.domain.anime.interactor.GetAnime = Injekt.get(),
     private val getTracksPerAnime: GetTracksPerAnime = Injekt.get(),
     private val getNextEpisodes: GetNextEpisodes = Injekt.get(),
     private val getEpisodesByAnimeId: GetEpisodesByAnimeId = Injekt.get(),
@@ -173,18 +174,40 @@ class LibraryScreenModel(
                 }
         }
 
-        libraryPreferences.libraryFolders().changes()
-            .onEach { folderSet ->
-                val folders = folderSet.mapNotNull { 
-                    val parts = it.split("|")
-                    if (parts.size == 3) {
+        combine(
+            libraryPreferences.libraryFolders().changes(),
+            getCategories.subscribe(),
+        ) { folderSet, categories ->
+            val folders = folderSet.mapNotNull { 
+                val parts = it.split("|")
+                if (parts.size >= 3) {
+                    val id = parts[0].toLongOrNull() ?: return@mapNotNull null
+                    val categoryName = parts.subList(1, parts.size - 1).joinToString("|")
+                    val name = parts.last()
+                    
+                    val category = categories.find { c -> c.name == categoryName }
+                    if (category != null) {
                         tachiyomi.domain.library.model.LibraryFolder(
-                            id = parts[0].toLongOrNull() ?: return@mapNotNull null,
-                            categoryId = parts[1].toLongOrNull() ?: return@mapNotNull null,
-                            name = parts[2]
+                            id = id,
+                            categoryId = category.id,
+                            name = name
                         )
-                    } else null
-                }
+                    } else {
+                        // fallback for old format: id|categoryId|name
+                        val categoryId = parts[1].toLongOrNull()
+                        if (categoryId != null) {
+                            tachiyomi.domain.library.model.LibraryFolder(
+                                id = id,
+                                categoryId = categoryId,
+                                name = parts[2]
+                            )
+                        } else null
+                    }
+                } else null
+            }
+            folders
+        }
+            .onEach { folders ->
                 mutableState.update { state -> state.copy(folders = folders) }
             }
             .launchIn(screenModelScope)
@@ -486,10 +509,24 @@ class LibraryScreenModel(
             libraryPreferences.animeFolderMap().changes(),
             downloadCache.changes.debounce(500L),
         ) { libraryMangaList, prefs, sources, folderMapStringSet, _ ->
-            val folderMap = folderMapStringSet.mapNotNull { 
-                val parts = it.split("|")
-                if (parts.size == 2) parts[0].toLongOrNull()?.to(parts[1].toLongOrNull()) else null
-            }.mapNotNull { if (it.first != null && it.second != null) it.first!! to it.second!! else null }.toMap()
+            val animeSourceUrlMap = libraryMangaList.associate { (it.anime.source to it.anime.url) to it.id }
+            val folderMap = mutableMapOf<Long, Long>()
+            for (item in folderMapStringSet) {
+                val parts = item.split("|")
+                if (parts.size >= 3) {
+                    val folderId = parts.last().toLongOrNull() ?: continue
+                    val source = parts[0].toLongOrNull() ?: continue
+                    val url = parts.subList(1, parts.size - 1).joinToString("|")
+                    val animeId = animeSourceUrlMap[source to url]
+                    if (animeId != null) {
+                        folderMap[animeId] = folderId
+                    }
+                } else if (parts.size == 2) {
+                    val animeId = parts[0].toLongOrNull() ?: continue
+                    val folderId = parts[1].toLongOrNull() ?: continue
+                    folderMap[animeId] = folderId
+                }
+            }
 
             libraryMangaList
                 .map { libraryManga ->
@@ -1092,7 +1129,8 @@ class LibraryScreenModel(
     fun createFolder(animeIds: List<Long>, categoryId: Long, folderName: String) {
         screenModelScope.launchIO {
             val id = System.currentTimeMillis()
-            val newFolderStr = "$id|$categoryId|$folderName"
+            val category = getCategories.await().find { it.id == categoryId } ?: return@launchIO
+            val newFolderStr = "$id|${category.name}|$folderName"
             val currentFolders = libraryPreferences.libraryFolders().get().toMutableSet()
             currentFolders.add(newFolderStr)
             libraryPreferences.libraryFolders().set(currentFolders)
@@ -1106,9 +1144,10 @@ class LibraryScreenModel(
             val folders = libraryPreferences.libraryFolders().get().toMutableSet()
             val folderStr = folders.find { it.startsWith("$folderId|") } ?: return@launchIO
             val parts = folderStr.split("|")
-            if (parts.size == 3) {
+            if (parts.size >= 3) {
+                val categoryName = parts.subList(1, parts.size - 1).joinToString("|")
                 folders.remove(folderStr)
-                folders.add("$folderId|${parts[1]}|$newName")
+                folders.add("$folderId|$categoryName|$newName")
                 libraryPreferences.libraryFolders().set(folders)
             }
         }
@@ -1136,12 +1175,15 @@ class LibraryScreenModel(
         screenModelScope.launchIO {
             val map = libraryPreferences.animeFolderMap().get().toMutableSet()
             for (animeId in animeIds) {
+                val anime = getAnime.await(animeId) ?: continue
+                val keyPrefix = "${anime.source}|${anime.url}|"
+                
                 // remove existing mapping for this anime
-                val existing = map.find { it.startsWith("$animeId|") }
+                val existing = map.find { it.startsWith(keyPrefix) } ?: map.find { it.startsWith("$animeId|") }
                 if (existing != null) map.remove(existing)
                 
                 if (folderId != null) {
-                    map.add("$animeId|$folderId")
+                    map.add("$keyPrefix$folderId")
                 }
             }
             libraryPreferences.animeFolderMap().set(map)
