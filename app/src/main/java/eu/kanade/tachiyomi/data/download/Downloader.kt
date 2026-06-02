@@ -150,6 +150,7 @@ class Downloader(
         }
 
         _isRunningFlow.value = true
+        DownloadJob.start(context)
         downloaderJob = scope.launch {
             // Pro-Active: Pre-fetch video URLs in parallel to eliminate transition lag
             launch {

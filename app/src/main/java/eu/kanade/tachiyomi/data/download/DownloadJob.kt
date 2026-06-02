@@ -109,7 +109,7 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
                 .addTag(TAG)
                 .build()
             WorkManager.getInstance(context)
-                .enqueueUniqueWork(TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+                .enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
         }
 
         fun stop(context: Context) {
