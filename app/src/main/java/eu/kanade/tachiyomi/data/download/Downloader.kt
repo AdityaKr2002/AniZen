@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -110,6 +111,7 @@ class Downloader(
 
     init {
         launchIO {
+            sourceManager.isInitialized.first { it }
             val downloads = store.restore()
             addAllToQueue(downloads)
             sweepOrphanedFiles(downloads) // Fire the janitor on startup

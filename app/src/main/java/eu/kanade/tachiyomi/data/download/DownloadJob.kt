@@ -59,7 +59,7 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
             applicationContext.activeNetworkState(),
             downloadPreferences.downloadOnlyOverWifi().get(),
         )
-        var active = networkCheck && downloadManager.downloaderStart()
+        var active = networkCheck && (downloadManager.downloaderStart() || downloadManager.isRunning)
 
         if (!active) {
             return Result.failure()
