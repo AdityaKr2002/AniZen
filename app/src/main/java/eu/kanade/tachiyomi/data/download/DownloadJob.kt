@@ -59,7 +59,7 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
             applicationContext.activeNetworkState(),
             downloadPreferences.downloadOnlyOverWifi().get(),
         )
-        var active = networkCheck && downloadManager.downloaderStart()
+        var active = networkCheck && (downloadManager.downloaderStart() || downloadManager.isRunning)
 
         if (!active) {
             return Result.failure()
@@ -109,7 +109,7 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
                 .addTag(TAG)
                 .build()
             WorkManager.getInstance(context)
-                .enqueueUniqueWork(TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+                .enqueueUniqueWork(TAG, ExistingWorkPolicy.KEEP, request)
         }
 
         fun stop(context: Context) {

@@ -571,7 +571,7 @@ class PlayerActivity : BaseActivity() {
 
     private fun copyAssets(configDir: String) {
         val assetManager = this.assets
-        val files = arrayOf("subfont.ttf", "cacert.pem")
+        val files = arrayOf("subfont.ttf")
         for (filename in files) {
             var ins: InputStream? = null
             var out: OutputStream? = null
