@@ -394,6 +394,10 @@ private fun ColumnScope.DisplayPage(
         label = stringResource(MR.strings.action_display_show_number_of_items),
         pref = screenModel.libraryPreferences.categoryNumberOfItems(),
     )
+    CheckboxItem(
+        label = stringResource(MR.strings.action_display_show_hidden_categories),
+        pref = screenModel.libraryPreferences.showHiddenCategories(),
+    )
 }
 
 private fun groupTypeDrawableRes(type: Int): Int {

@@ -556,9 +556,9 @@ class LibraryScreenModel(
 
         return combine(getCategories.subscribe(), animelibAnimesFlow) { categories, animelibAnime ->
             val displayCategories = if (animelibAnime.isNotEmpty() && !animelibAnime.containsKey(0)) {
-                categories.fastFilterNot { it.isSystemCategory || it.hidden }
+                categories.fastFilterNot { it.isSystemCategory }
             } else {
-                categories.fastFilter { !it.hidden || it.id == 0L }
+                categories
             }
 
             displayCategories.associateWith { animelibAnime[it.id].orEmpty() }
