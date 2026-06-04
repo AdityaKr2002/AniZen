@@ -150,25 +150,32 @@ fun SourcesScreen(
                             )
                         }
                         is SourceUiModel.Item -> {
-                            val shape = if (useContainer) MaterialTheme.shapes.large else RoundedCornerShape(0.dp)
-                            val containerColor = if (useContainer) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
-                            val elevation = if (useContainer) 2.dp else 0.dp
-                            
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 2.dp),
-                                shape = shape,
-                                color = containerColor,
-                                tonalElevation = elevation
-                            ) {
+                            if (useContainer) {
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 2.dp),
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    tonalElevation = 2.dp,
+                                ) {
+                                    SourceItem(
+                                        item = model,
+                                        onClickItem = onClickItem,
+                                        onLongClickItem = onLongClickItem,
+                                        onClickPin = onClickPin,
+                                        hideLatest = state.hideLatest,
+                                        modifier = Modifier.animateItem(),
+                                    )
+                                }
+                            } else {
                                 SourceItem(
                                     item = model,
                                     onClickItem = onClickItem,
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
                                     hideLatest = state.hideLatest,
-                                    modifier = Modifier.animateItem()
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
