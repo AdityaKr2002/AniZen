@@ -2144,8 +2144,8 @@ class PlayerViewModel @JvmOverloads constructor(
                 return@launchIO
             }
             val episodesToDownload = getNextEpisodes.await(anime.id, nextEpisode.id!!)
-                .filterNot { EpisodeLoader.isDownload(it, anime) }
                 .take(downloadAheadAmount)
+                .filterNot { EpisodeLoader.isDownload(it, anime) }
             downloadManager.downloadEpisodes(anime, episodesToDownload)
         }
     }
