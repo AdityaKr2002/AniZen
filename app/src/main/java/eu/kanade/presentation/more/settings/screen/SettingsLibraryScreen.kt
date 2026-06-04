@@ -281,6 +281,10 @@ object SettingsLibraryScreen : SearchableSettings {
                     title = stringResource(AMR.strings.pref_skip_dupe_episodes),
                 ),
                 // SY <--
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = libraryPreferences.hideMissingEpisodes(),
+                    title = stringResource(MR.strings.pref_hide_missing_episodes),
+                ),
                 Preference.PreferenceItem.ListPreference(
                     pref = libraryPreferences.seasonGroupingMode(),
                     title = "Season grouping",
