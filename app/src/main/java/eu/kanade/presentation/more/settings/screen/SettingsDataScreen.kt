@@ -166,16 +166,8 @@ object SettingsDataScreen : SearchableSettings {
         }
 
         return remember(storageDir) {
-            try {
-                val file = UniFile.fromUri(context, storageDir.toUri())
-                if (file != null && file.exists() && file.canWrite()) {
-                    file.displayablePath
-                } else {
-                    null
-                }
-            } catch (e: Exception) {
-                null
-            }
+            val file = UniFile.fromUri(context, storageDir.toUri())
+            file?.displayablePath
         } ?: stringResource(MR.strings.invalid_location, storageDir)
     }
 

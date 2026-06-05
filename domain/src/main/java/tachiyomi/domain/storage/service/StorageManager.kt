@@ -52,12 +52,8 @@ class StorageManager(
     }
 
     private fun getBaseDir(uri: String): UniFile? {
-        return try {
-            UniFile.fromUri(context, uri.toUri())
-                .takeIf { it != null && it.exists() && it.canWrite() }
-        } catch (e: Exception) {
-            null
-        }
+        return UniFile.fromUri(context, uri.toUri())
+            .takeIf { it?.exists() == true }
     }
 
     fun getAutomaticBackupsDirectory(): UniFile? {
