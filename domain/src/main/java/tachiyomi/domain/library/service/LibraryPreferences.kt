@@ -133,6 +133,8 @@ class LibraryPreferences(
     // SY <--
     // SY <--
 
+    fun hideMissingEpisodes() = preferenceStore.getBoolean("pref_hide_missing_episodes", false)
+
     fun filterTracking(id: Int) = preferenceStore.getEnum(
         "pref_filter_animelib_tracked_${id}_v2",
         TriState.DISABLED,

@@ -179,18 +179,32 @@ private fun MigrateSourceList(
                 key = { (item, _) -> "migrate-${item.source.id}" },
             ) { (item, count) ->
                 val isSelected = state.selectedSources.contains(item.source.id)
-                val shape = if (useContainer) MaterialTheme.shapes.large else RoundedCornerShape(0.dp)
-                val containerColor = if (useContainer) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
-                val elevation = if (useContainer) 2.dp else 0.dp
-
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 2.dp),
-                    shape = shape,
-                    color = containerColor,
-                    tonalElevation = elevation
-                ) {
+                if (useContainer) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        shape = MaterialTheme.shapes.large,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        tonalElevation = 2.dp,
+                    ) {
+                        MigrateSourceItem(
+                            modifier = Modifier.animateItemFastScroll(),
+                            item = item,
+                            count = count,
+                            isSelected = isSelected,
+                            isSelectionMode = state.selectionMode,
+                            onClickItem = {
+                                if (state.selectionMode) {
+                                    onToggleSelection(item.source.id)
+                                } else {
+                                    onClickItem(item.source)
+                                }
+                            },
+                            onLongClickItem = { onToggleSelection(item.source.id) },
+                        )
+                    }
+                } else {
                     MigrateSourceItem(
                         modifier = Modifier.animateItemFastScroll(),
                         item = item,

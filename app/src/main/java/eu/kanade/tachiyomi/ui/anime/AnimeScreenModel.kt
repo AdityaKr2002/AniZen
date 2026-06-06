@@ -274,6 +274,7 @@ class AnimeScreenModel(
         fillerEpisodes: Set<Float> = this.fillerEpisodes,
         showEpisodeSummary: Boolean = anime.showSummaries(),
         showEpisodeThumbnail: Boolean = anime.showPreviews(),
+        hideMissingEpisodes: Boolean = libraryPreferences.hideMissingEpisodes().get(),
     ): State.Success {
         val episodesStatusHash = episodes.sumOf { 
             it.episode.lastModifiedAt + 
@@ -300,7 +301,9 @@ class AnimeScreenModel(
             episodes.applyFilters(anime, libraryPreferences.skipDupeEpisodes().get()).toImmutableList()
         }
 
-        val missingEpisodeCount = if (processedEpisodes.size == this.processedEpisodes.size && !episodesChanged) {
+        val missingEpisodeCount = if (hideMissingEpisodes) {
+            0
+        } else if (processedEpisodes.size == this.processedEpisodes.size && !episodesChanged) {
             this.missingEpisodeCount
         } else {
             processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
@@ -310,7 +313,8 @@ class AnimeScreenModel(
             anime.seasonGroupingMode == this.anime.seasonGroupingMode &&
             anime.sortDescending() == this.anime.sortDescending() &&
             !episodesChanged &&
-            processedEpisodes.size == this.processedEpisodes.size
+            processedEpisodes.size == this.processedEpisodes.size &&
+            hideMissingEpisodes == this.hideMissingEpisodes
         ) {
             Triple(this.episodeListItems, this.availableSeasons, this.episodeToSeason)
         } else {
@@ -420,7 +424,7 @@ class AnimeScreenModel(
                     }
 
                     // 2. Missing count at series start (only for ascending)
-                    if (i == 0 && !anime.sortDescending()) {
+                    if (!hideMissingEpisodes && i == 0 && !anime.sortDescending()) {
                         val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
                         if (gap > 0) {
                             items.add(EpisodeList.MissingCount("start-${item.id}", gap))
@@ -431,13 +435,15 @@ class AnimeScreenModel(
                     items.add(item)
 
                     // 4. Missing count between items
-                    val next = processedEpisodes.getOrNull(i + 1)
-                    if (next != null) {
-                        val higher = if (anime.sortDescending()) item else next
-                        val lower = if (anime.sortDescending()) next else item
-                        val gap = calculateChapterGap(higher.episode, lower.episode)
-                        if (gap > 0) {
-                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                    if (!hideMissingEpisodes) {
+                        val next = processedEpisodes.getOrNull(i + 1)
+                        if (next != null) {
+                            val higher = if (anime.sortDescending()) item else next
+                            val lower = if (anime.sortDescending()) next else item
+                            val gap = calculateChapterGap(higher.episode, lower.episode)
+                            if (gap > 0) {
+                                items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                            }
                         }
                     }
                 }
@@ -447,7 +453,7 @@ class AnimeScreenModel(
                     val item = processedEpisodes[i]
 
                     // Missing count at series start (only for ascending)
-                    if (i == 0 && !anime.sortDescending()) {
+                    if (!hideMissingEpisodes && i == 0 && !anime.sortDescending()) {
                         val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
                         if (gap > 0) {
                             items.add(EpisodeList.MissingCount("start-${item.id}", gap))
@@ -457,13 +463,15 @@ class AnimeScreenModel(
                     items.add(item)
 
                     // Missing count between items
-                    val next = processedEpisodes.getOrNull(i + 1)
-                    if (next != null) {
-                        val higher = if (anime.sortDescending()) item else next
-                        val lower = if (anime.sortDescending()) next else item
-                        val gap = calculateChapterGap(higher.episode, lower.episode)
-                        if (gap > 0) {
-                            items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                    if (!hideMissingEpisodes) {
+                        val next = processedEpisodes.getOrNull(i + 1)
+                        if (next != null) {
+                            val higher = if (anime.sortDescending()) item else next
+                            val lower = if (anime.sortDescending()) next else item
+                            val gap = calculateChapterGap(higher.episode, lower.episode)
+                            if (gap > 0) {
+                                items.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                            }
                         }
                     }
                 }
@@ -518,6 +526,7 @@ class AnimeScreenModel(
             fillerEpisodes = fillerEpisodes,
             showEpisodeSummary = showEpisodeSummary,
             showEpisodeThumbnail = showEpisodeThumbnail,
+            hideMissingEpisodes = hideMissingEpisodes,
         )
     }
 
@@ -582,6 +591,7 @@ class AnimeScreenModel(
                     dialog = null,
                     selectedSeason = savedSeason,
                     skipDupeEpisodes = libraryPreferences.skipDupeEpisodes().get(),
+                    hideMissingEpisodes = libraryPreferences.hideMissingEpisodes().get(),
                 )
             }
 
@@ -2031,6 +2041,7 @@ class AnimeScreenModel(
             val fillerEpisodes: Set<Float> = emptySet(),
             val showEpisodeSummary: Boolean = true,
             val showEpisodeThumbnail: Boolean = true,
+            val hideMissingEpisodes: Boolean = false,
         ) : State {
             companion object {
                 fun create(
@@ -2046,9 +2057,10 @@ class AnimeScreenModel(
                     processedSeasonItems: ImmutableList<AnimeSeasonItem> = persistentListOf(),
                     // <-- AY
                     skipDupeEpisodes: Boolean = false,
+                    hideMissingEpisodes: Boolean = false,
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime, skipDupeEpisodes).toImmutableList()
-                    val missingEpisodeCount = processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
+                    val missingEpisodeCount = if (hideMissingEpisodes) 0 else processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
                     
                     val episodeListItems = mutableListOf<EpisodeList>()
                     val availableSeasonsList = mutableListOf<String>()
@@ -2154,7 +2166,7 @@ class AnimeScreenModel(
                             }
 
                             // 2. Missing count at series start (only for ascending)
-                            if (i == 0 && !anime.sortDescending()) {
+                            if (!hideMissingEpisodes && i == 0 && !anime.sortDescending()) {
                                 val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
                                 if (gap > 0) {
                                     episodeListItems.add(EpisodeList.MissingCount("start-${item.id}", gap))
@@ -2165,13 +2177,15 @@ class AnimeScreenModel(
                             episodeListItems.add(item)
 
                             // 4. Missing count between items
-                            val next = processedEpisodes.getOrNull(i + 1)
-                            if (next != null) {
-                                val higher = if (anime.sortDescending()) item else next
-                                val lower = if (anime.sortDescending()) next else item
-                                val gap = calculateChapterGap(higher.episode, lower.episode)
-                                if (gap > 0) {
-                                    episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                            if (!hideMissingEpisodes) {
+                                val next = processedEpisodes.getOrNull(i + 1)
+                                if (next != null) {
+                                    val higher = if (anime.sortDescending()) item else next
+                                    val lower = if (anime.sortDescending()) next else item
+                                    val gap = calculateChapterGap(higher.episode, lower.episode)
+                                    if (gap > 0) {
+                                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                                    }
                                 }
                             }
                         }
@@ -2181,7 +2195,7 @@ class AnimeScreenModel(
                             val item = processedEpisodes[i]
 
                             // Missing count at series start (only for ascending)
-                            if (i == 0 && !anime.sortDescending()) {
+                            if (!hideMissingEpisodes && i == 0 && !anime.sortDescending()) {
                                 val gap = floor(item.episode.episodeNumber).toInt().minus(1).coerceAtLeast(0)
                                 if (gap > 0) {
                                     episodeListItems.add(EpisodeList.MissingCount("start-${item.id}", gap))
@@ -2191,13 +2205,15 @@ class AnimeScreenModel(
                             episodeListItems.add(item)
 
                             // Missing count between items
-                            val next = processedEpisodes.getOrNull(i + 1)
-                            if (next != null) {
-                                val higher = if (anime.sortDescending()) item else next
-                                val lower = if (anime.sortDescending()) next else item
-                                val gap = calculateChapterGap(higher.episode, lower.episode)
-                                if (gap > 0) {
-                                    episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                            if (!hideMissingEpisodes) {
+                                val next = processedEpisodes.getOrNull(i + 1)
+                                if (next != null) {
+                                    val higher = if (anime.sortDescending()) item else next
+                                    val lower = if (anime.sortDescending()) next else item
+                                    val gap = calculateChapterGap(higher.episode, lower.episode)
+                                    if (gap > 0) {
+                                        episodeListItems.add(EpisodeList.MissingCount("${lower.id}-${higher.id}", gap))
+                                    }
                                 }
                             }
                         }

@@ -92,6 +92,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="anizen" />
+                <data android:scheme="aniyomi" />
+                <data android:scheme="mihon" />
+                <data android:scheme="tachiyomi" />
                 <data android:host="add-repo" />
             </intent-filter>
 
