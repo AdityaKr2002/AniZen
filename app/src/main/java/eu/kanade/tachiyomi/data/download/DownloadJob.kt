@@ -80,7 +80,7 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
         // Keep the worker running when needed
         while (active) {
             delay(1000)
-            active = !isStopped && downloadManager.isRunning && networkCheck
+            active = !isStopped && downloadManager.isRunning && (networkCheck || downloadManager.isLocalPhase)
         }
 
         return Result.success()
@@ -89,14 +89,16 @@ class DownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineW
     private fun checkNetworkState(state: NetworkState, requireWifi: Boolean): Boolean {
         return if (state.isOnline) {
             val noWifi = requireWifi && !state.isWifi
-            if (noWifi) {
+            if (noWifi && !downloadManager.isLocalPhase) {
                 downloadManager.downloaderStop(
                     applicationContext.getString(R.string.download_notifier_text_only_wifi),
                 )
             }
             !noWifi
         } else {
-            downloadManager.downloaderStop(applicationContext.getString(R.string.download_notifier_no_network))
+            if (!downloadManager.isLocalPhase) {
+                downloadManager.downloaderStop(applicationContext.getString(R.string.download_notifier_no_network))
+            }
             false
         }
     }

@@ -35,6 +35,7 @@ import tachiyomi.core.common.util.system.logcat
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.subtitles.StremioSubtitleResolver
 import eu.kanade.tachiyomi.util.system.copyToClipboard
+import eu.kanade.tachiyomi.util.system.activeNetworkState
 import okhttp3.Headers
 import okhttp3.Request
 import kotlinx.coroutines.CancellationException
@@ -109,6 +110,14 @@ class Downloader(
     val isRunning: Boolean
         get() = _isRunningFlow.value
 
+    val isLocalPhase: Boolean
+        get() = activeDownloads.keys.isNotEmpty() && activeDownloads.keys.all { id ->
+            val download = queueState.value.find { it.episode.id == id }
+            download?.status == Download.State.MERGING || 
+            download?.status == Download.State.DECRYPTING || 
+            download?.status == Download.State.FINALIZING
+        }
+
     init {
         launchIO {
             sourceManager.isInitialized.first { it }
@@ -141,10 +150,14 @@ class Downloader(
     fun start(): Boolean {
         if (isRunning || queueState.value.isEmpty()) return false
         
-        // Resume paused downloads by marking them as QUEUE
+        // Resume paused or interrupted downloads by marking them as QUEUE
         _queueState.update { 
             it.forEach { download ->
-                if (download.status == Download.State.PAUSED) {
+                if (download.status == Download.State.PAUSED ||
+                    download.status == Download.State.DOWNLOADING ||
+                    download.status == Download.State.MERGING ||
+                    download.status == Download.State.DECRYPTING ||
+                    download.status == Download.State.FINALIZING) {
                     download.status = Download.State.QUEUE
                 }
             }
@@ -190,6 +203,11 @@ class Downloader(
                     continue
                 }
 
+                if (isNetworkConstraintFailed()) {
+                    stop(getNetworkConstraintErrorString())
+                    break
+                }
+
                 download.status = Download.State.DOWNLOADING
                 notifyProgress(download)
                 
@@ -226,11 +244,38 @@ class Downloader(
     }
 
     fun stop(reason: String? = null) {
+        if (reason != null && isLocalPhase) {
+            logcat(LogPriority.INFO) { "Network offline, but keeping downloader running for local phase (merging/decrypting/finalizing)" }
+            return
+        }
         _isRunningFlow.value = false
         downloaderJob?.cancel()
         downloaderJob = null
         activeDownloads.clear()
-        val hasMoreToDownload = queueState.value.any { it.status == Download.State.QUEUE || it.status == Download.State.DOWNLOADING }
+        
+        val hasMoreToDownload = queueState.value.any { 
+            it.status == Download.State.QUEUE || 
+            it.status == Download.State.DOWNLOADING ||
+            it.status == Download.State.MERGING ||
+            it.status == Download.State.DECRYPTING ||
+            it.status == Download.State.FINALIZING
+        }
+
+        _queueState.update {
+            it.forEach { download ->
+                if (download.status == Download.State.DOWNLOADING || 
+                    download.status == Download.State.QUEUE ||
+                    download.status == Download.State.MERGING ||
+                    download.status == Download.State.DECRYPTING ||
+                    download.status == Download.State.FINALIZING) {
+                    download.interruptedState = download.status
+                    download.status = Download.State.PAUSED
+                    notifier.dismissProgress(download)
+                }
+            }
+            it
+        }
+
         if (reason != null) notifier.onWarning(reason)
         else if (hasMoreToDownload) notifier.onPaused()
         else {
@@ -247,7 +292,12 @@ class Downloader(
         activeDownloads.clear()
         _queueState.update {
             it.forEach { download ->
-                if (download.status == Download.State.DOWNLOADING || download.status == Download.State.QUEUE) {
+                if (download.status == Download.State.DOWNLOADING || 
+                    download.status == Download.State.QUEUE ||
+                    download.status == Download.State.MERGING ||
+                    download.status == Download.State.DECRYPTING ||
+                    download.status == Download.State.FINALIZING) {
+                    download.interruptedState = download.status
                     download.status = Download.State.PAUSED
                     notifier.dismissProgress(download)
                 }
@@ -453,6 +503,9 @@ class Downloader(
     }
 
     private suspend fun downloadEpisode(download: Download) {
+        val previousState = download.interruptedState ?: download.status
+        download.interruptedState = null
+
         val animeDir = provider.getAnimeDir(download.anime.ogTitle, download.source)
         val episodeDirname = provider.getEpisodeDirName(download.episode.name, download.episode.scanlator)
         
@@ -479,7 +532,7 @@ class Downloader(
             val mergedFile = File(sandboxDir, "$videoFilename.tmp")
 
             // RECOVERY: Handle interrupted FINALIZING state
-            if (download.status == Download.State.FINALIZING && mergedFile.exists()) {
+            if (previousState == Download.State.FINALIZING && mergedFile.exists()) {
                 finalizeDownload(download, UniFile.fromFile(mergedFile)!!, animeDir, episodeDirname)
                 return
             }
@@ -487,7 +540,7 @@ class Downloader(
             // RECOVERY: Handle interrupted MERGING state
             // If .part files exist in sandbox, the destination file is likely corrupted/incomplete
             val hasSandboxParts = sandboxDir.listFiles()?.any { it.name.contains(".part") } == true
-            if (download.status == Download.State.MERGING && hasSandboxParts) {
+            if (previousState == Download.State.MERGING && hasSandboxParts) {
                 logcat(LogPriority.WARN) { "Recovery: Interrupted merge detected for ${download.episode.name}. Cleaning destination." }
                 destDir.findFile("$videoFilename.$finalExt")?.delete()
                 destDir.findFile("$videoFilename.ts")?.delete()
@@ -1380,6 +1433,22 @@ class Downloader(
         val torrentUrl = TorrentServerUtils.getTorrentPlayLink(currentTorrent, index)
         download.video!!.videoUrl = torrentUrl
         return internalDownload(download, sandboxDir, filename)
+    }
+
+    private fun isNetworkConstraintFailed(): Boolean {
+        val state = context.activeNetworkState()
+        if (!state.isOnline) return true
+        val requireWifi = preferences.downloadOnlyOverWifi().get()
+        return requireWifi && !state.isWifi
+    }
+
+    private fun getNetworkConstraintErrorString(): String {
+        val state = context.activeNetworkState()
+        return if (!state.isOnline) {
+            context.stringResource(MR.strings.download_notifier_no_network)
+        } else {
+            context.stringResource(MR.strings.download_notifier_text_only_wifi)
+        }
     }
 
     companion object {

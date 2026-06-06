@@ -63,6 +63,7 @@ data class Download(
     var totalSegments: Int = 0
     @Transient var activeThreads: Int = 0
     var engineType: String = "" // "HLS", "DASH", or "Normal"
+    @Transient var interruptedState: State? = null
     
     // 1DM-style granular progress
     @Transient val partProgress = ConcurrentHashMap<Int, Float>()

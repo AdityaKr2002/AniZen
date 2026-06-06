@@ -58,6 +58,9 @@ class DownloadManager(
     val isRunning: Boolean
         get() = downloader.isRunning
 
+    val isLocalPhase: Boolean
+        get() = downloader.isLocalPhase
+
     /**
      * Queue to delay the deletion of a list of episodes until triggered.
      */
