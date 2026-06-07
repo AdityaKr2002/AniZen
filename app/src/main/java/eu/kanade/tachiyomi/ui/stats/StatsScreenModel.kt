@@ -480,7 +480,7 @@ class StatsScreenModel(
         val now = System.currentTimeMillis()
         val monthMillis = 30 * 24 * 60 * 60 * 1000L
 
-        val recentHistory = history.filter { it.seenAt != null && it.seenAt.time > (now - monthMillis) }
+        val recentHistory = history.filter { it.seenAt != null && it.seenAt!!.time > (now - monthMillis) }
         val sessionsByWeek = recentHistory.groupBy {
             val cal = Calendar.getInstance().apply { time = it.seenAt!! }
             cal.get(Calendar.WEEK_OF_YEAR)
@@ -496,11 +496,11 @@ class StatsScreenModel(
         }
         val avgSessions = if (sessionsByWeek > 0) recentHistory.size.toDouble() / divisorWeeks else 0.0
 
-        val topDay = history.filter { it.seenAt != null && it.seenAt.time > (now - (24 * 60 * 60 * 1000L)) }
+        val topDay = history.filter { it.seenAt != null && it.seenAt!!.time > (now - (24 * 60 * 60 * 1000L)) }
             .groupingBy { it.animeId }.eachCount().maxByOrNull { it.value }
             ?.let { entry -> history.find { it.animeId == entry.key }?.title }
 
-        val topMonth = history.filter { it.seenAt != null && it.seenAt.time > (now - monthMillis) }
+        val topMonth = history.filter { it.seenAt != null && it.seenAt!!.time > (now - monthMillis) }
             .groupingBy { it.animeId }.eachCount().maxByOrNull { it.value }
             ?.let { entry -> history.find { it.animeId == entry.key }?.title }
 
