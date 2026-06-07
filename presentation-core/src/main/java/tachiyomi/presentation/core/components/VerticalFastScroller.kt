@@ -173,7 +173,7 @@ private fun ListFastScrollThumb(
                 sizes[i++] = size
             }
             sizes.sort()
-            val medianSize = if (sizes.isEmpty()) 1 else sizes[sizes.size / 2]
+            val medianSize = if (sizes.isEmpty()) 1 else sizes[(sizes.size - 1) / 2]
 
             val firstItem = visibleItems.first()
             var pastItemsSize = 0
@@ -216,7 +216,7 @@ private fun ListFastScrollThumb(
                     sizes[i++] = size
                 }
                 sizes.sort()
-                val medianSize = if (sizes.isEmpty()) 1 else sizes[sizes.size / 2]
+                val medianSize = if (sizes.isEmpty()) 1 else sizes[(sizes.size - 1) / 2]
 
                 var totalSize = 0
                 for (index in 0 until totalItems) {
@@ -377,7 +377,7 @@ fun VerticalGridFastScroller(
                         sizes[i++] = size
                     }
                     sizes.sort()
-                    val medianSize = if (sizes.isEmpty()) 1 else sizes[sizes.size / 2]
+                    val medianSize = if (sizes.isEmpty()) 1 else sizes[(sizes.size - 1) / 2]
 
                     val firstItem = visibleItems.first()
                     var pastItemsSize = 0
@@ -431,7 +431,7 @@ fun VerticalGridFastScroller(
                             sizes[i++] = size
                         }
                         sizes.sort()
-                        val medianSize = if (sizes.isEmpty()) 1 else sizes[sizes.size / 2]
+                        val medianSize = if (sizes.isEmpty()) 1 else sizes[(sizes.size - 1) / 2]
 
                         val avgItemsPerRow = columnCount.coerceAtLeast(1)
 
