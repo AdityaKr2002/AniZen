@@ -159,29 +159,33 @@ private fun ListFastScrollThumb(
             if (isThumbDragged) return@snapshotFlow null
 
             val info = listState.layoutInfo
-            if (info.totalItemsCount == 0 || info.visibleItemsInfo.isEmpty()) return@snapshotFlow null
+            val totalItems = info.totalItemsCount
+            if (totalItems == 0 || info.visibleItemsInfo.isEmpty()) return@snapshotFlow null
 
             val visibleItems = info.visibleItemsInfo
-            val avgItemSize = visibleItems.sumOf { it.size }.toFloat() /
-                visibleItems.size.coerceAtLeast(1)
+            val firstItem = visibleItems.first()
+            val lastItem = visibleItems.last()
 
-            // First non-sticky item (offset can be negative when partially off-screen).
-            val firstItem = visibleItems.fastFirstOrNull {
-                (it.key as? String)?.startsWith(STICKY_HEADER_KEY_PREFIX)?.not() ?: true
-            } ?: visibleItems.first()
+            // If we are exactly at the top or bottom, return exact bounds to avoid calculation drift
+            if (firstItem.index == 0 && firstItem.offset >= info.viewportStartOffset) {
+                return@snapshotFlow 0f
+            }
+            if (lastItem.index == totalItems - 1 && lastItem.offset + lastItem.size <= info.viewportEndOffset) {
+                return@snapshotFlow 1f
+            }
 
-            // Fractional items above viewport (sub-item precision via offset).
-            val itemsBefore = firstItem.index -
-                firstItem.offset.toFloat() / avgItemSize.coerceAtLeast(1f)
+            // Sub-item precision for the exact top index visible
+            val topHiddenFraction = (info.viewportStartOffset - firstItem.offset).toFloat() / firstItem.size.coerceAtLeast(1)
+            val exactTopIndex = firstItem.index.toFloat() + topHiddenFraction.coerceIn(0f, 1f)
 
-            // Items that fit in the visible viewport.
-            val viewportPx = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-            val viewportItems = viewportPx / avgItemSize.coerceAtLeast(1f)
+            // Sub-item precision for the exact bottom index visible
+            val bottomHiddenFraction = (lastItem.offset + lastItem.size - info.viewportEndOffset).toFloat() / lastItem.size.coerceAtLeast(1)
+            val exactBottomIndex = lastItem.index.toFloat() - bottomHiddenFraction.coerceIn(0f, 1f)
 
-            // Scrollable range in item-units — reaches exactly 1.0 at list bottom.
-            val scrollableItems = (info.totalItemsCount - viewportItems).coerceAtLeast(1f)
+            val totalVisible = (exactBottomIndex - exactTopIndex).coerceAtLeast(1f)
+            val scrollableIndices = (totalItems - totalVisible).coerceAtLeast(1f)
 
-            (itemsBefore / scrollableItems).coerceIn(0f, 1f)
+            (exactTopIndex / scrollableIndices).coerceIn(0f, 1f)
         }.collectLatest { proportion ->
             if (proportion == null) return@collectLatest
             thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
@@ -206,18 +210,24 @@ private fun ListFastScrollThumb(
                 val visibleItems = info.visibleItemsInfo
                 if (visibleItems.isEmpty()) return@collectLatest
 
-                val avgItemSize = visibleItems.sumOf { it.size }.toFloat() /
-                    visibleItems.size.coerceAtLeast(1)
-                val viewportPx = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-                val viewportItems = viewportPx / avgItemSize.coerceAtLeast(1f)
-                val scrollableItems = (totalItems - viewportItems).coerceAtLeast(1f)
+                val firstItem = visibleItems.first()
+                val lastItem = visibleItems.last()
+                
+                val topHiddenFraction = (info.viewportStartOffset - firstItem.offset).toFloat() / firstItem.size.coerceAtLeast(1)
+                val exactTopIndex = firstItem.index.toFloat() + topHiddenFraction.coerceIn(0f, 1f)
+                
+                val bottomHiddenFraction = (lastItem.offset + lastItem.size - info.viewportEndOffset).toFloat() / lastItem.size.coerceAtLeast(1)
+                val exactBottomIndex = lastItem.index.toFloat() - bottomHiddenFraction.coerceIn(0f, 1f)
+                
+                val totalVisible = (exactBottomIndex - exactTopIndex).coerceAtLeast(1f)
+                val scrollableIndices = (totalItems - totalVisible).coerceAtLeast(1f)
 
-                // Inverse of the List→Thumb formula for symmetric accuracy.
-                val targetFractional = proportion * scrollableItems
+                val targetFractional = proportion * scrollableIndices
                 val targetIndex = targetFractional.toInt().coerceIn(0, totalItems - 1)
-                val targetOffset = ((targetFractional - targetIndex) * avgItemSize)
-                    .roundToInt()
-                    .coerceAtLeast(0)
+                
+                // We don't have exact item sizes for target, use avg visible size as fallback
+                val avgItemSize = visibleItems.sumOf { it.size }.toFloat() / visibleItems.size.coerceAtLeast(1)
+                val targetOffset = ((targetFractional - targetIndex) * avgItemSize).roundToInt().coerceAtLeast(0)
 
                 listState.scrollToItem(targetIndex, targetOffset)
                 scrolled.tryEmit(Unit)
@@ -326,47 +336,91 @@ fun VerticalGridFastScroller(
             val trackHeightPx = heightPx - thumbHeightPx
 
             val columnCount = remember(columns) { slotSizesSums(constraints).size.coerceAtLeast(1) }
-            val scrollRange = remember(columns) { computeGridScrollRange(state = state, columnCount = columnCount) }
 
-            LaunchedEffect(isThumbDragged, trackHeightPx, thumbTopPadding, heightPx, scrollRange, columnCount) {
-                if (!isThumbDragged) return@LaunchedEffect
-                snapshotFlow { thumbOffsetY }.collectLatest { y ->
-                    val visibleItems = state.layoutInfo.visibleItemsInfo
-                    if (visibleItems.isEmpty()) return@collectLatest
-                    val startChild = visibleItems.first()
-                    val endChild = visibleItems.last()
-                    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
-                    val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
-                    val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
+            // ── Grid → Thumb ─────────────────────────────────────────────────────────
+            LaunchedEffect(state, trackHeightPx, thumbTopPadding) {
+                snapshotFlow {
+                    if (isThumbDragged) return@snapshotFlow null
 
-                    val scrollRatio = (y - thumbTopPadding) / trackHeightPx
-                    val scrollAmt = scrollRatio * (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
-                    val rowNumber = (scrollAmt / avgSizePerRow.coerceAtLeast(1f)).toInt()
-                    val rowOffset = scrollAmt - rowNumber * avgSizePerRow
+                    val info = state.layoutInfo
+                    val totalItems = info.totalItemsCount
+                    if (totalItems == 0 || info.visibleItemsInfo.isEmpty()) return@snapshotFlow null
 
-                    state.scrollToItem(index = columnCount * rowNumber, scrollOffset = rowOffset.roundToInt())
-                    scrolled.tryEmit(Unit)
+                    val visibleItems = info.visibleItemsInfo
+                    val firstItem = visibleItems.first()
+                    val lastItem = visibleItems.last()
+
+                    if (firstItem.index == 0 && firstItem.offset.y >= info.viewportStartOffset) {
+                        return@snapshotFlow 0f
+                    }
+                    if (lastItem.index == totalItems - 1 && lastItem.offset.y + lastItem.size.height <= info.viewportEndOffset) {
+                        return@snapshotFlow 1f
+                    }
+
+                    val itemsInTopRow = visibleItems.count { it.offset.y == firstItem.offset.y }
+                    val topHiddenFraction = (info.viewportStartOffset - firstItem.offset.y).toFloat() / firstItem.size.height.coerceAtLeast(1)
+                    val exactTopIndex = firstItem.index.toFloat() + topHiddenFraction.coerceIn(0f, 1f) * itemsInTopRow
+
+                    val itemsInBottomRow = visibleItems.count { it.offset.y == lastItem.offset.y }
+                    val bottomRowStartIndex = lastItem.index - itemsInBottomRow + 1
+                    val bottomHiddenFraction = (lastItem.offset.y + lastItem.size.height - info.viewportEndOffset).toFloat() / lastItem.size.height.coerceAtLeast(1)
+                    val exactBottomIndex = bottomRowStartIndex.toFloat() + (1f - bottomHiddenFraction.coerceIn(0f, 1f)) * itemsInBottomRow
+
+                    val totalVisible = (exactBottomIndex - exactTopIndex).coerceAtLeast(1f)
+                    val scrollableIndices = (totalItems - totalVisible).coerceAtLeast(1f)
+
+                    (exactTopIndex / scrollableIndices).coerceIn(0f, 1f)
+                }.collectLatest { proportion ->
+                    if (proportion == null) return@collectLatest
+                    thumbOffsetY = trackHeightPx * proportion + thumbTopPadding
+                    if (state.isScrollInProgress) scrolled.tryEmit(Unit)
                 }
             }
 
-            LaunchedEffect(state, trackHeightPx, thumbTopPadding, heightPx, scrollRange, columnCount, isThumbDragged) {
-                if (isThumbDragged) return@LaunchedEffect
-                snapshotFlow {
-                    val info = state.layoutInfo
-                    if (info.totalItemsCount == 0) return@snapshotFlow null
-                    computeGridScrollOffset(state = state, columnCount = columnCount)
-                }.collectLatest { scrollOffset ->
-                    if (scrollOffset == null) return@collectLatest
-                    val totalScrollRange = (scrollRange.toFloat() - heightPx).coerceAtLeast(1f)
-                    val proportion = (scrollOffset.toFloat() / totalScrollRange).coerceIn(0f, 1f)
+            // ── Thumb → Grid ─────────────────────────────────────────────────────────
+            LaunchedEffect(state, trackHeightPx, thumbTopPadding, columnCount) {
+                snapshotFlow { if (isThumbDragged) thumbOffsetY else null }
+                    .collectLatest { y ->
+                        if (y == null) return@collectLatest
+                        
+                        val proportion = ((y - thumbTopPadding) / trackHeightPx).coerceIn(0f, 1f)
 
-                    thumbOffsetY = if (proportion >= 0.99f) {
-                        trackHeightPx + thumbTopPadding
-                    } else {
-                        trackHeightPx * proportion + thumbTopPadding
+                        val info = state.layoutInfo
+                        val totalItems = info.totalItemsCount
+                        if (totalItems == 0) return@collectLatest
+                        
+                        val visibleItems = info.visibleItemsInfo
+                        if (visibleItems.isEmpty()) return@collectLatest
+
+                        val firstItem = visibleItems.first()
+                        val lastItem = visibleItems.last()
+
+                        val itemsInTopRow = visibleItems.count { it.offset.y == firstItem.offset.y }
+                        val topHiddenFraction = (info.viewportStartOffset - firstItem.offset.y).toFloat() / firstItem.size.height.coerceAtLeast(1)
+                        val exactTopIndex = firstItem.index.toFloat() + topHiddenFraction.coerceIn(0f, 1f) * itemsInTopRow
+
+                        val itemsInBottomRow = visibleItems.count { it.offset.y == lastItem.offset.y }
+                        val bottomRowStartIndex = lastItem.index - itemsInBottomRow + 1
+                        val bottomHiddenFraction = (lastItem.offset.y + lastItem.size.height - info.viewportEndOffset).toFloat() / lastItem.size.height.coerceAtLeast(1)
+                        val exactBottomIndex = bottomRowStartIndex.toFloat() + (1f - bottomHiddenFraction.coerceIn(0f, 1f)) * itemsInBottomRow
+
+                        val totalVisible = (exactBottomIndex - exactTopIndex).coerceAtLeast(1f)
+                        val scrollableIndices = (totalItems - totalVisible).coerceAtLeast(1f)
+
+                        val targetFractional = proportion * scrollableIndices
+                        val targetIndex = targetFractional.toInt().coerceIn(0, totalItems - 1)
+
+                        // Estimate offset based on average item height, similar to list fallback
+                        val laidOutArea = (lastItem.offset.y + lastItem.size.height) - firstItem.offset.y
+                        val laidOutRows = 1 + abs(lastItem.index - firstItem.index) / columnCount
+                        val avgRowHeight = laidOutArea.toFloat() / laidOutRows.coerceAtLeast(1)
+                        
+                        val targetRowFraction = (targetFractional - targetIndex) / columnCount.coerceAtLeast(1)
+                        val targetOffset = (targetRowFraction * avgRowHeight).roundToInt().coerceAtLeast(0)
+
+                        state.scrollToItem(targetIndex, targetOffset)
+                        scrolled.tryEmit(Unit)
                     }
-                    scrolled.tryEmit(Unit)
-                }
             }
 
             val alpha = remember { Animatable(0f) }
@@ -462,32 +516,7 @@ private fun rememberColumnWidthSums(
     }
 }
 
-private fun computeGridScrollOffset(state: LazyGridState, columnCount: Int): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems.first()
-    val endChild = visibleItems.last()
-    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
-    val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
-    val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
 
-    val rowsBefore = min(startChild.index, endChild.index).coerceAtLeast(0) / columnCount
-    return (rowsBefore * avgSizePerRow - startChild.offset.y).roundToInt()
-}
-
-private fun computeGridScrollRange(state: LazyGridState, columnCount: Int): Int {
-    if (state.layoutInfo.totalItemsCount == 0) return 0
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val startChild = visibleItems.first()
-    val endChild = visibleItems.last()
-    val laidOutArea = (endChild.offset.y + endChild.size.height) - startChild.offset.y
-    val laidOutRows = 1 + abs(endChild.index - startChild.index) / columnCount
-    val avgSizePerRow = laidOutArea.toFloat() / laidOutRows
-
-    val totalRows = 1 + (state.layoutInfo.totalItemsCount - 1) / columnCount
-    val endSpacing = avgSizePerRow - endChild.size.height
-    return (endSpacing + (laidOutArea.toFloat() / laidOutRows) * totalRows).roundToInt()
-}
 
 private class MutableData<T>(var value: T)
 
