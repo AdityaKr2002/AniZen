@@ -139,7 +139,7 @@ private fun ListFastScrollThumb(
     }
 
     var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
-    val itemSizeCache = remember { mutableStateMapOf<Int, Int>() }
+    val itemSizeCache = remember { mutableMapOf<Int, Int>() }
 
     val dragInteractionSource = remember { MutableInteractionSource() }
     val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
@@ -327,7 +327,7 @@ fun VerticalGridFastScroller(
             if (!showScroller) return@subcompose
             val thumbTopPadding = with(LocalDensity.current) { topContentPadding.toPx() }
             var thumbOffsetY by remember(thumbTopPadding) { mutableFloatStateOf(thumbTopPadding) }
-            val itemSizeCache = remember { mutableStateMapOf<Int, Int>() }
+            val itemSizeCache = remember { mutableMapOf<Int, Int>() }
 
             val dragInteractionSource = remember { MutableInteractionSource() }
             val isThumbDragged by dragInteractionSource.collectIsDraggedAsState()
