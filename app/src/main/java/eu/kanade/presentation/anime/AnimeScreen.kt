@@ -1093,70 +1093,61 @@ fun AnimeScreenLargeImpl(
                                     val isWatching = remember(state.episodes) {
                                         state.episodes.fastAny { it.episode.seen }
                                     }
-                                    item(key = "action-row-large", contentType = AnimeScreenItem.ACTION_ROW) {
-                                        AnimeActionRow(
-                                            favorite = state.anime.favorite,
-                                            trackingCount = state.trackingCount,
-                                            nextUpdate = nextUpdate,
-                                            isUserIntervalMode = state.anime.fetchInterval < 0,
-                                            fetchInterval = state.anime.fetchInterval,
-                                            status = state.anime.status,
-                                            onAddToLibraryClicked = onAddToLibraryClicked,
-                                            onWebViewClicked = onWebViewClicked,
-                                            onWebViewLongClicked = onWebViewLongClicked,
-                                            onTrackingClicked = onTrackingClicked,
-                                            onEditIntervalClicked = onEditIntervalClicked,
-                                            onEditNotesClicked = onEditNotesClicked,
-                                            onEditCategory = onEditCategoryClicked,
-                                            onContinueWatching = { onContinueWatching(null) },
-                                            isWatching = isWatching,
-                                            mainTrackItem = remember(state.trackItems) { state.trackItems.firstOrNull() },
-                                        )
-                                    }
+                                    AnimeActionRow(
+                                        favorite = state.anime.favorite,
+                                        trackingCount = state.trackingCount,
+                                        nextUpdate = nextUpdate,
+                                        isUserIntervalMode = state.anime.fetchInterval < 0,
+                                        fetchInterval = state.anime.fetchInterval,
+                                        status = state.anime.status,
+                                        onAddToLibraryClicked = onAddToLibraryClicked,
+                                        onWebViewClicked = onWebViewClicked,
+                                        onWebViewLongClicked = onWebViewLongClicked,
+                                        onTrackingClicked = onTrackingClicked,
+                                        onEditIntervalClicked = onEditIntervalClicked,
+                                        onEditNotesClicked = onEditNotesClicked,
+                                        onEditCategory = onEditCategoryClicked,
+                                        onContinueWatching = { onContinueWatching(null) },
+                                        isWatching = isWatching,
+                                        mainTrackItem = remember(state.trackItems) { state.trackItems.firstOrNull() },
+                                    )
 
-                                    item(key = "description-large", contentType = AnimeScreenItem.DESCRIPTION_WITH_TAG) {
-                                        ExpandableAnimeDescription(
-                                            defaultExpandState = autoExpandDescription,
-                                            description = state.anime.description,
-                                            note = state.anime.note,
-                                            tagsProvider = { state.anime.genre },
-                                            onTagSearch = onTagSearch,
-                                            onCopyTagToClipboard = onCopyTagToClipboard,
-                                        )
-                                    }
+                                    ExpandableAnimeDescription(
+                                        defaultExpandState = autoExpandDescription,
+                                        description = state.anime.description,
+                                        note = state.anime.note,
+                                        tagsProvider = { state.anime.genre },
+                                        onTagSearch = onTagSearch,
+                                        onCopyTagToClipboard = onCopyTagToClipboard,
+                                    )
 
-                                    item(key = "relations-large") {
-                                        eu.kanade.presentation.anime.components.PrequelSequelBox(
-                                            anime = state.anime,
-                                            relations = state.relations,
-                                            onRelationClick = { onSearch(it, true) }
-                                        )
-                                    }
+                                    eu.kanade.presentation.anime.components.PrequelSequelBox(
+                                        anime = state.anime,
+                                        relations = state.relations,
+                                        onRelationClick = { onSearch(it, true) }
+                                    )
 
                                     // Cast Row — placed below tags
                                     val castLarge = state.anime.cast
                                     if (!castLarge.isNullOrEmpty()) {
-                                        item(key = "cast-large") {
-                                            eu.kanade.presentation.anime.components.CastRow(cast = castLarge)
-                                        }
+                                        eu.kanade.presentation.anime.components.CastRow(cast = castLarge)
                                     }
 
                                     if (showSuggestions && !suggestionsInOverflow) {
-                                        item(key = "discovery-large") {
-                                            Surface(
-                                                modifier = Modifier
-                                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                                    .fillMaxWidth(),
-                                                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                                                tonalElevation = 2.dp,
-                                            ) {
-                                                Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                                                    DiscoveryHeader(
-                                                        onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
-                                                    )
+                                        Surface(
+                                            modifier = Modifier
+                                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                                .fillMaxWidth(),
+                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                                            tonalElevation = 2.dp,
+                                        ) {
+                                            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                                                DiscoveryHeader(
+                                                    onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.RelatedAnimeScreen(state.anime.id)) }
+                                                )
 
-                                                    if (expandSuggestions) {
+                                                if (expandSuggestions) {
                                                         if (combinedItems.isEmpty() && state.isSuggestionsLoading) {
                                                             androidx.compose.foundation.lazy.LazyRow(
                                                                 modifier = Modifier.heightIn(min = 180.dp),
