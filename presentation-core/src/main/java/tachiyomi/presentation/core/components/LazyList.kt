@@ -72,6 +72,7 @@ fun FastScrollLazyColumn(
         listState = state,
         modifier = modifier,
         topContentPadding = contentPadding.calculateTopPadding(),
+        bottomContentPadding = contentPadding.calculateBottomPadding(),
         endContentPadding = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
     ) {
         LazyColumn(

@@ -480,32 +480,44 @@ class StatsScreenModel(
         val now = System.currentTimeMillis()
         val monthMillis = 30 * 24 * 60 * 60 * 1000L
 
-        val recentHistory = history.filter { (it.seenAt?.time ?: 0) > (now - monthMillis) }
+        val recentHistory = history.filter { it.seenAt != null && it.seenAt!!.time > (now - monthMillis) }
         val sessionsByWeek = recentHistory.groupBy {
             val cal = Calendar.getInstance().apply { time = it.seenAt!! }
             cal.get(Calendar.WEEK_OF_YEAR)
         }.size
         
-        val avgSessions = if (sessionsByWeek > 0) recentHistory.size.toDouble() / 4.0 else 0.0
+        val divisorWeeks = if (history.isNotEmpty()) {
+            val earliestSeen = history.mapNotNull { it.seenAt?.time }.minOrNull() ?: now
+            val totalSpanDays = ((now - earliestSeen) / (24 * 60 * 60 * 1000L)).coerceAtLeast(1)
+            val activeDays = totalSpanDays.coerceAtMost(30).coerceAtLeast(7)
+            activeDays.toDouble() / 7.0
+        } else {
+            4.28
+        }
+        val avgSessions = if (sessionsByWeek > 0) recentHistory.size.toDouble() / divisorWeeks else 0.0
 
-        val topDay = history.filter { (it.seenAt?.time ?: 0) > (now - (24 * 60 * 60 * 1000L)) }
+        val topDay = history.filter { it.seenAt != null && it.seenAt!!.time > (now - (24 * 60 * 60 * 1000L)) }
             .groupingBy { it.animeId }.eachCount().maxByOrNull { it.value }
-            ?.let { entry -> animeList.find { it.id == entry.key }?.anime?.title }
+            ?.let { entry -> history.find { it.animeId == entry.key }?.title }
 
-        val topMonth = history.filter { (it.seenAt?.time ?: 0) > (now - monthMillis) }
+        val topMonth = history.filter { it.seenAt != null && it.seenAt!!.time > (now - monthMillis) }
             .groupingBy { it.animeId }.eachCount().maxByOrNull { it.value }
-            ?.let { entry -> animeList.find { it.id == entry.key }?.anime?.title }
+            ?.let { entry -> history.find { it.animeId == entry.key }?.title }
 
         val hourCounts = history.mapNotNull { it.seenAt }.map {
             Calendar.getInstance().apply { time = it }.get(Calendar.HOUR_OF_DAY)
         }.groupingBy { it }.eachCount()
         
-        val topHour = hourCounts.maxByOrNull { it.value }?.key ?: 0
-        val preferredTime = when (topHour) {
-            in 5..11 -> "Morning"
-            in 12..17 -> "Afternoon"
-            in 18..22 -> "Evening"
-            else -> "Late Night"
+        val preferredTime = if (hourCounts.isEmpty()) {
+            "N/A"
+        } else {
+            val topHour = hourCounts.maxByOrNull { it.value }?.key ?: 0
+            when (topHour) {
+                in 5..11 -> "Morning"
+                in 12..17 -> "Afternoon"
+                in 18..22 -> "Evening"
+                else -> "Late Night"
+            }
         }
 
         return StatsData.WatchHabits(topDay, topMonth, preferredTime, avgSessions)

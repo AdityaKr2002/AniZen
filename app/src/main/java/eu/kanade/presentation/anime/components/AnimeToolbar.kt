@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,12 +81,17 @@ fun AnimeToolbar(
         stableTopPadding = topPadding
     }
 
+    // Capture the surface color during composition; alpha is applied during draw only.
+    val bgColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
     Column(
         modifier = modifier
-            .background(
-                MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                    .copy(alpha = backgroundAlphaProvider()),
-            )
+            .drawBehind {
+                // drawBehind reads backgroundAlphaProvider() in the draw phase — not
+                // composition — so the Column is NOT recomposed on every animation frame
+                // of the transparent-to-solid toolbar transition. Only the background
+                // fades; toolbar icons and content remain fully visible at all times.
+                drawRect(color = bgColor.copy(alpha = backgroundAlphaProvider()))
+            }
             .padding(top = stableTopPadding),
     ) {
         val isActionMode = actionModeCounter > 0
