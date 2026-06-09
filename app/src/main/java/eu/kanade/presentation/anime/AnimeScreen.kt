@@ -572,13 +572,6 @@ private fun AnimeScreenSmallImpl(
                             LazyColumn(
                                 modifier = Modifier.fillMaxHeight(),
                                 state = episodeListState,
-                                // beyondBoundsItemCount = 1: episode/season items always start at
-                                // index ≥ 2, so item[1] (merged header details) is perpetually
-                                // within 1 of the visible boundary and never gets detached from
-                                // composition. This eliminates the first-scroll freeze from
-                                // re-composing heavy header content (MarkdownRender, nested
-                                // LazyRow discovery, cast images) on upward flings.
-                                beyondBoundsItemCount = 1,
                                 contentPadding = PaddingValues(
                                     start = contentPadding.calculateStartPadding(layoutDirection),
                                     end = contentPadding.calculateEndPadding(layoutDirection),
@@ -1201,7 +1194,6 @@ fun AnimeScreenLargeImpl(
                                     LazyColumn(
                                         modifier = Modifier.fillMaxHeight(),
                                         state = episodeListState,
-                                        beyondBoundsItemCount = 1,
                                         contentPadding = PaddingValues(
                                             top = contentPadding.calculateTopPadding(),
                                             end = contentPadding.calculateEndPadding(layoutDirection),
