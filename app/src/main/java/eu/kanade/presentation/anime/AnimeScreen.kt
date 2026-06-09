@@ -565,9 +565,6 @@ private fun AnimeScreenSmallImpl(
                             topContentPadding = topPadding,
                             bottomContentPadding = contentPadding.calculateBottomPadding(),
                             endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
-                            // Show the fast scroll thumb only when the user has scrolled past
-                            // the anime info header — contextually meaningful regardless of count.
-                            thumbAllowed = { !isFirstItemVisible },
                         ) {
                             LazyColumn(
                                 modifier = Modifier.fillMaxHeight(),

@@ -249,7 +249,9 @@ private fun ListFastScrollThumb(
     val isThumbVisible = alpha.value > 0f
     LaunchedEffect(scrolled) {
         scrolled.sample(100).collectLatest {
-            if (thumbAllowed()) {
+            val info = listState.layoutInfo
+            val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
+            if (thumbAllowed() && isLongList) {
                 alpha.snapTo(1f)
                 delay(ScrollBarVisibilityDurationMillis)
                 alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
@@ -469,7 +471,9 @@ fun VerticalGridFastScroller(
                 scrolled
                     .sample(100)
                     .collectLatest {
-                        if (thumbAllowed()) {
+                        val info = state.layoutInfo
+                        val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
+                        if (thumbAllowed() && isLongList) {
                             alpha.snapTo(1f)
                             delay(ScrollBarVisibilityDurationMillis)
                             alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
