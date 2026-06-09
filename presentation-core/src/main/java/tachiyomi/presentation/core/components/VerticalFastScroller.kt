@@ -254,15 +254,16 @@ private fun ListFastScrollThumb(
     // ── Visibility ───────────────────────────────────────────────────────────
     val alpha = remember { Animatable(0f) }
     val isThumbVisible = alpha.value > 0f
-    LaunchedEffect(scrolled) {
-        scrolled.sample(100).collectLatest {
+    LaunchedEffect(listState, isThumbDragged) {
+        snapshotFlow {
             val info = listState.layoutInfo
             val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
-            if (thumbAllowed() && isLongList) {
+            (listState.isScrollInProgress || isThumbDragged) && thumbAllowed() && isLongList
+        }.collectLatest { show ->
+            if (show) {
                 alpha.snapTo(1f)
-                delay(ScrollBarVisibilityDurationMillis)
-                alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
             } else {
+                delay(ScrollBarVisibilityDurationMillis)
                 alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
             }
         }
@@ -478,20 +479,19 @@ fun VerticalGridFastScroller(
 
             val alpha = remember { Animatable(0f) }
             val isThumbVisible = alpha.value > 0f
-            LaunchedEffect(scrolled, alpha) {
-                scrolled
-                    .sample(100)
-                    .collectLatest {
-                        val info = state.layoutInfo
-                        val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
-                        if (thumbAllowed() && isLongList) {
-                            alpha.snapTo(1f)
-                            delay(ScrollBarVisibilityDurationMillis)
-                            alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
-                        } else {
-                            alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
-                        }
+            LaunchedEffect(state, isThumbDragged) {
+                snapshotFlow {
+                    val info = state.layoutInfo
+                    val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
+                    (state.isScrollInProgress || isThumbDragged) && thumbAllowed() && isLongList
+                }.collectLatest { show ->
+                    if (show) {
+                        alpha.snapTo(1f)
+                    } else {
+                        delay(ScrollBarVisibilityDurationMillis)
+                        alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
                     }
+                }
             }
 
             Box(
