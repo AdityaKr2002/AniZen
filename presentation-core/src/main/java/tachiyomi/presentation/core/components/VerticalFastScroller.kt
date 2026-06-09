@@ -256,12 +256,14 @@ private fun ListFastScrollThumb(
     val isThumbVisible = alpha.value > 0f
     LaunchedEffect(listState, isThumbDragged) {
         snapshotFlow {
-            val info = listState.layoutInfo
-            val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
-            (listState.isScrollInProgress || isThumbDragged) && thumbAllowed() && isLongList
-        }.collectLatest { show ->
-            if (show) {
-                alpha.snapTo(1f)
+            listState.isScrollInProgress || isThumbDragged
+        }.collectLatest { active ->
+            if (active) {
+                val info = listState.layoutInfo
+                val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
+                if (thumbAllowed() && isLongList) {
+                    alpha.snapTo(1f)
+                }
             } else {
                 delay(ScrollBarVisibilityDurationMillis)
                 alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
@@ -481,12 +483,14 @@ fun VerticalGridFastScroller(
             val isThumbVisible = alpha.value > 0f
             LaunchedEffect(state, isThumbDragged) {
                 snapshotFlow {
-                    val info = state.layoutInfo
-                    val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
-                    (state.isScrollInProgress || isThumbDragged) && thumbAllowed() && isLongList
-                }.collectLatest { show ->
-                    if (show) {
-                        alpha.snapTo(1f)
+                    state.isScrollInProgress || isThumbDragged
+                }.collectLatest { active ->
+                    if (active) {
+                        val info = state.layoutInfo
+                        val isLongList = info.totalItemsCount > info.visibleItemsInfo.size * 1.25f
+                        if (thumbAllowed() && isLongList) {
+                            alpha.snapTo(1f)
+                        }
                     } else {
                         delay(ScrollBarVisibilityDurationMillis)
                         alpha.animateTo(0f, animationSpec = ImmediateFadeOutAnimationSpec)
