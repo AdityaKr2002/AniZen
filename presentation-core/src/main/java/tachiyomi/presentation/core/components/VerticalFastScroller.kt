@@ -180,7 +180,9 @@ private fun ListFastScrollThumb(
             for (index in 0 until firstItem.index) {
                 pastItemsSize += itemSizeCache[index] ?: medianSize
             }
-            val currentOffset = pastItemsSize + (info.viewportStartOffset - firstItem.offset)
+            val beforePadding = info.beforeContentPadding
+            val afterPadding = info.afterContentPadding
+            val currentOffset = pastItemsSize + beforePadding + (info.viewportStartOffset - firstItem.offset)
 
             var totalSize = 0
             for (index in 0 until totalItems) {
@@ -188,7 +190,8 @@ private fun ListFastScrollThumb(
             }
 
             val viewportPx = info.viewportEndOffset - info.viewportStartOffset
-            val proportion = currentOffset.toFloat() / (totalSize - viewportPx).coerceAtLeast(1)
+            val totalScrollableSize = totalSize + beforePadding + afterPadding
+            val proportion = currentOffset.toFloat() / (totalScrollableSize - viewportPx).coerceAtLeast(1)
             
             proportion.coerceIn(0f, 1f)
         }.collectLatest { proportion ->
@@ -223,8 +226,12 @@ private fun ListFastScrollThumb(
                     totalSize += itemSizeCache[index] ?: medianSize
                 }
 
+                val beforePadding = info.beforeContentPadding
+                val afterPadding = info.afterContentPadding
                 val viewportPx = info.viewportEndOffset - info.viewportStartOffset
-                val targetOffsetPx = proportion * (totalSize - viewportPx).coerceAtLeast(1)
+                val totalScrollableSize = totalSize + beforePadding + afterPadding
+                val targetScrollOffset = proportion * (totalScrollableSize - viewportPx).coerceAtLeast(1)
+                val targetOffsetPx = targetScrollOffset - beforePadding
 
                 var accumulatedSize = 0
                 var targetIndex = 0
@@ -237,7 +244,7 @@ private fun ListFastScrollThumb(
                     accumulatedSize += size
                 }
                 
-                val targetItemOffset = (targetOffsetPx - accumulatedSize).roundToInt().coerceAtLeast(0)
+                val targetItemOffset = (targetOffsetPx - accumulatedSize).roundToInt()
 
                 listState.scrollToItem(targetIndex, targetItemOffset)
                 scrolled.tryEmit(Unit)
@@ -341,12 +348,9 @@ fun VerticalGridFastScroller(
             }
 
             val thumbBottomPadding = with(LocalDensity.current) { bottomContentPadding.toPx() }
-            val heightPx = contentHeight.toFloat() -
-                thumbTopPadding -
-                thumbBottomPadding -
-                state.layoutInfo.afterContentPadding
+            val heightPx = (contentHeight.toFloat() - thumbTopPadding - thumbBottomPadding).coerceAtLeast(0f)
             val thumbHeightPx = with(LocalDensity.current) { ThumbLength.toPx() }
-            val trackHeightPx = heightPx - thumbHeightPx
+            val trackHeightPx = (heightPx - thumbHeightPx).coerceAtLeast(0f)
 
             val columnCount = remember(columns) { slotSizesSums(constraints).size.coerceAtLeast(1) }
 
@@ -396,7 +400,9 @@ fun VerticalGridFastScroller(
                         val size = itemSizeCache[index] ?: medianSize
                         pastItemsSize += size / avgItemsPerRow
                     }
-                    val currentOffset = pastItemsSize + (info.viewportStartOffset - firstItem.offset.y)
+                    val beforePadding = info.beforeContentPadding
+                    val afterPadding = info.afterContentPadding
+                    val currentOffset = pastItemsSize + beforePadding + (info.viewportStartOffset - firstItem.offset.y)
 
                     var totalSize = 0
                     for (index in 0 until totalItems) {
@@ -405,7 +411,8 @@ fun VerticalGridFastScroller(
                     }
 
                     val viewportPx = info.viewportEndOffset - info.viewportStartOffset
-                    val proportion = currentOffset.toFloat() / (totalSize - viewportPx).coerceAtLeast(1)
+                    val totalScrollableSize = totalSize + beforePadding + afterPadding
+                    val proportion = currentOffset.toFloat() / (totalScrollableSize - viewportPx).coerceAtLeast(1)
 
                     proportion.coerceIn(0f, 1f)
                 }.collectLatest { proportion ->
@@ -443,8 +450,12 @@ fun VerticalGridFastScroller(
                             totalSize += size / avgItemsPerRow
                         }
 
+                        val beforePadding = info.beforeContentPadding
+                        val afterPadding = info.afterContentPadding
                         val viewportPx = info.viewportEndOffset - info.viewportStartOffset
-                        val targetOffsetPx = proportion * (totalSize - viewportPx).coerceAtLeast(1)
+                        val totalScrollableSize = totalSize + beforePadding + afterPadding
+                        val targetScrollOffset = proportion * (totalScrollableSize - viewportPx).coerceAtLeast(1)
+                        val targetOffsetPx = targetScrollOffset - beforePadding
 
                         var accumulatedSize = 0
                         var targetIndex = 0
@@ -458,7 +469,7 @@ fun VerticalGridFastScroller(
                             accumulatedSize += effectiveSize
                         }
                         
-                        val targetItemOffset = (targetOffsetPx - accumulatedSize).roundToInt().coerceAtLeast(0)
+                        val targetItemOffset = (targetOffsetPx - accumulatedSize).roundToInt()
 
                         state.scrollToItem(targetIndex, targetItemOffset)
                         scrolled.tryEmit(Unit)

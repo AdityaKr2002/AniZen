@@ -40,9 +40,9 @@ fun FastScrollLazyVerticalGrid(
         modifier = modifier,
         thumbAllowed = thumbAllowed,
         thumbColor = thumbColor,
-        topContentPadding = topContentPadding,
-        bottomContentPadding = bottomContentPadding,
-        endContentPadding = endContentPadding,
+        topContentPadding = if (topContentPadding == Dp.Hairline) contentPadding.calculateTopPadding() else topContentPadding,
+        bottomContentPadding = if (bottomContentPadding == Dp.Hairline) contentPadding.calculateBottomPadding() else bottomContentPadding,
+        endContentPadding = if (endContentPadding == Dp.Hairline) contentPadding.calculateEndPadding(LocalLayoutDirection.current) else endContentPadding,
     ) {
         LazyVerticalGrid(
             columns = columns,
