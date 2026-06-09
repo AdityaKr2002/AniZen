@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.anime.DownloadAction
@@ -82,10 +83,10 @@ fun AnimeToolbar(
 
     Column(
         modifier = modifier
-            .background(
-                MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                    .copy(alpha = backgroundAlphaProvider()),
-            )
+            // graphicsLayer defers alpha to the GPU draw layer, avoiding Column recomposition
+            // on every animation frame of the transparent-to-solid toolbar transition.
+            .graphicsLayer { alpha = backgroundAlphaProvider() }
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
             .padding(top = stableTopPadding),
     ) {
         val isActionMode = actionModeCounter > 0

@@ -547,6 +547,10 @@ private fun AnimeScreenSmallImpl(
                             topContentPadding = topPadding,
                             bottomContentPadding = contentPadding.calculateBottomPadding(),
                             endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
+                            // Show the fast scroll thumb only when there are enough episodes to
+                            // warrant it — fewer episodes fit comfortably without needing to jump.
+                            // Threshold chosen for AniZen: not present in Komikku/Mihon upstream.
+                            thumbAllowed = { currentSeasonCount >= 10 },
                         ) {
                             LazyColumn(
                                 modifier = Modifier.fillMaxHeight(),
