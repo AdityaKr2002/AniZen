@@ -58,6 +58,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -432,7 +433,22 @@ private fun AnimeScreenSmallImpl(
             .map { it[state.anime.id] }
             .distinctUntilChanged()
     }.collectAsState(initial = CoverColorObserver.get(state.anime.id))
-    val vibrantColor = vibrantColorState ?: state.anime.asAnimeCover().vibrantCoverColor
+    // Defer applying a new color seed to DynamicTachiyomiTheme while the list is actively
+    // scrolling. When vibrantColorState first emits (palette extraction completing on first open),
+    // it triggers a full recomposition of everything under DynamicTachiyomiTheme. Coinciding with
+    // an active scroll fling causes the first-scroll freeze unique to AniZen (upstream has no
+    // dynamic theme wrapper). The color is applied immediately when the user is not scrolling.
+    var deferredVibrantColor by remember(state.anime.id) {
+        mutableStateOf(vibrantColorState)
+    }
+    LaunchedEffect(vibrantColorState) {
+        if (vibrantColorState == deferredVibrantColor) return@LaunchedEffect
+        snapshotFlow { episodeListState.isScrollInProgress }
+            .filter { !it }
+            .first()
+        deferredVibrantColor = vibrantColorState
+    }
+    val vibrantColor = deferredVibrantColor ?: state.anime.asAnimeCover().vibrantCoverColor
 
     DynamicTachiyomiTheme(colorSeed = vibrantColor) {
         Box(
@@ -547,10 +563,9 @@ private fun AnimeScreenSmallImpl(
                             topContentPadding = topPadding,
                             bottomContentPadding = contentPadding.calculateBottomPadding(),
                             endContentPadding = contentPadding.calculateEndPadding(layoutDirection),
-                            // Show the fast scroll thumb only when there are enough episodes to
-                            // warrant it — fewer episodes fit comfortably without needing to jump.
-                            // Threshold chosen for AniZen: not present in Komikku/Mihon upstream.
-                            thumbAllowed = { currentSeasonCount >= 10 },
+                            // Show the fast scroll thumb only when the user has scrolled past
+                            // the anime info header — contextually meaningful regardless of count.
+                            thumbAllowed = { !isFirstItemVisible },
                         ) {
                             LazyColumn(
                                 modifier = Modifier.fillMaxHeight(),
