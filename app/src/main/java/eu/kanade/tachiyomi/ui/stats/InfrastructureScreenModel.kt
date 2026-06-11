@@ -58,7 +58,6 @@ class InfrastructureScreenModel(
         val sb = StringBuilder()
         sb.append("--- ANIZEN INFRASTRUCTURE REPORT ---\n")
         sb.append("Timestamp: ${java.time.Instant.now()}\n")
-        sb.append("BDIX Saturation: ${report.globalMetrics.bdixSaturation}%\n")
         sb.append("Avg Latency: ${report.globalMetrics.avgLatency}ms\n")
         sb.append("Active Nodes: ${report.globalMetrics.activeNodeCount}/${report.nodes.size}\n\n")
 
@@ -126,7 +125,7 @@ class InfrastructureScreenModel(
             }
 
             val metrics = GlobalNetworkMetrics(
-                bdixSaturation = if (nodes.isNotEmpty()) (nodes.count { it.network.topology == "BDIX" }.toDouble() / nodes.size * 100).toInt() else 0,
+                bdixSaturation = 0,
                 totalDataConsumed = 0,
                 avgLatency = if (nodes.isNotEmpty()) nodes.filter { it.status == NodeStatus.OPERATIONAL }.map { it.network.latency }.average().toInt() else 0,
                 activeNodeCount = nodes.count { it.status == NodeStatus.OPERATIONAL }
@@ -140,19 +139,12 @@ class InfrastructureScreenModel(
     }
 
     private fun createPlaceholderNode(source: HttpSource): SourceNode {
-        val name = source.name.lowercase()
-        val isBdix = name.contains("dflix") || name.contains("dhaka") || name.contains("bdix") || 
-                     name.contains("ftp") || name.contains("sam") || name.contains("bijoy") ||
-                     name.contains("icc") || name.contains("fanush") || name.contains("nagordola") ||
-                     name.contains("amader") || name.contains("cineplex") || name.contains("roarzone") ||
-                     name.contains("infomedia") || name.contains("fm ftp") || name.contains("bas play")
-
         return SourceNode(
             name = source.name,
             pkgName = source::class.java.name.substringBeforeLast("."),
             version = "Scanning...",
             status = NodeStatus.OPERATIONAL,
-            network = NetworkDiagnostics(0, if (isBdix) "BDIX" else "Global", "...", "...", false),
+            network = NetworkDiagnostics(0, "Global CDN", "...", "...", false),
             capabilities = SourceCapabilities(detectIsApi(source), false, source.supportsLatest, true),
             uptimeScore = 1.0
         )
@@ -261,13 +253,6 @@ class InfrastructureScreenModel(
             ip = "Network Err"
         }
 
-        val name = source.name.lowercase()
-        val isBdix = name.contains("dflix") || name.contains("dhaka") || name.contains("bdix") || 
-                     name.contains("ftp") || name.contains("sam") || name.contains("bijoy") ||
-                     name.contains("icc") || name.contains("fanush") || name.contains("nagordola") ||
-                     name.contains("amader") || name.contains("cineplex") || name.contains("roarzone") ||
-                     name.contains("infomedia") || name.contains("fm ftp") || name.contains("bas play")
-
         return SourceNode(
             name = source.name,
             pkgName = source::class.java.name.substringBeforeLast("."),
@@ -275,7 +260,7 @@ class InfrastructureScreenModel(
             status = if (status == NodeStatus.OPERATIONAL && latency > 2500) NodeStatus.DEGRADED else status,
             network = NetworkDiagnostics(
                 latency = latency,
-                topology = if (isBdix) "BDIX" else "Global CDN",
+                topology = "Global CDN",
                 ipAddress = ip,
                 tlsVersion = tls,
                 dnsResolved = resolved

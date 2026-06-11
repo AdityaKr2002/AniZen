@@ -66,9 +66,6 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
                 modifier = Modifier.weight(1f, fill = false)
             )
 
-            if (item.isBdix) {
-                StatusBadge("BDIX", Color(0xFF1E88E5))
-            }
             
             if (item.isApi) {
                 StatusBadge("API", Color(0xFF43A047))

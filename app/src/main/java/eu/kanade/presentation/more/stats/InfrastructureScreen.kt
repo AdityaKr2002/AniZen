@@ -50,7 +50,7 @@ fun InfrastructureScreen(
     }
 
     val report = (state as InfrastructureState.Success).report
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
 
@@ -60,7 +60,7 @@ fun InfrastructureScreen(
             containerColor = Color.Transparent,
             divider = {}
         ) {
-            listOf("BDIX NODES", "GLOBAL CDN", "SYSTEM LOGS").forEachIndexed { index, title ->
+            listOf("GLOBAL CDN", "SYSTEM LOGS").forEachIndexed { index, title ->
                 Tab(
                     selected = pagerState.currentPage == index,
                     onClick = { scope.launch { pagerState.animateScrollToPage(index) } }
@@ -89,28 +89,15 @@ fun InfrastructureScreen(
                     when (pageIndex) {
                         0 -> {
                             item { GlobalTelemetryHeader(report.globalMetrics) }
-                            val bdixNodes = report.nodes.filter { it.network.topology == "BDIX" }
-                            if (bdixNodes.isEmpty()) {
-                                item { EmptyState("No BDIX Nodes detected in your active extensions.") }
-                            }
-                            items(
-                                items = bdixNodes.distinctBy { it.name },
-                                key = { "node-${it.name}" } // Stable keys prevent jumping
-                            ) { node ->
-                                SourceNodeAuditCard(node)
-                            }
-                        }
-                        1 -> {
                             item { InfrastructureHealthBoard(report.nodes) }
-                            val globalNodes = report.nodes.filter { it.network.topology != "BDIX" }
                             items(
-                                items = globalNodes.distinctBy { it.name },
+                                items = report.nodes.distinctBy { it.name },
                                 key = { "node-${it.name}" }
                             ) { node ->
                                 SourceNodeAuditCard(node)
                             }
                         }
-                        2 -> {
+                        1 -> {
                             if (report.systemLogs.isEmpty()) {
                                 item { EmptyState("System is nominal. No alerts generated.") }
                             }
@@ -150,8 +137,7 @@ private fun GlobalTelemetryHeader(metrics: GlobalNetworkMetrics) {
                 Text("NETWORK COMMAND CENTER", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MetricSquare("LOCAL SATURATION", "${metrics.bdixSaturation}%", Color(0xFF1E88E5))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 MetricSquare("NODES ACTIVE", "${metrics.activeNodeCount}", Color(0xFF4CAF50))
                 MetricSquare("SYS LATENCY", "${metrics.avgLatency}ms", Color(0xFFFFC107))
             }
@@ -260,7 +246,7 @@ private fun SourceNodeAuditCard(node: SourceNode) {
                         Text(
                             text = node.network.topology,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (node.network.topology == "BDIX") Color(0xFF1E88E5) else MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                         if (node.capabilities.isApi) {
