@@ -511,13 +511,12 @@ class PlayerViewModel @JvmOverloads constructor(
     fun onFinishLoadingTracks() {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
         (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            activity.player.sid = it.id
-            activity.player.secondarySid = -1
+            selectSub(it.id)
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
         (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
-            activity.player.aid = it.id
+            selectAudio(it.id)
         }
 
         isLoadingTracks.update { _ -> true }

@@ -117,6 +117,17 @@ fun getTrackTitle(track: VideoTrack): String {
             track.name
         }
 
+        track.id < -1 -> {
+            val name = track.name
+            val lang = track.language
+            when {
+                lang.isNullOrBlank() -> name
+                name.isBlank() -> lang
+                name == lang -> name
+                else -> "$name ($lang)"
+            }
+        }
+
         track.language.isNullOrBlank() && track.name.isNotBlank() -> {
             stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
         }
