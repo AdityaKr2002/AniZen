@@ -71,6 +71,7 @@ import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.getChangedAt
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
+import eu.kanade.tachiyomi.ui.player.resolveUri
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
@@ -442,6 +443,14 @@ class PlayerViewModel @JvmOverloads constructor(
         MPVLib.getPropertyString("track-list/$it/type")
     }
 
+    private val loadedExternalTracks = mutableSetOf<String>()
+
+    fun clearTracks() {
+        _subtitleTracks.update { emptyList() }
+        _audioTracks.update { emptyList() }
+        loadedExternalTracks.clear()
+    }
+
     private var trackLoadingJob: Job? = null
     fun loadTracks() {
         trackLoadingJob?.cancel()
@@ -466,6 +475,26 @@ class PlayerViewModel @JvmOverloads constructor(
                 logcat(LogPriority.ERROR) { "Couldn't load tracks, probably cause mpv was destroyed" }
                 return@launch
             }
+
+            val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+            currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
+                if (!loadedExternalTracks.contains(sub.url)) {
+                    val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                        sub.lang.removePrefix(videoFilename).trimStart('.')
+                    } else {
+                        sub.lang
+                    }
+                    val finalLang = cleanLang.ifEmpty { sub.lang }
+                    subTracks.add(VideoTrack(-100 - index, finalLang, finalLang, sub.url))
+                }
+            }
+
+            currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
+                if (!loadedExternalTracks.contains(audio.url)) {
+                    audioTracks.add(VideoTrack(-200 - index, audio.lang, audio.lang, audio.url))
+                }
+            }
+
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
 
@@ -501,6 +530,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val id: Int,
         val name: String,
         val language: String?,
+        val url: String? = null,
     )
 
     fun loadChapters() {
@@ -548,6 +578,17 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectAudio(id: Int) {
+        if (id <= -200) {
+            val index = -200 - id
+            val audio = currentVideo.value?.audioTracks?.getOrNull(index) ?: return
+            loadedExternalTracks.add(audio.url)
+            
+            viewModelScope.launch {
+                val resolvedUrl = Uri.parse(audio.url).resolveUri(activity) ?: audio.url
+                MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", audio.lang))
+            }
+            return
+        }
         activity.player.aid = id
     }
 
@@ -569,6 +610,28 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectSub(id: Int) {
+        if (id <= -100) {
+            val index = -100 - id
+            val sub = currentVideo.value?.subtitleTracks?.getOrNull(index) ?: return
+            loadedExternalTracks.add(sub.url)
+            
+            viewModelScope.launch {
+                val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+                val resolvedUrl = Uri.parse(sub.url).resolveUri(activity) ?: sub.url
+                val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                    sub.lang.removePrefix(videoFilename).trimStart('.')
+                } else {
+                    sub.lang
+                }
+                
+                if (cleanLang.isNotEmpty()) {
+                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang, cleanLang))
+                } else {
+                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang))
+                }
+            }
+            return
+        }
         val selectedSubs = selectedSubtitles.value
         _selectedSubtitles.update {
             when (id) {

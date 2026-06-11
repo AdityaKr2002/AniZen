@@ -1202,6 +1202,7 @@ class PlayerActivity : BaseActivity() {
         viewModel.sheetShown.update { _ -> Sheets.None }
         viewModel.panelShown.update { _ -> Panels.None }
         viewModel.pause()
+        viewModel.clearTracks()
         viewModel.isLoading.update { _ -> true }
         viewModel.setIsStopped(false)
         viewModel.resetHosterState()
@@ -1473,38 +1474,8 @@ class PlayerActivity : BaseActivity() {
 
     private fun setupTracks() {
         if (player.isExiting) return
-        viewModel.isLoadingTracks.update { _ -> true }
-
-        val audioTracks = viewModel.currentVideo.value?.audioTracks?.takeIf { it.isNotEmpty() }
-        val subtitleTracks = viewModel.currentVideo.value?.subtitleTracks?.takeIf { it.isNotEmpty() }
-
-        // If no external audio or subtitle tracks are present, loadTracks() won't be
-        // called and we need to call onFinishLoadingTracks() manually
-        if (audioTracks == null && subtitleTracks == null) {
-            viewModel.onFinishLoadingTracks()
-            return
-        }
-
-        audioTracks?.forEach { audio ->
-            val resolvedUrl = Uri.parse(audio.url).resolveUri(this) ?: audio.url
-            executeMPVCommand(arrayOf("audio-add", resolvedUrl, "auto", audio.lang))
-        }
-        val videoFilename = DiskUtil.buildValidFilename(viewModel.currentEpisode.value?.name ?: "")
-        subtitleTracks?.forEach { sub ->
-            val resolvedUrl = Uri.parse(sub.url).resolveUri(this) ?: sub.url
-            val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
-                sub.lang.removePrefix(videoFilename).trimStart('.')
-            } else {
-                sub.lang
-            }
-            if (cleanLang.isNotEmpty()) {
-                executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang, cleanLang))
-            } else {
-                executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang))
-            }
-        }
-
         viewModel.isLoadingTracks.update { _ -> false }
+        viewModel.loadTracks()
     }
 
     private fun setupChapters() {
