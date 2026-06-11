@@ -21,7 +21,7 @@ class SourceUiModelMapper(
     ): SourceUiModel.Item {
         val extensionName = extensionManager.getExtensionNameForSource(source.id)
         val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
-        
+        val nameLower = source.name.lowercase()
         val isBdix = false
         
         val sourceClass = source.javaClass.simpleName
