@@ -1611,7 +1611,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
             val preloadedVideo = pendingPreloadedVideo
             pendingPreloadedVideo = null
-            val defaultSelector = if (hosterIndex == -1 && isEpisodeOnline() == true) {
+            val defaultSelector = if (hosterIndex == -1) {
                 DefaultStreamPreferenceStore(playerPreferences).getEffectiveSelector(currentAnime.value?.id)
             } else {
                 ""
@@ -1667,13 +1667,6 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
 
                     if (hasFoundPreferredVideo.compareAndSet(false, true)) {
-                        if (defaultSelector.isNotBlank()) {
-                            logcat { "Saved default not found or failed to load; skipping Torrentio auto-pick" }
-                            updateIsLoadingEpisode(false)
-                            isLoading.value = false
-                            return@coroutineScope
-                        }
-
                         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
                         if (hosterIdx == -1) {
                             updateIsLoadingEpisode(false)
