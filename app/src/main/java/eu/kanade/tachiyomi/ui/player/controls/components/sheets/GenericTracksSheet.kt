@@ -123,7 +123,7 @@ fun getTrackTitle(track: VideoTrack): String {
             when {
                 lang.isNullOrBlank() -> name
                 name.isBlank() -> lang
-                name == lang -> name
+                name.contains(lang, ignoreCase = true) || lang.contains(name, ignoreCase = true) -> name
                 else -> "$name ($lang)"
             }
         }
@@ -133,7 +133,12 @@ fun getTrackTitle(track: VideoTrack): String {
         }
 
         !track.language.isNullOrBlank() && track.name.isNotBlank() -> {
-            stringResource(MR.strings.player_sheets_track_title_w_lang, track.id, track.name, track.language)
+            if (track.name.contains(track.language, ignoreCase = true) || 
+                track.language.contains(track.name, ignoreCase = true)) {
+                stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
+            } else {
+                stringResource(MR.strings.player_sheets_track_title_w_lang, track.id, track.name, track.language)
+            }
         }
 
         !track.language.isNullOrBlank() && track.name.isBlank() -> {
