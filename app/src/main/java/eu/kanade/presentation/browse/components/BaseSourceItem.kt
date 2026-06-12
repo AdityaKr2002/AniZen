@@ -98,7 +98,13 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
             )
 
             if (item.isNsfw) {
-                StatusBadge("18+", MaterialTheme.colorScheme.error)
+                Text(
+                    text = "18+",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Black,
+                )
             }
         }
     }
