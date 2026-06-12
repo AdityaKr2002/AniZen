@@ -17,7 +17,7 @@ class SourceUiModelMapper(
         source: Source,
         headerKey: String = "",
         isNsfw: Boolean = source.isNsfw,
-        status: NodeStatus = NodeStatus.OPERATIONAL,
+        status: NodeStatus? = null,
     ): SourceUiModel.Item {
         val extensionName = extensionManager.getExtensionNameForSource(source.id)
         val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)

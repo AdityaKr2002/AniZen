@@ -82,8 +82,21 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-
-
+            if (item.status != null) {
+                // Health Pulse
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (item.status) {
+                                NodeStatus.OPERATIONAL -> Color(0xFF4CAF50)
+                                NodeStatus.DEGRADED -> Color(0xFFFFC107)
+                                else -> Color(0xFFF44336)
+                            }
+                        )
+                )
+            }
 
             if (item.isNsfw) {
                 Text(

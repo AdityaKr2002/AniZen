@@ -41,6 +41,7 @@ import tachiyomi.domain.source.model.FeedSavedSearch
 import tachiyomi.domain.source.model.FeedSavedSearchCategory
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.domain.source.model.Source
+import tachiyomi.domain.source.service.SourceHealthCache
 import eu.kanade.domain.source.service.SourcePreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -69,10 +70,11 @@ class SourcesScreenModel(
                 state.map { it.nsfwOnly }.distinctUntilChanged(),
                 getEnabledSources.subscribe(),
                 extensionManager.installedExtensionsFlow,
-            ) { query, nsfwOnly, sources, extensions ->
+                SourceHealthCache.healthMap,
+            ) { query, nsfwOnly, sources, extensions, healthMap ->
                 // Offload CPU-bound sorting and formatting to Default dispatcher
                 withContext(Dispatchers.Default) {
-                    collectLatestAnimeSources(sources, extensions, query, nsfwOnly)
+                    collectLatestAnimeSources(sources, extensions, healthMap, query, nsfwOnly)
                 }
             }.catch {
                 logcat(LogPriority.ERROR, it)
@@ -96,6 +98,7 @@ class SourcesScreenModel(
     private suspend fun collectLatestAnimeSources(
         sources: List<Source>,
         extensions: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>,
+        healthMap: Map<Long, NodeStatus>,
         query: String?,
         nsfwOnly: Boolean,
     ) {
@@ -145,7 +148,7 @@ class SourcesScreenModel(
                                 source = source,
                                 headerKey = lang,
                                 isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
-                                status = NodeStatus.OPERATIONAL,
+                                status = healthMap[source.id],
                             )
                         )
                     }
