@@ -1611,7 +1611,7 @@ class PlayerViewModel @JvmOverloads constructor(
 
             val preloadedVideo = pendingPreloadedVideo
             pendingPreloadedVideo = null
-            val defaultSelector = if (hosterIndex == -1) {
+            val defaultSelector = if (hosterIndex == -1 && isEpisodeOnline() == true) {
                 DefaultStreamPreferenceStore(playerPreferences).getEffectiveSelector(currentAnime.value?.id)
             } else {
                 ""
