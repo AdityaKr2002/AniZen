@@ -11,7 +11,7 @@ sealed interface SourceUiModel {
         val source: tachiyomi.domain.source.model.Source,
         val headerKey: String,
         val isNsfw: Boolean,
-        val status: NodeStatus,
+        val status: NodeStatus?,
         val isBdix: Boolean,
         val isApi: Boolean,
         val isStub: Boolean,

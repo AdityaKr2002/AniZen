@@ -66,9 +66,6 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
                 modifier = Modifier.weight(1f, fill = false)
             )
 
-            if (item.isBdix) {
-                StatusBadge("BDIX", Color(0xFF1E88E5))
-            }
             
             if (item.isApi) {
                 StatusBadge("API", Color(0xFF43A047))
@@ -85,23 +82,30 @@ private val defaultContent: @Composable RowScope.(SourceUiModel.Item) -> Unit = 
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-
-            // Health Pulse
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when (item.status) {
-                            NodeStatus.OPERATIONAL -> Color(0xFF4CAF50)
-                            NodeStatus.DEGRADED -> Color(0xFFFFC107)
-                            else -> Color(0xFFF44336)
-                        }
-                    )
-            )
+            if (item.status != null) {
+                // Health Pulse
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when (item.status) {
+                                NodeStatus.OPERATIONAL -> Color(0xFF4CAF50)
+                                NodeStatus.DEGRADED -> Color(0xFFFFC107)
+                                else -> Color(0xFFF44336)
+                            }
+                        )
+                )
+            }
 
             if (item.isNsfw) {
-                StatusBadge("18+", MaterialTheme.colorScheme.error)
+                Text(
+                    text = "18+",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Black,
+                )
             }
         }
     }

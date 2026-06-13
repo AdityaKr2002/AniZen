@@ -143,7 +143,7 @@ class AiAssistantScreen : Screen() {
                 ) {
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "ANALYTIC SESSIONS",
+                        "CHATS",
                         modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
@@ -153,7 +153,7 @@ class AiAssistantScreen : Screen() {
                     
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Add, null) },
-                        label = { Text("Start New Session") },
+                        label = { Text("New Chat") },
                         selected = false,
                         onClick = {
                             screenModel.createNewSession()
@@ -206,11 +206,11 @@ class AiAssistantScreen : Screen() {
             Scaffold(
                 topBar = {
                     AppBar(
-                        title = "AniZen Intelligence OS",
+                        title = "Diagnostic Assistant",
                         navigateUp = { navigator.pop() },
                         actions = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, "Session History")
+                                Icon(Icons.Default.Menu, "Chat History")
                             }
                         }
                     )
@@ -236,7 +236,7 @@ class AiAssistantScreen : Screen() {
                             if (state.messages.isEmpty()) {
                                 item {
                                     AssistantMessage(
-                                        content = "Analytical core online. Session synchronized. I have deep context of your anime library and system logs. How can I assist with your collection or system today?",
+                                        content = "Diagnostic Assistant online. How can I help you troubleshoot issues or analyze your library today?",
                                         onCopy = {
                                             context.copyToClipboard("AniZen AI", it)
                                             scope.launch { snackbarHostState.showSnackbar("Copied to clipboard") }
@@ -251,7 +251,7 @@ class AiAssistantScreen : Screen() {
                                         .collectAsState(aiPreferences.displayName().get())
                                     Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
                                         Text(
-                                            text = displayName.ifBlank { "USER" }.uppercase() + " // UPLINK",
+                                            text = displayName.ifBlank { "User" }.uppercase(),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontFamily = FontFamily.Monospace,
@@ -335,7 +335,7 @@ class AiAssistantScreen : Screen() {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "STATUS: ENCRYPTED // LIBRARY: SYNCED",
+                    text = "Status: Ready | Library: Synchronized",
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
                     letterSpacing = 1.sp,
@@ -373,7 +373,7 @@ class AiAssistantScreen : Screen() {
                 TextField(
                     value = value,
                     onValueChange = onValueChange,
-                    placeholder = { Text("Query intelligence core...", style = MaterialTheme.typography.bodyMedium) },
+                    placeholder = { Text("Type a message or ask a question...", style = MaterialTheme.typography.bodyMedium) },
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(28.dp))

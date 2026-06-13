@@ -226,13 +226,15 @@ class EpisodeOptionsDialogScreenModel(
             _hosterState.update { _ -> Result.success(initialHosterState) }
 
             try {
+                val defaultSelector = eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore(playerPreferences).getEffectiveSelector(animeId)
+
                 hosterList.mapIndexed { hosterIdx, hoster ->
                     async {
                         val hosterState = EpisodeLoader.loadHosterVideos(source, hoster)
 
                         _hosterState.updateAt(hosterIdx, hosterState)
 
-                        if (hosterState is HosterState.Ready) {
+                        if (defaultSelector.isBlank() && hosterState is HosterState.Ready) {
                             val prefIndex = hosterState.videoList.indexOfFirst { it.preferred }
                             if (prefIndex != -1) {
                                 if (hasFoundPreferredVideo.compareAndSet(false, true)) {
@@ -246,6 +248,23 @@ class EpisodeOptionsDialogScreenModel(
                         }
                     }
                 }.awaitAll()
+
+                if (!hasFoundPreferredVideo.get() && defaultSelector.isNotBlank()) {
+                    val states = hosterState.value?.getOrNull().orEmpty()
+                    val strictRanked = eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector.findRankedInHosters(defaultSelector, states)
+                    val ranked = strictRanked + eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector.findRankedInHostersRelaxed(defaultSelector, states)
+                        .filter { it !in strictRanked }
+
+                    for ((hIdx, vIdx) in ranked.distinct()) {
+                        val ready = states.getOrNull(hIdx) as? HosterState.Ready ?: continue
+                        val video = ready.videoList.getOrNull(vIdx) ?: continue
+                        if (hasFoundPreferredVideo.compareAndSet(false, true)) {
+                            val success = loadVideo(source, video, hIdx, vIdx)
+                            if (success) break
+                            hasFoundPreferredVideo.set(false)
+                        }
+                    }
+                }
 
                 if (hasFoundPreferredVideo.compareAndSet(false, true)) {
                     val hosterStateList = hosterState.value!!.getOrThrow()

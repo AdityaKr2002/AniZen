@@ -116,7 +116,7 @@ object InfrastructureScreen : Screen {
         Scaffold(
             topBar = { scrollBehavior ->
                 AppBar(
-                    title = "Infrastructure Command Center",
+                    title = "Extension Health",
                     navigateUp = navigator::pop,
                     scrollBehavior = scrollBehavior,
                 )

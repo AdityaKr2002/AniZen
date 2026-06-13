@@ -31,6 +31,8 @@ abstract class SourcePagingSource(
     protected open val source: CatalogueSource,
 ) : SourcePagingSourceType() {
 
+    private val seenAnime = hashSetOf<String>()
+
     abstract suspend fun requestNextPage(currentPage: Int): AnimesPage
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, SAnime> {
@@ -46,8 +48,10 @@ abstract class SourcePagingSource(
             return LoadResult.Error(e)
         }
 
+        val distinctAnimes = animesPage.animes.filter { seenAnime.add(it.url) }
+
         return LoadResult.Page(
-            data = animesPage.animes,
+            data = distinctAnimes,
             prevKey = null,
             nextKey = if (animesPage.hasNextPage) page + 1 else null,
         )

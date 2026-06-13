@@ -71,6 +71,7 @@ import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.getChangedAt
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
+import eu.kanade.tachiyomi.ui.player.resolveUri
 import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
@@ -442,6 +443,14 @@ class PlayerViewModel @JvmOverloads constructor(
         MPVLib.getPropertyString("track-list/$it/type")
     }
 
+    private val loadedExternalTracks = mutableSetOf<String>()
+
+    fun clearTracks() {
+        _subtitleTracks.update { emptyList() }
+        _audioTracks.update { emptyList() }
+        loadedExternalTracks.clear()
+    }
+
     private var trackLoadingJob: Job? = null
     fun loadTracks() {
         trackLoadingJob?.cancel()
@@ -466,6 +475,28 @@ class PlayerViewModel @JvmOverloads constructor(
                 logcat(LogPriority.ERROR) { "Couldn't load tracks, probably cause mpv was destroyed" }
                 return@launch
             }
+
+            val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+            currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
+                if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                    return@forEachIndexed
+                }
+                if (!loadedExternalTracks.contains(sub.url)) {
+                    val cleanLang = sub.lang
+                    val finalLang = cleanLang.ifEmpty { sub.lang }
+                    subTracks.add(VideoTrack(-100 - index, finalLang, finalLang, sub.url))
+                }
+            }
+
+            currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
+                if (audio.url.startsWith("content://") || audio.url.startsWith("file://")) {
+                    return@forEachIndexed
+                }
+                if (!loadedExternalTracks.contains(audio.url)) {
+                    audioTracks.add(VideoTrack(-200 - index, audio.lang, audio.lang, audio.url))
+                }
+            }
+
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
 
@@ -482,13 +513,12 @@ class PlayerViewModel @JvmOverloads constructor(
     fun onFinishLoadingTracks() {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
         (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            activity.player.sid = it.id
-            activity.player.secondarySid = -1
+            selectSub(it.id)
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
         (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
-            activity.player.aid = it.id
+            selectAudio(it.id)
         }
 
         isLoadingTracks.update { _ -> true }
@@ -501,6 +531,7 @@ class PlayerViewModel @JvmOverloads constructor(
         val id: Int,
         val name: String,
         val language: String?,
+        val url: String? = null,
     )
 
     fun loadChapters() {
@@ -548,6 +579,21 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectAudio(id: Int) {
+        if (id <= -200) {
+            val index = -200 - id
+            val audio = currentVideo.value?.audioTracks?.getOrNull(index) ?: return
+            loadedExternalTracks.add(audio.url)
+            
+            viewModelScope.launch {
+                try {
+                    val resolvedUrl = Uri.parse(audio.url).resolveUri(activity) ?: audio.url
+                    MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", audio.lang))
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Failed to select external audio track: ${e.message}" }
+                }
+            }
+            return
+        }
         activity.player.aid = id
     }
 
@@ -569,6 +615,32 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectSub(id: Int) {
+        if (id <= -100) {
+            val index = -100 - id
+            val sub = currentVideo.value?.subtitleTracks?.getOrNull(index) ?: return
+            loadedExternalTracks.add(sub.url)
+            
+            viewModelScope.launch {
+                try {
+                    val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+                    val resolvedUrl = Uri.parse(sub.url).resolveUri(activity) ?: sub.url
+                    val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                        sub.lang.removePrefix(videoFilename).trimStart('.')
+                    } else {
+                        sub.lang
+                    }
+                    
+                    if (cleanLang.isNotEmpty()) {
+                        MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang, cleanLang))
+                    } else {
+                        MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang))
+                    }
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Failed to select external subtitle track: ${e.message}" }
+                }
+            }
+            return
+        }
         val selectedSubs = selectedSubtitles.value
         _selectedSubtitles.update {
             when (id) {
@@ -1595,13 +1667,6 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
 
                     if (hasFoundPreferredVideo.compareAndSet(false, true)) {
-                        if (defaultSelector.isNotBlank()) {
-                            logcat { "Saved default not found or failed to load; skipping Torrentio auto-pick" }
-                            updateIsLoadingEpisode(false)
-                            isLoading.value = false
-                            return@coroutineScope
-                        }
-
                         val (hosterIdx, videoIdx) = HosterLoader.selectBestVideo(hosterState.value)
                         if (hosterIdx == -1) {
                             updateIsLoadingEpisode(false)

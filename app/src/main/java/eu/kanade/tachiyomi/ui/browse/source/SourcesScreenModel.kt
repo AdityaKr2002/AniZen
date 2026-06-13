@@ -148,7 +148,7 @@ class SourcesScreenModel(
                                 source = source,
                                 headerKey = lang,
                                 isNsfw = nsfwSourceIds.contains(source.id) || source.isNsfw,
-                                status = healthMap[source.id] ?: NodeStatus.OPERATIONAL,
+                                status = healthMap[source.id],
                             )
                         )
                     }

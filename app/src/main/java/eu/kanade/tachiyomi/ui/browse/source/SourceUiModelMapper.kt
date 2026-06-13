@@ -17,25 +17,12 @@ class SourceUiModelMapper(
         source: Source,
         headerKey: String = "",
         isNsfw: Boolean = source.isNsfw,
-        status: NodeStatus = NodeStatus.OPERATIONAL,
+        status: NodeStatus? = null,
     ): SourceUiModel.Item {
         val extensionName = extensionManager.getExtensionNameForSource(source.id)
         val sourceLangString = LocaleHelper.getSourceDisplayName(source.lang, context)
-        
         val nameLower = source.name.lowercase()
-        val isBdix = nameLower.contains("dflix") || 
-                     nameLower.contains("dhaka") || 
-                     nameLower.contains("bdix") || 
-                     nameLower.contains("ftp") ||
-                     nameLower.contains("cineplex") ||
-                     nameLower.contains("sam") ||
-                     nameLower.contains("bijoy") ||
-                     nameLower.contains("bas play") ||
-                     nameLower.contains("fanush") ||
-                     nameLower.contains("icc") ||
-                     nameLower.contains("nagordola") ||
-                     nameLower.contains("roarzone") ||
-                     nameLower.contains("infomedia")
+        val isBdix = false
         
         val sourceClass = source.javaClass.simpleName
         val isApi = nameLower.contains("api") || 

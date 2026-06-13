@@ -551,7 +551,14 @@ class Downloader(
             val video = retry {
                 download.video ?: run {
                     val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
-                    HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
+                    val defaultSelector = eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore(
+                        Injekt.get<eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences>()
+                    ).getEffectiveSelector(download.anime.id)
+                    if (defaultSelector.isNotBlank()) {
+                        HosterLoader.resolveDefaultStream(download.source as AnimeSource, hosters, defaultSelector)
+                    } else {
+                        null
+                    } ?: HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
                 } ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
             }.also { download.video = it }
             

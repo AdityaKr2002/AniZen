@@ -110,7 +110,7 @@ data object HistoryTab : Tab {
             snackbarHostState = snackbarHostState,
             onSearchQueryChange = screenModel::search,
             onClickCover = { navigator.push(AnimeScreen(it)) },
-            onClickResume = { animeId, episodeId -> scope.launch { openEpisode(context, animeId, episodeId) } },
+            onClickResume = { animeId, episodeId -> screenModel.getNextEpisodeForAnime(animeId, episodeId) },
             onDialogChange = screenModel::setDialog,
             navigateUp = navigateUp,
         )
