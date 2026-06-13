@@ -56,12 +56,12 @@ class InfrastructureScreenModel(
 
         val report = state.report
         val sb = StringBuilder()
-        sb.append("--- ANIZEN INFRASTRUCTURE REPORT ---\n")
+        sb.append("--- ANIZEN EXTENSION HEALTH REPORT ---\n")
         sb.append("Timestamp: ${java.time.Instant.now()}\n")
         sb.append("Avg Latency: ${report.globalMetrics.avgLatency}ms\n")
-        sb.append("Active Nodes: ${report.globalMetrics.activeNodeCount}/${report.nodes.size}\n\n")
+        sb.append("Active Sources: ${report.globalMetrics.activeNodeCount}/${report.nodes.size}\n\n")
 
-        sb.append("--- NODE STATUS ---\n")
+        sb.append("--- SOURCE STATUS ---\n")
         report.nodes.forEach { node ->
             sb.append("${node.name} [${node.status}]: ${node.network.latency}ms (${node.network.topology})\n")
             sb.append("  IP: ${node.network.ipAddress}, TLS: ${node.network.tlsVersion}\n")

@@ -312,7 +312,7 @@ class NavigationSettingsScreen(
                     PreferenceGroupHeader(title = "Adaptive Navigation (Beta)")
                     val adaptiveNavEnabled by uiPreferences.adaptiveNavEnabled().collectAsStatePref()
                     SwitchPreferenceWidget(
-                        title = "Enable Adaptive Engine",
+                        title = "Enable Adaptive Navigation",
                         subtitle = "Allow the app to suggest layout changes based on context.",
                         checked = adaptiveNavEnabled,
                         onCheckedChanged = { uiPreferences.adaptiveNavEnabled().set(it) },
@@ -321,15 +321,15 @@ class NavigationSettingsScreen(
                     if (adaptiveNavEnabled) {
                         val connectivityRule by uiPreferences.adaptiveConnectivityRule().collectAsStatePref()
                         SwitchPreferenceWidget(
-                            title = "Connectivity Rules",
-                            subtitle = "Suggest offline layouts when WiFi is lost.",
+                            title = "Offline Suggestions",
+                            subtitle = "Suggest offline layouts when internet connection is lost.",
                             checked = connectivityRule,
                             onCheckedChanged = { uiPreferences.adaptiveConnectivityRule().set(it) },
                             icon = null
                         )
                         val timeRule by uiPreferences.adaptiveTimeRule().collectAsStatePref()
                         SwitchPreferenceWidget(
-                            title = "Late Night Rules",
+                            title = "Late-Night Suggestions",
                             subtitle = "Simplify navigation during late hours.",
                             checked = timeRule,
                             onCheckedChanged = { uiPreferences.adaptiveTimeRule().set(it) },
@@ -370,11 +370,11 @@ class NavigationSettingsScreen(
 
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
-                    PreferenceGroupHeader(title = "Privacy & Telemetry")
+                    PreferenceGroupHeader(title = "Privacy & Diagnostics")
                     val telemetryEnabled by uiPreferences.adaptiveTelemetryEnabled().collectAsStatePref()
                     SwitchPreferenceWidget(
-                        title = "On-Device Telemetry",
-                        subtitle = "Logs gesture interactions locally for engine optimization. Data never leaves your device.",
+                        title = "Local Usage Logs",
+                        subtitle = "Logs interactions locally for navigation optimization. Data never leaves your device.",
                         checked = telemetryEnabled,
                         onCheckedChanged = { uiPreferences.adaptiveTelemetryEnabled().set(it) },
                         icon = null

@@ -134,12 +134,12 @@ private fun GlobalTelemetryHeader(metrics: GlobalNetworkMetrics) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Analytics, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("NETWORK COMMAND CENTER", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+                Text("NETWORK STATUS", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
             }
             Spacer(modifier = Modifier.height(24.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                MetricSquare("NODES ACTIVE", "${metrics.activeNodeCount}", Color(0xFF4CAF50))
-                MetricSquare("SYS LATENCY", "${metrics.avgLatency}ms", Color(0xFFFFC107))
+                MetricSquare("ACTIVE SOURCES", "${metrics.activeNodeCount}", Color(0xFF4CAF50))
+                MetricSquare("AVG LATENCY", "${metrics.avgLatency}ms", Color(0xFFFFC107))
             }
         }
     }
@@ -168,7 +168,7 @@ private fun InfrastructureHealthBoard(nodes: List<SourceNode>) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "REAL-TIME ENDPOINT CLUSTER",
+                text = "SOURCE STATUS GRID",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -280,19 +280,19 @@ private fun SourceNodeAuditCard(node: SourceNode) {
             if (expanded) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp).alpha(0.1f))
                 
-                Text("DEVELOPER TELEMETRY", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
+                Text("TECHNICAL DETAILS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                InfoRow("Endpoint ID", node.pkgName)
+                InfoRow("Package ID", node.pkgName)
                 InfoRow("IPv4 Address", node.network.ipAddress)
-                InfoRow("Security", "Encrypted via ${node.network.tlsVersion}")
+                InfoRow("Encryption", "Encrypted via ${node.network.tlsVersion}")
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CapabilityBadge("API SOURCE", node.capabilities.isApi)
-                    CapabilityBadge("INDEXING", node.capabilities.latestSupport)
-                    CapabilityBadge("QUERYING", node.capabilities.searchSupport)
+                    CapabilityBadge("API BASE", node.capabilities.isApi)
+                    CapabilityBadge("LATEST UPDATE", node.capabilities.latestSupport)
+                    CapabilityBadge("SEARCH SUPPORT", node.capabilities.searchSupport)
                 }
             }
         }

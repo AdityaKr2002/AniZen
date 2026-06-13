@@ -79,12 +79,12 @@ object SettingsAiScreen : SearchableSettings {
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.EditTextPreference(
                     pref = aiPreferences.displayName(),
-                    title = "Analytics Persona",
-                    subtitle = "Your identifier in system reports",
+                    title = "Display Name",
+                    subtitle = "Your name in chats and reports",
                 ),
                 Preference.PreferenceItem.TextPreference(
-                    title = "Analytics Avatar",
-                    subtitle = "Set your reporting identifier image",
+                    title = "Profile Photo",
+                    subtitle = "Set your profile picture for the assistant",
                     onClick = { pickImage.launch("image/*") }
                 ),
             ),
@@ -98,20 +98,20 @@ object SettingsAiScreen : SearchableSettings {
         val aiEngine by aiPreferences.aiEngine().collectAsState()
 
         return Preference.PreferenceGroup(
-            title = "Processing Engine",
+            title = "AI Configuration",
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.SwitchPreference(
                     pref = enableAiPref,
-                    title = "Enable Processing Core",
-                    subtitle = "Activates the analytical engine for data processing",
+                    title = "Enable AI Features",
+                    subtitle = "Allows smart search, summaries, and diagnostic help",
                 ),
                 Preference.PreferenceItem.ListPreference(
                     pref = aiPreferences.aiEngine(),
-                    title = "LLM Processor",
-                    subtitle = "Select the computational backend",
+                    title = "AI Model Provider",
+                    subtitle = "Choose the AI service provider",
                     entries = persistentMapOf(
-                        "gemini" to "Google Gemini (Analytical)",
-                        "groq" to "Groq (High-Speed Inference)",
+                        "gemini" to "Google Gemini",
+                        "groq" to "Groq",
                     ),
                     enabled = enableAi,
                 ),
