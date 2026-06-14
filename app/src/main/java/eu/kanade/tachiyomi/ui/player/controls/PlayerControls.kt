@@ -655,7 +655,7 @@ fun PlayerControls(
             subtitles = subtitles.toImmutableList(),
             selectedSubtitles = selectedSubtitles.toList().toImmutableList(),
             onAddSubtitle = viewModel::addSubtitle,
-            onSelectSubtitle = viewModel::selectSub,
+            onSelectSubtitle = { viewModel.selectSub(it) },
             audioTracks = audioTracks.toImmutableList(),
             selectedAudio = selectedAudio,
             onAddAudio = viewModel::addAudio,

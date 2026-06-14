@@ -513,7 +513,7 @@ class PlayerViewModel @JvmOverloads constructor(
     fun onFinishLoadingTracks() {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
         (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            selectSub(it.id)
+            selectSub(it.id, forcePrimary = true)
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
@@ -614,8 +614,12 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
-    fun selectSub(id: Int) {
+    fun selectSub(id: Int, forcePrimary: Boolean = false) {
         if (id <= -100) {
+            if (forcePrimary) {
+                _selectedSubtitles.update { Pair(id, -1) }
+                activity.player.secondarySid = -1
+            }
             val index = -100 - id
             val sub = currentVideo.value?.subtitleTracks?.getOrNull(index) ?: return
             loadedExternalTracks.add(sub.url)
@@ -639,6 +643,12 @@ class PlayerViewModel @JvmOverloads constructor(
                     logcat(LogPriority.ERROR) { "Failed to select external subtitle track: ${e.message}" }
                 }
             }
+            return
+        }
+        if (forcePrimary) {
+            _selectedSubtitles.update { Pair(id, -1) }
+            activity.player.secondarySid = -1
+            activity.player.sid = id
             return
         }
         val selectedSubs = selectedSubtitles.value
