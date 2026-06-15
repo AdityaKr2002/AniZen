@@ -51,7 +51,6 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * `Content-Type Verification` automatic validation of incoming stream headers to prevent HTML/text files masquerading as videos.
   * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, feed interactions) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
   * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
-* **Anikku**:
   * `Anime Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
   * `Auto theme color` based on each entry's cover for entry View & Reader.
   * `App custom theme` with `Color palettes` for endless color lover.
@@ -88,18 +87,16 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * Docking Watch/Resume button to left/right.
   * Auto-install app update.
   * Configurable interval to refresh entries from downloaded storage.
-* **Aniyomi**:
-  * Watching videos
-  * Local watching of downloaded content
-  * A configurable player built on mpv-android with multiple options and settings
-  * Tracker support: MyAnimeList, AniList, Kitsu, Simkl, Shikimori, and Bangumi
-  * Categories to organize your library
-  * Create backups locally to watch offline or to your desired cloud service
-* **Other forks' features**:
-  * Torrent support (Needs right extensions)
-  * Support for Cast functionality
-  * Group by tags in library
-  * Discord Rich Presence
+  * `Video Playback` watching video streams.
+  * `Local Playback` offline watching of downloaded content.
+  * `Configurable Player` built on mpv-android with multiple options and settings.
+  * `Tracker Support` MyAnimeList, AniList, Kitsu, Simkl, Shikimori, and Bangumi.
+  * `Library Categories` to organize your collection.
+  * `Local Backups` create backups locally to watch offline or to your desired cloud service.
+  * `Torrent Support` torrent streaming and playback (needs right extensions).
+  * `Cast Functionality` support for casting media.
+  * `Library Grouping` group by tags in library.
+  * `Discord Rich Presence` share your active watch status on Discord.
 
 </div>
 
