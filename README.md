@@ -55,16 +55,29 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * **📰 Feed & Personalization**:
     * `Category-Styled Feeds` feed homepage organizes saved searches and popular content under custom category sections with drag-and-drop ordering.
     * `Saved Search Feeds` pins specific keyword queries and filter configurations directly as auto-updating feed rows.
+    * `Unified Feed Tab` easily view the latest entries or saved searches from multiple sources simultaneously.
+    * `Custom Cover Art` set custom covers using local files or web URLs.
     * `Anime Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
     * `Auto theme color` based on each entry's cover for entry View & Reader.
     * `App custom theme` with `Color palettes` for endless color lovers.
     * `Panorama cover` showing wide cover in full.
     * `Library Categories` to organize your collection.
     * `Drag & Drop Reordering` categories.
+    * `Pin Anime` to top of Library with Tag sorting.
+    * `Dynamic Categories` view the library in multiple ways.
+    * `Custom Source Categories` custom folders for grouping specific sources.
   * **📊 Statistics & Maintenance**:
     * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, feed interactions) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
     * `Extension Health Monitoring` live reports detailing extension latency, online node status, and connections metrics.
     * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
+    * `Anime Recommendations` showing community recommends from AniList and MyAnimeList on details pages.
+    * `Manual Info Editor` edit anime details manually or fill data automatically from MAL, Kitsu, Shikimori, Bangumi, and Simkl.
+    * `Merge Anime` allows merging separated anime/episodes into a single library entry.
+    * `Lewd Filter` hide NSFW anime in your library on demand.
+    * `Tracking Filter` filter library view by tracked or non-tracked entries.
+    * `Search Tracking Status` search and filter tracking status within the library.
+    * `Mass Migration` migrate all anime from one source to another simultaneously.
+    * `Cross-Device Syncing` sync library across devices using SyncYomi or Google Drive.
     * `Fast browsing` for large libraries experiencing slow loading.
     * `Bulk-favorite` multiple entries all at once.
     * `Auto-install` app update notifications.
