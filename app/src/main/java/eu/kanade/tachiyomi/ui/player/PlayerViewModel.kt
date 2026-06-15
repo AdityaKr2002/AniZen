@@ -459,28 +459,38 @@ class PlayerViewModel @JvmOverloads constructor(
             )
             try {
                 val tracksCount = MPVLib.getPropertyInt("track-list/count") ?: 0
-                val parsedExternalSubs = mutableMapOf<Int, Int>()
-                val parsedExternalAudio = mutableMapOf<Int, Int>()
+                // Collect all MPV track names and IDs — Animiru matches externals by URL stored as name
+                val mpvSubNameToId = mutableMapOf<String, Int>()
+                val mpvAudioNameToId = mutableMapOf<String, Int>()
 
-                for (i in 0..<tracksCount) {
+                for (i in 0 until tracksCount) {
                     val type = getTrackType(i)
                     if (!possibleTrackTypes.contains(type) || type == null) continue
                     val title = getTrackTitle(i)
                     val mpvId = getTrackMPVId(i) ?: continue
 
-                    if (title.startsWith(VideoTrack.TRACK_TITLE_TAG)) {
-                        val idx = title.substringAfter("=").toIntOrNull() ?: continue
-                        if (type == "sub") parsedExternalSubs[idx] = mpvId
-                        if (type == "audio") parsedExternalAudio[idx] = mpvId
-                        continue
-                    }
-
                     when (type) {
-                        "sub" -> subTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
-                        "audio" -> audioTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
+                        "sub" -> {
+                            mpvSubNameToId[title] = mpvId
+                            // Only add as Internal if it's not an external URL track
+                            if (!title.startsWith("http") && !title.startsWith("content://") &&
+                                !title.startsWith("file://") && !title.startsWith("ftp://")
+                            ) {
+                                subTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
+                            }
+                        }
+                        "audio" -> {
+                            mpvAudioNameToId[title] = mpvId
+                            if (!title.startsWith("http") && !title.startsWith("content://") &&
+                                !title.startsWith("file://") && !title.startsWith("ftp://")
+                            ) {
+                                audioTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
+                            }
+                        }
                         else -> error("Unrecognized track type")
                     }
                 }
+
 
                 val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
                 currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
@@ -490,8 +500,8 @@ class PlayerViewModel @JvmOverloads constructor(
                         sub.lang
                     }
                     val finalLang = cleanLang.ifEmpty { sub.lang }
-                    val mpvId = parsedExternalSubs[index]
-                    // Carry forward isLoading so the spinner stays visible while MPV downloads
+                    // Match by URL — Animiru passes URL as the MPV track title
+                    val mpvId = mpvSubNameToId[sub.url]
                     val wasLoading = _subtitleTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
@@ -505,8 +515,8 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
 
                 currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
-                    val mpvId = parsedExternalAudio[index]
-                    // Carry forward isLoading so the spinner stays visible while MPV downloads
+                    // Match by URL — Animiru passes URL as the MPV track title
+                    val mpvId = mpvAudioNameToId[audio.url]
                     val wasLoading = _audioTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
@@ -659,12 +669,12 @@ class PlayerViewModel @JvmOverloads constructor(
             _audioTracks.update { list ->
                 list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
             }
-            viewModelScope.launch {
+            // resolveUri does blocking I/O for content:// URIs — must run on IO thread
+            viewModelScope.launchIO {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
-                MPVLib.command(arrayOf(
-                    "audio-add", resolvedUrl, "auto",
-                    "${VideoTrack.TRACK_TITLE_TAG}=${track.index}"
-                ))
+                // Use "select" like Animiru so MPV activates the track immediately after loading
+                // Pass URL as the title so loadTracks() can match it back by name
+                MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", resolvedUrl))
             }
             return
         }
@@ -695,12 +705,12 @@ class PlayerViewModel @JvmOverloads constructor(
             _subtitleTracks.update { list ->
                 list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
             }
-            viewModelScope.launch {
+            // resolveUri does blocking I/O for content:// URIs — must run on IO thread
+            viewModelScope.launchIO {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
-                MPVLib.command(arrayOf(
-                    "sub-add", resolvedUrl, "auto",
-                    "${VideoTrack.TRACK_TITLE_TAG}=${track.index}"
-                ))
+                // Use "select" like Animiru so MPV activates the track immediately after loading
+                // Pass URL as the title so loadTracks() can match it back by name
+                MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", resolvedUrl))
             }
             return
         }
