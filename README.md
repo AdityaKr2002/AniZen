@@ -4,7 +4,7 @@
 
 # AniZen
 
-### A high-performance anime & movie platform for Android.
+### A high-performance, intelligent anime & movie platform for Android.
 #### AniZen × Miyomi
 *Built from the ground up for fluidity, intelligence, and total control.*
 
@@ -19,61 +19,45 @@
 
 ## What is AniZen?
 
-AniZen is a solo-built anime and movie application for Android. While based on the Aniyomi/Anikku foundation, it has been redesigned from the UI to the network layer into something significantly beyond a fork — a full media platform with its own AI assistant, network infrastructure dashboard, behavioral analytics, and a custom extension ecosystem built specifically for BDIX servers.
+AniZen is a solo-built anime and movie application for Android. Starting from the Aniyomi/Anikku foundation, it has evolved into a comprehensive media platform featuring an integrated AI assistant, a real-time network operations dashboard, rich behavioral analytics, and a performance-oriented custom player.
 
-Every feature was conceived, designed, and directed by one developer.
+Every aspect of the application was conceived, designed, and implemented to feel fluid, responsive, and completely user-controlled.
 
 ---
 
 ## Features
 
 ### 🎬 Pro Video Engine
-- **MPV-Powered** with Zero-Lag optimizations tuned for mid-range hardware
-- **Anime4K Neural Upscaling** — real-time presets (Fast / Anime / Cinematic / High), ideal for 480p classic anime. [Read the Anime4K Guide](docs/ANIME4K_GUIDE.md)
-- **Motion Interpolation** — smooth frame generation for choppy camera pans, consistent 59.7/60fps output
-- **MPVFX Filter Suite** — Sharpen, Blur, Debanding, and Anime4K with card-based UI and custom presets
-- **Dynamic Mediacodec Switching** — automatically enables/disables hardware decoding based on active filters
-- **High-Quality Scaling** — `ewa_lanczossharp` for sharpest anime lines. [Read the Pro Player Guide](docs/PRO_PLAYER_GUIDE.md)
-- **Intuitive Gesture Controls**:
-  - Long-press → 2x speed with smooth release animation (zero jitter)
-  - Slide left/right → speed control
-  - All gestures individually toggleable
-- **Dynamic Player Theme** — player UI colors adapt to the current anime cover art
+*   **MPV-Powered Core:** High-performance playback with zero-lag optimizations tuned for Android hardware.
+*   **Anime4K Neural Upscaling:** Real-time upscaling presets (Fast / Anime / Cinematic / High) ideal for classic anime. [Read the Anime4K Guide](docs/ANIME4K_GUIDE.md)
+*   **Smooth Motion & Scaling:** Motion interpolation for consistent 60fps output and high-quality `ewa_lanczossharp` scaling. [Read the Pro Player Guide](docs/PRO_PLAYER_GUIDE.md)
+*   **MPVFX Filter Suite:** Custom shaders (Sharpen, Blur, Debanding) with an interactive card-based control UI.
+*   **Fluid Gestures:** Long-press for jitter-free 2x speed, horizontal slide for custom speed control.
+*   **Dynamic UI:** Player and application interface colors adapt dynamically to the active cover art.
 
-### 📥 1DM-Style Download Engine
-- **Multi-threaded chunked downloading** — byte-range splitting with concurrent async threads
-- **Intelligent resume** — per-part file tracking, resumes from exact byte position on restart
-- **5x auto-retry** — for unstable BDIX/FTP servers
-- **Dynamic buffer sizing** — 32KB/64KB/128KB buffers scale with thread count to protect RAM
-- **HTML content-type guard** — detects server error pages masquerading as video files
-- **Instant cancellation** — `ensureActive()` inside the byte loop for immediate stop
-- **External downloader support** — seamless handoff to 1DM and ADM with clipboard-based path fallback
+### 📥 High-Speed Download Engine
+*   **Multi-Threaded Chunking:** Concurrent asynchronous downloading with byte-range splitting.
+*   **Resilient Downloader:** Intelligent per-part resume tracking, auto-retries for unstable servers, and RAM-optimized dynamic buffer sizing.
+*   **Content Guard:** Detects and prevents downloading server error pages masquerading as video files.
+*   **External Support:** Seamless handoff to popular downloaders like 1DM and ADM.
 
 ### 🤖 AI Diagnostics & Assistant
-- **Diagnostic Assistant** — conversational AI that reads your actual error logs and stack traces
-- **Library Context Ingestion** — AI analyzes your collection for recommendations and insights
-- **LLM Processor selector** — choose your backend (Gemini, Groq for high-speed inference, etc.)
-- **Custom System Prompt** — override default assistant behavior
-- **Behavioral Analytics** — AI generates watch pattern insights on demand
-- **Groq-summarized release notes** — changelogs written in plain language, not raw git commits
+*   **Diagnostic Assistant:** Conversational AI that reads error logs and stack traces directly to troubleshoot issues.
+*   **Smart Recommendations:** Contextual recommendations based on library ingestion and watch habits.
+*   **Configurable LLMs:** Supports multiple backends (Gemini, Groq, etc.) with custom system prompt overrides.
+*   **Smart Release Notes:** AI-summarized changelogs written in plain, human-readable language.
 
-### 📡 Infrastructure Command Center
-A full network operations dashboard built into the app:
-- **BDIX Nodes** — real-time latency per BDIX server, live health indicators, local saturation %, active node count
-- **Global CDN** — endpoint cluster health visualization, latency matrix per source, Endpoint Reliability Index
-- **System Logs** — live error alerts with source status and response times
+### 📡 Network Operations Dashboard
+*   **Real-time Infrastructure Monitoring:** Visualizes live network latency, node health indicators, and bandwidth saturation.
+*   **Global CDN & Logs:** Real-time health monitoring of endpoints and live error alerts with response-time tracking.
 
-### 📊 Behavioral Statistics
-- Genre Distribution radar chart
-- Collection Status pie chart (Completed / Ongoing / On Hold / Dropped / Planned)
-- Score Distribution bar chart
-- Core Metrics — watch time, episode count, mean score, source count
-- Source & Extension Infrastructure Analytics — per-source latency and reliability scores
-- Temporal Patterns — preferred viewing cycle, sessions/week, peak focus title, dominant series (30d)
-- Analytics Persona & Avatar — personalized identifier in system reports
+### 📊 Detailed Behavioral Statistics
+*   **Rich Visualizations:** Interactive radar, pie, and bar charts for genres, collection status, and score distributions.
+*   **Comprehensive Metrics:** Detailed insights into watch time, temporal viewing habits, and preferred viewing cycles.
+*   **Infrastructure Analytics:** Performance metrics (latency and reliability) analyzed per-source.
 
 ### 🔄 Automatic Watch Tracking
-Status updates happen silently with no manual input required:
+Status updates happen silently in the background:
 
 | Trigger | Status |
 |---|---|
@@ -83,68 +67,32 @@ Status updates happen silently with no manual input required:
 | 1 month no activity on ongoing series | On Hold / Hiatus |
 | Detected drop pattern | Dropped |
 
-All automatic tracking is individually toggleable in settings.
+*Note: All automatic tracking features can be individually toggled in Settings.*
 
-### 📰 Feed System
-A fully customizable content discovery homepage:
-- **Default rows** — Popular and Latest from your sources, works immediately out of the box
-- **Saved searches** — search anything, save as a live updating feed row
-- **Saved filters** — lock in genre, year, status, type per row
-- **Category-based or source-based** — organize rows your way
-- **Draggable reordering** — manage layout with drag handles
-- **Flexible placement** — Feed tab in main navbar, browse section, or set as start screen
+### 📰 Customizable Feed System
+*   **Dynamic Feed Rows:** Display popular/latest content, or build custom rows from saved searches and filters.
+*   **Tailored Layout:** Organise content rows by category or source with draggable reordering.
+*   **Flexible Placement:** Set the feed as your homepage, in the main navigation, or within the browse tab.
 
-### 🎨 Dynamic Theming
-- **Dynamic Anime Theme** — app-wide colors adapt to the current anime's cover art
-- **Dynamic Player Theme** — video player colors match independently
-- **Panorama Cover** — landscape cover mode for wide artwork
-- Container style, action row spacing, animated transitions — all configurable
+### 📚 Library & Trackers
+*   **Sync Integration:** Supports 5 major trackers (**AniList, MAL, Kitsu, Shikimori, Simkl**) with automatic progress synchronization.
+*   **Local Management:** Multi-select bulk operations, offline tracking support, and an Incognito mode to pause history.
+*   **Enhanced Navigation:** Built-in season switchers, airing timers, and AI-powered recommendations on detail pages.
 
-### 📚 Library & Tracking
-- Series Season Switcher on detail pages
-- AI-powered recommendations on every detail page
-- Multi-select library with bulk operations
-- 5 working trackers: **MAL, AniList, Kitsu, Shikimori, Simkl**
-- Auto-sync progress on episode completion
-- Local tracking — fully offline, independent of external services
-- Next episode airing time display
-- Incognito mode — silently pauses history
-
-### 🔌 Custom BDIX Extension Ecosystem
-A full extension repository built for Bangladesh's BDIX infrastructure (`@salmanbappi`):
-
-| Extension | Type |
-|---|---|
-| DhakaFlix 2 (4 servers: English / Hindi / Anime / TV) | Multi · BDIX |
-| Cineplex BD | Multi · BDIX |
-| Dflix | Multi · BDIX |
-| FtpBd | Multi · BDIX |
-| FM FTP | Multi · BDIX |
-| Udvash | Multi · BDIX |
-| Amader FTP | Multi · BDIX |
-| Bas Play | Multi · BDIX |
-| RoarZone | Multi · BDIX |
-| Nagordola | Multi · BDIX |
-| IccFtp | Multi · BDIX |
-| InfoMedia | Multi · BDIX |
-| Jellyfin Bijoy | Multi · Local |
-| BDIX Live TV | Multi · BDIX |
-| Live Sports | Multi · BDIX |
-| Fanush | Multi · BDIX |
-| AnimeKai | English |
+### 🔌 Custom Extension Ecosystem
+*   **Tailored Extensions:** Supports a dedicated extension repository optimized for high-speed local media servers and networks.
 
 ---
 
 ## Performance Optimizations
 
-| Optimization | What it does |
-|---|---|
-| `Precision.INEXACT` | Skips exact pixel math, offloads cover scaling to GPU — eliminates micro-stutter while scrolling |
-| Dynamic parallelism | `limitedParallelism(coreCount.coerceIn(4,12))` — uses all CPU cores for image decoding |
-| 25% memory cache | Balanced for MIUI's RAM usage — hundreds of covers cached without triggering force-close |
-| 500MB disk cache | High cover retention without excessive storage |
-| Refresh rate override | Requests highest mode Android allows — respects system 60Hz lock, never drains battery |
-| Kernel-level merge | `transferTo` for part-file merging — minimal CPU overhead on download completion |
+| Optimization | Description | Impact |
+|---|---|---|
+| `Precision.INEXACT` | Skips exact pixel math, offloads cover scaling to GPU | Eliminates micro-stutter while scrolling |
+| **Dynamic Parallelism** | `limitedParallelism(coreCount.coerceIn(4,12))` | Leverages all CPU cores for image decoding |
+| **Optimized Cache** | 25% memory cache / 500MB disk cache | High cover retention, balanced for MIUI memory constraints |
+| **Refresh Rate Override** | Requests highest mode Android allows | Smooth 120/144Hz navigation without draining battery |
+| **Kernel-Level Merge** | `transferTo` for part-file merging | Zero-overhead file assembly on download completion |
 
 ---
 
@@ -169,10 +117,10 @@ app                   # Main module, dependency injection
 ## Getting Started
 
 ### For Users
-1. Visit the [Releases](https://github.com/salmanbappi/AniZen/releases) page
-2. Download the latest `arm64-v8a` APK
-3. Enable *Install from Unknown Sources* and install
-4. Package ID is `app.anizen` — installs alongside official Anikku without conflict
+1. Visit the [Releases](https://github.com/salmanbappi/AniZen/releases) page.
+2. Download the latest `arm64-v8a` APK.
+3. Enable *Install from Unknown Sources* in Android settings and install the APK.
+4. Package ID is `app.anizen` — installs alongside official Anikku without conflict.
 
 ### For Developers
 ```bash
@@ -181,7 +129,7 @@ git clone https://github.com/salmanbappi/AniZen.git
 ./gradlew assembleDebug
 ```
 
-Preview builds available in the [Actions tab](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml).
+Preview builds are available in the [Actions tab](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml).
 
 ---
 
@@ -189,25 +137,25 @@ Preview builds available in the [Actions tab](https://github.com/salmanbappi/Ani
 
 Contributions that improve stability, performance, or features are welcome.
 
-- **Bug Reports** — Use [GitHub Issues](https://github.com/salmanbappi/AniZen/issues) with detailed reproduction steps and logs
-- **Translations** — Help reach more users via localization
+*   **Bug Reports:** Open a [GitHub Issue](https://github.com/salmanbappi/AniZen/issues) with detailed reproduction steps and logs.
+*   **Translations:** Help reach more users by contributing to localization.
 
 ---
 
 ## Community & Support
 
-- **Discord** — [Join the AniZen Community](https://discord.gg/J2wmZqEJnS)
-- **GitHub Issues** — [Report problems or suggest features](https://github.com/salmanbappi/AniZen/issues)
+*   **Discord:** [Join the AniZen Community](https://discord.gg/J2wmZqEJnS)
+*   **GitHub Issues:** [Report problems or suggest features](https://github.com/salmanbappi/AniZen/issues)
 
 ---
 
 ## Credits
 
 Built on the work of:
-- [Aniyomi](https://github.com/aniyomiorg/aniyomi)
-- [Anikku](https://github.com/komikku-app/anikku)
-- [Anime4K](https://github.com/bloc97/Anime4K)
-- [mpvEx](https://github.com/marlboro-advance/mpvEx)
+*   [Aniyomi](https://github.com/aniyomiorg/aniyomi)
+*   [Anikku](https://github.com/komikku-app/anikku)
+*   [Anime4K](https://github.com/bloc97/Anime4K)
+*   [mpvEx](https://github.com/marlboro-advance/mpvEx)
 
 ---
 
