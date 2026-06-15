@@ -622,6 +622,8 @@ class PlayerViewModel @JvmOverloads constructor(
             }
             val index = -100 - id
             val sub = currentVideo.value?.subtitleTracks?.getOrNull(index) ?: return
+            
+            if (loadedExternalTracks.contains(sub.url)) return
             loadedExternalTracks.add(sub.url)
             
             viewModelScope.launch {
@@ -665,8 +667,14 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
             }
         }
-        activity.player.secondarySid = _selectedSubtitles.value.second
-        activity.player.sid = _selectedSubtitles.value.first
+        val newSecondarySid = _selectedSubtitles.value.second
+        if (newSecondarySid >= -1) {
+            activity.player.secondarySid = newSecondarySid
+        }
+        val newSid = _selectedSubtitles.value.first
+        if (newSid >= -1) {
+            activity.player.sid = newSid
+        }
     }
 
     fun updateSubtitle(sid: Int, secondarySid: Int) {
