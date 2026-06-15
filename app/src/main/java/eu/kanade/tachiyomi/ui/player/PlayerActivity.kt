@@ -1474,31 +1474,6 @@ class PlayerActivity : BaseActivity() {
 
     private fun setupTracks() {
         if (player.isExiting) return
-
-        // Load local external tracks immediately (like downloaded subtitles/audio)
-        val audioTracks = viewModel.currentVideo.value?.audioTracks
-        val subtitleTracks = viewModel.currentVideo.value?.subtitleTracks
-
-        audioTracks?.forEach { audio ->
-            if (audio.url.startsWith("content://") || audio.url.startsWith("file://")) {
-                val resolvedUrl = Uri.parse(audio.url).resolveUri(this) ?: audio.url
-                executeMPVCommand(arrayOf("audio-add", resolvedUrl, "auto", audio.lang))
-            }
-        }
-
-        val videoFilename = DiskUtil.buildValidFilename(viewModel.currentEpisode.value?.name ?: "")
-        subtitleTracks?.forEach { sub ->
-            if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
-                val resolvedUrl = Uri.parse(sub.url).resolveUri(this) ?: sub.url
-                val cleanLang = sub.lang.removePrefix(videoFilename).trimStart('.')
-                if (cleanLang.isNotEmpty()) {
-                    executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang, cleanLang))
-                } else {
-                    executeMPVCommand(arrayOf("sub-add", resolvedUrl, "auto", sub.lang))
-                }
-            }
-        }
-
         viewModel.isLoadingTracks.update { _ -> false }
         viewModel.loadTracks()
     }
