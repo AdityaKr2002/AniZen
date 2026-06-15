@@ -443,12 +443,9 @@ class PlayerViewModel @JvmOverloads constructor(
         MPVLib.getPropertyString("track-list/$it/type")
     }
 
-    private val loadedExternalTracks = mutableSetOf<String>()
-
     fun clearTracks() {
         _subtitleTracks.update { emptyList() }
         _audioTracks.update { emptyList() }
-        loadedExternalTracks.clear()
     }
 
     private var trackLoadingJob: Job? = null
@@ -457,42 +454,53 @@ class PlayerViewModel @JvmOverloads constructor(
         trackLoadingJob = viewModelScope.launch {
             val possibleTrackTypes = listOf("audio", "sub")
             val subTracks = mutableListOf<VideoTrack>()
-            val audioTracks = mutableListOf(
-                VideoTrack(-1, activity.stringResource(MR.strings.off), null),
+            val audioTracks = mutableListOf<VideoTrack>(
+                VideoTrack.Internal(-1, activity.stringResource(MR.strings.off), null),
             )
             try {
                 val tracksCount = MPVLib.getPropertyInt("track-list/count") ?: 0
+                val parsedExternalSubs = mutableMapOf<Int, Int>()
+                val parsedExternalAudio = mutableMapOf<Int, Int>()
+
                 for (i in 0..<tracksCount) {
                     val type = getTrackType(i)
                     if (!possibleTrackTypes.contains(type) || type == null) continue
+                    val title = getTrackTitle(i)
+                    val mpvId = getTrackMPVId(i)
+
+                    if (title.startsWith(VideoTrack.TRACK_TITLE_TAG)) {
+                        val idx = title.substringAfter("=").toIntOrNull() ?: continue
+                        if (type == "sub") parsedExternalSubs[idx] = mpvId
+                        if (type == "audio") parsedExternalAudio[idx] = mpvId
+                        continue
+                    }
+
                     when (type) {
-                        "sub" -> subTracks.add(VideoTrack(getTrackMPVId(i), getTrackTitle(i), getTrackLanguage(i)))
-                        "audio" -> audioTracks.add(VideoTrack(getTrackMPVId(i), getTrackTitle(i), getTrackLanguage(i)))
+                        "sub" -> subTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
+                        "audio" -> audioTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
                         else -> error("Unrecognized track type")
                     }
                 }
-            } catch (e: NullPointerException) {
-                logcat(LogPriority.ERROR) { "Couldn't load tracks, probably cause mpv was destroyed" }
-                return@launch
-            }
 
-            val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
-            currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
-                if (!loadedExternalTracks.contains(sub.url)) {
+                val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+                currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
                     val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
                         sub.lang.removePrefix(videoFilename).trimStart('.')
                     } else {
                         sub.lang
                     }
                     val finalLang = cleanLang.ifEmpty { sub.lang }
-                    subTracks.add(VideoTrack(-100 - index, finalLang, finalLang, sub.url))
+                    val mpvId = parsedExternalSubs[index]
+                    subTracks.add(VideoTrack.External(index, finalLang, finalLang, sub.url, mpvId, isAudio = false))
                 }
-            }
 
-            currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
-                if (!loadedExternalTracks.contains(audio.url)) {
-                    audioTracks.add(VideoTrack(-200 - index, audio.lang, audio.lang, audio.url))
+                currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
+                    val mpvId = parsedExternalAudio[index]
+                    audioTracks.add(VideoTrack.External(index, audio.lang, audio.lang, audio.url, mpvId, isAudio = true))
                 }
+            } catch (e: NullPointerException) {
+                logcat(LogPriority.ERROR) { "Couldn't load tracks, probably cause mpv was destroyed" }
+                return@launch
             }
 
             _subtitleTracks.update { subTracks }
@@ -525,12 +533,32 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     @Immutable
-    data class VideoTrack(
-        val id: Int,
-        val name: String,
-        val language: String?,
-        val url: String? = null,
-    )
+    sealed interface VideoTrack {
+        val id: Int
+        val name: String
+        val language: String?
+
+        data class Internal(
+            override val id: Int,
+            override val name: String,
+            override val language: String?,
+        ) : VideoTrack
+
+        data class External(
+            val index: Int,
+            override val name: String,
+            override val language: String?,
+            val url: String,
+            val mpvId: Int? = null,
+            val isAudio: Boolean = false,
+        ) : VideoTrack {
+            override val id: Int get() = mpvId ?: (if (isAudio) -200 - index else -100 - index)
+        }
+
+        companion object {
+            const val TRACK_TITLE_TAG = "animiru_ext"
+        }
+    }
 
     fun loadChapters() {
         val chapters = mutableListOf<IndexedSegment>()
@@ -577,14 +605,14 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectAudio(id: Int) {
-        if (id <= -200) {
-            val index = -200 - id
-            val audio = currentVideo.value?.audioTracks?.getOrNull(index) ?: return
-            loadedExternalTracks.add(audio.url)
-            
+        val track = audioTracks.value.find { it.id == id }
+        if (track is VideoTrack.External && track.mpvId == null) {
             viewModelScope.launch {
-                val resolvedUrl = Uri.parse(audio.url).resolveUri(activity) ?: audio.url
-                MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", audio.lang))
+                val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                MPVLib.command(arrayOf(
+                    "audio-add", resolvedUrl, "auto",
+                    "${VideoTrack.TRACK_TITLE_TAG}=${track.index}"
+                ))
             }
             return
         }
@@ -609,34 +637,22 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun selectSub(id: Int, forcePrimary: Boolean = false) {
-        if (id <= -100) {
+        val track = subtitleTracks.value.find { it.id == id }
+        if (track is VideoTrack.External && track.mpvId == null) {
             if (forcePrimary) {
                 _selectedSubtitles.update { Pair(id, -1) }
                 activity.player.secondarySid = -1
             }
-            val index = -100 - id
-            val sub = currentVideo.value?.subtitleTracks?.getOrNull(index) ?: return
-            
-            if (loadedExternalTracks.contains(sub.url)) return
-            loadedExternalTracks.add(sub.url)
-            
             viewModelScope.launch {
-                val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
-                val resolvedUrl = Uri.parse(sub.url).resolveUri(activity) ?: sub.url
-                val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
-                    sub.lang.removePrefix(videoFilename).trimStart('.')
-                } else {
-                    sub.lang
-                }
-                
-                if (cleanLang.isNotEmpty()) {
-                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang, cleanLang))
-                } else {
-                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang))
-                }
+                val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                MPVLib.command(arrayOf(
+                    "sub-add", resolvedUrl, "auto",
+                    "${VideoTrack.TRACK_TITLE_TAG}=${track.index}"
+                ))
             }
             return
         }
+
         if (forcePrimary) {
             _selectedSubtitles.update { Pair(id, -1) }
             activity.player.secondarySid = -1
