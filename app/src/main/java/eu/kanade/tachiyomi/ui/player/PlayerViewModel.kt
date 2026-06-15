@@ -510,10 +510,15 @@ class PlayerViewModel @JvmOverloads constructor(
             _audioTracks.update { audioTracks }
 
             // Activate newly loaded external tracks as soon as MPV assigns their ID
+            // Also clear the isLoading flag now that the track is ready
             subTracks.filterIsInstance<VideoTrack.External>().forEach { newTrack ->
                 if (newTrack.mpvId != null) {
                     val oldTrack = oldSubTracks.find { it is VideoTrack.External && it.index == newTrack.index } as? VideoTrack.External
                     if (oldTrack?.mpvId == null) {
+                        // Clear loading state then activate
+                        _subtitleTracks.update { list ->
+                            list.map { if (it is VideoTrack.External && it.index == newTrack.index) it.copy(isLoading = false) else it }
+                        }
                         selectSub(newTrack)
                     }
                 }
@@ -523,6 +528,10 @@ class PlayerViewModel @JvmOverloads constructor(
                 if (newTrack.mpvId != null) {
                     val oldTrack = oldAudioTracks.find { it is VideoTrack.External && it.index == newTrack.index } as? VideoTrack.External
                     if (oldTrack?.mpvId == null) {
+                        // Clear loading state then activate
+                        _audioTracks.update { list ->
+                            list.map { if (it is VideoTrack.External && it.index == newTrack.index) it.copy(isLoading = false) else it }
+                        }
                         selectAudio(newTrack)
                     }
                 }
@@ -572,6 +581,7 @@ class PlayerViewModel @JvmOverloads constructor(
             val url: String,
             val mpvId: Int? = null,
             val isAudio: Boolean = false,
+            val isLoading: Boolean = false,
         ) : VideoTrack
 
         companion object {
@@ -625,6 +635,10 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun selectAudio(track: VideoTrack) {
         if (track is VideoTrack.External && track.mpvId == null) {
+            // Mark track as loading immediately so the UI shows a spinner
+            _audioTracks.update { list ->
+                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
+            }
             viewModelScope.launch {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
                 MPVLib.command(arrayOf(
@@ -657,6 +671,10 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun selectSub(track: VideoTrack, forcePrimary: Boolean = false) {
         if (track is VideoTrack.External && track.mpvId == null) {
+            // Mark track as loading immediately so the UI shows a spinner
+            _subtitleTracks.update { list ->
+                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
+            }
             viewModelScope.launch {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
                 MPVLib.command(arrayOf(

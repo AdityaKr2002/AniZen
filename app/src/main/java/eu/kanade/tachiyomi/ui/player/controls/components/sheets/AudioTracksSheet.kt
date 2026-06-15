@@ -24,11 +24,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreTime
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,9 +82,11 @@ fun AudioTracksSheet(
                 is VideoTrack.Internal -> selectedId == it.id
                 is VideoTrack.External -> selectedId == it.mpvId
             }
+            val isLoading = it is VideoTrack.External && it.isLoading
             AudioTrackRow(
                 title = getTrackTitle(it),
                 isSelected = isSelected,
+                isLoading = isLoading,
                 onClick = { onSelect(it) },
             )
         },
@@ -95,6 +100,7 @@ fun AudioTrackRow(
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -113,5 +119,9 @@ fun AudioTrackRow(
             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal,
             fontStyle = if (isSelected) FontStyle.Italic else FontStyle.Normal,
         )
+        if (isLoading) {
+            Spacer(modifier = Modifier.weight(1f))
+            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+        }
     }
 }
