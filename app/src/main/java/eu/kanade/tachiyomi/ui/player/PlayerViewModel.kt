@@ -432,7 +432,7 @@ class PlayerViewModel @JvmOverloads constructor(
             activity.stringResource(MR.strings.off)
         }
     }
-    val getTrackMPVId: (Int) -> Int = {
+    val getTrackMPVId: (Int) -> Int? = {
         if (it != -1) {
             MPVLib.getPropertyInt("track-list/$it/id")
         } else {
@@ -466,7 +466,7 @@ class PlayerViewModel @JvmOverloads constructor(
                     val type = getTrackType(i)
                     if (!possibleTrackTypes.contains(type) || type == null) continue
                     val title = getTrackTitle(i)
-                    val mpvId = getTrackMPVId(i)
+                    val mpvId = getTrackMPVId(i) ?: continue
 
                     if (title.startsWith(VideoTrack.TRACK_TITLE_TAG)) {
                         val idx = title.substringAfter("=").toIntOrNull() ?: continue
