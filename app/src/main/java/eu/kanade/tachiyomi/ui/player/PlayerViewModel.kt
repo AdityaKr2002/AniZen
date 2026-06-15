@@ -491,12 +491,32 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
                     val finalLang = cleanLang.ifEmpty { sub.lang }
                     val mpvId = parsedExternalSubs[index]
-                    subTracks.add(VideoTrack.External(index, finalLang, finalLang, sub.url, mpvId, isAudio = false))
+                    // Carry forward isLoading so the spinner stays visible while MPV downloads
+                    val wasLoading = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.isLoading ?: false
+                    subTracks.add(
+                        VideoTrack.External(
+                            index, finalLang, finalLang, sub.url, mpvId,
+                            isAudio = false,
+                            isLoading = if (mpvId == null) wasLoading else false,
+                        )
+                    )
                 }
 
                 currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
                     val mpvId = parsedExternalAudio[index]
-                    audioTracks.add(VideoTrack.External(index, audio.lang, audio.lang, audio.url, mpvId, isAudio = true))
+                    // Carry forward isLoading so the spinner stays visible while MPV downloads
+                    val wasLoading = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.isLoading ?: false
+                    audioTracks.add(
+                        VideoTrack.External(
+                            index, audio.lang, audio.lang, audio.url, mpvId,
+                            isAudio = true,
+                            isLoading = if (mpvId == null) wasLoading else false,
+                        )
+                    )
                 }
             } catch (e: NullPointerException) {
                 logcat(LogPriority.ERROR) { "Couldn't load tracks, probably cause mpv was destroyed" }
