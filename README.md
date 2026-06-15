@@ -25,17 +25,6 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
 
 ---
 
-## ✨ Key Highlights
-
-*   **🎬 Optimized Video Engine:** Powered by a tuned MPV core with zero-lag hardware optimizations. Features real-time **Anime4K Neural Upscaling** to breathe life into classic series and motion interpolation for consistent 60fps output.
-*   **📥 Resilient Downloader:** A multi-threaded, chunked download engine featuring intelligent byte-position resume, RAM-optimized dynamic buffering, and automatic fail-safes for unstable servers.
-*   **🤖 Helper Integrations:** Optional conversational AI helper to diagnose logs/stack traces and recommend content based on your library context.
-*   **📊 Personal Watch Insights:** Generates visual breakdowns (radar and bar charts) of your viewing stats, genre distribution, and source performance.
-*   **📰 Adaptive UI & Feeds:** Build your own homepage feeds using custom search/filter rows with drag-and-drop ordering. The player and app interface dynamically shift colors to match cover art.
-*   **🔌 Localized Extension Support:** Designed to play nicely with custom extensions optimized for localized high-speed servers.
-
----
-
 ## 🛠️ Technical Architecture
 
 AniZen follows **Clean Architecture** principles to separate business logic, UI, and data handling into a modular structure:
