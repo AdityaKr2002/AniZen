@@ -32,6 +32,15 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
 ### Features include:
 
 * **AniZen**:
+  * `Adaptive Navigation` suggests layout presets (Default, Minimal, Power) dynamically based on network connectivity and time-of-day (e.g., Late-Night layouts).
+  * `Custom Player Layout` fully configurable action buttons and player interface layout reordering.
+  * `Preload Next Episode` pre-resolves stream links and hoster lists in the background with network-aware throttling to prevent playback stutter.
+  * `On-Demand Subtitles` loading of external/custom local subtitle files directly into the active player session via URI.
+  * `Default Stream Memory` automatically remembers preferred stream hoster and quality per anime to fast-forward selection for subsequent episodes.
+  * `Pinch-to-Zoom Gesture` pinch gestures and precise scale control (up to 3x) with dedicated zoom sheet adjustments during playback.
+  * `Extension Health Monitoring` live reports detailing extension latency, online node status, and connections metrics.
+  * `Category-Styled Feeds` feed homepage organizes saved searches and popular content under custom category sections with drag-and-drop ordering.
+  * `Saved Search Feeds` pins specific keyword queries and filter configurations directly as auto-updating feed rows.
   * `Anime4K Neural Shaders` built-in upscaling presets (Fast, Anime, Cinematic, High) for real-time video upscaling.
   * `Motion Interpolation` custom shaders generating smooth frames up to 60fps.
   * `MPVFX Filter Suite` card-based interface in the player for Debanding, Blur, Sharpen, and custom shader configurations.
@@ -41,7 +50,7 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * `Resilient Part-File Recovery` per-part download integrity checks, automatic 5x retry logic, and dynamic buffer sizing (32KB/64KB/128KB).
   * `Content-Type Verification` automatic validation of incoming stream headers to prevent HTML/text files masquerading as videos.
   * `Infrastructure Command Center` operational network dashboard showing BDIX server status, live node latency, and CDN Reliability Index.
-  * `Behavioral Watch Statistics` interactive profiling charts (radar, pie, bar) tracking genre focus, temporal viewing patterns, and source reliability.
+  * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, feed interactions) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
   * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
 * **Anikku**:
   * `Anime Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
@@ -94,6 +103,28 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * Discord Rich Presence
 
 </div>
+
+---
+
+## 💡 How to Use AniZen
+
+Follow these sorted instructions to use the unique capabilities of AniZen:
+
+1.  **Configure Playback & Controls:**
+    *   **Customize Layout:** Go to **Settings** > **Player** > **Custom Button** to configure and reorder interface controls.
+    *   **Pinch-to-Zoom:** Pinch the screen during playback or open the **Video Zoom** sheet to scale content precisely.
+    *   **On-Demand Subtitles:** Click the subtitles button in the player, choose **Add Subtitle File**, and select local subtitle documents.
+2.  **Optimize Streaming & Downloader:**
+    *   **Quality Persistence:** Select a stream quality once; AniZen will automatically remember it for future episodes.
+    *   **Preloading:** Go to **Player Settings** to adjust preloading modes, allowing background fetching of the next episode's streams.
+3.  **Manage Adaptive Layouts & Feeds:**
+    *   **Adaptive Navigation:** Enable in **Navigation Settings** to let the client dynamically adjust navigation bars based on late-night schedules or connectivity status.
+    *   **Organized Home Feeds:** Pinned saved searches automatically group into category sections on the homepage. Reorder them using drag handles in **Feed Settings**.
+4.  **Analyze and Monitor Infrastructure:**
+    *   **Network Nodes:** Check connection latency, CDN reliability indices, and logs inside the **Infrastructure Command Center**.
+    *   **Behavioral Graphs:** Open the **Statistics** page to view weekly watch heatmaps, genre affinity trends, and feed activity logs.
+5.  **Get AI Diagnostic Support:**
+    *   Navigate to the **AI Diagnostics Helper** to troubleshoot stack trace logs or get personalized recommendations based on library context.
 
 ---
 
