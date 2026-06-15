@@ -48,9 +48,7 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
     * `Fluid Playback Gestures` long-press to activate jitter-free 2x speed with release animation, and horizontal slide speed adjustments.
     * `Volume Boosting & Pitch Correction` volume boosting up to 200% with pitch correction to preserve original voices at high speeds.
     * `Custom Aspect Ratios & Sleep Timer` define custom aspect ratio values and schedule playback sleep timers.
-    * `Configurable Player` built on mpv-android with multiple options and settings.
-    * `Video Playback` watching video streams.
-    * `Support Android TV` Android TV and Fire TV support.
+    * `Custom Player Layout` fully configurable action buttons and player interface layout reordering.
   * **📥 Resilient Downloader & Storage**:
     * `1DM-Style Downloader` multi-threaded chunked download engine utilizing byte-range splitting.
     * `Resilient Part-File Recovery` per-part file size verification, automatic 5x retry logic with exponential backoff, and robust `BufferPool` recycling.
@@ -60,76 +58,29 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
     * `Pre-Flight Storage Protection` automatic space allocation checks (maintaining a 200MB safety buffer, or 1.5x for FFmpeg operations) before download execution to prevent system instability.
     * `Early Soft Subtitles Retrieval` downloads and packages VTT, ASS, and SRT subtitle tracks automatically and non-fatally alongside the video file.
     * `Atomic Directory Assembly` downloads are isolated in a sandbox cache using temporary folder renames (`_tmp`) to prevent partial downloads from cluttering public storage.
-    * `Local Playback` offline watching of downloaded content.
     * `Preload Next Episode` pre-resolves stream links and hoster lists in the background with network-aware throttling to prevent playback stutter.
-    * `Local Backups` create backups locally to watch offline or to your desired cloud service.
   * **📰 Feed & Personalization**:
     * `Category-Styled Feeds` feed homepage organizes saved searches and popular content under custom category sections with drag-and-drop ordering.
     * `Saved Search Feeds` pins specific keyword queries and filter configurations directly as auto-updating feed rows.
-    * `Unified Feed Tab` easily view the latest entries or saved searches from multiple sources simultaneously.
+    * `Unified Feed Tab` view the latest entries or saved searches from multiple sources simultaneously.
     * `Custom Cover Art` set custom covers using local files or web URLs.
-    * `Anime Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
     * `Auto theme color` based on each entry's cover for entry View.
     * `Dynamic Player Theme` automatically themes the media player interface colors based on the active cover art.
-    * `App custom theme` with `Color palettes` for endless color lovers.
+    * `App custom theme` with `22 Color palettes` for endless customization.
     * `Panorama cover` showing wide cover in full.
-    * `Library Categories` to organize your collection.
-    * `Library Folders` allows grouping specific anime into custom collapsible sub-folders inside library categories.
-    * `Drag & Drop Reordering` categories.
-    * `Dynamic Categories` view the library in multiple ways.
+    * `Library Folders` group specific anime into custom collapsible sub-folders inside library categories.
     * `UI Container Styles` choose card-like container layouts per-tab (Library, Updates, History, Browse, Details, Settings).
     * `Haze Glassmorphism` toggleable glass-blur styling effects for top and bottom navigation bars.
   * **📊 Statistics & Maintenance**:
     * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, rolling 30-day feed activity logs, preferred viewing times, and top-viewed titles) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
     * `Extension Health Monitoring` live reports detailing extension latency, online node status, and connections metrics.
     * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
-    * `Franchise Relations & Suggestions` displays AniList prequel/sequel relations, source-provided related titles, and smart tag-similarity suggestions on detail pages.
-    * `Manual Info Editor` edit anime details manually or customize them directly with custom anime info entries.
     * `Unified Rating Distribution` calculates and displays score distributions and mean ratings by combining local ratings and synced tracker data.
     * `Extension Repository Source Mapping` resolves and tracks the specific GitHub repository (owner/repo) from which extensions are installed.
     * `Diagnostics Report Export` formats and exports extension health statistics, resolve statuses, and logs directly to the clipboard.
-    * `Fast browsing` for large libraries experiencing slow loading.
-    * `Bulk-favorite` multiple entries all at once.
-    * `Auto-install` app update notifications.
-    * `Auto 2-way sync` progress with trackers.
-    * `Tracker Support` MyAnimeList, AniList, Kitsu, Simkl, Shikimori, and Bangumi.
-    * `Source & Language icons` on Library & various places.
-    * `Grouped updates` in Update tab.
-    * `Ability to enable/disable repos` with custom icons.
-    * `Search for sources` & Quick NSFW sources filter in Extensions, Browse & Migration screen.
-    * `In-app progress banner` shows Library syncing / Backup restoring / Library updating progress.
-    * `Long-click actions` to add/remove single entry to/from library everywhere.
-    * `Docking Watch/Resume` buttons to the left or right of details page.
-    * `Configurable interval` to refresh entries from downloaded storage.
-    * `Torrent Support` torrent streaming and playback (needs right extensions).
-    * `Cast Functionality` support for casting media.
-    * `Library Grouping` group by tags in library.
-    * `Discord Rich Presence` share your active watch status on Discord.
     * `Adaptive Navigation` suggests layout presets (Default, Minimal, Power) dynamically based on network connectivity and time-of-day.
 
 </div>
-
----
-
-## 💡 How to Use AniZen
-
-Follow these sorted instructions to use the unique capabilities of AniZen:
-
-1.  **Configure Playback & Controls:**
-    *   **Customize Layout:** Go to **Settings** > **Player** > **Custom Button** to configure and reorder interface controls.
-    *   **Pinch-to-Zoom:** Pinch the screen during playback or open the **Video Zoom** sheet to scale content precisely.
-    *   **On-Demand Subtitles:** Click the subtitles button in the player, choose **Add Subtitle File**, and select local subtitle documents.
-2.  **Optimize Streaming & Downloader:**
-    *   **Quality Persistence:** Select a stream quality once; AniZen will automatically remember it for future episodes.
-    *   **Preloading:** Go to **Player Settings** to adjust preloading modes, allowing background fetching of the next episode's streams.
-3.  **Manage Adaptive Layouts & Feeds:**
-    *   **Adaptive Navigation:** Enable in **Navigation Settings** to let the client dynamically adjust navigation bars based on late-night schedules or connectivity status.
-    *   **Organized Home Feeds:** Pinned saved searches automatically group into category sections on the homepage. Reorder them using drag handles in **Feed Settings**.
-4.  **Analyze and Monitor Extension Health:**
-    *   **Extension Status:** Check latency, online status, and connection health report within the **Extension Report**.
-    *   **Behavioral Graphs:** Open the **Statistics** page to view weekly watch heatmaps, genre affinity trends, and feed activity logs.
-5.  **Get AI Diagnostic Support:**
-    *   Navigate to the **AI Diagnostics Helper** to troubleshoot stack trace logs or get personalized recommendations based on library context.
 
 ---
 
