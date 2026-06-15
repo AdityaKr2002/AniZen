@@ -4,7 +4,7 @@
 
 # AniZen
 
-### A high-performance, intelligent anime & movie platform for Android.
+### A high-performance anime & movie platform for Android.
 #### AniZen × Miyomi
 *Built from the ground up for fluidity, intelligence, and total control.*
 
@@ -17,141 +17,66 @@
 
 ---
 
-## What is AniZen?
+## Overview
 
-AniZen is a solo-built anime and movie application for Android. Starting from the Aniyomi/Anikku foundation, it has evolved into a comprehensive media platform featuring an integrated AI assistant, a real-time network operations dashboard, rich behavioral analytics, and a performance-oriented custom player.
-
-Every aspect of the application was conceived, designed, and implemented to feel fluid, responsive, and completely user-controlled.
-
----
-
-## Features
-
-### 🎬 Pro Video Engine
-*   **MPV-Powered Core:** High-performance playback with zero-lag optimizations tuned for Android hardware.
-*   **Anime4K Neural Upscaling:** Real-time upscaling presets (Fast / Anime / Cinematic / High) ideal for classic anime. [Read the Anime4K Guide](docs/ANIME4K_GUIDE.md)
-*   **Smooth Motion & Scaling:** Motion interpolation for consistent 60fps output and high-quality `ewa_lanczossharp` scaling. [Read the Pro Player Guide](docs/PRO_PLAYER_GUIDE.md)
-*   **MPVFX Filter Suite:** Custom shaders (Sharpen, Blur, Debanding) with an interactive card-based control UI.
-*   **Fluid Gestures:** Long-press for jitter-free 2x speed, horizontal slide for custom speed control.
-*   **Dynamic UI:** Player and application interface colors adapt dynamically to the active cover art.
-
-### 📥 High-Speed Download Engine
-*   **Multi-Threaded Chunking:** Concurrent asynchronous downloading with byte-range splitting.
-*   **Resilient Downloader:** Intelligent per-part resume tracking, auto-retries for unstable servers, and RAM-optimized dynamic buffer sizing.
-*   **Content Guard:** Detects and prevents downloading server error pages masquerading as video files.
-*   **External Support:** Seamless handoff to popular downloaders like 1DM and ADM.
-
-### 🤖 AI Diagnostics & Assistant
-*   **Diagnostic Assistant:** Conversational AI that reads error logs and stack traces directly to troubleshoot issues.
-*   **Smart Recommendations:** Contextual recommendations based on library ingestion and watch habits.
-*   **Configurable LLMs:** Supports multiple backends (Gemini, Groq, etc.) with custom system prompt overrides.
-*   **Smart Release Notes:** AI-summarized changelogs written in plain, human-readable language.
-
-### 📡 Network Operations Dashboard
-*   **Real-time Infrastructure Monitoring:** Visualizes live network latency, node health indicators, and bandwidth saturation.
-*   **Global CDN & Logs:** Real-time health monitoring of endpoints and live error alerts with response-time tracking.
-
-### 📊 Detailed Behavioral Statistics
-*   **Rich Visualizations:** Interactive radar, pie, and bar charts for genres, collection status, and score distributions.
-*   **Comprehensive Metrics:** Detailed insights into watch time, temporal viewing habits, and preferred viewing cycles.
-*   **Infrastructure Analytics:** Performance metrics (latency and reliability) analyzed per-source.
-
-### 🔄 Automatic Watch Tracking
-Status updates happen silently in the background:
-
-| Trigger | Status |
-|---|---|
-| Added to library | Plan to Watch |
-| 15 seconds of playback | Watching |
-| Final episode finished | Completed |
-| 1 month no activity on ongoing series | On Hold / Hiatus |
-| Detected drop pattern | Dropped |
-
-*Note: All automatic tracking features can be individually toggled in Settings.*
-
-### 📰 Customizable Feed System
-*   **Dynamic Feed Rows:** Display popular/latest content, or build custom rows from saved searches and filters.
-*   **Tailored Layout:** Organise content rows by category or source with draggable reordering.
-*   **Flexible Placement:** Set the feed as your homepage, in the main navigation, or within the browse tab.
-
-### 📚 Library & Trackers
-*   **Sync Integration:** Supports 5 major trackers (**AniList, MAL, Kitsu, Shikimori, Simkl**) with automatic progress synchronization.
-*   **Local Management:** Multi-select bulk operations, offline tracking support, and an Incognito mode to pause history.
-*   **Enhanced Navigation:** Built-in season switchers, airing timers, and AI-powered recommendations on detail pages.
-
-### 🔌 Custom Extension Ecosystem
-*   **Tailored Extensions:** Supports a dedicated extension repository optimized for high-speed local media servers and networks.
-
----
-
-## Performance Optimizations
-
-| Optimization | Description | Impact |
-|---|---|---|
-| `Precision.INEXACT` | Skips exact pixel math, offloads cover scaling to GPU | Eliminates micro-stutter while scrolling |
-| **Dynamic Parallelism** | `limitedParallelism(coreCount.coerceIn(4,12))` | Leverages all CPU cores for image decoding |
-| **Optimized Cache** | 25% memory cache / 500MB disk cache | High cover retention, balanced for MIUI memory constraints |
-| **Refresh Rate Override** | Requests highest mode Android allows | Smooth 120/144Hz navigation without draining battery |
-| **Kernel-Level Merge** | `transferTo` for part-file merging | Zero-overhead file assembly on download completion |
+AniZen is a solo-built anime and movie application for Android, built on the Aniyomi/Anikku foundation. It is redesigned from the user interface to the network layer to operate as a high-performance media platform.
 
 ---
 
 ## Technical Architecture
 
-AniZen follows **Clean Architecture** principles for a modular, maintainable codebase.
+AniZen is designed using Clean Architecture principles to maintain a highly modular and decoupled codebase.
 
 ```
-app                   # Main module, dependency injection
-├── core              # Shared utilities, base logic
-├── data              # Repository implementations, data sources
-├── domain            # Business logic, use cases
-├── presentation-core # Reusable UI components, design system
-├── source-api        # Extension system interface definitions
-└── source-local      # Local media handling
+app                   # Application entry point, dependency injection
+├── core              # Shared utilities, common extensions, and base logic
+├── data              # Repositories, database (SQLDelight), and network layer (OkHttp)
+├── domain            # Core business logic, domain models, and use cases
+├── presentation-core # UI components, themes, and design system (Jetpack Compose)
+├── source-api        # Extension & source interface definitions
+└── source-local      # Local media parsing and storage handling
 ```
 
-**Stack:** 100% Kotlin · Jetpack Compose · Coroutines · SQLDelight · MPV · Coil 3 · OkHttp
+### Technology Stack
+*   **Language:** 100% Kotlin
+*   **UI Framework:** Jetpack Compose (declarative UI)
+*   **Asynchronous Programming:** Kotlin Coroutines & Flow
+*   **Database:** SQLDelight
+*   **Playback Core:** MPV (via native libmpv bindings)
+*   **Image Loading:** Coil 3
+*   **Networking:** OkHttp
 
 ---
 
 ## Getting Started
 
 ### For Users
-1. Visit the [Releases](https://github.com/salmanbappi/AniZen/releases) page.
+1. Head over to the [Releases](https://github.com/salmanbappi/AniZen/releases) section.
 2. Download the latest `arm64-v8a` APK.
-3. Enable *Install from Unknown Sources* in Android settings and install the APK.
-4. Package ID is `app.anizen` — installs alongside official Anikku without conflict.
+3. Install the APK on your device (ensure *Install from Unknown Sources* is enabled).
+4. Installs as `app.anizen` without conflicting with official Anikku.
 
 ### For Developers
+Clone the repository and open it in Android Studio:
 ```bash
 git clone https://github.com/salmanbappi/AniZen.git
-# Open in Android Studio
+cd AniZen
 ./gradlew assembleDebug
 ```
-
-Preview builds are available in the [Actions tab](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml).
-
----
-
-## Contributing
-
-Contributions that improve stability, performance, or features are welcome.
-
-*   **Bug Reports:** Open a [GitHub Issue](https://github.com/salmanbappi/AniZen/issues) with detailed reproduction steps and logs.
-*   **Translations:** Help reach more users by contributing to localization.
+Preview builds are generated via GitHub Actions and are accessible in the [Actions tab](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml).
 
 ---
 
-## Community & Support
+## Contributing & Support
 
-*   **Discord:** [Join the AniZen Community](https://discord.gg/J2wmZqEJnS)
-*   **GitHub Issues:** [Report problems or suggest features](https://github.com/salmanbappi/AniZen/issues)
+*   **Bug Reports:** Submit issue reports on [GitHub Issues](https://github.com/salmanbappi/AniZen/issues).
+*   **Community:** Join discussions and get help in the [Discord Server](https://discord.gg/J2wmZqEJnS).
 
 ---
 
 ## Credits
 
-Built on the work of:
+Built on top of excellent open-source projects:
 *   [Aniyomi](https://github.com/aniyomiorg/aniyomi)
 *   [Anikku](https://github.com/komikku-app/anikku)
 *   [Anime4K](https://github.com/bloc97/Anime4K)
