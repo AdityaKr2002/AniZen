@@ -33,22 +33,33 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
 
 * **AniZen**:
   * **🎬 Media Player & Video Engine**:
-    * `Anime4K Neural Shaders` built-in upscaling presets (Fast, Anime, Cinematic, High) for real-time video upscaling.
-    * `Motion Interpolation` custom shaders generating smooth frames up to 60fps.
-    * `MPVFX Filter Suite` card-based interface in the player for Debanding, Blur, Sharpen, and custom shader configurations.
+    * `Anime4K Neural Shaders` built-in upscaling quality levels (Fast, Balanced, High) and multiple processing modes (A, B, C, A+, B+, C+) for real-time video upscaling.
+    * `Motion Interpolation` temporal interpolation scaling (oversample, mitchell, catmull-rom) generating smooth frames matching the display refresh rate (up to 120fps/144fps).
+    * `MPVFX Filter Suite` card-based interface in the player for Debanding, Video Adjustments (Brightness, Saturation, Contrast, Gamma, Hue, Sharpen), and integrated Anime4K controls.
     * `Dynamic Mediacodec Switching` automatic fallback to software decoding if active filters exceed hardware capability.
+    * `Adaptive Shader Scaling` automatically downgrades Anime4K quality if high frame drops/delayed frames are detected during playback to keep rendering smooth.
+    * `AniSkip Integration` skippable intros and Netflix-style skip button based on the online AniSkip database.
+    * `Filler Episode Skipping` automatically skips filler episodes based on tracking information.
+    * `Native Picture-in-Picture (PiP)` background playback support with custom controls.
+    * `Advanced Config & Script Editor` in-app code editor for `mpv.conf` and `input.conf` files, and support for running custom scripts.
     * `Pinch-to-Zoom Gesture` pinch gestures and precise scale control (up to 3x) with dedicated zoom sheet adjustments during playback.
     * `On-Demand Subtitles` loading of external/custom local subtitle files directly into the active player session via URI.
     * `Default Stream Memory` automatically remembers preferred stream hoster and quality per anime to fast-forward selection for subsequent episodes.
     * `Fluid Playback Gestures` long-press to activate jitter-free 2x speed with release animation, and horizontal slide speed adjustments.
+    * `Volume Boosting & Pitch Correction` volume boosting up to 200% with pitch correction to preserve original voices at high speeds.
+    * `Custom Aspect Ratios & Sleep Timer` define custom aspect ratio values and schedule playback sleep timers.
     * `Configurable Player` built on mpv-android with multiple options and settings.
-    * `Custom Player Layout` fully configurable action buttons and player interface layout reordering.
     * `Video Playback` watching video streams.
     * `Support Android TV` Android TV and Fire TV support.
   * **📥 Resilient Downloader & Storage**:
     * `1DM-Style Downloader` multi-threaded chunked download engine utilizing byte-range splitting.
-    * `Resilient Part-File Recovery` per-part download integrity checks, automatic 5x retry logic, and dynamic buffer sizing (32KB/64KB/128KB).
-    * `Content-Type Verification` automatic validation of incoming stream headers to prevent HTML/text files masquerading as videos.
+    * `Resilient Part-File Recovery` per-part file size verification, automatic 5x retry logic with exponential backoff, and robust `BufferPool` recycling.
+    * `External Downloader Handoff` seamless delegation of downloads to external managers (like 1DM or ADM), automatically passing custom stream headers, filenames, and download directories.
+    * `Native HLS & DASH Engines` multi-threaded HLS segment downloader with on-the-fly AES-128 decryption, variant playlist resolution, and native DASH muxing via FFmpeg with duration-based progress estimation.
+    * `Pro-Active Stream Pre-fetching` background stream URL resolution for queued downloads, minimizing delay between transitions.
+    * `Pre-Flight Storage Protection` automatic space allocation checks (maintaining a 200MB safety buffer, or 1.5x for FFmpeg operations) before download execution to prevent system instability.
+    * `Early Soft Subtitles Retrieval` downloads and packages VTT, ASS, and SRT subtitle tracks automatically and non-fatally alongside the video file.
+    * `Atomic Directory Assembly` downloads are isolated in a sandbox cache using temporary folder renames (`_tmp`) to prevent partial downloads from cluttering public storage.
     * `Local Playback` offline watching of downloaded content.
     * `Preload Next Episode` pre-resolves stream links and hoster lists in the background with network-aware throttling to prevent playback stutter.
     * `Local Backups` create backups locally to watch offline or to your desired cloud service.
@@ -58,26 +69,25 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
     * `Unified Feed Tab` easily view the latest entries or saved searches from multiple sources simultaneously.
     * `Custom Cover Art` set custom covers using local files or web URLs.
     * `Anime Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
-    * `Auto theme color` based on each entry's cover for entry View & Reader.
+    * `Auto theme color` based on each entry's cover for entry View.
+    * `Dynamic Player Theme` automatically themes the media player interface colors based on the active cover art.
     * `App custom theme` with `Color palettes` for endless color lovers.
     * `Panorama cover` showing wide cover in full.
     * `Library Categories` to organize your collection.
+    * `Library Folders` allows grouping specific anime into custom collapsible sub-folders inside library categories.
     * `Drag & Drop Reordering` categories.
-    * `Pin Anime` to top of Library with Tag sorting.
     * `Dynamic Categories` view the library in multiple ways.
-    * `Custom Source Categories` custom folders for grouping specific sources.
+    * `UI Container Styles` choose card-like container layouts per-tab (Library, Updates, History, Browse, Details, Settings).
+    * `Haze Glassmorphism` toggleable glass-blur styling effects for top and bottom navigation bars.
   * **📊 Statistics & Maintenance**:
-    * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, feed interactions) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
+    * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, rolling 30-day feed activity logs, preferred viewing times, and top-viewed titles) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
     * `Extension Health Monitoring` live reports detailing extension latency, online node status, and connections metrics.
     * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
-    * `Anime Recommendations` showing community recommends from AniList and MyAnimeList on details pages.
-    * `Manual Info Editor` edit anime details manually or fill data automatically from MAL, Kitsu, Shikimori, Bangumi, and Simkl.
-    * `Merge Anime` allows merging separated anime/episodes into a single library entry.
-    * `Lewd Filter` hide NSFW anime in your library on demand.
-    * `Tracking Filter` filter library view by tracked or non-tracked entries.
-    * `Search Tracking Status` search and filter tracking status within the library.
-    * `Mass Migration` migrate all anime from one source to another simultaneously.
-    * `Cross-Device Syncing` sync library across devices using SyncYomi or Google Drive.
+    * `Franchise Relations & Suggestions` displays AniList prequel/sequel relations, source-provided related titles, and smart tag-similarity suggestions on detail pages.
+    * `Manual Info Editor` edit anime details manually or customize them directly with custom anime info entries.
+    * `Unified Rating Distribution` calculates and displays score distributions and mean ratings by combining local ratings and synced tracker data.
+    * `Extension Repository Source Mapping` resolves and tracks the specific GitHub repository (owner/repo) from which extensions are installed.
+    * `Diagnostics Report Export` formats and exports extension health statistics, resolve statuses, and logs directly to the clipboard.
     * `Fast browsing` for large libraries experiencing slow loading.
     * `Bulk-favorite` multiple entries all at once.
     * `Auto-install` app update notifications.
