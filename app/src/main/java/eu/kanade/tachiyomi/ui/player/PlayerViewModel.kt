@@ -478,20 +478,18 @@ class PlayerViewModel @JvmOverloads constructor(
 
             val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
             currentVideo.value?.subtitleTracks?.forEachIndexed { index, sub ->
-                if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
-                    return@forEachIndexed
-                }
                 if (!loadedExternalTracks.contains(sub.url)) {
-                    val cleanLang = sub.lang
+                    val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                        sub.lang.removePrefix(videoFilename).trimStart('.')
+                    } else {
+                        sub.lang
+                    }
                     val finalLang = cleanLang.ifEmpty { sub.lang }
                     subTracks.add(VideoTrack(-100 - index, finalLang, finalLang, sub.url))
                 }
             }
 
             currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
-                if (audio.url.startsWith("content://") || audio.url.startsWith("file://")) {
-                    return@forEachIndexed
-                }
                 if (!loadedExternalTracks.contains(audio.url)) {
                     audioTracks.add(VideoTrack(-200 - index, audio.lang, audio.lang, audio.url))
                 }
@@ -585,12 +583,8 @@ class PlayerViewModel @JvmOverloads constructor(
             loadedExternalTracks.add(audio.url)
             
             viewModelScope.launch {
-                try {
-                    val resolvedUrl = Uri.parse(audio.url).resolveUri(activity) ?: audio.url
-                    MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", audio.lang))
-                } catch (e: Exception) {
-                    logcat(LogPriority.ERROR) { "Failed to select external audio track: ${e.message}" }
-                }
+                val resolvedUrl = Uri.parse(audio.url).resolveUri(activity) ?: audio.url
+                MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", audio.lang))
             }
             return
         }
@@ -627,22 +621,18 @@ class PlayerViewModel @JvmOverloads constructor(
             loadedExternalTracks.add(sub.url)
             
             viewModelScope.launch {
-                try {
-                    val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
-                    val resolvedUrl = Uri.parse(sub.url).resolveUri(activity) ?: sub.url
-                    val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
-                        sub.lang.removePrefix(videoFilename).trimStart('.')
-                    } else {
-                        sub.lang
-                    }
-                    
-                    if (cleanLang.isNotEmpty()) {
-                        MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang, cleanLang))
-                    } else {
-                        MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang))
-                    }
-                } catch (e: Exception) {
-                    logcat(LogPriority.ERROR) { "Failed to select external subtitle track: ${e.message}" }
+                val videoFilename = DiskUtil.buildValidFilename(currentEpisode.value?.name ?: "")
+                val resolvedUrl = Uri.parse(sub.url).resolveUri(activity) ?: sub.url
+                val cleanLang = if (sub.url.startsWith("content://") || sub.url.startsWith("file://")) {
+                    sub.lang.removePrefix(videoFilename).trimStart('.')
+                } else {
+                    sub.lang
+                }
+                
+                if (cleanLang.isNotEmpty()) {
+                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang, cleanLang))
+                } else {
+                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", sub.lang))
                 }
             }
             return
