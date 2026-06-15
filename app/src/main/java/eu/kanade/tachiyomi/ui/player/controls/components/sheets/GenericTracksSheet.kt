@@ -112,12 +112,24 @@ fun AddTrackRow(
 
 @Composable
 fun getTrackTitle(track: VideoTrack): String {
-    return when {
-        track.id == -1 -> {
-            track.name
+    return when (track) {
+        is VideoTrack.Internal -> {
+            when {
+                track.id == -1 -> track.name
+                track.language.isNullOrBlank() && track.name.isNotBlank() -> stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
+                !track.language.isNullOrBlank() && track.name.isNotBlank() -> {
+                    if (track.name.contains(track.language, ignoreCase = true) || 
+                        track.language.contains(track.name, ignoreCase = true)) {
+                        stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
+                    } else {
+                        stringResource(MR.strings.player_sheets_track_title_w_lang, track.id, track.name, track.language)
+                    }
+                }
+                !track.language.isNullOrBlank() && track.name.isBlank() -> stringResource(MR.strings.player_sheets_track_lang_wo_title, track.id, track.language)
+                else -> track.name
+            }
         }
-
-        track.id < -1 -> {
+        is VideoTrack.External -> {
             val name = track.name
             val lang = track.language
             when {
@@ -127,25 +139,6 @@ fun getTrackTitle(track: VideoTrack): String {
                 else -> "$name ($lang)"
             }
         }
-
-        track.language.isNullOrBlank() && track.name.isNotBlank() -> {
-            stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
-        }
-
-        !track.language.isNullOrBlank() && track.name.isNotBlank() -> {
-            if (track.name.contains(track.language, ignoreCase = true) || 
-                track.language.contains(track.name, ignoreCase = true)) {
-                stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
-            } else {
-                stringResource(MR.strings.player_sheets_track_title_w_lang, track.id, track.name, track.language)
-            }
-        }
-
-        !track.language.isNullOrBlank() && track.name.isBlank() -> {
-            stringResource(MR.strings.player_sheets_track_lang_wo_title, track.id, track.language)
-        }
-
-        else -> stringResource(MR.strings.player_sheets_track_title_wo_lang, track.id, track.name)
     }
 }
 

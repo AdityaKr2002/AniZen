@@ -519,12 +519,12 @@ class PlayerViewModel @JvmOverloads constructor(
     fun onFinishLoadingTracks() {
         val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
         (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            selectSub(it.id, forcePrimary = true)
+            selectSub(it, forcePrimary = true)
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
         (preferredAudio ?: audioTracks.value.getOrNull(1))?.let {
-            selectAudio(it.id)
+            selectAudio(it)
         }
 
         isLoadingTracks.update { _ -> true }
@@ -534,12 +534,11 @@ class PlayerViewModel @JvmOverloads constructor(
 
     @Immutable
     sealed interface VideoTrack {
-        val id: Int
         val name: String
         val language: String?
 
         data class Internal(
-            override val id: Int,
+            val id: Int,
             override val name: String,
             override val language: String?,
         ) : VideoTrack
@@ -551,9 +550,7 @@ class PlayerViewModel @JvmOverloads constructor(
             val url: String,
             val mpvId: Int? = null,
             val isAudio: Boolean = false,
-        ) : VideoTrack {
-            override val id: Int get() = mpvId ?: (if (isAudio) -200 - index else -100 - index)
-        }
+        ) : VideoTrack
 
         companion object {
             const val TRACK_TITLE_TAG = "animiru_ext"
@@ -604,8 +601,7 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
-    fun selectAudio(id: Int) {
-        val track = audioTracks.value.find { it.id == id }
+    fun selectAudio(track: VideoTrack) {
         if (track is VideoTrack.External && track.mpvId == null) {
             viewModelScope.launch {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
@@ -616,6 +612,7 @@ class PlayerViewModel @JvmOverloads constructor(
             }
             return
         }
+        val id = (track as? VideoTrack.Internal)?.id ?: (track as? VideoTrack.External)?.mpvId ?: return
         activity.player.aid = id
     }
 
@@ -636,13 +633,8 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
-    fun selectSub(id: Int, forcePrimary: Boolean = false) {
-        val track = subtitleTracks.value.find { it.id == id }
+    fun selectSub(track: VideoTrack, forcePrimary: Boolean = false) {
         if (track is VideoTrack.External && track.mpvId == null) {
-            if (forcePrimary) {
-                _selectedSubtitles.update { Pair(id, -1) }
-                activity.player.secondarySid = -1
-            }
             viewModelScope.launch {
                 val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
                 MPVLib.command(arrayOf(
@@ -652,6 +644,8 @@ class PlayerViewModel @JvmOverloads constructor(
             }
             return
         }
+
+        val id = (track as? VideoTrack.Internal)?.id ?: (track as? VideoTrack.External)?.mpvId ?: return
 
         if (forcePrimary) {
             _selectedSubtitles.update { Pair(id, -1) }

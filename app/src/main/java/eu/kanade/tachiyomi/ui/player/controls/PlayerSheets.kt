@@ -59,13 +59,13 @@ fun PlayerSheets(
     subtitles: ImmutableList<VideoTrack>,
     selectedSubtitles: ImmutableList<Int>,
     onAddSubtitle: (Uri) -> Unit,
-    onSelectSubtitle: (Int) -> Unit,
+    onSelectSubtitle: (VideoTrack) -> Unit,
 
     // audio sheet
     audioTracks: ImmutableList<VideoTrack>,
     selectedAudio: Int,
     onAddAudio: (Uri) -> Unit,
-    onSelectAudio: (Int) -> Unit,
+    onSelectAudio: (VideoTrack) -> Unit,
 
     // video sheet
     isLoadingHosters: Boolean,

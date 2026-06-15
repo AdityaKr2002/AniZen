@@ -44,7 +44,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun AudioTracksSheet(
     tracks: ImmutableList<VideoTrack>,
     selectedId: Int,
-    onSelect: (Int) -> Unit,
+    onSelect: (VideoTrack) -> Unit,
     onAddAudioTrack: () -> Unit,
     onOpenDelayPanel: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -75,10 +75,14 @@ fun AudioTracksSheet(
             )
         },
         track = {
+            val isSelected = when (it) {
+                is VideoTrack.Internal -> selectedId == it.id
+                is VideoTrack.External -> selectedId == it.mpvId
+            }
             AudioTrackRow(
                 title = getTrackTitle(it),
-                isSelected = selectedId == it.id,
-                onClick = { onSelect(it.id) },
+                isSelected = isSelected,
+                onClick = { onSelect(it) },
             )
         },
         modifier = modifier,

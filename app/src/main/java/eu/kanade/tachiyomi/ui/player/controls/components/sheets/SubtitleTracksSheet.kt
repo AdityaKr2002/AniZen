@@ -48,7 +48,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun SubtitlesSheet(
     tracks: ImmutableList<VideoTrack>,
     selectedTracks: ImmutableList<Int>,
-    onSelect: (Int) -> Unit,
+    onSelect: (VideoTrack) -> Unit,
     onAddSubtitle: () -> Unit,
     onOpenSubtitleSettings: () -> Unit,
     onOpenSubtitleDelay: () -> Unit,
@@ -88,10 +88,14 @@ fun SubtitlesSheet(
             )
         },
         track = { track ->
+            val selectedIndex = when (track) {
+                is VideoTrack.Internal -> selectedTracks.indexOf(track.id)
+                is VideoTrack.External -> track.mpvId?.let { selectedTracks.indexOf(it) } ?: -1
+            }
             SubtitleTrackRow(
                 title = getTrackTitle(track),
-                selected = selectedTracks.indexOf(track.id),
-                onClick = { onSelect(track.id) },
+                selected = selectedIndex,
+                onClick = { onSelect(track) },
             )
         },
         footer = {
