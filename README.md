@@ -4,7 +4,7 @@
 
 # AniZen
 
-### A personal, high-performance anime & movie client for Android.
+### A personal anime & movie client for Android.
 #### AniZen × Miyomi
 *A custom media player built with Jetpack Compose, designed for fluid interactions, smart offline playback, and experimental integrations.*
 
