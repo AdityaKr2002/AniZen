@@ -503,8 +503,8 @@ class PlayerViewModel @JvmOverloads constructor(
                 return@launch
             }
 
-            val oldSubTracks = subtitleTracks.value
-            val oldAudioTracks = audioTracks.value
+            val oldSubTracks = _subtitleTracks.value
+            val oldAudioTracks = _audioTracks.value
 
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
