@@ -49,7 +49,6 @@ It aims to offer a premium, responsive, and completely personalized viewing spac
   * `1DM-Style Downloader` multi-threaded chunked download engine utilizing byte-range splitting.
   * `Resilient Part-File Recovery` per-part download integrity checks, automatic 5x retry logic, and dynamic buffer sizing (32KB/64KB/128KB).
   * `Content-Type Verification` automatic validation of incoming stream headers to prevent HTML/text files masquerading as videos.
-  * `Infrastructure Command Center` operational network dashboard showing BDIX server status, live node latency, and CDN Reliability Index.
   * `Behavioral Watch Statistics` tracks rich watch habits (weekly heatmaps, genre affinity, status breakdowns, feed interactions) and infrastructure metrics (throughput distribution, latency matrices, and topology breakdowns).
   * `AI Diagnostics & Assistant` conversational troubleshooting assistant capable of digesting exception trace logs and library context.
 * **Anikku**:
@@ -120,8 +119,8 @@ Follow these sorted instructions to use the unique capabilities of AniZen:
 3.  **Manage Adaptive Layouts & Feeds:**
     *   **Adaptive Navigation:** Enable in **Navigation Settings** to let the client dynamically adjust navigation bars based on late-night schedules or connectivity status.
     *   **Organized Home Feeds:** Pinned saved searches automatically group into category sections on the homepage. Reorder them using drag handles in **Feed Settings**.
-4.  **Analyze and Monitor Infrastructure:**
-    *   **Network Nodes:** Check connection latency, CDN reliability indices, and logs inside the **Infrastructure Command Center**.
+4.  **Analyze and Monitor Extension Health:**
+    *   **Extension Status:** Check latency, online status, and connection health report within the **Extension Report**.
     *   **Behavioral Graphs:** Open the **Statistics** page to view weekly watch heatmaps, genre affinity trends, and feed activity logs.
 5.  **Get AI Diagnostic Support:**
     *   Navigate to the **AI Diagnostics Helper** to troubleshoot stack trace logs or get personalized recommendations based on library context.
