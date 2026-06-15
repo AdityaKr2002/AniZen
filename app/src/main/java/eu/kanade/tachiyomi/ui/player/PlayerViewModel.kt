@@ -503,8 +503,30 @@ class PlayerViewModel @JvmOverloads constructor(
                 return@launch
             }
 
+            val oldSubTracks = subtitleTracks.value
+            val oldAudioTracks = audioTracks.value
+
             _subtitleTracks.update { subTracks }
             _audioTracks.update { audioTracks }
+
+            // Activate newly loaded external tracks as soon as MPV assigns their ID
+            subTracks.filterIsInstance<VideoTrack.External>().forEach { newTrack ->
+                if (newTrack.mpvId != null) {
+                    val oldTrack = oldSubTracks.find { it is VideoTrack.External && it.index == newTrack.index } as? VideoTrack.External
+                    if (oldTrack?.mpvId == null) {
+                        selectSub(newTrack)
+                    }
+                }
+            }
+
+            audioTracks.filterIsInstance<VideoTrack.External>().forEach { newTrack ->
+                if (newTrack.mpvId != null) {
+                    val oldTrack = oldAudioTracks.find { it is VideoTrack.External && it.index == newTrack.index } as? VideoTrack.External
+                    if (oldTrack?.mpvId == null) {
+                        selectAudio(newTrack)
+                    }
+                }
+            }
 
             if (!isLoadingTracks.value) {
                 onFinishLoadingTracks()
