@@ -375,6 +375,7 @@ class PlayerActivity : BaseActivity() {
 
         MPVLib.removeLogObserver(playerObserver)
         MPVLib.removeObserver(playerObserver)
+        player.initialized = false
         player.destroy()
         castManager.cleanup()
 
@@ -526,6 +527,7 @@ class PlayerActivity : BaseActivity() {
             cacheDir = applicationContext.cacheDir.path,
             logLvl = logLevel,
         )
+        MPVLib.setOptionString("idle", "yes")
         MPVLib.addLogObserver(playerObserver)
         MPVLib.addObserver(playerObserver)
     }
@@ -1205,7 +1207,7 @@ class PlayerActivity : BaseActivity() {
         viewModel.clearTracks()
         viewModel.isLoading.update { _ -> true }
         viewModel.setIsStopped(false)
-        viewModel.resetHosterState()
+        viewModel.resetState()
 
         lifecycleScope.launch {
             try {

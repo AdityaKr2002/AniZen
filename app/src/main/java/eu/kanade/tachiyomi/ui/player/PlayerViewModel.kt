@@ -93,6 +93,15 @@ import eu.kanade.tachiyomi.util.system.isConnectedToWifi
 import eu.kanade.tachiyomi.util.system.toast
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.Utils
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import eu.kanade.tachiyomi.animesource.model.ThumbnailInfo
+import eu.kanade.tachiyomi.animesource.model.TileInfo
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -259,6 +268,23 @@ class PlayerViewModel @JvmOverloads constructor(
 
     private val _pos = MutableStateFlow(0f)
     val pos = _pos.asStateFlow()
+
+    private val _seekPosition = MutableStateFlow(0f)
+    val seekPosition = _seekPosition.asStateFlow()
+
+    private val _thumbnailImage = MutableStateFlow<ImageBitmap?>(null)
+    val thumbnailImage = _thumbnailImage.asStateFlow()
+
+    private val thumbnailInfo = MutableStateFlow<ThumbnailInfo?>(null)
+    val hasThumbnails = thumbnailInfo.map { it != null }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val thumbnailTileCache =
+        object : LinkedHashMap<Int, Bitmap>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Int, Bitmap>?) = size > 15
+        }
+    private var thumbnailFetchJob: Job? = null
+
+    private var lastScrubSeekTime = 0L
 
     private var castProgressJob: Job? = null
 
@@ -764,6 +790,68 @@ class PlayerViewModel @JvmOverloads constructor(
         }
     }
 
+    fun updateSeekPos(pos: Float) {
+        _seekPosition.update { _ -> pos }
+
+        val thumbInfo = thumbnailInfo.value ?: return
+        val info = thumbInfo.tileInfo.lastOrNull { it.timeMs <= pos * 1000L }
+        if (info != null) {
+            val tileBitmap = synchronized(thumbnailTileCache) { thumbnailTileCache[info.imageIndex] }
+            if (tileBitmap != null) {
+                // Perform crop operation entirely on background thread to avoid main thread jank
+                thumbnailFetchJob?.cancel()
+                thumbnailFetchJob = viewModelScope.launchIO {
+                    try {
+                        val thumbnail = Bitmap.createBitmap(tileBitmap, info.x, info.y, info.width, info.height)
+                        val imageBitmap = thumbnail.asImageBitmap()
+                        _thumbnailImage.update { _ -> imageBitmap }
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        logcat(LogPriority.ERROR, e) { "Failed to crop cached thumbnail" }
+                    }
+                }
+            } else {
+                thumbnailFetchJob?.cancel()
+                thumbnailFetchJob = viewModelScope.launchIO {
+                    // 150ms debounce before launching network request
+                    delay(150)
+                    val source = currentSource.value as? AnimeHttpSource ?: return@launchIO
+
+                    try {
+                        val tileUrl = thumbInfo.imageTileUrls[info.imageIndex]
+                        val bitmap = source.getImageTile(tileUrl)
+                        if (bitmap != null) {
+                            synchronized(thumbnailTileCache) {
+                                thumbnailTileCache[info.imageIndex] = bitmap
+                            }
+                            val thumbnail = Bitmap.createBitmap(bitmap, info.x, info.y, info.width, info.height)
+                            val imageBitmap = thumbnail.asImageBitmap()
+                            _thumbnailImage.update { _ -> imageBitmap }
+                        }
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        logcat(LogPriority.ERROR, e) { "Failed to fetch thumbnails tiles" }
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateIsSeeking(value: Boolean) {
+        isSeekingUI.update { _ -> value }
+        if (!value) {
+            _thumbnailImage.update { _ -> null }
+        }
+    }
+
+    fun scrubSeekTo(position: Int, precise: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (now - lastScrubSeekTime > 200L) {
+            lastScrubSeekTime = now
+            seekTo(position, precise)
+        }
+    }
+
     fun updateReadAhead(value: Long) {
         _readAhead.update { value.toFloat() }
     }
@@ -1247,12 +1335,20 @@ class PlayerViewModel @JvmOverloads constructor(
         if (showSeekBar) showSeekBar()
     }
 
-    fun resetHosterState() {
+    /**
+     * Reset state when changing episodes
+     */
+    fun resetState() {
         _pausedState.update { _ -> false }
         _hosterState.update { _ -> emptyList() }
         _hosterList.update { _ -> emptyList() }
         _hosterExpandedList.update { _ -> emptyList() }
         _selectedHosterVideoIndex.update { _ -> Pair(-1, -1) }
+        synchronized(thumbnailTileCache) {
+            thumbnailTileCache.clear()
+        }
+        thumbnailFetchJob?.cancel()
+        lastScrubSeekTime = 0L
     }
 
     private fun setPropertyDouble(property: String, value: Double) {
@@ -1907,6 +2003,10 @@ class PlayerViewModel @JvmOverloads constructor(
         _currentVideo.update { _ -> resolvedVideo }
 
         qualityIndex = Pair(hosterIndex, videoIndex)
+
+        viewModelScope.launchIO {
+            loadThumbnails(resolvedVideo, source)
+        }
 
         activity.setVideo(resolvedVideo)
         return true
@@ -2737,6 +2837,38 @@ class PlayerViewModel @JvmOverloads constructor(
         data class SetCoverResult(val result: SetAsCover) : Event()
         data class SavedImage(val result: SaveImageResult) : Event()
         data class ShareImage(val uri: Uri, val seconds: String) : Event()
+    }
+
+    suspend fun loadThumbnails(video: Video, source: AnimeSource?) {
+        synchronized(thumbnailTileCache) {
+            thumbnailTileCache.clear()
+        }
+        if (source is AnimeHttpSource) {
+            try {
+                val thumbInfo = source.getVideoThumbnails(video)
+                if (thumbInfo != null) {
+                    thumbnailInfo.update { _ ->
+                        ThumbnailInfo(
+                            tileInfo = thumbInfo.tileInfo.sortedBy { it.timeMs },
+                            imageTileUrls = thumbInfo.imageTileUrls,
+                        )
+                    }
+
+                    // Preload first 2 tilemaps
+                    thumbInfo.imageTileUrls.take(2).forEachIndexed { index, tileUrl ->
+                        val bitmap = source.getImageTile(tileUrl)
+                        if (bitmap != null) {
+                            synchronized(thumbnailTileCache) {
+                                thumbnailTileCache[index] = bitmap
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                logcat(LogPriority.ERROR, e) { "Failed to fetch thumbnails" }
+            }
+        }
     }
 }
 

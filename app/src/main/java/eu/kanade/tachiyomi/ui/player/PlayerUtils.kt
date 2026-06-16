@@ -28,10 +28,14 @@ import logcat.LogPriority
 import logcat.logcat
 
 internal fun Uri.openContentFd(context: Context): String? {
-    return context.contentResolver.openFileDescriptor(this, "r")?.detachFd()?.let {
-        Utils.findRealPath(it)?.also { _ ->
-            ParcelFileDescriptor.adoptFd(it).close()
-        } ?: "fd://$it"
+    return context.contentResolver.openFileDescriptor(this, "r")?.detachFd()?.let { fd ->
+        val path = Utils.findRealPath(fd)
+        if (path != null && java.io.File(path).canRead()) {
+            ParcelFileDescriptor.adoptFd(fd).close()
+            path
+        } else {
+            "fd://$fd"
+        }
     }
 }
 
