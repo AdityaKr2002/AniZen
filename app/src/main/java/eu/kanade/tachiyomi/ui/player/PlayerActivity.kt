@@ -375,6 +375,7 @@ class PlayerActivity : BaseActivity() {
 
         MPVLib.removeLogObserver(playerObserver)
         MPVLib.removeObserver(playerObserver)
+        player.initialized = false
         player.destroy()
         castManager.cleanup()
 
