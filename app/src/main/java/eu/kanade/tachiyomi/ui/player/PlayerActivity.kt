@@ -1207,7 +1207,7 @@ class PlayerActivity : BaseActivity() {
         viewModel.clearTracks()
         viewModel.isLoading.update { _ -> true }
         viewModel.setIsStopped(false)
-        viewModel.resetHosterState()
+        viewModel.resetState()
 
         lifecycleScope.launch {
             try {

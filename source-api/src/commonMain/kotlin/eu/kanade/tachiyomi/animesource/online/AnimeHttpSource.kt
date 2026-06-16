@@ -21,6 +21,8 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import tachiyomi.core.common.util.lang.awaitSingle
+import android.graphics.Bitmap
+import eu.kanade.tachiyomi.animesource.model.ThumbnailInfo
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -542,6 +544,21 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @param response the response from the site.
      */
     protected abstract fun videoUrlParse(response: Response): String
+
+    /**
+     * Return info for thumbnails to be used as a preview when seeking.
+     *
+     * @since extensions-lib 17
+     * @param video the video information.
+     * @return the info for thumbnails. Return null if no thumbnails exist.
+     */
+    open suspend fun getVideoThumbnails(video: Video): ThumbnailInfo? {
+        return null
+    }
+
+    open suspend fun getImageTile(url: String): Bitmap? {
+        return null
+    }
 
     /**
      * Returns the response of the source video.

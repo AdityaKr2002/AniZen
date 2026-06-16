@@ -403,6 +403,8 @@ fun GestureHandler(
                             if (dragDirection == 1) {
                                 viewModel.gestureSeekAmount.update { null }
                                 viewModel.hideSeekBar()
+                                viewModel.updateIsSeeking(false)
+                                viewModel.seekTo(viewModel.seekPosition.value.coerceIn(0f, duration).toInt(), preciseSeeking)
                                 if (!wasPlayerAlreadyPause) viewModel.unpause()
                             }
                             break
@@ -412,6 +414,8 @@ fun GestureHandler(
                             if (dragDirection == 1) {
                                 viewModel.gestureSeekAmount.update { null }
                                 viewModel.hideSeekBar()
+                                viewModel.updateIsSeeking(false)
+                                viewModel.seekTo(viewModel.seekPosition.value.coerceIn(0f, duration).toInt(), preciseSeeking)
                                 if (!wasPlayerAlreadyPause) viewModel.unpause()
                             }
                             break
@@ -426,6 +430,7 @@ fun GestureHandler(
                                     startingX = pointer.position.x
                                     wasPlayerAlreadyPause = viewModel.paused.value
                                     viewModel.pause()
+                                    viewModel.updateIsSeeking(true)
                                 } else if (diffY > diffX && gestureVolumeBrightness) {
                                     dragDirection = 2
                                     startingY = pointer.position.y
@@ -436,8 +441,12 @@ fun GestureHandler(
                             }
                         } else if (dragDirection == 1) {
                             calculateNewHorizontalGestureValue(startingPosition.toFloat(), startingX, pointer.position.x, 0.15f).let {
-                                viewModel.gestureSeekAmount.update { _ -> Pair(startingPosition, (it - startingPosition).toInt().coerceIn(0 - startingPosition, (duration - startingPosition).toInt())) }
-                                viewModel.seekTo(it.toInt().coerceIn(0, duration.toInt()), preciseSeeking)
+                                val targetPos = it.coerceIn(0f, duration)
+                                viewModel.gestureSeekAmount.update { _ -> Pair(startingPosition, (targetPos - startingPosition).toInt()) }
+                                viewModel.updateSeekPos(targetPos)
+                                if (!viewModel.hasThumbnails.value) {
+                                    viewModel.scrubSeekTo(targetPos.toInt(), false)
+                                }
                             }
                             if (showSeekbar) viewModel.showSeekBar()
                             pointer.consume()

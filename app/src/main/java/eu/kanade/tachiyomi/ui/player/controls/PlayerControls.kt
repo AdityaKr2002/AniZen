@@ -73,6 +73,7 @@ import eu.kanade.tachiyomi.ui.player.controls.components.BrightnessSlider
 import eu.kanade.tachiyomi.ui.player.controls.components.ControlsButton
 import eu.kanade.tachiyomi.ui.player.controls.components.DoubleSpeedPlayerUpdate
 import eu.kanade.tachiyomi.ui.player.controls.components.SeekbarWithTimers
+import eu.kanade.tachiyomi.ui.player.controls.components.ThumbnailPreview
 import eu.kanade.tachiyomi.ui.player.controls.components.TextPlayerUpdate
 import eu.kanade.tachiyomi.ui.player.controls.components.VolumeSlider
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.toFixed
@@ -143,8 +144,12 @@ fun PlayerControls(
     val currentBrightness by viewModel.currentBrightness.collectAsState()
 
     val playerTimeToDisappear by playerPreferences.playerTimeToDisappear().collectAsState()
-    var isSeeking by remember { mutableStateOf(false) }
     var resetControls by remember { mutableStateOf(true) }
+    val isSeekingUI by viewModel.isSeekingUI.collectAsState()
+    val seekPosition by viewModel.seekPosition.collectAsState()
+    val chaptersList = remember(chapters) {
+        chapters.map { it.toSegment() }.toImmutableList()
+    }
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -165,10 +170,10 @@ fun PlayerControls(
     LaunchedEffect(
         controlsShown,
         paused,
-        isSeeking,
+        isSeekingUI,
         resetControls,
     ) {
-        if (controlsShown && !paused && !isSeeking) {
+        if (controlsShown && !paused && !isSeekingUI) {
             delay(playerTimeToDisappear.toLong())
             viewModel.hideControls()
         }
@@ -219,7 +224,7 @@ fun PlayerControls(
                     unlockControlsButton,
                     bottomRightControls, bottomLeftControls,
                     centerControls, seekbar, playerUpdates,
-                    portraitBottomBar,
+                    portraitBottomBar, thumbnail,
                 ) = createRefs()
 
                 val hasPreviousEpisode by viewModel.hasPreviousEpisode.collectAsState()
@@ -434,9 +439,10 @@ fun PlayerControls(
                     val readAhead by viewModel.readAhead.collectAsState()
                     val preciseSeeking by gesturePreferences.playerSmoothSeek().collectAsState()
 
+                    var wasPlayerAlreadyPause by remember { mutableStateOf(false) }
                     var sliderPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
                     LaunchedEffect(position) {
-                        if (!isSeeking) {
+                        if (!isSeekingUI) {
                             sliderPosition = position
                         }
                     }
@@ -446,23 +452,28 @@ fun PlayerControls(
                         duration = duration,
                         readAheadValue = readAhead,
                         onValueChange = {
-                            isSeeking = true
-                            viewModel.isSeekingUI.value = true
+                            if (!viewModel.isSeekingUI.value) {
+                                wasPlayerAlreadyPause = viewModel.paused.value
+                                viewModel.pause()
+                                viewModel.updateIsSeeking(true)
+                            }
                             sliderPosition = it
-                            viewModel.updatePlayBackPos(it)
-                            // Fast scrubbing: absolute+keyframes (precise=false) while dragging
-                            viewModel.seekTo(it.toInt(), false)
+                            viewModel.updateSeekPos(it)
+                            if (!viewModel.hasThumbnails.value) {
+                                viewModel.scrubSeekTo(it.toInt(), false)
+                            }
                         },
-                        onValueChangeFinished = { 
-                            isSeeking = false 
-                            viewModel.isSeekingUI.value = false
-                            // Final precise seek on release
+                        onValueChangeFinished = {
+                            viewModel.updateIsSeeking(false)
                             viewModel.seekTo(sliderPosition.toInt(), preciseSeeking)
+                            if (!wasPlayerAlreadyPause) {
+                                viewModel.unpause()
+                            }
                         },
                         timersInverted = Pair(false, invertDuration),
                         durationTimerOnCLick = { playerPreferences.invertDuration().set(!invertDuration) },
                         positionTimerOnClick = {},
-                        chapters = chapters.map { it.toSegment() }.toImmutableList(),
+                        chapters = chaptersList,
                     )
                 }
                 val mediaTitle by viewModel.mediaTitle.collectAsState()
@@ -615,6 +626,18 @@ fun PlayerControls(
                         onCastClick = { showCastSheet = true },
                     )
                 }
+
+                val thumbnailImage by viewModel.thumbnailImage.collectAsState()
+                ThumbnailPreview(
+                    visible = isSeekingUI,
+                    image = thumbnailImage,
+                    positionS = seekPosition.toLong(),
+                    durationS = duration.toLong(),
+                    chapters = chaptersList,
+                    modifier = Modifier.fillMaxWidth().constrainAs(thumbnail) {
+                        bottom.linkTo(seekbar.top, spacing.medium)
+                    },
+                )
             }
         }
 
@@ -674,7 +697,7 @@ fun PlayerControls(
             displayHosters = Pair(showFailedHosters, emptyHosters),
 
             chapter = currentChapter?.toSegment(),
-            chapters = chapters.map { it.toSegment() }.toImmutableList(),
+            chapters = chaptersList,
             onSeekToChapter = {
                 viewModel.selectChapter(it)
                 viewModel.dismissSheet()
