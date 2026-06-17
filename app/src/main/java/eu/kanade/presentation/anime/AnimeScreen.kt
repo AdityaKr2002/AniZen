@@ -61,6 +61,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.snap
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.FabPosition
+import kotlin.math.roundToInt
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.onSizeChanged
@@ -465,6 +475,7 @@ private fun AnimeScreenSmallImpl(
             Scaffold(
                 hazeEnabled = false,
                 contentWindowInsets = scaffoldInsets,
+                floatingActionButtonPosition = FabPosition.Center,
                 floatingActionButton = {
                     AnimatedVisibility(
                         visible = isFABVisible,
@@ -474,15 +485,10 @@ private fun AnimeScreenSmallImpl(
                         val isWatching = remember(state.episodes) {
                             state.episodes.fastAny { it.episode.seen }
                         }
-                        ExtendedFloatingActionButton(
-                            text = {
-                                Text(text = stringResource(if (isWatching) MR.strings.action_resume else MR.strings.action_start))
-                            },
-                            icon = {
-                                Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
-                            },
-                            onClick = { onContinueWatching(null) },
-                            expanded = episodeListState.shouldExpandFAB(),
+                        DraggableAnimeFAB(
+                            isWatching = isWatching,
+                            onContinueWatching = { onContinueWatching(null) },
+                            shouldExpand = episodeListState.shouldExpandFAB(),
                         )
                     }
                 },
@@ -964,6 +970,7 @@ fun AnimeScreenLargeImpl(
             Scaffold(
                 hazeEnabled = false,
                 contentWindowInsets = scaffoldInsets,
+                floatingActionButtonPosition = FabPosition.Center,
                 floatingActionButton = {
                     AnimatedVisibility(
                         visible = isFABVisible,
@@ -973,15 +980,10 @@ fun AnimeScreenLargeImpl(
                         val isWatching = remember(state.episodes) {
                             state.episodes.fastAny { it.episode.seen }
                         }
-                        ExtendedFloatingActionButton(
-                            text = {
-                                Text(text = stringResource(if (isWatching) MR.strings.action_resume else MR.strings.action_start))
-                            },
-                            icon = {
-                                Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
-                            },
-                            onClick = { onContinueWatching(null) },
-                            expanded = episodeListState.shouldExpandFAB(),
+                        DraggableAnimeFAB(
+                            isWatching = isWatching,
+                            onContinueWatching = { onContinueWatching(null) },
+                            shouldExpand = episodeListState.shouldExpandFAB(),
                         )
                     }
                 },
@@ -1682,6 +1684,98 @@ private fun SeasonSelector(
                 border = null,
             )
         }
+    }
+}
+
+@Composable
+private fun DraggableAnimeFAB(
+    isWatching: Boolean,
+    onContinueWatching: () -> Unit,
+    shouldExpand: Boolean,
+) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val fabOnLeftPref = remember { uiPreferences.animeDetailsFabOnLeft() }
+    val isFabOnLeft by fabOnLeftPref.collectAsStatePref()
+
+    var containerWidth by remember { mutableStateOf(0f) }
+    var fabWidth by remember { mutableStateOf(0f) }
+    var dragOffset by remember { mutableStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    var isInitialized by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val paddingPx = remember { with(density) { 16.dp.toPx() } }
+
+    val targetOffset = if (isFabOnLeft) {
+        0f
+    } else {
+        (containerWidth - 2 * paddingPx - fabWidth).coerceAtLeast(0f)
+    }
+
+    if (containerWidth > 0f && fabWidth > 0f) {
+        LaunchedEffect(Unit) {
+            delay(50)
+            isInitialized = true
+        }
+    }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = targetOffset + dragOffset,
+        animationSpec = if (!isInitialized || isDragging) snap() else spring(stiffness = Spring.StiffnessMediumLow),
+        label = "FAB Position"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { containerWidth = it.width.toFloat() }
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.BottomStart
+    ) {
+        ExtendedFloatingActionButton(
+            modifier = Modifier
+                .onSizeChanged { fabWidth = it.width.toFloat() }
+                .offset { IntOffset(x = animatedOffset.roundToInt(), y = 0) }
+                .pointerInput(isFabOnLeft, containerWidth, fabWidth) {
+                    detectHorizontalDragGestures(
+                        onDragStart = {
+                            isDragging = true
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                            val threshold = (containerWidth - 2 * paddingPx - fabWidth) / 3f
+                            val toggled = if (isFabOnLeft) {
+                                dragOffset > threshold
+                            } else {
+                                dragOffset < -threshold
+                            }
+                            if (toggled) {
+                                scope.launch {
+                                    fabOnLeftPref.set(!isFabOnLeft)
+                                }
+                            }
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            isDragging = false
+                            dragOffset = 0f
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            dragOffset += dragAmount
+                        }
+                    )
+                },
+            text = {
+                Text(text = stringResource(if (isWatching) MR.strings.action_resume else MR.strings.action_start))
+            },
+            icon = {
+                Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
+            },
+            onClick = { onContinueWatching() },
+            expanded = shouldExpand,
+        )
     }
 }
 
