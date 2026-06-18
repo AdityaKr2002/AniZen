@@ -106,6 +106,7 @@ android {
 
             applicationIdSuffix = ".beta"
 
+            versionName = "r"
             versionNameSuffix = debug.versionNameSuffix
             signingConfig = release.signingConfig
 
