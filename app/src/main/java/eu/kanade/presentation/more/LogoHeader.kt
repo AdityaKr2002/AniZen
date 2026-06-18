@@ -78,7 +78,7 @@ fun LogoHeader() {
                 )
             } else {
                 Icon(
-                    painter = painterResource(R.drawable.ic_splash_logo),
+                    painter = painterResource(R.drawable.ic_splash_logo_raw),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(48.dp)

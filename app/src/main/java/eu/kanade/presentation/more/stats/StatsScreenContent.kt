@@ -195,7 +195,7 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                     )
                 } else {
                     Icon(
-                        painter = painterResource(R.drawable.ic_splash_logo),
+                        painter = painterResource(R.drawable.ic_splash_logo_raw),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.primary // 10% Accent
