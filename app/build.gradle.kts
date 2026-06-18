@@ -230,7 +230,10 @@ kotlin {
     val appExtension = extensions.getByType<com.android.build.gradle.AppExtension>()
     appExtension.applicationVariants.all {
         if (buildType.name == "preview") {
-            mergedFlavor.versionName = "r"
+            outputs.all {
+                val output = this as? com.android.build.gradle.api.ApkVariantOutput
+                output?.versionNameOverride = "r-${getCommitCount()}"
+            }
         }
     }
 }
