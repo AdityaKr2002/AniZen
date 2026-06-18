@@ -106,7 +106,6 @@ android {
 
             applicationIdSuffix = ".beta"
 
-            versionName = "r"
             versionNameSuffix = debug.versionNameSuffix
             signingConfig = release.signingConfig
 
@@ -226,6 +225,12 @@ kotlin {
             "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
         )
+    }
+
+    applicationVariants.all {
+        if (buildType.name == "preview") {
+            mergedFlavor.versionName = "r"
+        }
     }
 }
 
