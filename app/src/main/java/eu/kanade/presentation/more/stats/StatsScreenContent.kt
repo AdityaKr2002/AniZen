@@ -283,13 +283,6 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                             }
                             innerTextField()
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Outlined.Edit,
-                            contentDescription = "Edit Name",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
                     }
                 }
             )
