@@ -207,6 +207,15 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+
+    applicationVariants.all {
+        if (buildType.name == "preview") {
+            outputs.all {
+                val output = this as? com.android.build.gradle.api.ApkVariantOutput
+                output?.versionNameOverride = "r-${getCommitCount()}"
+            }
+        }
+    }
 }
 
 kotlin {
@@ -225,16 +234,6 @@ kotlin {
             "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
         )
-    }
-
-    val appExtension = extensions.getByType<com.android.build.gradle.AppExtension>()
-    appExtension.applicationVariants.all {
-        if (buildType.name == "preview") {
-            outputs.all {
-                val output = this as? com.android.build.gradle.api.ApkVariantOutput
-                output?.versionNameOverride = "r-${getCommitCount()}"
-            }
-        }
     }
 }
 
