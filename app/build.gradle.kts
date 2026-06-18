@@ -227,7 +227,8 @@ kotlin {
         )
     }
 
-    applicationVariants.all {
+    val appExtension = extensions.getByType<com.android.build.gradle.AppExtension>()
+    appExtension.applicationVariants.all {
         if (buildType.name == "preview") {
             mergedFlavor.versionName = "r"
         }
