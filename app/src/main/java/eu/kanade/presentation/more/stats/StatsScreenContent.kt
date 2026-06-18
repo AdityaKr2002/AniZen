@@ -66,6 +66,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
+import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.presentation.anime.components.MarkdownRender
 import eu.kanade.presentation.more.stats.data.ExtensionInfo
@@ -193,7 +195,7 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Outlined.LocalLibrary,
+                        painter = painterResource(R.drawable.ic_splash_logo),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.primary // 10% Accent

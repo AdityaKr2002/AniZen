@@ -78,7 +78,7 @@ fun LogoHeader() {
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Outlined.LocalLibrary,
+                    painter = painterResource(R.drawable.ic_splash_logo),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(48.dp)

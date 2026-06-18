@@ -318,7 +318,7 @@ private fun ProfileHeader(name: String) {
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Outlined.LocalLibrary,
+                    painter = painterResource(R.drawable.ic_splash_logo),
                     contentDescription = null,
                     modifier = Modifier.size(48.dp).align(Alignment.Center),
                     tint = MaterialTheme.colorScheme.primary
