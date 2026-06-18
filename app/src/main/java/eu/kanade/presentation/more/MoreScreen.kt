@@ -110,6 +110,7 @@ fun MoreScreen(
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
+    val aiPreferences = remember { Injekt.get<AiPreferences>() }
 
     Scaffold(
         topBar = {

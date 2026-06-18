@@ -117,7 +117,7 @@ fun MiddlePlayerControls(
                     if (showLoading) {
                         CircularProgressIndicator(Modifier.size(96.dp))
                     }
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = controlsShown && !areControlsLocked && !showLoading,
                         enter = enter,
                         exit = exit,

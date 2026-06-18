@@ -255,6 +255,7 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                     onDone = { focusManager.clearFocus() }
                 ),
                 decorationBox = { innerTextField ->
+                    val lineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
@@ -264,7 +265,7 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                                 val strokeWidth = 1.dp.toPx()
                                 val y = size.height - strokeWidth / 2
                                 drawLine(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                    color = lineColor,
                                     start = Offset(0f, y),
                                     end = Offset(size.width, y),
                                     strokeWidth = strokeWidth
