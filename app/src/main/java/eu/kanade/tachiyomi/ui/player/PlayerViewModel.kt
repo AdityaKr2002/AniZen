@@ -1558,7 +1558,7 @@ class PlayerViewModel @JvmOverloads constructor(
                     val epSeason = EpisodeSeasonUtils.getSeasonName(domainEp)
                     val effectiveSeason = when {
                         epSeason != null && epSeason != "Season 0" -> epSeason
-                        EpisodeSeasonUtils.hasSpecialKeywords(domainEp) || EpisodeSeasonUtils.isSeasonZero(domainEp) -> "Specials"
+                        EpisodeSeasonUtils.isSeasonZero(domainEp) -> "Specials"
                         else -> "Extras"
                     }
                     effectiveSeason == savedSeason

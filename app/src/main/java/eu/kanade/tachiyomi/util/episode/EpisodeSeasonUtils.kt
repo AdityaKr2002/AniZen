@@ -5,7 +5,6 @@ import tachiyomi.domain.episode.model.Episode
 object EpisodeSeasonUtils {
     // Added |_ to delimiters to support patterns like _s1e1_
     private val seasonRegex = Regex("""(?i)(?:^|\b|\s|\[|_)(?:s|season\s*)(\d+)(?:\s|e|x|\||-|\.|\b|\]|_|$)""")
-    private val specialKeywordsRegex = Regex("""(?i)\b(ova|oav|ona|movie|pv|trailer|bonus|recap|summary|prologue|extra|special|omake|teaser|clip|interview|preview)s?\b""")
 
 
     /**
@@ -24,35 +23,13 @@ object EpisodeSeasonUtils {
     }
 
     /**
-     * Checks if the episode name contains special keywords.
-     */
-    fun hasSpecialKeywords(episode: Episode): Boolean {
-        return specialKeywordsRegex.containsMatchIn(episode.name)
-    }
-
-    /**
-     * Checks if the episode name contains digits.
-     */
-    fun hasDigits(s: String): Boolean {
-        return s.any { it.isDigit() }
-    }
-
-    /**
      * Checks if the episode is from Season 0.
      * Also detects 0.x numbering (e.g., 0.1, 0.2) used by many extensions for specials.
      */
     fun isSeasonZero(episode: Episode): Boolean {
         val hasSeasonZeroName = getSeasonName(episode) == "Season 0"
-        val hasSeasonZeroNumber = episode.episodeNumber > 0 && episode.episodeNumber < 1.0
+        val hasSeasonZeroNumber = episode.episodeNumber >= 0 && episode.episodeNumber < 1.0
         return hasSeasonZeroName || hasSeasonZeroNumber
-    }
-
-    /**
-     * Checks if the episode is likely a non-standard content (Special or Extra).
-     */
-    fun isSpecial(episode: Episode): Boolean {
-        // Contains special keywords, or is Season 0, or is unrecognized with negative number, or name has no digits
-        return episode.episodeNumber < 0 || hasSpecialKeywords(episode) || !hasDigits(episode.name) || isSeasonZero(episode)
     }
 
     /**
@@ -63,8 +40,8 @@ object EpisodeSeasonUtils {
         fun getPriority(s: String): Int {
             return when {
                 s.startsWith("Season", ignoreCase = true) -> 0
-                s.contains("Extra", ignoreCase = true) -> 1
-                s.contains("Special", ignoreCase = true) -> 2
+                s.contains("Special", ignoreCase = true) -> 1
+                s.contains("Extra", ignoreCase = true) -> 2
                 else -> 3
             }
         }

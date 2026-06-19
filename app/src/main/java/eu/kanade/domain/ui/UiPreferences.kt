@@ -217,6 +217,8 @@ class UiPreferences(
     fun preloadLibraryColor() = preferenceStore.getBoolean("preload_library_color", true)
 
     fun hazeEnabled() = preferenceStore.getBoolean("pref_haze_enabled", false)
+
+    fun animeDetailsFabOnLeft() = preferenceStore.getBoolean("anime_details_fab_on_left", false)
     // SY <--
 
     companion object {

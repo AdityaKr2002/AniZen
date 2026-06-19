@@ -350,17 +350,15 @@ class AnimeScreenModel(
                     val item = chronological[index]
                     val prevItem = chronological.getOrNull(index - 1)
                     
+                    val currentIsSeasonZero = EpisodeSeasonUtils.isSeasonZero(item.episode)
+                    val prevIsSeasonZero = prevItem?.let { EpisodeSeasonUtils.isSeasonZero(it.episode) }
+
                     val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                     val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                    val currentHasKeywords = EpisodeSeasonUtils.hasSpecialKeywords(item.episode) || EpisodeSeasonUtils.isSeasonZero(item.episode)
-                    val prevHasKeywords = prevItem?.let { EpisodeSeasonUtils.hasSpecialKeywords(it.episode) || EpisodeSeasonUtils.isSeasonZero(it.episode) }
-                    val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
-                    val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
                     val isNewBlock = if (prevItem == null) {
                         true
-                    } else if (currentIsSpecial != prevIsSpecial) {
-                        // Split when switching between special/extra and regular content
+                    } else if (currentIsSeasonZero != prevIsSeasonZero) {
                         true
                     } else if (currentExplicit != prevExplicit) {
                         // Split whenever the explicit season name changes (including null transitions)
@@ -382,10 +380,10 @@ class AnimeScreenModel(
                 // Step 3: Assign season names to blocks
                 blocks.forEach { block ->
                     var explicitSeasonName: String? = null
-                    var hasSpecials = false
+                    var isSeasonZeroBlock = false
                     for (item in block.episodes) {
-                        if (EpisodeSeasonUtils.isSpecial(item.episode)) {
-                            hasSpecials = true
+                        if (EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                            isSeasonZeroBlock = true
                         }
                         if (explicitSeasonName == null) {
                             val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -393,10 +391,10 @@ class AnimeScreenModel(
                         }
                     }
                     
-                    val seasonName = if (explicitSeasonName != null) {
-                        explicitSeasonName
-                    } else if (hasSpecials) {
+                    val seasonName = if (isSeasonZeroBlock) {
                         "Specials"
+                    } else if (explicitSeasonName != null) {
+                        explicitSeasonName
                     } else {
                         "Extras"
                     }
@@ -2094,15 +2092,15 @@ class AnimeScreenModel(
                             val item = chronological[index]
                             val prevItem = chronological.getOrNull(index - 1)
 
+                            val currentIsSeasonZero = EpisodeSeasonUtils.isSeasonZero(item.episode)
+                            val prevIsSeasonZero = prevItem?.let { EpisodeSeasonUtils.isSeasonZero(it.episode) }
+
                             val currentExplicit = EpisodeSeasonUtils.getSeasonName(item.episode)
                             val prevExplicit = prevItem?.let { EpisodeSeasonUtils.getSeasonName(it.episode) }
-                            val currentIsSpecial = EpisodeSeasonUtils.isSpecial(item.episode)
-                            val prevIsSpecial = prevItem?.let { EpisodeSeasonUtils.isSpecial(it.episode) }
 
                             val isNewBlock = if (prevItem == null) {
                                 true
-                            } else if (currentIsSpecial != prevIsSpecial) {
-                                // Split when switching between special/extra and regular content
+                            } else if (currentIsSeasonZero != prevIsSeasonZero) {
                                 true
                             } else if (currentExplicit != prevExplicit) {
                                 // Split whenever the explicit season name changes (including null transitions)
@@ -2124,10 +2122,10 @@ class AnimeScreenModel(
                         // Step 3: Assign season names to blocks
                         blocks.forEach { block ->
                             var explicitSeasonName: String? = null
-                            var hasSpecials = false
+                            var isSeasonZeroBlock = false
                             for (item in block.episodes) {
-                                if (EpisodeSeasonUtils.isSpecial(item.episode)) {
-                                    hasSpecials = true
+                                if (EpisodeSeasonUtils.isSeasonZero(item.episode)) {
+                                    isSeasonZeroBlock = true
                                 }
                                 if (explicitSeasonName == null) {
                                     val name = EpisodeSeasonUtils.getSeasonName(item.episode)
@@ -2135,10 +2133,10 @@ class AnimeScreenModel(
                                 }
                             }
 
-                            val seasonName = if (explicitSeasonName != null) {
-                                explicitSeasonName
-                            } else if (hasSpecials) {
+                            val seasonName = if (isSeasonZeroBlock) {
                                 "Specials"
+                            } else if (explicitSeasonName != null) {
+                                explicitSeasonName
                             } else {
                                 "Extras"
                             }

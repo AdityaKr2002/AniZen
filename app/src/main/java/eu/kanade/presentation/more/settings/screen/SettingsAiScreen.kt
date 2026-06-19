@@ -40,55 +40,14 @@ object SettingsAiScreen : SearchableSettings {
         return if (enableAi) {
             listOf(
                 getMainGroup(aiPreferences, navigator),
-                getIdentityGroup(aiPreferences),
                 getAssistantGroup(aiPreferences),
                 getStatisticsGroup(aiPreferences),
             )
         } else {
             listOf(
                 getMainGroup(aiPreferences, navigator),
-                getIdentityGroup(aiPreferences),
             )
         }
-    }
-
-    @Composable
-    private fun getIdentityGroup(aiPreferences: AiPreferences): Preference.PreferenceGroup {
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-        
-        val pickImage = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            if (uri != null) {
-                // Take persistable URI permission if possible
-                try {
-                    context.contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
-                } catch (e: Exception) {
-                    // Ignore if not supported
-                }
-                aiPreferences.profilePhotoUri().set(uri.toString())
-            }
-        }
-
-        return Preference.PreferenceGroup(
-            title = "Personalization",
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.EditTextPreference(
-                    pref = aiPreferences.displayName(),
-                    title = "Display Name",
-                    subtitle = "Your name in chats and reports",
-                ),
-                Preference.PreferenceItem.TextPreference(
-                    title = "Profile Photo",
-                    subtitle = "Set your profile picture for the assistant",
-                    onClick = { pickImage.launch("image/*") }
-                ),
-            ),
-        )
     }
 
     @Composable

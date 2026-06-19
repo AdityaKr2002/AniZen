@@ -66,6 +66,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import eu.kanade.tachiyomi.R
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.presentation.anime.components.MarkdownRender
 import eu.kanade.presentation.more.stats.data.ExtensionInfo
@@ -164,6 +177,24 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
     val aiPreferences = remember { Injekt.get<AiPreferences>() }
     val displayName by aiPreferences.displayName().collectAsState()
     val profilePhotoUri by aiPreferences.profilePhotoUri().collectAsState()
+    val context = LocalContext.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
+    val pickImage = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: Exception) {
+                // Ignore if not supported
+            }
+            aiPreferences.profilePhotoUri().set(uri.toString())
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -181,7 +212,8 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer), // Accent highlight
+                    .background(MaterialTheme.colorScheme.primaryContainer) // Accent highlight
+                    .clickable { pickImage.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
                 if (profilePhotoUri.isNotEmpty()) {
@@ -193,7 +225,7 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Outlined.LocalLibrary,
+                        painter = painterResource(R.drawable.ic_splash_logo_raw),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.primary // 10% Accent
@@ -201,12 +233,61 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+
+            var editText by remember(displayName) { mutableStateOf(displayName) }
+
+            BasicTextField(
+                value = editText,
+                onValueChange = {
+                    editText = it
+                    aiPreferences.displayName().set(it)
+                },
+                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                ),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
+                decorationBox = { innerTextField ->
+                    val lineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .drawBehind {
+                                val strokeWidth = 1.dp.toPx()
+                                val y = size.height - strokeWidth / 2
+                                drawLine(
+                                    color = lineColor,
+                                    start = Offset(0f, y),
+                                    end = Offset(size.width, y),
+                                    strokeWidth = strokeWidth
+                                )
+                            }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (editText.isEmpty()) {
+                                Text(
+                                    text = "Your Name",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    }
+                }
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "${state.overview.libraryAnimeCount} Titles in Collection",
                 style = MaterialTheme.typography.bodyMedium.copy(

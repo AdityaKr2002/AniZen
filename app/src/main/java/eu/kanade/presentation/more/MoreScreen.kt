@@ -110,6 +110,7 @@ fun MoreScreen(
     val uriHandler = LocalUriHandler.current
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
+    val aiPreferences = remember { Injekt.get<AiPreferences>() }
 
     Scaffold(
         topBar = {
@@ -124,16 +125,13 @@ fun MoreScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        val aiPreferences = remember { Injekt.get<AiPreferences>() }
-        val displayName by aiPreferences.displayName().collectAsState()
-
         ScrollbarLazyColumn(
             modifier = Modifier.fillMaxSize().padding(contentPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ProfileHeader(name = displayName.ifBlank { "User" })
+                ProfileHeader()
             }
 
             item {
@@ -293,47 +291,16 @@ fun MoreScreen(
 }
 
 @Composable
-private fun ProfileHeader(name: String) {
-    val aiPreferences = remember { Injekt.get<AiPreferences>() }
-    val profilePhotoUri by aiPreferences.profilePhotoUri().collectAsState()
-
+private fun ProfileHeader() {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                .padding(4.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            if (profilePhotoUri.isNotEmpty()) {
-                AsyncImage(
-                    model = profilePhotoUri,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.LocalLibrary,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp).align(Alignment.Center),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = name,
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            color = MaterialTheme.colorScheme.onBackground
+        Icon(
+            painter = painterResource(R.drawable.ic_splash_logo_raw),
+            contentDescription = null,
+            modifier = Modifier.size(100.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
     }
 }
