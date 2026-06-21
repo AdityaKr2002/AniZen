@@ -58,5 +58,13 @@ class PlayerObserver(val activity: PlayerActivity) :
         }
         if (text.contains("HTTP error")) httpError = text
         logcat.logcat("mpv/$prefix", logPriority) { text }
+
+        if (level == MPVLib.mpvLogLevel.MPV_LOG_LEVEL_ERROR || level == MPVLib.mpvLogLevel.MPV_LOG_LEVEL_FATAL ||
+            text.contains("Cannot open", ignoreCase = true) || text.contains("failed to open", ignoreCase = true)
+        ) {
+            activity.runOnUiThread {
+                activity.viewModel.handleMpvLogFailure(text)
+            }
+        }
     }
 }

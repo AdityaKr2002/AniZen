@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreTime
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -84,10 +85,12 @@ fun AudioTracksSheet(
                 is VideoTrack.External -> selectedId == it.mpvId
             }
             val isLoading = it is VideoTrack.External && it.isLoading
+            val isFailed = it is VideoTrack.External && it.isFailed
             AudioTrackRow(
                 title = getTrackTitle(it),
                 isSelected = isSelected,
                 isLoading = isLoading,
+                isFailed = isFailed,
                 onClick = { onSelect(it) },
             )
         },
@@ -102,6 +105,7 @@ fun AudioTrackRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    isFailed: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -123,6 +127,14 @@ fun AudioTrackRow(
         if (isLoading) {
             Spacer(modifier = Modifier.weight(1f))
             CircularProgressIndicator(modifier = Modifier.size(20.dp))
+        } else if (isFailed) {
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Default.ErrorOutline,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
