@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreTime
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -152,10 +152,10 @@ fun SubtitleTrackRow(
             CircularProgressIndicator(modifier = Modifier.size(20.dp))
         } else if (isFailed) {
             Icon(
-                imageVector = Icons.Default.ErrorOutline,
+                imageVector = Icons.Default.Error,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
             )
         } else if (selected != -1) {
             Text(
