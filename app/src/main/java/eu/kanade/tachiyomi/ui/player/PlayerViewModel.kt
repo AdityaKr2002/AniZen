@@ -534,12 +534,16 @@ class PlayerViewModel @JvmOverloads constructor(
                     val wasFailed = _subtitleTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isFailed ?: false
+                    val resolvedUrl = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     subTracks.add(
                         VideoTrack.External(
                             index, finalLang, finalLang, sub.url, mpvId,
                             isAudio = false,
                             isLoading = if (mpvId == null) wasLoading else false,
                             isFailed = if (mpvId != null) false else wasFailed,
+                            resolvedUrl = resolvedUrl,
                         )
                     )
                 }
@@ -553,12 +557,16 @@ class PlayerViewModel @JvmOverloads constructor(
                     val wasFailed = _audioTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isFailed ?: false
+                    val resolvedUrl = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     audioTracks.add(
                         VideoTrack.External(
                             index, audio.lang, audio.lang, audio.url, mpvId,
                             isAudio = true,
                             isLoading = if (mpvId == null) wasLoading else false,
                             isFailed = if (mpvId != null) false else wasFailed,
+                            resolvedUrl = resolvedUrl,
                         )
                     )
                 }
@@ -647,6 +655,7 @@ class PlayerViewModel @JvmOverloads constructor(
             val isAudio: Boolean = false,
             val isLoading: Boolean = false,
             val isFailed: Boolean = false,
+            val resolvedUrl: String? = null,
         ) : VideoTrack
 
         companion object {
@@ -708,6 +717,9 @@ class PlayerViewModel @JvmOverloads constructor(
             viewModelScope.launchIO {
                 try {
                     val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                    _audioTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(resolvedUrl = resolvedUrl) else it }
+                    }
                     // Use "select" like Animiru so MPV activates the track immediately after loading
                     // Pass URL as the title so loadTracks() can match it back by name
                     MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", resolvedUrl))
@@ -751,6 +763,9 @@ class PlayerViewModel @JvmOverloads constructor(
             viewModelScope.launchIO {
                 try {
                     val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                    _subtitleTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(resolvedUrl = resolvedUrl) else it }
+                    }
                     // Use "select" like Animiru so MPV activates the track immediately after loading
                     // Pass URL as the title so loadTracks() can match it back by name
                     MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", resolvedUrl))
@@ -803,7 +818,9 @@ class PlayerViewModel @JvmOverloads constructor(
     fun handleMpvLogFailure(text: String) {
         _subtitleTracks.update { list ->
             list.map { track ->
-                if (track is VideoTrack.External && track.isLoading && (text.contains(track.url) || (track.url.substringAfterLast("/").isNotEmpty() && text.contains(track.url.substringAfterLast("/"))))) {
+                if (track is VideoTrack.External && track.isLoading &&
+                    (text.contains(track.url) || (track.resolvedUrl != null && text.contains(track.resolvedUrl)))
+                ) {
                     track.copy(isLoading = false, isFailed = true)
                 } else {
                     track
@@ -812,7 +829,9 @@ class PlayerViewModel @JvmOverloads constructor(
         }
         _audioTracks.update { list ->
             list.map { track ->
-                if (track is VideoTrack.External && track.isLoading && (text.contains(track.url) || (track.url.substringAfterLast("/").isNotEmpty() && text.contains(track.url.substringAfterLast("/"))))) {
+                if (track is VideoTrack.External && track.isLoading &&
+                    (text.contains(track.url) || (track.resolvedUrl != null && text.contains(track.resolvedUrl)))
+                ) {
                     track.copy(isLoading = false, isFailed = true)
                 } else {
                     track
