@@ -424,6 +424,8 @@ class LibraryScreenModel(
                     item1Score.compareTo(item2Score)
                 }
                 LibrarySort.Type.AiringTime -> when {
+                    i1.libraryAnime.anime.nextEpisodeAiringAt == 0L && i2.libraryAnime.anime.nextEpisodeAiringAt == 0L ->
+                        i1.libraryAnime.unseenCount.compareTo(i2.libraryAnime.unseenCount)
                     i1.libraryAnime.anime.nextEpisodeAiringAt == 0L -> if (sort.isAscending) 1 else -1
                     i2.libraryAnime.anime.nextEpisodeAiringAt == 0L -> if (sort.isAscending) -1 else 1
                     i1.libraryAnime.unseenCount == i2.libraryAnime.unseenCount ->
