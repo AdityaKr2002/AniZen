@@ -9,6 +9,11 @@ import eu.kanade.tachiyomi.data.track.anilist.dto.ALOAuth
 import eu.kanade.tachiyomi.data.track.anilist.dto.ALSearchResult
 import eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListEntryQueryResult
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
+import eu.kanade.tachiyomi.util.lang.htmlDecode
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -127,6 +132,69 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
             }
             authClient.newCall(POST(API_URL, body = payload.toString().toRequestBody(jsonMime)))
                 .awaitSuccess()
+        }
+    }
+
+    suspend fun getAnimeMetadata(track: DomainAnimeTrack): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata {
+        return withIOContext {
+            val query = """
+            |query (${'$'}animeId: Int!) {
+                |Media (id: ${'$'}animeId, type: ANIME) {
+                    |id
+                    |title {
+                        |userPreferred
+                    |}
+                    |coverImage {
+                        |large
+                    |}
+                    |description
+                    |genres
+                    |studios(isMain: true) {
+                        |nodes {
+                            |name
+                        |}
+                    |}
+                |}
+            |}
+            |
+            """.trimMargin()
+            val payload = buildJsonObject {
+                put("query", query)
+                putJsonObject("variables") {
+                    put("animeId", track.remoteId)
+                }
+            }
+            val responseBody = authClient.newCall(
+                POST(
+                    API_URL,
+                    body = payload.toString().toRequestBody(jsonMime),
+                ),
+            )
+                .awaitSuccess()
+                .body.string()
+
+            val jsonElement = json.parseToJsonElement(responseBody)
+            val media = jsonElement.jsonObject["data"]?.jsonObject?.get("Media")?.jsonObject
+                ?: throw Exception("Media not found in AniList response")
+
+            val title = media["title"]?.jsonObject?.get("userPreferred")?.jsonPrimitive?.content ?: ""
+            val coverImage = media["coverImage"]?.jsonObject?.get("large")?.jsonPrimitive?.content ?: ""
+            val description = media["description"]?.jsonPrimitive?.contentOrNull
+            val genres = media["genres"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull }
+            val studios = media["studios"]?.jsonObject?.get("nodes")?.jsonArray
+                ?.mapNotNull { it.jsonObject["name"]?.jsonPrimitive?.contentOrNull }
+                ?.joinToString(", ")
+                ?.ifEmpty { null }
+
+            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
+                remoteId = track.remoteId,
+                title = title,
+                thumbnailUrl = coverImage,
+                description = description?.htmlDecode(),
+                author = studios,
+                artist = null,
+                genres = genres,
+            )
         }
     }
 

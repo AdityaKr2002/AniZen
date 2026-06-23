@@ -251,6 +251,10 @@ class Anilist(id: Long) :
         relationsCache.clear()
     }
 
+    override suspend fun getAnimeMetadata(track: DomainAnimeTrack): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
+        return api.getAnimeMetadata(track)
+    }
+
     fun saveOAuth(alOAuth: ALOAuth?) {
         trackPreferences.trackToken(this).set(json.encodeToString(alOAuth))
     }

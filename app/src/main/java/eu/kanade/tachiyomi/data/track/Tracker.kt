@@ -43,6 +43,8 @@ interface Tracker {
 
     fun saveCredentials(username: String, password: String)
 
+    suspend fun getAnimeMetadata(track: tachiyomi.domain.track.model.Track): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? = null
+
     val animeService: AnimeTracker
         get() = this as AnimeTracker
 }

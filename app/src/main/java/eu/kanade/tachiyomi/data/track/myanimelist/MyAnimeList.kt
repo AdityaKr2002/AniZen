@@ -172,6 +172,23 @@ class MyAnimeList(id: Long) :
         interceptor.setAuth(null)
     }
 
+    override suspend fun getAnimeMetadata(track: DomainAnimeTrack): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
+        return try {
+            val malTrack = api.getAnimeDetails(track.remoteId.toInt())
+            eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata(
+                remoteId = malTrack.remote_id,
+                title = malTrack.title,
+                thumbnailUrl = malTrack.cover_url,
+                description = malTrack.summary,
+                author = null,
+                artist = null,
+                genres = null,
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun getIfAuthExpired(): Boolean {
         return trackPreferences.trackAuthExpired(this).get()
     }
