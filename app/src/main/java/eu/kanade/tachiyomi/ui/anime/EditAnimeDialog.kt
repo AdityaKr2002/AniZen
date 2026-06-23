@@ -251,6 +251,7 @@ private fun onViewCreated(
         binding.mangaArtist.setText(anime.artist.orEmpty())
 
         binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+        binding.thumbnailUrl.setText(anime.thumbnailUrl.orEmpty())
 
         binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
         binding.mangaDescription.setText(anime.description.orEmpty())
@@ -265,20 +266,31 @@ private fun onViewCreated(
         if (anime.artist != anime.ogArtist) {
             binding.mangaArtist.append(anime.artist.orEmpty())
         }
+        if (anime.thumbnailUrl != anime.ogThumbnailUrl) {
+            binding.thumbnailUrl.append(anime.thumbnailUrl.orEmpty())
+        }
         if (anime.description != anime.ogDescription) {
             binding.mangaDescription.append(anime.description.orEmpty())
         }
         binding.mangaGenresTags.setChips(anime.genre.orEmpty().dropBlank(), scope)
 
-        binding.titleOutline.hint = context.getString(R.string.title)
+        binding.titleOutline.hint = context.stringResource(SYMR.strings.title_hint, anime.ogTitle)
 
-        binding.mangaAuthorOutline.hint = context.getString(R.string.author)
+        binding.mangaAuthorOutline.hint = context.stringResource(SYMR.strings.author_hint, anime.ogAuthor ?: "")
 
-        binding.mangaArtistOutline.hint = context.getString(R.string.artist)
+        binding.mangaArtistOutline.hint = context.stringResource(SYMR.strings.artist_hint, anime.ogArtist ?: "")
 
-        binding.thumbnailUrlOutline.hint = context.getString(R.string.thumbnail_url)
+        binding.thumbnailUrlOutline.hint = context.stringResource(
+            SYMR.strings.thumbnail_url_hint,
+            anime.ogThumbnailUrl?.let {
+                it.chop(40) + if (it.length > 46) "." + it.substringAfterLast(".").chop(6) else ""
+            } ?: "",
+        )
 
-        binding.mangaDescriptionOutline.hint = context.getString(R.string.description_hint, "").trim().removeSuffix(":").trim()
+        binding.mangaDescriptionOutline.hint = context.stringResource(
+            SYMR.strings.description_hint,
+            anime.ogDescription?.takeIf { it.isNotBlank() }?.replace("\n", " ")?.chop(20) ?: "",
+        )
     }
     binding.mangaGenresTags.clearFocus()
 
