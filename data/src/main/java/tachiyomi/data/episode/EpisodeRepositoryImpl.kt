@@ -112,13 +112,13 @@ class EpisodeRepositoryImpl(
 
     override suspend fun getExcludedScanlatorsByAnimeId(animeId: Long): List<String> {
         return handler.awaitList {
-            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId) { it }
+            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId)
         }
     }
 
     override fun getExcludedScanlatorsByAnimeIdAsFlow(animeId: Long): Flow<List<String>> {
         return handler.subscribeToList {
-            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId) { it }
+            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId)
         }
     }
 
