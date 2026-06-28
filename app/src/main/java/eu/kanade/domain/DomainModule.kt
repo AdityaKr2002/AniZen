@@ -83,11 +83,14 @@ import tachiyomi.domain.custombuttons.interactor.ReorderCustomButton
 import tachiyomi.domain.custombuttons.interactor.ToggleFavoriteCustomButton
 import tachiyomi.domain.custombuttons.interactor.UpdateCustomButton
 import tachiyomi.domain.custombuttons.repository.CustomButtonRepository
+import tachiyomi.domain.episode.interactor.GetAvailableScanlators
 import tachiyomi.domain.episode.interactor.GetEpisode
 import tachiyomi.domain.episode.interactor.GetEpisodeByUrlAndAnimeId
 import tachiyomi.domain.episode.interactor.GetEpisodesByAnimeId
+import tachiyomi.domain.episode.interactor.GetExcludedScanlators
 import tachiyomi.domain.episode.interactor.GetMergedEpisodesByAnimeId
 import tachiyomi.domain.episode.interactor.SetAnimeDefaultEpisodeFlags
+import tachiyomi.domain.episode.interactor.SetExcludedScanlators
 import tachiyomi.domain.episode.interactor.ShouldUpdateDbEpisode
 import tachiyomi.domain.episode.interactor.UpdateEpisode
 import tachiyomi.domain.episode.repository.EpisodeRepository
@@ -163,8 +166,8 @@ class DomainModule : InjektModule {
         addFactory { SyncSeasonsWithSource(get(), get(), get(), get(), get()) }
         addFactory { SetAnimeCategories(get()) }
         addFactory { GetMergedReferencesById(get()) }
-        // addFactory { GetExcludedScanlators(get()) }
-        // addFactory { SetExcludedScanlators(get()) }
+        addFactory { GetExcludedScanlators(get()) }
+        addFactory { SetExcludedScanlators(get()) }
 
         addSingletonFactory<ReleaseService> { ReleaseServiceImpl(get(), get()) }
         addFactory { GetApplicationRelease(get(), get()) }
@@ -191,7 +194,7 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.season.interactor.ShouldUpdateDbSeason() }
         addFactory { tachiyomi.domain.season.interactor.SetAnimeDefaultSeasonFlags(get(), get(), get()) }
         addFactory { SyncEpisodesWithSource(get(), get(), get(), get(), get(), get(), get()) }
-        // addFactory { GetAvailableScanlators(get()) }
+        addFactory { GetAvailableScanlators(get()) }
         addFactory { FilterEpisodesForDownload(get(), get(), get(), get()) }
 
         addSingletonFactory<HistoryRepository> { HistoryRepositoryImpl(get()) }

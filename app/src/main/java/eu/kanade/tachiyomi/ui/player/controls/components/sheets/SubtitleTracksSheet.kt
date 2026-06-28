@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreTime
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -96,10 +97,12 @@ fun SubtitlesSheet(
                 is VideoTrack.External -> track.mpvId?.let { selectedTracks.indexOf(it) } ?: -1
             }
             val isLoading = track is VideoTrack.External && track.isLoading
+            val isFailed = track is VideoTrack.External && track.isFailed
             SubtitleTrackRow(
                 title = getTrackTitle(track),
                 selected = selectedIndex,
                 isLoading = isLoading,
+                isFailed = isFailed,
                 onClick = { onSelect(track) },
             )
         },
@@ -126,6 +129,7 @@ fun SubtitleTrackRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    isFailed: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -145,7 +149,14 @@ fun SubtitleTrackRow(
         )
         Spacer(modifier = Modifier.weight(1f))
         if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        } else if (isFailed) {
+            Icon(
+                imageVector = Icons.Default.ErrorOutline,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp),
+            )
         } else if (selected != -1) {
             Text(
                 text = "#${selected + 1}",

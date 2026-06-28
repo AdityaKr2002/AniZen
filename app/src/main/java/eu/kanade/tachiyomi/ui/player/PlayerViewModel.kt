@@ -531,11 +531,19 @@ class PlayerViewModel @JvmOverloads constructor(
                     val wasLoading = _subtitleTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
+                    val wasFailed = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.isFailed ?: false
+                    val resolvedUrl = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     subTracks.add(
                         VideoTrack.External(
                             index, finalLang, finalLang, sub.url, mpvId,
                             isAudio = false,
                             isLoading = if (mpvId == null) wasLoading else false,
+                            isFailed = if (mpvId != null) false else wasFailed,
+                            resolvedUrl = resolvedUrl,
                         )
                     )
                 }
@@ -546,11 +554,19 @@ class PlayerViewModel @JvmOverloads constructor(
                     val wasLoading = _audioTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
+                    val wasFailed = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.isFailed ?: false
+                    val resolvedUrl = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     audioTracks.add(
                         VideoTrack.External(
                             index, audio.lang, audio.lang, audio.url, mpvId,
                             isAudio = true,
                             isLoading = if (mpvId == null) wasLoading else false,
+                            isFailed = if (mpvId != null) false else wasFailed,
+                            resolvedUrl = resolvedUrl,
                         )
                     )
                 }
@@ -638,6 +654,8 @@ class PlayerViewModel @JvmOverloads constructor(
             val mpvId: Int? = null,
             val isAudio: Boolean = false,
             val isLoading: Boolean = false,
+            val isFailed: Boolean = false,
+            val resolvedUrl: String? = null,
         ) : VideoTrack
 
         companion object {
@@ -693,14 +711,24 @@ class PlayerViewModel @JvmOverloads constructor(
         if (track is VideoTrack.External && track.mpvId == null) {
             // Mark track as loading immediately so the UI shows a spinner
             _audioTracks.update { list ->
-                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
+                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true, isFailed = false) else it }
             }
             // resolveUri does blocking I/O for content:// URIs — must run on IO thread
             viewModelScope.launchIO {
-                val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
-                // Use "select" like Animiru so MPV activates the track immediately after loading
-                // Pass URL as the title so loadTracks() can match it back by name
-                MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", resolvedUrl))
+                try {
+                    val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                    _audioTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(resolvedUrl = resolvedUrl) else it }
+                    }
+                    // Use "select" like Animiru so MPV activates the track immediately after loading
+                    // Pass URL as the title so loadTracks() can match it back by name
+                    MPVLib.command(arrayOf("audio-add", resolvedUrl, "select", resolvedUrl))
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Failed to resolve or add audio: ${e.message}" }
+                    _audioTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = false, isFailed = true) else it }
+                    }
+                }
             }
             return
         }
@@ -729,14 +757,24 @@ class PlayerViewModel @JvmOverloads constructor(
         if (track is VideoTrack.External && track.mpvId == null) {
             // Mark track as loading immediately so the UI shows a spinner
             _subtitleTracks.update { list ->
-                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true) else it }
+                list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = true, isFailed = false) else it }
             }
             // resolveUri does blocking I/O for content:// URIs — must run on IO thread
             viewModelScope.launchIO {
-                val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
-                // Use "select" like Animiru so MPV activates the track immediately after loading
-                // Pass URL as the title so loadTracks() can match it back by name
-                MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", resolvedUrl))
+                try {
+                    val resolvedUrl = Uri.parse(track.url).resolveUri(activity) ?: track.url
+                    _subtitleTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(resolvedUrl = resolvedUrl) else it }
+                    }
+                    // Use "select" like Animiru so MPV activates the track immediately after loading
+                    // Pass URL as the title so loadTracks() can match it back by name
+                    MPVLib.command(arrayOf("sub-add", resolvedUrl, "select", resolvedUrl))
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR) { "Failed to resolve or add subtitle: ${e.message}" }
+                    _subtitleTracks.update { list ->
+                        list.map { if (it is VideoTrack.External && it.index == track.index) it.copy(isLoading = false, isFailed = true) else it }
+                    }
+                }
             }
             return
         }
@@ -775,6 +813,31 @@ class PlayerViewModel @JvmOverloads constructor(
 
     fun updateSubtitle(sid: Int, secondarySid: Int) {
         _selectedSubtitles.update { Pair(sid, secondarySid) }
+    }
+
+    fun handleMpvLogFailure(text: String) {
+        _subtitleTracks.update { list ->
+            list.map { track ->
+                if (track is VideoTrack.External && track.isLoading &&
+                    (text.contains(track.url) || (track.resolvedUrl != null && text.contains(track.resolvedUrl)))
+                ) {
+                    track.copy(isLoading = false, isFailed = true)
+                } else {
+                    track
+                }
+            }
+        }
+        _audioTracks.update { list ->
+            list.map { track ->
+                if (track is VideoTrack.External && track.isLoading &&
+                    (text.contains(track.url) || (track.resolvedUrl != null && text.contains(track.resolvedUrl)))
+                ) {
+                    track.copy(isLoading = false, isFailed = true)
+                } else {
+                    track
+                }
+            }
+        }
     }
 
     fun updatePlayBackPos(pos: Float) {

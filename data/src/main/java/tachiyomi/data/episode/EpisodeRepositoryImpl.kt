@@ -110,6 +110,30 @@ class EpisodeRepositoryImpl(
         }
     }
 
+    override suspend fun getExcludedScanlatorsByAnimeId(animeId: Long): List<String> {
+        return handler.awaitList {
+            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId)
+        }
+    }
+
+    override fun getExcludedScanlatorsByAnimeIdAsFlow(animeId: Long): Flow<List<String>> {
+        return handler.subscribeToList {
+            excluded_scanlatorsQueries.getExcludedScanlatorsByAnimeId(animeId)
+        }
+    }
+
+    override suspend fun insertExcludedScanlator(animeId: Long, scanlator: String) {
+        handler.await {
+            excluded_scanlatorsQueries.insert(animeId, scanlator)
+        }
+    }
+
+    override suspend fun removeExcludedScanlators(animeId: Long, scanlators: List<String>) {
+        handler.await {
+            excluded_scanlatorsQueries.remove(animeId, scanlators)
+        }
+    }
+
     override suspend fun getBookmarkedEpisodesByAnimeId(animeId: Long): List<Episode> {
         return handler.awaitList {
             episodesQueries.getBookmarkedEpisodesByAnimeId(

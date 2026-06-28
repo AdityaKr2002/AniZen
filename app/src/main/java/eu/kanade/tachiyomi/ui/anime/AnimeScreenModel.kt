@@ -58,8 +58,11 @@ import exh.util.nullIfEmpty
 import exh.util.trimOrNull
 import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -207,6 +210,10 @@ class AnimeScreenModel(
     private val fetchInterval: FetchInterval = Injekt.get(),
     private val removeHistory: tachiyomi.domain.history.interactor.RemoveHistory = Injekt.get(),
     private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
+    // AY <--
+    private val getExcludedScanlators: tachiyomi.domain.episode.interactor.GetExcludedScanlators = Injekt.get(),
+    private val setExcludedScanlators: tachiyomi.domain.episode.interactor.SetExcludedScanlators = Injekt.get(),
+    private val getAvailableScanlators: tachiyomi.domain.episode.interactor.GetAvailableScanlators = Injekt.get(),
 ) : StateScreenModel<AnimeScreenModel.State>(State.Loading) {
 
     private val successState: State.Success?
@@ -268,6 +275,8 @@ class AnimeScreenModel(
         // AY -->
         processedSeasonItems: ImmutableList<AnimeSeasonItem> = this.processedSeasonItems,
         // <-- AY
+        availableScanlators: ImmutableList<String> = this.availableScanlators,
+        excludedScanlators: ImmutableSet<String> = this.excludedScanlators,
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
@@ -517,6 +526,8 @@ class AnimeScreenModel(
             // AY -->
             processedSeasonItems = processedSeasonItems,
             // <-- AY
+            availableScanlators = availableScanlators,
+            excludedScanlators = excludedScanlators,
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
@@ -605,13 +616,19 @@ class AnimeScreenModel(
             combine(
                 getAnimeAndEpisodesAndSeasons.subscribe(
                     id = animeId,
+                    applyScanlatorFilter = true,
                     useHierarchicalSeasons = useHierarchicalSeasons,
                     virtualSeasonsFlow = virtualSeasonsFlow,
                 ).distinctUntilChanged(),
+                getAvailableScanlators.subscribe(animeId),
+                getExcludedScanlators.subscribe(animeId),
                 downloadCache.changes,
                 downloadManager.queueState,
-            ) { triple, _, _ -> triple }
-                .onEach { (anime, episodes, seasonAnimes) ->
+            ) { triple, availableScanlators, excludedScanlators, _, _ -> 
+                Triple(triple, availableScanlators, excludedScanlators) 
+            }
+                .onEach { (triple, availableScanlators, excludedScanlators) ->
+                    val (anime, episodes, seasonAnimes) = triple
                     val hasHierarchicalSeasons = seasonAnimes.isNotEmpty() || anime.parentId != null
                     
                     val correctedAnime = if (anime.parentId != null && anime.fetchType == FetchType.Seasons) {
@@ -654,6 +671,8 @@ class AnimeScreenModel(
                             episodes = episodes.toEpisodeListItems(correctedAnime),
                             seasons = seasons.toImmutableList(),
                             processedSeasonItems = seasonItems.toImmutableList(),
+                            availableScanlators = availableScanlators.toImmutableList(),
+                            excludedScanlators = excludedScanlators.toImmutableSet(),
                         )
                     }
                     // If details were just loaded, retry suggestions
@@ -1911,6 +1930,25 @@ class AnimeScreenModel(
     fun showTrackDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.TrackSheet) }
     fun showCoverDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.FullCover) }
     fun showEditAnimeInfoDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.EditAnimeInfo(it.anime)) }
+    
+    fun toggleExcludedScanlator(scanlator: String) {
+        val state = successState ?: return
+        val currentExcluded = state.excludedScanlators.toMutableSet()
+        if (currentExcluded.contains(scanlator)) {
+            currentExcluded.remove(scanlator)
+        } else {
+            currentExcluded.add(scanlator)
+        }
+        screenModelScope.launchIO {
+            setExcludedScanlators.await(animeId, currentExcluded)
+        }
+    }
+
+    fun setExcludedScanlators(excludedScanlators: Set<String>) {
+        screenModelScope.launchIO {
+            setExcludedScanlators.await(animeId, excludedScanlators)
+        }
+    }
 
     fun showEditMergedSettings() {
         val state = successState ?: return
@@ -2040,6 +2078,8 @@ class AnimeScreenModel(
             val showEpisodeSummary: Boolean = true,
             val showEpisodeThumbnail: Boolean = true,
             val hideMissingEpisodes: Boolean = false,
+            val availableScanlators: ImmutableList<String> = persistentListOf(),
+            val excludedScanlators: ImmutableSet<String> = persistentSetOf(),
         ) : State {
             companion object {
                 fun create(
@@ -2056,6 +2096,8 @@ class AnimeScreenModel(
                     // <-- AY
                     skipDupeEpisodes: Boolean = false,
                     hideMissingEpisodes: Boolean = false,
+                    availableScanlators: ImmutableList<String> = persistentListOf(),
+                    excludedScanlators: ImmutableSet<String> = persistentSetOf(),
                 ): Success {
                     val processedEpisodes = episodes.applyFilters(anime, skipDupeEpisodes).toImmutableList()
                     val missingEpisodeCount = if (hideMissingEpisodes) 0 else processedEpisodes.map { it.episode.episodeNumber }.missingEpisodesCount()
@@ -2249,6 +2291,8 @@ class AnimeScreenModel(
                         seasons = seasons,
                         processedSeasonItems = processedSeasonItems,
                         // <-- AY
+                        availableScanlators = availableScanlators,
+                        excludedScanlators = excludedScanlators,
                     )
                 }
             }
@@ -2261,7 +2305,8 @@ class AnimeScreenModel(
             val trackingAvailable: Boolean get() = trackItems.isNotEmpty()
             val airingEpisodeNumber: Double get() = nextAiringEpisode.first.toDouble()
             val airingTime: Long get() = nextAiringEpisode.second.times(1000L).minus(Calendar.getInstance().timeInMillis)
-            val filterActive: Boolean get() = anime.episodesFiltered()
+            val scanlatorFilterActive: Boolean get() = excludedScanlators.intersect(availableScanlators.toSet()).isNotEmpty()
+            val filterActive: Boolean get() = scanlatorFilterActive || anime.episodesFiltered()
         }
     }
 }
