@@ -58,8 +58,11 @@ import exh.util.nullIfEmpty
 import exh.util.trimOrNull
 import java.util.Collections
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -207,7 +210,6 @@ class AnimeScreenModel(
     private val fetchInterval: FetchInterval = Injekt.get(),
     private val removeHistory: tachiyomi.domain.history.interactor.RemoveHistory = Injekt.get(),
     private val animeMergeRepository: tachiyomi.domain.anime.repository.AnimeMergeRepository = Injekt.get(),
-    private val episodeMergeRepository: tachiyomi.domain.episode.repository.EpisodeMergeRepository = Injekt.get(),
     // AY <--
     private val getExcludedScanlators: tachiyomi.domain.episode.interactor.GetExcludedScanlators = Injekt.get(),
     private val setExcludedScanlators: tachiyomi.domain.episode.interactor.SetExcludedScanlators = Injekt.get(),
@@ -273,6 +275,8 @@ class AnimeScreenModel(
         // AY -->
         processedSeasonItems: ImmutableList<AnimeSeasonItem> = this.processedSeasonItems,
         // <-- AY
+        availableScanlators: ImmutableList<String> = this.availableScanlators,
+        excludedScanlators: ImmutableSet<String> = this.excludedScanlators,
         nextAiringEpisode: Pair<Int, Long> = this.nextAiringEpisode,
         selectedSeason: String? = this.selectedSeason,
         episodeToSeason: Map<Long, String> = this.episodeToSeason,
@@ -522,6 +526,8 @@ class AnimeScreenModel(
             // AY -->
             processedSeasonItems = processedSeasonItems,
             // <-- AY
+            availableScanlators = availableScanlators,
+            excludedScanlators = excludedScanlators,
             nextAiringEpisode = nextAiringEpisode,
             availableSeasons = availableSeasons,
             selectedSeason = finalSelectedSeason,
