@@ -164,7 +164,7 @@ fun AnimeToolbar(
                                         title = stringResource(MR.strings.scanlator),
                                         icon = Icons.Outlined.Subtitles,
                                         onClick = onClickScanlatorFilter,
-                                    )
+                                    ),
                                 )
                                 if (onClickRefresh != null) {
                                     add(
