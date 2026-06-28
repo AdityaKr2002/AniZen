@@ -1907,7 +1907,6 @@ class AnimeScreenModel(
         data object EpisodeSettingsSheet : Dialog
         data object TrackSheet : Dialog
         data object FullCover : Dialog
-        data object ScanlatorFilter : Dialog
     }
 
     fun toggleDiscoveryExpansion() {
@@ -1930,12 +1929,18 @@ class AnimeScreenModel(
     }
     fun showTrackDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.TrackSheet) }
     fun showCoverDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.FullCover) }
-    fun showScanlatorFilterDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.ScanlatorFilter) }
     fun showEditAnimeInfoDialog() = updateSuccessState { it.copySuccess(dialog = Dialog.EditAnimeInfo(it.anime)) }
     
-    fun setExcludedScanlators(excludedScanlators: Set<String>) {
+    fun toggleExcludedScanlator(scanlator: String) {
+        val state = successState ?: return
+        val currentExcluded = state.excludedScanlators.toMutableSet()
+        if (currentExcluded.contains(scanlator)) {
+            currentExcluded.remove(scanlator)
+        } else {
+            currentExcluded.add(scanlator)
+        }
         screenModelScope.launchIO {
-            setExcludedScanlators.await(animeId, excludedScanlators)
+            setExcludedScanlators.await(animeId, currentExcluded)
         }
     }
 
