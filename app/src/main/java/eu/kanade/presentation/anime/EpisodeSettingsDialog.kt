@@ -1,13 +1,20 @@
 package eu.kanade.presentation.anime
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PeopleAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,16 +23,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.anime.model.downloadedFilter
 import eu.kanade.domain.anime.model.forceDownloaded
 import eu.kanade.presentation.components.TabbedDialog
 import eu.kanade.presentation.components.TabbedDialogPaddings
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.i18n.MR
@@ -36,6 +41,7 @@ import tachiyomi.presentation.core.components.RadioItem
 import tachiyomi.presentation.core.components.SortItem
 import tachiyomi.presentation.core.components.TriStateItem
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.theme.active
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -54,9 +60,8 @@ fun EpisodeSettingsDialog(
     onShowPreviewsEnabled: (Long) -> Unit,
     onShowSummariesEnabled: (Long) -> Unit,
     onSetAsDefault: (applyToExistingAnime: Boolean) -> Unit,
-    availableScanlators: ImmutableList<String> = persistentListOf(),
-    excludedScanlators: ImmutableSet<String> = persistentSetOf(),
-    onScanlatorFilterClicked: (String) -> Unit = {},
+    scanlatorFilterActive: Boolean,
+    onScanlatorFilterClicked: () -> Unit,
 ) {
     var showSetAsDefaultDialog by rememberSaveable { mutableStateOf(false) }
     if (showSetAsDefaultDialog) {
@@ -102,8 +107,7 @@ fun EpisodeSettingsDialog(
                         fillermarkedFilter = anime?.fillermarkedFilter ?: TriState.DISABLED,
                         onFillermarkedFilterChanged = onFillermarkedFilterChanged,
                         // <-- AM (FILLERMARK)
-                        availableScanlators = availableScanlators,
-                        excludedScanlators = excludedScanlators,
+                        scanlatorFilterActive = scanlatorFilterActive,
                         onScanlatorFilterClicked = onScanlatorFilterClicked,
                     )
                 }
@@ -142,9 +146,8 @@ private fun ColumnScope.FilterPage(
     fillermarkedFilter: TriState,
     onFillermarkedFilterChanged: (TriState) -> Unit,
     // <-- AM (FILLERMARK)
-    availableScanlators: ImmutableList<String>,
-    excludedScanlators: ImmutableSet<String>,
-    onScanlatorFilterClicked: (String) -> Unit,
+    scanlatorFilterActive: Boolean,
+    onScanlatorFilterClicked: () -> Unit,
 ) {
     TriStateItem(
         label = stringResource(MR.strings.label_downloaded),
@@ -169,28 +172,38 @@ private fun ColumnScope.FilterPage(
     )
     // <-- AM (FILLERMARK)
 
-    if (availableScanlators.isNotEmpty()) {
-        androidx.compose.material3.HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-        )
+    ScanlatorFilterItem(
+        active = scanlatorFilterActive,
+        onClick = onScanlatorFilterClicked,
+    )
+}
 
+@Composable
+fun ScanlatorFilterItem(
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .fillMaxWidth()
+            .padding(horizontal = TabbedDialogPaddings.Horizontal, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.PeopleAlt,
+            contentDescription = null,
+            tint = if (active) {
+                MaterialTheme.colorScheme.active
+            } else {
+                LocalContentColor.current
+            },
+        )
         Text(
             text = stringResource(MR.strings.scanlator),
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyMedium,
         )
-
-        availableScanlators.map { scanlator ->
-            CheckboxItem(
-                label = scanlator,
-                checked = !excludedScanlators.contains(scanlator),
-                onClick = {
-                    onScanlatorFilterClicked(scanlator)
-                },
-            )
-        }
     }
 }
 

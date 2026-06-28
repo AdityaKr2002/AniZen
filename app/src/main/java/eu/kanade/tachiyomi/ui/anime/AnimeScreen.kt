@@ -11,6 +11,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import eu.kanade.presentation.anime.components.ScanlatorFilterDialog
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -254,6 +257,17 @@ class AnimeScreen(
                 onSeasonClicked = { navigator.push(AnimeScreen(it.anime.id)) },
                 // <-- AY
                 )
+            var showScanlatorsDialog by remember { mutableStateOf(false) }
+
+            if (showScanlatorsDialog) {
+                ScanlatorFilterDialog(
+                    availableScanlators = successState.availableScanlators.toSet(),
+                    excludedScanlators = successState.excludedScanlators.toSet(),
+                    onDismissRequest = { showScanlatorsDialog = false },
+                    onConfirm = screenModel::setExcludedScanlators,
+                )
+            }
+
             val onDismissRequest = {
                 screenModel.dismissDialog()
             }
@@ -447,9 +461,8 @@ class AnimeScreen(
                         onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
                         onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
                         onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
-                        availableScanlators = successState.availableScanlators,
-                        excludedScanlators = successState.excludedScanlators,
-                        onScanlatorFilterClicked = screenModel::toggleExcludedScanlator,
+                        scanlatorFilterActive = successState.scanlatorFilterActive,
+                        onScanlatorFilterClicked = { showScanlatorsDialog = true },
                     )
                 }
 
@@ -466,9 +479,8 @@ class AnimeScreen(
                         onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
                         onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
                         onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
-                        availableScanlators = successState.availableScanlators,
-                        excludedScanlators = successState.excludedScanlators,
-                        onScanlatorFilterClicked = screenModel::toggleExcludedScanlator,
+                        scanlatorFilterActive = successState.scanlatorFilterActive,
+                        onScanlatorFilterClicked = { showScanlatorsDialog = true },
                     )
                 }
 

@@ -1944,6 +1944,12 @@ class AnimeScreenModel(
         }
     }
 
+    fun setExcludedScanlators(excludedScanlators: Set<String>) {
+        screenModelScope.launchIO {
+            setExcludedScanlators.await(animeId, excludedScanlators)
+        }
+    }
+
     fun showEditMergedSettings() {
         val state = successState ?: return
         screenModelScope.launchIO {
@@ -2299,7 +2305,8 @@ class AnimeScreenModel(
             val trackingAvailable: Boolean get() = trackItems.isNotEmpty()
             val airingEpisodeNumber: Double get() = nextAiringEpisode.first.toDouble()
             val airingTime: Long get() = nextAiringEpisode.second.times(1000L).minus(Calendar.getInstance().timeInMillis)
-            val filterActive: Boolean get() = anime.episodesFiltered()
+            val scanlatorFilterActive: Boolean get() = excludedScanlators.intersect(availableScanlators.toSet()).isNotEmpty()
+            val filterActive: Boolean get() = scanlatorFilterActive || anime.episodesFiltered()
         }
     }
 }
