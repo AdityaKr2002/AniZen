@@ -35,6 +35,7 @@ import eu.kanade.presentation.anime.EpisodeOptionsDialogScreen
 import eu.kanade.presentation.anime.EpisodeSettingsDialog
 import eu.kanade.presentation.anime.components.AnimeCoverDialog
 import eu.kanade.presentation.anime.components.ClearAnimeDialog
+import eu.kanade.presentation.anime.components.ScanlatorFilterDialog
 import eu.kanade.presentation.anime.components.DeleteEpisodesDialog
 import eu.kanade.presentation.anime.components.SetIntervalDialog
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
@@ -201,6 +202,7 @@ class AnimeScreen(
                 },
                 onTagSearch = { scope.launch { performGenreSearch(navigator, it, screenModel.source!!) } },
                 onFilterButtonClicked = screenModel::showSettingsDialog,
+                onScanlatorFilterClicked = screenModel::showScanlatorFilterDialog,
                 onRefresh = screenModel::fetchAllFromSource,
                 onContinueWatching = { season ->
                     scope.launchIO {
@@ -447,6 +449,15 @@ class AnimeScreen(
                         onShowPreviewsEnabled = screenModel::setShowEpisodeThumbnail,
                         onShowSummariesEnabled = screenModel::setShowEpisodeSummary,
                         onSetAsDefault = screenModel::setCurrentSettingsAsDefault,
+                    )
+                }
+
+                is AnimeScreenModel.Dialog.ScanlatorFilter -> {
+                    ScanlatorFilterDialog(
+                        availableScanlators = successState.availableScanlators,
+                        excludedScanlators = successState.excludedScanlators,
+                        onDismissRequest = onDismissRequest,
+                        onConfirm = screenModel::setExcludedScanlators,
                     )
                 }
 

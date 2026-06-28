@@ -20,6 +20,14 @@ interface EpisodeRepository {
 
     fun getScanlatorsByAnimeIdAsFlow(animeId: Long): Flow<List<String>>
 
+    suspend fun getExcludedScanlatorsByAnimeId(animeId: Long): List<String>
+
+    fun getExcludedScanlatorsByAnimeIdAsFlow(animeId: Long): Flow<List<String>>
+
+    suspend fun insertExcludedScanlator(animeId: Long, scanlator: String)
+
+    suspend fun removeExcludedScanlators(animeId: Long, scanlators: List<String>)
+
     suspend fun getBookmarkedEpisodesByAnimeId(animeId: Long): List<Episode>
 
     // AM (FILLERMARK) -->

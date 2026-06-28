@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material.icons.outlined.Subtitles
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,7 @@ fun AnimeToolbar(
     hasFilters: Boolean,
     onBackClicked: () -> Unit,
     onClickFilter: () -> Unit,
+    onClickScanlatorFilter: () -> Unit,
     onClickShare: (() -> Unit)?,
     onClickDownload: ((DownloadAction) -> Unit)?,
     onClickEditCategory: (() -> Unit)?,
@@ -156,6 +158,13 @@ fun AnimeToolbar(
                                         iconTint = filterTint,
                                         onClick = onClickFilter,
                                     ),
+                                )
+                                add(
+                                    AppBar.Action(
+                                        title = stringResource(MR.strings.scanlator),
+                                        icon = Icons.Outlined.Subtitles,
+                                        onClick = onClickScanlatorFilter,
+                                    )
                                 )
                                 if (onClickRefresh != null) {
                                     add(
