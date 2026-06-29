@@ -2120,9 +2120,15 @@ class PlayerViewModel @JvmOverloads constructor(
             ?.videoList
             ?.getOrNull(videoIndex)
             ?: return
+        val currentComposite = getEffectiveDefaultStreamSelector()
+        val newComposite = DefaultStreamSelector.updateCompositeSelector(
+            currentComposite,
+            hoster.name,
+            DefaultStreamSelector.selectorFor(video, hoster.name)
+        )
         DefaultStreamPreferenceStore(playerPreferences).setSelector(
             animeId = currentAnime.value?.id,
-            selector = DefaultStreamSelector.selectorFor(video, hoster.name),
+            selector = newComposite,
         )
     }
 

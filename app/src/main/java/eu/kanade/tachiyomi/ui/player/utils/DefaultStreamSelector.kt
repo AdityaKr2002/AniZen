@@ -8,6 +8,8 @@ object DefaultStreamSelector {
     private const val VERSION_V3 = "v3"
     private const val VERSION_V4 = "v4"
     private const val FIELD_SEP = '\u001D'
+    private const val HOSTER_SEP = '\u001C'
+    private const val HOSTER_KV_SEP = '\u001B'
 
     private val EPISODE_NUMBER_PATTERN = Regex(
         """(?i)(?:^|[\s/\-_\[])(?:ep(?:isode)?|e|#)?\s*0*(\d{1,4})(?:\s*v\d+)?(?:$|[\s\]\-_.])""",
@@ -41,9 +43,11 @@ object DefaultStreamSelector {
      */
     fun findBestMatchIndex(selector: String, candidates: List<Video>, hosterName: String = ""): Int {
         if (selector.isBlank() || candidates.isEmpty()) return -1
-        return findBestMatchIndexInternal(selector, candidates, hosterName, relaxed = false)
+        val hosterSelector = getSelectorForHoster(selector, hosterName)
+        if (hosterSelector.isBlank()) return -1
+        return findBestMatchIndexInternal(hosterSelector, candidates, hosterName, relaxed = false)
             .takeIf { it >= 0 }
-            ?: findBestMatchIndexInternal(selector, candidates, hosterName, relaxed = true)
+            ?: findBestMatchIndexInternal(hosterSelector, candidates, hosterName, relaxed = true)
     }
 
     private fun findBestMatchIndexInternal(
@@ -100,16 +104,18 @@ object DefaultStreamSelector {
         relaxed: Boolean,
     ): List<Pair<Int, Int>> {
         if (selector.isBlank()) return emptyList()
-        val saved = decode(selector)
         val ranked = mutableListOf<Triple<Int, Int, Int>>()
         hosterStates.forEachIndexed { hosterIdx, state ->
             if (state !is eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState.Ready) return@forEachIndexed
+            val hosterSelector = getSelectorForHoster(selector, state.name)
+            if (hosterSelector.isBlank()) return@forEachIndexed
+            val saved = decode(hosterSelector)
             state.videoList.forEachIndexed { videoIdx, video ->
                 val score = if (saved != null) {
                     scoreMatch(saved, video, state.name, continuity = true, relaxed = relaxed)
                 } else {
-                    val tokenScore = legacyTokenScore(selector, video)
-                    if (tokenScore >= minOf(legacyTokens(selector).size, 3) * 8) tokenScore else 0
+                    val tokenScore = legacyTokenScore(hosterSelector, video)
+                    if (tokenScore >= minOf(legacyTokens(hosterSelector).size, 3) * 8) tokenScore else 0
                 }
                 if (score > 0) {
                     ranked.add(Triple(hosterIdx, videoIdx, score))
@@ -522,5 +528,78 @@ object DefaultStreamSelector {
         "h265", "265" -> "x265"
         "h264", "264" -> "x264"
         else -> this
+    }
+
+    fun getSelectorForHoster(compositeSelector: String, hosterName: String): String {
+        if (compositeSelector.isBlank()) return ""
+        val parts = compositeSelector.split(HOSTER_SEP)
+        for (part in parts) {
+            val idx = part.indexOf(HOSTER_KV_SEP)
+            if (idx >= 0) {
+                val name = part.substring(0, idx)
+                val sel = part.substring(idx + 1)
+                if (name.equals(hosterName, ignoreCase = true)) {
+                    return sel
+                }
+            } else {
+                val decoded = decode(part)
+                if (decoded != null) {
+                    if (decoded.hosterName.equals(hosterName, ignoreCase = true) || decoded.hosterName.isBlank()) {
+                        return part
+                    }
+                } else {
+                    return part
+                }
+            }
+        }
+        for (part in parts) {
+            val idx = part.indexOf(HOSTER_KV_SEP)
+            if (idx >= 0) {
+                val name = part.substring(0, idx)
+                val sel = part.substring(idx + 1)
+                if (name.isBlank()) {
+                    return sel
+                }
+            } else {
+                val decoded = decode(part)
+                if (decoded == null || decoded.hosterName.isBlank()) {
+                    return part
+                }
+            }
+        }
+        return ""
+    }
+
+    fun updateCompositeSelector(compositeSelector: String, hosterName: String, newSelector: String): String {
+        val parts = if (compositeSelector.isNotBlank()) {
+            compositeSelector.split(HOSTER_SEP).toMutableList()
+        } else {
+            mutableListOf()
+        }
+        val newEntry = "$hosterName$HOSTER_KV_SEP$newSelector"
+        var updated = false
+        for (i in parts.indices) {
+            val part = parts[i]
+            val idx = part.indexOf(HOSTER_KV_SEP)
+            if (idx >= 0) {
+                val name = part.substring(0, idx)
+                if (name.equals(hosterName, ignoreCase = true)) {
+                    parts[i] = newEntry
+                    updated = true
+                    break
+                }
+            } else {
+                val decoded = decode(part)
+                if (decoded != null && decoded.hosterName.equals(hosterName, ignoreCase = true)) {
+                    parts[i] = newEntry
+                    updated = true
+                    break
+                }
+            }
+        }
+        if (!updated) {
+            parts.add(newEntry)
+        }
+        return parts.joinToString(HOSTER_SEP.toString())
     }
 }
