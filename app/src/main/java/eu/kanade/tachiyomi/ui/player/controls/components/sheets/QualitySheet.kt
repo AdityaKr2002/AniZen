@@ -211,7 +211,7 @@ private fun buildDefaultVideoByHosterIndex(
     if (defaultStreamSelector.isBlank()) return emptyMap()
     return hosterState.mapIndexedNotNull { hosterIdx, state ->
         if (state !is HosterState.Ready) return@mapIndexedNotNull null
-        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector)
+        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector, state.name)
         if (videoIdx >= 0) hosterIdx to videoIdx else null
     }.toMap()
 }
@@ -219,7 +219,8 @@ private fun buildDefaultVideoByHosterIndex(
 private fun findDefaultVideoIndex(
     videos: List<Video>,
     defaultStreamSelector: String,
-): Int = DefaultStreamSelector.findBestMatchIndex(defaultStreamSelector, videos)
+    hosterName: String = "",
+): Int = DefaultStreamSelector.findBestMatchIndex(defaultStreamSelector, videos, hosterName)
 
 /** Lazy list index for a video row when hosters use flattened header + per-video items. */
 @Composable
@@ -314,7 +315,7 @@ fun QualitySheetVideoContent(
 ) {
     val listState = rememberLazyListState()
     val defaultVideoIndex = remember(videoList, defaultStreamSelector, highlightDefaultStream) {
-        if (!highlightDefaultStream) -1 else findDefaultVideoIndex(videoList, defaultStreamSelector)
+        if (!highlightDefaultStream) -1 else findDefaultVideoIndex(videoList, defaultStreamSelector, Hoster.NO_HOSTER_LIST)
     }
     val scrollTarget = remember(defaultVideoIndex) {
         if (defaultVideoIndex >= 0) {
@@ -361,7 +362,7 @@ private fun findDefaultScrollTarget(
     if (defaultStreamSelector.isBlank()) return null
     for ((hosterIdx, state) in hosterState.withIndex()) {
         if (state !is HosterState.Ready) continue
-        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector)
+        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector, state.name)
         if (videoIdx >= 0) {
             return DefaultScrollTarget(hosterIndex = hosterIdx, videoIndex = videoIdx)
         }

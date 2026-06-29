@@ -6,6 +6,7 @@ import java.util.Locale
 object DefaultStreamSelector {
     private const val VERSION_V2 = "v2"
     private const val VERSION_V3 = "v3"
+    private const val VERSION_V4 = "v4"
     private const val FIELD_SEP = '\u001D'
 
     private val EPISODE_NUMBER_PATTERN = Regex(
@@ -20,7 +21,7 @@ object DefaultStreamSelector {
     )
     private val BRACKET_GROUP_PATTERN = Regex("""\[(.{1,48}?)]""")
 
-    fun selectorFor(video: Video): String = encode(fingerprintFor(video))
+    fun selectorFor(video: Video, hosterName: String = ""): String = encode(fingerprintFor(video, hosterName))
 
     fun isDefaultMatch(selector: String, video: Video, candidates: List<Video>): Boolean {
         if (selector.isBlank() || candidates.isEmpty()) return false
@@ -38,16 +39,17 @@ object DefaultStreamSelector {
      * Index of the best matching video for UI highlight / scroll.
      * Tries strict continuity match first, then relaxed (release group + provider + resolution).
      */
-    fun findBestMatchIndex(selector: String, candidates: List<Video>): Int {
+    fun findBestMatchIndex(selector: String, candidates: List<Video>, hosterName: String = ""): Int {
         if (selector.isBlank() || candidates.isEmpty()) return -1
-        return findBestMatchIndexInternal(selector, candidates, relaxed = false)
+        return findBestMatchIndexInternal(selector, candidates, hosterName, relaxed = false)
             .takeIf { it >= 0 }
-            ?: findBestMatchIndexInternal(selector, candidates, relaxed = true)
+            ?: findBestMatchIndexInternal(selector, candidates, hosterName, relaxed = true)
     }
 
     private fun findBestMatchIndexInternal(
         selector: String,
         candidates: List<Video>,
+        hosterName: String,
         relaxed: Boolean,
     ): Int {
         val saved = decode(selector)
@@ -61,7 +63,7 @@ object DefaultStreamSelector {
         var bestIndex = -1
         var bestScore = 0
         candidates.forEachIndexed { index, video ->
-            val score = scoreMatch(saved, video, continuity = true, relaxed = relaxed)
+            val score = scoreMatch(saved, video, hosterName, continuity = true, relaxed = relaxed)
             when {
                 score > bestScore -> {
                     bestScore = score
@@ -104,7 +106,7 @@ object DefaultStreamSelector {
             if (state !is eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState.Ready) return@forEachIndexed
             state.videoList.forEachIndexed { videoIdx, video ->
                 val score = if (saved != null) {
-                    scoreMatch(saved, video, continuity = true, relaxed = relaxed)
+                    scoreMatch(saved, video, state.name, continuity = true, relaxed = relaxed)
                 } else {
                     val tokenScore = legacyTokenScore(selector, video)
                     if (tokenScore >= minOf(legacyTokens(selector).size, 3) * 8) tokenScore else 0
@@ -156,13 +158,14 @@ object DefaultStreamSelector {
         val sizeBytes: Long,
         val seeders: Int,
         val provider: String,
+        val hosterName: String = "",
     )
 
     private const val EXACT_MATCH_THRESHOLD = 120
     private const val CONTINUITY_MATCH_THRESHOLD = 72
     private const val CONTINUITY_RELAXED_THRESHOLD = 48
 
-    private fun fingerprintFor(video: Video): StreamFingerprint {
+    private fun fingerprintFor(video: Video, hosterName: String = ""): StreamFingerprint {
         val lines = video.videoTitle.lines().map { it.trim() }.filter { it.isNotBlank() }
         val rawTitle = video.videoTitle.replace('\n', ' ').trim()
         val fileLine = lines.lastOrNull {
@@ -187,17 +190,27 @@ object DefaultStreamSelector {
             sizeBytes = parseSizeBytes(video.videoTitle),
             seeders = parseSeeders(video.videoTitle),
             provider = parseProvider(video.videoTitle),
+            hosterName = hosterName,
         )
     }
 
     private fun scoreMatch(
         saved: StreamFingerprint,
         video: Video,
+        candidateHosterName: String = "",
         continuity: Boolean,
         relaxed: Boolean,
     ): Int {
         val candidate = fingerprintFor(video)
         var score = 0
+
+        if (saved.hosterName.isNotBlank() && candidateHosterName.isNotBlank()) {
+            if (saved.hosterName.equals(candidateHosterName, ignoreCase = true)) {
+                score += 40
+            } else {
+                score -= 80
+            }
+        }
 
         if (saved.provider.isNotBlank() && saved.provider == candidate.provider) score += 14
 
@@ -326,7 +339,7 @@ object DefaultStreamSelector {
     }
 
     private fun encode(fp: StreamFingerprint): String = listOf(
-        VERSION_V3,
+        VERSION_V4,
         fp.exactNorm,
         fp.batchNorm,
         fp.fileBaseNorm,
@@ -336,10 +349,27 @@ object DefaultStreamSelector {
         fp.sizeBytes.toString(),
         fp.seeders.toString(),
         fp.provider,
+        fp.hosterName,
     ).joinToString(FIELD_SEP.toString())
 
     private fun decode(selector: String): StreamFingerprint? {
         when {
+            selector.startsWith("$VERSION_V4$FIELD_SEP") -> {
+                val parts = selector.split(FIELD_SEP)
+                if (parts.size < 11) return null
+                return StreamFingerprint(
+                    exactNorm = parts[1],
+                    batchNorm = parts[2],
+                    fileBaseNorm = parts[3],
+                    releaseGroup = parts[4],
+                    ripLabel = parts[5],
+                    qualityTag = parts[6],
+                    sizeBytes = parts[7].toLongOrNull() ?: -1L,
+                    seeders = parts[8].toIntOrNull() ?: -1,
+                    provider = parts[9],
+                    hosterName = parts[10],
+                )
+            }
             selector.startsWith("$VERSION_V3$FIELD_SEP") -> {
                 val parts = selector.split(FIELD_SEP)
                 if (parts.size < 10) return null
@@ -353,6 +383,7 @@ object DefaultStreamSelector {
                     sizeBytes = parts[7].toLongOrNull() ?: -1L,
                     seeders = parts[8].toIntOrNull() ?: -1,
                     provider = parts[9],
+                    hosterName = "",
                 )
             }
             selector.startsWith("$VERSION_V2$FIELD_SEP") -> {
@@ -368,6 +399,7 @@ object DefaultStreamSelector {
                     sizeBytes = parts[4].toLongOrNull() ?: -1L,
                     seeders = parts[5].toIntOrNull() ?: -1,
                     provider = parts[6],
+                    hosterName = "",
                 )
             }
             else -> return null

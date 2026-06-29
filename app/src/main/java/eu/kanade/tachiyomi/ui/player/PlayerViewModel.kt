@@ -2115,13 +2115,14 @@ class PlayerViewModel @JvmOverloads constructor(
     }
 
     fun setDefaultStreamSelector(hosterIndex: Int, videoIndex: Int) {
-        val video = (_hosterState.value.getOrNull(hosterIndex) as? HosterState.Ready)
+        val hoster = _hosterState.value.getOrNull(hosterIndex)
+        val video = (hoster as? HosterState.Ready)
             ?.videoList
             ?.getOrNull(videoIndex)
             ?: return
         DefaultStreamPreferenceStore(playerPreferences).setSelector(
             animeId = currentAnime.value?.id,
-            selector = DefaultStreamSelector.selectorFor(video),
+            selector = DefaultStreamSelector.selectorFor(video, hoster.name),
         )
     }
 
