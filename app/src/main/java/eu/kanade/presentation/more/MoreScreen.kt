@@ -48,10 +48,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
@@ -137,12 +133,6 @@ fun MoreScreen(
         ) {
             item {
                 ProfileHeader()
-            }
-
-            item {
-                SponsorCard(
-                    onClick = { uriHandler.openUri("https://www.patreon.com/10625779/join") }
-                )
             }
 
             item {
@@ -295,6 +285,11 @@ fun MoreScreen(
                         icon = Icons.AutoMirrored.Outlined.HelpOutline,
                         onClick = { uriHandler.openUri(Constants.URL_HELP) }
                     )
+                    MoreItem(
+                        title = stringResource(MR.strings.label_sponsor_me),
+                        icon = Icons.Outlined.Favorite,
+                        onClick = { uriHandler.openUri("https://www.patreon.com/10625779/join") }
+                    )
                 }
             }
         }
@@ -313,71 +308,5 @@ private fun ProfileHeader() {
             modifier = Modifier.size(100.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-    }
-}
-
-@Composable
-private fun SponsorCard(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val gradient = Brush.horizontalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.secondaryContainer,
-        )
-    )
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
-        color = Color.Transparent,
-    ) {
-        Box(
-            modifier = Modifier
-                .background(gradient)
-                .padding(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Favorite,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = "Support AniZen",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "Help keep the app alive and support active development on Patreon",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        }
     }
 }
