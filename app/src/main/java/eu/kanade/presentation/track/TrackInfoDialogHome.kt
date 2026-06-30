@@ -51,6 +51,7 @@ import eu.kanade.presentation.track.components.TrackLogoIcon
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.ui.anime.track.TrackItem
+import eu.kanade.tachiyomi.ui.anime.track.resolvedLastEpisodeSeen
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import tachiyomi.i18n.MR
@@ -89,7 +90,7 @@ fun TrackInfoDialogHome(
                     tracker = item.tracker,
                     status = (item.tracker as? AnimeTracker)?.getStatusForAnime(item.track.status),
                     onStatusClick = { onStatusClick(item) },
-                    episodes = "${item.track.lastEpisodeSeen.toInt()}".let {
+                    episodes = "${item.track.resolvedLastEpisodeSeen(item.tracker.id)}".let {
                         val totalEpisodes = item.track.totalEpisodes
                         if (totalEpisodes > 0) {
                             // Add known total episode count
