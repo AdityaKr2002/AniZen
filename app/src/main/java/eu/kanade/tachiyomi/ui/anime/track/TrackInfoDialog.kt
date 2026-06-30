@@ -92,6 +92,9 @@ import java.time.ZoneOffset
 import tachiyomi.domain.track.model.Track as DbAnimeTrack
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.unit.dp
 
 data class TrackInfoDialogHomeScreen(
     private val animeId: Long,
@@ -938,12 +941,12 @@ private fun TraktSeasonPickerDialog(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .androidx.compose.ui.draw.clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable {
                                     onSeasonSelected(null, totalEpisodes)
                                 }
                                 .fillMaxWidth()
-                                .androidx.compose.material3.minimumInteractiveComponentSize()
+                                .minimumInteractiveComponentSize()
                                 .padding(horizontal = 8.dp, vertical = 12.dp),
                         ) {
                             Text(
@@ -958,12 +961,12 @@ private fun TraktSeasonPickerDialog(
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .androidx.compose.ui.draw.clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .clickable {
                                         onSeasonSelected(seasonNum, count)
                                     }
                                     .fillMaxWidth()
-                                    .androidx.compose.material3.minimumInteractiveComponentSize()
+                                    .minimumInteractiveComponentSize()
                                     .padding(horizontal = 8.dp, vertical = 12.dp),
                             ) {
                                 Text(
