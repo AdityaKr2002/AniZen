@@ -167,20 +167,6 @@ class Downloader(
         _isRunningFlow.value = true
         DownloadJob.start(context)
         downloaderJob = scope.launch {
-            // Pro-Active: Pre-fetch video URLs in parallel to eliminate transition lag
-            launch {
-                queueState.value.filter { it.video == null && it.status == Download.State.QUEUE }
-                    .forEach { download ->
-                        if (!isRunning) return@launch
-                        try {
-                            val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source as AnimeSource)
-                            download.video = HosterLoader.getBestVideo(download.source as AnimeSource, hosters)
-                        } catch (e: Exception) {
-                            logcat(LogPriority.WARN) { "Pre-fetch failed for ${download.episode.name}" }
-                        }
-                    }
-            }
-
             // Dynamic Queue Processing
             while (isRunning) {
                 val maxConcurrency = preferences.concurrentDownloads().get().coerceAtLeast(1)

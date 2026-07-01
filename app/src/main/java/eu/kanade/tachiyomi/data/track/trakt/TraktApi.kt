@@ -459,6 +459,33 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         }
     }
 
+    fun getShowSeasons(traktId: Long): List<Pair<Int, Int>> {
+        val request = Request.Builder()
+            .url("$baseUrl/shows/$traktId/seasons?extended=episodes")
+            .applyTraktHeaders(includeContentType = false)
+            .get()
+            .build()
+        val response = publicClient.newCall(request).execute()
+        val body = response.body.string()
+        return try {
+            val root = json.parseToJsonElement(body).jsonArray
+            root.mapNotNull { seasonEl ->
+                try {
+                    val seasonObj = seasonEl.jsonObject
+                    val seasonNum = seasonObj["number"]?.jsonPrimitive?.contentOrNull?.toIntOrNull() ?: 1
+                    if (seasonNum == 0) return@mapNotNull null // skip specials
+                    val episodes = seasonObj["episodes"]?.jsonArray
+                    val count = seasonObj["episode_count"]?.jsonPrimitive?.intOrNull ?: episodes?.size ?: 0
+                    seasonNum to count
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     fun getTmdbId(traktId: Long, mediaType: String): Long? {
         val path = if (mediaType == "movie") "movies" else "shows"
         val request = Request.Builder()

@@ -29,6 +29,12 @@ import tachiyomi.i18n.MR
 import uy.kohesive.injekt.injectLazy
 import kotlin.math.roundToInt
 import tachiyomi.domain.track.model.Track as DomainTrack
+import tachiyomi.core.common.util.lang.withIOContext
+import eu.kanade.domain.track.model.toDomainTrack
+import tachiyomi.domain.track.interactor.InsertTrack
+import android.app.Application
+import tachiyomi.core.common.util.lang.withUIContext
+import eu.kanade.tachiyomi.util.system.toast
 
 /**
  * Trakt.tv tracker implementation (anime / shows / movies).
@@ -133,7 +139,12 @@ class Trakt(
         }
 
         try {
-            val total = api.getShowEpisodeCount(track.remote_id)
+            val (existingSeason, _) = resolveSeasonEpisode(track.last_episode_seen)
+            val total = if (existingSeason != null) {
+                api.getShowSeasons(track.remote_id).firstOrNull { it.first == existingSeason }?.second?.toLong() ?: 0L
+            } else {
+                api.getShowEpisodeCount(track.remote_id)
+            }
             if (total > 0) {
                 track.total_episodes = total
             }
@@ -200,6 +211,49 @@ class Trakt(
         }
     }
 
+    suspend fun getSeasons(remoteId: Long): List<Pair<Int, Int>> = withIOContext {
+        api.getShowSeasons(remoteId)
+    }
+
+    override suspend fun setRemoteLastEpisodeSeen(track: Track, episodeNumber: Int) {
+        val (seasonParam, _) = resolveSeasonEpisode(track.last_episode_seen)
+        val currentEpisode = if (seasonParam != null) {
+            resolveSeasonEpisode(track.last_episode_seen).second
+        } else {
+            track.last_episode_seen.toInt()
+        }
+        if (currentEpisode == 0 &&
+            currentEpisode < episodeNumber &&
+            track.status != getRewatchingStatus()
+        ) {
+            track.status = getWatchingStatus()
+        }
+
+        if (seasonParam != null) {
+            track.last_episode_seen = encodeSeasonEpisode(seasonParam, episodeNumber)
+        } else {
+            track.last_episode_seen = episodeNumber.toDouble()
+        }
+
+        val finalEpisode = if (seasonParam != null) episodeNumber else track.last_episode_seen.toLong().toInt()
+        if (track.total_episodes != 0L && finalEpisode.toLong() == track.total_episodes) {
+            track.status = getCompletionStatus()
+            track.finished_watching_date = System.currentTimeMillis()
+        }
+
+        withIOContext {
+            try {
+                update(track, didWatchEpisode = true)
+                track.toDomainTrack(idRequired = false)?.let {
+                    Injekt.get<InsertTrack>().await(it)
+                }
+            } catch (e: Throwable) {
+                withUIContext { Injekt.get<Application>().toast(e.message) }
+                throw e
+            }
+        }
+    }
+
     override suspend fun bind(track: Track, hasSeenEpisodes: Boolean): Track {
         // Try to find the item in the user's watched/collection. If found, copy progress into the track.
         try {
@@ -215,7 +269,13 @@ class Trakt(
             val found = items.firstOrNull { it.traktId == traktId }
             if (found != null) {
                 track.library_id = traktId
-                track.last_episode_seen = found.progress.toDouble()
+                val (existingSeason, _) = resolveSeasonEpisode(track.last_episode_seen)
+                if (existingSeason != null) {
+                    val currentEp = resolveSeasonEpisode(track.last_episode_seen).second
+                    track.last_episode_seen = encodeSeasonEpisode(existingSeason, maxOf(currentEp, found.progress))
+                } else {
+                    track.last_episode_seen = found.progress.toDouble()
+                }
                 return track
             }
         } catch (_: Exception) {
@@ -237,7 +297,13 @@ class Trakt(
             }
             val found = items.firstOrNull { it.traktId == traktId }
             if (found != null) {
-                track.last_episode_seen = found.progress.toDouble()
+                val (existingSeason, _) = resolveSeasonEpisode(track.last_episode_seen)
+                if (existingSeason != null) {
+                    val currentEp = resolveSeasonEpisode(track.last_episode_seen).second
+                    track.last_episode_seen = encodeSeasonEpisode(existingSeason, maxOf(currentEp, found.progress))
+                } else {
+                    track.last_episode_seen = found.progress.toDouble()
+                }
             }
         } catch (_: Exception) {
             // ignore errors, return track as-is
@@ -355,7 +421,8 @@ class Trakt(
 
     private fun applyLocalStatus(track: Track, didWatchEpisode: Boolean) {
         if (!didWatchEpisode || track.status == COMPLETED) return
-        track.status = if (track.total_episodes > 0 && track.last_episode_seen.toLong() == track.total_episodes) {
+        val currentEpisode = resolveSeasonEpisode(track.last_episode_seen).second
+        track.status = if (track.total_episodes > 0 && currentEpisode.toLong() == track.total_episodes) {
             COMPLETED
         } else {
             WATCHING
@@ -389,6 +456,11 @@ class Trakt(
         return track
     }
 
+    private fun encodeSeasonEpisode(season: Int, episode: Int): Double {
+        val formattedFraction = String.format(java.util.Locale.US, "%04d1", episode)
+        return "$season.$formattedFraction".toDoubleOrNull() ?: (season.toDouble())
+    }
+
     private fun resolveSeasonEpisode(lastSeen: Double): Pair<Int?, Int> {
         val lastSeenStr = runCatching {
             java.math.BigDecimal.valueOf(lastSeen).stripTrailingZeros().toPlainString()
@@ -397,10 +469,15 @@ class Trakt(
             val parts = lastSeenStr.split('.', limit = 2)
             val season = parts.getOrNull(0)?.toIntOrNull()?.takeIf { it > 0 } ?: 1
             val fraction = parts.getOrNull(1).orEmpty()
-            val episode = fraction.trimStart('0').toIntOrNull()
-                ?: fraction.toIntOrNull()
-                ?: lastSeen.roundToInt().coerceAtLeast(1)
-            return season to episode
+            if (fraction.endsWith('1') && fraction.length >= 2) {
+                val episode = fraction.dropLast(1).toIntOrNull() ?: 0
+                return season to episode
+            } else {
+                val episode = fraction.trimStart('0').toIntOrNull()
+                    ?: fraction.toIntOrNull()
+                    ?: lastSeen.roundToInt().coerceAtLeast(1)
+                return season to episode
+            }
         }
         return null to lastSeen.roundToInt().coerceAtLeast(1)
     }

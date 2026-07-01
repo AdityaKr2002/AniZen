@@ -61,6 +61,15 @@ class BackupCreator(
         try {
             file = if (isAutoBackup) {
                 val dir = UniFile.fromUri(context, uri)
+
+                // Delete older backups
+                val numberOfBackups = maxOf(1, backupPreferences.numberOfBackups().get())
+                dir?.listFiles()
+                    ?.filter { it.isFile && it.name != null && FILENAME_REGEX.matches(it.name!!) }
+                    ?.sortedByDescending { it.name }
+                    ?.drop(numberOfBackups - 1)
+                    ?.forEach { it.delete() }
+
                 dir?.createFile(getFilename())
             } else {
                 UniFile.fromUri(context, uri)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -90,6 +91,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import tachiyomi.domain.track.model.Track as DbAnimeTrack
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.unit.dp
 
 data class TrackInfoDialogHomeScreen(
     private val animeId: Long,
@@ -368,7 +374,7 @@ private data class TrackEpisodeSelectorScreen(
     private class Model(
         private val track: DbAnimeTrack,
         private val tracker: Tracker,
-    ) : StateScreenModel<Model.State>(State(track.lastEpisodeSeen.toInt())) {
+    ) : StateScreenModel<Model.State>(State(track.resolvedLastEpisodeSeen(tracker.id))) {
 
         fun getRange(): Iterable<Int> {
             val endRange = if (track.totalEpisodes > 0) {
@@ -694,6 +700,11 @@ data class TrackServiceSearchScreen(
 
         val state by screenModel.state.collectAsState()
 
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        var seasonsList by remember { mutableStateOf<List<Pair<Int, Int>>?>(null) }
+        var showSeasonDialog by remember { mutableStateOf(false) }
+        var loadingSeasons by remember { mutableStateOf(false) }
+
         val textFieldState = rememberTextFieldState(initialQuery)
         TrackerSearch(
             state = textFieldState,
@@ -702,18 +713,58 @@ data class TrackServiceSearchScreen(
             selected = state.selected,
             onSelectedChange = screenModel::updateSelection,
             onConfirmSelection = {
-                screenModel.registerTracking(state.selected!!)
-                navigator.pop()
+                val selected = state.selected!!
+                if (serviceId == TrackerManager.TRAKT && selected.tracking_url.contains("/shows/")) {
+                    loadingSeasons = true
+                    scope.launch {
+                        try {
+                            val traktTracker = screenModel.tracker as? eu.kanade.tachiyomi.data.track.trakt.Trakt
+                            val seasons = traktTracker?.getSeasons(selected.remote_id) ?: emptyList()
+                            seasonsList = seasons
+                            showSeasonDialog = true
+                        } catch (e: Exception) {
+                            screenModel.registerTracking(selected)
+                            navigator.pop()
+                        } finally {
+                            loadingSeasons = false
+                        }
+                    }
+                } else {
+                    screenModel.registerTracking(selected)
+                    navigator.pop()
+                }
             },
             onDismissRequest = navigator::pop,
         )
+
+        if (showSeasonDialog && seasonsList != null) {
+            TraktSeasonPickerDialog(
+                seasons = seasonsList!!,
+                onSeasonSelected = { season, count ->
+                    showSeasonDialog = false
+                    val selected = state.selected!!
+                    if (season != null) {
+                        selected.last_episode_seen = season.toDouble()
+                        selected.total_episodes = count.toLong()
+                    } else {
+                        selected.last_episode_seen = 0.0
+                        selected.total_episodes = count.toLong()
+                    }
+                    screenModel.registerTracking(selected)
+                    navigator.pop()
+                },
+                onDismissRequest = {
+                    showSeasonDialog = false
+                }
+            )
+        }
     }
 
     private class Model(
         private val animeId: Long,
         private val currentUrl: String? = null,
         initialQuery: String,
-        private val tracker: Tracker,
+        val tracker: Tracker,
     ) : StateScreenModel<Model.State>(State()) {
 
         init {
@@ -863,4 +914,73 @@ private data class TrackerAnimeRemoveScreen(
             screenModelScope.launchNonCancellable { deleteTrack.await(animeId, serviceId) }
         }
     }
+}
+
+@Composable
+private fun TraktSeasonPickerDialog(
+    seasons: List<Pair<Int, Int>>,
+    onSeasonSelected: (Int?, Int) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(MR.strings.action_cancel))
+            }
+        },
+        title = {
+            Text(text = "Select Trakt season")
+        },
+        text = {
+            val state = androidx.compose.foundation.lazy.rememberLazyListState()
+            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth()) {
+                tachiyomi.presentation.core.components.ScrollbarLazyColumn(state = state) {
+                    item {
+                        val totalEpisodes = seasons.sumOf { it.second }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    onSeasonSelected(null, totalEpisodes)
+                                }
+                                .fillMaxWidth()
+                                .minimumInteractiveComponentSize()
+                                .padding(horizontal = 8.dp, vertical = 12.dp),
+                        ) {
+                            Text(
+                                text = "All Seasons",
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
+
+                    seasons.forEach { (seasonNum, count) ->
+                        item {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        onSeasonSelected(seasonNum, count)
+                                    }
+                                    .fillMaxWidth()
+                                    .minimumInteractiveComponentSize()
+                                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                            ) {
+                                Text(
+                                    text = "Season $seasonNum ($count episodes)",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                        }
+                    }
+                }
+                if (state.canScrollBackward) androidx.compose.material3.HorizontalDivider(modifier = Modifier.align(Alignment.TopCenter))
+                if (state.canScrollForward) androidx.compose.material3.HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
+            }
+        }
+    )
 }

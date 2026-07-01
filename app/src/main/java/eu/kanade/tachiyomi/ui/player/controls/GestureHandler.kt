@@ -263,31 +263,33 @@ fun GestureHandler(
                     }
 
                     try {
-                        longPressJob?.cancel()
-                        longPressJob = scope.launch {
-                            delay(viewConfiguration.longPressTimeoutMillis)
-                            val isPaused = viewModel.paused.value
-                            wasPaused = isPaused
-                            if (isPaused) {
-                                when (pausedLongPressAction) {
-                                    PausedLongPressAction.Screenshot -> viewModel.sheetShown.update { Sheets.Screenshot }
-                                    PausedLongPressAction.Play2x -> {
+                        if (!areControlsLocked) {
+                            longPressJob?.cancel()
+                            longPressJob = scope.launch {
+                                delay(viewConfiguration.longPressTimeoutMillis)
+                                val isPaused = viewModel.paused.value
+                                wasPaused = isPaused
+                                if (isPaused) {
+                                    when (pausedLongPressAction) {
+                                        PausedLongPressAction.Screenshot -> viewModel.sheetShown.update { Sheets.Screenshot }
+                                        PausedLongPressAction.Play2x -> {
+                                            viewModel.isLongPressing.update { true }
+                                            isSpeedLongPress = true
+                                            viewModel.unpause()
+                                            originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
+                                            rampSpeed(playerPreferences.playerSpeedLongPress().get())
+                                        }
+                                        else -> {}
+                                    }
+                                } else {
+                                    if (longPressAction == LongPressAction.Speed) {
                                         viewModel.isLongPressing.update { true }
                                         isSpeedLongPress = true
-                                        viewModel.unpause()
                                         originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
                                         rampSpeed(playerPreferences.playerSpeedLongPress().get())
+                                    } else if (longPressAction == LongPressAction.Screenshot) {
+                                        viewModel.sheetShown.update { Sheets.Screenshot }
                                     }
-                                    else -> {}
-                                }
-                            } else {
-                                if (longPressAction == LongPressAction.Speed) {
-                                    viewModel.isLongPressing.update { true }
-                                    isSpeedLongPress = true
-                                    originalSpeed = MPVLib.getPropertyDouble("speed").toFloat()
-                                    rampSpeed(playerPreferences.playerSpeedLongPress().get())
-                                } else if (longPressAction == LongPressAction.Screenshot) {
-                                    viewModel.sheetShown.update { Sheets.Screenshot }
                                 }
                             }
                         }
@@ -349,11 +351,11 @@ fun GestureHandler(
                                 viewModel.playerUpdate.update { PlayerUpdates.None }
                             }
                         } else if (up != null) {
-                            val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                            val secondDown = if (areControlsLocked) null else withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
                                 awaitFirstDown(requireUnconsumed = true)
                             }
                             if (secondDown == null) {
-                                if (!isDoubleTapSeeking && viewModel.doubleTapSeekAmount.value == 0) {
+                                if (areControlsLocked || (!isDoubleTapSeeking && viewModel.doubleTapSeekAmount.value == 0)) {
                                     if (controlsShown) viewModel.hideControls() else viewModel.showControls()
                                 }
                             } else {
