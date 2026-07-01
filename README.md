@@ -11,8 +11,9 @@
 [![Discord](https://img.shields.io/discord/1242381704459452488?label=Discord&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF&style=flat-square)](https://discord.gg/J2wmZqEJnS)
 [![Preview Build](https://img.shields.io/github/actions/workflow/status/salmanbappi/AniZen/preview.yml?branch=preview&label=Preview%20Build&style=flat-square)](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml)
 [![Release](https://img.shields.io/github/v/release/salmanbappi/AniZen?style=flat-square)](https://github.com/salmanbappi/AniZen/releases)
+[![Downloads](https://img.shields.io/github/downloads/salmanbappi/AniZen/total?style=flat-square)](https://github.com/salmanbappi/AniZen/releases)
+[![Views](https://komarev.com/ghpvc/?username=salmanbappi&repo=AniZen&style=flat-square&color=0877d2)](https://github.com/salmanbappi/AniZen)
 [![License](https://img.shields.io/github/license/salmanbappi/AniZen?label=License&color=0877d2&style=flat-square)](/LICENSE)
-
 </div>
 
 ---
