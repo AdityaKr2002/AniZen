@@ -771,9 +771,15 @@ private fun sendEpisodesToCast(
             putString(MediaMetadata.KEY_SUBTITLE, episode)
             addImage(WebImage(Uri.parse(image)))
         }
+        val castContentType = when {
+            videoUrl.contains(".m3u8", ignoreCase = true) -> "application/x-mpegURL"
+            videoUrl.contains(".mpd", ignoreCase = true) -> "application/dash+xml"
+            videoUrl.contains(".mkv", ignoreCase = true) -> "video/x-matroska"
+            else -> "video/mp4"
+        }
         val mediaInfo = MediaInfo.Builder(videoUrl)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            .setContentType("video/mp4")
+            .setContentType(castContentType)
             .setMetadata(mediaMetadata)
             .build()
         val mediaQueueItem = MediaQueueItem.Builder(mediaInfo)

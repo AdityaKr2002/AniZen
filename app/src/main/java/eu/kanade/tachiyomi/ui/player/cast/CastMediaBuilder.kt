@@ -45,8 +45,9 @@ class CastMediaBuilder(
         }
 
         val contentType = when {
-            videoUrl.contains(".m3u8") -> "application/x-mpegURL"
-            videoUrl.contains(".mpd") -> "application/dash+xml"
+            video.videoUrl.contains(".m3u8", ignoreCase = true) -> "application/x-mpegURL"
+            video.videoUrl.contains(".mpd", ignoreCase = true) -> "application/dash+xml"
+            video.videoUrl.contains(".mkv", ignoreCase = true) -> "video/x-matroska"
             else -> "video/mp4"
         }
 

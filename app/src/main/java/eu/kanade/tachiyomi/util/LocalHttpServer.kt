@@ -28,7 +28,9 @@ class LocalHttpServer(
             return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid URI")
         }
 
-        val mimeType = URLConnection.guessContentTypeFromName(uri.toString()) ?: "application/octet-stream"
+        val mimeType = contentResolver.getType(uri)
+            ?: URLConnection.guessContentTypeFromName(uri.toString())
+            ?: "application/octet-stream"
 
         val assetFileDescriptor = try {
             contentResolver.openAssetFileDescriptor(uri, "r")

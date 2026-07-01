@@ -489,6 +489,20 @@ class PlayerViewModel @JvmOverloads constructor(
                 val mpvSubNameToId = mutableMapOf<String, Int>()
                 val mpvAudioNameToId = mutableMapOf<String, Int>()
 
+                val externalSubUrls = currentVideo.value?.subtitleTracks?.flatMap { sub ->
+                    val resolvedUrl = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.url == sub.url }?.resolvedUrl
+                    listOfNotNull(sub.url, resolvedUrl)
+                }?.toSet().orEmpty()
+
+                val externalAudioUrls = currentVideo.value?.audioTracks?.flatMap { audio ->
+                    val resolvedUrl = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.url == audio.url }?.resolvedUrl
+                    listOfNotNull(audio.url, resolvedUrl)
+                }?.toSet().orEmpty()
+
                 for (i in 0 until tracksCount) {
                     val type = getTrackType(i)
                     if (!possibleTrackTypes.contains(type) || type == null) continue
@@ -500,7 +514,8 @@ class PlayerViewModel @JvmOverloads constructor(
                             mpvSubNameToId[title] = mpvId
                             // Only add as Internal if it's not an external URL track
                             if (!title.startsWith("http") && !title.startsWith("content://") &&
-                                !title.startsWith("file://") && !title.startsWith("ftp://")
+                                !title.startsWith("file://") && !title.startsWith("ftp://") &&
+                                !title.startsWith("fd://") && !externalSubUrls.contains(title)
                             ) {
                                 subTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
                             }
@@ -508,7 +523,8 @@ class PlayerViewModel @JvmOverloads constructor(
                         "audio" -> {
                             mpvAudioNameToId[title] = mpvId
                             if (!title.startsWith("http") && !title.startsWith("content://") &&
-                                !title.startsWith("file://") && !title.startsWith("ftp://")
+                                !title.startsWith("file://") && !title.startsWith("ftp://") &&
+                                !title.startsWith("fd://") && !externalAudioUrls.contains(title)
                             ) {
                                 audioTracks.add(VideoTrack.Internal(mpvId, title, getTrackLanguage(i)))
                             }
@@ -526,17 +542,17 @@ class PlayerViewModel @JvmOverloads constructor(
                         sub.lang
                     }
                     val finalLang = cleanLang.ifEmpty { sub.lang }
+                    val resolvedUrl = _subtitleTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     // Match by URL — Animiru passes URL as the MPV track title
-                    val mpvId = mpvSubNameToId[sub.url]
+                    val mpvId = mpvSubNameToId[resolvedUrl] ?: mpvSubNameToId[sub.url]
                     val wasLoading = _subtitleTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
                     val wasFailed = _subtitleTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isFailed ?: false
-                    val resolvedUrl = _subtitleTracks.value
-                        .filterIsInstance<VideoTrack.External>()
-                        .find { it.index == index }?.resolvedUrl
                     subTracks.add(
                         VideoTrack.External(
                             index, finalLang, finalLang, sub.url, mpvId,
@@ -549,17 +565,17 @@ class PlayerViewModel @JvmOverloads constructor(
                 }
 
                 currentVideo.value?.audioTracks?.forEachIndexed { index, audio ->
+                    val resolvedUrl = _audioTracks.value
+                        .filterIsInstance<VideoTrack.External>()
+                        .find { it.index == index }?.resolvedUrl
                     // Match by URL — Animiru passes URL as the MPV track title
-                    val mpvId = mpvAudioNameToId[audio.url]
+                    val mpvId = mpvAudioNameToId[resolvedUrl] ?: mpvAudioNameToId[audio.url]
                     val wasLoading = _audioTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isLoading ?: false
                     val wasFailed = _audioTracks.value
                         .filterIsInstance<VideoTrack.External>()
                         .find { it.index == index }?.isFailed ?: false
-                    val resolvedUrl = _audioTracks.value
-                        .filterIsInstance<VideoTrack.External>()
-                        .find { it.index == index }?.resolvedUrl
                     audioTracks.add(
                         VideoTrack.External(
                             index, audio.lang, audio.lang, audio.url, mpvId,
