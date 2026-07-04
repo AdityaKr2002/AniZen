@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import mihon.domain.extensionrepo.repository.ExtensionRepoRepository
 
 class GetExtensionsByType(
@@ -23,7 +24,17 @@ class GetExtensionsByType(
             extensionManager.untrustedExtensionsFlow,
             extensionManager.availableExtensionsFlow,
             extensionRepoRepository.subscribeAll(),
-        ) { enabledLanguages: Set<String>, _installed: List<Extension.Installed>, _untrusted: List<Extension.Untrusted>, _available: List<Extension.Available>, repos: List<mihon.domain.extensionrepo.model.ExtensionRepo> ->
+            extensionManager.isInitialized,
+        ) { flows ->
+            val enabledLanguages = flows[0] as Set<String>
+            val _installed = flows[1] as List<Extension.Installed>
+            val _untrusted = flows[2] as List<Extension.Untrusted>
+            val _available = flows[3] as List<Extension.Available>
+            val repos = flows[4] as List<mihon.domain.extensionrepo.model.ExtensionRepo>
+            val isInitialized = flows[5] as Boolean
+
+            if (!isInitialized) return@combine null
+
             val (updates, installed) = _installed
                 .filter { (showNsfwSources || !it.isNsfw) }
                 .sortedWith(
@@ -62,5 +73,6 @@ class GetExtensionsByType(
 
             Extensions(updates, installed, available, untrusted)
         }
+        .filterNotNull()
     }
 }
