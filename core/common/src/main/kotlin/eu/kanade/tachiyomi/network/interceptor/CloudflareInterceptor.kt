@@ -79,13 +79,14 @@ class CloudflareInterceptor(
             .trim()
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     private fun resolveWithWebView(originalRequest: Request, oldCookie: Cookie?) {
         // We need to lock this thread until the WebView finds the challenge solution url, because
         // OkHttp doesn't support asynchronous interceptors.
         val latch = CountDownLatch(1)
 
         var webview: WebView? = null
+        var attachedToWindow = false
+        var parentView: android.view.ViewGroup? = null
 
         var challengeFound = false
         var cloudflareBypassed = false
@@ -95,18 +96,36 @@ class CloudflareInterceptor(
         val headers = parseHeaders(originalRequest.headers)
 
         executor.execute {
-            webview = createWebView(originalRequest).apply {
+            val activity = eu.kanade.tachiyomi.App.activeActivity?.get()
+            val createdWebView = createWebView(originalRequest).apply {
                 layoutParams = android.view.ViewGroup.LayoutParams(1080, 1920)
                 measure(
                     android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
                     android.view.View.MeasureSpec.makeMeasureSpec(1920, android.view.View.MeasureSpec.EXACTLY)
                 )
                 layout(0, 0, 1080, 1920)
+
+                // Render invisible but active
+                alpha = 0.01f
+                setBackgroundColor(0)
+
+                requestFocus()
                 onResume()
                 resumeTimers()
             }
+            webview = createdWebView
 
-            webview?.webViewClient = object : WebViewClient() {
+            if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+                try {
+                    parentView = activity.findViewById<android.view.ViewGroup>(android.R.id.content)
+                    parentView?.addView(createdWebView, android.view.ViewGroup.LayoutParams(1, 1))
+                    attachedToWindow = true
+                } catch (e: Exception) {
+                    // Fallback to detached view
+                }
+            }
+
+            createdWebView.webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
                     super.onPageStarted(view, url, favicon)
                     view.evaluateJavascript(
@@ -118,6 +137,12 @@ class CloudflareInterceptor(
                                 { description: "Portable Document Format", filename: "internal-pdf-viewer", name: "Chromium PDF Viewer" }
                             ] });
                             window.chrome = { runtime: {}, loadTimes: function() {}, csi: function() {} };
+
+                            // Override document focus & visibility
+                            Object.defineProperty(document, 'hidden', { get: () => false });
+                            Object.defineProperty(document, 'visibilityState', { get: () => 'visible' });
+                            Object.defineProperty(document, 'hasFocus', { get: () => () => true });
+                            window.hasFocus = () => true;
                         } catch (e) {}
                         """.trimIndent(),
                         null
@@ -289,6 +314,11 @@ class CloudflareInterceptor(
             }
 
             webview?.run {
+                if (attachedToWindow) {
+                    try {
+                        parentView?.removeView(this)
+                    } catch (e: Exception) {}
+                }
                 stopLoading()
                 destroy()
             }
