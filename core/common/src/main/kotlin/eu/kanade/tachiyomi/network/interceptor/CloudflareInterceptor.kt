@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -86,79 +85,6 @@ class CloudflareInterceptor(
             }
 
             webview?.webViewClient = object : WebViewClient() {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    request: WebResourceRequest
-                ): WebResourceResponse? {
-                    val url = request.url.toString()
-                    val method = request.method
-
-                    val blockedHeaders = setOf(
-                        "sec-ch-ua",
-                        "sec-ch-ua-full-version-list",
-                        "x-requested-with"
-                    )
-
-                    val hasBlocked = request.requestHeaders.keys.any { it.lowercase(java.util.Locale.ROOT) in blockedHeaders }
-                    if (method != "GET" || !request.isForMainFrame || !hasBlocked) {
-                        return super.shouldInterceptRequest(view, request)
-                    }
-
-                    val originalUri = try { java.net.URI(origRequestUrl) } catch (e: Exception) { null }
-                    val requestUri = try { java.net.URI(url) } catch (e: Exception) { null }
-
-                    val isSameOrigin = originalUri != null && requestUri != null &&
-                            originalUri.scheme.equals(requestUri.scheme, ignoreCase = true) &&
-                            originalUri.host.equals(requestUri.host, ignoreCase = true)
-
-                    if (!isSameOrigin) {
-                        return super.shouldInterceptRequest(view, request)
-                    }
-
-                    try {
-                        val client = okhttp3.OkHttpClient.Builder()
-                            .cookieJar(cookieManager)
-                            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                            .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                            .build()
-
-                        val requestBuilder = okhttp3.Request.Builder()
-                            .url(url)
-                            .method(method, null)
-
-                        for ((key, value) in request.requestHeaders) {
-                            val lowerKey = key.lowercase(java.util.Locale.ROOT)
-                            if (lowerKey !in blockedHeaders) {
-                                requestBuilder.addHeader(key, value)
-                            }
-                        }
-
-                        val response = client.newCall(requestBuilder.build()).execute()
-                        val contentType = response.header("Content-Type")
-                        val mimeType: String
-                        val charset: String?
-
-                        if (contentType != null) {
-                            val parts = contentType.split(";")
-                            mimeType = parts[0].trim()
-                            charset = parts.find { it.trim().startsWith("charset=", ignoreCase = true) }
-                                ?.substringAfter("=")?.trim()
-                        } else {
-                            mimeType = "text/html"
-                            charset = "UTF-8"
-                        }
-
-                        val headersMap = mutableMapOf<String, String>()
-                        response.headers.forEach { headersMap[it.first] = it.second }
-
-                        return WebResourceResponse(mimeType, charset, response.body?.byteStream()).apply {
-                            responseHeaders = headersMap
-                        }
-                    } catch (e: Exception) {
-                        return super.shouldInterceptRequest(view, request)
-                    }
-                }
-
                 override fun onPageFinished(view: WebView, url: String) {
                     fun isCloudFlareBypassed(): Boolean {
                         return cookieManager.get(origRequestUrl.toHttpUrl())
