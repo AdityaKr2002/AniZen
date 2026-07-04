@@ -56,6 +56,9 @@ class CloudflareInterceptor(
 
             val newRequest = request.newBuilder()
                 .header("User-Agent", cleanUserAgent)
+                .apply {
+                    addClientHints(this, cleanUserAgent)
+                }
                 .build()
 
             resolveWithWebView(newRequest, oldCookie)
@@ -77,6 +80,19 @@ class CloudflareInterceptor(
             .replace(Regex("\\s+AniZen/\\S+", RegexOption.IGNORE_CASE), "")
             .replace(Regex("\\s+Tachiyomi/\\S+", RegexOption.IGNORE_CASE), "")
             .trim()
+    }
+
+    private fun addClientHints(builder: Request.Builder, userAgent: String) {
+        val chromeVersionMatch = Regex("Chrome/(\\d+)").find(userAgent)
+        val chromeVersion = chromeVersionMatch?.groupValues?.get(1) ?: "131"
+
+        val androidVersionMatch = Regex("Android\\s+(\\d+)").find(userAgent)
+        val androidVersion = androidVersionMatch?.groupValues?.get(1) ?: "13"
+
+        builder.header("Sec-CH-UA", "\"Chromium\";v=\"$chromeVersion\", \"Google Chrome\";v=\"$chromeVersion\", \"Not=A?Brand\";v=\"99\"")
+        builder.header("Sec-CH-UA-Mobile", "?1")
+        builder.header("Sec-CH-UA-Platform", "\"Android\"")
+        builder.header("Sec-CH-UA-Platform-Version", "\"$androidVersion.0.0\"")
     }
 
     private fun resolveWithWebView(originalRequest: Request, oldCookie: Cookie?) {
