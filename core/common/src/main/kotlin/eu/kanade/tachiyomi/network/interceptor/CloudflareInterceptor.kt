@@ -45,7 +45,13 @@ class CloudflareInterceptor(
             val oldCookie = cookieManager.get(request.url)
                 .firstOrNull { it.name == "cf_clearance" }
 
-            val originalUserAgent = request.header("User-Agent") ?: defaultUserAgentProvider()
+            val originalUserAgent = request.header("User-Agent") ?: run {
+                try {
+                    android.webkit.WebSettings.getDefaultUserAgent(context)
+                } catch (e: Exception) {
+                    defaultUserAgentProvider()
+                }
+            }
             val cleanUserAgent = cleanUserAgent(originalUserAgent)
 
             val newRequest = request.newBuilder()
@@ -101,6 +107,23 @@ class CloudflareInterceptor(
             }
 
             webview?.webViewClient = object : WebViewClient() {
+                override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    view.evaluateJavascript(
+                        """
+                        try {
+                            Object.defineProperty(navigator, 'webdriver', { get: () => false });
+                            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+                            Object.defineProperty(navigator, 'plugins', { get: () => [
+                                { description: "Portable Document Format", filename: "internal-pdf-viewer", name: "Chromium PDF Viewer" }
+                            ] });
+                            window.chrome = { runtime: {}, loadTimes: function() {}, csi: function() {} };
+                        } catch (e) {}
+                        """.trimIndent(),
+                        null
+                    )
+                }
+
                 override fun onPageFinished(view: WebView, url: String) {
                     fun isCloudFlareBypassed(): Boolean {
                         return cookieManager.get(origRequestUrl.toHttpUrl())
