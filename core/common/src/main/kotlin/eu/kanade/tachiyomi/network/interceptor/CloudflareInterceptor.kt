@@ -87,8 +87,7 @@ class CloudflareInterceptor(
         val chromeVersionMatch = Regex("Chrome/(\\d+)").find(userAgent)
         val chromeVersion = chromeVersionMatch?.groupValues?.get(1) ?: "131"
 
-        val androidVersionMatch = Regex("Android\\s+(\\d+)").find(userAgent)
-        val androidVersion = androidVersionMatch?.groupValues?.get(1) ?: "13"
+        val androidVersion = android.os.Build.VERSION.RELEASE.takeWhile { it.isDigit() }.ifEmpty { "13" }
 
         builder.header("Sec-CH-UA", "\"Chromium\";v=\"$chromeVersion\", \"Google Chrome\";v=\"$chromeVersion\", \"Not=A?Brand\";v=\"99\"")
         builder.header("Sec-CH-UA-Mobile", "?1")
