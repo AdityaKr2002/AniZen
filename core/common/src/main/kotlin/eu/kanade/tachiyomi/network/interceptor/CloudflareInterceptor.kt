@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -76,6 +77,79 @@ class CloudflareInterceptor(
             webview = createWebView(originalRequest)
 
             webview?.webViewClient = object : WebViewClient() {
+                override fun shouldInterceptRequest(
+                    view: WebView,
+                    request: WebResourceRequest
+                ): WebResourceResponse? {
+                    val url = request.url.toString()
+                    val method = request.method
+
+                    val blockedHeaders = setOf(
+                        "sec-ch-ua",
+                        "sec-ch-ua-full-version-list",
+                        "x-requested-with"
+                    )
+
+                    val hasBlocked = request.requestHeaders.keys.any { it.lowercase(java.util.Locale.ROOT) in blockedHeaders }
+                    if (method != "GET" || !request.isForMainFrame || !hasBlocked) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
+
+                    val originalUri = try { java.net.URI(origRequestUrl) } catch (e: Exception) { null }
+                    val requestUri = try { java.net.URI(url) } catch (e: Exception) { null }
+
+                    val isSameOrigin = originalUri != null && requestUri != null &&
+                            originalUri.scheme.equals(requestUri.scheme, ignoreCase = true) &&
+                            originalUri.host.equals(requestUri.host, ignoreCase = true)
+
+                    if (!isSameOrigin) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
+
+                    try {
+                        val client = okhttp3.OkHttpClient.Builder()
+                            .cookieJar(cookieManager)
+                            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                            .build()
+
+                        val requestBuilder = okhttp3.Request.Builder()
+                            .url(url)
+                            .method(method, null)
+
+                        for ((key, value) in request.requestHeaders) {
+                            val lowerKey = key.lowercase(java.util.Locale.ROOT)
+                            if (lowerKey !in blockedHeaders) {
+                                requestBuilder.addHeader(key, value)
+                            }
+                        }
+
+                        val response = client.newCall(requestBuilder.build()).execute()
+                        val contentType = response.header("Content-Type")
+                        val mimeType: String
+                        val charset: String?
+
+                        if (contentType != null) {
+                            val parts = contentType.split(";")
+                            mimeType = parts[0].trim()
+                            charset = parts.find { it.trim().startsWith("charset=", ignoreCase = true) }
+                                ?.substringAfter("=")?.trim()
+                        } else {
+                            mimeType = "text/html"
+                            charset = "UTF-8"
+                        }
+
+                        val headersMap = mutableMapOf<String, String>()
+                        response.headers.forEach { headersMap[it.first] = it.second }
+
+                        return WebResourceResponse(mimeType, charset, response.body?.byteStream()).apply {
+                            responseHeaders = headersMap
+                        }
+                    } catch (e: Exception) {
+                        return super.shouldInterceptRequest(view, request)
+                    }
+                }
+
                 override fun onPageFinished(view: WebView, url: String) {
                     fun isCloudFlareBypassed(): Boolean {
                         return cookieManager.get(origRequestUrl.toHttpUrl())
@@ -92,6 +166,79 @@ class CloudflareInterceptor(
                         // The first request didn't return the challenge, abort.
                         latch.countDown()
                     }
+
+                    // Inject Turnstile auto-click script
+                    view.evaluateJavascript(
+                        """
+                        (function() {
+                            const MIN_DELAY = 1000;
+                            const MAX_DELAY = 3000;
+                            const CHECK_INTERVAL = 2000;
+
+                            function getRandomDelay() {
+                                return Math.floor(Math.random() * (MAX_DELAY - MIN_DELAY + 1)) + MIN_DELAY;
+                            }
+
+                            function findWidget(root) {
+                                const widget = root.querySelector('#challenge-stage input[type="checkbox"]') ||
+                                       root.querySelector('input[name="cf-turnstile-response"]') ||
+                                       root.querySelector('.ctp-checkbox-container input') ||
+                                       root.querySelector('.cf-turnstile-wrapper iframe') ||
+                                       root.querySelector('#turnstile-wrapper iframe');
+
+                                if (widget) return widget;
+
+                                const all = root.querySelectorAll('*');
+                                for (let i = 0; i < all.length; i++) {
+                                    if (all[i].shadowRoot) {
+                                        const found = findWidget(all[i].shadowRoot);
+                                        if (found) return found;
+                                    }
+                                }
+                                return null;
+                            }
+
+                            function attemptClick() {
+                                const element = findWidget(document);
+                                if (element) {
+                                    setTimeout(() => {
+                                        if (element.tagName === 'IFRAME') {
+                                            element.focus();
+                                        } else {
+                                            element.focus();
+                                            element.click();
+                                            element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                                            element.dispatchEvent(new Event('change', { bubbles: true }));
+                                            element.dispatchEvent(new Event('input', { bubbles: true }));
+                                        }
+                                    }, getRandomDelay());
+                                    return true;
+                                }
+                                return false;
+                            }
+
+                            const observer = new MutationObserver((mutations) => {
+                                if (attemptClick()) {
+                                    observer.disconnect();
+                                }
+                            });
+
+                            observer.observe(document.body, { childList: true, subtree: true });
+
+                            if (attemptClick()) {
+                                observer.disconnect();
+                            }
+
+                            const interval = setInterval(() => {
+                                if (attemptClick()) {
+                                    clearInterval(interval);
+                                    observer.disconnect();
+                                }
+                            }, CHECK_INTERVAL);
+                        })();
+                        """.trimIndent(),
+                        null
+                    )
                 }
 
                 override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
@@ -110,7 +257,24 @@ class CloudflareInterceptor(
             webview?.loadUrl(origRequestUrl, headers)
         }
 
-        latch.awaitFor30Seconds()
+        val pollTimer = java.util.Timer()
+        pollTimer.schedule(object : java.util.TimerTask() {
+            override fun run() {
+                val currentCookie = cookieManager.get(origRequestUrl.toHttpUrl())
+                    .firstOrNull { it.name == "cf_clearance" }
+                if (currentCookie != null && currentCookie != oldCookie) {
+                    cloudflareBypassed = true
+                    latch.countDown()
+                    pollTimer.cancel()
+                }
+            }
+        }, 0L, 700L)
+
+        try {
+            latch.awaitFor30Seconds()
+        } finally {
+            pollTimer.cancel()
+        }
 
         executor.execute {
             if (!cloudflareBypassed) {
