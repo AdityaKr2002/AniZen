@@ -74,7 +74,16 @@ class CloudflareInterceptor(
         val headers = parseHeaders(originalRequest.headers)
 
         executor.execute {
-            webview = createWebView(originalRequest)
+            webview = createWebView(originalRequest).apply {
+                layoutParams = android.view.ViewGroup.LayoutParams(1080, 1920)
+                measure(
+                    android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec(1920, android.view.View.MeasureSpec.EXACTLY)
+                )
+                layout(0, 0, 1080, 1920)
+                onResume()
+                resumeTimers()
+            }
 
             webview?.webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(
@@ -266,9 +275,42 @@ class CloudflareInterceptor(
                     cloudflareBypassed = true
                     latch.countDown()
                     pollTimer.cancel()
+                    return
+                }
+
+                executor.execute {
+                    webview?.evaluateJavascript(
+                        """
+                        (function() {
+                            try {
+                                var href = (document.location && document.location.href) || '';
+                                if (href === '' || href === 'about:blank') return 'wait';
+                                if (document.readyState !== 'interactive' && document.readyState !== 'complete') return 'wait';
+                                var t = (document.title || '').toLowerCase();
+                                if (t.indexOf('attention required') !== -1 || t.indexOf('access denied') !== -1) return 'error';
+                                if (t.indexOf('just a moment') !== -1 || t.indexOf('un instant') !== -1 ||
+                                    t.indexOf('einen moment') !== -1 || t.indexOf('un momento') !== -1 ||
+                                    t.indexOf('один момент') !== -1) return 'wait';
+                                if (document.querySelector('#challenge-running, #challenge-stage, #cf-challenge-running, .cf-browser-verification, #turnstile-wrapper, #cf-please-wait, script[src*="challenge-platform"]')) return 'wait';
+                                if (!document.body || document.body.children.length === 0) return 'wait';
+                                return 'ok';
+                            } catch (e) { return 'wait'; }
+                        })()
+                        """.trimIndent()
+                    ) { state ->
+                        if (state == "\"ok\"") {
+                            val current = cookieManager.get(origRequestUrl.toHttpUrl())
+                                .firstOrNull { it.name == "cf_clearance" }
+                            if (current != null) {
+                                cloudflareBypassed = true
+                                latch.countDown()
+                                pollTimer.cancel()
+                            }
+                        }
+                    }
                 }
             }
-        }, 0L, 700L)
+        }, 0L, 1000L)
 
         try {
             latch.awaitFor30Seconds()
