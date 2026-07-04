@@ -112,7 +112,7 @@ class CloudflareInterceptor(
         val headers = parseHeaders(originalRequest.headers)
 
         executor.execute {
-            val activity = eu.kanade.tachiyomi.App.activeActivity?.get()
+            val activity = ActivityTracker.activeActivity?.get()
             val createdWebView = createWebView(originalRequest).apply {
                 layoutParams = android.view.ViewGroup.LayoutParams(1080, 1920)
                 measure(
@@ -133,7 +133,7 @@ class CloudflareInterceptor(
 
             if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
                 try {
-                    parentView = activity.findViewById<android.view.ViewGroup>(android.R.id.content)
+                    parentView = activity.findViewById(android.R.id.content) as? android.view.ViewGroup
                     parentView?.addView(createdWebView, android.view.ViewGroup.LayoutParams(1, 1))
                     attachedToWindow = true
                 } catch (e: Exception) {
@@ -357,3 +357,21 @@ private val SERVER_CHECK = arrayOf("cloudflare-nginx", "cloudflare")
 private val COOKIE_NAMES = listOf("cf_clearance")
 
 private class CloudflareBypassException : Exception()
+
+object ActivityTracker : android.app.Application.ActivityLifecycleCallbacks {
+    var activeActivity: java.lang.ref.WeakReference<android.app.Activity>? = null
+
+    override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {}
+    override fun onActivityStarted(activity: android.app.Activity) {}
+    override fun onActivityResumed(activity: android.app.Activity) {
+        activeActivity = java.lang.ref.WeakReference(activity)
+    }
+    override fun onActivityPaused(activity: android.app.Activity) {
+        if (activeActivity?.get() == activity) {
+            activeActivity = null
+        }
+    }
+    override fun onActivityStopped(activity: android.app.Activity) {}
+    override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) {}
+    override fun onActivityDestroyed(activity: android.app.Activity) {}
+}

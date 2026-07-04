@@ -105,10 +105,6 @@ import okio.Path.Companion.toPath
 
 class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factory {
 
-    companion object {
-        var activeActivity: java.lang.ref.WeakReference<android.app.Activity>? = null
-    }
-
     private val basePreferences: BasePreferences by injectLazy()
     private val privacyPreferences: PrivacyPreferences by injectLazy()
     private val networkPreferences: NetworkPreferences by injectLazy()
@@ -117,21 +113,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
     @SuppressLint("LaunchActivityFromNotification")
     override fun onCreate() {
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {}
-            override fun onActivityStarted(activity: android.app.Activity) {}
-            override fun onActivityResumed(activity: android.app.Activity) {
-                activeActivity = java.lang.ref.WeakReference(activity)
-            }
-            override fun onActivityPaused(activity: android.app.Activity) {
-                if (activeActivity?.get() == activity) {
-                    activeActivity = null
-                }
-            }
-            override fun onActivityStopped(activity: android.app.Activity) {}
-            override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) {}
-            override fun onActivityDestroyed(activity: android.app.Activity) {}
-        })
+        registerActivityLifecycleCallbacks(eu.kanade.tachiyomi.network.interceptor.ActivityTracker)
 
         super<Application>.onCreate()
         patchInjekt()
