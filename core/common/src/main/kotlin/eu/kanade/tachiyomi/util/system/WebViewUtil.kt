@@ -79,7 +79,9 @@ fun WebView.setDefaultSettings() {
         displayZoomControls = false
     }
 
-    CookieManager.getInstance().acceptThirdPartyCookies(this)
+    val cookieManager = CookieManager.getInstance()
+    cookieManager.setAcceptCookie(true)
+    cookieManager.acceptThirdPartyCookies(this)
 }
 
 private fun WebView.getWebViewMajorVersion(): Int {

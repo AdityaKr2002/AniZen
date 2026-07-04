@@ -42,6 +42,7 @@ class CloudflareInterceptor(
         try {
             response.close()
             cookieManager.remove(request.url, COOKIE_NAMES, 0)
+            android.webkit.CookieManager.getInstance().flush()
             val oldCookie = cookieManager.get(request.url)
                 .firstOrNull { it.name == "cf_clearance" }
 
@@ -113,7 +114,8 @@ class CloudflareInterceptor(
 
         executor.execute {
             val activity = ActivityTracker.activeActivity?.get()
-            val createdWebView = createWebView(originalRequest).apply {
+            val webViewContext = activity ?: context
+            val createdWebView = createWebView(originalRequest, webViewContext).apply {
                 layoutParams = android.view.ViewGroup.LayoutParams(1080, 1920)
                 measure(
                     android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
@@ -338,6 +340,7 @@ class CloudflareInterceptor(
                 stopLoading()
                 destroy()
             }
+            android.webkit.CookieManager.getInstance().flush()
         }
 
         // Throw exception if we failed to bypass Cloudflare
