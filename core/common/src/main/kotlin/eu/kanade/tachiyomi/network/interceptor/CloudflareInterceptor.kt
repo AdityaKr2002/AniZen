@@ -135,9 +135,7 @@ class CloudflareInterceptor(
             if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
                 try {
                     parentView = activity.findViewById(android.R.id.content) as? android.view.ViewGroup
-                    createdWebView.translationX = 10000f
-                    createdWebView.translationY = 10000f
-                    parentView?.addView(createdWebView, android.view.ViewGroup.LayoutParams(1080, 1920))
+                    parentView?.addView(createdWebView, 0, android.view.ViewGroup.LayoutParams(1080, 1920))
                     attachedToWindow = true
                 } catch (e: Exception) {
                     // Fallback to detached view
