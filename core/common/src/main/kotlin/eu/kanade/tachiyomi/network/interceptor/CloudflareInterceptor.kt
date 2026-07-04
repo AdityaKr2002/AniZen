@@ -44,9 +44,17 @@ class CloudflareInterceptor(
             cookieManager.remove(request.url, COOKIE_NAMES, 0)
             val oldCookie = cookieManager.get(request.url)
                 .firstOrNull { it.name == "cf_clearance" }
-            resolveWithWebView(request, oldCookie)
 
-            return chain.proceed(request)
+            val originalUserAgent = request.header("User-Agent") ?: defaultUserAgentProvider()
+            val cleanUserAgent = cleanUserAgent(originalUserAgent)
+
+            val newRequest = request.newBuilder()
+                .header("User-Agent", cleanUserAgent)
+                .build()
+
+            resolveWithWebView(newRequest, oldCookie)
+
+            return chain.proceed(newRequest)
         }
         // Because OkHttp's enqueue only handles IOExceptions, wrap the exception so that
         // we don't crash the entire app
@@ -55,6 +63,14 @@ class CloudflareInterceptor(
         } catch (e: Exception) {
             throw IOException(e)
         }
+    }
+
+    private fun cleanUserAgent(userAgent: String): String {
+        return userAgent
+            .replace(Regex("\\s+Aniyomi/\\S+", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s+AniZen/\\S+", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s+Tachiyomi/\\S+", RegexOption.IGNORE_CASE), "")
+            .trim()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
