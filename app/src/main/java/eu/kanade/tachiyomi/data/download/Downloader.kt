@@ -788,7 +788,7 @@ class Downloader(
         if (size <= 0) {
             try {
                 client.newCall(Request.Builder().url(video.videoUrl).headers(headers).head().build()).execute().use { res ->
-                    size = if (res.isSuccessful) res.header("Content-Length")?.toLong() ?: -1L else -1L
+                    size = if (res.isSuccessful) res.header("Content-Length")?.toLongOrNull() ?: -1L else -1L
                 }
             } catch (e: Exception) {
                 logcat(LogPriority.DEBUG) { "HEAD request failed: ${e.message}" }
