@@ -76,6 +76,7 @@ import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.utils.AniSkipApi
 import eu.kanade.tachiyomi.ui.player.utils.ChapterUtils.Companion.getStringRes
 import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore
@@ -186,6 +187,7 @@ class PlayerViewModel @JvmOverloads constructor(
     internal val gesturePreferences: GesturePreferences = Injekt.get(),
     private val decoderPreferences: DecoderPreferences = Injekt.get(),
     private val audioPreferences: AudioPreferences = Injekt.get(),
+    private val subtitlePreferences: SubtitlePreferences = Injekt.get(),
     private val basePreferences: BasePreferences = Injekt.get(),
     private val getCustomButtons: GetCustomButtons = Injekt.get(),
     private val trackSelect: TrackSelect = Injekt.get(),
@@ -636,9 +638,13 @@ class PlayerViewModel @JvmOverloads constructor(
      * or select the first one in the list if trackSelect fails.
      */
     fun onFinishLoadingTracks() {
-        val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
-        (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            selectSub(it, forcePrimary = true)
+        if (!subtitlePreferences.disableAutoSubtitles().get()) {
+            val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
+            (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
+                selectSub(it, forcePrimary = true)
+            }
+        } else {
+            activity.player.sid = -1
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)

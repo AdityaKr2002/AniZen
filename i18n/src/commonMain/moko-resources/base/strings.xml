@@ -364,6 +364,8 @@
     <string name="pref_player_subtitle_whitelist_info">Whitelist for subtitles. If a whitelist is defined, the first subtitle that contains a whitelisted word will be used. Multiple values can be delimited by a comma.</string>
     <string name="pref_player_subtitle_blacklist">Blacklist</string>
     <string name="pref_player_subtitle_blacklist_info">Blacklist for subtitles. If a blacklist is defined, all subtitles that contains a blacklisted word will be filtered out. Multiple values can be delimited by a comma.</string>
+    <string name="pref_disable_auto_subtitles">Disable auto subtitle selection</string>
+    <string name="pref_disable_auto_subtitles_summary">Do not automatically select any subtitle track when loading a video</string>
 
     <!-- Player settings - Audio -->
     <string name="pref_player_audio">Audio</string>
