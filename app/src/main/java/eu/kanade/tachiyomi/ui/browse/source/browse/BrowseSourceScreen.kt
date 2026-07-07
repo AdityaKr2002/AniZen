@@ -94,7 +94,8 @@ import uy.kohesive.injekt.api.get
 
 data class BrowseSourceScreen(
     private val sourceId: Long,
-    private val listingQuery: String?,
+    private val listingQuery: String? = null,
+    private val savedSearchId: Long? = null,
 ) : Screen(), AssistContentScreen {
 
     private var assistUrl: String? = null
@@ -109,7 +110,13 @@ data class BrowseSourceScreen(
         }
 
         val uiPreferences = remember { Injekt.get<UiPreferences>() }
-        val screenModel = rememberScreenModel { BrowseSourceScreenModel(sourceId, listingQuery) }
+        val screenModel = rememberScreenModel {
+            BrowseSourceScreenModel(
+                sourceId = sourceId,
+                listingQuery = listingQuery,
+                savedSearchId = savedSearchId,
+            )
+        }
         val state by screenModel.state.collectAsState()
 
         val navigator = LocalNavigator.currentOrThrow

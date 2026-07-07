@@ -68,6 +68,7 @@ import tachiyomi.domain.episode.interactor.SetAnimeDefaultEpisodeFlags
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.interactor.DeleteSavedSearchById
 import tachiyomi.domain.source.interactor.GetRemoteAnime
+import tachiyomi.domain.source.interactor.GetSavedSearchById
 import tachiyomi.domain.source.interactor.GetSavedSearchBySourceId
 import tachiyomi.domain.source.interactor.InsertSavedSearch
 import tachiyomi.domain.source.model.SavedSearch
@@ -80,6 +81,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter as AnimeSourceModelFilt
 class BrowseSourceScreenModel(
     private val sourceId: Long,
     listingQuery: String?,
+    private val savedSearchId: Long? = null,
     sourceManager: SourceManager = Injekt.get(),
     sourcePreferences: SourcePreferences = Injekt.get(),
     basePreferences: BasePreferences = Injekt.get(),
@@ -94,6 +96,7 @@ class BrowseSourceScreenModel(
     private val networkToLocalAnime: NetworkToLocalAnime = Injekt.get(),
     private val updateAnime: UpdateAnime = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
+    private val getSavedSearchById: GetSavedSearchById = Injekt.get(),
     private val getSavedSearchBySourceId: GetSavedSearchBySourceId = Injekt.get(),
     private val insertSavedSearch: InsertSavedSearch = Injekt.get(),
     private val deleteSavedSearchById: DeleteSavedSearchById = Injekt.get(),
@@ -107,6 +110,15 @@ class BrowseSourceScreenModel(
     val source = sourceManager.getOrStub(sourceId)
 
     init {
+        if (savedSearchId != null) {
+            screenModelScope.launch {
+                val savedSearch = getSavedSearchById.awaitOrNull(savedSearchId)
+                if (savedSearch != null) {
+                    loadSearch(savedSearch)
+                }
+            }
+        }
+
         if (source is CatalogueSource) {
             mutableState.update {
                 var query: String? = null

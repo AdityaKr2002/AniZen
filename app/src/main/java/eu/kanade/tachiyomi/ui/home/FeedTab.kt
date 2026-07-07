@@ -105,12 +105,25 @@ data object FeedTab : Tab {
                 }
             },
             onSeeAllClick = { item ->
-                val query = when (tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type)) {
-                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Latest -> tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_LATEST
-                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Popular -> tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_POPULAR
-                    tachiyomi.domain.source.model.FeedSavedSearch.Type.SavedSearch -> item.savedSearch?.query
+                val type = tachiyomi.domain.source.model.FeedSavedSearch.Type.from(item.feed.type)
+                val screen = when (type) {
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Latest ->
+                        eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(
+                            sourceId = item.source.id,
+                            listingQuery = tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_LATEST,
+                        )
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.Popular ->
+                        eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(
+                            sourceId = item.source.id,
+                            listingQuery = tachiyomi.domain.source.interactor.GetRemoteAnime.QUERY_POPULAR,
+                        )
+                    tachiyomi.domain.source.model.FeedSavedSearch.Type.SavedSearch ->
+                        eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(
+                            sourceId = item.source.id,
+                            savedSearchId = item.savedSearch?.id,
+                        )
                 }
-                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(item.source.id, query))
+                navigator.push(screen)
             },
             contentPadding = contentPadding,
             usePanorama = usePanorama,
