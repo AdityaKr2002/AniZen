@@ -719,13 +719,24 @@ class PlayerViewModel @JvmOverloads constructor(
     fun addAudio(uri: Uri) {
         val url = uri.toString()
         val isContentUri = url.startsWith("content://")
-        val path = (if (isContentUri) uri.openContentFd(activity) else url)
-            ?: return
-        val name = if (isContentUri) uri.getFileName(activity) else null
-        if (name == null) {
-            MPVLib.command(arrayOf("audio-add", path, "cached"))
+        if (isContentUri) {
+            viewModelScope.launchIO {
+                val cacheFile = copyUriToCache(uri)
+                if (cacheFile != null) {
+                    withUIContext {
+                        MPVLib.command(arrayOf("audio-add", cacheFile.absolutePath, "select", cacheFile.name))
+                    }
+                } else {
+                    logcat(LogPriority.ERROR) { "Failed to copy audio to cache" }
+                }
+            }
         } else {
-            MPVLib.command(arrayOf("audio-add", path, "cached", name))
+            val name = uri.path?.let { File(it).name }
+            if (name == null) {
+                MPVLib.command(arrayOf("audio-add", url, "select"))
+            } else {
+                MPVLib.command(arrayOf("audio-add", url, "select", name))
+            }
         }
     }
 
@@ -762,16 +773,48 @@ class PlayerViewModel @JvmOverloads constructor(
         _selectedAudio.update { id }
     }
 
+    private fun copyUriToCache(uri: Uri): File? {
+        val name = uri.getFileName(activity) ?: run {
+            val extension = activity.contentResolver.getType(uri)?.let { mime ->
+                android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+            } ?: uri.path?.substringAfterLast('.', "")?.takeIf { it.isNotEmpty() } ?: "bin"
+            "temp_${System.currentTimeMillis()}.$extension"
+        }
+        val cacheFile = File(activity.cacheDir, name)
+        try {
+            activity.contentResolver.openInputStream(uri)?.use { input ->
+                cacheFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return if (cacheFile.exists()) cacheFile else null
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) { "Failed to copy URI to cache: ${e.message}" }
+            return null
+        }
+    }
+
     fun addSubtitle(uri: Uri) {
         val url = uri.toString()
         val isContentUri = url.startsWith("content://")
-        val path = (if (isContentUri) uri.openContentFd(activity) else url)
-            ?: return
-        val name = if (isContentUri) uri.getFileName(activity) else null
-        if (name == null) {
-            MPVLib.command(arrayOf("sub-add", path, "cached"))
+        if (isContentUri) {
+            viewModelScope.launchIO {
+                val cacheFile = copyUriToCache(uri)
+                if (cacheFile != null) {
+                    withUIContext {
+                        MPVLib.command(arrayOf("sub-add", cacheFile.absolutePath, "select", cacheFile.name))
+                    }
+                } else {
+                    logcat(LogPriority.ERROR) { "Failed to copy subtitle to cache" }
+                }
+            }
         } else {
-            MPVLib.command(arrayOf("sub-add", path, "cached", name))
+            val name = uri.path?.let { File(it).name }
+            if (name == null) {
+                MPVLib.command(arrayOf("sub-add", url, "select"))
+            } else {
+                MPVLib.command(arrayOf("sub-add", url, "select", name))
+            }
         }
     }
 
