@@ -22,8 +22,11 @@ import eu.kanade.tachiyomi.ui.player.MPV_KT_PREVIEW
 import eu.kanade.tachiyomi.ui.player.MPV_PLAYER
 import eu.kanade.tachiyomi.ui.player.MPV_REMOTE
 import eu.kanade.tachiyomi.ui.player.MPV_REX
+import eu.kanade.tachiyomi.ui.player.MPV_REX_DEBUG
 import eu.kanade.tachiyomi.ui.player.MPV_RX
+import eu.kanade.tachiyomi.ui.player.MPV_RX_DEBUG
 import eu.kanade.tachiyomi.ui.player.MPV_EX
+import eu.kanade.tachiyomi.ui.player.MPV_EX_DEBUG
 import eu.kanade.tachiyomi.ui.player.MX_PLAYER
 import eu.kanade.tachiyomi.ui.player.MX_PLAYER_FREE
 import eu.kanade.tachiyomi.ui.player.MX_PLAYER_PRO
@@ -583,6 +586,9 @@ val externalPlayers = listOf(
     WEB_VIDEO_CASTER,
     AMNIS,
     MPV_REX,
+    MPV_REX_DEBUG,
     MPV_RX,
+    MPV_RX_DEBUG,
     MPV_EX,
+    MPV_EX_DEBUG,
 )

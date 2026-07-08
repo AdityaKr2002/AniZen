@@ -249,7 +249,7 @@ class ExternalIntents {
     private fun standardIntentForPackage(pkgName: String, context: Context, uri: Uri, video: Video): Intent {
         return Intent(Intent.ACTION_VIEW).apply {
             if (isPackageInstalled(pkgName, context.packageManager)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && pkgName.contains("vlc")) {
+                if (pkgName.contains("mpv") || pkgName.contains("mehiz") || pkgName.contains("vlc") || pkgName.contains("marlboroadvance") || pkgName.contains("gyrolet")) {
                     setPackage(pkgName)
                 } else {
                     component = getComponent(pkgName)
@@ -394,9 +394,9 @@ class ExternalIntents {
             NEXT_PLAYER -> ComponentName(packageName, "$packageName.feature.player.PlayerActivity")
             X_PLAYER -> ComponentName(packageName, "com.inshot.xplayer.activities.PlayerActivity")
             AMNIS -> ComponentName(packageName, "$packageName.gui.player.PlayerActivity")
-            MPV_REX -> ComponentName(packageName, "xyz.mpv.rex.ui.player.PlayerActivity")
-            MPV_RX -> ComponentName(packageName, "app.gyrolet.mpvrx.ui.player.PlayerActivity")
-            MPV_EX -> ComponentName(packageName, "app.marlboroadvance.mpvex.ui.player.PlayerActivity")
+            MPV_REX, MPV_REX_DEBUG -> ComponentName(packageName, "xyz.mpv.rex.ui.player.PlayerActivity")
+            MPV_RX, MPV_RX_DEBUG -> ComponentName(packageName, "app.gyrolet.mpvrx.ui.player.PlayerActivity")
+            MPV_EX, MPV_EX_DEBUG -> ComponentName(packageName, "app.marlboroadvance.mpvex.ui.player.PlayerActivity")
             else -> null
         }
     }
@@ -676,5 +676,8 @@ const val X_PLAYER = "video.player.videoplayer"
 const val WEB_VIDEO_CASTER = "com.instantbits.cast.webvideo"
 const val AMNIS = "com.amnis"
 const val MPV_REX = "xyz.mpv.rex"
+const val MPV_REX_DEBUG = "xyz.mpv.rex.debug"
 const val MPV_RX = "app.gyrolet.mpvrx"
+const val MPV_RX_DEBUG = "app.gyrolet.mpvrx.debug"
 const val MPV_EX = "app.marlboroadvance.mpvex"
+const val MPV_EX_DEBUG = "app.marlboroadvance.mpvex.debug"
