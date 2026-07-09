@@ -117,6 +117,8 @@ class FeedScreenModel(
                     ) { feedSavedSearches, isInitialized ->
                         feedSavedSearches to isInitialized
                     }.collectLatest { (feedSavedSearches, isInitialized) ->
+                        if (!isInitialized) return@collectLatest
+
                         // 1. Establish structural placeholders immediately and CLEAN UP removed feeds
                         // This ensures that even if sources aren't loaded, we show the containers
                         val savedSearches = getSavedSearchGlobalFeed.await(category.id)
@@ -140,8 +142,6 @@ class FeedScreenModel(
                             newItemsMap[category.id] = initialItems
                             state.copy(items = newItemsMap.toImmutableMap())
                         }
-
-                        if (!isInitialized) return@collectLatest
 
                         // 2. Load content in parallel with TIMEOUT and NO RETRIES to prevent hangs
                         coroutineScope {

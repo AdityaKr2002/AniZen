@@ -76,6 +76,7 @@ import eu.kanade.tachiyomi.ui.player.settings.AudioPreferences
 import eu.kanade.tachiyomi.ui.player.settings.DecoderPreferences
 import eu.kanade.tachiyomi.ui.player.settings.GesturePreferences
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
+import eu.kanade.tachiyomi.ui.player.settings.SubtitlePreferences
 import eu.kanade.tachiyomi.ui.player.utils.AniSkipApi
 import eu.kanade.tachiyomi.ui.player.utils.ChapterUtils.Companion.getStringRes
 import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore
@@ -186,6 +187,7 @@ class PlayerViewModel @JvmOverloads constructor(
     internal val gesturePreferences: GesturePreferences = Injekt.get(),
     private val decoderPreferences: DecoderPreferences = Injekt.get(),
     private val audioPreferences: AudioPreferences = Injekt.get(),
+    private val subtitlePreferences: SubtitlePreferences = Injekt.get(),
     private val basePreferences: BasePreferences = Injekt.get(),
     private val getCustomButtons: GetCustomButtons = Injekt.get(),
     private val trackSelect: TrackSelect = Injekt.get(),
@@ -636,9 +638,13 @@ class PlayerViewModel @JvmOverloads constructor(
      * or select the first one in the list if trackSelect fails.
      */
     fun onFinishLoadingTracks() {
-        val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
-        (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
-            selectSub(it, forcePrimary = true)
+        if (!subtitlePreferences.disableAutoSubtitles().get()) {
+            val preferredSubtitle = trackSelect.getPreferredTrackIndex(subtitleTracks.value)
+            (preferredSubtitle ?: subtitleTracks.value.firstOrNull())?.let {
+                selectSub(it, forcePrimary = true)
+            }
+        } else {
+            activity.player.sid = -1
         }
 
         val preferredAudio = trackSelect.getPreferredTrackIndex(audioTracks.value, subtitle = false)
@@ -713,13 +719,24 @@ class PlayerViewModel @JvmOverloads constructor(
     fun addAudio(uri: Uri) {
         val url = uri.toString()
         val isContentUri = url.startsWith("content://")
-        val path = (if (isContentUri) uri.openContentFd(activity) else url)
-            ?: return
-        val name = if (isContentUri) uri.getFileName(activity) else null
-        if (name == null) {
-            MPVLib.command(arrayOf("audio-add", path, "cached"))
+        if (isContentUri) {
+            viewModelScope.launchIO {
+                val cacheFile = copyUriToCache(uri)
+                if (cacheFile != null) {
+                    withUIContext {
+                        MPVLib.command(arrayOf("audio-add", cacheFile.absolutePath, "select", cacheFile.name))
+                    }
+                } else {
+                    logcat(LogPriority.ERROR) { "Failed to copy audio to cache" }
+                }
+            }
         } else {
-            MPVLib.command(arrayOf("audio-add", path, "cached", name))
+            val name = uri.path?.let { File(it).name }
+            if (name == null) {
+                MPVLib.command(arrayOf("audio-add", url, "select"))
+            } else {
+                MPVLib.command(arrayOf("audio-add", url, "select", name))
+            }
         }
     }
 
@@ -756,16 +773,48 @@ class PlayerViewModel @JvmOverloads constructor(
         _selectedAudio.update { id }
     }
 
+    private fun copyUriToCache(uri: Uri): File? {
+        val name = uri.getFileName(activity) ?: run {
+            val extension = activity.contentResolver.getType(uri)?.let { mime ->
+                android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)
+            } ?: uri.path?.substringAfterLast('.', "")?.takeIf { it.isNotEmpty() } ?: "bin"
+            "temp_${System.currentTimeMillis()}.$extension"
+        }
+        val cacheFile = File(activity.cacheDir, name)
+        try {
+            activity.contentResolver.openInputStream(uri)?.use { input ->
+                cacheFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return if (cacheFile.exists()) cacheFile else null
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) { "Failed to copy URI to cache: ${e.message}" }
+            return null
+        }
+    }
+
     fun addSubtitle(uri: Uri) {
         val url = uri.toString()
         val isContentUri = url.startsWith("content://")
-        val path = (if (isContentUri) uri.openContentFd(activity) else url)
-            ?: return
-        val name = if (isContentUri) uri.getFileName(activity) else null
-        if (name == null) {
-            MPVLib.command(arrayOf("sub-add", path, "cached"))
+        if (isContentUri) {
+            viewModelScope.launchIO {
+                val cacheFile = copyUriToCache(uri)
+                if (cacheFile != null) {
+                    withUIContext {
+                        MPVLib.command(arrayOf("sub-add", cacheFile.absolutePath, "select", cacheFile.name))
+                    }
+                } else {
+                    logcat(LogPriority.ERROR) { "Failed to copy subtitle to cache" }
+                }
+            }
         } else {
-            MPVLib.command(arrayOf("sub-add", path, "cached", name))
+            val name = uri.path?.let { File(it).name }
+            if (name == null) {
+                MPVLib.command(arrayOf("sub-add", url, "select"))
+            } else {
+                MPVLib.command(arrayOf("sub-add", url, "select", name))
+            }
         }
     }
 

@@ -76,6 +76,7 @@ fun WebViewScreenContent(
 
             override fun onPageFinished(view: WebView, url: String?) {
                 super.onPageFinished(view, url)
+                android.webkit.CookieManager.getInstance().flush()
                 scope.launch {
                     val html = view.getHtml()
                     showCloudflareHelp = "window._cf_chl_opt" in html || "Ray ID is" in html

@@ -689,8 +689,6 @@ private fun VideoText(
             defaultSelected -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.onSurface
         },
-        maxLines = 6,
-        overflow = TextOverflow.Ellipsis,
         modifier = modifier,
     )
 }

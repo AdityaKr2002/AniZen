@@ -113,6 +113,8 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
     @SuppressLint("LaunchActivityFromNotification")
     override fun onCreate() {
+        registerActivityLifecycleCallbacks(eu.kanade.tachiyomi.network.interceptor.ActivityTracker)
+
         super<Application>.onCreate()
         patchInjekt()
 

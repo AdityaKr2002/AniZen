@@ -85,8 +85,12 @@ fun FeedScreen(
     }
 
     val visibleCategories = remember(state.categories, state.items) {
-        state.categories.filterNot { category ->
-            category.name == "Global" && state.items[category.id].isNullOrEmpty()
+        if (state.categories.size <= 1) {
+            state.categories
+        } else {
+            state.categories.filterNot { category ->
+                category.name == "Global" && state.items[category.id].isNullOrEmpty()
+            }
         }
     }
     

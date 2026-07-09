@@ -100,6 +100,11 @@ class WebViewActivity : BaseActivity() {
     }
     // <-- AM (DISCORD)
 
+    override fun onPause() {
+        super.onPause()
+        android.webkit.CookieManager.getInstance().flush()
+    }
+
     override fun onProvideAssistContent(outContent: AssistContent) {
         super.onProvideAssistContent(outContent)
         assistUrl?.let { outContent.webUri = it.toUri() }

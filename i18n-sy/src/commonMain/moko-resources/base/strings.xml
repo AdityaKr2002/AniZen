@@ -435,7 +435,7 @@
     <!-- Feed Tab -->
     <string name="feed">Feed</string>
     <string name="feed_delete">Delete feed item?</string>
-    <string name="feed_tab_empty">You don\'t have any sources in your feed, navigate to the top right to add one</string>
+    <string name="feed_tab_empty">You don\'t have any sources in your feed. Go to the Browse tab, long press a source, and add it to feed.</string>
     <string name="feed_add">Add %1$s to feed?</string>
 
     <!-- Sort by tags -->

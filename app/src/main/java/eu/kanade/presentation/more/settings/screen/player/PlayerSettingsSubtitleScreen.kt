@@ -24,8 +24,14 @@ object PlayerSettingsSubtitleScreen : SearchableSettings {
         val langPref = subtitlePreferences.preferredSubLanguages()
         val whitelist = subtitlePreferences.subtitleWhitelist()
         val blacklist = subtitlePreferences.subtitleBlacklist()
+        val disableAutoSubtitles = subtitlePreferences.disableAutoSubtitles()
 
         return listOf(
+            Preference.PreferenceItem.SwitchPreference(
+                pref = disableAutoSubtitles,
+                title = stringResource(MR.strings.pref_disable_auto_subtitles),
+                subtitle = stringResource(MR.strings.pref_disable_auto_subtitles_summary),
+            ),
             Preference.PreferenceItem.EditTextInfoPreference(
                 pref = langPref,
                 title = stringResource(MR.strings.pref_player_subtitle_lang),
