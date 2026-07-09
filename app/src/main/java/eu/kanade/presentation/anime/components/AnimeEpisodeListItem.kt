@@ -244,7 +244,7 @@ private fun EpisodeItemRow(
         Column {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalAlignment = Alignment.Top,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 EpisodeThumbnail(previewUrl = previewUrl)
 
