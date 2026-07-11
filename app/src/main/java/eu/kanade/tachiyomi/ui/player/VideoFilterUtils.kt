@@ -59,14 +59,16 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 fun updateDecoderState(prefs: DecoderPreferences) {
     if (!prefs.tryHWDecoding().get()) return
     
-    val anime4kEnabled = prefs.enableAnime4K().get()
     val gpuDeband = prefs.videoDebanding().get() == Debanding.GPU
+    val filtersActive = prefs.saturationFilter().get() != 0 ||
+        prefs.hueFilter().get() != 0 ||
+        prefs.sharpenFilter().get() != 0
     
-    // If high-intensity shaders are active, we must use a copy-back decoder
+    // If high-intensity shaders or video filters are active, we must use a copy-back decoder
     // to allow the GPU to process the frames before display.
     // mediacodec (HW+) often bypasses the shader pipeline on many devices.
-    if (anime4kEnabled || gpuDeband) {
-        logcat("Decoder", LogPriority.INFO) { "High-intensity filters active. Switching to HW (Copy)." }
+    if (gpuDeband || filtersActive) {
+        logcat("Decoder", LogPriority.INFO) { "High-intensity or video filters active. Switching to HW (Copy)." }
         MPVLib.setPropertyString("hwdec", "mediacodec-copy")
     } else {
         logcat("Decoder", LogPriority.INFO) { "Filters inactive. Restoring HW+ (Direct)." }
@@ -115,6 +117,7 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("deband-threshold", 32)
     MPVLib.setPropertyInt("deband-range", 16)
     MPVLib.setPropertyInt("deband-grain", 48)
+    updateDecoderState(prefs)
 }
 
 fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {

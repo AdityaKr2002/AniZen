@@ -288,6 +288,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         
         setupSubtitlesOptions()
         setupAudioOptions()
+        updateDecoderState(decoderPreferences)
     }
 
     override fun observeProperties() {
