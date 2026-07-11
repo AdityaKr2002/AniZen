@@ -61,8 +61,7 @@ fun updateDecoderState(prefs: DecoderPreferences) {
     
     val gpuDeband = prefs.videoDebanding().get() == Debanding.GPU
     val filtersActive = prefs.saturationFilter().get() != 0 ||
-        prefs.hueFilter().get() != 0 ||
-        prefs.sharpenFilter().get() != 0
+        prefs.hueFilter().get() != 0
     
     // If high-intensity shaders or video filters are active, we must use a copy-back decoder
     // to allow the GPU to process the frames before display.
