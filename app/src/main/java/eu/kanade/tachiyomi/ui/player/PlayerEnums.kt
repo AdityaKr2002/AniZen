@@ -288,7 +288,7 @@ enum class VideoFilterTheme(
         description = "Vivid colors and sharper edges, best for modern anime.",
         contrast = 5,
         saturation = 20,
-        sharpen = 2,
+        sharpen = 1,
     ),
     Cinema(
         MR.strings.player_sheets_filters_theme_cinema,

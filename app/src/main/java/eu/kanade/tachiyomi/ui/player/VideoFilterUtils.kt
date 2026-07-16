@@ -59,14 +59,13 @@ fun applyDebandSetting(setting: DebandSettings, value: Int) {
 fun updateDecoderState(prefs: DecoderPreferences) {
     if (!prefs.tryHWDecoding().get()) return
     
-    val gpuDeband = prefs.videoDebanding().get() == Debanding.GPU
     val filtersActive = prefs.saturationFilter().get() != 0 ||
         prefs.hueFilter().get() != 0
     
     // If high-intensity shaders or video filters are active, we must use a copy-back decoder
     // to allow the GPU to process the frames before display.
     // mediacodec (HW+) often bypasses the shader pipeline on many devices.
-    if (gpuDeband || filtersActive) {
+    if (filtersActive) {
         logcat("Decoder", LogPriority.INFO) { "High-intensity or video filters active. Switching to HW (Copy)." }
         MPVLib.setPropertyString("hwdec", "mediacodec-copy")
     } else {
