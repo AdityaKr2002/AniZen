@@ -231,6 +231,11 @@ class Anilist(id: Long) :
         return fetched
     }
 
+    suspend fun getUserAnimeList(): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem> {
+        return api.getUserAnimeList(getUsername().toInt())
+    }
+
+
     override suspend fun login(username: String, password: String) = login(password)
 
     suspend fun login(token: String) {

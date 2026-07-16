@@ -31,7 +31,11 @@ data class ALSearchItem(
 @Serializable
 data class ALItemTitle(
     val userPreferred: String,
+    val romaji: String? = null,
+    val english: String? = null,
+    val native: String? = null,
 )
+
 
 @Serializable
 data class ItemCover(

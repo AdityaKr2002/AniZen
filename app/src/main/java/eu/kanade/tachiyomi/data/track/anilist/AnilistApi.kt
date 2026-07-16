@@ -319,6 +319,87 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
         return findLibAnime(track, userId) ?: throw Exception("Could not find anime")
     }
 
+    suspend fun getUserAnimeList(userId: Int): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem> {
+        return withIOContext {
+            val list = mutableListOf<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem>()
+            var page = 1
+            var hasNextPage = true
+            while (hasNextPage) {
+                val query = """
+                |query (${'$'}id: Int!, ${'$'}page: Int!) {
+                    |Page(page: ${'$'}page, perPage: 50) {
+                        |pageInfo {
+                            |hasNextPage
+                        |}
+                        |mediaList(userId: ${'$'}id, type: ANIME) {
+                            |id
+                            |status
+                            |scoreRaw: score(format: POINT_100)
+                            |progress
+                            |startedAt {
+                                |year
+                                |month
+                                |day
+                            |}
+                            |completedAt {
+                                |year
+                                |month
+                                |day
+                            |}
+                            |media {
+                                |id
+                                |title {
+                                    |userPreferred
+                                    |romaji
+                                    |english
+                                    |native
+                                |}
+                                |coverImage {
+                                    |large
+                                |}
+                                |format
+                                |status
+                                |episodes
+                                |description
+                                |startDate {
+                                    |year
+                                    |month
+                                    |day
+                                |}
+                                |averageScore
+                            |}
+                        |}
+                    |}
+                |}
+                |
+                """.trimMargin()
+                val payload = buildJsonObject {
+                    put("query", query)
+                    putJsonObject("variables") {
+                        put("id", userId)
+                        put("page", page)
+                    }
+                }
+                val response = with(json) {
+                    authClient.newCall(
+                        POST(
+                            API_URL,
+                            body = payload.toString().toRequestBody(jsonMime),
+                        ),
+                    )
+                        .awaitSuccess()
+                        .parseAs<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListEntryQueryResult>()
+                }
+                val mediaList = response.data.page.mediaList
+                list.addAll(mediaList)
+                hasNextPage = response.data.page.pageInfo?.hasNextPage ?: false
+                page++
+            }
+            list
+        }
+    }
+
+
     suspend fun getRelations(mediaId: Int): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> {
         return withIOContext {
             val query = """

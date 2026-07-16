@@ -1669,4 +1669,8 @@
     <!-- Anime relations -->
     <string name="relation_prequel">Prequel</string>
     <string name="relation_sequel">Sequel</string>
+    <string name="pref_import_from_anilist">Import from AniList</string>
+    <string name="pref_import_from_anilist_summary">Import tracked anime from your AniList account</string>
+    <string name="anilist_import_notice">This lists anime tracked on your AniList account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
 </resources>
+
