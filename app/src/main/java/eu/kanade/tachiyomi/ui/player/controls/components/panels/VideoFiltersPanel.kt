@@ -347,20 +347,24 @@ fun DebandCard() {
                 }
             }
 
-            DebandSettings.entries.forEach { setting ->
-                key("deband-setting-${setting.name}") {
-                    val value by setting.preference(decoderPreferences).collectAsState()
-                    SliderItem(
-                        label = stringResource(setting.titleRes),
-                        value = value.toFloat(),
-                        valueText = value.toString(),
-                        onChange = {
-                            setting.preference(decoderPreferences).set(it.toInt())
-                            applyDebandSetting(setting, it.toInt())
-                        },
-                        max = setting.end.toFloat(),
-                        min = setting.start.toFloat(),
-                    )
+            AnimatedVisibility(visible = debandMode == Debanding.GPU) {
+                Column {
+                    DebandSettings.entries.forEach { setting ->
+                        key("deband-setting-${setting.name}") {
+                            val value by setting.preference(decoderPreferences).collectAsState()
+                            SliderItem(
+                                label = stringResource(setting.titleRes),
+                                value = value,
+                                valueText = value.toString(),
+                                onChange = {
+                                    setting.preference(decoderPreferences).set(it)
+                                    applyDebandSetting(setting, it)
+                                },
+                                max = setting.end,
+                                min = setting.start,
+                            )
+                        }
+                    }
                 }
             }
         }
