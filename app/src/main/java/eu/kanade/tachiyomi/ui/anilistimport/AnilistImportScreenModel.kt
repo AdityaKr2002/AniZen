@@ -64,8 +64,9 @@ class AnilistImportScreenModel(
 
                 val libraryAnime = getLibraryAnime.await()
                 val libraryAnimeNormalizedTitles = libraryAnime
-                    .map { it.title.normalizeTitle() }
+                    .map { it.anime.title.normalizeTitle() }
                     .toSet()
+
 
                 val filteredItems = remoteItems.filter { item ->
                     if (item.media.id in alreadyTrackedRemoteIds) return@filter false
