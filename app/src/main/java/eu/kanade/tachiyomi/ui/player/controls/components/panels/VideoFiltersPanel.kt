@@ -47,7 +47,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.NotInterested
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
@@ -342,30 +341,26 @@ fun DebandCard() {
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Refresh, null)
+                        Icon(painterResource(R.drawable.reset_iso_24px), null)
                         Text(stringResource(MR.strings.action_reset))
                     }
                 }
             }
 
-            AnimatedVisibility(visible = debandMode == Debanding.GPU) {
-                Column {
-                    DebandSettings.entries.forEach { setting ->
-                        key("deband-setting-${setting.name}") {
-                            val value by setting.preference(decoderPreferences).collectAsState()
-                            SliderItem(
-                                label = stringResource(setting.titleRes),
-                                value = value.toFloat(),
-                                valueText = value.toString(),
-                                onChange = {
-                                    setting.preference(decoderPreferences).set(it.toInt())
-                                    applyDebandSetting(setting, it.toInt())
-                                },
-                                max = setting.end.toFloat(),
-                                min = setting.start.toFloat(),
-                            )
-                        }
-                    }
+            DebandSettings.entries.forEach { setting ->
+                key("deband-setting-${setting.name}") {
+                    val value by setting.preference(decoderPreferences).collectAsState()
+                    SliderItem(
+                        label = stringResource(setting.titleRes),
+                        value = value.toFloat(),
+                        valueText = value.toString(),
+                        onChange = {
+                            setting.preference(decoderPreferences).set(it.toInt())
+                            applyDebandSetting(setting, it.toInt())
+                        },
+                        max = setting.end.toFloat(),
+                        min = setting.start.toFloat(),
+                    )
                 }
             }
         }
