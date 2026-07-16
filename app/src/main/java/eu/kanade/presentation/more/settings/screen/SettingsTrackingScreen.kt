@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import eu.kanade.presentation.more.settings.widget.BasePreferenceWidget
+import eu.kanade.presentation.more.settings.widget.PrefsHorizontalPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -194,31 +196,31 @@ object SettingsTrackingScreen : SearchableSettings {
                              Preference.PreferenceItem.CustomPreference(
                                 title = stringResource(MR.strings.pref_import_from_anilist),
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
-                                        },
-                                        shape = CircleShape,
-                                        border = BorderStroke(
-                                            width = 1.dp,
-                                            color = MaterialTheme.colorScheme.primary,
-                                        ),
-                                        colors = ButtonDefaults.outlinedButtonColors(
-                                            contentColor = MaterialTheme.colorScheme.primary,
-                                        ),
-                                    ) {
-                                        Text(
-                                            text = stringResource(MR.strings.pref_import_from_anilist),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
+                                BasePreferenceWidget(
+                                    subcomponent = {
+                                        OutlinedButton(
+                                            onClick = {
+                                                navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = PrefsHorizontalPadding),
+                                            shape = CircleShape,
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(MR.strings.pref_import_from_anilist),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
                                     }
-                                }
+                                )
                             }
                         )
                     } else {
