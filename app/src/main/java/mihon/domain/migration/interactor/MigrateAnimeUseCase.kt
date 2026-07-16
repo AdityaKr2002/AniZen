@@ -74,7 +74,8 @@ class MigrateAnimeUseCase(
                 val maxEpisodeSeen = listOfNotNull(
                     prevAnimeEpisodes.filter { it.seen }.maxOfOrNull { it.episodeNumber },
                     getTracks.await(current.id).maxOfOrNull { it.lastEpisodeSeen.toFloat() },
-                ).maxOfOrNull { it }
+                ).maxOrNull()
+
 
 
                 val historyUpdates = mutableListOf<HistoryUpdate>()

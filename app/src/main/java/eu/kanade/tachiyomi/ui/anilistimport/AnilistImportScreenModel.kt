@@ -72,7 +72,7 @@ class AnilistImportScreenModel(
                 mutableState.update { it.copy(isLoading = true) }
                 val anilist = trackerManager.aniList
                 if (!anilist.isLoggedIn) {
-                    mutableState.update { it.copy(isLoading = false, items = emptyList()) }
+                    mutableState.update { it.copy(isLoading = false, rawItems = emptyList()) }
                     return@launchIO
                 }
                 val remoteItems = anilist.getUserAnimeList()
@@ -107,7 +107,7 @@ class AnilistImportScreenModel(
 
                 mutableState.update { it.copy(isLoading = false, rawItems = allItems) }
             } catch (e: Exception) {
-                mutableState.update { it.copy(isLoading = false, items = emptyList()) }
+                mutableState.update { it.copy(isLoading = false, rawItems = emptyList()) }
             }
         }
     }
