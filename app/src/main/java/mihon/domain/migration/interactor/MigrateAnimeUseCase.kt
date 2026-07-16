@@ -79,7 +79,8 @@ class MigrateAnimeUseCase(
                     ?.toFloat()
 
                 val maxEpisodeSeen: Float? = when {
-                    maxLocalSeen != null && maxTrackSeen != null -> maxOf(maxLocalSeen, maxTrackSeen)
+                    maxLocalSeen != null && maxTrackSeen != null -> if (maxLocalSeen > maxTrackSeen) maxLocalSeen else maxTrackSeen
+
                     maxLocalSeen != null -> maxLocalSeen
                     maxTrackSeen != null -> maxTrackSeen
                     else -> null
