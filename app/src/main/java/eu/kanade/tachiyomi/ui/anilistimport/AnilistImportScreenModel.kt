@@ -7,6 +7,7 @@ import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.tachiyomi.data.database.models.Track as DbTrack
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.anilist.AnilistApi
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.util.lang.launchIO
@@ -64,6 +65,7 @@ class AnilistImportScreenModel(
 
     init {
         loadItems()
+        observeLibraryChanges()
     }
 
     private fun loadItems() {
@@ -75,7 +77,20 @@ class AnilistImportScreenModel(
                     mutableState.update { it.copy(isLoading = false, rawItems = emptyList()) }
                     return@launchIO
                 }
-                val remoteItems = anilist.getUserAnimeList()
+                val currentUserId = try { anilist.getUsername() } catch (e: Exception) { "" }
+                val now = System.currentTimeMillis()
+                val remoteItems = if (cachedRemoteItems != null &&
+                    cachedUserId == currentUserId &&
+                    now - lastCacheTime < CACHE_DURATION
+                ) {
+                    cachedRemoteItems!!
+                } else {
+                    val fetched = anilist.getUserAnimeList()
+                    cachedRemoteItems = fetched
+                    cachedUserId = currentUserId
+                    lastCacheTime = now
+                    fetched
+                }
                 val localTracks = getTracks.await()
                 val alreadyTrackedRemoteIds = localTracks
                     .filter { it.trackerId == TrackerManager.ANILIST }
@@ -213,5 +228,48 @@ class AnilistImportScreenModel(
                 onFailure(t)
             }
         }
+    }
+
+    private fun observeLibraryChanges() {
+        screenModelScope.launchIO {
+            getLibraryAnime.subscribe().collectLatest { libraryAnime ->
+                val libraryAnimeNormalizedTitles = libraryAnime
+                    .map { it.anime.title.normalizeTitle() }
+                    .toSet()
+
+                val localTracks = getTracks.await()
+                val alreadyTrackedRemoteIds = localTracks
+                    .filter { it.trackerId == TrackerManager.ANILIST }
+                    .map { it.remoteId }
+                    .toSet()
+
+                mutableState.update { state ->
+                    val updatedItems = state.rawItems.map { item ->
+                        val isAlreadyTracked = item.item.media.id in alreadyTrackedRemoteIds
+                        val title = item.item.media.title
+                        val titlesToCompare = listOfNotNull(
+                            title.userPreferred,
+                            title.romaji,
+                            title.english,
+                            title.native
+                        ).map { it.normalizeTitle() }
+                        val hasTitleMatch = titlesToCompare.any { it in libraryAnimeNormalizedTitles }
+                        val isLibraryMatch = isAlreadyTracked || hasTitleMatch
+                        item.copy(
+                            isLibraryMatch = isLibraryMatch,
+                            selected = if (isLibraryMatch) false else item.selected
+                        )
+                    }
+                    state.copy(rawItems = updatedItems)
+                }
+            }
+        }
+    }
+
+    companion object {
+        private var cachedRemoteItems: List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem>? = null
+        private var cachedUserId: String? = null
+        private var lastCacheTime: Long = 0
+        private const val CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
     }
 }

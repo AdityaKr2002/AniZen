@@ -5,9 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Close
@@ -186,13 +191,35 @@ object SettingsTrackingScreen : SearchableSettings {
                         ),
                     ) + (if (trackerManager.aniList.isLoggedIn) {
                         listOf(
-                            Preference.PreferenceItem.TextPreference(
+                             Preference.PreferenceItem.CustomPreference(
                                 title = stringResource(MR.strings.pref_import_from_anilist),
-                                subtitle = stringResource(MR.strings.pref_import_from_anilist_summary),
-                                onClick = {
-                                    navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                                        },
+                                        shape = CircleShape,
+                                        border = BorderStroke(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        ),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.primary,
+                                        ),
+                                    ) {
+                                        Text(
+                                            text = stringResource(MR.strings.pref_import_from_anilist),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                    }
                                 }
-                            )
+                            }
                         )
                     } else {
                         emptyList()
