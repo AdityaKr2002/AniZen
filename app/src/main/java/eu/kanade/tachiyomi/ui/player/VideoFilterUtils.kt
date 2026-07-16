@@ -27,7 +27,6 @@ fun applyFilter(filter: VideoFilters, value: Int, prefs: DecoderPreferences) {
     val property = filter.mpvProperty
     
     MPVLib.setPropertyInt(property, value)
-    updateDecoderState(prefs)
 }
 
 fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
@@ -49,30 +48,13 @@ fun applyDebandMode(mode: Debanding, prefs: DecoderPreferences) {
             }
         }
     }
-    updateDecoderState(prefs)
 }
 
 fun applyDebandSetting(setting: DebandSettings, value: Int) {
     MPVLib.setPropertyInt(setting.mpvProperty, value)
 }
 
-fun updateDecoderState(prefs: DecoderPreferences) {
-    if (!prefs.tryHWDecoding().get()) return
-    
-    val filtersActive = prefs.saturationFilter().get() != 0 ||
-        prefs.hueFilter().get() != 0
-    
-    // If high-intensity shaders or video filters are active, we must use a copy-back decoder
-    // to allow the GPU to process the frames before display.
-    // mediacodec (HW+) often bypasses the shader pipeline on many devices.
-    if (filtersActive) {
-        logcat("Decoder", LogPriority.INFO) { "High-intensity or video filters active. Switching to HW (Copy)." }
-        MPVLib.setPropertyString("hwdec", "mediacodec-copy")
-    } else {
-        logcat("Decoder", LogPriority.INFO) { "Filters inactive. Restoring HW+ (Direct)." }
-        MPVLib.setPropertyString("hwdec", "mediacodec")
-    }
-}
+
 
 fun buildVFChain(decoderPreferences: DecoderPreferences): String {
     val useYuv420p = decoderPreferences.useYUV420P().get()
@@ -115,7 +97,6 @@ fun applyTheme(theme: VideoFilterTheme, prefs: DecoderPreferences) {
     MPVLib.setPropertyInt("deband-threshold", 32)
     MPVLib.setPropertyInt("deband-range", 16)
     MPVLib.setPropertyInt("deband-grain", 48)
-    updateDecoderState(prefs)
 }
 
 fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boolean = false) {
@@ -159,5 +140,4 @@ fun applyAnime4K(prefs: DecoderPreferences, manager: Anime4KManager, isInit: Boo
             MPVLib.setPropertyString("glsl-shaders", "")
         }
     }
-    updateDecoderState(prefs)
 }
