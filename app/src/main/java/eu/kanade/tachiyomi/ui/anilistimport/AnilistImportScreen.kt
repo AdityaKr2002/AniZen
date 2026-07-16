@@ -17,7 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Switch
 import androidx.compose.material.icons.outlined.FindReplace
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.HelpOutline
@@ -116,6 +122,8 @@ class AnilistImportScreen : Screen() {
                     }
                 )
             },
+            onToggleStatusFilter = screenModel::toggleStatusFilter,
+            onToggleExcludeLibraryMatches = screenModel::setExcludeLibraryMatches,
             navigateUp = navigator::pop,
         )
     }
@@ -128,6 +136,8 @@ fun AnilistImportScreen(
     onInvertSelection: () -> Unit,
     onItemClicked: (AnilistImportItem) -> Unit,
     onImportClicked: () -> Unit,
+    onToggleStatusFilter: (ImportStatusFilter) -> Unit,
+    onToggleExcludeLibraryMatches: (Boolean) -> Unit,
     navigateUp: () -> Unit,
 ) {
     BackHandler(enabled = state.selectionMode, onBack = { onSelectAll(false) })
@@ -182,17 +192,60 @@ fun AnilistImportScreen(
             }
         },
     ) { contentPadding ->
-        when {
-            state.isLoading -> LoadingScreen(modifier = Modifier.padding(contentPadding))
-            state.items.isEmpty() -> EmptyScreen(
-                message = "No importable anime found on AniList",
-                modifier = Modifier.padding(contentPadding),
-            )
+        if (state.isLoading) {
+            LoadingScreen(modifier = Modifier.padding(contentPadding))
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+            ) {
+                // Filter chips row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ImportStatusFilter.entries.forEach { filter ->
+                        FilterChip(
+                            selected = state.selectedStatuses.contains(filter),
+                            onClick = { onToggleStatusFilter(filter) },
+                            label = { Text(text = stringResource(filter.titleRes)) },
+                        )
+                    }
+                }
 
-            else -> {
-                FastScrollLazyColumn(
-                    modifier = Modifier.padding(contentPadding),
-                    state = listState,
+                // Exclude matches setting row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onToggleExcludeLibraryMatches(!state.excludeLibraryMatches) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "Exclude anime already in library",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Switch(
+                        checked = state.excludeLibraryMatches,
+                        onCheckedChange = { onToggleExcludeLibraryMatches(it) },
+                    )
+                }
+
+                if (state.items.isEmpty()) {
+                    EmptyScreen(
+                        message = "No importable anime found on AniList",
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    FastScrollLazyColumn(
+                        modifier = Modifier.weight(1f),
+                        state = listState,
                 ) {
                     item(key = "notice") {
                         Card(
@@ -244,9 +297,11 @@ fun AnilistImportScreen(
                     }
                 }
             }
+            }
         }
     }
 }
+
 
 @Composable
 fun AnilistImportItemRow(

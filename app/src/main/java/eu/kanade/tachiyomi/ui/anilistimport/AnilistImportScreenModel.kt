@@ -17,13 +17,32 @@ import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.InsertTrack
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import dev.icerock.moko.resources.StringResource
+import tachiyomi.i18n.MR
 import java.util.Locale
+
+enum class ImportStatusFilter(val titleRes: StringResource, val apiStatuses: Set<String>) {
+    WATCHING(MR.strings.watching, setOf("CURRENT", "REPEATING")),
+    PLAN_TO_WATCH(MR.strings.plan_to_watch, setOf("PLANNING")),
+    COMPLETED(MR.strings.completed, setOf("COMPLETED")),
+    ON_HOLD(MR.strings.on_hold, setOf("PAUSED")),
+}
 
 @Immutable
 data class AnilistImportScreenState(
     val isLoading: Boolean = true,
-    val items: List<AnilistImportItem> = emptyList(),
+    val rawItems: List<AnilistImportItem> = emptyList(),
+    val excludeLibraryMatches: Boolean = true,
+    val selectedStatuses: Set<ImportStatusFilter> = ImportStatusFilter.entries.toSet(),
 ) {
+    val items: List<AnilistImportItem>
+        get() = rawItems.filter { item ->
+            val matchingFilter = selectedStatuses.any { filter -> item.item.status in filter.apiStatuses }
+            if (!matchingFilter) return@filter false
+            if (excludeLibraryMatches && item.isLibraryMatch) return@filter false
+            true
+        }
+
     val selected = items.filter { it.selected }
     val selectionMode = selected.isNotEmpty()
 }
@@ -32,6 +51,7 @@ data class AnilistImportScreenState(
 data class AnilistImportItem(
     val item: eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem,
     val selected: Boolean = false,
+    val isLibraryMatch: Boolean = false,
 )
 
 class AnilistImportScreenModel(
@@ -68,8 +88,8 @@ class AnilistImportScreenModel(
                     .toSet()
 
 
-                val filteredItems = remoteItems.filter { item ->
-                    if (item.media.id in alreadyTrackedRemoteIds) return@filter false
+                val allItems = remoteItems.map { item ->
+                    val isAlreadyTracked = item.media.id in alreadyTrackedRemoteIds
                     val title = item.media.title
                     val titlesToCompare = listOfNotNull(
                         title.userPreferred,
@@ -77,11 +97,15 @@ class AnilistImportScreenModel(
                         title.english,
                         title.native
                     ).map { it.normalizeTitle() }
-                    if (titlesToCompare.any { it in libraryAnimeNormalizedTitles }) return@filter false
-                    true
-                }.map { AnilistImportItem(it) }
+                    val hasTitleMatch = titlesToCompare.any { it in libraryAnimeNormalizedTitles }
+                    val isLibraryMatch = isAlreadyTracked || hasTitleMatch
+                    AnilistImportItem(
+                        item = item,
+                        isLibraryMatch = isLibraryMatch
+                    )
+                }
 
-                mutableState.update { it.copy(isLoading = false, items = filteredItems) }
+                mutableState.update { it.copy(isLoading = false, rawItems = allItems) }
             } catch (e: Exception) {
                 mutableState.update { it.copy(isLoading = false, items = emptyList()) }
             }
@@ -92,34 +116,59 @@ class AnilistImportScreenModel(
         return this.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "")
     }
 
+    fun setExcludeLibraryMatches(exclude: Boolean) {
+        mutableState.update { it.copy(excludeLibraryMatches = exclude) }
+    }
+
+    fun toggleStatusFilter(filter: ImportStatusFilter) {
+        mutableState.update { state ->
+            val newStatuses = if (state.selectedStatuses.contains(filter)) {
+                state.selectedStatuses - filter
+            } else {
+                state.selectedStatuses + filter
+            }
+            state.copy(selectedStatuses = newStatuses)
+        }
+    }
+
     fun toggleSelection(item: AnilistImportItem, selected: Boolean) {
         mutableState.update { state ->
-            val newItems = state.items.map {
+            val newItems = state.rawItems.map {
                 if (it.item.media.id == item.item.media.id) {
                     it.copy(selected = selected)
                 } else {
                     it
                 }
             }
-            state.copy(items = newItems)
+            state.copy(rawItems = newItems)
         }
     }
 
     fun toggleAllSelection(selected: Boolean) {
         mutableState.update { state ->
-            val newItems = state.items.map {
-                it.copy(selected = selected)
+            val visibleIds = state.items.map { it.item.media.id }.toSet()
+            val newItems = state.rawItems.map {
+                if (it.item.media.id in visibleIds) {
+                    it.copy(selected = selected)
+                } else {
+                    it
+                }
             }
-            state.copy(items = newItems)
+            state.copy(rawItems = newItems)
         }
     }
 
     fun invertSelection() {
         mutableState.update { state ->
-            val newItems = state.items.map {
-                it.copy(selected = !it.selected)
+            val visibleIds = state.items.map { it.item.media.id }.toSet()
+            val newItems = state.rawItems.map {
+                if (it.item.media.id in visibleIds) {
+                    it.copy(selected = !it.selected)
+                } else {
+                    it
+                }
             }
-            state.copy(items = newItems)
+            state.copy(rawItems = newItems)
         }
     }
 
@@ -137,7 +186,7 @@ class AnilistImportScreenModel(
                         ogTitle = item.media.title.userPreferred,
                         ogThumbnailUrl = item.media.coverImage.large,
                         source = TrackerManager.ANILIST,
-                        favorite = true,
+                        favorite = false,
                         dateAdded = System.currentTimeMillis()
                     )
                     val savedAnime = networkToLocalAnime.await(anime)
