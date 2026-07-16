@@ -60,14 +60,12 @@ class AppUpdateChecker(
 
                 // KMK -->
                 if (autoUpdate && result is GetApplicationRelease.Result.NewUpdate) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        AppUpdateDownloadJob.start(
-                            context = context,
-                            url = result.release.getDownloadLink(),
-                            title = result.release.version,
-                            scheduled = true,
-                        )
-                    }
+                    AppUpdateDownloadJob.start(
+                        context = context,
+                        url = result.release.getDownloadLink(),
+                        title = result.release.version,
+                        scheduled = true,
+                    )
                 }
                 // KMK <--
             }

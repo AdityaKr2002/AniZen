@@ -299,12 +299,16 @@ class AppUpdateDownloadJob(private val context: Context, workerParams: WorkerPar
                         if (AppUpdatePolicy.DEVICE_NETWORK_NOT_METERED in restrictions) {
                             networkRequestBuilder.addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
                         }
-                        val constraints = Constraints.Builder()
+                        val constraints = Constraints.Builder().apply {
                             // 'networkRequest' only applies to Android 9+, otherwise 'networkType' is used
-                            .setRequiredNetworkRequest(networkRequestBuilder.build(), networkType)
-                            .setRequiresCharging(AppUpdatePolicy.DEVICE_CHARGING in restrictions)
-                            .setRequiresBatteryNotLow(true)
-                            .build()
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                setRequiredNetworkRequest(networkRequestBuilder.build(), networkType)
+                            } else {
+                                setRequiredNetworkType(networkType)
+                            }
+                            setRequiresCharging(AppUpdatePolicy.DEVICE_CHARGING in restrictions)
+                            setRequiresBatteryNotLow(true)
+                        }.build()
 
                         setConstraints(constraints)
                         setInitialDelay(10, TimeUnit.MINUTES)
