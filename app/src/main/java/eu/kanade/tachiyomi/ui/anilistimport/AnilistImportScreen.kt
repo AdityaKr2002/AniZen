@@ -185,7 +185,7 @@ fun AnilistImportScreen(
         when {
             state.isLoading -> LoadingScreen(modifier = Modifier.padding(contentPadding))
             state.items.isEmpty() -> EmptyScreen(
-                text = "No importable anime found on AniList",
+                message = "No importable anime found on AniList",
                 modifier = Modifier.padding(contentPadding),
             )
 
@@ -309,28 +309,25 @@ private fun AnilistImportAppBar(
     AppBar(
         title = title,
         navigateUp = navigateUp,
-        actions = {
+        actions = {},
+        actionModeCounter = selectedCount,
+        onCancelActionMode = onClickUnselectAll,
+        actionModeActions = {
             AppBarActions(
-                actions = if (selectedCount > 0) {
-                    persistentListOf(
-                        AppBar.Action(
-                            title = stringResource(MR.strings.action_select_all),
-                            icon = Icons.Outlined.SelectAll,
-                            onClick = onClickSelectAll,
-                        ),
-                        AppBar.Action(
-                            title = stringResource(MR.strings.action_select_inverse),
-                            icon = Icons.Outlined.FlipToBack,
-                            onClick = onClickInvertSelection,
-                        ),
-                    )
-                } else {
-                    persistentListOf()
-                },
+                persistentListOf(
+                    AppBar.Action(
+                        title = stringResource(MR.strings.action_select_all),
+                        icon = Icons.Outlined.SelectAll,
+                        onClick = onClickSelectAll,
+                    ),
+                    AppBar.Action(
+                        title = stringResource(MR.strings.action_select_inverse),
+                        icon = Icons.Outlined.FlipToBack,
+                        onClick = onClickInvertSelection,
+                    ),
+                ),
             )
         },
-        selectedCount = selectedCount,
-        onClickClearSelection = onClickUnselectAll,
         scrollBehavior = scrollBehavior,
     )
 }
