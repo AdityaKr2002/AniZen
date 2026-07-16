@@ -331,7 +331,10 @@ class PlayerActivity : BaseActivity() {
                     castManager = castManager, // Pass the castManager instance
                     onBackPress = {
                         if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                            enterPictureInPictureMode(createPipParams())
+                            val entered = enterPictureInPictureMode(createPipParams())
+                            if (!entered) {
+                                finish()
+                            }
                         } else {
                             finish()
                         }
@@ -431,7 +434,7 @@ class PlayerActivity : BaseActivity() {
     @SuppressLint("MissingSuperCall")
     override fun onUserLeaveHint() {
         if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-            enterPictureInPictureMode()
+            enterPictureInPictureMode(createPipParams())
         }
         super.onUserLeaveHint()
     }
@@ -443,7 +446,12 @@ class PlayerActivity : BaseActivity() {
                 viewModel.panelShown.value == Panels.None &&
                 viewModel.dialogShown.value == Dialogs.None
             ) {
-                enterPictureInPictureMode()
+                val entered = enterPictureInPictureMode(createPipParams())
+                if (!entered) {
+                    super.onBackPressed()
+                }
+            } else {
+                super.onBackPressed()
             }
         } else {
             super.onBackPressed()
