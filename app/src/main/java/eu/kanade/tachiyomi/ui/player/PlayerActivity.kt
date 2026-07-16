@@ -45,6 +45,7 @@ import android.util.Rational
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
@@ -283,6 +284,24 @@ class PlayerActivity : BaseActivity() {
         setupMediaSession()
         setupPlayerOrientation()
 
+        onBackPressedDispatcher.addCallback(this) {
+            if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
+                if (viewModel.sheetShown.value == Sheets.None &&
+                    viewModel.panelShown.value == Panels.None &&
+                    viewModel.dialogShown.value == Dialogs.None
+                ) {
+                    val entered = enterPictureInPictureMode(createPipParams())
+                    if (!entered) {
+                        finish()
+                    }
+                } else {
+                    finish()
+                }
+            } else {
+                finish()
+            }
+        }
+
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
             runOnUiThread {
                 toast(throwable.message)
@@ -439,24 +458,7 @@ class PlayerActivity : BaseActivity() {
         super.onUserLeaveHint()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-            if (viewModel.sheetShown.value == Sheets.None &&
-                viewModel.panelShown.value == Panels.None &&
-                viewModel.dialogShown.value == Dialogs.None
-            ) {
-                val entered = enterPictureInPictureMode(createPipParams())
-                if (!entered) {
-                    super.onBackPressed()
-                }
-            } else {
-                super.onBackPressed()
-            }
-        } else {
-            super.onBackPressed()
-        }
-    }
+
 
     override fun onStart() {
         super.onStart()
