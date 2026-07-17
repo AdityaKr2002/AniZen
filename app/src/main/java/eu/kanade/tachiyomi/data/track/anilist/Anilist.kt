@@ -26,7 +26,8 @@ class Anilist(id: Long) :
         "AniList",
     ),
     AnimeTracker,
-    DeletableTracker {
+    DeletableTracker,
+    ImportableTracker {
 
     companion object {
         const val READING = 1L
@@ -274,6 +275,36 @@ class Anilist(id: Long) :
             json.decodeFromString<ALOAuth>(trackPreferences.trackToken(this).get())
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override fun getNoticeStringRes(): StringResource {
+        return MR.strings.anilist_import_notice
+    }
+
+    override suspend fun getImportableList(): List<ImportableEntry> {
+        return getUserAnimeList().map { item ->
+            val mappedStatusFilter = when (item.status) {
+                "CURRENT", "REPEATING" -> ImportStatusFilter.WATCHING
+                "PLANNING" -> ImportStatusFilter.PLAN_TO_WATCH
+                "COMPLETED" -> ImportStatusFilter.COMPLETED
+                "PAUSED" -> ImportStatusFilter.ON_HOLD
+                else -> null
+            }
+            val alUserAnime = item.toALUserAnime()
+            ImportableEntry(
+                remoteId = item.media.id,
+                title = item.media.title.userPreferred ?: "",
+                coverUrl = item.media.coverImage.large ?: "",
+                totalEpisodes = (item.media.episodes ?: 0).toLong(),
+                episodesSeen = item.progress,
+                score = item.scoreRaw.toDouble(),
+                status = alUserAnime.toTrack().status,
+                statusFilter = mappedStatusFilter,
+                startDate = item.startedAt.toEpochMilli(),
+                finishDate = item.completedAt.toEpochMilli(),
+                trackingUrl = AnilistApi.animeUrl(item.media.id)
+            )
         }
     }
 }

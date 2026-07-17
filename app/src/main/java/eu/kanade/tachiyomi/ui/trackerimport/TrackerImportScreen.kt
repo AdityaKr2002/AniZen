@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.anilistimport
+package eu.kanade.tachiyomi.ui.trackerimport
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -59,6 +59,7 @@ import eu.kanade.presentation.anime.components.AnimeCover
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.util.Screen
+import eu.kanade.tachiyomi.data.track.ImportStatusFilter
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.persistentListOf
 import mihon.feature.migration.config.MigrationConfigScreen
@@ -70,13 +71,13 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.selectedBackground
 
-class AnilistImportScreen : Screen() {
+class TrackerImportScreen(val trackerId: Long) : Screen() {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
-        val screenModel = rememberScreenModel { AnilistImportScreenModel() }
+        val screenModel = rememberScreenModel { TrackerImportScreenModel(trackerId) }
         val state by screenModel.state.collectAsState()
 
         var isImporting by remember { mutableStateOf(false) }
@@ -85,7 +86,7 @@ class AnilistImportScreen : Screen() {
             AlertDialog(
                 onDismissRequest = {},
                 confirmButton = {},
-                title = { Text(text = "Importing from AniList") },
+                title = { Text(text = "Importing from ${state.trackerName}") },
                 text = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -98,7 +99,17 @@ class AnilistImportScreen : Screen() {
             )
         }
 
-        AnilistImportScreen(
+        val title = if (trackerId == 1L) {
+            stringResource(MR.strings.pref_import_from_myanimelist)
+        } else {
+            stringResource(MR.strings.pref_import_from_anilist)
+        }
+
+        val noticeRes = screenModel.tracker?.getNoticeStringRes() ?: MR.strings.anilist_import_notice
+
+        TrackerImportScreen(
+            title = title,
+            noticeRes = noticeRes,
             state = state,
             onSelectAll = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
@@ -130,11 +141,13 @@ class AnilistImportScreen : Screen() {
 }
 
 @Composable
-fun AnilistImportScreen(
-    state: AnilistImportScreenState,
+fun TrackerImportScreen(
+    title: String,
+    noticeRes: dev.icerock.moko.resources.StringResource,
+    state: TrackerImportScreenState,
     onSelectAll: (Boolean) -> Unit,
     onInvertSelection: () -> Unit,
-    onItemClicked: (AnilistImportItem) -> Unit,
+    onItemClicked: (TrackerImportItem) -> Unit,
     onImportClicked: () -> Unit,
     onToggleStatusFilter: (ImportStatusFilter) -> Unit,
     onToggleExcludeLibraryMatches: (Boolean) -> Unit,
@@ -146,8 +159,8 @@ fun AnilistImportScreen(
 
     Scaffold(
         topBar = { scrollBehavior ->
-            AnilistImportAppBar(
-                title = stringResource(MR.strings.pref_import_from_anilist),
+            TrackerImportAppBar(
+                title = title,
                 navigateUp = navigateUp,
                 selectedCount = state.selected.size,
                 onClickUnselectAll = { onSelectAll(false) },
@@ -239,73 +252,68 @@ fun AnilistImportScreen(
 
                 if (state.items.isEmpty()) {
                     EmptyScreen(
-                        message = "No importable anime found on AniList",
+                        message = "No importable anime found on ${state.trackerName}",
                         modifier = Modifier.weight(1f),
                     )
                 } else {
                     FastScrollLazyColumn(
                         modifier = Modifier.weight(1f),
                         state = listState,
-                ) {
-                    item(key = "notice") {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        item(key = "notice") {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                                )
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.HelpOutline,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(end = 12.dp)
-                                )
-                                Text(
-                                    text = stringResource(MR.strings.anilist_import_notice),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.HelpOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(end = 12.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(noticeRes),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    items(
-                        items = state.items,
-                        key = { "anilist-import-${it.item.media.id}" },
-                    ) { uiModel ->
-                        AnilistImportItemRow(
-                            item = uiModel,
-                            selected = uiModel.selected,
-                            selectionMode = state.selectionMode,
-                            onClick = {
-                                if (state.selectionMode) {
+                        items(
+                            items = state.items,
+                            key = { "tracker-import-${it.item.remoteId}" },
+                        ) { uiModel ->
+                            TrackerImportItemRow(
+                                item = uiModel,
+                                selected = uiModel.selected,
+                                selectionMode = state.selectionMode,
+                                onClick = {
                                     onItemClicked(uiModel)
-                                } else {
+                                },
+                                onLongClick = {
                                     onItemClicked(uiModel)
                                 }
-                            },
-                            onLongClick = {
-                                onItemClicked(uiModel)
-                            }
-                        )
+                            )
+                        }
                     }
                 }
-            }
             }
         }
     }
 }
 
-
 @Composable
-fun AnilistImportItemRow(
-    item: AnilistImportItem,
+fun TrackerImportItemRow(
+    item: TrackerImportItem,
     selected: Boolean,
     selectionMode: Boolean,
     onClick: () -> Unit,
@@ -329,7 +337,7 @@ fun AnilistImportItemRow(
     ) {
         AnimeCover.Square(
             modifier = Modifier.height(48.dp),
-            data = item.item.media.coverImage.large
+            data = item.item.coverUrl
         )
         Column(
             modifier = Modifier
@@ -337,13 +345,13 @@ fun AnilistImportItemRow(
                 .weight(1f)
         ) {
             Text(
-                text = item.item.media.title.userPreferred,
+                text = item.item.title,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "Progress: ${item.item.progress} episodes",
+                text = "Progress: ${item.item.episodesSeen} episodes",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -352,7 +360,7 @@ fun AnilistImportItemRow(
 }
 
 @Composable
-private fun AnilistImportAppBar(
+private fun TrackerImportAppBar(
     title: String,
     navigateUp: () -> Unit,
     selectedCount: Int,

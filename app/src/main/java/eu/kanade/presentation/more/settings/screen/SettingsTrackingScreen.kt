@@ -192,7 +192,7 @@ object SettingsTrackingScreen : SearchableSettings {
                                     subcomponent = {
                                         OutlinedButton(
                                             onClick = {
-                                                navigator?.push(eu.kanade.tachiyomi.ui.malimport.MalImportScreen())
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(1L))
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -218,6 +218,7 @@ object SettingsTrackingScreen : SearchableSettings {
                     } else {
                         emptyList()
                     }) + listOf(
+                        Preference.PreferenceItem.TrackerPreference(
                             title = trackerManager.aniList.name,
                             tracker = trackerManager.aniList,
                             login = {
@@ -237,7 +238,7 @@ object SettingsTrackingScreen : SearchableSettings {
                                     subcomponent = {
                                         OutlinedButton(
                                             onClick = {
-                                                navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(trackerManager.aniList.id))
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()
