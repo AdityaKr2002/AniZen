@@ -153,6 +153,10 @@ class MyAnimeList(id: Long) :
         return api.findListItem(track) ?: add(track)
     }
 
+    suspend fun getUserAnimeList(): List<eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUserAnimeListItem> {
+        return api.getUserAnimeList()
+    }
+
     override suspend fun login(username: String, password: String) = login(password)
 
     suspend fun login(authCode: String) {

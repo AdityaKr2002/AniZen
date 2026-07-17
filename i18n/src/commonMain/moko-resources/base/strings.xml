@@ -1672,5 +1672,9 @@
     <string name="pref_import_from_anilist">Import from AniList</string>
     <string name="pref_import_from_anilist_summary">Import tracked anime from your AniList account</string>
     <string name="anilist_import_notice">This lists anime tracked on your AniList account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
+    <string name="pref_import_from_myanimelist">Import from MyAnimeList</string>
+    <string name="pref_import_from_myanimelist_summary">Import tracked anime from your MyAnimeList account</string>
+    <string name="myanimelist_import_notice">This lists anime tracked on your MyAnimeList account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
 </resources>
+
 

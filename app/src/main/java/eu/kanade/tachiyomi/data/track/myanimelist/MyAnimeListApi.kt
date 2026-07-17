@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALOAuth
 import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALSearchResult
 import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUser
 import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUserSearchResult
+import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUserAnimeList
+import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUserAnimeListItem
 import eu.kanade.tachiyomi.network.DELETE
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -195,7 +197,7 @@ class MyAnimeListApi(
 
     private suspend fun getListPage(offset: Int): MALUserSearchResult {
         return withIOContext {
-            val urlBuilder = "$BASE_API_URL/users/@me/mangalist".toUri().buildUpon()
+            val urlBuilder = "$BASE_API_URL/users/@me/animelist".toUri().buildUpon()
                 .appendQueryParameter("fields", "list_status{start_date,finish_date}")
                 .appendQueryParameter("limit", LIST_PAGINATION_AMOUNT.toString())
             if (offset > 0) {
@@ -210,6 +212,42 @@ class MyAnimeListApi(
                 authClient.newCall(request)
                     .awaitSuccess()
                     .parseAs()
+            }
+        }
+    }
+
+    suspend fun getUserAnimeList(offset: Int = 0): List<MALUserAnimeListItem> {
+        return withIOContext {
+            val response = getUserAnimeListPage(offset)
+            val items = response.data
+            if (!response.paging.next.isNullOrBlank()) {
+                items + getUserAnimeList(offset + LIST_PAGINATION_AMOUNT)
+            } else {
+                items
+            }
+        }
+    }
+
+    private suspend fun getUserAnimeListPage(offset: Int): MALUserAnimeList {
+        return withIOContext {
+            val urlBuilder = "$BASE_API_URL/users/@me/animelist".toUri().buildUpon()
+                .appendQueryParameter(
+                    "fields",
+                    "list_status{status,score,num_episodes_watched,is_rewatching,start_date,finish_date},num_episodes,main_picture,synopsis"
+                )
+                .appendQueryParameter("limit", LIST_PAGINATION_AMOUNT.toString())
+            if (offset > 0) {
+                urlBuilder.appendQueryParameter("offset", offset.toString())
+            }
+
+            val request = Request.Builder()
+                .url(urlBuilder.build().toString())
+                .get()
+                .build()
+            with(json) {
+                authClient.newCall(request)
+                    .awaitSuccess()
+                    .parseAs<MALUserAnimeList>()
             }
         }
     }
