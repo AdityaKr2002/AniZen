@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import cafe.adriel.voyager.navigator.LocalNavigator
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,6 +100,7 @@ object SettingsTrackingScreen : SearchableSettings {
         val trackerManager = remember { Injekt.get<TrackerManager>() }
         val sourceManager = remember { Injekt.get<SourceManager>() }
         val autoTrackStatePref = trackPreferences.autoUpdateTrackOnMarkRead()
+        val isAnilistLoggedIn by trackerManager.aniList.isLoggedInFlow.collectAsState(trackerManager.aniList.isLoggedIn)
 
         var dialog by remember { mutableStateOf<Any?>(null) }
         dialog?.run {
@@ -191,7 +193,7 @@ object SettingsTrackingScreen : SearchableSettings {
                             },
                             logout = { dialog = LogoutDialog(trackerManager.aniList) },
                         ),
-                    ) + (if (trackerManager.aniList.isLoggedIn) {
+                    ) + (if (isAnilistLoggedIn) {
                         listOf(
                              Preference.PreferenceItem.CustomPreference(
                                 title = stringResource(MR.strings.pref_import_from_anilist),
