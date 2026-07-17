@@ -71,9 +71,22 @@ class MigrateAnimeUseCase(
                 val prevAnimeEpisodes = getEpisodesByAnimeId.await(current.id)
                 val animeEpisodes = getEpisodesByAnimeId.await(target.id)
 
-                val maxEpisodeSeen = prevAnimeEpisodes
+                val maxLocalSeen = prevAnimeEpisodes
                     .filter { it.seen }
                     .maxOfOrNull { it.episodeNumber }
+                val maxTrackSeen = getTracks.await(current.id)
+                    .maxOfOrNull { it.lastEpisodeSeen }
+
+                val maxEpisodeSeen: Double? = when {
+                    maxLocalSeen != null && maxTrackSeen != null -> if (maxLocalSeen > maxTrackSeen) maxLocalSeen else maxTrackSeen
+                    maxLocalSeen != null -> maxLocalSeen
+                    maxTrackSeen != null -> maxTrackSeen
+                    else -> null
+                }
+
+
+
+
 
                 val historyUpdates = mutableListOf<HistoryUpdate>()
                 val prevHistoryList = getHistory.await(current.id)

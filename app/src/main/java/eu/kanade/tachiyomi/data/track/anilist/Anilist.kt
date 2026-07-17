@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.data.track.anilist
 import android.graphics.Color
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.track.model.toDbTrack
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
@@ -230,6 +231,11 @@ class Anilist(id: Long) :
         return fetched
     }
 
+    suspend fun getUserAnimeList(): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem> {
+        return api.getUserAnimeList(getUsername().toInt())
+    }
+
+
     override suspend fun login(username: String, password: String) = login(password)
 
     suspend fun login(token: String) {
@@ -253,6 +259,10 @@ class Anilist(id: Long) :
 
     override suspend fun getAnimeMetadata(track: DomainAnimeTrack): eu.kanade.tachiyomi.data.track.model.TrackAnimeMetadata? {
         return api.getAnimeMetadata(track)
+    }
+
+    override suspend fun fetchCastByTitle(remoteId: Long, mediaType: String): List<Credit>? {
+        return api.fetchCastById(remoteId)
     }
 
     fun saveOAuth(alOAuth: ALOAuth?) {

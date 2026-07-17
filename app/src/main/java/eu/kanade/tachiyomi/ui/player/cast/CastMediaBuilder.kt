@@ -7,6 +7,7 @@ import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.MediaTrack
 import com.google.android.gms.common.images.WebImage
 import eu.kanade.tachiyomi.animesource.model.Video
+import okhttp3.Headers
 import eu.kanade.tachiyomi.torrentServer.TorrentServerApi
 import eu.kanade.tachiyomi.torrentServer.TorrentServerUtils
 import eu.kanade.tachiyomi.ui.player.PlayerActivity
@@ -41,7 +42,17 @@ class CastMediaBuilder(
                 "magnet",
             ) ||
                 videoUrl.endsWith(".torrent") -> torrentLinkHandler(videoUrl, video.quality)
-            else -> videoUrl
+            else -> {
+                // The Cast default receiver cannot send custom HTTP headers.
+                // If the video source requires headers (Referer, UA, cookies, etc.),
+                // proxy the stream through the local HTTP server.
+                val headers = video.headers
+                if (headers != null && headers.size > 0) {
+                    getProxyUrl(videoUrl, headers)
+                } else {
+                    videoUrl
+                }
+            }
         }
 
         val contentType = when {
@@ -123,18 +134,54 @@ class CastMediaBuilder(
         return "http://$ip:$port/file?uri=$encodedUri"
     }
 
+    private fun getProxyUrl(videoUrl: String, headers: Headers): String {
+        val context = activity.applicationContext
+        context.startService(Intent(context, LocalHttpServerService::class.java))
+        val ip = getLocalIpAddress()
+        val encodedUrl = URLEncoder.encode(videoUrl, "UTF-8")
+        // Serialize headers as newline-separated "Key: Value" pairs
+        val headerString = headers.toMultimap()
+            .flatMap { (key, values) -> values.map { "$key: $it" } }
+            .joinToString("\n")
+        val encodedHeaders = URLEncoder.encode(headerString, "UTF-8")
+        return "http://$ip:$port/proxy?url=$encodedUrl&headers=$encodedHeaders"
+    }
+
     private fun getLocalIpAddress(): String {
         try {
-            val interfaces = NetworkInterface.getNetworkInterfaces()
-            while (interfaces.hasMoreElements()) {
-                val intf = interfaces.nextElement()
+            val interfaces = NetworkInterface.getNetworkInterfaces().toList()
+            val ipAddresses = mutableListOf<Pair<String, String>>()
+            for (intf in interfaces) {
+                val name = intf.name.lowercase()
                 val addresses = intf.inetAddresses
                 while (addresses.hasMoreElements()) {
                     val addr = addresses.nextElement()
                     if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        return addr.hostAddress ?: "127.0.0.1"
+                        val ip = addr.hostAddress
+                        if (ip != null) {
+                            ipAddresses.add(name to ip)
+                        }
                     }
                 }
+            }
+
+            val wifiIp = ipAddresses.find { (name, _) ->
+                name.startsWith("wlan") || name.startsWith("ap") || name.startsWith("eth")
+            }?.second
+            if (wifiIp != null) return wifiIp
+
+            val nonMobileIp = ipAddresses.find { (name, _) ->
+                !name.startsWith("rmnet") &&
+                !name.startsWith("ccmni") &&
+                !name.startsWith("pdp") &&
+                !name.startsWith("tun") &&
+                !name.startsWith("tap") &&
+                !name.startsWith("p2p")
+            }?.second
+            if (nonMobileIp != null) return nonMobileIp
+
+            if (ipAddresses.isNotEmpty()) {
+                return ipAddresses.first().second
             }
         } catch (ex: Exception) {
             logcat(LogPriority.DEBUG) { "Error getting local IP address" }

@@ -17,7 +17,10 @@
 
 package eu.kanade.tachiyomi.ui.player.controls.components.panels
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.res.painterResource
+import eu.kanade.tachiyomi.R
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -284,7 +287,7 @@ fun FiltersCard() {
 fun DebandCard() {
     val decoderPreferences = remember { Injekt.get<DecoderPreferences>() }
     val debandMode by decoderPreferences.videoDebanding().collectAsState()
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(true) }
 
     ExpandableCard(
         isExpanded = isExpanded,
@@ -302,7 +305,7 @@ fun DebandCard() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = MaterialTheme.padding.medium),
+                    .padding(start = MaterialTheme.padding.extraSmall, end = MaterialTheme.padding.medium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Debanding.entries.forEach { mode ->
@@ -313,12 +316,11 @@ fun DebandCard() {
                             applyDebandMode(mode, decoderPreferences)
                         }
                     ) {
-                        val icon = when (mode) {
-                            Debanding.None -> Icons.Default.NotInterested
-                            Debanding.CPU -> Icons.Default.Memory
-                            Debanding.GPU -> Icons.Default.Gradient
+                        when (mode) {
+                            Debanding.None -> Icon(Icons.Default.NotInterested, null)
+                            Debanding.CPU -> Icon(Icons.Default.Memory, null)
+                            Debanding.GPU -> Icon(painterResource(R.drawable.expansion_card), null)
                         }
-                        Icon(icon, null)
                     }
                 }
                 
@@ -335,24 +337,34 @@ fun DebandCard() {
                         MPVLib.setPropertyInt(setting.mpvProperty, pref.get())
                     }
                 }) {
-                    Text(stringResource(MR.strings.action_reset))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(painterResource(R.drawable.reset_iso_24px), null)
+                        Text(stringResource(MR.strings.action_reset))
+                    }
                 }
             }
 
-            DebandSettings.entries.forEach { setting ->
-                key("deband-setting-${setting.name}") {
-                    val value by setting.preference(decoderPreferences).collectAsState()
-                    SliderItem(
-                        label = stringResource(setting.titleRes),
-                        value = value.toFloat(),
-                        valueText = value.toString(),
-                        onChange = {
-                            setting.preference(decoderPreferences).set(it.toInt())
-                            applyDebandSetting(setting, it.toInt())
-                        },
-                        max = setting.end.toFloat(),
-                        min = setting.start.toFloat(),
-                    )
+            AnimatedVisibility(visible = debandMode == Debanding.GPU) {
+                Column {
+                    DebandSettings.entries.forEach { setting ->
+                        key("deband-setting-${setting.name}") {
+                            val value by setting.preference(decoderPreferences).collectAsState()
+                            SliderItem(
+                                label = stringResource(setting.titleRes),
+                                value = value,
+                                valueText = value.toString(),
+                                onChange = {
+                                    setting.preference(decoderPreferences).set(it)
+                                    applyDebandSetting(setting, it)
+                                },
+                                max = setting.end,
+                                min = setting.start,
+                            )
+                        }
+                    }
                 }
             }
         }

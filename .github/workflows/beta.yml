@@ -40,7 +40,7 @@ jobs:
           echo "CURRENT_VN=$CURRENT_VN"
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease -Pinclude-telemetry=false -Penable-updater=false --no-daemon
+        run: ./gradlew assembleRelease -Pinclude-telemetry=false -Penable-updater=true --no-daemon
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}

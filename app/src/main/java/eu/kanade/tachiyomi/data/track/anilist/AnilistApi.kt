@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.track.anilist
 
 import android.net.Uri
 import androidx.core.net.toUri
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.anilist.dto.ALAddAnimeResult
 import eu.kanade.tachiyomi.data.track.anilist.dto.ALCurrentUserResult
@@ -318,6 +319,87 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
         return findLibAnime(track, userId) ?: throw Exception("Could not find anime")
     }
 
+    suspend fun getUserAnimeList(userId: Int): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem> {
+        return withIOContext {
+            val list = mutableListOf<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem>()
+            var page = 1
+            var hasNextPage = true
+            while (hasNextPage) {
+                val query = """
+                |query (${'$'}id: Int!, ${'$'}page: Int!) {
+                    |Page(page: ${'$'}page, perPage: 50) {
+                        |pageInfo {
+                            |hasNextPage
+                        |}
+                        |mediaList(userId: ${'$'}id, type: ANIME) {
+                            |id
+                            |status
+                            |scoreRaw: score(format: POINT_100)
+                            |progress
+                            |startedAt {
+                                |year
+                                |month
+                                |day
+                            |}
+                            |completedAt {
+                                |year
+                                |month
+                                |day
+                            |}
+                            |media {
+                                |id
+                                |title {
+                                    |userPreferred
+                                    |romaji
+                                    |english
+                                    |native
+                                |}
+                                |coverImage {
+                                    |large
+                                |}
+                                |format
+                                |status
+                                |episodes
+                                |description
+                                |startDate {
+                                    |year
+                                    |month
+                                    |day
+                                |}
+                                |averageScore
+                            |}
+                        |}
+                    |}
+                |}
+                |
+                """.trimMargin()
+                val payload = buildJsonObject {
+                    put("query", query)
+                    putJsonObject("variables") {
+                        put("id", userId)
+                        put("page", page)
+                    }
+                }
+                val response = with(json) {
+                    authClient.newCall(
+                        POST(
+                            API_URL,
+                            body = payload.toString().toRequestBody(jsonMime),
+                        ),
+                    )
+                        .awaitSuccess()
+                        .parseAs<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListEntryQueryResult>()
+                }
+                val mediaList = response.data.page.mediaList
+                list.addAll(mediaList)
+                hasNextPage = response.data.page.pageInfo?.hasNextPage ?: false
+                page++
+            }
+            list
+        }
+    }
+
+
     suspend fun getRelations(mediaId: Int): List<eu.kanade.tachiyomi.data.track.anilist.dto.ALRelationEdge> {
         return withIOContext {
             val query = """
@@ -399,6 +481,128 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                         val viewer = it.data.viewer
                         Pair(viewer.id, viewer.mediaListOptions.scoreFormat)
                     }
+            }
+        }
+    }
+
+    suspend fun fetchCastById(mediaId: Long): List<Credit>? {
+        return withIOContext {
+            try {
+                val query = """
+                |query GetCast(${"$"}mediaId: Int) {
+                |    Media (id: ${"$"}mediaId, type: ANIME) {
+                |        id
+                |        characters {
+                |            edges {
+                |                role
+                |                node {
+                |                    name { userPreferred }
+                |                    image { large medium }
+                |                }
+                |                voiceActors {
+                |                    name { userPreferred }
+                |                    language
+                |                    image { large medium }
+                |                }
+                |            }
+                |        }
+                |        staff {
+                |            edges {
+                |                role
+                |                node {
+                |                    name { userPreferred }
+                |                    image { large medium }
+                |                }
+                |            }
+                |        }
+                |    }
+                |}
+                |
+                """.trimMargin()
+
+                val payload = buildJsonObject {
+                    put("query", query)
+                    putJsonObject("variables") {
+                        put("mediaId", mediaId)
+                    }
+                }
+
+                val response = authClient.newCall(
+                    POST(
+                        API_URL,
+                        body = payload.toString().toRequestBody(jsonMime),
+                    ),
+                ).execute()
+                
+                if (!response.isSuccessful) return@withIOContext null
+                val bodyStr = response.body.string()
+                val parsed = json.parseToJsonElement(bodyStr).jsonObject
+                val media = parsed["data"]?.jsonObject?.get("Media")?.jsonObject ?: return@withIOContext null
+
+                val credits = mutableListOf<Credit>()
+
+                // Parse characters
+                val characters = media["characters"]?.jsonObject?.get("edges")?.jsonArray
+                characters?.forEach { edgeEl ->
+                    val edge = edgeEl.jsonObject
+                    val node = edge["node"]?.jsonObject
+                    val charName = node?.get("name")?.jsonObject?.get("userPreferred")?.jsonPrimitive?.contentOrNull
+                    val charImage = node?.get("image")?.jsonObject?.get("large")?.jsonPrimitive?.contentOrNull
+                    
+                    val vas = edge["voiceActors"]?.jsonArray
+                    val vaNames = mutableListOf<String>()
+                    var vaImage: String? = null
+                    vas?.forEach { vaEl ->
+                        val va = vaEl.jsonObject
+                        val vaName = va["name"]?.jsonObject?.get("userPreferred")?.jsonPrimitive?.contentOrNull
+                        val vaLang = va["language"]?.jsonPrimitive?.contentOrNull
+                        if (!vaName.isNullOrBlank()) {
+                            vaNames.add(if (!vaLang.isNullOrBlank()) "$vaName ($vaLang)" else vaName)
+                        }
+                        if (vaImage == null) {
+                            vaImage = va["image"]?.jsonObject?.get("large")?.jsonPrimitive?.contentOrNull
+                        }
+                    }
+                    val roleText = vaNames.joinToString(", ")
+                    var finalImage: String? = charImage ?: vaImage
+                    if (!finalImage.isNullOrBlank() && finalImage.startsWith("//")) {
+                        finalImage = "https:$finalImage"
+                    }
+                    if (!charName.isNullOrBlank()) {
+                        credits.add(
+                            Credit(
+                                name = charName,
+                                role = roleText.ifBlank { null },
+                                character = charName,
+                                image_url = finalImage,
+                            ),
+                        )
+                    }
+                }
+
+                // Parse staff
+                val staff = media["staff"]?.jsonObject?.get("edges")?.jsonArray
+                staff?.forEach { stEl ->
+                    val sedge = stEl.jsonObject
+                    val srole = sedge["role"]?.jsonPrimitive?.contentOrNull
+                    val snode = sedge["node"]?.jsonObject
+                    val sname = snode?.get("name")?.jsonObject?.get("userPreferred")?.jsonPrimitive?.contentOrNull
+                    var sImage = snode?.get("image")?.jsonObject?.get("large")?.jsonPrimitive?.contentOrNull
+                    if (!sImage.isNullOrBlank() && sImage.startsWith("//")) sImage = "https:$sImage"
+                    if (!sname.isNullOrBlank()) {
+                        credits.add(
+                            Credit(
+                                name = sname,
+                                role = srole,
+                                image_url = sImage,
+                            ),
+                        )
+                    }
+                }
+
+                credits.ifEmpty { null }
+            } catch (_: Exception) {
+                null
             }
         }
     }

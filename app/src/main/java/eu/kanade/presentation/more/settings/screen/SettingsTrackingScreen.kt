@@ -5,9 +5,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import eu.kanade.presentation.more.settings.widget.BasePreferenceWidget
+import eu.kanade.presentation.more.settings.widget.PrefsHorizontalPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Close
@@ -23,6 +30,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import cafe.adriel.voyager.navigator.LocalNavigator
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,12 +93,14 @@ object SettingsTrackingScreen : SearchableSettings {
 
     @Composable
     override fun getPreferences(): List<Preference> {
+        val navigator = LocalNavigator.current
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val trackPreferences = remember { Injekt.get<TrackPreferences>() }
         val trackerManager = remember { Injekt.get<TrackerManager>() }
         val sourceManager = remember { Injekt.get<SourceManager>() }
         val autoTrackStatePref = trackPreferences.autoUpdateTrackOnMarkRead()
+        val isAnilistLoggedIn by trackerManager.aniList.isLoggedInFlow.collectAsState(trackerManager.aniList.isLoggedIn)
 
         var dialog by remember { mutableStateOf<Any?>(null) }
         dialog?.run {
@@ -158,106 +169,143 @@ object SettingsTrackingScreen : SearchableSettings {
             ),
             Preference.PreferenceGroup(
                 title = stringResource(MR.strings.services),
-                preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.myAnimeList.name,
-                        tracker = trackerManager.myAnimeList,
-                        login = {
-                            context.openInBrowser(
-                                MyAnimeListApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.myAnimeList) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.aniList.name,
-                        tracker = trackerManager.aniList,
-                        login = {
-                            context.openInBrowser(
-                                AnilistApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.aniList) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.kitsu.name,
-                        tracker = trackerManager.kitsu,
-                        login = { dialog = LoginDialog(trackerManager.kitsu, MR.strings.email) },
-                        logout = { dialog = LogoutDialog(trackerManager.kitsu) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.shikimori.name,
-                        tracker = trackerManager.shikimori,
-                        login = {
-                            context.openInBrowser(
-                                ShikimoriApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.shikimori) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.simkl.name,
-                        tracker = trackerManager.simkl,
-                        login = {
-                            context.openInBrowser(
-                                SimklApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.simkl) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.trakt.name,
-                        tracker = trackerManager.trakt,
-                        login = {
-                            context.openInBrowser(
-                                eu.kanade.tachiyomi.data.track.trakt.TraktApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.trakt) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.tmdb.name,
-                        tracker = trackerManager.tmdb,
-                        login = {
-                            val currentApiKey = trackPreferences.trackApiKey(trackerManager.tmdb).get()
-                            if (currentApiKey.isBlank()) {
-                                dialog = ApiKeyDialog(trackerManager.tmdb)
-                            } else {
-                                scope.launchIO {
-                                    try {
-                                        val authUrl = trackerManager.tmdb.getAuthUrl()
-                                        context.openInBrowser(
-                                            authUrl,
-                                            forceDefaultBrowser = true,
-                                        )
-                                    } catch (e: Exception) {
-                                        withUIContext {
-                                            context.toast(e.message ?: "Error logging in")
+                preferenceItems = (
+                    listOf(
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.myAnimeList.name,
+                            tracker = trackerManager.myAnimeList,
+                            login = {
+                                context.openInBrowser(
+                                    MyAnimeListApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.myAnimeList) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.aniList.name,
+                            tracker = trackerManager.aniList,
+                            login = {
+                                context.openInBrowser(
+                                    AnilistApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.aniList) },
+                        ),
+                    ) + (if (isAnilistLoggedIn) {
+                        listOf(
+                             Preference.PreferenceItem.CustomPreference(
+                                title = stringResource(MR.strings.pref_import_from_anilist),
+                            ) {
+                                BasePreferenceWidget(
+                                    subcomponent = {
+                                        OutlinedButton(
+                                            onClick = {
+                                                navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = PrefsHorizontalPadding),
+                                            shape = CircleShape,
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(MR.strings.pref_import_from_anilist),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        emptyList()
+                    }) + listOf(
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.kitsu.name,
+                            tracker = trackerManager.kitsu,
+                            login = { dialog = LoginDialog(trackerManager.kitsu, MR.strings.email) },
+                            logout = { dialog = LogoutDialog(trackerManager.kitsu) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.shikimori.name,
+                            tracker = trackerManager.shikimori,
+                            login = {
+                                context.openInBrowser(
+                                    ShikimoriApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.shikimori) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.simkl.name,
+                            tracker = trackerManager.simkl,
+                            login = {
+                                context.openInBrowser(
+                                    SimklApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.simkl) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.trakt.name,
+                            tracker = trackerManager.trakt,
+                            login = {
+                                context.openInBrowser(
+                                    eu.kanade.tachiyomi.data.track.trakt.TraktApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.trakt) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.tmdb.name,
+                            tracker = trackerManager.tmdb,
+                            login = {
+                                val currentApiKey = trackPreferences.trackApiKey(trackerManager.tmdb).get()
+                                if (currentApiKey.isBlank()) {
+                                    dialog = ApiKeyDialog(trackerManager.tmdb)
+                                } else {
+                                    scope.launchIO {
+                                        try {
+                                            val authUrl = trackerManager.tmdb.getAuthUrl()
+                                            context.openInBrowser(
+                                                authUrl,
+                                                forceDefaultBrowser = true,
+                                            )
+                                        } catch (e: Exception) {
+                                            withUIContext {
+                                                context.toast(e.message ?: "Error logging in")
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.tmdb) },
-                    ),
-                    Preference.PreferenceItem.TrackerPreference(
-                        title = trackerManager.bangumi.name,
-                        tracker = trackerManager.bangumi,
-                        login = {
-                            context.openInBrowser(
-                                BangumiApi.authUrl(),
-                                forceDefaultBrowser = true,
-                            )
-                        },
-                        logout = { dialog = LogoutDialog(trackerManager.bangumi) },
-                    ),
-                    Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.tracking_info)),
-                ),
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.tmdb) },
+                        ),
+                        Preference.PreferenceItem.TrackerPreference(
+                            title = trackerManager.bangumi.name,
+                            tracker = trackerManager.bangumi,
+                            login = {
+                                context.openInBrowser(
+                                    BangumiApi.authUrl(),
+                                    forceDefaultBrowser = true,
+                                )
+                            },
+                            logout = { dialog = LogoutDialog(trackerManager.bangumi) },
+                        ),
+                        Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.tracking_info)),
+                    )
+                ).toImmutableList(),
             ),
             Preference.PreferenceGroup(
                 title = stringResource(MR.strings.enhanced_services),

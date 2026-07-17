@@ -15,9 +15,16 @@ data class ALUserListEntryPage(
 )
 
 @Serializable
+data class ALPageInfo(
+    val hasNextPage: Boolean,
+)
+
+@Serializable
 data class ALUserListMediaList(
+    val pageInfo: ALPageInfo? = null,
     val mediaList: List<ALUserListItem>,
 )
+
 
 @Serializable
 data class ALUserListItem(
