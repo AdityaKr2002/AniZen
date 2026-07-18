@@ -62,6 +62,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import tachiyomi.presentation.core.util.clickableNoIndication
 import java.net.URLEncoder
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import tachiyomi.core.common.util.lang.withIOContext
 
 @Composable
 fun CreditDetailsDialog(
@@ -72,6 +78,58 @@ fun CreditDetailsDialog(
     val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
     var isVisible by remember { mutableStateOf(false) }
+    var biography by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val parsedDetails = remember(credit.url) {
+        if (credit.url == null) return@remember null
+        val uri = credit.url
+        when {
+            uri.contains("anilist.co/character/") -> {
+                val id = uri.substringAfter("anilist.co/character/").substringBefore("/").toLongOrNull()
+                id?.let { Pair("anilist-character", it) }
+            }
+            uri.contains("anilist.co/staff/") -> {
+                val id = uri.substringAfter("anilist.co/staff/").substringBefore("/").toLongOrNull()
+                id?.let { Pair("anilist-staff", it) }
+            }
+            uri.contains("themoviedb.org/person/") -> {
+                val id = uri.substringAfter("themoviedb.org/person/").substringBefore("/").toLongOrNull()
+                id?.let { Pair("tmdb-person", it) }
+            }
+            else -> null
+        }
+    }
+
+    LaunchedEffect(parsedDetails) {
+        if (parsedDetails == null) return@LaunchedEffect
+        isLoading = true
+        biography = null
+        try {
+            val trackerManager = Injekt.get<eu.kanade.tachiyomi.data.track.TrackerManager>()
+            val result = withIOContext {
+                when (parsedDetails.first) {
+                    "anilist-character" -> trackerManager.aniList.api.getCharacterDescription(parsedDetails.second)
+                    "anilist-staff" -> trackerManager.aniList.api.getStaffDescription(parsedDetails.second)
+                    "tmdb-person" -> trackerManager.tmdb.api.getPersonBiography(parsedDetails.second)
+                    else -> null
+                }
+            }
+            biography = result
+        } catch (_: Exception) {
+            // Log/ignore
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val cleanBio = remember(biography) {
+        biography?.let {
+            it.replace(Regex("<br\\s*/?>"), "\n")
+              .replace(Regex("<[^>]*>"), "")
+              .trim()
+        }
+    }
 
     LaunchedEffect(Unit) {
         isVisible = true
@@ -231,6 +289,50 @@ fun CreditDetailsDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 160.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            if (isLoading) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            } else {
+                                val bioText = cleanBio
+                                if (!bioText.isNullOrBlank()) {
+                                    Text(
+                                        text = bioText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Text(
+                                        text = "No description available.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))

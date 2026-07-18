@@ -633,6 +633,70 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
         }
     }
 
+    suspend fun getCharacterDescription(charId: Long): String? {
+        return withIOContext {
+            try {
+                val query = """
+                |query GetChar(${"$"}id: Int) {
+                |    Character (id: ${"$"}id) {
+                |        description
+                |    }
+                |}
+                """.trimMargin()
+                val payload = buildJsonObject {
+                    put("query", query)
+                    putJsonObject("variables") {
+                        put("id", charId.toInt())
+                    }
+                }
+                val response = authClient.newCall(
+                    POST(
+                        API_URL,
+                        body = payload.toString().toRequestBody(jsonMime),
+                    ),
+                ).execute()
+                if (!response.isSuccessful) return@withIOContext null
+                val body = response.body.string()
+                val parsed = json.parseToJsonElement(body).jsonObject
+                parsed["data"]?.jsonObject?.get("Character")?.jsonObject?.get("description")?.jsonPrimitive?.contentOrNull
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    suspend fun getStaffDescription(staffId: Long): String? {
+        return withIOContext {
+            try {
+                val query = """
+                |query GetStaff(${"$"}id: Int) {
+                |    Staff (id: ${"$"}id) {
+                |        description
+                |    }
+                |}
+                """.trimMargin()
+                val payload = buildJsonObject {
+                    put("query", query)
+                    putJsonObject("variables") {
+                        put("id", staffId.toInt())
+                    }
+                }
+                val response = authClient.newCall(
+                    POST(
+                        API_URL,
+                        body = payload.toString().toRequestBody(jsonMime),
+                    ),
+                ).execute()
+                if (!response.isSuccessful) return@withIOContext null
+                val body = response.body.string()
+                val parsed = json.parseToJsonElement(body).jsonObject
+                parsed["data"]?.jsonObject?.get("Staff")?.jsonObject?.get("description")?.jsonPrimitive?.contentOrNull
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
     companion object {
         private const val CLIENT_ID = "36266"
         private const val API_URL = "https://graphql.anilist.co/"
