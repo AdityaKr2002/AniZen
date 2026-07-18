@@ -203,7 +203,7 @@ fun AnimeScreen(
 ) {
     val sourcePreferences: SourcePreferences by injectLazy()
     val context = LocalContext.current
-    var activeCredit by remember { mutableStateOf<Credit?>(null) }
+    var activeCreditIndex by remember { mutableStateOf<Int?>(null) }
     val onCopyTagToClipboard: (tag: String) -> Unit = {
         if (it.isNotEmpty()) {
             context.copyToClipboard(it, it)
@@ -275,7 +275,7 @@ fun AnimeScreen(
             onEditIntervalClicked = onEditIntervalClicked,
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             combinedItems = combinedItems,
-            onCastClick = { activeCredit = it },
+            onCastClick = { credit -> activeCreditIndex = state.anime.cast?.indexOf(credit)?.takeIf { it >= 0 } },
         )
     } else {
         AnimeScreenLargeImpl(
@@ -331,14 +331,16 @@ fun AnimeScreen(
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             onSettingsClicked = onSettingsClicked,
             combinedItems = combinedItems,
-            onCastClick = { activeCredit = it },
+            onCastClick = { credit -> activeCreditIndex = state.anime.cast?.indexOf(credit)?.takeIf { it >= 0 } },
         )
     }
 
-    activeCredit?.let { credit ->
+    activeCreditIndex?.let { index ->
+        val castList = state.anime.cast ?: emptyList()
         CreditDetailsDialog(
-            credit = credit,
-            onDismissRequest = { activeCredit = null },
+            cast = castList,
+            initialIndex = index,
+            onDismissRequest = { activeCreditIndex = null },
             onSearch = { onSearch(it, true) },
         )
     }

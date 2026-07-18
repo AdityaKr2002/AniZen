@@ -1,5 +1,9 @@
 package eu.kanade.presentation.anime.components
 
+import android.content.Intent
+import android.text.Html
+import android.text.method.LinkMovementMethod
+import android.widget.TextView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,21 +15,28 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,12 +57,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -60,24 +74,116 @@ import coil3.request.crossfade
 import eu.kanade.tachiyomi.animesource.model.Credit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.presentation.core.util.clickableNoIndication
-import java.net.URLEncoder
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.heightIn
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import tachiyomi.core.common.util.lang.withIOContext
+import java.net.URLEncoder
+import kotlin.math.absoluteValue
 
 @Composable
 fun CreditDetailsDialog(
-    credit: Credit,
+    cast: List<Credit>,
+    initialIndex: Int,
     onDismissRequest: () -> Unit,
     onSearch: (String) -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
     var isVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
+
+    fun dismissWithAnimation() {
+        isVisible = false
+        scope.launch {
+            delay(250)
+            onDismissRequest()
+        }
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex,
+        pageCount = { cast.size },
+    )
+
+    Dialog(
+        onDismissRequest = { dismissWithAnimation() },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickableNoIndication { dismissWithAnimation() }
+                .background(Color.Black.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.8f),
+                exit = fadeOut(tween(250)) + scaleOut(tween(250), targetScale = 0.8f),
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    contentPadding = PaddingValues(horizontal = 32.dp),
+                    pageSpacing = 16.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { page ->
+                    val credit = cast[page]
+                    val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+                    val scale = 0.85f + (1f - 0.85f) * (1f - pageOffset.coerceIn(0f, 1f))
+                    val alpha = 0.5f + (1f - 0.5f) * (1f - pageOffset.coerceIn(0f, 1f))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                                this.alpha = alpha
+                            }
+                            .clickableNoIndication {} // Prevent click propagation to background
+                            .border(
+                                width = 1.5.dp,
+                                brush = Brush.sweepGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                    ),
+                                ),
+                                shape = RoundedCornerShape(24.dp),
+                            ),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    ) {
+                        CreditPageContent(
+                            credit = credit,
+                            onSearch = onSearch,
+                            dismissWithAnimation = { dismissWithAnimation() },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreditPageContent(
+    credit: Credit,
+    onSearch: (String) -> Unit,
+    dismissWithAnimation: () -> Unit,
+) {
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     var biography by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -123,287 +229,264 @@ fun CreditDetailsDialog(
         }
     }
 
-    val cleanBio = remember(biography) {
+    val processedBio = remember(biography) {
         biography?.let {
-            it.replace(Regex("<br\\s*/?>"), "\n")
-              .replace(Regex("<[^>]*>"), "")
-              .trim()
+            it.replace("\n", "<br>")
         }
     }
 
-    LaunchedEffect(Unit) {
-        isVisible = true
-    }
-
-    fun dismissWithAnimation() {
-        isVisible = false
-        scope.launch {
-            delay(250)
-            onDismissRequest()
-        }
-    }
-
-    Dialog(
-        onDismissRequest = { dismissWithAnimation() },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-        ),
+    Column(
+        modifier = Modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickableNoIndication { dismissWithAnimation() }
-                .background(Color.Black.copy(alpha = 0.6f)),
-            contentAlignment = Alignment.Center,
+        // Share and Close buttons at top
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.8f),
-                exit = fadeOut(tween(250)) + scaleOut(tween(250), targetScale = 0.8f),
-            ) {
-                Card(
-                    modifier = Modifier
-                        .width(320.dp)
-                        .clickableNoIndication {} // Prevent click propagation to background
-                        .border(
-                            width = 1.5.dp,
-                            brush = Brush.sweepGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                ),
-                            ),
-                            shape = RoundedCornerShape(24.dp),
-                        ),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        // Close button at top right
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                        ) {
-                            IconButton(onClick = { dismissWithAnimation() }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Close,
-                                    contentDescription = "Close",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                )
-                            }
-                        }
-
-                        // Profile Image
-                        val ctx = LocalContext.current
-                        val imageModifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .border(
-                                width = 3.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                                shape = CircleShape,
-                            )
-
-                        if (!credit.image_url.isNullOrBlank()) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(ctx)
-                                    .data(credit.image_url)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = credit.name,
-                                modifier = imageModifier,
-                            )
-                        } else {
-                            Box(
-                                modifier = imageModifier.background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Name
-                        Text(
-                            text = credit.name,
-                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Role / Character Info
-                        val isCharacter = credit.character != null
-                        val hasVA = !credit.role.isNullOrBlank()
-
-                        if (isCharacter && hasVA && credit.role != credit.character) {
-                            Text(
-                                text = "Character",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                text = credit.character ?: "",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Played by / VA",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                            Text(
-                                text = credit.role ?: "",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                        } else if (!credit.role.isNullOrBlank()) {
-                            Text(
-                                text = "Role",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                text = credit.role ?: "",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 160.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainer,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(12.dp)
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            if (isLoading) {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().height(60.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    androidx.compose.material3.CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            } else {
-                                val bioText = cleanBio
-                                if (!bioText.isNullOrBlank()) {
-                                    Text(
-                                        text = bioText,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                } else {
-                                    Text(
-                                        text = "No description available.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Buttons
-                        Button(
-                            onClick = {
-                                dismissWithAnimation()
-                                onSearch(credit.name)
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Search in AniZen")
-                        }
-
-                        if (!credit.url.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            val buttonText = remember(credit.url) {
-                                when {
-                                    credit.url.contains("anilist.co") -> "Open on AniList"
-                                    credit.url.contains("themoviedb.org") -> "Open on TMDB"
-                                    else -> "Open Source Page"
-                                }
-                            }
-
-                            Button(
-                                onClick = {
-                                    uriHandler.openUri(credit.url)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Language,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = buttonText)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedButton(
-                            onClick = {
-                                val escapedName = URLEncoder.encode(credit.name, "UTF-8")
-                                uriHandler.openUri("https://www.google.com/search?q=$escapedName")
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Language,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Search on Web (Google)")
-                        }
+            IconButton(onClick = {
+                try {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, credit.name)
+                        putExtra(Intent.EXTRA_TEXT, "${credit.name} - ${credit.url ?: ""}")
                     }
+                    context.startActivity(Intent.createChooser(intent, "Share Character"))
+                } catch (_: Exception) {}
+            }) {
+                Icon(
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = "Share",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                )
+            }
+
+            IconButton(onClick = { dismissWithAnimation() }) {
+                Icon(
+                    imageVector = Icons.Outlined.Close,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                )
+            }
+        }
+
+        // Profile Image
+        val ctx = LocalContext.current
+        val imageModifier = Modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .border(
+                width = 3.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                shape = CircleShape,
+            )
+
+        if (!credit.image_url.isNullOrBlank()) {
+            AsyncImage(
+                model = ImageRequest.Builder(ctx)
+                    .data(credit.image_url)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = credit.name,
+                modifier = imageModifier,
+            )
+        } else {
+            Box(
+                modifier = imageModifier.background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Name
+        Text(
+            text = credit.name,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Role / Character Info
+        val isCharacter = credit.character != null
+        val hasVA = !credit.role.isNullOrBlank()
+
+        if (isCharacter && hasVA && credit.role != credit.character) {
+            Text(
+                text = "Character",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = credit.character ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Played by / VA",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+            Text(
+                text = credit.role ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        } else if (!credit.role.isNullOrBlank()) {
+            Text(
+                text = "Role",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = credit.role ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Biography / Description scrollable area with HTML link support
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 160.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .padding(12.dp)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            } else {
+                val bioHtml = processedBio
+                if (!bioHtml.isNullOrBlank()) {
+                    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+                    AndroidView(
+                        factory = { ctx ->
+                            TextView(ctx).apply {
+                                movementMethod = LinkMovementMethod.getInstance()
+                                textSize = 14f
+                            }
+                        },
+                        update = { tv ->
+                            tv.setTextColor(onSurfaceVariant)
+                            tv.text = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                Html.fromHtml(bioHtml, Html.FROM_HTML_MODE_LEGACY)
+                            } else {
+                                @Suppress("DEPRECATION")
+                                Html.fromHtml(bioHtml)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Text(
+                        text = "No description available.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Buttons
+        Button(
+            onClick = {
+                dismissWithAnimation()
+                onSearch(credit.name)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Search in AniZen")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (!credit.url.isNullOrBlank()) {
+            val buttonText = remember(credit.url) {
+                when {
+                    credit.url.contains("anilist.co") -> "Open on AniList"
+                    credit.url.contains("themoviedb.org") -> "Open on TMDB"
+                    else -> "Open Source Page"
+                }
+            }
+
+            Button(
+                onClick = {
+                    uriHandler.openUri(credit.url)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Language,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = buttonText)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        OutlinedButton(
+            onClick = {
+                val escapedName = URLEncoder.encode(credit.name, "UTF-8")
+                uriHandler.openUri("https://www.google.com/search?q=$escapedName")
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Language,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Search on Web (Google)")
         }
     }
 }
