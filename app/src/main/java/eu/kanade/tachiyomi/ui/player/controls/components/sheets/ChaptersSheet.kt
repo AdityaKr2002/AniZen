@@ -31,14 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.vivvvek.seeker.Segment
 import `is`.xyz.mpv.Utils
-import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
 fun ChaptersSheet(
-    chapters: ImmutableList<Segment>,
+    chapters: List<Segment>,
     currentChapter: Segment,
     onClick: (Segment) -> Unit,
     onDismissRequest: () -> Unit,

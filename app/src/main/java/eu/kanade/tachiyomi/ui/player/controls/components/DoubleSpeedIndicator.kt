@@ -79,9 +79,7 @@ fun DoubleSpeedIndicator(
                             color = if (Math.abs(speed - stopVal) < 0.1f) Color(0xFF4A90E2) else Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.offset { 
-                                androidx.compose.ui.unit.IntOffset((trackWidth * labelProgress - 12.dp).roundToPx(), 0) 
-                            },
+                            modifier = Modifier.offset(x = trackWidth * labelProgress - 12.dp),
                         )
                     }
                 }
@@ -116,9 +114,7 @@ fun DoubleSpeedIndicator(
                         val dotOffset = (trackWidth * dotProgress - 3.dp).coerceAtLeast(0.dp)
                         Box(
                             modifier = Modifier
-                                .offset {
-                                    androidx.compose.ui.unit.IntOffset(dotOffset.roundToPx(), 0)
-                                }
+                                .offset(x = dotOffset)
                                 .size(6.dp)
                                 .clip(CircleShape)
                                 .background(if (speed >= stopVal - 0.1f) Color(0xFF4A90E2) else Color.White.copy(alpha = 0.7f)),

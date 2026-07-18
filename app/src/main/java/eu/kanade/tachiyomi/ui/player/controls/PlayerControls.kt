@@ -630,7 +630,10 @@ fun PlayerControls(
                 ThumbnailPreview(
                     visible = isSeekingUI,
                     image = thumbnailImage,
-                    positionSProvider = { seekPosition.toLong() },
+                    positionSProvider = run {
+                        val currentSeekPosition = androidx.compose.runtime.rememberUpdatedState(seekPosition.toLong())
+                        remember { { currentSeekPosition.value } }
+                    },
                     durationS = duration.toLong(),
                     chapters = chaptersList,
                     modifier = Modifier.fillMaxWidth().constrainAs(thumbnail) {
