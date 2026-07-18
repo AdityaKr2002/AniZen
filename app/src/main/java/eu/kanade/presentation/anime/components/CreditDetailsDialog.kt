@@ -1,9 +1,6 @@
 package eu.kanade.presentation.anime.components
 
 import android.content.Intent
-import android.text.Html
-import android.text.method.LinkMovementMethod
-import android.widget.TextView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Share
@@ -56,16 +52,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
@@ -79,7 +72,10 @@ import tachiyomi.presentation.core.util.clickableNoIndication
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.absoluteValue
+
+private val biographyCache = ConcurrentHashMap<String, String>()
 
 @Composable
 fun CreditDetailsDialog(
@@ -112,13 +108,13 @@ fun CreditDetailsDialog(
         onDismissRequest = { dismissWithAnimation() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
         ),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickableNoIndication { dismissWithAnimation() }
-                .background(Color.Black.copy(alpha = 0.6f)),
+                .clickableNoIndication { dismissWithAnimation() },
             contentAlignment = Alignment.Center,
         ) {
             AnimatedVisibility(
@@ -166,7 +162,6 @@ fun CreditDetailsDialog(
                     ) {
                         CreditPageContent(
                             credit = credit,
-                            onSearch = onSearch,
                             dismissWithAnimation = { dismissWithAnimation() },
                         )
                     }
@@ -179,7 +174,6 @@ fun CreditDetailsDialog(
 @Composable
 private fun CreditPageContent(
     credit: Credit,
-    onSearch: (String) -> Unit,
     dismissWithAnimation: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -209,6 +203,12 @@ private fun CreditPageContent(
 
     LaunchedEffect(parsedDetails) {
         if (parsedDetails == null) return@LaunchedEffect
+        val cacheKey = credit.url ?: ""
+        if (cacheKey.isNotEmpty() && biographyCache.containsKey(cacheKey)) {
+            biography = biographyCache[cacheKey]
+            return@LaunchedEffect
+        }
+
         isLoading = true
         biography = null
         try {
@@ -222,6 +222,9 @@ private fun CreditPageContent(
                 }
             }
             biography = result
+            if (!result.isNullOrBlank() && cacheKey.isNotEmpty()) {
+                biographyCache[cacheKey] = result
+            }
         } catch (_: Exception) {
             // Log/ignore
         } finally {
@@ -231,7 +234,8 @@ private fun CreditPageContent(
 
     val processedBio = remember(biography) {
         biography?.let {
-            it.replace("\n", "<br>")
+            it.replace(Regex("<br\\s*/?>"), "\n")
+              .trim()
         }
     }
 
@@ -363,11 +367,11 @@ private fun CreditPageContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Biography / Description scrollable area with HTML link support
+        // Biography / Description scrollable area with Markdown
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 160.dp)
+                .heightIn(max = 180.dp)
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = RoundedCornerShape(12.dp),
@@ -389,25 +393,10 @@ private fun CreditPageContent(
                     )
                 }
             } else {
-                val bioHtml = processedBio
-                if (!bioHtml.isNullOrBlank()) {
-                    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-                    AndroidView(
-                        factory = { ctx ->
-                            TextView(ctx).apply {
-                                movementMethod = LinkMovementMethod.getInstance()
-                                textSize = 14f
-                            }
-                        },
-                        update = { tv ->
-                            tv.setTextColor(onSurfaceVariant)
-                            tv.text = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                                Html.fromHtml(bioHtml, Html.FROM_HTML_MODE_LEGACY)
-                            } else {
-                                @Suppress("DEPRECATION")
-                                Html.fromHtml(bioHtml)
-                            }
-                        },
+                val bioMarkdown = processedBio
+                if (!bioMarkdown.isNullOrBlank()) {
+                    MarkdownRender(
+                        content = bioMarkdown,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
@@ -425,25 +414,6 @@ private fun CreditPageContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Buttons
-        Button(
-            onClick = {
-                dismissWithAnimation()
-                onSearch(credit.name)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Search in AniZen")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         val creditUrl = credit.url
         if (!creditUrl.isNullOrBlank()) {
             val buttonText = remember(creditUrl) {
