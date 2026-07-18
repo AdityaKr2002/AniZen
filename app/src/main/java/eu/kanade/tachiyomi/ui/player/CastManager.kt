@@ -134,7 +134,7 @@ class CastManager(
     }
 
     private fun initializeCast() {
-        if (!isCastApiAvailable) return
+        if (!playerPreferences.enableCast().get() || !isCastApiAvailable) return
         try {
             castContext = CastContext.getSharedInstance(context.applicationContext)
             sessionListener = CastSessionListener(this)
@@ -352,9 +352,11 @@ class CastManager(
     }
 
     fun reconnect() {
-        if (!isCastApiAvailable) return
+        if (!playerPreferences.enableCast().get() || !isCastApiAvailable) return
         try {
-            castContext = CastContext.getSharedInstance(context.applicationContext)
+            if (castContext == null) {
+                initializeCast()
+            }
             castSession = castContext?.sessionManager?.currentCastSession
             if (castSession?.isConnected == true) {
                 updateCastState(CastState.CONNECTED)
@@ -385,10 +387,13 @@ class CastManager(
     }
 
     fun startDeviceDiscovery() {
-        if (!isCastApiAvailable) return
+        if (!playerPreferences.enableCast().get() || !isCastApiAvailable) return
         discoveryRetryJob?.cancel()
 
         try {
+            if (castContext == null) {
+                initializeCast()
+            }
             castContext?.let { castContext ->
                 if (_castState.value != CastState.CONNECTED) {
                     _castState.value = CastState.CONNECTING
@@ -609,7 +614,7 @@ class CastManager(
     }
 
     fun endSession() {
-        val mSessionManager = castContext!!.sessionManager
+        val mSessionManager = castContext?.sessionManager ?: return
         mSessionManager.endCurrentSession(true)
         reset()
         _castState.value = CastState.DISCONNECTED
