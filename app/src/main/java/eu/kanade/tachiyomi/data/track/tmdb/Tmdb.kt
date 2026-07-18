@@ -43,7 +43,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
     private val sessionId: String
         get() = trackPreferences.trackToken(this).get()
 
-    private val api: TmdbApi
+    val api: TmdbApi
         get() = TmdbApi(client, apiKey, sessionId)
 
     override fun getScoreList(): ImmutableList<String> = SCORE_LIST

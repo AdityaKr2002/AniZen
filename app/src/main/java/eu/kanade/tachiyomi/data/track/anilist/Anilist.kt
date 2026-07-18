@@ -54,7 +54,7 @@ class Anilist(id: Long) :
 
     private val interceptor by lazy { AnilistInterceptor(this, getPassword()) }
 
-    private val api by lazy { AnilistApi(client, interceptor) }
+    val api by lazy { AnilistApi(client, interceptor) }
 
     override val supportsReadingDates: Boolean = true
 
