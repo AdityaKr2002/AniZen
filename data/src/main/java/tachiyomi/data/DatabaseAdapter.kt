@@ -48,6 +48,7 @@ object CreditListColumnAdapter {
                 c.role?.let { put("role", it) }
                 c.character?.let { put("character", it) }
                 c.image_url?.let { put("image_url", it) }
+                c.url?.let { put("url", it) }
             })
         }
         return arr.toString()
@@ -64,6 +65,7 @@ object CreditListColumnAdapter {
                     role = obj.optString("role", null),
                     character = obj.optString("character", null),
                     image_url = obj.optString("image_url", null),
+                    url = obj.optString("url", null),
                 )
             }
         } catch (_: Exception) {

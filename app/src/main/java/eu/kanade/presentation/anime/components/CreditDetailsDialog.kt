@@ -253,6 +253,34 @@ fun CreditDetailsDialog(
                             Text(text = "Search in AniZen")
                         }
 
+                        if (!credit.url.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val buttonText = remember(credit.url) {
+                                when {
+                                    credit.url.contains("anilist.co") -> "Open on AniList"
+                                    credit.url.contains("themoviedb.org") -> "Open on TMDB"
+                                    else -> "Open Source Page"
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    uriHandler.openUri(credit.url)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Language,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = buttonText)
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         OutlinedButton(
@@ -269,7 +297,7 @@ fun CreditDetailsDialog(
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Search on Web")
+                            Text(text = "Search on Web (Google)")
                         }
                     }
                 }

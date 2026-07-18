@@ -496,10 +496,12 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                 |            edges {
                 |                role
                 |                node {
+                |                    id
                 |                    name { userPreferred }
                 |                    image { large medium }
                 |                }
                 |                voiceActors {
+                |                    id
                 |                    name { userPreferred }
                 |                    language
                 |                    image { large medium }
@@ -510,6 +512,7 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                 |            edges {
                 |                role
                 |                node {
+                |                    id
                 |                    name { userPreferred }
                 |                    image { large medium }
                 |                }
@@ -548,6 +551,8 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                     val node = edge["node"]?.jsonObject
                     val charName = node?.get("name")?.jsonObject?.get("userPreferred")?.jsonPrimitive?.contentOrNull
                     val charImage = node?.get("image")?.jsonObject?.get("large")?.jsonPrimitive?.contentOrNull
+                    val charId = node?.get("id")?.jsonPrimitive?.contentOrNull
+                    val charUrl = charId?.let { "https://anilist.co/character/$it" }
                     
                     val vas = edge["voiceActors"]?.jsonArray
                     val vaNames = mutableListOf<String>()
@@ -575,6 +580,7 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                                 role = roleText.ifBlank { null },
                                 character = charName,
                                 image_url = finalImage,
+                                url = charUrl,
                             ),
                         )
                     }
@@ -588,6 +594,8 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                     val snode = sedge["node"]?.jsonObject
                     val sname = snode?.get("name")?.jsonObject?.get("userPreferred")?.jsonPrimitive?.contentOrNull
                     var sImage = snode?.get("image")?.jsonObject?.get("large")?.jsonPrimitive?.contentOrNull
+                    val staffId = snode?.get("id")?.jsonPrimitive?.contentOrNull
+                    val staffUrl = staffId?.let { "https://anilist.co/staff/$it" }
                     if (!sImage.isNullOrBlank() && sImage.startsWith("//")) sImage = "https:$sImage"
                     if (!sname.isNullOrBlank()) {
                         credits.add(
@@ -595,6 +603,7 @@ class AnilistApi(val client: OkHttpClient, interceptor: AnilistInterceptor) {
                                 name = sname,
                                 role = srole,
                                 image_url = sImage,
+                                url = staffUrl,
                             ),
                         )
                     }
