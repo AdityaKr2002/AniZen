@@ -327,6 +327,10 @@ private fun CreditPageContent(
         val isCharacter = credit.character != null
         val hasVA = !credit.role.isNullOrBlank()
 
+        var isCharacterExpanded by remember { mutableStateOf(false) }
+        var isVAExpanded by remember { mutableStateOf(false) }
+        var isRoleExpanded by remember { mutableStateOf(false) }
+
         if (isCharacter && hasVA && credit.role != credit.character) {
             Text(
                 text = "Character",
@@ -338,8 +342,9 @@ private fun CreditPageContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = if (isCharacterExpanded) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickableNoIndication { isCharacterExpanded = !isCharacterExpanded },
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -352,8 +357,9 @@ private fun CreditPageContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = if (isVAExpanded) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickableNoIndication { isVAExpanded = !isVAExpanded },
             )
         } else if (!credit.role.isNullOrBlank()) {
             Text(
@@ -366,8 +372,9 @@ private fun CreditPageContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = if (isRoleExpanded) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickableNoIndication { isRoleExpanded = !isRoleExpanded },
             )
         }
 
