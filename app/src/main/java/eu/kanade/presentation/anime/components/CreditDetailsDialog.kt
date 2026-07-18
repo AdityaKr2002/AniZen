@@ -188,19 +188,19 @@ private fun CreditPageContent(
     var isLoading by remember { mutableStateOf(false) }
 
     val parsedDetails = remember(credit.url) {
-        if (credit.url == null) return@remember null
-        val uri = credit.url
+        val url = credit.url
+        if (url == null) return@remember null
         when {
-            uri.contains("anilist.co/character/") -> {
-                val id = uri.substringAfter("anilist.co/character/").substringBefore("/").toLongOrNull()
+            url.contains("anilist.co/character/") -> {
+                val id = url.substringAfter("anilist.co/character/").substringBefore("/").toLongOrNull()
                 id?.let { Pair("anilist-character", it) }
             }
-            uri.contains("anilist.co/staff/") -> {
-                val id = uri.substringAfter("anilist.co/staff/").substringBefore("/").toLongOrNull()
+            url.contains("anilist.co/staff/") -> {
+                val id = url.substringAfter("anilist.co/staff/").substringBefore("/").toLongOrNull()
                 id?.let { Pair("anilist-staff", it) }
             }
-            uri.contains("themoviedb.org/person/") -> {
-                val id = uri.substringAfter("themoviedb.org/person/").substringBefore("/").toLongOrNull()
+            url.contains("themoviedb.org/person/") -> {
+                val id = url.substringAfter("themoviedb.org/person/").substringBefore("/").toLongOrNull()
                 id?.let { Pair("tmdb-person", it) }
             }
             else -> null
@@ -444,18 +444,19 @@ private fun CreditPageContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (!credit.url.isNullOrBlank()) {
-            val buttonText = remember(credit.url) {
+        val creditUrl = credit.url
+        if (!creditUrl.isNullOrBlank()) {
+            val buttonText = remember(creditUrl) {
                 when {
-                    credit.url.contains("anilist.co") -> "Open on AniList"
-                    credit.url.contains("themoviedb.org") -> "Open on TMDB"
+                    creditUrl.contains("anilist.co") -> "Open on AniList"
+                    creditUrl.contains("themoviedb.org") -> "Open on TMDB"
                     else -> "Open Source Page"
                 }
             }
 
             Button(
                 onClick = {
-                    uriHandler.openUri(credit.url)
+                    uriHandler.openUri(creditUrl)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
