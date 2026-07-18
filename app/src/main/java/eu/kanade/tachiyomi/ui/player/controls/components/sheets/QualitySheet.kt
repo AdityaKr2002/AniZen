@@ -52,8 +52,6 @@ import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import tachiyomi.i18n.MR
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.pluralStringResource
@@ -93,8 +91,8 @@ private const val HostExpandSettleMs = 200L
 @Composable
 fun QualitySheet(
     isLoadingHosters: Boolean,
-    hosterState: ImmutableList<HosterState>,
-    expandedState: ImmutableList<Boolean>,
+    hosterState: List<HosterState>,
+    expandedState: List<Boolean>,
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
@@ -174,8 +172,8 @@ fun QualitySheet(
                     hosterState.first() is HosterState.Ready
                 ) {
                     QualitySheetVideoContent(
-                        videoList = (hosterState.first() as HosterState.Ready).videoList.toImmutableList(),
-                        videoState = (hosterState.first() as HosterState.Ready).videoState.toImmutableList(),
+                        videoList = (hosterState.first() as HosterState.Ready).videoList,
+                        videoState = (hosterState.first() as HosterState.Ready).videoState,
                         selectedVideoIndex = selectedVideoIndex.second,
                         onClickVideo = onClickVideo,
                         defaultStreamSelector = effectiveSelector,
@@ -305,8 +303,8 @@ private fun ScrollToDefaultEffect(
 
 @Composable
 fun QualitySheetVideoContent(
-    videoList: ImmutableList<Video>,
-    videoState: ImmutableList<Video.State>,
+    videoList: List<Video>,
+    videoState: List<Video.State>,
     selectedVideoIndex: Int,
     onClickVideo: (Int, Int) -> Unit,
     defaultStreamSelector: String = "",
@@ -374,8 +372,8 @@ private fun findDefaultScrollTarget(
 
 @Composable
 fun QualitySheetHosterContent(
-    hosterState: ImmutableList<HosterState>,
-    expandedState: ImmutableList<Boolean>,
+    hosterState: List<HosterState>,
+    expandedState: List<Boolean>,
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,

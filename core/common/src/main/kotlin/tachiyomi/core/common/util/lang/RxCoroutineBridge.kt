@@ -72,7 +72,7 @@ fun <T> runAsObservable(
 ): Observable<T> {
     return Observable.create(
         { emitter ->
-            val job = kotlinx.coroutines.CoroutineScope(Dispatchers.Unconfined).launch(start = CoroutineStart.ATOMIC) {
+            val job = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.ATOMIC) {
                 try {
                     emitter.onNext(block())
                     emitter.onCompleted()

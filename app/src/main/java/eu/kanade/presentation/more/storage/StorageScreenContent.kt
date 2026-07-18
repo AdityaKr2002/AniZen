@@ -109,7 +109,7 @@ fun StorageScreenContent(
                             }
                             items(
                                 state.items.size,
-                                key = { it },
+                                key = null,
                                 itemContent = { index ->
                                     StorageItem(
                                         item = state.items[index],

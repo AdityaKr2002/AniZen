@@ -36,11 +36,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.vivvvek.seeker.Segment
-import kotlinx.collections.immutable.ImmutableList
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -49,7 +49,7 @@ fun ThumbnailPreview(
     image: ImageBitmap?,
     positionSProvider: () -> Long,
     durationS: Long,
-    chapters: ImmutableList<Segment>,
+    chapters: List<Segment>,
     modifier: Modifier = Modifier,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -72,8 +72,10 @@ fun ThumbnailPreview(
 
     // Reactively compute the seeking chapter only when it changes, without recomposing
     // the entire ThumbnailPreview on every position tick.
-    val seekingChapter by androidx.compose.runtime.derivedStateOf { 
-        chapters.lastOrNull { it.start <= positionSProvider() } 
+    val seekingChapter by remember(chapters) {
+        androidx.compose.runtime.derivedStateOf { 
+            chapters.lastOrNull { it.start <= positionSProvider() } 
+        }
     }
 
     val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()

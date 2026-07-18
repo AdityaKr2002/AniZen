@@ -344,7 +344,7 @@ private fun ColumnScope.DisplayPage(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
         contentPadding = PaddingValues(horizontal = MaterialTheme.padding.medium)
     ) {
-        items(11, key = { it }) { i ->
+        items(11) { i ->
             FilterChip(
                 selected = columns == i,
                 onClick = { columnPreference.set(i) },

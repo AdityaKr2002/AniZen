@@ -73,11 +73,11 @@ fun CalendarDay(
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Normal,
                 modifier = Modifier
-                    .offset { androidx.compose.ui.unit.IntOffset(12.dp.roundToPx(), (-10).dp.roundToPx()) },
+                    .offset(x = 12.dp, y = (-10).dp),
             )
         }
         // KMK <--
-        Row(Modifier.offset { androidx.compose.ui.unit.IntOffset(0, 12.dp.roundToPx()) }) {
+        Row(Modifier.offset(y = 12.dp)) {
             val size = events.coerceAtMost(MAX_EVENTS)
             for (index in 0 until size) {
                 CalendarIndicator(

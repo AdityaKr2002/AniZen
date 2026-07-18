@@ -147,7 +147,7 @@ fun PlayerControls(
     val isSeekingUI by viewModel.isSeekingUI.collectAsState()
     val seekPosition by viewModel.seekPosition.collectAsState()
     val chaptersList = remember(chapters) {
-        chapters.map { it.toSegment() }.toImmutableList()
+        chapters.map { it.toSegment() }
     }
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -158,10 +158,10 @@ fun PlayerControls(
     val bottomRightButtons by playerPreferences.bottomRightControls().collectAsState()
     val portraitBottomButtons by playerPreferences.portraitBottomControls().collectAsState()
 
-    val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons).toImmutableList() }
-    val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons).toImmutableList() }
-    val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons).toImmutableList() }
-    val portraitBottomButtonsList = remember(portraitBottomButtons) { parseButtons(portraitBottomButtons).toImmutableList() }
+    val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons) }
+    val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons) }
+    val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons) }
+    val portraitBottomButtonsList = remember(portraitBottomButtons) { parseButtons(portraitBottomButtons) }
 
     val customButtons by viewModel.customButtons.collectAsState()
     val customButton by viewModel.primaryButton.collectAsState()
@@ -674,19 +674,19 @@ fun PlayerControls(
         PlayerSheets(
             sheetShown = sheetShown,
             viewModel = viewModel,
-            subtitles = subtitles.toImmutableList(),
-            selectedSubtitles = selectedSubtitles.toList().toImmutableList(),
+            subtitles = subtitles,
+            selectedSubtitles = selectedSubtitles.toList(),
             onAddSubtitle = viewModel::addSubtitle,
             onSelectSubtitle = { viewModel.selectSub(it) },
-            audioTracks = audioTracks.toImmutableList(),
+            audioTracks = audioTracks,
             selectedAudio = selectedAudio,
             onAddAudio = viewModel::addAudio,
             onSelectAudio = viewModel::selectAudio,
 
             isLoadingHosters = isLoadingHosters,
 
-            hosterState = hosterState.toImmutableList(),
-            expandedState = expandedState.toImmutableList(),
+            hosterState = hosterState,
+            expandedState = expandedState,
             selectedVideoIndex = selectedHosterVideoIndex,
             onClickHoster = viewModel::onHosterClicked,
             onClickVideo = viewModel::onVideoClicked,
@@ -708,7 +708,7 @@ fun PlayerControls(
             onSpeedChange = { MPVLib.setPropertyDouble("speed", it.toFixed(2).toDouble()) },
             sleepTimerTimeRemaining = sleepTimerTimeRemaining,
             onStartSleepTimer = viewModel::startTimer,
-            buttons = customButtons.getButtons().toImmutableList(),
+            buttons = customButtons.getButtons(),
 
             showSubtitles = showSubtitles,
             onToggleShowSubtitles = { subtitlePreferences.screenshotSubtitles().set(it) },

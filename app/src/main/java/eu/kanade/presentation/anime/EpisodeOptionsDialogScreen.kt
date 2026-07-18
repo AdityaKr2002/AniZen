@@ -68,7 +68,6 @@ import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.QualitySheetHosterContent
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.QualitySheetVideoContent
-import kotlinx.collections.immutable.toImmutableList
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.getChangedAt
 import eu.kanade.tachiyomi.ui.player.loader.EpisodeLoader
 import eu.kanade.tachiyomi.ui.player.loader.HosterLoader
@@ -620,15 +619,15 @@ private fun VideoList(
                     hosterStateList.first() is HosterState.Ready
                 ) {
                     QualitySheetVideoContent(
-                        videoList = (hosterStateList.first() as HosterState.Ready).videoList.toImmutableList(),
-                        videoState = (hosterStateList.first() as HosterState.Ready).videoState.toImmutableList(),
+                        videoList = (hosterStateList.first() as HosterState.Ready).videoList,
+                        videoState = (hosterStateList.first() as HosterState.Ready).videoState,
                         selectedVideoIndex = selectedHosterVideoIndex.second,
                         onClickVideo = onClickVideo,
                     )
                 } else {
                     QualitySheetHosterContent(
-                        hosterState = hosterStateList.toImmutableList(),
-                        expandedState = expandedList.toImmutableList(),
+                        hosterState = hosterStateList,
+                        expandedState = expandedList,
                         selectedVideoIndex = selectedHosterVideoIndex,
                         onClickHoster = onClickHoster,
                         onClickVideo = onClickVideo,
