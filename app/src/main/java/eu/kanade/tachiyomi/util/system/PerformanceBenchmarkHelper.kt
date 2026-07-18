@@ -78,7 +78,7 @@ object PerformanceBenchmarkHelper {
             activity.window.addOnFrameMetricsAvailableListener(frameMetricsListener, handler)
         }
 
-        benchmarkJob = kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+        benchmarkJob = kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
             val startTime = System.currentTimeMillis()
             while (System.currentTimeMillis() - startTime < 30_000) {
                 maxMemory = max(maxMemory, getUsedMemory())

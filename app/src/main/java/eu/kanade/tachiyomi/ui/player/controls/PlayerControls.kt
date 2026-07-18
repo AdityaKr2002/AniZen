@@ -158,10 +158,10 @@ fun PlayerControls(
     val bottomRightButtons by playerPreferences.bottomRightControls().collectAsState()
     val portraitBottomButtons by playerPreferences.portraitBottomControls().collectAsState()
 
-    val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons) }
-    val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons) }
-    val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons) }
-    val portraitBottomButtonsList = remember(portraitBottomButtons) { parseButtons(portraitBottomButtons) }
+    val topRightButtonsList = remember(topRightButtons) { parseButtons(topRightButtons).toImmutableList() }
+    val bottomLeftButtonsList = remember(bottomLeftButtons) { parseButtons(bottomLeftButtons).toImmutableList() }
+    val bottomRightButtonsList = remember(bottomRightButtons) { parseButtons(bottomRightButtons).toImmutableList() }
+    val portraitBottomButtonsList = remember(portraitBottomButtons) { parseButtons(portraitBottomButtons).toImmutableList() }
 
     val customButtons by viewModel.customButtons.collectAsState()
     val customButton by viewModel.primaryButton.collectAsState()
@@ -630,7 +630,7 @@ fun PlayerControls(
                 ThumbnailPreview(
                     visible = isSeekingUI,
                     image = thumbnailImage,
-                    positionS = seekPosition.toLong(),
+                    positionSProvider = { seekPosition.toLong() },
                     durationS = duration.toLong(),
                     chapters = chaptersList,
                     modifier = Modifier.fillMaxWidth().constrainAs(thumbnail) {
@@ -685,8 +685,8 @@ fun PlayerControls(
 
             isLoadingHosters = isLoadingHosters,
 
-            hosterState = hosterState,
-            expandedState = expandedState,
+            hosterState = hosterState.toImmutableList(),
+            expandedState = expandedState.toImmutableList(),
             selectedVideoIndex = selectedHosterVideoIndex,
             onClickHoster = viewModel::onHosterClicked,
             onClickVideo = viewModel::onVideoClicked,

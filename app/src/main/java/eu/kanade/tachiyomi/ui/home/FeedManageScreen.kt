@@ -309,7 +309,7 @@ class FeedManageScreen : Screen() {
                 title = { Text(text = "Move to Category") },
                 text = {
                     LazyColumn {
-                        itemsIndexed(state.categories) { _, category ->
+                        itemsIndexed(state.categories, key = { _, category -> category.id }) { _, category ->
                              ListItem(
                                 headlineContent = { Text(category.name) },
                                 modifier = Modifier

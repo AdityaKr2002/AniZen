@@ -22,13 +22,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.collections.immutable.ImmutableList
 import eu.kanade.tachiyomi.ui.player.CastManager
 import eu.kanade.tachiyomi.ui.player.PlayerButton
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel
 
 @Composable
 fun TopRightPlayerControls(
-    buttons: List<PlayerButton>,
+    buttons: ImmutableList<PlayerButton>,
     viewModel: PlayerViewModel,
     castManager: CastManager,
     onBackPress: () -> Unit,

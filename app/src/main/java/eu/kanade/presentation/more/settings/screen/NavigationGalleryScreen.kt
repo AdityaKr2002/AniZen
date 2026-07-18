@@ -88,7 +88,7 @@ class NavigationGalleryScreen : Screen() {
                     PreferenceGroupHeader(title = "Community Presets")
                 }
 
-                items(NavCommunityRegistry.OFFICIAL_PACKS) { pack ->
+                items(NavCommunityRegistry.OFFICIAL_PACKS, key = { it.id }) { pack ->
                     LayoutPackCard(
                         pack = pack,
                         onApply = {
@@ -103,7 +103,7 @@ class NavigationGalleryScreen : Screen() {
                         PreferenceGroupHeader(title = "Personalized for You")
                     }
 
-                    items(strategies) { (strategy, details, config) ->
+                    items(strategies, key = { it.first.name }) { (strategy, details, config) ->
                         val (name, desc) = details
                         LayoutPackCard(
                             pack = NavLayoutPack(

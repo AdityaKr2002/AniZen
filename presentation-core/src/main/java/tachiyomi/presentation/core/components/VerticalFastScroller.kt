@@ -550,7 +550,7 @@ private fun rememberColumnWidthSums(
     columns: GridCells,
     horizontalArrangement: Arrangement.Horizontal,
     contentPadding: PaddingValues,
-) = remember<Density.(Constraints) -> List<Int>>(
+) = remember<Density.(Constraints) -> kotlinx.collections.immutable.ImmutableList<Int>>(
     columns,
     horizontalArrangement,
     contentPadding,
@@ -570,7 +570,7 @@ private fun rememberColumnWidthSums(
                 for (i in 1..<size) {
                     this[i] += this[i - 1]
                 }
-            }
+            }.let { kotlinx.collections.immutable.toImmutableList(it) }
         }
     }
 }

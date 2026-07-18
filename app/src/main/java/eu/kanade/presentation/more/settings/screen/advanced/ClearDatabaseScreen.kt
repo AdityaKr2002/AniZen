@@ -140,7 +140,7 @@ class ClearDatabaseScreen : Screen() {
                             LazyColumn(
                                 modifier = Modifier.weight(1f),
                             ) {
-                                items(s.items) { sourceWithCount ->
+                                items(s.items, key = { it.id }) { sourceWithCount ->
                                     ClearDatabaseItem(
                                         source = sourceWithCount.source,
                                         count = sourceWithCount.count,

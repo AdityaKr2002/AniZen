@@ -52,6 +52,7 @@ import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import tachiyomi.i18n.MR
+import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.pluralStringResource
@@ -91,8 +92,8 @@ private const val HostExpandSettleMs = 200L
 @Composable
 fun QualitySheet(
     isLoadingHosters: Boolean,
-    hosterState: List<HosterState>,
-    expandedState: List<Boolean>,
+    hosterState: ImmutableList<HosterState>,
+    expandedState: ImmutableList<Boolean>,
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
@@ -303,8 +304,8 @@ private fun ScrollToDefaultEffect(
 
 @Composable
 fun QualitySheetVideoContent(
-    videoList: List<Video>,
-    videoState: List<Video.State>,
+    videoList: ImmutableList<Video>,
+    videoState: ImmutableList<Video.State>,
     selectedVideoIndex: Int,
     onClickVideo: (Int, Int) -> Unit,
     defaultStreamSelector: String = "",
@@ -372,8 +373,8 @@ private fun findDefaultScrollTarget(
 
 @Composable
 fun QualitySheetHosterContent(
-    hosterState: List<HosterState>,
-    expandedState: List<Boolean>,
+    hosterState: ImmutableList<HosterState>,
+    expandedState: ImmutableList<Boolean>,
     selectedVideoIndex: Pair<Int, Int>,
     onClickHoster: (Int) -> Unit,
     onClickVideo: (Int, Int) -> Unit,
