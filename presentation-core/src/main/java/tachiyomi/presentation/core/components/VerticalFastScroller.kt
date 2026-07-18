@@ -1,5 +1,7 @@
 package tachiyomi.presentation.core.components
 
+import kotlinx.collections.immutable.toImmutableList
+
 import android.view.ViewConfiguration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -570,7 +572,7 @@ private fun rememberColumnWidthSums(
                 for (i in 1..<size) {
                     this[i] += this[i - 1]
                 }
-            }.let { kotlinx.collections.immutable.toImmutableList(it) }
+            }.toImmutableList()
         }
     }
 }

@@ -53,6 +53,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector
 import tachiyomi.i18n.MR
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.pluralStringResource
@@ -173,8 +174,8 @@ fun QualitySheet(
                     hosterState.first() is HosterState.Ready
                 ) {
                     QualitySheetVideoContent(
-                        videoList = (hosterState.first() as HosterState.Ready).videoList,
-                        videoState = (hosterState.first() as HosterState.Ready).videoState,
+                        videoList = (hosterState.first() as HosterState.Ready).videoList.toImmutableList(),
+                        videoState = (hosterState.first() as HosterState.Ready).videoState.toImmutableList(),
                         selectedVideoIndex = selectedVideoIndex.second,
                         onClickVideo = onClickVideo,
                         defaultStreamSelector = effectiveSelector,
