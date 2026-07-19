@@ -42,8 +42,6 @@ import eu.kanade.tachiyomi.ui.player.controls.components.sheets.SubtitlesSheet
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.VideoZoomSheet
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel
 import eu.kanade.tachiyomi.ui.player.settings.PlayerPreferences
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import tachiyomi.domain.custombuttons.model.CustomButton
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
@@ -56,13 +54,13 @@ fun PlayerSheets(
     viewModel: PlayerViewModel,
 
     // subtitles sheet
-    subtitles: ImmutableList<VideoTrack>,
-    selectedSubtitles: ImmutableList<Int>,
+    subtitles: List<VideoTrack>,
+    selectedSubtitles: List<Int>,
     onAddSubtitle: (Uri) -> Unit,
     onSelectSubtitle: (VideoTrack) -> Unit,
 
     // audio sheet
-    audioTracks: ImmutableList<VideoTrack>,
+    audioTracks: List<VideoTrack>,
     selectedAudio: Int,
     onAddAudio: (Uri) -> Unit,
     onSelectAudio: (VideoTrack) -> Unit,
@@ -81,7 +79,7 @@ fun PlayerSheets(
 
     // chapters sheet
     chapter: Segment?,
-    chapters: ImmutableList<Segment>,
+    chapters: List<Segment>,
     onSeekToChapter: (Int) -> Unit,
 
     // Decoders sheet
@@ -95,7 +93,7 @@ fun PlayerSheets(
     // More sheet
     sleepTimerTimeRemaining: Int,
     onStartSleepTimer: (Int) -> Unit,
-    buttons: ImmutableList<CustomButton>,
+    buttons: List<CustomButton>,
 
     // Screenshot sheet
     showSubtitles: Boolean,
@@ -121,7 +119,7 @@ fun PlayerSheets(
                 onAddSubtitle(it)
             }
             SubtitlesSheet(
-                tracks = subtitles.toImmutableList(),
+                tracks = subtitles,
                 selectedTracks = selectedSubtitles,
                 onSelect = onSelectSubtitle,
                 onAddSubtitle = { subtitlesPicker.launch(arrayOf("*/*")) },

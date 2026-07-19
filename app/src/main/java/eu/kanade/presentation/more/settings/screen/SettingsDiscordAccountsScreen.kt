@@ -134,7 +134,7 @@ private fun DiscordAccountsScreenContent() {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(16.dp),
                     ) {
-                        items(state.accounts) { account ->
+                        items(state.accounts, key = { it.id }) { account ->
                             DiscordAccountItem(
                                 account = account,
                                 onRemove = { screenModel.removeAccount(account.id) },

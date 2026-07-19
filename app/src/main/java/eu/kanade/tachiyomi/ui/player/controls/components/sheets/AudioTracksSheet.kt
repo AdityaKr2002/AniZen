@@ -40,14 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel.VideoTrack
-import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
 fun AudioTracksSheet(
-    tracks: ImmutableList<VideoTrack>,
+    tracks: List<VideoTrack>,
     selectedId: Int,
     onSelect: (VideoTrack) -> Unit,
     onAddAudioTrack: () -> Unit,

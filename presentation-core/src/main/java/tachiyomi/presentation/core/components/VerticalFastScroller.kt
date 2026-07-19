@@ -1,5 +1,7 @@
 package tachiyomi.presentation.core.components
 
+import kotlinx.collections.immutable.toImmutableList
+
 import android.view.ViewConfiguration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -550,7 +552,7 @@ private fun rememberColumnWidthSums(
     columns: GridCells,
     horizontalArrangement: Arrangement.Horizontal,
     contentPadding: PaddingValues,
-) = remember<Density.(Constraints) -> List<Int>>(
+) = remember<Density.(Constraints) -> kotlinx.collections.immutable.ImmutableList<Int>>(
     columns,
     horizontalArrangement,
     contentPadding,
@@ -570,7 +572,7 @@ private fun rememberColumnWidthSums(
                 for (i in 1..<size) {
                     this[i] += this[i - 1]
                 }
-            }
+            }.toImmutableList()
         }
     }
 }

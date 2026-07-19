@@ -168,7 +168,7 @@ class AiAssistantScreen : Screen() {
                     HorizontalDivider(Modifier.padding(vertical = 8.dp, horizontal = 28.dp))
                     
                     LazyColumn(modifier = Modifier.fillMaxHeight()) {
-                        items(sessions) { session ->
+                        items(sessions, key = { it.id }) { session ->
                             NavigationDrawerItem(
                                 icon = { Icon(Icons.Default.History, null) },
                                 label = { 

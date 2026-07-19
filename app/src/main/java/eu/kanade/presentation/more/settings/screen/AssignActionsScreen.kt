@@ -78,7 +78,7 @@ class AssignActionsScreen : Screen() {
                     )
                 }
 
-                items(visibleItems) { item ->
+                items(visibleItems, key = { it.id }) { item ->
                     GestureMappingSection(
                         item = item,
                         behavior = behaviorMap[item.id] ?: NavBehavior(),

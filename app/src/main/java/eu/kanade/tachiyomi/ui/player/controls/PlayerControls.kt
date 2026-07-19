@@ -147,7 +147,7 @@ fun PlayerControls(
     val isSeekingUI by viewModel.isSeekingUI.collectAsState()
     val seekPosition by viewModel.seekPosition.collectAsState()
     val chaptersList = remember(chapters) {
-        chapters.map { it.toSegment() }.toImmutableList()
+        chapters.map { it.toSegment() }
     }
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -630,7 +630,10 @@ fun PlayerControls(
                 ThumbnailPreview(
                     visible = isSeekingUI,
                     image = thumbnailImage,
-                    positionS = seekPosition.toLong(),
+                    positionSProvider = run {
+                        val currentSeekPosition = androidx.compose.runtime.rememberUpdatedState(seekPosition.toLong())
+                        remember { { currentSeekPosition.value } }
+                    },
                     durationS = duration.toLong(),
                     chapters = chaptersList,
                     modifier = Modifier.fillMaxWidth().constrainAs(thumbnail) {
@@ -674,11 +677,11 @@ fun PlayerControls(
         PlayerSheets(
             sheetShown = sheetShown,
             viewModel = viewModel,
-            subtitles = subtitles.toImmutableList(),
-            selectedSubtitles = selectedSubtitles.toList().toImmutableList(),
+            subtitles = subtitles,
+            selectedSubtitles = selectedSubtitles.toList(),
             onAddSubtitle = viewModel::addSubtitle,
             onSelectSubtitle = { viewModel.selectSub(it) },
-            audioTracks = audioTracks.toImmutableList(),
+            audioTracks = audioTracks,
             selectedAudio = selectedAudio,
             onAddAudio = viewModel::addAudio,
             onSelectAudio = viewModel::selectAudio,
@@ -708,7 +711,7 @@ fun PlayerControls(
             onSpeedChange = { MPVLib.setPropertyDouble("speed", it.toFixed(2).toDouble()) },
             sleepTimerTimeRemaining = sleepTimerTimeRemaining,
             onStartSleepTimer = viewModel::startTimer,
-            buttons = customButtons.getButtons().toImmutableList(),
+            buttons = customButtons.getButtons(),
 
             showSubtitles = showSubtitles,
             onToggleShowSubtitles = { subtitlePreferences.screenshotSubtitles().set(it) },
