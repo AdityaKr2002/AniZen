@@ -223,6 +223,7 @@ object SettingsMainScreen : Screen() {
     }
 
     private fun Navigator.navigate(screen: VoyagerScreen, twoPane: Boolean) {
+        if (lastItem.key == screen.key) return
         if (twoPane) replace(screen) else push(screen)
     }
 

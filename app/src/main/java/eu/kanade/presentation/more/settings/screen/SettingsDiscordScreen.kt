@@ -151,7 +151,11 @@ object SettingsDiscordScreen : SearchableSettings {
         return listOf(
             Preference.PreferenceItem.TextPreference(
                 title = stringResource(R.string.discord_accounts),
-                onClick = { navigator.push(DiscordAccountsScreen) },
+                onClick = {
+                    if (navigator.lastItem.key != DiscordAccountsScreen.key) {
+                        navigator.push(DiscordAccountsScreen)
+                    }
+                },
             ),
             Preference.PreferenceGroup(
                 title = stringResource(R.string.connections_discord),

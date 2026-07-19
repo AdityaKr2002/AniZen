@@ -95,7 +95,11 @@ object SettingsLibraryScreen : SearchableSettings {
                         count = userAnimeCategoriesCount,
                         userAnimeCategoriesCount,
                     ),
-                    onClick = { navigator.push(CategoryScreen) },
+                    onClick = {
+                        if (navigator.lastItem.key != CategoryScreen.key) {
+                            navigator.push(CategoryScreen)
+                        }
+                    },
                 ),
                 Preference.PreferenceItem.ListPreference(
                     pref = libraryPreferences.defaultCategory(),
