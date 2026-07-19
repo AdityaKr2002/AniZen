@@ -348,7 +348,9 @@ object SettingsDataScreen : SearchableSettings {
                     title = stringResource(MR.strings.label_storage),
                     icon = Icons.Outlined.Storage,
                     onClick = {
-                        navigator.push(StorageScreen)
+                        if (navigator.lastItem.key != StorageScreen.key) {
+                            navigator.push(StorageScreen)
+                        }
                     },
                 ),
 

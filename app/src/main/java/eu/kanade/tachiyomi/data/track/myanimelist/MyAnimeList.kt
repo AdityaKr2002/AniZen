@@ -7,6 +7,9 @@ import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
 import eu.kanade.tachiyomi.data.track.DeletableTracker
+import eu.kanade.tachiyomi.data.track.ImportableTracker
+import eu.kanade.tachiyomi.data.track.ImportableEntry
+import eu.kanade.tachiyomi.data.track.ImportStatusFilter
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.data.track.myanimelist.dto.MALOAuth
 import kotlinx.collections.immutable.ImmutableList
@@ -23,7 +26,8 @@ class MyAnimeList(id: Long) :
         "MyAnimeList",
     ),
     AnimeTracker,
-    DeletableTracker {
+    DeletableTracker,
+    ImportableTracker {
 
     companion object {
         const val READING = 1L
@@ -153,6 +157,10 @@ class MyAnimeList(id: Long) :
         return api.findListItem(track) ?: add(track)
     }
 
+    suspend fun getUserAnimeList(): List<eu.kanade.tachiyomi.data.track.myanimelist.dto.MALUserAnimeListItem> {
+        return api.getUserAnimeList()
+    }
+
     override suspend fun login(username: String, password: String) = login(password)
 
     suspend fun login(authCode: String) {
@@ -206,6 +214,44 @@ class MyAnimeList(id: Long) :
             json.decodeFromString<MALOAuth>(trackPreferences.trackToken(this).get())
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override fun getNoticeStringRes(): StringResource {
+        return MR.strings.myanimelist_import_notice
+    }
+
+    override suspend fun getImportableList(): List<ImportableEntry> {
+        return getUserAnimeList().map { item ->
+            val mappedStatusFilter = when (item.listStatus.status) {
+                "watching" -> ImportStatusFilter.WATCHING
+                "plan_to_watch" -> ImportStatusFilter.PLAN_TO_WATCH
+                "completed" -> ImportStatusFilter.COMPLETED
+                "on_hold" -> ImportStatusFilter.ON_HOLD
+                else -> null
+            }
+            ImportableEntry(
+                remoteId = item.node.id,
+                title = item.node.title,
+                coverUrl = item.node.covers?.large ?: item.node.covers?.medium ?: "",
+                totalEpisodes = item.node.numEpisodes,
+                episodesSeen = item.listStatus.numEpisodesWatched.toInt(),
+                score = item.listStatus.score.toDouble(),
+                status = item.toMALUserAnime().toTrack().status,
+                statusFilter = mappedStatusFilter,
+                startDate = item.listStatus.startDate?.let { parseDate(it) } ?: 0L,
+                finishDate = item.listStatus.finishDate?.let { parseDate(it) } ?: 0L,
+                trackingUrl = "https://myanimelist.net/anime/${item.node.id}"
+            )
+        }
+    }
+
+    private fun parseDate(isoDate: String): Long {
+        if (isoDate.isBlank()) return 0L
+        return try {
+            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(isoDate)?.time ?: 0L
+        } catch (e: Exception) {
+            0L
         }
     }
 }

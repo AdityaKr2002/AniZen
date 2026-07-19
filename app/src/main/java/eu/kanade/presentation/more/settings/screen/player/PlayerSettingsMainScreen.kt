@@ -164,6 +164,7 @@ object PlayerSettingsMainScreen : Screen() {
     }
 
     private fun Navigator.navigate(screen: VoyagerScreen, twoPane: Boolean) {
+        if (lastItem.key == screen.key) return
         if (twoPane) replaceAll(screen) else push(screen)
     }
 

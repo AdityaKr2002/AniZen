@@ -160,7 +160,9 @@ class SettingsSearchScreen(
                 contentPadding = contentPadding,
             ) { result ->
                 SearchableSettings.highlightKey = result.highlightKey
-                navigator.replace(result.route)
+                if (navigator.lastItem.key != result.route.key) {
+                    navigator.replace(result.route)
+                }
             }
         }
     }

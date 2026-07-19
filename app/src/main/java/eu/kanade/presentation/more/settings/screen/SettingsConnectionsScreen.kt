@@ -90,7 +90,11 @@ object SettingsConnectionsScreen : SearchableSettings {
                         login = {
                             context.openDiscordLoginActivity()
                         },
-                        openSettings = { navigator.push(SettingsDiscordScreen) },
+                        openSettings = {
+                            if (navigator.lastItem.key != SettingsDiscordScreen.key) {
+                                navigator.push(SettingsDiscordScreen)
+                            }
+                        },
                     ),
                     Preference.PreferenceItem.InfoPreference(
                         stringResource(R.string.connections_discord_info),

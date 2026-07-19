@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.anilistimport
+package eu.kanade.tachiyomi.ui.trackerimport
 
 import androidx.compose.runtime.Immutable
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -6,7 +6,9 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.track.model.toDomainTrack
 import eu.kanade.tachiyomi.data.database.models.Track as DbTrack
 import eu.kanade.tachiyomi.data.track.TrackerManager
-import eu.kanade.tachiyomi.data.track.anilist.AnilistApi
+import eu.kanade.tachiyomi.data.track.ImportableTracker
+import eu.kanade.tachiyomi.data.track.ImportableEntry
+import eu.kanade.tachiyomi.data.track.ImportStatusFilter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -18,27 +20,19 @@ import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.interactor.InsertTrack
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import dev.icerock.moko.resources.StringResource
-import tachiyomi.i18n.MR
 import java.util.Locale
 
-enum class ImportStatusFilter(val titleRes: StringResource, val apiStatuses: Set<String>) {
-    WATCHING(MR.strings.watching, setOf("CURRENT", "REPEATING")),
-    PLAN_TO_WATCH(MR.strings.plan_to_watch, setOf("PLANNING")),
-    COMPLETED(MR.strings.completed, setOf("COMPLETED")),
-    ON_HOLD(MR.strings.on_hold, setOf("PAUSED")),
-}
-
 @Immutable
-data class AnilistImportScreenState(
+data class TrackerImportScreenState(
+    val trackerName: String = "",
     val isLoading: Boolean = true,
-    val rawItems: List<AnilistImportItem> = emptyList(),
+    val rawItems: List<TrackerImportItem> = emptyList(),
     val excludeLibraryMatches: Boolean = true,
     val selectedStatuses: Set<ImportStatusFilter> = ImportStatusFilter.entries.toSet(),
 ) {
-    val items: List<AnilistImportItem>
+    val items: List<TrackerImportItem>
         get() = rawItems.filter { item ->
-            val matchingFilter = selectedStatuses.any { filter -> item.item.status in filter.apiStatuses }
+            val matchingFilter = item.item.statusFilter == null || selectedStatuses.contains(item.item.statusFilter)
             if (!matchingFilter) return@filter false
             if (excludeLibraryMatches && item.isLibraryMatch) return@filter false
             true
@@ -49,21 +43,25 @@ data class AnilistImportScreenState(
 }
 
 @Immutable
-data class AnilistImportItem(
-    val item: eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem,
+data class TrackerImportItem(
+    val item: ImportableEntry,
     val selected: Boolean = false,
     val isLibraryMatch: Boolean = false,
 )
 
-class AnilistImportScreenModel(
+class TrackerImportScreenModel(
+    val trackerId: Long,
     private val getLibraryAnime: GetLibraryAnime = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val networkToLocalAnime: NetworkToLocalAnime = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
     private val trackerManager: TrackerManager = Injekt.get(),
-) : StateScreenModel<AnilistImportScreenState>(AnilistImportScreenState()) {
+) : StateScreenModel<TrackerImportScreenState>(TrackerImportScreenState()) {
+
+    val tracker = trackerManager.get(trackerId) as? ImportableTracker
 
     init {
+        mutableState.update { it.copy(trackerName = tracker?.name ?: "") }
         loadItems()
         observeLibraryChanges()
     }
@@ -72,28 +70,27 @@ class AnilistImportScreenModel(
         screenModelScope.launchIO {
             try {
                 mutableState.update { it.copy(isLoading = true) }
-                val anilist = trackerManager.aniList
-                if (!anilist.isLoggedIn) {
+                val currentTracker = tracker
+                if (currentTracker == null || !currentTracker.isLoggedIn) {
                     mutableState.update { it.copy(isLoading = false, rawItems = emptyList()) }
                     return@launchIO
                 }
-                val currentUserId = try { anilist.getUsername() } catch (e: Exception) { "" }
+                val currentUserId = try { currentTracker.getUsername() } catch (e: Exception) { "" }
                 val now = System.currentTimeMillis()
-                val remoteItems = if (cachedRemoteItems != null &&
-                    cachedUserId == currentUserId &&
-                    now - lastCacheTime < CACHE_DURATION
+                val cacheKey = "${trackerId}_${currentUserId}"
+                val remoteItems = if (cachedRemoteItems[cacheKey] != null &&
+                    now - lastCacheTime.getOrDefault(cacheKey, 0L) < CACHE_DURATION
                 ) {
-                    cachedRemoteItems!!
+                    cachedRemoteItems[cacheKey]!!
                 } else {
-                    val fetched = anilist.getUserAnimeList()
-                    cachedRemoteItems = fetched
-                    cachedUserId = currentUserId
-                    lastCacheTime = now
+                    val fetched = currentTracker.getImportableList()
+                    cachedRemoteItems[cacheKey] = fetched
+                    lastCacheTime[cacheKey] = now
                     fetched
                 }
                 val localTracks = getTracks.await()
                 val alreadyTrackedRemoteIds = localTracks
-                    .filter { it.trackerId == TrackerManager.ANILIST }
+                    .filter { it.trackerId == trackerId }
                     .map { it.remoteId }
                     .toSet()
 
@@ -102,19 +99,13 @@ class AnilistImportScreenModel(
                     .map { it.anime.title.normalizeTitle() }
                     .toSet()
 
-
                 val allItems = remoteItems.map { item ->
-                    val isAlreadyTracked = item.media.id in alreadyTrackedRemoteIds
-                    val title = item.media.title
-                    val titlesToCompare = listOfNotNull(
-                        title.userPreferred,
-                        title.romaji,
-                        title.english,
-                        title.native
-                    ).map { it.normalizeTitle() }
+                    val isAlreadyTracked = item.remoteId in alreadyTrackedRemoteIds
+                    val title = item.title
+                    val titlesToCompare = listOf(title).map { it.normalizeTitle() }
                     val hasTitleMatch = titlesToCompare.any { it in libraryAnimeNormalizedTitles }
                     val isLibraryMatch = isAlreadyTracked || hasTitleMatch
-                    AnilistImportItem(
+                    TrackerImportItem(
                         item = item,
                         isLibraryMatch = isLibraryMatch
                     )
@@ -146,10 +137,10 @@ class AnilistImportScreenModel(
         }
     }
 
-    fun toggleSelection(item: AnilistImportItem, selected: Boolean) {
+    fun toggleSelection(item: TrackerImportItem, selected: Boolean) {
         mutableState.update { state ->
             val newItems = state.rawItems.map {
-                if (it.item.media.id == item.item.media.id) {
+                if (it.item.remoteId == item.item.remoteId) {
                     it.copy(selected = selected)
                 } else {
                     it
@@ -161,9 +152,9 @@ class AnilistImportScreenModel(
 
     fun toggleAllSelection(selected: Boolean) {
         mutableState.update { state ->
-            val visibleIds = state.items.map { it.item.media.id }.toSet()
+            val visibleIds = state.items.map { it.item.remoteId }.toSet()
             val newItems = state.rawItems.map {
-                if (it.item.media.id in visibleIds) {
+                if (it.item.remoteId in visibleIds) {
                     it.copy(selected = selected)
                 } else {
                     it
@@ -175,9 +166,9 @@ class AnilistImportScreenModel(
 
     fun invertSelection() {
         mutableState.update { state ->
-            val visibleIds = state.items.map { it.item.media.id }.toSet()
+            val visibleIds = state.items.map { it.item.remoteId }.toSet()
             val newItems = state.rawItems.map {
-                if (it.item.media.id in visibleIds) {
+                if (it.item.remoteId in visibleIds) {
                     it.copy(selected = !it.selected)
                 } else {
                     it
@@ -196,29 +187,30 @@ class AnilistImportScreenModel(
                 val createdAnimeIds = mutableListOf<Long>()
                 for (selected in selectedItems) {
                     val item = selected.item
+                    val pathPrefix = if (trackerId == 1L) "mal" else "anilist"
                     val anime = Anime.create().copy(
-                        url = "/anime/anilist-import/${item.media.id}",
-                        ogTitle = item.media.title.userPreferred,
-                        ogThumbnailUrl = item.media.coverImage.large,
-                        source = TrackerManager.ANILIST,
+                        url = "/anime/${pathPrefix}-import/${item.remoteId}",
+                        ogTitle = item.title,
+                        ogThumbnailUrl = item.coverUrl,
+                        source = trackerId,
                         favorite = false,
                         dateAdded = System.currentTimeMillis()
                     )
                     val savedAnime = networkToLocalAnime.await(anime)
                     createdAnimeIds.add(savedAnime.id)
 
-                    val dbTrack = DbTrack.create(TrackerManager.ANILIST).apply {
+                    val dbTrack = DbTrack.create(trackerId).apply {
                         anime_id = savedAnime.id
-                        remote_id = item.media.id
-                        library_id = item.id
-                        title = item.media.title.userPreferred
-                        last_episode_seen = item.progress.toDouble()
-                        total_episodes = item.media.episodes ?: 0
-                        status = item.toALUserAnime().toTrack().status
-                        score = item.scoreRaw.toDouble()
-                        tracking_url = AnilistApi.animeUrl(item.media.id)
-                        started_watching_date = item.startedAt.toEpochMilli()
-                        finished_watching_date = item.completedAt.toEpochMilli()
+                        remote_id = item.remoteId
+                        library_id = item.remoteId
+                        title = item.title
+                        last_episode_seen = item.episodesSeen.toDouble()
+                        total_episodes = item.totalEpisodes
+                        status = item.status
+                        score = item.score
+                        tracking_url = item.trackingUrl
+                        started_watching_date = item.startDate
+                        finished_watching_date = item.finishDate
                     }
                     val domainTrack = dbTrack.toDomainTrack(idRequired = false)!!
                     insertTrack.await(domainTrack)
@@ -239,20 +231,15 @@ class AnilistImportScreenModel(
 
                 val localTracks = getTracks.await()
                 val alreadyTrackedRemoteIds = localTracks
-                    .filter { it.trackerId == TrackerManager.ANILIST }
+                    .filter { it.trackerId == trackerId }
                     .map { it.remoteId }
                     .toSet()
 
                 mutableState.update { state ->
                     val updatedItems = state.rawItems.map { item ->
-                        val isAlreadyTracked = item.item.media.id in alreadyTrackedRemoteIds
-                        val title = item.item.media.title
-                        val titlesToCompare = listOfNotNull(
-                            title.userPreferred,
-                            title.romaji,
-                            title.english,
-                            title.native
-                        ).map { it.normalizeTitle() }
+                        val isAlreadyTracked = item.item.remoteId in alreadyTrackedRemoteIds
+                        val title = item.item.title
+                        val titlesToCompare = listOf(title).map { it.normalizeTitle() }
                         val hasTitleMatch = titlesToCompare.any { it in libraryAnimeNormalizedTitles }
                         val isLibraryMatch = isAlreadyTracked || hasTitleMatch
                         item.copy(
@@ -267,9 +254,8 @@ class AnilistImportScreenModel(
     }
 
     companion object {
-        private var cachedRemoteItems: List<eu.kanade.tachiyomi.data.track.anilist.dto.ALUserListItem>? = null
-        private var cachedUserId: String? = null
-        private var lastCacheTime: Long = 0
+        private val cachedRemoteItems = java.util.concurrent.ConcurrentHashMap<String, List<ImportableEntry>>()
+        private val lastCacheTime = java.util.concurrent.ConcurrentHashMap<String, Long>()
         private const val CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
     }
 }

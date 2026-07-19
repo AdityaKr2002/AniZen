@@ -650,6 +650,25 @@ class NotificationReceiver : BroadcastReceiver() {
         }
 
         /**
+         * Returns [PendingIntent] that opens the library update errors screen
+         *
+         * @param context context of application
+         * @return [PendingIntent]
+         */
+        internal fun openLibraryUpdateErrorsPendingActivity(context: Context): PendingIntent {
+            val newIntent = Intent(context, MainActivity::class.java).setAction(Constants.SHORTCUT_LIBRARY_UPDATE_ERRORS)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .putExtra("notificationId", Notifications.ID_LIBRARY_ERROR)
+            return PendingIntent.getActivity(
+                context,
+                Notifications.ID_LIBRARY_ERROR,
+                newIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
+
+
+        /**
          * Returns [PendingIntent] that cancels a backup restore job.
          *
          * @param context context of application

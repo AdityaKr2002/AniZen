@@ -43,7 +43,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
     private val sessionId: String
         get() = trackPreferences.trackToken(this).get()
 
-    private val api: TmdbApi
+    val api: TmdbApi
         get() = TmdbApi(client, apiKey, sessionId)
 
     override fun getScoreList(): ImmutableList<String> = SCORE_LIST
@@ -269,6 +269,8 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
             json.optJSONArray("cast")?.let { arr ->
                 for (i in 0 until arr.length()) {
                     val p = arr.getJSONObject(i)
+                    val personId = p.optLong("id")
+                    val personUrl = if (personId != 0L) "https://www.themoviedb.org/person/$personId" else null
                     list.add(
                         Credit(
                             name = p.optString("name"),
@@ -276,6 +278,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
                             character = p.optString("character").ifBlank { null },
                             image_url = p.optString("profile_path", null)
                                 ?.let { TmdbApi.IMAGE_BASE + it },
+                            url = personUrl,
                         ),
                     )
                 }
@@ -283,6 +286,8 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
             json.optJSONArray("crew")?.let { arr ->
                 for (i in 0 until arr.length()) {
                     val p = arr.getJSONObject(i)
+                    val personId = p.optLong("id")
+                    val personUrl = if (personId != 0L) "https://www.themoviedb.org/person/$personId" else null
                     list.add(
                         Credit(
                             name = p.optString("name"),
@@ -290,6 +295,7 @@ class Tmdb(id: Long) : BaseTracker(id, "TMDB"), AnimeTracker {
                             character = null,
                             image_url = p.optString("profile_path", null)
                                 ?.let { TmdbApi.IMAGE_BASE + it },
+                            url = personUrl,
                         ),
                     )
                 }

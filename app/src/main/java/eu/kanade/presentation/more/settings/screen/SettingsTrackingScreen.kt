@@ -101,6 +101,7 @@ object SettingsTrackingScreen : SearchableSettings {
         val sourceManager = remember { Injekt.get<SourceManager>() }
         val autoTrackStatePref = trackPreferences.autoUpdateTrackOnMarkRead()
         val isAnilistLoggedIn by trackerManager.aniList.isLoggedInFlow.collectAsState(trackerManager.aniList.isLoggedIn)
+        val isMyanimelistLoggedIn by trackerManager.myAnimeList.isLoggedInFlow.collectAsState(trackerManager.myAnimeList.isLoggedIn)
 
         var dialog by remember { mutableStateOf<Any?>(null) }
         dialog?.run {
@@ -182,6 +183,41 @@ object SettingsTrackingScreen : SearchableSettings {
                             },
                             logout = { dialog = LogoutDialog(trackerManager.myAnimeList) },
                         ),
+                    ) + (if (isMyanimelistLoggedIn) {
+                        listOf(
+                            Preference.PreferenceItem.CustomPreference(
+                                title = stringResource(MR.strings.pref_import_from_myanimelist),
+                            ) {
+                                BasePreferenceWidget(
+                                    subcomponent = {
+                                        OutlinedButton(
+                                            onClick = {
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(1L))
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = PrefsHorizontalPadding),
+                                            shape = CircleShape,
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(MR.strings.pref_import_from_myanimelist),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        emptyList()
+                    }) + listOf(
                         Preference.PreferenceItem.TrackerPreference(
                             title = trackerManager.aniList.name,
                             tracker = trackerManager.aniList,
@@ -202,7 +238,7 @@ object SettingsTrackingScreen : SearchableSettings {
                                     subcomponent = {
                                         OutlinedButton(
                                             onClick = {
-                                                navigator?.push(eu.kanade.tachiyomi.ui.anilistimport.AnilistImportScreen())
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(trackerManager.aniList.id))
                                             },
                                             modifier = Modifier
                                                 .fillMaxWidth()

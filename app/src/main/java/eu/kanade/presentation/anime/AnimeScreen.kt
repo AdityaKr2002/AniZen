@@ -94,6 +94,8 @@ import eu.kanade.presentation.anime.components.AnimeSeasonListItem
 import eu.kanade.presentation.anime.components.AnimeToolbar
 import eu.kanade.presentation.anime.components.EpisodeDownloadAction
 import eu.kanade.presentation.anime.components.EpisodeHeader
+import eu.kanade.presentation.anime.components.CreditDetailsDialog
+import eu.kanade.tachiyomi.animesource.model.Credit
 import eu.kanade.presentation.anime.components.ExpandableAnimeDescription
 import eu.kanade.presentation.anime.components.MissingEpisodeCountListItem
 import eu.kanade.presentation.anime.components.NextEpisodeAiringListItem
@@ -201,6 +203,7 @@ fun AnimeScreen(
 ) {
     val sourcePreferences: SourcePreferences by injectLazy()
     val context = LocalContext.current
+    var activeCreditIndex by remember { mutableStateOf<Int?>(null) }
     val onCopyTagToClipboard: (tag: String) -> Unit = {
         if (it.isNotEmpty()) {
             context.copyToClipboard(it, it)
@@ -272,6 +275,7 @@ fun AnimeScreen(
             onEditIntervalClicked = onEditIntervalClicked,
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             combinedItems = combinedItems,
+            onCastClick = { credit -> activeCreditIndex = state.anime.cast?.indexOf(credit)?.takeIf { it >= 0 } },
         )
     } else {
         AnimeScreenLargeImpl(
@@ -327,6 +331,17 @@ fun AnimeScreen(
             onToggleDiscoveryExpansion = onToggleDiscoveryExpansion,
             onSettingsClicked = onSettingsClicked,
             combinedItems = combinedItems,
+            onCastClick = { credit -> activeCreditIndex = state.anime.cast?.indexOf(credit)?.takeIf { it >= 0 } },
+        )
+    }
+
+    activeCreditIndex?.let { index ->
+        val castList = state.anime.cast ?: emptyList()
+        CreditDetailsDialog(
+            cast = castList,
+            initialIndex = index,
+            onDismissRequest = { activeCreditIndex = null },
+            onSearch = { onSearch(it, true) },
         )
     }
 }
@@ -386,6 +401,7 @@ private fun AnimeScreenSmallImpl(
     onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
+    onCastClick: (Credit) -> Unit,
 ) {
     val navigator = LocalNavigator.currentOrThrow
     val episodeListState = rememberLazyListState()
@@ -645,7 +661,10 @@ private fun AnimeScreenSmallImpl(
                                 val castInner = state.anime.cast
                                 if (!castInner.isNullOrEmpty()) {
                                     item(key = "cast-small") {
-                                        eu.kanade.presentation.anime.components.CastRow(cast = castInner)
+                                        eu.kanade.presentation.anime.components.CastRow(
+                                            cast = castInner,
+                                            onClick = onCastClick,
+                                        )
                                     }
                                 }
 
@@ -835,6 +854,7 @@ private fun AnimeScreenSmallImpl(
                 }
             }
         }
+        
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -892,6 +912,7 @@ fun AnimeScreenLargeImpl(
     onSeasonClicked: (tachiyomi.domain.anime.model.SeasonAnime) -> Unit,
     // <-- AY
     combinedItems: List<tachiyomi.domain.anime.model.Anime>,
+    onCastClick: (Credit) -> Unit,
 ) {
     val navigator = LocalNavigator.currentOrThrow
     val layoutDirection = LocalLayoutDirection.current
@@ -1132,7 +1153,10 @@ fun AnimeScreenLargeImpl(
                                     // Cast Row — placed below tags
                                     val castLarge = state.anime.cast
                                     if (!castLarge.isNullOrEmpty()) {
-                                        eu.kanade.presentation.anime.components.CastRow(cast = castLarge)
+                                        eu.kanade.presentation.anime.components.CastRow(
+                                            cast = castLarge,
+                                            onClick = onCastClick,
+                                        )
                                     }
 
                                     if (showSuggestions && !suggestionsInOverflow) {

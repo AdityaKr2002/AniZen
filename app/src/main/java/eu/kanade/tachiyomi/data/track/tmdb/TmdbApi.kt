@@ -243,6 +243,18 @@ class TmdbApi(private val client: OkHttpClient, private val apiKey: String, priv
             return JSONObject(body)
         }
     }
+
+    suspend fun getPersonBiography(id: Long, language: String? = null): String? {
+        return try {
+            val params = mutableMapOf<String, String>()
+            if (!language.isNullOrBlank()) params["language"] = language
+            val url = buildUrl("3/person/$id", params)
+            val json = executeUrl(url)
+            json.optString("biography").ifBlank { null }
+        } catch (_: Exception) {
+            null
+        }
+    }
 }
 
 data class TmdbSearchResult(
