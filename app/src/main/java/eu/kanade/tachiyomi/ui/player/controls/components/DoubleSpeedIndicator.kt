@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
+private val speedStops = listOf(0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
+
 @Composable
 fun DoubleSpeedIndicator(
     speed: Float,
@@ -61,7 +63,6 @@ fun DoubleSpeedIndicator(
     ) {
         if (showFullBar) {
             val trackWidth = 240.dp
-            val speedStops = listOf(0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -123,7 +124,9 @@ fun DoubleSpeedIndicator(
                     val thumbOffset = (trackWidth * progress - 5.dp).coerceAtLeast(0.dp)
                     Box(
                         modifier = Modifier
-                            .offset(x = thumbOffset)
+                            .offset {
+                                androidx.compose.ui.unit.IntOffset(thumbOffset.roundToPx(), 0)
+                            }
                             .size(10.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF4A90E2)),

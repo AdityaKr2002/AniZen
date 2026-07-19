@@ -465,6 +465,7 @@ class NavigationSettingsScreen(
                 
                 items(
                     items = NavActionExecutor.getHistory(),
+                    key = { it.timestamp }
                 ) { trace: ActionTrace ->
                     Text(
                         text = "[${trace.timestamp % 10000}] ${trace.tabId ?: "Global"} -> ${trace.actionName} (${trace.result})",

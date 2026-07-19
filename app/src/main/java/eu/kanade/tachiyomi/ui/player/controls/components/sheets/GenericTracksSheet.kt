@@ -42,14 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.player.components.PlayerSheet
 import eu.kanade.tachiyomi.ui.player.PlayerViewModel.VideoTrack
-import kotlinx.collections.immutable.ImmutableList
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
 fun <T> GenericTracksSheet(
-    tracks: ImmutableList<T>,
+    tracks: List<T>,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     dismissEvent: Boolean = false,

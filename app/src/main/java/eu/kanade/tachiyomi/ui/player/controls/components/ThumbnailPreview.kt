@@ -26,6 +26,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,20 +36,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.vivvvek.seeker.Segment
-import kotlinx.collections.immutable.ImmutableList
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun ThumbnailPreview(
     visible: Boolean,
     image: ImageBitmap?,
-    positionS: Long,
+    positionSProvider: () -> Long,
     durationS: Long,
-    chapters: ImmutableList<Segment>,
+    chapters: List<Segment>,
     modifier: Modifier = Modifier,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -69,7 +70,13 @@ fun ThumbnailPreview(
             }
         }
 
-    val seekingChapter = chapters.lastOrNull { it.start <= positionS }
+    // Reactively compute the seeking chapter only when it changes, without recomposing
+    // the entire ThumbnailPreview on every position tick.
+    val seekingChapter by remember(chapters) {
+        androidx.compose.runtime.derivedStateOf { 
+            chapters.lastOrNull { it.start <= positionSProvider() } 
+        }
+    }
 
     val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
     val startInset = safeDrawingPadding.calculateStartPadding(layoutDirection)
@@ -89,31 +96,32 @@ fun ThumbnailPreview(
                 // Subtract insets from seekbarWidth to precisely align the preview card
                 val seekbarWidth = screenWidth - startInset - endInset - timerWidth - timerWidth
 
-                val progress = if (durationS > 0f) {
-                    (positionS.toFloat() / durationS.toFloat()).coerceIn(0f, 1f)
-                } else {
-                    0f
-                }
-
-                // Handle LTR & RTL Layout Directions correctly accounting for cutout/safe-area insets
-                val targetX = if (layoutDirection == LayoutDirection.Ltr) {
-                    startInset + timerWidth + (seekbarWidth * progress)
-                } else {
-                    (screenWidth - startInset - timerWidth) - (seekbarWidth * progress)
-                }
-
-                val minX = startInset + 8.dp
-                val maxX = screenWidth - previewWidth - endInset - 8.dp
-
-                val constrainedX = when {
-                    targetX - previewWidth / 2 < minX -> minX
-                    targetX + previewWidth / 2 > screenWidth - endInset - 8.dp -> maxX
-                    else -> targetX - previewWidth / 2
-                }
-
                 Card(
                     modifier = Modifier
-                        .offset(x = constrainedX)
+                        .offset { 
+                            val positionS = positionSProvider()
+                            val progress = if (durationS > 0L) {
+                                (positionS.toFloat() / durationS.toFloat()).coerceIn(0f, 1f)
+                            } else {
+                                0f
+                            }
+
+                            val targetX = if (layoutDirection == LayoutDirection.Ltr) {
+                                startInset + timerWidth + (seekbarWidth * progress)
+                            } else {
+                                (screenWidth - startInset - timerWidth) - (seekbarWidth * progress)
+                            }
+
+                            val minX = startInset + 8.dp
+                            val maxX = screenWidth - previewWidth - endInset - 8.dp
+
+                            val constrainedX = when {
+                                targetX - previewWidth / 2 < minX -> minX
+                                targetX + previewWidth / 2 > screenWidth - endInset - 8.dp -> maxX
+                                else -> targetX - previewWidth / 2
+                            }
+                            androidx.compose.ui.unit.IntOffset(constrainedX.roundToPx(), 0)
+                        }
                         .size(previewWidth, previewHeight),
                     colors = CardDefaults.cardColors(containerColor = Color.Black),
                     shape = RoundedCornerShape(8.dp),
@@ -127,7 +135,7 @@ fun ThumbnailPreview(
                             contentScale = ContentScale.Crop,
                         )
 
-                        AnimatedContent(
+                        AnimatedContent<Segment?>(
                             targetState = seekingChapter,
                             transitionSpec = {
                                 fadeIn(animationSpec = tween(200)) togetherWith

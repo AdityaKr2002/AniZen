@@ -81,7 +81,7 @@ fun WhatsNewDialog(onDismissRequest: () -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(changelog.orEmpty()) { changelog ->
+                        items(changelog.orEmpty(), key = { it.version }) { changelog ->
                             Column(Modifier.fillMaxWidth()) {
                                 Text(
                                     text = stringResource(SYMR.strings.changelog_version, changelog.version),

@@ -185,7 +185,7 @@ fun PlayerSheet(
             },
         )
 
-        LaunchedEffect(true) {
+        LaunchedEffect(Unit) {
             backgroundAlpha = 0.5f
         }
 
