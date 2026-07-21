@@ -1675,6 +1675,12 @@
     <string name="pref_import_from_myanimelist">Import from MyAnimeList</string>
     <string name="pref_import_from_myanimelist_summary">Import tracked anime from your MyAnimeList account</string>
     <string name="myanimelist_import_notice">This lists anime tracked on your MyAnimeList account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
+    <string name="pref_import_from_simkl">Import from Simkl</string>
+    <string name="pref_import_from_simkl_summary">Import tracked anime from your Simkl account</string>
+    <string name="simkl_import_notice">This lists anime tracked on your Simkl account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
+    <string name="pref_import_from_trakt">Import from Trakt</string>
+    <string name="pref_import_from_trakt_summary">Import tracked anime from your Trakt account</string>
+    <string name="trakt_import_notice">This lists anime tracked on your Trakt account that are not in your library. Select the ones you want to import, then migrate them to video sources.</string>
 </resources>
 
 

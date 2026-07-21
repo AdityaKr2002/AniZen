@@ -99,11 +99,8 @@ class TrackerImportScreen(val trackerId: Long) : Screen() {
             )
         }
 
-        val title = if (trackerId == 1L) {
-            stringResource(MR.strings.pref_import_from_myanimelist)
-        } else {
-            stringResource(MR.strings.pref_import_from_anilist)
-        }
+        val title = screenModel.tracker?.let { "Import from ${it.name}" }
+            ?: stringResource(MR.strings.pref_import_from_anilist)
 
         val noticeRes = screenModel.tracker?.getNoticeStringRes() ?: MR.strings.anilist_import_notice
 

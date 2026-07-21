@@ -102,6 +102,8 @@ object SettingsTrackingScreen : SearchableSettings {
         val autoTrackStatePref = trackPreferences.autoUpdateTrackOnMarkRead()
         val isAnilistLoggedIn by trackerManager.aniList.isLoggedInFlow.collectAsState(trackerManager.aniList.isLoggedIn)
         val isMyanimelistLoggedIn by trackerManager.myAnimeList.isLoggedInFlow.collectAsState(trackerManager.myAnimeList.isLoggedIn)
+        val isSimklLoggedIn by trackerManager.simkl.isLoggedInFlow.collectAsState(trackerManager.simkl.isLoggedIn)
+        val isTraktLoggedIn by trackerManager.trakt.isLoggedInFlow.collectAsState(trackerManager.trakt.isLoggedIn)
 
         var dialog by remember { mutableStateOf<Any?>(null) }
         dialog?.run {
@@ -292,6 +294,41 @@ object SettingsTrackingScreen : SearchableSettings {
                             },
                             logout = { dialog = LogoutDialog(trackerManager.simkl) },
                         ),
+                    ) + (if (isSimklLoggedIn) {
+                        listOf(
+                            Preference.PreferenceItem.CustomPreference(
+                                title = stringResource(MR.strings.pref_import_from_simkl),
+                            ) {
+                                BasePreferenceWidget(
+                                    subcomponent = {
+                                        OutlinedButton(
+                                            onClick = {
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(trackerManager.simkl.id))
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = PrefsHorizontalPadding),
+                                            shape = CircleShape,
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(MR.strings.pref_import_from_simkl),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        emptyList()
+                    }) + listOf(
                         Preference.PreferenceItem.TrackerPreference(
                             title = trackerManager.trakt.name,
                             tracker = trackerManager.trakt,
@@ -303,6 +340,41 @@ object SettingsTrackingScreen : SearchableSettings {
                             },
                             logout = { dialog = LogoutDialog(trackerManager.trakt) },
                         ),
+                    ) + (if (isTraktLoggedIn) {
+                        listOf(
+                            Preference.PreferenceItem.CustomPreference(
+                                title = stringResource(MR.strings.pref_import_from_trakt),
+                            ) {
+                                BasePreferenceWidget(
+                                    subcomponent = {
+                                        OutlinedButton(
+                                            onClick = {
+                                                navigator?.push(eu.kanade.tachiyomi.ui.trackerimport.TrackerImportScreen(trackerManager.trakt.id))
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = PrefsHorizontalPadding),
+                                            shape = CircleShape,
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(MR.strings.pref_import_from_trakt),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        emptyList()
+                    })
                         Preference.PreferenceItem.TrackerPreference(
                             title = trackerManager.tmdb.name,
                             tracker = trackerManager.tmdb,

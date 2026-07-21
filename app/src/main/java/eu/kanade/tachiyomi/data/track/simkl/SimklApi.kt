@@ -156,6 +156,16 @@ class SimklApi(private val client: OkHttpClient, interceptor: SimklInterceptor) 
         }
     }
 
+    suspend fun getAllItems(): SimklSyncResult {
+        return withIOContext {
+            with(json) {
+                authClient.newCall(GET("$API_URL/sync/all-items"))
+                    .awaitSuccess()
+                    .parseAs<SimklSyncResult>()
+            }
+        }
+    }
+
     /**
      * Checks if the given [track] exists in the user's list and
      * returns all info about it or null if it isn't found.
