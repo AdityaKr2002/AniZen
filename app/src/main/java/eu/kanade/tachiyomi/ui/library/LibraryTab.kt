@@ -244,6 +244,7 @@ data object LibraryTab : Tab {
                         onDeleteClicked = screenModel::openDeleteAnimeDialog,
                         onMigrateClicked = {
                             val animeIds = state.selection.map { it.anime.id }
+                            screenModel.clearSelection()
                             navigator.push(MigrationConfigScreen(animeIds))
                         },
                         onMergeClicked = {

@@ -54,6 +54,7 @@ data class MigrateAnimeScreen(
             onSelectAll = screenModel::toggleAllSelection,
             onInvertSelection = screenModel::invertSelection,
             onMultiMigrateClicked = {
+                screenModel.clearSelection()
                 navigator.push(MigrationConfigScreen(it.map { it.id }))
             },
         )
