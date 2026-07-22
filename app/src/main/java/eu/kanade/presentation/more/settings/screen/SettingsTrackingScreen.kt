@@ -374,7 +374,7 @@ object SettingsTrackingScreen : SearchableSettings {
                         )
                     } else {
                         emptyList()
-                    })
+                    }) + listOf(
                         Preference.PreferenceItem.TrackerPreference(
                             title = trackerManager.tmdb.name,
                             tracker = trackerManager.tmdb,

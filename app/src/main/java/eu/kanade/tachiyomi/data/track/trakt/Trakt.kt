@@ -43,7 +43,7 @@ import eu.kanade.tachiyomi.util.system.toast
  */
 class Trakt(
     id: Long,
-) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableTracker {
+) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableTracker, ImportableTracker {
 
     companion object {
         const val WATCHING = 1L
