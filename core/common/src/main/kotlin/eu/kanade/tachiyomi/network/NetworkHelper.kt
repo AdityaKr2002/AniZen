@@ -61,6 +61,8 @@ open /* SY <-- */ class NetworkHelper(
         // KMK <--
     ): OkHttpClient = run {
         val builder = OkHttpClient.Builder()
+            .fastFallback(true)
+            .retryOnConnectionFailure(true)
             .dispatcher(
                 Dispatcher().apply {
                     maxRequests = 128

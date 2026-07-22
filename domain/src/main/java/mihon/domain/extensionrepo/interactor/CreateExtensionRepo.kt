@@ -16,19 +16,28 @@ class CreateExtensionRepo(
     private val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
 
     suspend fun await(indexUrl: String): Result {
-        val trimmed = indexUrl.trim().removeSuffix("/")
-        val fullIndexUrl = if (trimmed.endsWith("/index.min.json")) trimmed else "$trimmed/index.min.json"
+        val trimmed = indexUrl.trim()
+        val httpUrl = trimmed.toHttpUrlOrNull() ?: return Result.InvalidUrl
 
-        val formattedIndexUrl = fullIndexUrl.toHttpUrlOrNull()
-            ?.toString()
-            ?.takeIf { it.matches(repoRegex) }
-            ?: return Result.InvalidUrl
+        val cleanPath = httpUrl.encodedPath.removeSuffix("/")
+        val indexPath = if (cleanPath.endsWith("/index.min.json")) cleanPath else "$cleanPath/index.min.json"
 
-        val author = repoHostAuthorRegex.find(formattedIndexUrl)?.let {
+        val normalizedUrl = httpUrl.newBuilder()
+            .encodedPath(indexPath)
+            .query(null)
+            .fragment(null)
+            .build()
+            .toString()
+
+        if (!normalizedUrl.matches(repoRegex)) {
+            return Result.InvalidUrl
+        }
+
+        val author = repoHostAuthorRegex.find(normalizedUrl)?.let {
             "@${it.groupValues[1]}"
         }
 
-        val baseUrl = formattedIndexUrl.removeSuffix("/index.min.json")
+        val baseUrl = normalizedUrl.removeSuffix("/index.min.json")
         return service.fetchRepoDetails(baseUrl, author)?.let { insert(it) } ?: Result.InvalidUrl
     }
 
