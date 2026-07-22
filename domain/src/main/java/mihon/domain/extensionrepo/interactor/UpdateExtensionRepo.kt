@@ -19,12 +19,7 @@ class UpdateExtensionRepo(
     }
 
     suspend fun await(repo: ExtensionRepo) {
-        val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
-        val author = repoHostAuthorRegex.find(repo.baseUrl)?.let {
-            "@${it.groupValues[1]}"
-        } ?: repo.author
-
-        val newRepo = service.fetchRepoDetails(repo.baseUrl, author) ?: return
+        val newRepo = service.fetchRepoDetails(repo.baseUrl) ?: return
         if (
             repo.signingKeyFingerprint.startsWith("NOFINGERPRINT") ||
             repo.signingKeyFingerprint == newRepo.signingKeyFingerprint
@@ -32,7 +27,7 @@ class UpdateExtensionRepo(
             repository.upsertRepo(
                 newRepo.copy(
                     isVisible = repo.isVisible,
-                    author = newRepo.author ?: author,
+                    author = newRepo.author ?: repo.author,
                 ),
             )
         }

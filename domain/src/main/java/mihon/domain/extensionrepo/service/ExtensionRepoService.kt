@@ -10,12 +10,6 @@ import mihon.domain.extensionrepo.model.ExtensionRepo
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonObject
-
-import okhttp3.CacheControl
-
 class ExtensionRepoService(
     networkHelper: NetworkHelper,
     private val json: Json,
@@ -24,52 +18,19 @@ class ExtensionRepoService(
 
     suspend fun fetchRepoDetails(
         repo: String,
-        author: String? = null,
     ): ExtensionRepo? {
         return withIOContext {
             try {
-                val response = client.newCall(GET("$repo/repo.json", cache = CacheControl.FORCE_NETWORK)).awaitSuccess()
-                val responseText = response.body.string().trim().removePrefix("\uFEFF")
-                response.close()
-
-                val jsonElement = json.parseToJsonElement(responseText)
-                val repoDto = if (jsonElement is JsonObject && "meta" in jsonElement) {
-                    json.decodeFromJsonElement<ExtensionRepoDto>(jsonElement.jsonObject["meta"]!!)
-                } else {
-                    json.decodeFromJsonElement<ExtensionRepoDto>(jsonElement)
+                with(json) {
+                    client.newCall(GET("$repo/repo.json"))
+                        .awaitSuccess()
+                        .parseAs<ExtensionRepoMetaDto>()
+                        .toExtensionRepo(baseUrl = repo)
                 }
-                repoDto.toExtensionRepo(baseUrl = repo, author = author)
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to fetch repo.json details for $repo, trying index.min.json fallback" }
-                fetchFallbackRepoDetails(repo, author)
+                logcat(LogPriority.ERROR, e) { "Failed to fetch repo details" }
+                null
             }
-        }
-    }
-
-    private suspend fun fetchFallbackRepoDetails(
-        repo: String,
-        author: String? = null,
-    ): ExtensionRepo? {
-        return try {
-            val response = client.newCall(GET("$repo/index.min.json", cache = CacheControl.FORCE_NETWORK)).awaitSuccess()
-            val isSuccess = response.isSuccessful
-            response.close()
-            if (isSuccess) {
-                val repoName = author?.removePrefix("@") ?: repo.substringAfter("://").substringBefore("/")
-                val website = if (repo.contains("/raw")) repo.substringBefore("/raw") else repo
-                ExtensionRepo(
-                    baseUrl = repo,
-                    name = repoName,
-                    shortName = author?.removePrefix("@"),
-                    website = website,
-                    signingKeyFingerprint = "NOFINGERPRINT_${repo.hashCode()}",
-                    isVisible = true,
-                    author = author,
-                )
-            } else null
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Failed to fetch fallback repo details for $repo" }
-            null
         }
     }
 }

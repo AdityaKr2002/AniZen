@@ -19,22 +19,14 @@ data class ExtensionRepoDto(
 
 fun ExtensionRepoMetaDto.toExtensionRepo(
     baseUrl: String,
-    author: String? = null,
-): ExtensionRepo {
-    return meta.toExtensionRepo(baseUrl, author)
-}
-
-fun ExtensionRepoDto.toExtensionRepo(
-    baseUrl: String,
-    author: String? = null,
 ): ExtensionRepo {
     return ExtensionRepo(
         baseUrl = baseUrl,
-        name = name,
-        shortName = shortName,
-        website = website,
-        signingKeyFingerprint = signingKeyFingerprint.trim().lowercase().padStart(64, '0'),
+        name = meta.name,
+        shortName = meta.shortName,
+        website = meta.website,
+        signingKeyFingerprint = meta.signingKeyFingerprint,
         isVisible = true,
-        author = author ?: this.author,
+        author = meta.author,
     )
 }
