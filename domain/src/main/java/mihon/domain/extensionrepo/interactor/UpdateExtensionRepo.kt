@@ -19,8 +19,8 @@ class UpdateExtensionRepo(
     }
 
     suspend fun await(repo: ExtensionRepo) {
-        val githubRegex = """https://raw\.githubusercontent\.com/([^/]+)/.*""".toRegex()
-        val author = githubRegex.find(repo.baseUrl)?.let {
+        val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
+        val author = repoHostAuthorRegex.find(repo.baseUrl)?.let {
             "@${it.groupValues[1]}"
         } ?: repo.author
 

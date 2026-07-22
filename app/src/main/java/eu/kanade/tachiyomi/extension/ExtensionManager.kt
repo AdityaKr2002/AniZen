@@ -72,7 +72,7 @@ class ExtensionManager(
 
     private val iconMap = mutableMapOf<String, Drawable>()
 
-    private val githubRegex = """https://raw.githubusercontent.com/(.+?)/.+""".toRegex()
+    private val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
 
     private val installedExtensionsMapFlow = MutableStateFlow(emptyMap<String, Extension.Installed>())
     val installedExtensionsFlow = combine(
@@ -80,12 +80,16 @@ class ExtensionManager(
         extensionRepoRepository.subscribeAll(),
     ) { installedMap, repos ->
         installedMap.values.map { extension ->
-            val matchingRepo = repos.find { it.signingKeyFingerprint == extension.signatureHash }
-            val author = matchingRepo?.let { repo ->
-                githubRegex.find(repo.baseUrl)?.let { match ->
-                    "@${match.groupValues[1]}"
-                } ?: repo.shortName ?: repo.name
-            } ?: extension.author
+            val matchingRepo = repos.find {
+                it.signingKeyFingerprint.equals(extension.signatureHash, ignoreCase = true) ||
+                it.signingKeyFingerprint.padStart(64, '0').equals(extension.signatureHash.padStart(64, '0'), ignoreCase = true)
+            }
+            val author = matchingRepo?.author
+                ?: matchingRepo?.let { repo ->
+                    repoHostAuthorRegex.find(repo.baseUrl)?.let { match ->
+                        "@${match.groupValues[1]}"
+                    } ?: repo.shortName ?: repo.name
+                } ?: extension.author
 
             extension.copy(author = author)
         }

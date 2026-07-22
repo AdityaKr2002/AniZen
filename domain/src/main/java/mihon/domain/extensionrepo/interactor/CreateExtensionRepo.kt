@@ -13,16 +13,18 @@ class CreateExtensionRepo(
     private val service: ExtensionRepoService,
 ) {
     private val repoRegex = """^https://.*/index\.min\.json$""".toRegex()
-
-    private val githubRepoRegex = """https://raw\.githubusercontent\.com/([^/]+)/.*""".toRegex()
+    private val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
 
     suspend fun await(indexUrl: String): Result {
-        val formattedIndexUrl = indexUrl.toHttpUrlOrNull()
+        val trimmed = indexUrl.trim().removeSuffix("/")
+        val fullIndexUrl = if (trimmed.endsWith("/index.min.json")) trimmed else "$trimmed/index.min.json"
+
+        val formattedIndexUrl = fullIndexUrl.toHttpUrlOrNull()
             ?.toString()
             ?.takeIf { it.matches(repoRegex) }
             ?: return Result.InvalidUrl
 
-        val author = githubRepoRegex.find(formattedIndexUrl)?.let {
+        val author = repoHostAuthorRegex.find(formattedIndexUrl)?.let {
             "@${it.groupValues[1]}"
         }
 

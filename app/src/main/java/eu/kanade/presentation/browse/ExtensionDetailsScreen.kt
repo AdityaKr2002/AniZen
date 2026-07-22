@@ -76,13 +76,21 @@ fun ExtensionDetailsScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     val url = remember(state.extension) {
-        val regex = """https://raw.githubusercontent.com/(.+?)/(.+?)/.+""".toRegex()
-        regex.find(state.extension?.repoUrl.orEmpty())
-            ?.let {
-                val (user, repo) = it.destructured
-                "https://github.com/$user/$repo"
-            }
-            ?: state.extension?.repoUrl
+        val githubRegex = """https://raw\.githubusercontent\.com/(.+?)/(.+?)/.+""".toRegex()
+        val codebergRegex = """https://codeberg\.org/(.+?)/(.+?)/raw/.+""".toRegex()
+        val gitlabRegex = """https://gitlab\.com/(.+?)/(.+?)/-/raw/.+""".toRegex()
+
+        val repoUrl = state.extension?.repoUrl.orEmpty()
+        githubRegex.find(repoUrl)?.let {
+            val (user, repo) = it.destructured
+            "https://github.com/$user/$repo"
+        } ?: codebergRegex.find(repoUrl)?.let {
+            val (user, repo) = it.destructured
+            "https://codeberg.org/$user/$repo"
+        } ?: gitlabRegex.find(repoUrl)?.let {
+            val (user, repo) = it.destructured
+            "https://gitlab.com/$user/$repo"
+        } ?: state.extension?.repoUrl
     }
 
     Scaffold(

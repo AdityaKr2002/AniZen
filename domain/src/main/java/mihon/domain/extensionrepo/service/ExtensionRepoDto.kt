@@ -26,7 +26,7 @@ fun ExtensionRepoMetaDto.toExtensionRepo(
         name = meta.name,
         shortName = meta.shortName,
         website = meta.website,
-        signingKeyFingerprint = meta.signingKeyFingerprint,
+        signingKeyFingerprint = meta.signingKeyFingerprint.trim().lowercase().padStart(64, '0'),
         isVisible = true,
         author = author ?: meta.author,
     )
