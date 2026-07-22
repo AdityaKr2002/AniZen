@@ -378,13 +378,32 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         }
     }
 
+    private fun extractPosterUrl(posterEl: JsonElement?): String {
+        val raw = when (posterEl) {
+            null -> null
+            is JsonObject -> posterEl["full"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl["medium"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl["thumb"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl.entries.firstOrNull()?.value?.let { extractPosterUrl(it) }
+            is JsonArray -> posterEl.firstOrNull()?.jsonPrimitive?.contentOrNull
+            else -> posterEl.jsonPrimitive.contentOrNull
+        }?.trim().takeUnless { it.isNullOrBlank() } ?: return ""
+
+        return when {
+            raw.startsWith("//") -> "https:$raw"
+            raw.startsWith("http://") || raw.startsWith("https://") -> raw
+            raw.startsWith("/") -> raw
+            else -> "https://$raw"
+        }
+    }
+
     fun getImportableList(): List<ImportableEntry> {
         val entries = mutableListOf<ImportableEntry>()
 
         // Watched shows
         try {
             val request = Request.Builder()
-                .url("$baseUrl/sync/watched/shows?extended=full")
+                .url("$baseUrl/sync/watched/shows?extended=full,images")
                 .applyTraktHeaders(includeContentType = false)
                 .get()
                 .build()
@@ -398,6 +417,7 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
                     val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                     val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                    val coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
                     val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
                     val seasons = elem.jsonObject["seasons"]?.jsonArray
                     var watchedEpisodes = 0
@@ -412,7 +432,7 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                         ImportableEntry(
                             remoteId = traktId,
                             title = title,
-                            coverUrl = "",
+                            coverUrl = coverUrl,
                             totalEpisodes = totalEpisodes,
                             episodesSeen = watchedEpisodes,
                             score = 0.0,
@@ -430,7 +450,7 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         // Watched movies
         try {
             val request = Request.Builder()
-                .url("$baseUrl/sync/watched/movies?extended=full")
+                .url("$baseUrl/sync/watched/movies?extended=full,images")
                 .applyTraktHeaders(includeContentType = false)
                 .get()
                 .build()
@@ -444,12 +464,13 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
                     val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                     val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                    val coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
 
                     entries.add(
                         ImportableEntry(
                             remoteId = traktId,
                             title = title,
-                            coverUrl = "",
+                            coverUrl = coverUrl,
                             totalEpisodes = 1L,
                             episodesSeen = 1,
                             score = 0.0,
@@ -467,7 +488,7 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         // Watchlist shows
         try {
             val request = Request.Builder()
-                .url("$baseUrl/sync/watchlist/shows?extended=full")
+                .url("$baseUrl/sync/watchlist/shows?extended=full,images")
                 .applyTraktHeaders(includeContentType = false)
                 .get()
                 .build()
@@ -482,13 +503,14 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     if (entries.none { it.remoteId == traktId }) {
                         val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                         val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                        val coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
                         val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
 
                         entries.add(
                             ImportableEntry(
                                 remoteId = traktId,
                                 title = title,
-                                coverUrl = "",
+                                coverUrl = coverUrl,
                                 totalEpisodes = totalEpisodes,
                                 episodesSeen = 0,
                                 score = 0.0,
@@ -507,7 +529,7 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         // Watchlist movies
         try {
             val request = Request.Builder()
-                .url("$baseUrl/sync/watchlist/movies?extended=full")
+                .url("$baseUrl/sync/watchlist/movies?extended=full,images")
                 .applyTraktHeaders(includeContentType = false)
                 .get()
                 .build()
@@ -522,12 +544,13 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     if (entries.none { it.remoteId == traktId }) {
                         val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                         val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                        val coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
 
                         entries.add(
                             ImportableEntry(
                                 remoteId = traktId,
                                 title = title,
-                                coverUrl = "",
+                                coverUrl = coverUrl,
                                 totalEpisodes = 1L,
                                 episodesSeen = 0,
                                 score = 0.0,
