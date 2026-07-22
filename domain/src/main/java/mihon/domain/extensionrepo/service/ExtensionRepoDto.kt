@@ -21,13 +21,20 @@ fun ExtensionRepoMetaDto.toExtensionRepo(
     baseUrl: String,
     author: String? = null,
 ): ExtensionRepo {
+    return meta.toExtensionRepo(baseUrl, author)
+}
+
+fun ExtensionRepoDto.toExtensionRepo(
+    baseUrl: String,
+    author: String? = null,
+): ExtensionRepo {
     return ExtensionRepo(
         baseUrl = baseUrl,
-        name = meta.name,
-        shortName = meta.shortName,
-        website = meta.website,
-        signingKeyFingerprint = meta.signingKeyFingerprint.trim().lowercase().padStart(64, '0'),
+        name = name,
+        shortName = shortName,
+        website = website,
+        signingKeyFingerprint = signingKeyFingerprint.trim().lowercase().padStart(64, '0'),
         isVisible = true,
-        author = author ?: meta.author,
+        author = author ?: this.author,
     )
 }
