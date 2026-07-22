@@ -14,6 +14,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 
+import okhttp3.CacheControl
+
 class ExtensionRepoService(
     networkHelper: NetworkHelper,
     private val json: Json,
@@ -26,9 +28,9 @@ class ExtensionRepoService(
     ): ExtensionRepo? {
         return withIOContext {
             try {
-                val responseText = client.newCall(GET("$repo/repo.json"))
-                    .awaitSuccess()
-                    .body.string()
+                val response = client.newCall(GET("$repo/repo.json", cache = CacheControl.FORCE_NETWORK)).awaitSuccess()
+                val responseText = response.body.string().trim().removePrefix("\uFEFF")
+                response.close()
 
                 val jsonElement = json.parseToJsonElement(responseText)
                 val repoDto = if (jsonElement is JsonObject && "meta" in jsonElement) {
@@ -49,8 +51,10 @@ class ExtensionRepoService(
         author: String? = null,
     ): ExtensionRepo? {
         return try {
-            val response = client.newCall(GET("$repo/index.min.json")).awaitSuccess()
-            if (response.isSuccessful) {
+            val response = client.newCall(GET("$repo/index.min.json", cache = CacheControl.FORCE_NETWORK)).awaitSuccess()
+            val isSuccess = response.isSuccessful
+            response.close()
+            if (isSuccess) {
                 val repoName = author?.removePrefix("@") ?: repo.substringAfter("://").substringBefore("/")
                 val website = if (repo.contains("/raw")) repo.substringBefore("/raw") else repo
                 ExtensionRepo(
