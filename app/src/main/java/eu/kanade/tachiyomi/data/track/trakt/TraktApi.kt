@@ -397,6 +397,23 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         }
     }
 
+    private fun getPosterUrl(traktId: Long, isMovie: Boolean): String {
+        val path = if (isMovie) "movies" else "shows"
+        val request = Request.Builder()
+            .url("$baseUrl/$path/$traktId?extended=full,images")
+            .applyTraktHeaders(includeContentType = false)
+            .get()
+            .build()
+        return try {
+            val response = publicClient.newCall(request).execute()
+            val body = response.body.string()
+            val obj = json.parseToJsonElement(body).jsonObject
+            extractPosterUrl(obj["images"]?.jsonObject?.get("poster"))
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
     fun getImportableList(): List<ImportableEntry> {
         val entries = mutableListOf<ImportableEntry>()
 
@@ -417,7 +434,10 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
                     val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                     val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
-                    val coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                    var coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                    if (coverUrl.isBlank()) {
+                        coverUrl = getPosterUrl(traktId, isMovie = false)
+                    }
                     val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
                     val seasons = elem.jsonObject["seasons"]?.jsonArray
                     var watchedEpisodes = 0
@@ -464,7 +484,10 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
                     val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                     val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
-                    val coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                    var coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                    if (coverUrl.isBlank()) {
+                        coverUrl = getPosterUrl(traktId, isMovie = true)
+                    }
 
                     entries.add(
                         ImportableEntry(
@@ -503,7 +526,10 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     if (entries.none { it.remoteId == traktId }) {
                         val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                         val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
-                        val coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                        var coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                        if (coverUrl.isBlank()) {
+                            coverUrl = getPosterUrl(traktId, isMovie = false)
+                        }
                         val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
 
                         entries.add(
@@ -544,7 +570,10 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
                     if (entries.none { it.remoteId == traktId }) {
                         val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
                         val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
-                        val coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                        var coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                        if (coverUrl.isBlank()) {
+                            coverUrl = getPosterUrl(traktId, isMovie = true)
+                        }
 
                         entries.add(
                             ImportableEntry(
