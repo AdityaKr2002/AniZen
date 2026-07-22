@@ -21,16 +21,39 @@ class ExtensionRepoService(
     ): ExtensionRepo? {
         return withIOContext {
             try {
-                with(json) {
-                    client.newCall(GET("$repo/repo.json"))
-                        .awaitSuccess()
-                        .parseAs<ExtensionRepoMetaDto>()
-                        .toExtensionRepo(baseUrl = repo)
-                }
+                val response = client.newCall(GET("$repo/repo.json")).awaitSuccess()
+                val responseText = response.body.string().trim().removePrefix("\uFEFF")
+                response.close()
+                json.decodeFromString<ExtensionRepoMetaDto>(responseText).toExtensionRepo(baseUrl = repo)
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to fetch repo details" }
-                null
+                logcat(LogPriority.ERROR, e) { "Failed to fetch repo.json details for $repo, trying fallback" }
+                fetchFallbackRepoDetails(repo)
             }
+        }
+    }
+
+    private suspend fun fetchFallbackRepoDetails(
+        repo: String,
+    ): ExtensionRepo? {
+        return try {
+            val response = client.newCall(GET("$repo/index.min.json")).awaitSuccess()
+            val isSuccess = response.isSuccessful
+            response.close()
+            if (isSuccess) {
+                val repoName = repo.substringAfter("://").substringBefore("/")
+                val website = if (repo.contains("/raw")) repo.substringBefore("/raw") else repo
+                ExtensionRepo(
+                    baseUrl = repo,
+                    name = repoName,
+                    shortName = null,
+                    website = website,
+                    signingKeyFingerprint = "NOFINGERPRINT_${repo.hashCode()}",
+                    isVisible = true,
+                )
+            } else null
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to fetch fallback index for $repo" }
+            null
         }
     }
 }
