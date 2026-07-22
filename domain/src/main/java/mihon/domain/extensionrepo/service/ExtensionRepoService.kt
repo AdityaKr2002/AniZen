@@ -3,12 +3,19 @@ package mihon.domain.extensionrepo.service
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.awaitSuccess
-import eu.kanade.tachiyomi.network.parseAs
 import kotlinx.serialization.json.Json
 import logcat.LogPriority
 import mihon.domain.extensionrepo.model.ExtensionRepo
+import okhttp3.CacheControl
+import okhttp3.Headers
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
+
+private val REPO_HEADERS = Headers.Builder()
+    .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0")
+    .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+    .add("Accept-Language", "en-US,en;q=0.5")
+    .build()
 
 class ExtensionRepoService(
     networkHelper: NetworkHelper,
@@ -21,7 +28,8 @@ class ExtensionRepoService(
     ): ExtensionRepo? {
         return withIOContext {
             try {
-                val response = client.newCall(GET("$repo/repo.json")).awaitSuccess()
+                val request = GET("$repo/repo.json", headers = REPO_HEADERS, cache = CacheControl.FORCE_NETWORK)
+                val response = client.newCall(request).awaitSuccess()
                 val responseText = response.body.string().trim().removePrefix("\uFEFF")
                 response.close()
                 json.decodeFromString<ExtensionRepoMetaDto>(responseText).toExtensionRepo(baseUrl = repo)
@@ -36,7 +44,8 @@ class ExtensionRepoService(
         repo: String,
     ): ExtensionRepo? {
         return try {
-            val response = client.newCall(GET("$repo/index.min.json")).awaitSuccess()
+            val request = GET("$repo/index.min.json", headers = REPO_HEADERS, cache = CacheControl.FORCE_NETWORK)
+            val response = client.newCall(request).awaitSuccess()
             val isSuccess = response.isSuccessful
             response.close()
             if (isSuccess) {

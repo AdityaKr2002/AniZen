@@ -47,11 +47,17 @@ internal class ExtensionApi {
         }
     }
 
+private val REPO_HEADERS = okhttp3.Headers.Builder()
+    .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0")
+    .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+    .add("Accept-Language", "en-US,en;q=0.5")
+    .build()
+
     private suspend fun getExtensions(extRepo: ExtensionRepo): List<Extension.Available> {
         val repoBaseUrl = extRepo.baseUrl
         return try {
             val response = networkService.client
-                .newCall(GET("$repoBaseUrl/index.min.json"))
+                .newCall(GET("$repoBaseUrl/index.min.json", headers = REPO_HEADERS))
                 .awaitSuccess()
 
             val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
