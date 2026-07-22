@@ -38,9 +38,34 @@ class ExtensionRepoService(
                 }
                 repoDto.toExtensionRepo(baseUrl = repo, author = author)
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Failed to fetch repo details for $repo" }
-                null
+                logcat(LogPriority.ERROR, e) { "Failed to fetch repo.json details for $repo, trying index.min.json fallback" }
+                fetchFallbackRepoDetails(repo, author)
             }
+        }
+    }
+
+    private suspend fun fetchFallbackRepoDetails(
+        repo: String,
+        author: String? = null,
+    ): ExtensionRepo? {
+        return try {
+            val response = client.newCall(GET("$repo/index.min.json")).awaitSuccess()
+            if (response.isSuccessful) {
+                val repoName = author?.removePrefix("@") ?: repo.substringAfter("://").substringBefore("/")
+                val website = if (repo.contains("/raw")) repo.substringBefore("/raw") else repo
+                ExtensionRepo(
+                    baseUrl = repo,
+                    name = repoName,
+                    shortName = author?.removePrefix("@"),
+                    website = website,
+                    signingKeyFingerprint = "NOFINGERPRINT_${repo.hashCode()}",
+                    isVisible = true,
+                    author = author,
+                )
+            } else null
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to fetch fallback repo details for $repo" }
+            null
         }
     }
 }
