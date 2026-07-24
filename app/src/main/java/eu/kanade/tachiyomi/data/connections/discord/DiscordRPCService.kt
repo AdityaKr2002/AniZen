@@ -302,6 +302,7 @@ class DiscordRPCService : Service() {
 
         private fun String.fixDiscordImage(): String {
             if (this.startsWith(MP_PREFIX)) return this
+            if (this.toLongOrNull() != null) return this
             return "$MP_PREFIX$this"
         }
 
