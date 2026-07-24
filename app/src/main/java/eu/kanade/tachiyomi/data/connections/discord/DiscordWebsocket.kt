@@ -80,7 +80,7 @@ open class DiscordWebSocketImpl(
         webSocket?.send(
             json.encodeToString(
                 Presence.Response(
-                    op = 3,
+                    op = OpCode.DISPATCH.value.toLong(),
                     d = Presence(status = "offline"),
                 ),
             ),

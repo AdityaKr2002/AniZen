@@ -65,10 +65,10 @@ data class Activity(
 
 @Serializable
 data class Presence(
-    val activities: List<Activity> = listOf(),
-    val afk: Boolean = true,
-    val since: Long? = null,
     val status: String? = null,
+    val afk: Boolean = true,
+    val activities: List<Activity> = listOf(),
+    val since: Long? = null,
 ) {
     @Serializable
     data class Response(
@@ -190,17 +190,16 @@ enum class DiscordScreen(
 }
 
 // Constants for standard Rich Presence image urls
-// change the image Urls used here to match animetail brown/ green theme, Luft
-private const val ANIMETAIL_IMAGE_URL = "1000163149"
-private const val ANIMETAIL_PREVIEW_IMAGE_URL = "1000163149"
+private const val ANIMETAIL_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
+private const val ANIMETAIL_PREVIEW_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
 private val ANIMETAIL_IMAGE = if (isPreviewBuildType) ANIMETAIL_PREVIEW_IMAGE_URL else ANIMETAIL_IMAGE_URL
-private const val LIBRARY_IMAGE_URL = "1000163149"
-private const val UPDATES_IMAGE_URL = "1000163149"
-private const val HISTORY_IMAGE_URL = "1000163149"
-private const val BROWSE_IMAGE_URL = "1000163149"
-private const val MORE_IMAGE_URL = "1000163149"
-private const val WEBVIEW_IMAGE_URL = "1000163149"
-private const val VIDEO_IMAGE_URL = "1000163149"
-private const val MANGA_IMAGE_URL = "1000163149"
+private const val LIBRARY_IMAGE_URL = "emojis/1365262809050644591.webp?quality=lossless"
+private const val UPDATES_IMAGE_URL = "emojis/1365261957883625492.webp?quality=lossless"
+private const val HISTORY_IMAGE_URL = "emojis/1365262076787949598.webp?quality=lossless"
+private const val BROWSE_IMAGE_URL = "emojis/1365263374992146576.webp?quality=lossless"
+private const val MORE_IMAGE_URL = "emojis/1365261438276599849.webp?quality=lossless"
+private const val WEBVIEW_IMAGE_URL = "emojis/1365262268811579443.webp?quality=lossless"
+private const val VIDEO_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
+private const val MANGA_IMAGE_URL = "emojis/1365263962622529576.webp?quality=lossless"
 
 // <-- AM (DISCORD)
