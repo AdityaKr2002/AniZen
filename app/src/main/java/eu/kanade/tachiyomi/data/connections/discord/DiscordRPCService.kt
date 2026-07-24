@@ -449,12 +449,6 @@ class DiscordRPCService : Service() {
 
             return try {
                 rpcExternalAsset.getDiscordUri(thumbnailUrl)
-                    ?.takeIf { !it.contains("external/Not Found") }
-                    ?.substringAfter("\"id\": \"")
-                    ?.substringBefore("\"}")
-                    ?.split(EXTERNAL_PREFIX)
-                    ?.getOrNull(1)
-                    ?.let { "$EXTERNAL_PREFIX$it" }
             } catch (e: Exception) {
                 Log.e(TAG, "Error getting Discord URI: ${e.message}", e)
                 null
