@@ -190,7 +190,7 @@ enum class DiscordScreen(
 }
 
 // Constants for standard Rich Presence image urls
-private const val ANIZEN_LOGO_IMAGE_URL = "https://raw.githubusercontent.com/salmanbappi/AniZen/preview/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+private const val ANIZEN_LOGO_IMAGE_URL = "https://raw.githubusercontent.com/salmanbappi/AniZen/preview/app/src/main/res/drawable/ic_splash_logo_raw.png"
 private const val ANIMETAIL_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
 private const val ANIMETAIL_PREVIEW_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
 private val ANIMETAIL_IMAGE = if (isPreviewBuildType) ANIMETAIL_PREVIEW_IMAGE_URL else ANIMETAIL_IMAGE_URL
