@@ -17,7 +17,7 @@ import kotlinx.serialization.json.JsonElement
 const val RICH_PRESENCE_TAG = "discord_rpc"
 
 // Constant for application id
-const val RICH_PRESENCE_APPLICATION_ID = "1471263338934566972"
+const val RICH_PRESENCE_APPLICATION_ID = "1173423931865170070"
 
 const val DOWNLOAD_BUTTON_LABEL = "Download"
 const val DOWNLOAD_BUTTON_URL = "https://github.com/salmanbappi/AniZen/releases/latest"
@@ -190,16 +190,16 @@ enum class DiscordScreen(
 }
 
 // Constants for standard Rich Presence image urls
-private const val ANIMETAIL_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
-private const val ANIMETAIL_PREVIEW_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
+private const val ANIMETAIL_IMAGE_URL = "emojis/1286834441981005824.webp?quality=lossless"
+private const val ANIMETAIL_PREVIEW_IMAGE_URL = "emojis/1286834519533420544.webp?quality=lossless"
 private val ANIMETAIL_IMAGE = if (isPreviewBuildType) ANIMETAIL_PREVIEW_IMAGE_URL else ANIMETAIL_IMAGE_URL
-private const val LIBRARY_IMAGE_URL = "emojis/1365262809050644591.webp?quality=lossless"
-private const val UPDATES_IMAGE_URL = "emojis/1365261957883625492.webp?quality=lossless"
-private const val HISTORY_IMAGE_URL = "emojis/1365262076787949598.webp?quality=lossless"
-private const val BROWSE_IMAGE_URL = "emojis/1365263374992146576.webp?quality=lossless"
-private const val MORE_IMAGE_URL = "emojis/1365261438276599849.webp?quality=lossless"
-private const val WEBVIEW_IMAGE_URL = "emojis/1365262268811579443.webp?quality=lossless"
-private const val VIDEO_IMAGE_URL = "emojis/1365538288894738532.webp?quality=lossless"
-private const val MANGA_IMAGE_URL = "emojis/1365263962622529576.webp?quality=lossless"
+private const val LIBRARY_IMAGE_URL = "emojis/1235353629867638924.webp?quality=lossless"
+private const val UPDATES_IMAGE_URL = "emojis/1235354596570955917.webp?quality=lossless"
+private const val HISTORY_IMAGE_URL = "emojis/1235354299089817671.webp?quality=lossless"
+private const val BROWSE_IMAGE_URL = "emojis/1235354864419344455.webp?quality=lossless"
+private const val MORE_IMAGE_URL = "emojis/1235355169752088706.webp?quality=lossless"
+private const val WEBVIEW_IMAGE_URL = "emojis/1235355362169851996.webp?quality=lossless"
+private const val VIDEO_IMAGE_URL = "emojis/1235355607201218660.webp?quality=lossless"
+private const val MANGA_IMAGE_URL = "emojis/1235355804274659390.webp?quality=lossless"
 
 // <-- AM (DISCORD)
