@@ -63,11 +63,10 @@ open class DiscordWebSocketImpl(
             op = 2,
             d = Identity(
                 token = token,
-                applicationId = RICH_PRESENCE_APPLICATION_ID,
                 properties = Identity.Properties(
-                    os = "android",
-                    browser = "Discord Android",
-                    device = "phone",
+                    os = "windows",
+                    browser = "Chrome",
+                    device = "disco",
                 ),
                 compress = false,
                 intents = 0,
@@ -81,7 +80,7 @@ open class DiscordWebSocketImpl(
         webSocket?.send(
             json.encodeToString(
                 Presence.Response(
-                    op = 3,
+                    op = OpCode.DISPATCH.value.toLong(),
                     d = Presence(status = "offline"),
                 ),
             ),
@@ -91,9 +90,14 @@ open class DiscordWebSocketImpl(
     }
 
     override suspend fun sendActivity(presence: Presence) {
-        // TODO : Figure out a better way to wait for socket to be connected to account
-        while (!connected) {
+        var retries = 0
+        while (!connected && retries < 300) {
             delay(10.milliseconds)
+            retries++
+        }
+        if (!connected) {
+            log("Timed out waiting for connection")
+            return
         }
         log("Sending ${OpCode.PRESENCE_UPDATE}")
         val response = Presence.Response(

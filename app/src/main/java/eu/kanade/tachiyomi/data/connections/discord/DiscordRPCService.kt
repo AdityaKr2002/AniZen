@@ -302,11 +302,6 @@ class DiscordRPCService : Service() {
 
         private fun String.fixDiscordImage(): String {
             if (this.startsWith(MP_PREFIX)) return this
-            // If it's the 'AniZen' portal asset, don't add mp:
-            if (this == "AniZen") return this
-            // If it's a numeric ID, also don't add mp:
-            if (this.toLongOrNull() != null) return this
-            // Otherwise add it (for external proxied URLs like thumbnails)
             return "$MP_PREFIX$this"
         }
 
@@ -449,12 +444,6 @@ class DiscordRPCService : Service() {
 
             return try {
                 rpcExternalAsset.getDiscordUri(thumbnailUrl)
-                    ?.takeIf { !it.contains("external/Not Found") }
-                    ?.substringAfter("\"id\": \"")
-                    ?.substringBefore("\"}")
-                    ?.split(EXTERNAL_PREFIX)
-                    ?.getOrNull(1)
-                    ?.let { "$EXTERNAL_PREFIX$it" }
             } catch (e: Exception) {
                 Log.e(TAG, "Error getting Discord URI: ${e.message}", e)
                 null

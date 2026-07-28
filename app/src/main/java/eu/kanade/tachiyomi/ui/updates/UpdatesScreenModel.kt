@@ -154,7 +154,14 @@ class UpdatesScreenModel(
             
             animeIds.forEach { animeId ->
                 val items = animeGroups[animeId]!!
-                val animeItems = items.sortedWith(
+                val latestFetchDate = items.maxOf { it.update.dateFetch }.toLocalDate()
+                val hasUnwatched = items.any { !it.update.seen }
+                val filteredItems = if (hasUnwatched) {
+                    items.filterNot { it.update.seen && it.update.dateFetch.toLocalDate() < latestFetchDate }
+                } else {
+                    items
+                }
+                val animeItems = filteredItems.sortedWith(
                     compareBy<UpdatesItem> { it.update.seen }
                         .thenByDescending { it.update.lastSecondSeen > 0 }
                         .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber },

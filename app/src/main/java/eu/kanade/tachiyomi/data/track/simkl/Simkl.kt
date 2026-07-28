@@ -6,7 +6,11 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
+import eu.kanade.tachiyomi.data.track.ImportableEntry
+import eu.kanade.tachiyomi.data.track.ImportableTracker
+import eu.kanade.tachiyomi.data.track.ImportStatusFilter
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
+import eu.kanade.tachiyomi.data.track.simkl.SimklApi.Companion.POSTERS_URL
 import eu.kanade.tachiyomi.data.track.simkl.dto.SimklOAuth
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -16,7 +20,7 @@ import tachiyomi.i18n.MR
 import uy.kohesive.injekt.injectLazy
 import tachiyomi.domain.track.model.Track as DomainAnimeTrack
 
-class Simkl(id: Long) : BaseTracker(id, "Simkl"), AnimeTracker {
+class Simkl(id: Long) : BaseTracker(id, "Simkl"), AnimeTracker, ImportableTracker {
 
     companion object {
         const val WATCHING = 1L
@@ -145,5 +149,49 @@ class Simkl(id: Long) : BaseTracker(id, "Simkl"), AnimeTracker {
         super.logout()
         trackPreferences.trackToken(this).delete()
         interceptor.newAuth(null)
+    }
+
+    override fun getNoticeStringRes(): StringResource {
+        return MR.strings.simkl_import_notice
+    }
+
+    override suspend fun getImportableList(): List<ImportableEntry> {
+        val syncResult = api.getAllItems()
+        val allItems = (syncResult.anime.orEmpty() + syncResult.tv.orEmpty() + syncResult.shows.orEmpty() + syncResult.movies.orEmpty())
+            .distinctBy { (it.show?.ids?.simkl ?: it.movie?.ids?.simkl) }
+
+        return allItems.mapNotNull { item ->
+            val resultData = item.show ?: item.movie ?: return@mapNotNull null
+            val isMovie = item.movie != null
+            val statusStr = item.status ?: "watching"
+            val mappedStatusFilter = when (statusStr) {
+                "watching" -> ImportStatusFilter.WATCHING
+                "plantowatch" -> ImportStatusFilter.PLAN_TO_WATCH
+                "completed" -> ImportStatusFilter.COMPLETED
+                "hold" -> ImportStatusFilter.ON_HOLD
+                else -> null
+            }
+            val cover = resultData.poster?.let { "$POSTERS_URL${it}_m.webp" } ?: ""
+            val totalEps = if (isMovie) 1L else (item.totalEpisodesCount ?: 0L)
+            val epsSeen = if (isMovie) {
+                if (statusStr == "completed") 1 else 0
+            } else {
+                item.watchedEpisodesCount?.toInt() ?: 0
+            }
+
+            ImportableEntry(
+                remoteId = resultData.ids.simkl,
+                title = resultData.title,
+                coverUrl = cover,
+                totalEpisodes = totalEps,
+                episodesSeen = epsSeen,
+                score = item.userRating?.toDouble() ?: 0.0,
+                status = toTrackStatus(statusStr),
+                statusFilter = mappedStatusFilter,
+                startDate = 0L,
+                finishDate = 0L,
+                trackingUrl = "https://simkl.com/${if (isMovie) "movies" else "anime"}/${resultData.ids.simkl}"
+            )
+        }
     }
 }

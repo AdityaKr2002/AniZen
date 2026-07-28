@@ -8,16 +8,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SimklSyncResult(
-    val anime: List<SimklSyncItem>?,
-    val tv: List<SimklSyncItem>?,
-    val movies: List<SimklSyncItem>?,
+    val anime: List<SimklSyncItem>? = null,
+    val tv: List<SimklSyncItem>? = null,
+    val shows: List<SimklSyncItem>? = null,
+    val movies: List<SimklSyncItem>? = null,
 ) {
     fun getFromType(type: String): List<SimklSyncItem>? {
         return when (type) {
             "anime" -> anime
             "tv" -> tv
             "movies" -> movies
-            "shows" -> tv
+            "shows" -> shows ?: tv
             else -> throw Exception("Unknown type: $type")
         }
     }
@@ -25,14 +26,15 @@ data class SimklSyncResult(
 
 @Serializable
 data class SimklSyncItem(
-    val show: SimklSyncResultItem?,
-    val movie: SimklSyncResultItem?,
+    val show: SimklSyncResultItem? = null,
+    val movie: SimklSyncResultItem? = null,
+    val status: String? = null,
     @SerialName("total_episodes_count")
-    val totalEpisodesCount: Long?,
+    val totalEpisodesCount: Long? = null,
     @SerialName("watched_episodes_count")
-    val watchedEpisodesCount: Double?,
+    val watchedEpisodesCount: Double? = null,
     @SerialName("user_rating")
-    val userRating: Int?,
+    val userRating: Int? = null,
 ) {
     fun toAnimeTrack(typeName: String, type: String, statusString: String): Track {
         val resultData = getFromType(typeName)
@@ -65,6 +67,7 @@ data class SimklSyncItem(
 @Serializable
 data class SimklSyncResultItem(
     val title: String,
+    val poster: String? = null,
     val ids: SimklSyncResultIds,
 )
 

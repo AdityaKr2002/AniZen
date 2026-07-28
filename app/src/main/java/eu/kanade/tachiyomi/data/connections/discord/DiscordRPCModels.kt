@@ -65,10 +65,10 @@ data class Activity(
 
 @Serializable
 data class Presence(
-    val activities: List<Activity> = listOf(),
-    val afk: Boolean = true,
-    val since: Long? = null,
     val status: String? = null,
+    val afk: Boolean = true,
+    val activities: List<Activity> = listOf(),
+    val since: Long? = null,
 ) {
     @Serializable
     data class Response(
@@ -190,17 +190,17 @@ enum class DiscordScreen(
 }
 
 // Constants for standard Rich Presence image urls
-// change the image Urls used here to match animetail brown/ green theme, Luft
-private const val ANIMETAIL_IMAGE_URL = "AniZen"
-private const val ANIMETAIL_PREVIEW_IMAGE_URL = "AniZen"
+private const val ANIZEN_LOGO_IMAGE_URL = "https://raw.githubusercontent.com/salmanbappi/AniZen/preview/app/src/main/res/drawable/ic_splash_logo_raw.png"
+private const val ANIMETAIL_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val ANIMETAIL_PREVIEW_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
 private val ANIMETAIL_IMAGE = if (isPreviewBuildType) ANIMETAIL_PREVIEW_IMAGE_URL else ANIMETAIL_IMAGE_URL
-private const val LIBRARY_IMAGE_URL = "AniZen"
-private const val UPDATES_IMAGE_URL = "AniZen"
-private const val HISTORY_IMAGE_URL = "AniZen"
-private const val BROWSE_IMAGE_URL = "AniZen"
-private const val MORE_IMAGE_URL = "AniZen"
-private const val WEBVIEW_IMAGE_URL = "AniZen"
-private const val VIDEO_IMAGE_URL = "AniZen"
-private const val MANGA_IMAGE_URL = "AniZen"
+private const val LIBRARY_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val UPDATES_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val HISTORY_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val BROWSE_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val MORE_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val WEBVIEW_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val VIDEO_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
+private const val MANGA_IMAGE_URL = ANIZEN_LOGO_IMAGE_URL
 
 // <-- AM (DISCORD)

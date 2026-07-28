@@ -7,6 +7,8 @@ import eu.kanade.tachiyomi.data.database.models.Track
 import eu.kanade.tachiyomi.data.track.AnimeTracker
 import eu.kanade.tachiyomi.data.track.BaseTracker
 import eu.kanade.tachiyomi.data.track.DeletableTracker
+import eu.kanade.tachiyomi.data.track.ImportableEntry
+import eu.kanade.tachiyomi.data.track.ImportableTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
 import eu.kanade.tachiyomi.animesource.model.Credit
@@ -41,7 +43,7 @@ import eu.kanade.tachiyomi.util.system.toast
  */
 class Trakt(
     id: Long,
-) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableTracker {
+) : BaseTracker(id, "Trakt"), AnimeTracker, DeletableTracker, ImportableTracker {
 
     companion object {
         const val WATCHING = 1L
@@ -491,6 +493,16 @@ class Trakt(
             } else {
                 api.sendRatings(showRatings = listOf(traktId to rating))
             }
+        }
+    }
+
+    override fun getNoticeStringRes(): StringResource {
+        return MR.strings.trakt_import_notice
+    }
+
+    override suspend fun getImportableList(): List<ImportableEntry> {
+        return withIOContext {
+            api.getImportableList()
         }
     }
 }

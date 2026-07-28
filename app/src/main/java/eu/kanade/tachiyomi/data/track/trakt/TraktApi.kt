@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.data.track.trakt
 
 import androidx.core.net.toUri
 import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.data.track.ImportableEntry
+import eu.kanade.tachiyomi.data.track.ImportStatusFilter
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktOAuth
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktSearchResult
 import eu.kanade.tachiyomi.data.track.trakt.dto.TraktSyncMovie
@@ -374,6 +376,226 @@ class TraktApi(private val client: OkHttpClient, private val interceptor: TraktI
         } catch (_: Exception) {
             emptyList()
         }
+    }
+
+    private fun extractPosterUrl(posterEl: JsonElement?): String {
+        val raw = when (posterEl) {
+            null -> null
+            is JsonObject -> posterEl["full"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl["medium"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl["thumb"]?.jsonPrimitive?.contentOrNull
+                ?: posterEl.entries.firstOrNull()?.value?.let { extractPosterUrl(it) }
+            is JsonArray -> posterEl.firstOrNull()?.jsonPrimitive?.contentOrNull
+            else -> posterEl.jsonPrimitive.contentOrNull
+        }?.trim().takeUnless { it.isNullOrBlank() } ?: return ""
+
+        return when {
+            raw.startsWith("//") -> "https:$raw"
+            raw.startsWith("http://") || raw.startsWith("https://") -> raw
+            raw.startsWith("/") -> raw
+            else -> "https://$raw"
+        }
+    }
+
+    private fun getPosterUrl(traktId: Long, isMovie: Boolean): String {
+        val path = if (isMovie) "movies" else "shows"
+        val request = Request.Builder()
+            .url("$baseUrl/$path/$traktId?extended=full,images")
+            .applyTraktHeaders(includeContentType = false)
+            .get()
+            .build()
+        return try {
+            val response = publicClient.newCall(request).execute()
+            val body = response.body.string()
+            val obj = json.parseToJsonElement(body).jsonObject
+            extractPosterUrl(obj["images"]?.jsonObject?.get("poster"))
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    fun getImportableList(): List<ImportableEntry> {
+        val entries = mutableListOf<ImportableEntry>()
+
+        // Watched shows
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/sync/watched/shows?extended=full,images")
+                .applyTraktHeaders(includeContentType = false)
+                .get()
+                .build()
+            val response = authClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body.string()
+                val root = json.parseToJsonElement(body).jsonArray
+                root.forEach { elem ->
+                    val show = elem.jsonObject["show"]?.jsonObject ?: return@forEach
+                    val ids = show["ids"]?.jsonObject ?: return@forEach
+                    val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
+                    val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
+                    val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                    var coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                    if (coverUrl.isBlank()) {
+                        coverUrl = getPosterUrl(traktId, isMovie = false)
+                    }
+                    val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
+                    val seasons = elem.jsonObject["seasons"]?.jsonArray
+                    var watchedEpisodes = 0
+                    seasons?.forEach { s ->
+                        val eps = s.jsonObject["episodes"]?.jsonArray
+                        watchedEpisodes += eps?.size ?: 0
+                    }
+                    val isCompleted = totalEpisodes > 0 && watchedEpisodes >= totalEpisodes
+                    val statusFilter = if (isCompleted) ImportStatusFilter.COMPLETED else ImportStatusFilter.WATCHING
+
+                    entries.add(
+                        ImportableEntry(
+                            remoteId = traktId,
+                            title = title,
+                            coverUrl = coverUrl,
+                            totalEpisodes = totalEpisodes,
+                            episodesSeen = watchedEpisodes,
+                            score = 0.0,
+                            status = if (isCompleted) Trakt.COMPLETED else Trakt.WATCHING,
+                            statusFilter = statusFilter,
+                            startDate = 0L,
+                            finishDate = 0L,
+                            trackingUrl = "https://trakt.tv/shows/$slug"
+                        )
+                    )
+                }
+            }
+        } catch (_: Exception) {}
+
+        // Watched movies
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/sync/watched/movies?extended=full,images")
+                .applyTraktHeaders(includeContentType = false)
+                .get()
+                .build()
+            val response = authClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body.string()
+                val root = json.parseToJsonElement(body).jsonArray
+                root.forEach { elem ->
+                    val movie = elem.jsonObject["movie"]?.jsonObject ?: return@forEach
+                    val ids = movie["ids"]?.jsonObject ?: return@forEach
+                    val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
+                    val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
+                    val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                    var coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                    if (coverUrl.isBlank()) {
+                        coverUrl = getPosterUrl(traktId, isMovie = true)
+                    }
+
+                    entries.add(
+                        ImportableEntry(
+                            remoteId = traktId,
+                            title = title,
+                            coverUrl = coverUrl,
+                            totalEpisodes = 1L,
+                            episodesSeen = 1,
+                            score = 0.0,
+                            status = Trakt.COMPLETED,
+                            statusFilter = ImportStatusFilter.COMPLETED,
+                            startDate = 0L,
+                            finishDate = 0L,
+                            trackingUrl = "https://trakt.tv/movies/$slug"
+                        )
+                    )
+                }
+            }
+        } catch (_: Exception) {}
+
+        // Watchlist shows
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/sync/watchlist/shows?extended=full,images")
+                .applyTraktHeaders(includeContentType = false)
+                .get()
+                .build()
+            val response = authClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body.string()
+                val root = json.parseToJsonElement(body).jsonArray
+                root.forEach { elem ->
+                    val show = elem.jsonObject["show"]?.jsonObject ?: return@forEach
+                    val ids = show["ids"]?.jsonObject ?: return@forEach
+                    val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
+                    if (entries.none { it.remoteId == traktId }) {
+                        val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
+                        val title = show["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                        var coverUrl = extractPosterUrl(show["images"]?.jsonObject?.get("poster"))
+                        if (coverUrl.isBlank()) {
+                            coverUrl = getPosterUrl(traktId, isMovie = false)
+                        }
+                        val totalEpisodes = show["aired_episodes"]?.jsonPrimitive?.longOrNull ?: 0L
+
+                        entries.add(
+                            ImportableEntry(
+                                remoteId = traktId,
+                                title = title,
+                                coverUrl = coverUrl,
+                                totalEpisodes = totalEpisodes,
+                                episodesSeen = 0,
+                                score = 0.0,
+                                status = Trakt.PLAN_TO_WATCH,
+                                statusFilter = ImportStatusFilter.PLAN_TO_WATCH,
+                                startDate = 0L,
+                                finishDate = 0L,
+                                trackingUrl = "https://trakt.tv/shows/$slug"
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        // Watchlist movies
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/sync/watchlist/movies?extended=full,images")
+                .applyTraktHeaders(includeContentType = false)
+                .get()
+                .build()
+            val response = authClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body.string()
+                val root = json.parseToJsonElement(body).jsonArray
+                root.forEach { elem ->
+                    val movie = elem.jsonObject["movie"]?.jsonObject ?: return@forEach
+                    val ids = movie["ids"]?.jsonObject ?: return@forEach
+                    val traktId = ids["trakt"]?.jsonPrimitive?.longOrNull ?: return@forEach
+                    if (entries.none { it.remoteId == traktId }) {
+                        val slug = ids["slug"]?.jsonPrimitive?.contentOrNull ?: ""
+                        val title = movie["title"]?.jsonPrimitive?.contentOrNull ?: ""
+                        var coverUrl = extractPosterUrl(movie["images"]?.jsonObject?.get("poster"))
+                        if (coverUrl.isBlank()) {
+                            coverUrl = getPosterUrl(traktId, isMovie = true)
+                        }
+
+                        entries.add(
+                            ImportableEntry(
+                                remoteId = traktId,
+                                title = title,
+                                coverUrl = coverUrl,
+                                totalEpisodes = 1L,
+                                episodesSeen = 0,
+                                score = 0.0,
+                                status = Trakt.PLAN_TO_WATCH,
+                                statusFilter = ImportStatusFilter.PLAN_TO_WATCH,
+                                startDate = 0L,
+                                finishDate = 0L,
+                                trackingUrl = "https://trakt.tv/movies/$slug"
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        return entries
     }
 
     /**

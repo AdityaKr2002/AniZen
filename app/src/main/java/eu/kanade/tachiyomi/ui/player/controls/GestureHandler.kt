@@ -324,17 +324,26 @@ fun GestureHandler(
                             } else {
                                 pointer.consume()
                                 if (longPressSliding && isSpeedLongPress && !viewModel.paused.value) {
-                                    if (!hasInitializedDragSpeed) {
-                                        unsnappedCurrentSpeed = MPVLib.getPropertyDouble("speed")
-                                        hasInitializedDragSpeed = true
-                                    }
-                                    val diffX = pointer.position.x - lastX
-                                    if (abs(diffX) > 1f) {
-                                        unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.0035).coerceIn(0.25, 4.0)                                        
-                                        val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
-                                        speedRampJob?.cancel() 
-                                        MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
-                                        viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(snappedSpeed, isDragging = true) }
+                                    val dragDistance = abs(pointer.position.x - startPosition.x)
+                                    if (hasInitializedDragSpeed || dragDistance > viewConfiguration.touchSlop) {
+                                        if (!hasInitializedDragSpeed) {
+                                            unsnappedCurrentSpeed = maxOf(
+                                                playerPreferences.playerSpeedLongPress().get(),
+                                                MPVLib.getPropertyDouble("speed").toFloat(),
+                                            ).toDouble()
+                                            hasInitializedDragSpeed = true
+                                            lastX = pointer.position.x
+                                        }
+                                        val diffX = pointer.position.x - lastX
+                                        if (abs(diffX) > 1f) {
+                                            unsnappedCurrentSpeed = (unsnappedCurrentSpeed + diffX * 0.0035).coerceIn(0.25, 4.0)
+                                            val snappedSpeed = (Math.round(unsnappedCurrentSpeed * 2.0) / 2.0).toFloat().coerceIn(0.5f, 4.0f)
+                                            speedRampJob?.cancel()
+                                            MPVLib.setPropertyDouble("speed", snappedSpeed.toDouble())
+                                            viewModel.playerUpdate.update { PlayerUpdates.DoubleSpeed(snappedSpeed, isDragging = true) }
+                                            lastX = pointer.position.x
+                                        }
+                                    } else {
                                         lastX = pointer.position.x
                                     }
                                 }

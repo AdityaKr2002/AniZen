@@ -54,11 +54,12 @@ internal class ExtensionApi {
                 .newCall(GET("$repoBaseUrl/index.min.json"))
                 .awaitSuccess()
 
-            val regex = """https://raw.githubusercontent.com/(.+?)/.+""".toRegex()
-            val author = regex.find(repoBaseUrl)?.let {
-                val (user) = it.destructured
-                "@$user"
-            } ?: extRepo.shortName ?: extRepo.name
+            val repoHostAuthorRegex = """^https://(?:raw\.githubusercontent\.com|codeberg\.org|gitlab\.com)/([^/]+)/.*""".toRegex()
+            val author = extRepo.author
+                ?: repoHostAuthorRegex.find(repoBaseUrl)?.let {
+                    val (user) = it.destructured
+                    "@$user"
+                } ?: extRepo.shortName ?: extRepo.name
 
             with(json) {
                 response
