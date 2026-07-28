@@ -154,7 +154,9 @@ class UpdatesScreenModel(
             
             animeIds.forEach { animeId ->
                 val items = animeGroups[animeId]!!
-                val animeItems = items.sortedWith(
+                val hasUnwatched = items.any { !it.update.seen }
+                val filteredItems = if (hasUnwatched) items.filter { !it.update.seen } else items
+                val animeItems = filteredItems.sortedWith(
                     compareBy<UpdatesItem> { it.update.seen }
                         .thenByDescending { it.update.lastSecondSeen > 0 }
                         .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber },
