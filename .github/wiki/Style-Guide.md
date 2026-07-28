@@ -1,18 +1,21 @@
 # Wiki Style Guide
 
-Standardized writing formation and style rules for the **AniZen Wiki**.
+Standardized writing formation, design, and formatting rules for the **AniZen Wiki**.
 
 > [!NOTE]
-> These rules apply **exclusively to pages within the Wiki** (`.github/wiki/` and the GitHub Wiki repository). They do not affect root documentation, code comments, or external repository files.
+> These rules apply **exclusively to pages within the Wiki** (`.github/wiki/` and the GitHub Wiki repository). They do not affect root project documentation, source code comments, or external repository files.
 
 ---
 
-## 1. Page Hierarchy & Structure
+## 1. Page Structure & Hierarchy
 
-- **Title (H1)**: Every page must begin with a single `# Heading`.
-- **Sub-description**: Immediately under the H1 title, include a single concise sentence describing the page's purpose.
-- **Section Dividers**: Use `---` horizontal rules after the sub-description and between major H2 sections.
-- **Heading Order**: Use `## H2` for main topic sections and `### H3` for sub-sections. Never skip heading levels.
+- **Title (H1)**: Every page must start with a single `# Title`.
+- **Tagline Sub-description**: Immediately below the H1 title, include a single concise sentence describing the page's purpose.
+- **Dividers (`---`)**: Place a `---` horizontal rule after the tagline sub-description and between major H2 sections.
+- **Heading Order**:
+  - `## H2`: Major topic divisions on the page.
+  - `### H3`: Sub-topics within an H2 section.
+  - Never skip heading levels (e.g. do not jump from H1 directly to H3).
 
 ```markdown
 # Page title
@@ -21,7 +24,7 @@ Single concise sentence explaining what this page covers.
 
 ---
 
-## Section title
+## Major section title
 
 ### Sub-section title
 ```
@@ -30,54 +33,65 @@ Single concise sentence explaining what this page covers.
 
 ## 2. Voice, Tone & UI Formatting
 
-- **Voice**: Instructional, direct, concise, and neutral (Aniyomi / VitePress documentation style).
-- **Imperative Steps**: Use direct action verbs for instructions (*"Open AniZen"*, *"Navigate to Settings"*, *"Select the APK"*).
-- **UI Elements**: **Bold** all UI labels, button text, menu paths, and tab titles.
-  - Path format: **Settings → Player → Decoder**
-  - Button format: Press the **Add to library** button.
+- **Voice & Tone**: Instructional, direct, concise, and neutral (matching the Aniyomi / VitePress documentation standard).
+- **Action Verbs**: Use direct imperative verbs for step-by-step instructions (*"Open AniZen"*, *"Navigate to Settings"*, *"Select the APK"*).
+- **UI Elements**: **Bold** all UI labels, button names, tab titles, and screen names.
+- **Navigation Paths**: Format in-app navigation paths with bold text and right arrows (`→`):
+  - **More → Settings → Advanced**
+  - **Browse → Extension Repositories**
+  - **Library → Filter → Display**
 
 ---
 
 ## 3. Step-by-Step Instructions
 
-- Use numbered lists (`1.`, `2.`, `3.`) for all procedures, installation steps, and setup guides.
-- Keep individual steps concise and focused on a single action.
+- Use numbered lists (`1.`, `2.`, `3.`) for procedures, installation guides, and setup workflows.
+- Keep each step single-sentence or focused on a single actionable step.
 
 ```markdown
-1. Open **AniZen** and navigate to the **Browse** tab.
-2. Select **Extension Repositories** from the top toolbar.
-3. Paste the repository URL and tap **Add**.
+1. Open **AniZen** and navigate to **More → Settings → Browse**.
+2. Select **Extension Repositories** from the top menu.
+3. Paste your repository URL and tap **Add**.
 ```
 
 ---
 
 ## 4. Callouts & Admonitions
 
-Use standard GitHub alert blockquotes for context-specific callouts:
+Use standard GitHub blockquote callouts to highlight important information:
 
-- `> [!NOTE]` — Contextual information, package IDs, or default behaviors.
-- `> [!TIP]` — Best practices, shortcuts, or optimization suggestions.
-- `> [!WARNING]` — Performance costs, high GPU usage, or device heating warnings.
-- `> [!IMPORTANT]` — Mandatory prerequisites or critical setup steps.
-
----
-
-## 5. Tables & Comparisons
-
-Use Markdown tables to present feature comparisons, preset profiles, gesture lists, and hardware requirements.
-
-```markdown
-| Preset | Settings | Recommended Use |
-|:---|:---|:---|
-| **Vivid Anime** | Contrast +5, Saturation +20 | Enhances line art and color vibrance |
-```
+- `> [!NOTE]` — General background context, package IDs, or default application behaviors.
+- `> [!TIP]` — Efficiency tips, shortcuts, or recommended user workflows.
+- `> [!WARNING]` — High GPU usage, battery consumption, or resource-heavy settings.
+- `> [!IMPORTANT]` — Mandatory prerequisites or essential setup instructions.
+- `> [!CAUTION]` — Critical warnings regarding potential data loss or app crashes.
 
 ---
 
-## 6. Title Search Examples
+## 5. Title Search Examples
 
-When providing title search examples or alternative spellings, format them using blockquotes:
+When providing title search examples or spelling variations, format them using blockquotes with bold keywords:
 
 ```markdown
 > Example: **Boku no Hero Academia** instead of **My Hero Academia**.
 ```
+
+---
+
+## 6. Tables & Specifications
+
+Use clean Markdown tables for presenting option comparisons, performance profiles, filter presets, or hardware requirements:
+
+```markdown
+| Preset | Sliders | Recommended Use |
+|:---|:---|:---|
+| **Vivid Anime** | Contrast +5, Saturation +20 | Enhances line art and color vibrance |
+| **Cinema** | Brightness -5, Contrast +15 | Darker, moody cinematic atmosphere |
+```
+
+---
+
+## 7. Scope & Isolation
+
+- **Wiki Scope Only**: These guidelines strictly govern `.github/wiki/*.md` and `AniZen.wiki.git`.
+- **Non-Interference**: Do not apply or enforce these rules to `README.md`, code comments, pull request titles, or commit messages outside the wiki folder.
