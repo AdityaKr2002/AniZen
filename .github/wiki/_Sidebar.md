@@ -1,31 +1,16 @@
-## 🎌 AniZen
+### General
+- **[Welcome](Home)**
+- **[Getting started](Installation)**
+- **[Features](Features)**
+- **[Changelogs](Changelog)**
 
-**[🏠 Home](Home)**
+### Guides
+- **[Player settings](Player-Guide)**
+- **[Anime4K guide](Anime4K-Guide)**
 
----
+### Frequently Asked Questions
+- **[FAQ](FAQ)**
 
-### 👤 Users
-- [🚀 Installation](Installation)
-- [✨ Features](Features)
-- [❓ FAQ](FAQ)
-
----
-
-### 🎬 Player
-- [⚙️ Player Guide](Player-Guide)
-- [🧠 Anime4K Guide](Anime4K-Guide)
-
----
-
-### 🛠️ Developers
-- [🏗️ Architecture](Architecture)
-- [🤝 Contributing](Contributing)
-
----
-
-### 📋 Release
-- [📋 Changelog](Changelog)
-
----
-
-[Discord](https://discord.gg/J2wmZqEJnS) · [Issues](https://github.com/salmanbappi/AniZen/issues) · [Releases](https://github.com/salmanbappi/AniZen/releases)
+### Developers
+- **[Architecture](Architecture)**
+- **[Contribute](Contributing)**

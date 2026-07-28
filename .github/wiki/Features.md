@@ -1,90 +1,49 @@
-# ✨ Features
+# Features
 
-AniZen packs an extensive set of features across its player, downloader, UI, and analytics systems.
-
----
-
-## 🎬 Media Player & Video Engine
-
-### Neural Upscaling (Anime4K)
-- **Anime4K Shaders** built-in with quality levels: `Fast (S)`, `Balanced (M)`, `High (L)`
-- Multiple processing modes: `A`, `B`, `C`, `A+`, `B+`, `C+` for different content types
-- **Adaptive Shader Scaling** — automatically downgrades quality on frame-drop detection
-- **Dynamic MediaCodec Switching** — auto-fallback to software decoding if filters exceed hardware limits
-
-> See the full [Anime4K Guide](Anime4K-Guide) for mode explanations and performance tuning.
-
-### Playback & Motion
-- **Motion Interpolation** — temporal frame generation with `oversample`, `mitchell`, `catmull-rom` to match display refresh (up to 120/144 Hz)
-- **High-Quality Scaling** — `ewa_lanczossharp` Jinc-based scaler for sharp anime lines
-- **AniSkip Integration** — skippable intros with a Netflix-style skip button
-- **Filler Episode Skipping** — auto-skips filler episodes from tracker data
-- **Default Stream Memory** — remembers preferred hoster & quality per anime
-- **Custom Aspect Ratios** — define precise values with a dedicated sheet
-
-### Gestures & Controls
-- **Pinch-to-Zoom** — up to 3× scale with adjustment sheet
-- **Long-Press 2× Speed** — jitter-free with animated release
-- **Horizontal Slide Speed** — smooth horizontal swipe speed adjustment
-- **Volume Boosting** — up to 200% with pitch correction
-- **Sleep Timer** — schedule playback stop
-- **Native PiP** — background playback with custom controls
-
-### Subtitles & Config
-- **On-Demand Subtitles** — load external `.srt`/`.ass`/`.vtt` files mid-session via URI
-- **Advanced Config Editor** — in-app editor for `mpv.conf` and `input.conf`
-- **Custom Script Runner** — load and run custom MPV Lua scripts
-- **Custom Player Layout** — reorder and configure all action buttons
-
-### Filters (MPVFX Suite)
-Card-based filter interface with:
-- Debanding
-- Brightness / Saturation / Contrast / Gamma / Hue / Sharpen
-- Integrated Anime4K controls
-- Presets: **Vivid Anime**, **Cinema**, **Vintage**
+Overview of playback capabilities, downloader resilience, UI customization, and monitoring tools in **AniZen**.
 
 ---
 
-## 📥 Resilient Downloader & Storage
+## Video player & engine
 
-| Feature | Detail |
-|:---|:---|
-| **1DM-Style Engine** | Multi-threaded chunked downloads via byte-range splitting |
-| **Part-File Recovery** | Per-part size verification, 5× retry with exponential backoff |
-| **External Downloader** | Handoff to 1DM/ADM with headers, filenames, and directories |
-| **Native HLS** | Multi-threaded segment downloader with on-the-fly AES-128 decryption |
-| **Native DASH** | FFmpeg-based muxing with duration-based progress estimation |
-| **Stream Pre-fetching** | Background URL resolution for queued downloads |
-| **Storage Protection** | 200 MB safety buffer check before every download |
-| **Soft Subtitles** | Auto-downloads VTT/ASS/SRT tracks alongside video |
-| **Atomic Assembly** | Sandbox `_tmp` folder renames to prevent partial-download clutter |
-| **Preload Next Episode** | Pre-resolves stream links with network-aware throttling |
+AniZen features a heavily optimized media player built on `mpv-android`.
 
----
+### Upscaling & Shaders
+- **Anime4K Neural Shaders**: Built-in real-time upscaling with processing modes `A`, `B`, `C`, `A+`, `B+`, and `C+`.
+- **Adaptive Shader Scaling**: Dynamically adjusts upscaling quality if frame drops are detected during heavy scenes.
+- **Dynamic MediaCodec Switching**: Automatically falls back to software decoding if active GLSL filters exceed hardware limits.
 
-## 📰 Feed & Personalization
-
-- **Category-Styled Feeds** — saved searches & popular content in draggable category rows
-- **Saved Search Feeds** — pin keyword/filter combos as auto-updating feed rows
-- **Unified Feed Tab** — view multiple sources simultaneously
-- **Custom Cover Art** — set covers from local files or web URLs
-- **Auto Theme Color** — entry view colors derived from cover art
-- **Dynamic Player Theme** — player UI colors from active cover art
-- **22 Color Palettes** — full custom theming
-- **Panorama Cover** — wide-cover full display
-- **Library Folders** — collapsible sub-folders inside library categories
-- **UI Container Styles** — card layouts configurable per-tab
-- **Haze Glassmorphism** — toggleable glass-blur for nav bars
+### Smooth Motion & Playback
+- **Motion Interpolation**: Generates intermediate frames matching device refresh rates (60Hz, 90Hz, 120Hz, 144Hz).
+- **AniSkip Integration**: Displays a one-tap skip button for opening and ending themes powered by AniSkip.
+- **Filler Episode Skipping**: Identifies and skips filler episodes based on online tracking data.
+- **Default Stream Memory**: Remembers preferred hoster and quality settings per series for seamless playback.
 
 ---
 
-## 📊 Statistics & Maintenance
+## Downloader & storage engine
 
-- **Watch Statistics** — weekly heatmaps, genre affinity, status breakdowns, 30-day activity logs, top titles, preferred viewing times
-- **Infrastructure Metrics** — throughput distribution, latency matrices, topology breakdowns
-- **Extension Health Monitor** — live latency, node status, connection metrics
-- **AI Diagnostics Assistant** — conversational troubleshooter using exception traces & library context
-- **Unified Rating Distribution** — combines local + tracker scores into unified score distributions
-- **Extension Repo Mapping** — resolves the GitHub owner/repo for every installed extension
-- **Diagnostics Export** — one-tap export of health stats, resolve logs, and errors to clipboard
-- **Adaptive Navigation** — suggests layout presets (Default, Minimal, Power) based on network & time of day
+The download subsystem is designed for reliability over poor network conditions:
+
+- **Chunked Downloading**: Multi-threaded downloader utilizing HTTP byte-range requests.
+- **Part-File Recovery**: Validates chunk sizes automatically and retries failed segments up to 5 times with backoff.
+- **Native HLS & DASH**: Muxes video, audio, and AES-128 encrypted streams cleanly into local MP4 containers.
+- **External Downloader Handoff**: Passes download tasks directly to external apps like **1DM** or **ADM**, preserving headers and cookies.
+- **Pre-Flight Storage Protection**: Verifies available device storage before starting downloads to prevent corruption.
+
+---
+
+## Customization & UI
+
+- **Category Feeds**: Personalize your home screen by pinning saved searches and categories as custom feed rows.
+- **Theme Engine**: Includes 22 curated color palettes alongside dynamic color extraction from cover art.
+- **Glassmorphism Styling**: Optional Haze blur effects for top app bars and bottom navigation.
+- **Custom Player Layout**: Reorder action buttons and player controls directly from the settings menu.
+
+---
+
+## Maintenance & Analytics
+
+- **Watch Statistics**: Detailed heatmaps, genre breakdowns, viewing time trends, and rating distribution graphs.
+- **Extension Health Monitor**: Reports real-time latency, node status, and response metrics for all installed extensions.
+- **Diagnostics Export**: One-tap tool to format and copy error logs and extension diagnostics to your clipboard.

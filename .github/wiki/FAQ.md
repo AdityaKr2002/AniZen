@@ -1,88 +1,47 @@
-# ❓ FAQ
+# Frequently Asked Questions
 
-Frequently asked questions about AniZen.
-
----
-
-## 🔧 General
-
-### Is AniZen free?
-Yes — completely free and open-source under the [Apache-2.0 License](https://github.com/salmanbappi/AniZen/blob/master/LICENSE).
-
-### Will AniZen conflict with Anikku or Aniyomi?
-No. AniZen uses the package ID `app.anizen`, which is unique. It installs and runs completely independently alongside other anime apps.
-
-### Does AniZen come with built-in anime sources?
-No. Like Aniyomi, AniZen uses **extensions** — community-built plugins that connect to anime sites. Extensions are installed separately.
-
-### Where are my downloads stored?
-By default, downloads go to `/storage/emulated/0/AniZen/`. You can change this in **Settings → Downloads → Download Location**.
-
-### Can I migrate my library from Aniyomi / Anikku?
-Yes — use the backup/restore feature. Export a `.tachibk` backup from the source app and import it in AniZen via **Settings → Backup → Restore Backup**.
+Answers to common questions about AniZen's library, player, downloads, and storage.
 
 ---
 
-## 🎬 Player
+## General
 
-### Why does the video stutter when I enable Anime4K?
-Your device's GPU may not be powerful enough for the selected quality level. Try:
-1. Lower the quality: `High → Balanced → Fast`
-2. Avoid `A+/B+/C+` modes (they double GPU load)
-3. Disable `ewa_lanczossharp` scaling simultaneously
+### Is AniZen free and open-source?
+Yes, AniZen is open-source software licensed under the **Apache-2.0 License**.
 
-See the full [Anime4K Guide](Anime4K-Guide) for details.
+### Does AniZen replace Aniyomi or Anikku?
+No. AniZen uses the package identifier `app.anizen`. It installs as a separate application on your device and operates independently without affecting your existing Aniyomi or Anikku installations.
 
-### The screen goes black when I start playback — what do I do?
-Force software decoding: **Settings → Player → Decoder → Force Software**.
-
-### Why is audio out of sync?
-If you're using Interpolation, it requires `display-resample` sync which can sometimes desync on lower-end devices. Try disabling Interpolation.
-
-### Can I use external subtitle files?
-Yes. During playback, tap the subtitle button and select **Load External Subtitle**. Supports `.srt`, `.ass`, and `.vtt` formats.
-
-### What does "Copy Mode" mean in Video Filters?
-Android's hardware decoder normally doesn't allow post-processing. "Copy Mode" (`mediacodec-copy`) forces the decoder to copy frames back to memory so filters can be applied. It's automatically enabled when any filter is active and disabled when all filters are at 0.
+### How do I import my backup from Aniyomi?
+1. Open **Aniyomi** and navigate to **Settings → Backup and restore → Create backup**.
+2. Save the `.tachibk` file to your storage.
+3. Open **AniZen** and navigate to **Settings → Backup and restore → Restore backup**.
+4. Select your `.tachibk` file to restore your library and history.
 
 ---
 
-## 📥 Downloads
+## Media Player
 
-### My download shows 0 MB — is it broken?
-This was a known issue with HLS streams. It's fixed in the latest version — update AniZen and retry.
+### Why is the player lagging during playback?
+Playback stuttering usually happens when hardware decoding is overloaded by active video filters or high Anime4K upscaling presets.
 
-### Can I use an external download manager like 1DM?
-Yes. Go to **Settings → Downloads → External Downloader** and select your preferred app. AniZen will hand off the URL with correct headers and filename.
+To resolve playback lag:
+- Lower your Anime4K quality setting to **Balanced (M)** or **Fast (S)**.
+- Disable **High-quality scaling** (`ewa_lanczossharp`).
+- Reset video adjustment sliders back to `0` to re-enable pure hardware decoding.
 
-### A download failed partway through — will it resume?
-Yes. AniZen's downloader uses per-part file verification and will automatically resume from where it left off with up to 5 retry attempts per part.
-
----
-
-## 🌐 Extensions & Sources
-
-### Where do I get extensions?
-Extensions are hosted by the community. Add an extension repository URL in **Settings → Browse → Extension Repositories**.
-
-### An extension isn't working — is it broken?
-Check the extension health monitor: **Settings → Statistics → Extension Health**. It shows live latency and node status per extension. If a source is down, it's usually a temporary server-side issue.
-
-### How do I report a broken extension?
-Report it to the extension repository maintainer, not the AniZen issue tracker. AniZen only ships the app — extensions are third-party.
+### How do I add custom external subtitles?
+While playing a video:
+1. Tap the **Subtitles** icon on the player overlay.
+2. Select **Load external subtitle...**
+3. Pick your `.srt`, `.ass`, or `.vtt` file using the system file picker.
 
 ---
 
-## 🔄 Updates
+## Downloads & Storage
 
-### How do I get the latest version?
-AniZen has a built-in update checker. You'll see a notification banner when an update is available. You can also check manually at **Settings → About → Check for Updates**, or grab the latest APK from [Releases](https://github.com/salmanbappi/AniZen/releases).
+### Where are downloaded videos stored?
+Downloaded files are saved in `AniZen/downloads/` within your primary device storage by default. You can customize the download destination under **Settings → Downloads → Download location**.
 
-### What are Preview builds?
-Preview builds are automated builds from the `preview` branch. They contain the latest commits but may be unstable. Find them in [GitHub Actions](https://github.com/salmanbappi/AniZen/actions/workflows/preview.yml).
-
----
-
-## 💬 More Help
-
-Still stuck? Join the [Discord Server](https://discord.gg/J2wmZqEJnS) or open a [GitHub Issue](https://github.com/salmanbappi/AniZen/issues).
+### Can I use an external download manager?
+Yes. Navigate to **Settings → Downloads → External downloader** and enable external handoff. AniZen will automatically prompt external download managers like **1DM** or **ADM** when initiating downloads.

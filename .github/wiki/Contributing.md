@@ -1,86 +1,45 @@
-# 🤝 Contributing
+# Contribute
 
-Thanks for your interest in contributing to AniZen! Here's everything you need to get started.
-
----
-
-## 🐛 Reporting Bugs
-
-1. Check [existing issues](https://github.com/salmanbappi/AniZen/issues) to avoid duplicates.
-2. Open a [new issue](https://github.com/salmanbappi/AniZen/issues/new) with:
-   - AniZen version
-   - Android version & device model
-   - Steps to reproduce
-   - Logcat or crash report (use **Settings → Diagnostics → Export Logs**)
+Guidelines for reporting issues, contributing code, and helping with translations.
 
 ---
 
-## 💡 Feature Requests
+## Code contributions
 
-Open an issue tagged `enhancement`. Describe the use case, not just the solution. Feature discussions also happen in the [Discord server](https://discord.gg/J2wmZqEJnS).
-
----
-
-## 🔧 Code Contributions
-
-Pull requests are welcome! No assignment or permission required — just pick an [open issue](https://github.com/salmanbappi/AniZen/issues) and comment on it so others know it's being worked on.
+Pull requests are welcome! If you are interested in taking on an open issue, feel free to comment on the issue ticket so others are aware.
 
 ### Prerequisites
 
-You need working knowledge of:
+Contributing to AniZen requires familiarity with the following core technologies:
 
-| Skill | Resource |
-|:---|:---|
-| **Kotlin** | [kotlinlang.org](https://kotlinlang.org/) |
-| **Android Development** | [developer.android.com](https://developer.android.com/) |
-| **Jetpack Compose** | [Compose docs](https://developer.android.com/compose) |
+- **Android Development** using Android Studio and Gradle.
+- **Kotlin** (Coroutines, Flow, functional concepts).
+- **Jetpack Compose** declarative UI framework.
 
-### Tools Required
+### Development setup
 
-- [Android Studio](https://developer.android.com/studio) (latest stable or Canary)
-- An Android device or emulator with developer options enabled
-
-### Setup
-
-```bash
-git clone https://github.com/salmanbappi/AniZen.git
-cd AniZen
-./gradlew assembleDebug
-```
-
-Install the debug APK to your device and you're ready to iterate.
-
-### Code Style
-
-- Run `./gradlew detekt` before submitting — all Detekt rules must pass
-- Follow existing naming conventions and architecture patterns
-- See [Architecture](Architecture) for module boundaries — respect them
+1. Clone the repository to your local machine:
+   ```bash
+   git clone https://github.com/salmanbappi/AniZen.git
+   ```
+2. Open the project in **Android Studio**.
+3. Connect an Android device or launch an emulator.
+4. Run `./gradlew assembleDebug` to build and install the debug build.
 
 ---
 
-## 🌐 Translations
+## Reporting issues
 
-Translations are managed externally via [**Weblate**](https://hosted.weblate.org/projects/salmanbappi/anizen/).
+Before creating a new bug report, please check existing [GitHub Issues](https://github.com/salmanbappi/AniZen/issues) to avoid duplicates.
 
-- No code changes required — just translate strings in Weblate
-- Weblate auto-syncs to the repo via PRs
-
----
-
-## 🍴 Forking
-
-Forks are permitted under [Apache-2.0](https://github.com/salmanbappi/AniZen/blob/master/LICENSE). When forking:
-
-| Requirement | Why |
-|:---|:---|
-| Change the app name | Avoid user confusion |
-| Change the app icon | Avoid user confusion |
-| Change `applicationId` in `build.gradle.kts` | Avoid install conflicts with AniZen |
-| Disable/replace the update checker | Prevent your users from receiving AniZen updates |
-| Replace ACRA endpoint (if using crash reporting) | Prevent your crash data polluting AniZen's reports |
+When filing an issue, please include:
+- Your device model and Android version.
+- Exact AniZen version string.
+- Steps to consistently reproduce the issue.
+- Relevant crash logs or export files from **Settings → Diagnostics**.
 
 ---
 
-## 💬 Getting Help
+## Translations
 
-Join the [Discord server](https://discord.gg/J2wmZqEJnS) for live help while developing.
+Translations are hosted externally on [Weblate](https://hosted.weblate.org/projects/salmanbappi/anizen/). String changes submitted on Weblate are periodically synchronized back to the repository automatically.

@@ -1,50 +1,34 @@
-<div align="center">
+# Welcome to AniZen
 
-# 🎌 AniZen Wiki
+Essential information to help you navigate, configure, and get the most out of **AniZen**.
 
-**A personal anime & movie client for Android — built for fluidity, fidelity, and freedom.**
-
-*AniZen × Miyomi · Designed, directed, and built solo. Every detail intentional.*
-
-[![Discord](https://img.shields.io/discord/1242381704459452488?label=Discord&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF&style=flat-square)](https://discord.gg/J2wmZqEJnS)
-[![Release](https://img.shields.io/github/v/release/salmanbappi/AniZen?style=flat-square)](https://github.com/salmanbappi/AniZen/releases)
-[![License](https://img.shields.io/github/license/salmanbappi/AniZen?color=0877d2&style=flat-square)](https://github.com/salmanbappi/AniZen/blob/master/LICENSE)
-
-</div>
+AniZen is a personal anime & movie client for Android, designed with a focus on fluid interactions, deep player optimizations, and modern visual design.
 
 ---
 
-## 👋 Welcome
+## Quick Navigation
 
-AniZen is a solo-built passion project forked from Aniyomi and Anikku, reimagined with modern Kotlin/Compose architecture, a deeply optimized MPV-based player, and a premium visual experience. This wiki is your complete reference for everything AniZen.
+### 🚀 Getting Started
+- **[Installation](Installation)** — Download and set up AniZen on your Android device.
+- **[Features](Features)** — Overview of media player, downloader, and customization options.
+- **[FAQ](FAQ)** — Frequently asked questions about library management, playback, and sources.
 
----
+### 🎬 Player & Media Engine
+- **[Player settings](Player-Guide)** — Detailed guide to zero-lag playback, video filters, and controls.
+- **[Anime4K guide](Anime4K-Guide)** — Understand neural upscaling modes, performance presets, and tuning.
 
-## 📚 Wiki Index
-
-| Section | Description |
-|:---|:---|
-| 🚀 [Installation](Installation) | Download & install AniZen on your device |
-| ✨ [Features](Features) | Complete feature overview |
-| ⚙️ [Player Guide](Player-Guide) | Pro player settings, gestures & optimizations |
-| 🧠 [Anime4K Guide](Anime4K-Guide) | Upscaling shader modes & performance tuning |
-| 🏗️ [Architecture](Architecture) | Module structure & technical stack |
-| 🤝 [Contributing](Contributing) | How to report bugs, translate & submit PRs |
-| 📋 [Changelog](Changelog) | Release notes & version history |
-| ❓ [FAQ](FAQ) | Frequently asked questions |
+### 🛠️ Developer & Community
+- **[Architecture](Architecture)** — Codebase structure, technology stack, and module dependencies.
+- **[Contribute](Contributing)** — How to report issues, contribute code, or help translate.
+- **[Changelogs](Changelog)** — Detailed release notes and version history.
 
 ---
 
-## ⚡ Quick Start
+## Community & Support
 
-```
-1. Go to Releases → download the latest arm64-v8a APK
-2. Enable "Install from Unknown Sources" in Android settings
-3. Install → launches as app.anizen (no conflict with Anikku)
-```
+> [!NOTE]
+> AniZen is open-source software licensed under the **Apache-2.0 License**.
 
-> **Need help?** Join the [Discord Server](https://discord.gg/J2wmZqEJnS) or open a [GitHub Issue](https://github.com/salmanbappi/AniZen/issues).
-
----
-
-<sub>AniZen Wiki · Apache-2.0 License</sub>
+- **Discord**: Join the [Discord server](https://discord.gg/J2wmZqEJnS) for online help and community discussions.
+- **GitHub**: Report bugs and request features on our [GitHub Issues](https://github.com/salmanbappi/AniZen/issues) page.
+- **Releases**: Download the latest official APKs from the [Releases](https://github.com/salmanbappi/AniZen/releases) page.
