@@ -327,7 +327,6 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
     }
 
     private val observedProps = mapOf(
-        "chapter" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
         "chapter-list" to MPVLib.mpvFormat.MPV_FORMAT_NONE,
         "track-list" to MPVLib.mpvFormat.MPV_FORMAT_NONE,
         "time-pos" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
