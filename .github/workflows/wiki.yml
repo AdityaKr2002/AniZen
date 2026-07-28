@@ -2,7 +2,7 @@ name: Publish Wiki
 
 on:
   push:
-    branches: [master, main]
+    branches: [preview]
     paths:
       - '.github/wiki/**'
   workflow_dispatch:
