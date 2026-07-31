@@ -399,6 +399,17 @@ class EpisodeOptionsDialogScreenModel(
             val success = loadVideo(_source.value!!, video, hosterIndex, videoIndex)
             if (success) {
                 _showAllQualities.update { _ -> false }
+                val hoster = _hosterList.value.getOrNull(hosterIndex)
+                if (hoster != null) {
+                    val store = eu.kanade.tachiyomi.ui.player.utils.DefaultStreamPreferenceStore(playerPreferences)
+                    val currentComposite = store.getEffectiveSelector(animeId)
+                    val newComposite = eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector.updateCompositeSelector(
+                        currentComposite,
+                        hoster.hosterName,
+                        eu.kanade.tachiyomi.ui.player.utils.DefaultStreamSelector.selectorFor(video, hoster.hosterName),
+                    )
+                    store.setSelector(animeId, newComposite)
+                }
             }
         }
     }

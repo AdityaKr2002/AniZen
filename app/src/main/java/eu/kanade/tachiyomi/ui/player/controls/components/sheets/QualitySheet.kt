@@ -209,11 +209,12 @@ private fun buildDefaultVideoByHosterIndex(
     defaultStreamSelector: String,
 ): Map<Int, Int> {
     if (defaultStreamSelector.isBlank()) return emptyMap()
-    return hosterState.mapIndexedNotNull { hosterIdx, state ->
-        if (state !is HosterState.Ready) return@mapIndexedNotNull null
-        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector, state.name)
-        if (videoIdx >= 0) hosterIdx to videoIdx else null
-    }.toMap()
+    val bestMatch = DefaultStreamSelector.findBestInHosters(defaultStreamSelector, hosterState)
+    return if (bestMatch != null) {
+        mapOf(bestMatch.first to bestMatch.second)
+    } else {
+        emptyMap()
+    }
 }
 
 private fun findDefaultVideoIndex(
@@ -360,14 +361,10 @@ private fun findDefaultScrollTarget(
     defaultStreamSelector: String,
 ): DefaultScrollTarget? {
     if (defaultStreamSelector.isBlank()) return null
-    for ((hosterIdx, state) in hosterState.withIndex()) {
-        if (state !is HosterState.Ready) continue
-        val videoIdx = findDefaultVideoIndex(state.videoList, defaultStreamSelector, state.name)
-        if (videoIdx >= 0) {
-            return DefaultScrollTarget(hosterIndex = hosterIdx, videoIndex = videoIdx)
-        }
+    val bestMatch = DefaultStreamSelector.findBestInHosters(defaultStreamSelector, hosterState)
+    return bestMatch?.let { (hIdx, vIdx) ->
+        DefaultScrollTarget(hosterIndex = hIdx, videoIndex = vIdx)
     }
-    return null
 }
 
 @Composable
