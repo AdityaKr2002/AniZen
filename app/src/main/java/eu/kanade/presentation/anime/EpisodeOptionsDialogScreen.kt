@@ -151,7 +151,7 @@ class EpisodeOptionsDialogScreen(
 
 class EpisodeOptionsDialogScreenModel(
     episodeId: Long,
-    animeId: Long,
+    private val animeId: Long,
     sourceId: Long,
 ) : ScreenModel {
     private val sourceManager: SourceManager = Injekt.get()
