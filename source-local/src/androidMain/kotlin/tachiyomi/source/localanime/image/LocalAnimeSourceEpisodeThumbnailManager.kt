@@ -17,10 +17,31 @@ actual class LocalAnimeSourceEpisodeThumbnailManager(
     private val fileSystem: LocalAnimeSourceFileSystem,
 ) {
 
-    actual fun find(animeUrl: String, fileName: String): UniFile? {
-        return fileSystem.getFilesInAnimeDirectory(animeUrl)
-            .filter { it.isFile && it.nameWithoutExtension.equals(fileName, ignoreCase = true) }
-            .firstOrNull { ImageUtil.isImage(it.name) { it.openInputStream() } }
+    actual fun find(animeUrl: String, episodeName: String): UniFile? {
+        val files = fileSystem.getFilesInAnimeDirectory(animeUrl)
+
+        // 1. Match "<Episode Name>-thumbnail" (e.g., Episode 01-thumbnail.jpg)
+        files.firstOrNull {
+            it.isFile &&
+                it.nameWithoutExtension.equals("$episodeName-thumbnail", ignoreCase = true) &&
+                ImageUtil.isImage(it.name) { it.openInputStream() }
+        }?.let { return it }
+
+        // 2. Match "<Episode Name>" image file (e.g., Episode 01.jpg)
+        files.firstOrNull {
+            it.isFile &&
+                it.nameWithoutExtension.equals(episodeName, ignoreCase = true) &&
+                ImageUtil.isImage(it.name) { it.openInputStream() }
+        }?.let { return it }
+
+        // 3. Match "<Episode Name>-cover" (e.g., Episode 01-cover.jpg)
+        files.firstOrNull {
+            it.isFile &&
+                it.nameWithoutExtension.equals("$episodeName-cover", ignoreCase = true) &&
+                ImageUtil.isImage(it.name) { it.openInputStream() }
+        }?.let { return it }
+
+        return null
     }
 
     actual fun update(anime: SAnime, episode: SEpisode, inputStream: InputStream): UniFile? {
@@ -31,7 +52,7 @@ actual class LocalAnimeSourceEpisodeThumbnailManager(
         }
 
         val fileName = "${episode.name}-$DEFAULT_THUMBNAIL_NAME"
-        val targetFile = find(anime.url, fileName) ?: directory.createFile(fileName)!!
+        val targetFile = find(anime.url, episode.name) ?: directory.createFile(fileName)!!
 
         inputStream.use { input ->
             targetFile.openOutputStream().use { output ->

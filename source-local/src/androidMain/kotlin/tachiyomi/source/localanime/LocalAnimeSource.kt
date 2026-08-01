@@ -245,17 +245,14 @@ actual class LocalAnimeSource(
 
                     // Look for local episode thumbnail file or extract frame from video if thumbnail is missing
                     if (this.preview_url == null) {
-                        val thumbnailFile = thumbnailManager.find(anime.url, "${this.name}-$DEFAULT_THUMBNAIL_NAME")
-                            ?: thumbnailManager.find(anime.url, "${this.name}-thumbnail.png")
+                        val thumbnailFile = thumbnailManager.find(anime.url, this.name)
                         if (thumbnailFile != null) {
                             this.preview_url = thumbnailFile.uri.toString()
                         } else {
-                            scope.launch {
-                                try {
-                                    updateEpisodeThumbnailFromVideo(this@apply, anime)
-                                } catch (e: Exception) {
-                                    logcat(LogPriority.ERROR) { "Couldn't extract episode thumbnail from video: $e" }
-                                }
+                            try {
+                                updateEpisodeThumbnailFromVideo(this, anime)
+                            } catch (e: Exception) {
+                                logcat(LogPriority.ERROR) { "Couldn't extract episode thumbnail from video: $e" }
                             }
                         }
                     }

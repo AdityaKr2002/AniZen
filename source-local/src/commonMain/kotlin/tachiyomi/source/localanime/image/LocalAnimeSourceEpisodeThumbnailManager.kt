@@ -7,7 +7,7 @@ import java.io.InputStream
 
 expect class LocalAnimeSourceEpisodeThumbnailManager {
 
-    fun find(animeUrl: String, fileName: String): UniFile?
+    fun find(animeUrl: String, episodeName: String): UniFile?
 
     fun update(anime: SAnime, episode: SEpisode, inputStream: InputStream): UniFile?
 }
