@@ -36,6 +36,7 @@ import tachiyomi.domain.episode.service.EpisodeRecognition
 import tachiyomi.i18n.MR
 import tachiyomi.source.localanime.filter.OrderBy
 import tachiyomi.source.localanime.image.LocalAnimeSourceCoverManager
+import tachiyomi.source.localanime.image.LocalAnimeSourceEpisodeThumbnailManager
 import tachiyomi.source.localanime.io.Archive
 import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
 import uy.kohesive.injekt.injectLazy
@@ -50,6 +51,7 @@ actual class LocalAnimeSource(
     private val context: Context,
     private val fileSystem: LocalAnimeSourceFileSystem,
     private val coverManager: LocalAnimeSourceCoverManager,
+    private val thumbnailManager: LocalAnimeSourceEpisodeThumbnailManager,
 ) : CatalogueSource, UnmeteredSource {
 
     private val json: Json by injectLazy()
@@ -236,7 +238,26 @@ actual class LocalAnimeSource(
                                 data.name?.also { name = it }
                                 data.date_upload?.also { date_upload = parseDate(it) }
                                 scanlator = data.scanlator
+                                summary = data.summary
+                                data.preview_url?.also { preview_url = it }
                             }
+                    }
+
+                    // Look for local episode thumbnail file or extract frame from video if thumbnail is missing
+                    if (this.preview_url == null) {
+                        val thumbnailFile = thumbnailManager.find(anime.url, "${this.name}-$DEFAULT_THUMBNAIL_NAME")
+                            ?: thumbnailManager.find(anime.url, "${this.name}-thumbnail.png")
+                        if (thumbnailFile != null) {
+                            this.preview_url = thumbnailFile.uri.toString()
+                        } else {
+                            scope.launch {
+                                try {
+                                    updateEpisodeThumbnailFromVideo(this@apply, anime)
+                                } catch (e: Exception) {
+                                    logcat(LogPriority.ERROR) { "Couldn't extract episode thumbnail from video: $e" }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -302,11 +323,39 @@ actual class LocalAnimeSource(
         }
     }
 
+    private fun updateEpisodeThumbnailFromVideo(episode: SEpisode, anime: SAnime) {
+        val tempFile = File.createTempFile(
+            "tmp_",
+            anime.title + episode.name + DEFAULT_THUMBNAIL_NAME,
+        )
+        val outFile = tempFile.path
+
+        val episodeName = episode.url.split('/', limit = 2).last()
+        val animeDir = fileSystem.getAnimeDirectory(anime.url)!!
+        val episodeFile = animeDir.findFile(episodeName)!!
+        val episodeFilename = { episodeFile.toFFmpegString(context) }
+
+        val ffProbe = com.arthenica.ffmpegkit.FFprobeKit.execute(
+            "-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"${episodeFilename()}\"",
+        )
+        val duration = ffProbe.allLogsAsString.trim().toFloat()
+        val second = duration.toInt() / 2
+
+        com.arthenica.ffmpegkit.FFmpegKit.execute(
+            "-ss $second -i \"${episodeFilename()}\" -frames:v 1 -update true \"$outFile\" -y",
+        )
+
+        if (tempFile.length() > 0L) {
+            thumbnailManager.update(anime, episode, tempFile.inputStream())
+        }
+    }
+
     companion object {
         const val ID = 0L
         const val HELP_URL = "https://aniyomi.org/help/guides/local-anime/"
 
         private const val DEFAULT_COVER_NAME = "cover.jpg"
+        private const val DEFAULT_THUMBNAIL_NAME = "thumbnail.jpg"
         private val LATEST_THRESHOLD = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS)
     }
 }

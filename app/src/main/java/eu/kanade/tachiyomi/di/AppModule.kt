@@ -48,6 +48,7 @@ import tachiyomi.domain.source.service.SourceManager
 
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.source.localanime.image.LocalAnimeSourceCoverManager
+import tachiyomi.source.localanime.image.LocalAnimeSourceEpisodeThumbnailManager
 import tachiyomi.source.localanime.io.LocalAnimeSourceFileSystem
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -157,6 +158,7 @@ class AppModule(val app: Application) : InjektModule {
 
         addSingletonFactory { LocalAnimeSourceFileSystem(get()) }
         addSingletonFactory { LocalAnimeSourceCoverManager(app, get()) }
+        addSingletonFactory { LocalAnimeSourceEpisodeThumbnailManager(app, get()) }
 
         addSingletonFactory { StorageManager(app, get()) }
 
