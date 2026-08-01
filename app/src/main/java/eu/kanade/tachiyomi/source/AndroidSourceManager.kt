@@ -74,6 +74,7 @@ class AndroidSourceManager(
                             context,
                             Injekt.get(),
                             Injekt.get(),
+                            Injekt.get(),
                         ),
                     ),
                 )

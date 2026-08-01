@@ -584,21 +584,23 @@ object DefaultStreamSelector {
             if (idx >= 0) {
                 val name = part.substring(0, idx)
                 if (name.equals(hosterName, ignoreCase = true)) {
-                    parts[i] = newEntry
+                    parts.removeAt(i)
+                    parts.add(0, newEntry)
                     updated = true
                     break
                 }
             } else {
                 val decoded = decode(part)
                 if (decoded != null && decoded.hosterName.equals(hosterName, ignoreCase = true)) {
-                    parts[i] = newEntry
+                    parts.removeAt(i)
+                    parts.add(0, newEntry)
                     updated = true
                     break
                 }
             }
         }
         if (!updated) {
-            parts.add(newEntry)
+            parts.add(0, newEntry)
         }
         return parts.joinToString(HOSTER_SEP.toString())
     }
