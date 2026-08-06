@@ -1,42 +1,42 @@
-# Categories guide
+# Categories Guide
 
-Organize your library with custom categories, folder groupings, and update exclusions.
-
----
-
-## Creating and managing categories
-
-Categories allow you to group anime titles into custom tabs (such as *Watching*, *Plan to Watch*, *Completed*, or *Hiatus*).
-
-### Creating a new category
-
-1. Open **AniZen** and navigate to **More → Settings → Library → Categories**.
-2. Tap the **+** icon in the upper toolbar.
-3. Enter a category name (e.g., **Currently Watching**).
-4. Tap **Add**.
-
-### Editing and reordering categories
-
-- Drag the handle icon next to any category name to reorder how tabs appear in your Library.
-- Tap a category to edit its display options or delete it.
+Organize your library with custom categories, default category preferences, and global update exclusions.
 
 ---
 
-## Assigning titles to categories
+## Creating and Managing Categories
 
-To move a series into a category:
+Categories group anime titles into custom tabs (e.g., *Watching*, *Plan to Watch*, *Completed*, *Hiatus*).
 
-1. Long-press any series card in your **Library**.
-2. Tap **Set categories**.
-3. Check the categories you wish to assign the series to.
-4. Tap **Save**.
+### Creating a Category
+
+1. Go to **More → Settings → Library → Edit categories** (under **Categories**).
+2. Select **+** (Add) at the bottom right.
+3. Enter a category name and select **Add**.
+
+### Editing and Reordering Categories
+
+- Drag the handle icon next to a category name to reorder tabs, or select **Sort Alphabetically** in the toolbar.
+- Select a category to access **Rename**, **Hide**, or **Delete** options.
+- The **Default / Uncategorized** category contains entries not explicitly assigned to a custom category.
 
 ---
 
-## Global update exclusions
+## Assigning Titles to Categories
 
-You can exclude specific categories (such as *Completed* or *Dropped* titles) from running background update checks to save battery and network bandwidth:
+1. Long-press a series card in your **Library** (or select **Edit categories** inside series details).
+2. Select **Set categories** / **Edit categories**.
+3. Select the target categories.
+4. Select **Save**.
+
+---
+
+## Global Update Exclusions
+
+Exclude specific categories (such as *Completed* or *Dropped*) from background update checks:
 
 1. Go to **More → Settings → Library → Global update → Categories**.
-2. Select only the active categories you want to include during global updates (e.g., **Currently Watching**).
-3. Uncheck categories containing completed or inactive series.
+2. Select categories to **Include** or **Exclude** during global updates.
+3. Save or dismiss the dialog.
+
+

@@ -1,27 +1,30 @@
-# Shizuku guide
+# Shizuku Setup Guide
 
-Use Shizuku for silent, background extension updates without system package installer prompts.
-
----
-
-## What is Shizuku?
-
-**Shizuku** is an open-source tool that allows applications to use system-level APIs with elevated permissions (via ADB or Wireless Debugging).
-
-By connecting AniZen to Shizuku:
-
-- Extension updates install silently in the background.
-- You avoid repeated "Install from Unknown Sources" system prompts for every extension package.
+Configure Shizuku to allow silent background installation and updating of extension packages without manual system prompt confirmation.
 
 ---
 
-## Enabling Shizuku in AniZen
+## System Requirements
 
-1. Download and install **Shizuku** from Google Play or F-Droid.
-2. Start the Shizuku service on your device using Wireless Debugging or an ADB command.
-3. Open **AniZen** and navigate to **More → Settings → Advanced**.
-4. Select **Installer** and tap **Shizuku**.
-5. When prompted by Shizuku, grant AniZen permission to access the service.
+- **Android Version**: Android 8.0 (API 26)+ required.
+- **Wireless Debugging**: Android 11 (API 30)+ required (or ADB over USB for Android 8.0–10).
 
-> [!NOTE]
-> Shizuku integration requires Android 8.0 or higher. Wireless debugging setup requires Android 11 or higher.
+---
+
+## Configuration Steps
+
+1. Install **Shizuku** from Google Play or F-Droid.
+2. Start the Shizuku service via Wireless Debugging or ADB.
+3. In AniZen, go to **Settings → Advanced → Extension installer**.
+4. Select **Shizuku**.
+5. Grant permission when the Shizuku authorization prompt appears.
+
+---
+
+## Wireless Debugging Setup (Android 11+)
+
+1. Open **Android Settings → About phone** and tap **Build number** 7 times to enable Developer Options.
+2. Navigate to **Developer options → Wireless debugging** and enable it.
+3. Open **Shizuku** and select **Start via Wireless Debugging**.
+4. Tap **Pairing** and enter the 6-digit code shown in the system notification.
+5. Confirm Shizuku status reports `Running`, then set **Extension installer** to **Shizuku** in AniZen.

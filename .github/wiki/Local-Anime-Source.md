@@ -1,19 +1,19 @@
-# Local anime source guide
+# Local Anime Source Guide
 
-Play video files stored directly on your device storage with automatic metadata indexing and external subtitle support.
+Technical guide for playing offline video files stored on local device storage, including file naming conventions, side-loaded subtitles, artwork, and JSON metadata schemas.
 
 ---
 
-## Directory structure
+## Directory Structure
 
-AniZen reads local media files from the dedicated local storage directory.
+AniZen indexes local media files from `AniZen/localanime/` located in root storage.
 
-1. Create a folder named `Anizen/local/` on your primary internal device storage.
-2. Store each series inside its own subfolder:
+1. Create `AniZen/localanime/` in primary internal storage.
+2. Group files into subfolders named after each series:
 
 ```
-Anizen/
-└── local/
+AniZen/
+└── localanime/
     ├── Frieren/
     │   ├── Episode 01.mp4
     │   ├── Episode 02.mkv
@@ -25,42 +25,41 @@ Anizen/
 
 ---
 
-## File naming conventions
+## File Naming Conventions & Supported Formats
 
-To ensure accurate episode ordering:
-
-- Use standard episode number patterns in filenames: `Episode 01`, `E01`, `S01E01`, or `[01]`.
-- Supported video formats: `.mp4`, `.mkv`, `.webm`, `.avi`, `.ts`.
-
----
-
-## External subtitles & cover artwork
-
-- **Cover Image**: Add a `cover.jpg` or `cover.png` inside the series folder to display custom cover art in your Library.
-- **Episode Thumbnails**: Place a `<Episode Name>-thumbnail.jpg` or `<Episode Name>-thumbnail.png` file (e.g. `Episode 01-thumbnail.jpg`) alongside the video file, or let AniZen automatically generate one from the video frame.
-- **Side-Loaded Subtitles**: Place `.ass`, `.srt`, or `.vtt` subtitle files in the same folder with matching filenames (e.g., `Episode 01.ass` alongside `Episode 01.mp4`). AniZen will automatically bind and load the external subtitle track during playback.
+- **Episode Pattern**: Use standard numbering formats: `Episode 01`, `E01`, `S01E01`, or `[01]`.
+- **Supported Formats**: `.mp4`, `.mkv`, `.webm`, `.avi`, `.flv`, `.mov`, `.wmv`, `.torrent`, `.m3u`, `.m3u8`.
+- **Unsupported Formats**: `.ts` streams are not supported.
 
 ---
 
-## Local metadata files (`details.json` & `episodes.json`)
+## Subtitles & Custom Artwork
 
-You can provide rich series and episode metadata directly inside your anime subfolder:
+- **Series Cover**: Add `cover.jpg`, `cover.png`, `cover.jpeg`, `Cover.jpg`, `Cover.png`, or `Cover.jpeg` inside the series subfolder.
+- **Episode Thumbnails**: Place `<Episode Name>-thumbnail.jpg`, `<Episode Name>.jpg`, or `<Episode Name>-cover.jpg` in the same directory as the video file. If missing, FFmpeg extracts a static frame.
+- **Subtitles**: Place `.ass`, `.srt`, or `.vtt` files alongside the video file using identical base filenames (e.g., `Episode 01.ass` with `Episode 01.mp4`).
 
-### `details.json` (Anime details)
-Create `Anizen/local/<Anime Title>/details.json`:
+---
+
+## Local Metadata Files (`details.json` & `episodes.json`)
+
+Optional JSON configurations inside `AniZen/localanime/<Series Title>/` override default parsed values.
+
+### `details.json`
+Path: `AniZen/localanime/<Series Title>/details.json`
 ```json
 {
   "title": "Frieren: Beyond Journey's End",
   "author": "Kanehito Yamada",
   "artist": "Tsukasa Abe",
-  "description": "An elf mage and her courageous fellow adventurers have defeated the Demon King...",
+  "description": "An elf mage and her fellow adventurers have defeated the Demon King...",
   "genre": ["Adventure", "Drama", "Fantasy"],
   "status": 1
 }
 ```
 
-### `episodes.json` (Episode titles & summaries)
-Create `Anizen/local/<Anime Title>/episodes.json`:
+### `episodes.json`
+Path: `AniZen/localanime/<Series Title>/episodes.json`
 ```json
 [
   {
@@ -72,4 +71,3 @@ Create `Anizen/local/<Anime Title>/episodes.json`:
   }
 ]
 ```
-

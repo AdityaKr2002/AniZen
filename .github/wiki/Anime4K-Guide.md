@@ -1,60 +1,60 @@
-# Anime4K guide
+# Anime4K Guide
 
-Understanding real-time neural upscaling modes, performance presets, and configuration options.
-
----
-
-## What is Anime4K?
-
-**Anime4K** is an open-source set of high-performance real-time upscaling and denoising GLSL shaders designed specifically for anime. AniZen integrates these shaders directly into the media player pipeline.
+Shader-based upscaling modes, performance presets, and configuration options.
 
 ---
 
-## Upscaling modes
+## Overview
 
-Anime4K includes different processing algorithms tailored to specific source content qualities:
+**Anime4K** is an open-source set of GLSL upscaling and denoising shaders optimized for anime. AniZen applies these shaders directly inside the MPV player rendering pipeline.
 
-### Mode A (Faithful Upscaling)
-- **Target Content**: Modern 720p or 1080p anime.
-- **Description**: Reconstructs line edges faithfully without altering original artistic detail.
-- **Use Case**: Best for high-quality recent releases viewed on 1440p or 4K mobile displays.
+---
 
-### Mode B (Perceptual Deblur)
-- **Target Content**: 720p or older anime (1990s–2000s).
-- **Description**: Applies perceptual sharpening to correct soft or out-of-focus source material.
-- **Use Case**: Recommended for older anime titles that appear blurry.
+## Upscaling Modes
+
+Anime4K algorithms target specific source video conditions:
+
+### Mode A (Faithful Reconstruction)
+- **Target Video**: 720p or 1080p source material.
+- **Function**: Reconstructs line art edges while maintaining original detail.
+- **Use Case**: HD animation viewed on 1440p or 4K screens.
+
+### Mode B (Deblur)
+- **Target Video**: Soft or blurry 720p and SD source material.
+- **Function**: Applies perceptual sharpening to soft lines.
+- **Use Case**: Older anime releases with soft focus.
 
 ### Mode C (Denoise & Restore)
-- **Target Content**: Low-bitrate 480p streams, DVD rips, or heavily compressed videos.
-- **Description**: Cleans compression artifacts and blocking noise before performing upscaling.
-- **Use Case**: Best for web streams with visible JPEG/MPEG compression artifacts.
+- **Target Video**: 480p, DVD rips, or heavily compressed video.
+- **Function**: Removes compression artifacts and blocking noise before scaling.
+- **Use Case**: Low-bitrate web streams with compression noise.
 
 ### Mode A+, B+, and C+
-- Runs the reconstruction pass twice for maximum sharpness.
-- **Hardware Requirement**: Snapdragon 8 Gen 1/2/3 or equivalent flagship processors.
+- Applies a second reconstruction pass for higher sharpness.
+- **Hardware Requirement**: High-end GPUs (e.g., Snapdragon 8 Gen 1 or equivalent).
 
 ---
 
-## Quality profiles
+## Quality Profiles
 
-Select a profile based on your device's GPU capabilities:
+Shader load varies by profile size:
 
-| Profile | Network Size | Processing Power | Recommended Hardware |
+| Profile | Shader Size | GPU Load | Recommended Hardware |
 |:---|:---|:---|:---|
-| **Fast (S)** | Small | Low | Mid-range SoCs (Snapdragon 7xx series) |
+| **Fast (S)** | Small | Low | Mid-range SoCs (Snapdragon 7xx) |
 | **Balanced (M)** | Medium | Moderate | Upper mid-range / older flagships (Snapdragon 865/870/888) |
-| **High (L)** | Large | High | Modern flagship SoCs (Snapdragon 8 Gen 1+) |
+| **High (L)** | Large | High | Flagship SoCs (Snapdragon 8 Gen 1+) |
 
 ---
 
-## Troubleshooting performance issues
+## Performance Troubleshooting
 
-If you encounter video stuttering or audio desync while using Anime4K:
+If video stutters or audio desynchronizes during playback:
 
-1. Lower the preset quality from **High (L)** to **Balanced (M)** or **Fast (S)**.
-2. Switch from a **Plus (+)** mode variant to the standard mode (e.g., Mode A+ to Mode A).
-3. Disable **High-quality scaling** (`ewa_lanczossharp`) to reduce GPU pipeline load.
-4. Enable **Adaptive Shader Scaling** in **Settings → Player → Anime4K** to let AniZen automatically scale down shaders during heavy scenes.
+1. Reduce profile quality from **High (L)** to **Balanced (M)** or **Fast (S)** in **Settings → Player → Anime4K**.
+2. Switch from **Plus (+)** variants to standard modes (e.g., Mode A+ to Mode A).
+3. Disable **High-quality scaling** (`spline36`) to lower total GPU load.
+4. Enable **Adaptive Shader Scaling** in **Settings → Player → Anime4K** so AniZen can automatically reduce shader complexity when frame drops are detected.
 
 > [!NOTE]
-> Anime4K shaders require the standard `gpu` renderer. AniZen automatically switches off `gpu-next` when Anime4K is enabled to prevent render pipeline crashes.
+> Anime4K shaders require the standard `gpu` renderer. If `gpu-next` is active, AniZen bypasses Anime4K shaders to avoid pipeline conflicts. Select the `gpu` renderer to use Anime4K.

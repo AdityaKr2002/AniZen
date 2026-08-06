@@ -42,3 +42,27 @@ No. AniZen uses the package identifier `app.anizen`. It installs and runs side-b
 ## What is a fork?
 
 A fork is an independent copy of an open-source codebase developed with unique features or architectural changes. AniZen is a specialized fork combining core foundations from Aniyomi and Anikku with deep MPV player enhancements, GLSL upscaling shaders, and dynamic theming.
+
+---
+
+## How do I customize the bottom navigation bar & tabs?
+
+AniZen allows complete customization of the main navigation layout:
+
+1. Open **AniZen** and navigate to **More → Settings → Appearance → Navigation** (or tap **Navigation settings**).
+2. **Reorder Tabs**: Drag tabs up or down using the drag handle to change their order on the bottom bar.
+3. **Show / Hide Tabs**: Toggle visibility for individual navigation items (**Library**, **Updates**, **History**, **Feed**, **Browse**, **More**).
+4. **Label Visibility**: Choose whether tab labels are always visible, visible only when selected, or hidden.
+5. **Auto-Hide on Scroll**: Toggle whether the navigation bar hides when scrolling down lists.
+6. **Share Layout**: Tap **Copy layout string** to export your custom tab layout or paste a shared configuration code.
+
+---
+
+## How do I use the AI Assistant feature?
+
+AniZen includes an integrated AI Assistant for grounded app navigation and library queries:
+
+1. Open **AniZen** and navigate to **More → Settings → Advanced Analytics** (or **AI Assistant**).
+2. **Enable AI Assistant**: Toggle the switch ON.
+3. **API Key Setup**: Enter a valid Gemini or Groq API key.
+4. **App Guidance & Navigation**: Ask the assistant for help with settings, extension configuration, or library statistics.

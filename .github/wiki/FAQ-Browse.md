@@ -1,56 +1,70 @@
 # Browse & Extensions FAQ
 
-Frequently asked questions about extensions, repository setup, Cloudflare verification, and local media sources.
+Frequently asked questions regarding extension repositories, Cloudflare verification, local storage, DNS configuration, and feed customization.
 
 ---
 
 ## How do I add extension repositories?
 
-AniZen uses modular extension repositories for content indexing.
-
-To add a repository:
-
-1. Open **AniZen** and navigate to **Browse → Extension Repositories**.
-2. Tap **Add repository**.
-3. Paste the repository URL provided by the repository maintainer.
-4. Tap **Add**. Installed extensions will now appear in the **Extensions** tab under **Browse**.
+1. Go to **Browse → Extensions → ⋮ (Overflow menu) → Extension Repositories** (or **Settings → Browse → Extension Repositories**).
+2. Tap **Add repository** (+).
+3. Paste the HTTPS repository URL (ending in `/index.min.json` or base URL).
+4. Tap **Add**. Installed extensions appear in **Browse → Extensions**.
 
 ---
 
 ## What should I do if Cloudflare protection blocks a source?
 
-Some media hosts protect their endpoints with Cloudflare verification pages.
-
-To pass Cloudflare verification:
-
 1. Open the affected source in **Browse**.
-2. Tap the **WebView** icon in the upper right toolbar.
-3. Complete the captcha or verification challenge inside the WebView browser.
-4. Once the site loads correctly, return to AniZen. The Cloudflare session token will be cached automatically.
+2. Tap **WebView** in the top toolbar.
+3. Complete the CAPTCHA or verification challenge in WebView.
+4. Return to AniZen. Cloudflare session cookies are saved to the app `CookieJar` automatically.
 
 ---
 
 ## Can I play local video files stored on my device?
 
-Yes. AniZen includes a local anime source module.
+Yes.
 
-To configure local video sources:
-
-1. Create an `Anizen/local/` directory in your device storage.
-2. Structure your video files inside folders named after the series title:
+1. Create an `AniZen/localanime/` directory in primary storage.
+2. Store files inside folders named after the series title:
    ```
-   Anizen/local/
+   AniZen/localanime/
    └── Series Name/
        ├── Episode 01.mp4
        └── Episode 02.mkv
    ```
-3. Open **Browse → Anime Sources** and tap **Local source** to browse and play your local files.
+3. Open **Browse → Anime → Local anime source** to access local files.
 
 ---
 
 ## Why does global search take longer on certain sources?
 
-Global search queries all active extensions concurrently. If an extension points to a slow host or experiences network latency, its results may take longer to return.
+Global search queries all enabled extensions concurrently. Responses are limited by the slowest external source endpoint.
 
 > [!TIP]
-> You can disable slow or unused extensions in **Browse → Extensions** to accelerate global search response times.
+> Disable unused extensions under **Browse → Extensions** to reduce global search query times.
+
+---
+
+## How do I configure DNS-over-HTTPS (DoH) & Custom User-Agent?
+
+If network providers block extension domains:
+
+1. Open **Settings → Advanced → Network**.
+2. Select **DNS-over-HTTPS (DoH)** and pick a provider:
+   - **Cloudflare** (`1.1.1.1`)
+   - **Google** (`8.8.8.8`)
+   - **AdGuard**
+   - **NextDNS**
+   - **Quad9**
+3. Set **Custom User-Agent** if an endpoint requires specific browser header identification.
+
+---
+
+## How do I use the Feed feature?
+
+1. **Pin a Search**: Open a source in **Browse**, enter a query or filter, and tap **Save search** / **Pin to Feed**.
+2. **Access Feeds**: Open the **Feed** tab (or enable **Settings → Appearance → Show Feed in Browse**).
+3. **Organize**: Reorder or group pinned searches into Feed categories.
+4. **Updates**: Pinned rows fetch new uploads directly from sources on refresh.

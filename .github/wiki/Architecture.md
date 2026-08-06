@@ -1,41 +1,44 @@
 # Architecture
 
-Codebase architecture, module dependencies, and technical stack details.
+Codebase layout, module boundaries, and tech stack specification.
 
 ---
 
-## Architecture overview
+## Architecture Overview
 
-AniZen is structured around **Clean Architecture** guidelines, splitting domain logic, data persistence, and presentation across isolated Gradle modules.
+AniZen follows **Clean Architecture** principles, decoupling domain logic, data sources, and presentation across isolated Gradle modules.
 
 ```
 AniZen/
-├── app/                    # Application entry point, Koin DI, Voyager Navigation
-├── core/                   # Shared utilities, extensions, and core models
-├── data/                   # Repositories, SQLDelight database, OkHttp network layer
-├── domain/                 # Core business logic, Use Cases, pure Kotlin models
-├── presentation-core/      # Jetpack Compose UI components, design tokens, themes
+├── app/                    # Application entry point, Koin DI bindings, Voyager Navigation, tracker implementations
+├── core/                   # Shared utilities and core submodules (:core:common, :core:archive)
+├── core-metadata/          # Metadata parsers and serialization schemas
+├── data/                   # Repository implementations, SQLDelight database, OkHttp networking
+├── domain/                 # Business logic, use cases, pure Kotlin models
+├── presentation-core/      # Jetpack Compose UI components, design system tokens, themes
+├── presentation-widget/    # Home screen widget components
 ├── source-api/             # Extension interfaces and source abstractions
-├── source-local/           # Local media indexing and storage handlers
-├── anikku-tracker/         # Tracking service integrations (AniList, MyAnimeList)
-└── i18n/                   # String resources and internationalization packages
+├── source-local/           # Local media indexing and storage access
+├── telemetry/              # Analytics and crash reporting integration
+└── i18n/                   # String resources and localization modules (:i18n, :i18n-kmk, :i18n-sy)
 ```
 
 ---
 
-## Technical stack
+## Technical Stack
 
-- **Programming Language**: 100% Kotlin with Coroutines and Flow for asynchronous operations.
+- **Language**: Kotlin with Coroutines and `StateFlow`/`SharedFlow` for asynchronous state management.
 - **UI Framework**: Jetpack Compose using Material Design 3 guidelines.
-- **Navigation**: Voyager multi-stack Compose navigation library.
-- **Database Layer**: SQLDelight providing compile-time safe SQL queries.
-- **Dependency Injection**: Koin framework.
-- **Media Playback**: `mpv-android` (libmpv native bindings) with custom GLSL shader support.
+- **Navigation**: Voyager multi-stack navigation framework.
+- **Database**: SQLDelight for type-safe SQLite database operations.
+- **Dependency Injection**: Koin.
+- **Media Playback**: `mpv-android` (`libmpv` C bindings) with custom GLSL shader support.
 
 ---
 
-## Module rules
+## Module Boundary Rules
 
-- **`domain`** contains no Android framework dependencies and consists strictly of pure Kotlin code.
-- **`data`** implements repositories declared in `domain` using SQLDelight and OkHttp.
-- **`presentation-core`** depends on `domain` models to expose reactive UI states using `StateFlow`.
+- **`domain`**: Pure Kotlin module without Android framework (`android.*`) dependencies.
+- **`data`**: Implements repository interfaces defined in `domain` using SQLDelight and OkHttp.
+- **`presentation-core`**: Consumes `domain` models and use cases, exposing UI state via `StateFlow`.
+

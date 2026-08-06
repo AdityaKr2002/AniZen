@@ -1,49 +1,60 @@
-# Tracking guide
+# Tracking
 
-Connect external tracking services to automatically update your watch progress and synchronize episode status.
+Configuration and synchronization details for external tracking services in **AniZen**.
 
 ---
 
-## Supported tracking services
+## Supported Services
 
-AniZen supports direct integration with the following tracking platforms:
+AniZen integrates with the following tracking services:
 
-- **AniList**
 - **MyAnimeList (MAL)**
+- **AniList**
 - **Kitsu**
 - **Shikimori**
 - **Bangumi**
+- **Simkl**
+- **Jellyfin**
+- **Trakt**
+- **TMDB**
 
 ---
 
-## Authenticating a tracker
-
-To log into your tracking accounts:
+## Tracker Authentication
 
 1. Open **AniZen** and navigate to **More → Settings → Tracking**.
-2. Tap the tracking service you wish to connect (e.g., **AniList**).
-3. Tap **Log in**. A browser window will open requesting authorization.
-4. Authorize the application. Once complete, your account status will show as **Logged in**.
+2. Select the target service (e.g., **AniList**).
+3. Tap **Log in** to open the OAuth authorization flow in the browser.
+4. Authorize AniZen. Upon redirection, status will update to **Logged in**.
 
 ---
 
-## Binding a series to a tracker
+## Series Binding
 
-After logging into a tracking service, bind individual series entries to sync watch progress:
-
-1. Open any anime entry from your **Library** or **Browse** tab.
-2. Tap the **Tracking** tab (or press the tracking icon on the series detail page).
-3. Select your tracker. If the title is not automatically matched, tap the search query field to search by title manually.
-4. Tap the matching title to bind it.
+1. Open an anime entry from the **Library** or **Browse** tab.
+2. Select the **Tracking** tab (or tap the tracking icon on the series detail page).
+3. Select the service. If auto-matching fails, use the search field to query the title manually.
+4. Select the matching entry to establish the binding.
 
 ---
 
-## Auto-tracking settings
+## Auto-Tracking Configuration
 
-Once a series is bound, AniZen automatically updates your episode count when you finish watching an episode.
+When a series is bound, episode progress updates automatically upon reaching the configured threshold.
 
-To adjust auto-tracking behavior:
+Settings path: **More → Settings → Tracking**
 
-- Navigate to **More → Settings → Tracking**.
-- **Update tracking when watching**: Toggle whether progress updates immediately upon reaching the trigger threshold.
-- **Trigger threshold**: Configure the percentage of an episode that must be watched (default: **85%**) before tracking updates are sent.
+- **Update tracking when watching**: Toggles automatic progress dispatching when reaching the trigger threshold.
+- **Trigger threshold**: Minimum percentage of episode duration watched (default: **85%**) before sending progress updates.
+
+---
+
+## Multi-Service Sync & Status Mapping
+
+AniZen supports binding a title to multiple services concurrently (e.g., AniList and Trakt):
+
+- **Status Mapping**: Watch status (*Watching*, *Completed*, *On Hold*, *Dropped*, *Plan to Watch*) synchronizes across all bound accounts.
+- **Score Synchronization**: Ratings map to each platform's scoring system (10-point decimal for MAL/AniList, 5-star, or 100-point scales).
+- **Media Format Tracking**: Services such as **Trakt**, **TMDB**, **Simkl**, and **Jellyfin** track both episodic series and standalone movie/OVA entries.
+
+

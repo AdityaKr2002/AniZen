@@ -1,62 +1,58 @@
-# Backups guide
+# Backups Guide
 
-Backups allow you to safeguard your library, watch history, category organization, and app settings.
+Manage manual and automatic library backups in AniZen.
 
 ---
 
-## Creating a backup
+## Creating a Backup
 
-To manually generate a backup file:
-
-1. Open **AniZen** and navigate to **More → Settings → Data and storage**.
-2. Tap **Create backup**.
-3. Choose a secure directory in your device storage to save the `.tachibk` file.
+1. Go to **More → Settings → Data and storage**.
+2. Under **Backup and restore**, select **Create backup**.
+3. Select the data to include (Library entries, Categories, Episodes, Tracking, History, App settings, Extension repos, Custom buttons, Source settings) and choose an output directory.
 
 > [!NOTE]
-> Backups are saved as compressed files with the `.tachibk` extension and are fully portable across devices.
+> Backups are saved as Gzip-compressed Protobuf binary files (`.tachibk`). JSON format is not supported.
 
 ---
 
-## What is included in a backup?
+## Backup Contents
 
-A backup includes the following data:
+Depending on your selection, backups contain:
 
-- **Library Titles**: All saved anime and movie entries.
-- **Categories**: Custom library categories and folder structures.
-- **Watch History & Progress**: Episode watch states, bookmark flags, and timestamps.
-- **Tracker Connections**: Active tracking accounts and series binding IDs.
-- **App & Source Settings**: Player configuration, theme choices, and source settings.
-- **Extension List**: Identifiers for installed extensions.
+- **Library Titles**: Saved anime and movie entries (and non-library seen entries if selected).
+- **Categories**: Custom categories and category flags.
+- **Watch History & Progress**: Episode watch state, bookmarks, and timestamps.
+- **Tracker Connections**: Active tracking accounts and series IDs.
+- **App & Source Settings**: Player configuration, themes, app settings, private settings, and source settings.
+- **Extensions & Repositories**: Installed extension identifiers and repository URLs.
+- **Custom Buttons**: Player button configurations.
 
-### What is NOT included?
+### Excluded Data
 
-- Video downloads or local media files.
-- Custom cover images (these are re-downloaded upon restoration).
-- Search history or transient cache files.
-
----
-
-## Restoring a backup
-
-To restore a previously created backup:
-
-1. Copy the `.tachibk` file to your new device.
-2. Ensure you have installed your preferred extension repositories under **Browse → Extension Repositories**.
-3. Log into your tracking services under **More → Settings → Tracking**.
-4. Go to **More → Settings → Data and storage**.
-5. Tap **Restore backup** and select your `.tachibk` file.
+- Downloaded video files and local media.
+- Custom cover images (re-downloaded on restore).
+- Search history and cache files.
 
 ---
 
-## Automatic backups
+## Restoring a Backup
 
-We strongly recommend enabling automatic backups to prevent library loss.
+1. Transfer the `.tachibk` file to the target device.
+2. Log into tracking services under **More → Settings → Tracking** if restoring tracker data.
+3. Go to **More → Settings → Data and storage**.
+4. Under **Backup and restore**, select **Restore backup** and pick the `.tachibk` file.
 
-### Setting up automatic backups
+---
 
-1. Navigate to **More → Settings → Data and storage**.
-2. Select **Automatic backups** and choose a backup frequency (e.g., *Daily* or *Weekly*).
-3. Set your target backup storage folder.
+## Automatic Backups
+
+### Configuration
+
+1. Go to **More → Settings → Data and storage**.
+2. Under **Backup and restore**, select **Backup frequency**: *Every 6 hours*, *Every 12 hours*, *Daily (24 hours)*, *Every 2 days (48 hours)*, or *Weekly (168 hours)*.
+3. Select **Backup slots** to set the retained copy limit (1 to 5 files).
+4. Files are saved in the `autobackup/` directory inside your configured **Storage location**.
 
 > [!TIP]
-> You can sync your automatic backup folder to cloud services like Google Drive or Nextcloud using third-party sync utilities such as **Autosync for Google Drive** or **FolderSync**.
+> The `autobackup/` folder can be synchronized to cloud services using third-party tools (e.g., FolderSync) or AniZen's built-in Google Drive / SyncYomi sync under **Data and storage → Sync**.
+

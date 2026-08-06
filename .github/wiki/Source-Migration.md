@@ -1,41 +1,48 @@
-# Source migration guide
+# Source Migration Guide
 
-Migrate series entries between extension sources while preserving watch history, episode tracking, and bookmarks.
-
----
-
-## Why migrate sources?
-
-You may need to migrate a series from one extension source to another if:
-
-- An extension source becomes offline or unresponsive.
-- A different source offers higher video quality or faster streaming hosters.
-- You want to consolidate titles to a single extension provider.
+Migrate series entries between extension sources while preserving watch history, tracker links, and bookmarks.
 
 ---
 
-## Migrating a single series
+## Overview
 
-To transfer one series entry to a new source:
-
-1. Open the anime details page of the series you want to migrate.
-2. Tap the **overflow menu (⋮)** in the upper-right corner.
-3. Select **Migrate**.
-4. Choose the target extension source you want to migrate to.
-5. Select the matching series entry from the search results.
-6. Review the episode mapping preview, then tap **Migrate** to confirm.
+Source migration allows transferring series data between extensions when:
+- An extension domain is offline or defunct.
+- A replacement source offers higher resolution or faster mirrors.
+- Standardizing library items to a single provider.
 
 ---
 
-## Mass migration
+## Single Series Migration
 
-To migrate multiple titles at once when an extension source is retired:
+1. Open the target anime details page.
+2. Tap **⋮ (Overflow menu) → Migrate**.
+3. Select the destination extension.
+4. Select the corresponding title from search results.
+5. Review episode mapping and tap **Migrate**.
 
-1. Navigate to **Browse → Extensions → Migrate**.
-2. Select the source you want to migrate away from.
-3. Select the titles you wish to transfer.
-4. Select the target destination source.
-5. Confirm the batch migration. AniZen will automatically match episode counts and watch states across the selected titles.
+---
+
+## Mass Migration
+
+1. Go to **Browse → Migrate**.
+2. Select the source to migrate from (or use long-press selection for multiple sources).
+3. Select titles to transfer.
+4. Choose the target source.
+5. Confirm batch migration. AniZen maps episode numbers and watch progress automatically.
+
+---
+
+## Migration Flags & Options
+
+Selectable attributes during migration:
+
+- **Episodes & Watch History**: Copies watch progress (`seen`), timestamps (`seenAt`, `watchDuration`), bookmarks, and fetch dates.
+- **Categories**: Retains category assignments.
+- **Tracking**: Rebinds active trackers (AniList, MyAnimeList) to the new source entry.
+- **Delete Downloads**: Removes downloaded media files associated with the old source upon completion.
+- **Custom Cover**: Retains custom cover art.
+- **Extra Flags**: Transfers display flags and viewer preferences.
 
 > [!TIP]
-> After mass migrating titles, check your library to ensure episode numbers aligned correctly across different translation conventions.
+> Verify episode number alignments in your library after batch migrating across sources with differing release numbering.

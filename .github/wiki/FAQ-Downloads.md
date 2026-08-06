@@ -1,43 +1,45 @@
 # Downloads FAQ
 
-Frequently asked questions regarding download managers, HLS stream muxing, 1DM handoff, and storage verification.
+Technical details regarding download engines, stream handling, external downloader delegation, and storage verification.
 
 ---
 
 ## How does AniZen's chunked download engine work?
 
-AniZen includes a 1DM-style multi-threaded download engine:
+AniZen includes a multi-threaded internal download engine:
 
-- **Byte-Range Chunking**: Splits large video files into parallel streams for accelerated download speeds.
-- **Part-File Recovery**: Verifies downloaded chunk byte sizes against checksums and retries corrupted chunks up to 5 times automatically.
-- **Atomic Renaming**: Downloads are isolated in temporary `_tmp` folders and atomically renamed upon completion to prevent partially downloaded files from cluttering your media library.
-
----
-
-## Can I delegate downloads to an external manager like 1DM or ADM?
-
-Yes. AniZen supports seamless handoff to external download apps.
-
-To enable external downloads:
-
-1. Navigate to **More → Settings → Downloads**.
-2. Select **External downloader**.
-3. Choose your preferred app (e.g., **1DM**, **ADM**, or **Neat Download Manager**).
-
-When initiating a download, AniZen automatically forwards the stream URL along with required HTTP headers, user-agents, and output filenames to your selected download manager.
+- **Byte-Range Chunking**: Splits video files into parallel streams using HTTP `Range` headers (1 to 64 threads, configurable in **More → Settings → Downloads → Internal Downloader**).
+- **Part-File Recovery**: Writes chunk progress into temporary `.part` files (`$filename.part$i`) and retries network failures up to 5 times with exponential backoff and jitter.
+- **Atomic Renaming**: Downloads are written to temporary `_tmp` directories and sandbox files (`.tmp`), and atomically renamed upon completion to avoid corrupting media storage.
 
 ---
 
-## Why did my download report 0 MB or fail immediately?
+## Can downloads be delegated to an external download manager?
 
-Immediate 0 MB download failures typically occur when an HLS master playlist variant cannot be resolved due to expired tokens.
+Yes. AniZen can hand off stream URLs to external download applications.
 
-- **Solution**: Update AniZen to the latest release or Preview build. AniZen's native engine resolves HLS variant streams and AES-128 key tokens dynamically before starting segment fetches.
+### Setup
+
+1. Go to **More → Settings → Downloads**.
+2. Under **External Downloader**, enable **Use external downloader**.
+3. Select **External downloader** and choose an installed application (**1DM / 1DM+** or **ADM**).
+
+AniZen forwards the stream URL, required HTTP headers, User-Agent strings, and target file paths to the selected manager.
+
+---
+
+## Why does a download report 0 MB or fail immediately?
+
+Immediate 0 MB download failures occur when an HLS master playlist variant cannot be resolved due to expired stream tokens.
+
+- **Fix**: Update AniZen to the latest version. The HLS engine dynamically resolves playlist variants and decrypts AES-128 key tokens before fetching segments.
 
 ---
 
 ## What is Pre-Flight Storage Protection?
 
-Before launching a download task, AniZen verifies available internal storage.
+Before starting downloads or muxing operations, AniZen checks available disk space on the target volume.
 
-If available space is below **200 MB** (or less than **1.5×** the target size for FFmpeg muxing operations), the download is paused automatically with a notification warning to prevent device instability.
+If free storage drops below **200 MB** plus the target video size (or **1.5×** total size for FFmpeg/DASH muxing operations), the download aborts and returns an insufficient space error (`MR.strings.download_insufficient_space`).
+
+

@@ -455,9 +455,7 @@ fun GestureHandler(
                                 val targetPos = it.coerceIn(0f, duration)
                                 viewModel.gestureSeekAmount.update { _ -> Pair(startingPosition, (targetPos - startingPosition).toInt()) }
                                 viewModel.updateSeekPos(targetPos)
-                                if (!viewModel.hasThumbnails.value) {
-                                    viewModel.scrubSeekTo(targetPos.toInt(), false)
-                                }
+                                viewModel.scrubSeekTo(targetPos.toInt(), false)
                             }
                             if (showSeekbar) viewModel.showSeekBar()
                             pointer.consume()

@@ -6,72 +6,76 @@ Frequently asked questions regarding library management, updates, categories, an
 
 ## Why is Global Update skipping entries?
 
-By default, **AniZen** skips background updates for entries that meet any of the following criteria:
+Background updates can skip entries based on configured Smart Update restrictions (**More → Settings → Library → Global update → Smart update**):
 
-- Has unwatched episodes or unread chapters.
-- Has not been started yet.
-- Marked with a **Completed** status.
-- Is not expected to have new release updates yet.
+- Has unwatched episodes (`Skip entries with unwatched episodes`).
+- Has not been started yet (`Skip entries that haven't been started`).
+- Marked with a **Completed** status (`Skip completed series`).
+- Outside expected release schedule (`Skip entries outside release period`).
 
-This intelligent skipping strategy reduces unnecessary server requests and prevents extension sources from implementing anti-bot rate limits.
+This reduces unnecessary server requests and prevents rate-limiting by extension sources.
 
 > [!TIP]
-> You can control which categories are included in global updates by navigating to **More → Settings → Library → Global update → Categories**.
+> Categories included in global updates can be configured under **More → Settings → Library → Global update → Categories**.
 
 ---
 
-## Why aren't background library updates running?
+## Why are background library updates not running?
 
-Certain Android device skins (such as MIUI, ColorOS, or OneUI) apply aggressive background process limits that close background tasks.
+Android device skins (such as MIUI, ColorOS, or OneUI) apply aggressive background process optimization that terminates background tasks.
 
-To ensure reliable background updates:
+To configure background execution:
 
-1. Navigate to **More → Settings → Advanced**.
-2. Tap **Disable battery optimization**.
-3. Allow AniZen to run unrestricted in your system settings.
+1. Go to **More → Settings → Advanced**.
+2. Select **Disable battery optimization**.
+3. Allow AniZen to run unrestricted in system settings.
 
 > [!NOTE]
-> If issues persist, visit [Don't Kill My App](https://dontkillmyapp.com/) for device-specific background permission guides.
+> For device-specific configuration, see [Don't Kill My App](https://dontkillmyapp.com/).
 
 ---
 
 ## How do I display download badges on library entries?
 
-To show badge counts for downloaded episodes directly on entry cards:
+To show badge counts for downloaded episodes on entry cards:
 
-1. Open the **Library** tab.
-2. Tap the **Filter** icon in the upper toolbar.
-3. Select the **Display** tab.
-4. Enable **Download badges** under the badge options.
-
----
-
-## How can I sync my library between multiple devices?
-
-Direct multi-device syncing is not supported. To transfer your library database, watch history, and category setup to a new device:
-
-1. On the source device, go to **More → Settings → Backup and restore → Create backup**.
-2. Transfer the `.tachibk` file to your target device.
-3. On the target device, navigate to **More → Settings → Backup and restore → Restore backup** and select the file.
+1. Open **Library**.
+2. Select the filter icon in the toolbar.
+3. Select **Display**.
+4. Enable **Downloaded episodes** under **Badges**.
 
 ---
 
-## Why are some cover thumbnails blank or corrupted?
+## How can I sync my library between devices?
 
-Blank or broken cover thumbnails usually indicate an incomplete image download due to network interruption.
+Transfer your library database, watch history, and categories via backup files or cloud sync:
 
-To fix missing covers:
+1. On the source device, go to **More → Settings → Data and storage**.
+2. Under **Backup and restore**, select **Create backup**.
+3. Transfer the `.tachibk` file to the target device.
+4. On the target device, go to **More → Settings → Data and storage → Restore backup** and select the file.
 
-1. Navigate to **More → Settings → Advanced**.
-2. Tap **Refresh library covers**.
-3. Re-open your library to reload fresh cover artwork.
+> [!NOTE]
+> Automatic cloud sync with Google Drive or SyncYomi is available under **More → Settings → Data and storage → Sync**.
 
 ---
 
-## How do I pause watching history?
+## Why are cover thumbnails blank or corrupted?
 
-To temporarily prevent watched episodes from being saved to your history:
+Blank or missing thumbnails indicate incomplete image downloads due to network interruptions.
 
-1. Open **More**.
+To reload covers:
+
+1. Go to **More → Settings → Advanced**.
+2. Select **Refresh library covers**.
+3. Re-open the library to reload cover images.
+
+---
+
+## How do I pause watch history?
+
+1. Go to **More**.
 2. Toggle **Incognito mode** to **ON**.
-3. A notification icon will confirm that watch history recording is paused.
+3. An icon in the notification bar indicates watch history recording is paused.
+
+

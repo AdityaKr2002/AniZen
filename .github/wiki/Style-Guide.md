@@ -1,13 +1,13 @@
 # Wiki Style Guide
 
-Standardized writing formation, design, and formatting rules for the **AniZen Wiki**.
+Formatting and writing standards for the AniZen wiki.
 
 > [!NOTE]
-> These rules apply **exclusively to pages within the Wiki** (`.github/wiki/` and the GitHub Wiki repository). They do not affect root project documentation, source code comments, or external repository files.
+> These rules apply exclusively to pages within the Wiki (`.github/wiki/` and the GitHub Wiki repository). They do not affect root project documentation, source code comments, or external repository files.
 
 ---
 
-## 1. Page Structure & Hierarchy
+## Page Structure & Hierarchy
 
 - **Title (H1)**: Every page must start with a single `# Title`.
 - **Tagline Sub-description**: Immediately below the H1 title, include a single concise sentence describing the page's purpose.
@@ -31,9 +31,9 @@ Single concise sentence explaining what this page covers.
 
 ---
 
-## 2. Voice, Tone & UI Formatting
+## Voice, Tone & UI Formatting
 
-- **Voice & Tone**: Instructional, direct, concise, and neutral (matching the Aniyomi / VitePress documentation standard).
+- **Voice & Tone**: Direct, concise, technical, and neutral.
 - **Action Verbs**: Use direct imperative verbs for step-by-step instructions (*"Open AniZen"*, *"Navigate to Settings"*, *"Select the APK"*).
 - **UI Elements**: **Bold** all UI labels, button names, tab titles, and screen names.
 - **Navigation Paths**: Format in-app navigation paths with bold text and right arrows (`→`):
@@ -43,7 +43,7 @@ Single concise sentence explaining what this page covers.
 
 ---
 
-## 3. Step-by-Step Instructions
+## Step-by-Step Instructions
 
 - Use numbered lists (`1.`, `2.`, `3.`) for procedures, installation guides, and setup workflows.
 - Keep each step single-sentence or focused on a single actionable step.
@@ -56,7 +56,7 @@ Single concise sentence explaining what this page covers.
 
 ---
 
-## 4. Callouts & Admonitions
+## Callouts & Admonitions
 
 Use standard GitHub blockquote callouts to highlight important information:
 
@@ -68,7 +68,7 @@ Use standard GitHub blockquote callouts to highlight important information:
 
 ---
 
-## 5. Title Search Examples
+## Title Search Examples
 
 When providing title search examples or spelling variations, format them using blockquotes with bold keywords:
 
@@ -78,7 +78,7 @@ When providing title search examples or spelling variations, format them using b
 
 ---
 
-## 6. Tables & Specifications
+## Tables & Specifications
 
 Use clean Markdown tables for presenting option comparisons, performance profiles, filter presets, or hardware requirements:
 
@@ -91,7 +91,7 @@ Use clean Markdown tables for presenting option comparisons, performance profile
 
 ---
 
-## 7. Scope & Isolation
+## Scope & Isolation
 
 - **Wiki Scope Only**: These guidelines strictly govern `.github/wiki/*.md` and `AniZen.wiki.git`.
 - **Non-Interference**: Do not apply or enforce these rules to `README.md`, code comments, pull request titles, or commit messages outside the wiki folder.

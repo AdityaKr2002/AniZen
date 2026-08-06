@@ -1,48 +1,53 @@
-# Troubleshooting guide
+# Troubleshooting
 
-Diagnose playback errors, extension connectivity issues, and system issues in **AniZen**.
-
----
-
-## Common issues & solutions
-
-### 1. Extension source loading errors or 403 Forbidden
-
-- **Cause**: Cloudflare protection or anti-bot verification page triggered on the target site.
-- **Solution**: Open the extension source in **Browse**, tap the **WebView** icon in the toolbar, and complete the verification challenge.
-
-### 2. Video stuttering or high battery usage
-
-- **Cause**: Heavy GLSL shader processing (Anime4K) or Jinc scaling (`ewa_lanczossharp`).
-- **Solution**: Navigate to **Settings → Player → Anime4K** and lower the quality setting to **Balanced (M)** or **Fast (S)**. Enable **Adaptive Shader Scaling**.
-
-### 3. Subtitles not displaying properly
-
-- **Cause**: Missing subtitle track fonts or unsupported container soft-sub formats.
-- **Solution**: Tap the subtitle icon during playback and manually select the desired track, or use **Load external subtitle...** to import an external `.srt` or `.ass` file.
-
-### 4. Downloads failing at 0 MB
-
-- **Cause**: Expired stream token or unresolved HLS variant master playlist.
-- **Solution**: Ensure you are running the latest version of AniZen. Native HLS variant token resolution handles master playlist segment resolution dynamically.
+Diagnostics and solutions for playback, extension source, download, and system issues in **AniZen**.
 
 ---
 
-## System diagnostics & log export
+## Common Issues & Solutions
 
-AniZen includes built-in diagnostic tools to help investigate technical issues:
+### Extension Source 403 Forbidden / Loading Errors
+- **Cause**: Anti-bot Cloudflare protection triggered by the target source host.
+- **Solution**: Open the source in **Browse**, tap the **WebView** icon in the toolbar, and complete the Cloudflare challenge.
 
-### Extension health monitor
+### Video Stuttering or High Battery Consumption
+- **Cause**: High GPU load from Anime4K shaders or Jinc scaling (`ewa_lanczossharp`).
+- **Solution**: Navigate to **Settings → Player → Anime4K** and select **Balanced (M)** or **Fast (S)** quality presets, or enable **Adaptive Shader Scaling**.
 
-1. Navigate to **More → Settings → Diagnostics**.
-2. Tap **Check Extension Health**.
-3. View real-time reports detailing extension latency, online node status, and response metrics.
+### Subtitles Missing or Rendering Incorrectly
+- **Cause**: Missing embedded fonts or unsupported container soft-sub streams.
+- **Solution**: Open the player subtitle selector to switch tracks, or select **Load external subtitle...** to load a local `.srt` or `.ass` file.
 
-### Exporting logcat diagnostics
+### Download Fails Immediately (0 MB)
+- **Cause**: Expired playback session tokens or unresolved HLS master playlist URL.
+- **Solution**: Update AniZen to the latest release to use updated HLS variant resolving, or re-fetch the stream link from the source.
 
-If submitting a bug report on GitHub:
+---
 
-1. Go to **More → Settings → Diagnostics**.
-2. Tap **Export Logs**.
-3. The formatted diagnostic report (including device specs, active player filters, and recent stack traces) will be copied to your clipboard.
-4. Paste the log contents into your [GitHub Issue report](https://github.com/salmanbappi/AniZen/issues).
+## Cache Maintenance
+
+Options located under **Settings → Data and storage** and **Settings → Advanced**:
+
+- **Clear Chapter Cache**: Flushes cached stream metadata and temporary video segments.
+- **Clear Cookies**: Removes stored network cookies across extension WebViews.
+- **Clear WebView Data**: Resets browser cache, web storage, form data, and SSL sessions.
+- **Clear Database**: Removes non-library anime records and unindexed source metadata.
+
+---
+
+## System Diagnostics & Log Export
+
+### Extension Health Monitor
+
+1. Open **AniZen** and navigate to **More → Extension Health**.
+2. The health monitor tests active sources for latency, IP endpoints, TLS versions, and availability.
+3. Tap **Copy Report** to copy the diagnostics report to the clipboard.
+
+### Exporting Crash Logs
+
+1. Navigate to **More → Settings → Advanced**.
+2. Tap **Dump crash logs** (or select **Dump crash logs** on the crash handler overlay if app crashes).
+3. AniZen exports `anizen_crash_logs.txt` containing system specs, installed extension versions, and recent `logcat` error entries.
+4. Attach `anizen_crash_logs.txt` when opening a [GitHub Issue](https://github.com/salmanbappi/AniZen/issues).
+
+

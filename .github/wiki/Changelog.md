@@ -1,6 +1,6 @@
-# Changelogs
+# Changelog
 
-Release notes and version history for **AniZen**.
+Release notes and version history for AniZen.
 
 ---
 
@@ -18,7 +18,7 @@ Release notes and version history for **AniZen**.
 - Fixed Jellyfin enhanced tracking synchronization ([@Secozzi](https://github.com/Secozzi)).
 
 ### Improved
-- Adjusted long-press gesture speed slider sensitivity for finer control.
+- Adjusted long-press gesture speed slider sensitivity.
 - Updated timestamp strings to show "Now" instead of "0 minutes ago".
 
 ---
@@ -26,8 +26,8 @@ Release notes and version history for **AniZen**.
 ## [v0.16.4.0] — 2024-07-01
 
 ### Fixed
-- Resolved Picture-in-Picture intent broadcasting issues on Android 14+.
-- Fixed crash when opening advanced player settings on Android 10 and below.
+- Fixed Picture-in-Picture intent broadcasting on Android 14+.
+- Fixed crash when opening advanced player settings on Android 10 and lower.
 
 ### Improved
 - Auto-hide the skip intro button when the skipped interval evaluates to 0 seconds.

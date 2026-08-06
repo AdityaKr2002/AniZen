@@ -440,8 +440,10 @@ fun PlayerControls(
 
                     var wasPlayerAlreadyPause by remember { mutableStateOf(false) }
                     var sliderPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
-                    LaunchedEffect(position) {
-                        if (!isSeekingUI) {
+                    LaunchedEffect(position, seekPosition, isSeekingUI) {
+                        if (isSeekingUI) {
+                            sliderPosition = seekPosition
+                        } else {
                             sliderPosition = position
                         }
                     }
@@ -458,9 +460,7 @@ fun PlayerControls(
                             }
                             sliderPosition = it
                             viewModel.updateSeekPos(it)
-                            if (!viewModel.hasThumbnails.value) {
-                                viewModel.scrubSeekTo(it.toInt(), false)
-                            }
+                            viewModel.scrubSeekTo(it.toInt(), false)
                         },
                         onValueChangeFinished = {
                             viewModel.updateIsSeeking(false)

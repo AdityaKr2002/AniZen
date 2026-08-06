@@ -1,10 +1,10 @@
 ### General
-- **[Welcome](Home)**
-- **[Getting started](Installation)**
+- **[Home](Home)**
+- **[Getting Started](Installation)**
 - **[Features](Features)**
-- **[Changelogs](Changelog)**
+- **[Changelog](Changelog)**
 
-### Frequently Asked Questions
+### FAQ
 - **[FAQ Overview](FAQ)**
 - **[General FAQ](FAQ-General)**
 - **[Library FAQ](FAQ-Library)**
@@ -14,17 +14,17 @@
 - **[Storage FAQ](FAQ-Storage)**
 
 ### User Guides
-- **[Player settings](Player-Guide)**
-- **[Anime4K guide](Anime4K-Guide)**
-- **[Backups guide](Backups)**
-- **[Tracking guide](Tracking)**
-- **[Categories guide](Categories)**
-- **[Source migration guide](Source-Migration)**
-- **[Local anime source](Local-Anime-Source)**
-- **[Troubleshooting guide](Troubleshooting)**
-- **[Shizuku setup](Shizuku)**
+- **[Player Settings](Player-Guide)**
+- **[Anime4K Guide](Anime4K-Guide)**
+- **[Backups Guide](Backups)**
+- **[Tracking Guide](Tracking)**
+- **[Categories Guide](Categories)**
+- **[Source Migration Guide](Source-Migration)**
+- **[Local Anime Source](Local-Anime-Source)**
+- **[Troubleshooting Guide](Troubleshooting)**
+- **[Shizuku Setup](Shizuku)**
 
 ### Developers
 - **[Architecture](Architecture)**
-- **[Contribute](Contributing)**
-- **[Wiki style guide](Style-Guide)**
+- **[Contributing](Contributing)**
+- **[Wiki Style Guide](Style-Guide)**
