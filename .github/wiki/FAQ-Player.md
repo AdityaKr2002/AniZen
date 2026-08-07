@@ -25,12 +25,15 @@ AniZen uses `audio` sync by default and automatically switches to `display-resam
 
 ---
 
-## What is Copy Mode (`mediacodec-copy`)?
+## What is the difference between HW (`mediacodec-copy`) and HW+ (`mediacodec`)?
 
-Standard Android hardware decoding (`mediacodec`) renders directly to a display surface. To apply post-processing filters (such as sharpening, saturation, or debanding), frames are copied to RAM for GPU processing (`mediacodec-copy`).
+In **Settings → Player → Decoder**:
 
-- **Filters Disabled**: Direct hardware decoding active for minimum power consumption.
-- **Filters Enabled**: `mediacodec-copy` engaged automatically to run MPVFX filters and shaders.
+- **HW (`mediacodec-copy`)**: Hardware decodes video frames into system RAM before sending them to the GPU renderer. This increases compatibility with software video filters and GLSL shaders on certain GPUs.
+- **HW+ (`mediacodec`)**: Direct hardware decoding that renders directly to a Surface. Offers maximum battery efficiency and lower memory usage, but may bypass certain custom post-processing filters depending on GPU driver capabilities.
+
+AniZen allows switching between `mediacodec`, `mediacodec-copy`, `auto`, and software decoding directly in the player decoder menu.
+
 
 ---
 

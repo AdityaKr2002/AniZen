@@ -39,9 +39,6 @@ Adjust video controls in the player using the **Filters (MPVFX)** panel.
 | **Cinema** | Brightness -5, Contrast +15, Saturation -10, Gamma -5 | High-contrast dark scenes |
 | **Vintage** | Contrast +10, Saturation -30, Gamma -10, Hue -5 | Older or desaturated animation |
 
-> [!NOTE]
-> Applying video filters automatically switches decoding to Copy Mode (`mediacodec-copy`) for frame post-processing. Resetting filter sliders to `0` restores direct hardware decoding (`mediacodec`).
-
 ---
 
 ## Touch Gestures
