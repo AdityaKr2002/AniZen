@@ -440,11 +440,31 @@ fun PlayerControls(
 
                     var wasPlayerAlreadyPause by remember { mutableStateOf(false) }
                     var sliderPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+                    var lastTargetSeekPos by remember { mutableStateOf<Float?>(null) }
+
                     LaunchedEffect(position, seekPosition, isSeekingUI) {
                         if (isSeekingUI) {
                             sliderPosition = seekPosition
+                            lastTargetSeekPos = seekPosition
                         } else {
-                            sliderPosition = position
+                            val target = lastTargetSeekPos
+                            if (target != null) {
+                                if (kotlin.math.abs(position - target) > 1.5f) {
+                                    sliderPosition = target
+                                } else {
+                                    sliderPosition = position
+                                    lastTargetSeekPos = null
+                                }
+                            } else {
+                                sliderPosition = position
+                            }
+                        }
+                    }
+
+                    LaunchedEffect(isSeekingUI) {
+                        if (!isSeekingUI && lastTargetSeekPos != null) {
+                            kotlinx.coroutines.delay(1000)
+                            lastTargetSeekPos = null
                         }
                     }
 
