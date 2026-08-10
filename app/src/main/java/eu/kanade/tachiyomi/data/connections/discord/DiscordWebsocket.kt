@@ -119,10 +119,11 @@ open class DiscordWebSocketImpl(
         var scope = CoroutineScope(coroutineContext)
 
         private fun sendHeartBeat(sendIdentify: Boolean) {
+            val interval = heartbeatInterval ?: return
             scope.cancel()
             scope = CoroutineScope(coroutineContext)
             scope.launch {
-                delay(heartbeatInterval!!)
+                delay(interval)
                 webSocket?.send("{\"op\":1, \"d\":$seq}")
             }
             if (sendIdentify) sendIdentify()
@@ -137,12 +138,12 @@ open class DiscordWebSocketImpl(
 
             when (map.op) {
                 OpCode.HELLO.value -> {
-                    map.d
-                    heartbeatInterval = map.d.jsonObject["heartbeat_interval"]!!.jsonPrimitive.long
+                    heartbeatInterval = map.d.jsonObject["heartbeat_interval"]?.jsonPrimitive?.long
                     sendHeartBeat(true)
                 }
                 OpCode.DISPATCH.value -> if (map.t == "READY") {
                     connected = true
+                    log("Discord Gateway connected (READY)")
                 }
                 OpCode.HEARTBEAT.value -> {
                     if (scope.isActive) scope.cancel()
@@ -158,13 +159,14 @@ open class DiscordWebSocketImpl(
         @Suppress("MagicNumber")
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             log("Server Closed : $code $reason")
-            if (code == 4000) {
-                scope.cancel()
-            }
+            connected = false
+            scope.cancel()
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             log("Failure : ${t.message}")
+            connected = false
+            scope.cancel()
             if (t.message != "Interrupt") {
                 this@DiscordWebSocketImpl.webSocket = client.newWebSocket(request, Listener())
             }
