@@ -1416,7 +1416,7 @@
     <string name="pref_bottom_nav_reset_style">Сбросить стиль</string>
     <string name="pref_bottom_nav_settings">Настройки навигации</string>
     <string name="pref_bottom_nav_visible_tabs">Видимые вкладки</string>
-    <string name="pref_category_ai">Расширенная диагностика и аналитика</string>
+    <string name="pref_category_ai">Интеграция ИИ</string>
     <string name="pref_category_intro_skip">Пропуск опенинга</string>
     <string name="pref_category_navbar">Навигационная панель</string>
     <string name="pref_category_player_performance">Производительность</string>

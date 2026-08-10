@@ -12,7 +12,31 @@ class AiPreferences(
 
     fun geminiApiKey() = preferenceStore.getString("gemini_api_key", "")
 
+    fun geminiModel() = preferenceStore.getString("gemini_model", "gemini-flash-latest")
+
     fun groqApiKey() = preferenceStore.getString("groq_api_key", "")
+
+    fun deepseekApiKey() = preferenceStore.getString("deepseek_api_key", "")
+
+    fun deepseekModel() = preferenceStore.getString("deepseek_model", "deepseek-v4-flash-free")
+
+    fun openaiApiKey() = preferenceStore.getString("openai_api_key", "")
+
+    fun openaiModel() = preferenceStore.getString("openai_model", "gpt-4o-mini")
+
+    fun anthropicApiKey() = preferenceStore.getString("anthropic_api_key", "")
+
+    fun anthropicModel() = preferenceStore.getString("anthropic_model", "claude-3-5-sonnet-20241022")
+
+    fun openrouterApiKey() = preferenceStore.getString("openrouter_api_key", "")
+
+    fun openrouterModel() = preferenceStore.getString("openrouter_model", "openai/gpt-4o-mini")
+
+    fun togetherApiKey() = preferenceStore.getString("together_api_key", "")
+
+    fun togetherModel() = preferenceStore.getString("together_model", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+
+    fun groqModel() = preferenceStore.getString("groq_model", "llama-3.3-70b-versatile")
 
     // Assistant
     fun enableAiAssistant() = preferenceStore.getBoolean("enable_ai_assistant", true)

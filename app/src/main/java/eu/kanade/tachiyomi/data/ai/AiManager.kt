@@ -36,6 +36,7 @@ class AiManager(
     private val json: Json = Injekt.get(),
 ) {
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+    private val keyFailures = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     // Circuit Breaker Config
     private val MAP_VERSION = 132
@@ -65,12 +66,16 @@ class AiManager(
         }
 
         val engine = aiPreferences.aiEngine().get()
-        val apiKey = if (engine == "gemini") {
-            aiPreferences.geminiApiKey().get()
-        } else {
-            aiPreferences.groqApiKey().get()
+        val apiKey = when (engine) {
+            "gemini" -> aiPreferences.geminiApiKey().get()
+            "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "openai" -> aiPreferences.openaiApiKey().get()
+            "anthropic" -> aiPreferences.anthropicApiKey().get()
+            "openrouter" -> aiPreferences.openrouterApiKey().get()
+            "together" -> aiPreferences.togetherApiKey().get()
+            else -> aiPreferences.groqApiKey().get()
         }.ifBlank { 
-            emit("Please set an API Key in Settings > Advanced Analytics")
+            emit("Please set an API Key in Settings > AI Integration")
             return@flow 
         }
 
@@ -96,10 +101,14 @@ class AiManager(
         aiPreferences.isRequestPending().set(true)
         
         try {
-            if (engine == "gemini") {
-                callGeminiStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
-            } else {
-                callGroqStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+            when (engine) {
+                "gemini" -> callGeminiStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "deepseek" -> callDeepSeekStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "openai" -> callOpenAiStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "anthropic" -> callAnthropicStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "openrouter" -> callOpenRouterStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "together" -> callTogetherStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                else -> callGroqStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
             }
         } finally {
             aiPreferences.isRequestPending().set(false)
@@ -133,10 +142,14 @@ class AiManager(
         if (isCircuitBreakerTripped()) return@flow
 
         val engine = aiPreferences.aiEngine().get()
-        val apiKey = if (engine == "gemini") {
-            aiPreferences.geminiApiKey().get()
-        } else {
-            aiPreferences.groqApiKey().get()
+        val apiKey = when (engine) {
+            "gemini" -> aiPreferences.geminiApiKey().get()
+            "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "openai" -> aiPreferences.openaiApiKey().get()
+            "anthropic" -> aiPreferences.anthropicApiKey().get()
+            "openrouter" -> aiPreferences.openrouterApiKey().get()
+            "together" -> aiPreferences.togetherApiKey().get()
+            else -> aiPreferences.groqApiKey().get()
         }.ifBlank { return@flow }
 
         val prompt = """
@@ -156,10 +169,14 @@ class AiManager(
 
         aiPreferences.isRequestPending().set(true)
         try {
-            if (engine == "gemini") {
-                callGeminiStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
-            } else {
-                callGroqStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+            when (engine) {
+                "gemini" -> callGeminiStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "deepseek" -> callDeepSeekStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "openai" -> callOpenAiStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "anthropic" -> callAnthropicStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "openrouter" -> callOpenRouterStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "together" -> callTogetherStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                else -> callGroqStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
             }
         } finally {
             aiPreferences.isRequestPending().set(false)
@@ -378,6 +395,16 @@ class AiManager(
         systemInstruction: String? = null,
         withTools: Boolean = false
     ): Flow<String> = flow {
+        val rawKeys = apiKey.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        val healthyKeys = rawKeys.sortedBy { keyFailures[it] ?: 0L }
+
+        val primaryModel = aiPreferences.geminiModel().get().ifBlank { "gemini-flash-latest" }
+        val modelsToTry = if (primaryModel != "gemini-flash-lite-latest") {
+            listOf(primaryModel, "gemini-flash-lite-latest")
+        } else {
+            listOf("gemini-flash-lite-latest")
+        }
+
         val finalMessages = if (withTools) {
             val lastQuery = messages.last().content.lowercase()
             val toolContext = StringBuilder()
@@ -414,41 +441,219 @@ class AiManager(
                 GeminiSafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_NONE")
             )
         )
-        val request = Request.Builder()
-            .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:streamGenerateContent?alt=sse&key=$apiKey")
-            .header("Content-Type", "application/json")
-            .post(json.encodeToString(GeminiRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
-            .build()
+
+        var streamEmitted = false
+
+        keyLoop@ for (key in healthyKeys) {
+            for (model in modelsToTry) {
+                try {
+                    val request = Request.Builder()
+                        .url("https://generativelanguage.googleapis.com/v1beta/models/$model:streamGenerateContent?alt=sse&key=$key")
+                        .header("Content-Type", "application/json")
+                        .post(json.encodeToString(GeminiRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+                        .build()
+
+                    val timedClient = networkHelper.client.newBuilder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    
+                    var emittedInAttempt = false
+                    timedClient.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) {
+                            keyFailures[key] = System.currentTimeMillis()
+                            return@use
+                        }
+                        val source = response.body.source()
+                        while (!source.exhausted()) {
+                            val line = source.readUtf8Line() ?: break
+                            if (line.startsWith("data: ")) {
+                                val data = line.substring(6).trim()
+                                if (data == "[DONE]") break
+                                try {
+                                    val chunk = json.decodeFromString(GeminiResponse.serializer(), data)
+                                    val text = chunk.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                                    if (text != null) {
+                                        emit(text)
+                                        emittedInAttempt = true
+                                    }
+                                } catch (e: Exception) {
+                                    // Skip partial or invalid JSON
+                                }
+                            }
+                        }
+                    }
+                    if (emittedInAttempt) {
+                        streamEmitted = true
+                        break@keyLoop
+                    }
+                } catch (e: Exception) {
+                    keyFailures[key] = System.currentTimeMillis()
+                }
+            }
+        }
+
+        if (!streamEmitted) {
+            val groqKey = aiPreferences.groqApiKey().get()
+            if (groqKey.isNotBlank()) {
+                callGroqStream(messages, groqKey, systemInstruction, withTools).collect { emit(it) }
+    suspend fun fetchAvailableModels(engine: String): List<String> = withIOContext {
+        val apiKey = when (engine) {
+            "gemini" -> aiPreferences.geminiApiKey().get().split(",").firstOrNull()?.trim() ?: ""
+            "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "openai" -> aiPreferences.openaiApiKey().get()
+            "anthropic" -> aiPreferences.anthropicApiKey().get()
+            "openrouter" -> aiPreferences.openrouterApiKey().get()
+            "together" -> aiPreferences.togetherApiKey().get()
+            else -> aiPreferences.groqApiKey().get()
+        }
+
+        if (apiKey.isBlank()) return@withIOContext getDefaultModelsForEngine(engine)
 
         try {
-            val timedClient = networkHelper.client.newBuilder()
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .build()
-            
-                timedClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    emit("Gemini Error ${response.code}")
-                    return@flow
+            when (engine) {
+                "gemini" -> {
+                    val request = Request.Builder()
+                        .url("https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey")
+                        .build()
+                    networkHelper.client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) return@withIOContext getDefaultModelsForEngine(engine)
+                        val body = response.body.string()
+                        val parsed = json.decodeFromString(GeminiModelsListResponse.serializer(), body)
+                        val models = parsed.models.map { it.name.removePrefix("models/") }
+                            .filter { it.contains("gemini") }
+                        models.ifEmpty { getDefaultModelsForEngine(engine) }
+                    }
                 }
-                val source = response.body.source()
-                while (!source.exhausted()) {
-                    val line = source.readUtf8Line() ?: break
-                    if (line.startsWith("data: ")) {
-                        val data = line.substring(6).trim()
-                        if (data == "[DONE]") break
-                        try {
-                            val chunk = json.decodeFromString(GeminiResponse.serializer(), data)
-                            val text = chunk.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                            if (text != null) emit(text)
-                        } catch (e: Exception) {
-                            // Skip partial or invalid JSON
+                "openai", "openrouter", "together", "groq", "deepseek" -> {
+                    val url = when (engine) {
+                        "openai" -> "https://api.openai.com/v1/models"
+                        "openrouter" -> "https://openrouter.ai/api/v1/models"
+                        "together" -> "https://api.together.xyz/v1/models"
+                        "groq" -> "https://api.groq.com/openai/v1/models"
+                        else -> "https://api.deepseek.com/models"
+                    }
+                    val request = Request.Builder()
+                        .url(url)
+                        .header("Authorization", "Bearer $apiKey")
+                        .build()
+                    networkHelper.client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) return@withIOContext getDefaultModelsForEngine(engine)
+                        val body = response.body.string()
+                        val parsed = json.decodeFromString(OpenAiModelsListResponse.serializer(), body)
+                        val models = parsed.data.map { it.id }
+                        models.ifEmpty { getDefaultModelsForEngine(engine) }
+                    }
+                }
+                else -> getDefaultModelsForEngine(engine)
+            }
+        } catch (e: Exception) {
+            getDefaultModelsForEngine(engine)
+        }
+    }
+
+    private fun getDefaultModelsForEngine(engine: String): List<String> {
+        return when (engine) {
+            "gemini" -> listOf("gemini-pro-latest", "gemini-flash-latest", "gemini-flash-lite-latest")
+            "openai" -> listOf("gpt-4o-mini", "gpt-4o", "o1-mini", "o1-preview")
+            "anthropic" -> listOf("claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229")
+            "openrouter" -> listOf("openai/gpt-4o-mini", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-r1")
+            "together" -> listOf("meta-llama/Llama-3.3-70B-Instruct-Turbo", "deepseek-ai/DeepSeek-R1")
+            "deepseek" -> listOf("deepseek-v4-flash-free", "deepseek-chat", "deepseek-reasoner")
+            else -> listOf("llama-3.3-70b-versatile", "llama-3.1-8b-instant")
+        }
+    }
+
+    private suspend fun callDeepSeekStream(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        systemInstruction: String? = null,
+        withTools: Boolean = false
+    ): Flow<String> = flow {
+        val selectedModel = aiPreferences.deepseekModel().get().ifBlank { "deepseek-v4-flash-free" }
+        val providers = listOf(
+            Triple("OpenCode Zen", "https://opencode.ai/zen/v1/chat/completions", selectedModel),
+            Triple("LiteRouter", "https://api.literouter.com/v1/chat/completions", selectedModel),
+            Triple("TokenReply", "https://api.tokenreply.com/v1/chat/completions", selectedModel),
+            Triple("DeepSeek", "https://api.deepseek.com/chat/completions", if (selectedModel == "deepseek-v4-flash-free") "deepseek-chat" else selectedModel)
+        )
+
+        val finalMessages = if (withTools) {
+            val lastQuery = messages.last().content.lowercase()
+            val toolContext = StringBuilder()
+            if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
+                if (aiPreferences.aiAssistantLogs().get()) {
+                    toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
+                }
+            }
+            if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
+                if (aiPreferences.aiAssistantLibrary().get()) {
+                    toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
+                }
+            }
+            messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
+        } else {
+            messages
+        }
+
+        val groqMessages = mutableListOf<GroqMessage>()
+        if (systemInstruction != null) groqMessages.add(GroqMessage(role = "system", content = systemInstruction))
+        finalMessages.forEach { msg -> groqMessages.add(GroqMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)) }
+
+        var success = false
+        for ((_, endpointUrl, modelName) in providers) {
+            try {
+                val requestBody = GroqRequest(messages = groqMessages, model = modelName, stream = true)
+                val request = Request.Builder()
+                    .url(endpointUrl)
+                    .header("Authorization", "Bearer $apiKey")
+                    .header("Content-Type", "application/json")
+                    .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+                    .build()
+
+                val timedClient = networkHelper.client.newBuilder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+
+                var emitted = false
+                timedClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) return@use
+                    val source = response.body.source()
+                    while (!source.exhausted()) {
+                        val line = source.readUtf8Line() ?: break
+                        if (line.startsWith("data: ")) {
+                            val data = line.substring(6).trim()
+                            if (data == "[DONE]") break
+                            try {
+                                val chunk = json.decodeFromString(GroqStreamResponse.serializer(), data)
+                                val text = chunk.choices.firstOrNull()?.delta?.content
+                                if (text != null) {
+                                    emit(text)
+                                    emitted = true
+                                }
+                            } catch (e: Exception) {
+                                // Skip partial JSON
+                            }
                         }
                     }
                 }
+                if (emitted) {
+                    success = true
+                    break
+                }
+            } catch (e: Exception) {
+                // Try next provider
             }
-        } catch (e: Exception) {
-            emit("Gemini Exception: ${e.message}")
+        }
+
+        if (!success) {
+            val groqKey = aiPreferences.groqApiKey().get()
+            if (groqKey.isNotBlank()) {
+                callGroqStream(messages, groqKey, systemInstruction, withTools).collect { emit(it) }
+            } else {
+                emit("DeepSeek Exception: All 3-layer endpoints failed.")
+            }
         }
     }
 
@@ -516,7 +721,8 @@ class AiManager(
             if (systemInstruction != null) groqMessages.add(GroqMessage(role = "system", content = systemInstruction))
             finalMessages.forEach { msg -> groqMessages.add(GroqMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)) }
             
-            val requestBody = GroqRequest(messages = groqMessages, model = "groq/compound-mini", stream = true)
+            val model = aiPreferences.groqModel().get().ifBlank { "llama-3.3-70b-versatile" }
+            val requestBody = GroqRequest(messages = groqMessages, model = model, stream = true)
             val request = Request.Builder()
                 .url("https://api.groq.com/openai/v1/chat/completions")
                 .header("Authorization", "Bearer $apiKey")
@@ -555,6 +761,180 @@ class AiManager(
                 emit("Groq Exception: ${e.message}")
             }
         }
+
+    private suspend fun callOpenAiStream(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        systemInstruction: String? = null,
+        withTools: Boolean = false
+    ): Flow<String> = flow {
+        val finalMessages = prepareFinalMessages(messages, systemInstruction, withTools)
+        val model = aiPreferences.openaiModel().get().ifBlank { "gpt-4o-mini" }
+        val requestBody = GroqRequest(messages = finalMessages, model = model, stream = true)
+        val request = Request.Builder()
+            .url("https://api.openai.com/v1/chat/completions")
+            .header("Authorization", "Bearer $apiKey")
+            .header("Content-Type", "application/json")
+            .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+            .build()
+        executeOpenAiFormatStream(request).collect { emit(it) }
+    }
+
+    private suspend fun callAnthropicStream(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        systemInstruction: String? = null,
+        withTools: Boolean = false
+    ): Flow<String> = flow {
+        val anthropicMessages = messages.map { msg ->
+            AnthropicMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)
+        }
+        val model = aiPreferences.anthropicModel().get().ifBlank { "claude-3-5-sonnet-20241022" }
+        val requestBody = AnthropicRequest(
+            model = model,
+            system = systemInstruction,
+            messages = anthropicMessages,
+            stream = true
+        )
+        val request = Request.Builder()
+            .url("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", apiKey)
+            .header("anthropic-version", "2023-06-01")
+            .header("Content-Type", "application/json")
+            .post(json.encodeToString(AnthropicRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+            .build()
+
+        try {
+            val timedClient = networkHelper.client.newBuilder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
+            timedClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    emit("Anthropic Error ${response.code}")
+                    return@flow
+                }
+                val source = response.body.source()
+                while (!source.exhausted()) {
+                    val line = source.readUtf8Line() ?: break
+                    if (line.startsWith("data: ")) {
+                        val data = line.substring(6).trim()
+                        if (data == "[DONE]") break
+                        try {
+                            val chunk = json.decodeFromString(AnthropicStreamResponse.serializer(), data)
+                            val text = chunk.delta?.text
+                            if (text != null) emit(text)
+                        } catch (e: Exception) {
+                            // Skip partial JSON
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            emit("Anthropic Exception: ${e.message}")
+        }
+    }
+
+    private suspend fun callOpenRouterStream(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        systemInstruction: String? = null,
+        withTools: Boolean = false
+    ): Flow<String> = flow {
+        val finalMessages = prepareFinalMessages(messages, systemInstruction, withTools)
+        val model = aiPreferences.openrouterModel().get().ifBlank { "openai/gpt-4o-mini" }
+        val requestBody = GroqRequest(messages = finalMessages, model = model, stream = true)
+        val request = Request.Builder()
+            .url("https://openrouter.ai/api/v1/chat/completions")
+            .header("Authorization", "Bearer $apiKey")
+            .header("HTTP-Referer", "https://github.com/salmanbappi/AniZen")
+            .header("X-Title", "AniZen")
+            .header("Content-Type", "application/json")
+            .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+            .build()
+        executeOpenAiFormatStream(request).collect { emit(it) }
+    }
+
+    private suspend fun callTogetherStream(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        systemInstruction: String? = null,
+        withTools: Boolean = false
+    ): Flow<String> = flow {
+        val finalMessages = prepareFinalMessages(messages, systemInstruction, withTools)
+        val model = aiPreferences.togetherModel().get().ifBlank { "meta-llama/Llama-3.3-70B-Instruct-Turbo" }
+        val requestBody = GroqRequest(messages = finalMessages, model = model, stream = true)
+        val request = Request.Builder()
+            .url("https://api.together.xyz/v1/chat/completions")
+            .header("Authorization", "Bearer $apiKey")
+            .header("Content-Type", "application/json")
+            .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+            .build()
+        executeOpenAiFormatStream(request).collect { emit(it) }
+    }
+
+    private fun prepareFinalMessages(
+        messages: List<ChatMessage>,
+        systemInstruction: String?,
+        withTools: Boolean
+    ): List<GroqMessage> {
+        val contextMessages = if (withTools) {
+            val lastQuery = messages.last().content.lowercase()
+            val toolContext = StringBuilder()
+            if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
+                if (aiPreferences.aiAssistantLogs().get()) {
+                    toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
+                }
+            }
+            if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
+                if (aiPreferences.aiAssistantLibrary().get()) {
+                    toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
+                }
+            }
+            messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
+        } else {
+            messages
+        }
+
+        val result = mutableListOf<GroqMessage>()
+        if (systemInstruction != null) result.add(GroqMessage(role = "system", content = systemInstruction))
+        contextMessages.forEach { msg -> result.add(GroqMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)) }
+        return result
+    }
+
+    private fun executeOpenAiFormatStream(request: Request): Flow<String> = flow {
+        try {
+            val timedClient = networkHelper.client.newBuilder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build()
+
+            timedClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    emit("API Error ${response.code}")
+                    return@flow
+                }
+                val source = response.body.source()
+                while (!source.exhausted()) {
+                    val line = source.readUtf8Line() ?: break
+                    if (line.startsWith("data: ")) {
+                        val data = line.substring(6).trim()
+                        if (data == "[DONE]") break
+                        try {
+                            val chunk = json.decodeFromString(GroqStreamResponse.serializer(), data)
+                            val text = chunk.choices.firstOrNull()?.delta?.content
+                            if (text != null) emit(text)
+                        } catch (e: Exception) {
+                            // Skip partial JSON
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            emit("API Exception: ${e.message}")
+        }
+    }
     
         @Serializable
         data class ChatMessage(val role: String, val content: String)
@@ -608,4 +988,37 @@ class AiManager(
     
         @Serializable
         private data class GroqStreamDelta(val content: String? = null)
+
+        @Serializable
+        private data class AnthropicRequest(
+            val model: String = "claude-3-5-sonnet-20241022",
+            val max_tokens: Int = 1024,
+            val system: String? = null,
+            val messages: List<AnthropicMessage>,
+            val stream: Boolean = true
+        )
+
+        @Serializable
+        private data class AnthropicMessage(val role: String, val content: String)
+
+        @Serializable
+        private data class AnthropicStreamResponse(
+            val type: String? = null,
+            val delta: AnthropicDelta? = null
+        )
+
+        @Serializable
+        private data class AnthropicDelta(val text: String? = null)
+
+        @Serializable
+        private data class GeminiModelsListResponse(val models: List<GeminiModelItem>)
+
+        @Serializable
+        private data class GeminiModelItem(val name: String)
+
+        @Serializable
+        private data class OpenAiModelsListResponse(val data: List<OpenAiModelItem>)
+
+        @Serializable
+        private data class OpenAiModelItem(val id: String)
     }

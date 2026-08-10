@@ -14,11 +14,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.compose.runtime.produceState
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.presentation.more.settings.Preference
 import eu.kanade.presentation.more.settings.screen.ai.AiAssistantScreen
+import eu.kanade.tachiyomi.data.ai.AiManager
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
@@ -52,9 +55,84 @@ object SettingsAiScreen : SearchableSettings {
 
     @Composable
     private fun getMainGroup(aiPreferences: AiPreferences, navigator: cafe.adriel.voyager.navigator.Navigator): Preference.PreferenceGroup {
+        val aiManager = remember { Injekt.get<AiManager>() }
         val enableAiPref = aiPreferences.enableAi()
         val enableAi by enableAiPref.collectAsState()
         val aiEngine by aiPreferences.aiEngine().collectAsState()
+
+        val geminiKey by aiPreferences.geminiApiKey().collectAsState()
+        val deepseekKey by aiPreferences.deepseekApiKey().collectAsState()
+        val openaiKey by aiPreferences.openaiApiKey().collectAsState()
+        val anthropicKey by aiPreferences.anthropicApiKey().collectAsState()
+        val openrouterKey by aiPreferences.openrouterApiKey().collectAsState()
+        val togetherKey by aiPreferences.togetherApiKey().collectAsState()
+        val groqKey by aiPreferences.groqApiKey().collectAsState()
+
+        val activeKey = when (aiEngine) {
+            "gemini" -> geminiKey
+            "deepseek" -> deepseekKey
+            "openai" -> openaiKey
+            "anthropic" -> anthropicKey
+            "openrouter" -> openrouterKey
+            "together" -> togetherKey
+            else -> groqKey
+        }
+
+        val availableModels by produceState(
+            initialValue = emptyList<String>(),
+            key1 = aiEngine,
+            key2 = activeKey,
+        ) {
+            value = aiManager.fetchAvailableModels(aiEngine)
+        }
+
+        val currentModelPref = when (aiEngine) {
+            "gemini" -> aiPreferences.geminiModel()
+            "deepseek" -> aiPreferences.deepseekModel()
+            "openai" -> aiPreferences.openaiModel()
+            "anthropic" -> aiPreferences.anthropicModel()
+            "openrouter" -> aiPreferences.openrouterModel()
+            "together" -> aiPreferences.togetherModel()
+            else -> aiPreferences.groqModel()
+        }
+
+        val modelEntries = remember(availableModels) {
+            if (availableModels.isNotEmpty()) {
+                availableModels.associateWith { it }.toPersistentMap()
+            } else {
+                persistentMapOf("loading" to "Fetching accessible models...")
+            }
+        }
+
+        val activeApiKeyPref = when (aiEngine) {
+            "gemini" -> aiPreferences.geminiApiKey()
+            "deepseek" -> aiPreferences.deepseekApiKey()
+            "openai" -> aiPreferences.openaiApiKey()
+            "anthropic" -> aiPreferences.anthropicApiKey()
+            "openrouter" -> aiPreferences.openrouterApiKey()
+            "together" -> aiPreferences.togetherApiKey()
+            else -> aiPreferences.groqApiKey()
+        }
+
+        val activeApiKeyTitle = when (aiEngine) {
+            "gemini" -> stringResource(MR.strings.pref_ai_gemini_api_key)
+            "deepseek" -> "DeepSeek API Key"
+            "openai" -> "OpenAI API Key"
+            "anthropic" -> "Anthropic API Key"
+            "openrouter" -> "OpenRouter API Key"
+            "together" -> "Together AI API Key"
+            else -> "Groq API Key"
+        }
+
+        val activeApiKeySubtitle = when (aiEngine) {
+            "gemini" -> "Supports multiple comma-separated keys for health rotation"
+            "deepseek" -> "Used for DeepSeek V4 3-layer endpoint failover"
+            "openai" -> "Used for GPT-4o / o-series models"
+            "anthropic" -> "Used for Claude 3.5 Sonnet / Haiku models"
+            "openrouter" -> "Unified access to open & closed models"
+            "together" -> "High-performance inference for open-weights models"
+            else -> "Used for high-speed inference"
+        }
 
         return Preference.PreferenceGroup(
             title = "AI Configuration",
@@ -67,25 +145,37 @@ object SettingsAiScreen : SearchableSettings {
                 Preference.PreferenceItem.ListPreference(
                     pref = aiPreferences.aiEngine(),
                     title = "AI Model Provider",
-                    subtitle = "Choose the AI service provider",
+                    subtitle = "Choose the active AI service provider",
                     entries = persistentMapOf(
                         "gemini" to "Google Gemini",
+                        "deepseek" to "DeepSeek V4",
+                        "openai" to "OpenAI (ChatGPT)",
+                        "anthropic" to "Anthropic (Claude)",
+                        "openrouter" to "OpenRouter",
+                        "together" to "Together AI",
                         "groq" to "Groq",
                     ),
                     enabled = enableAi,
                 ),
                 Preference.PreferenceItem.EditTextPreference(
-                    pref = aiPreferences.geminiApiKey(),
-                    title = stringResource(MR.strings.pref_ai_gemini_api_key),
-                    subtitle = stringResource(MR.strings.pref_ai_gemini_api_key_summary),
-                    enabled = enableAi && aiEngine == "gemini",
+                    pref = activeApiKeyPref,
+                    title = activeApiKeyTitle,
+                    subtitle = activeApiKeySubtitle,
+                    enabled = enableAi,
+                ),
+                Preference.PreferenceItem.ListPreference(
+                    pref = currentModelPref,
+                    title = "Accessible Models",
+                    subtitle = if (activeKey.isNotBlank()) "Dynamically fetched based on API key permissions" else "Enter API key above to load accessible models",
+                    entries = modelEntries,
+                    enabled = enableAi,
                 ),
                 Preference.PreferenceItem.EditTextPreference(
-                    pref = aiPreferences.groqApiKey(),
-                    title = "Groq API Key",
-                    subtitle = "Used for high-speed inference",
-                    enabled = enableAi && aiEngine == "groq",
-                )
+                    pref = currentModelPref,
+                    title = "Custom Model Override",
+                    subtitle = "Enter custom model tag if not listed in accessible models",
+                    enabled = enableAi && aiEngine != "gemini",
+                ),
             ),
         )
     }
