@@ -497,6 +497,12 @@ class AiManager(
             val groqKey = aiPreferences.groqApiKey().get()
             if (groqKey.isNotBlank()) {
                 callGroqStream(messages, groqKey, systemInstruction, withTools).collect { emit(it) }
+            } else {
+                emit("Gemini Exception: All Gemini keys/models failed. Please check your API keys.")
+            }
+        }
+    }
+
     suspend fun fetchAvailableModels(engine: String): List<String> = withIOContext {
         val apiKey = when (engine) {
             "gemini" -> aiPreferences.geminiApiKey().get().split(",").firstOrNull()?.trim() ?: ""
