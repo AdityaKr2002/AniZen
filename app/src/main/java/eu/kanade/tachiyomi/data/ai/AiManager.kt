@@ -880,7 +880,7 @@ class AiManager(
         executeOpenAiFormatStream(request).collect { emit(it) }
     }
 
-    private fun prepareFinalMessages(
+    private suspend fun prepareFinalMessages(
         messages: List<ChatMessage>,
         systemInstruction: String?,
         withTools: Boolean
