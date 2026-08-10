@@ -38,7 +38,7 @@ class DiscordLoginActivity : BaseActivity() {
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (url != null && url.contains("/channels/")) {
+                if (url != null && (url.contains("/channels/") || url.endsWith("/app"))) {
                     webView.stopLoading()
                     webView.evaluateJavascript(
                         """
