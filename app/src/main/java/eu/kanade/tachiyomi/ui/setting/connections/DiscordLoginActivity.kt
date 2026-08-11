@@ -144,49 +144,50 @@ class DiscordLoginActivity : BaseActivity() {
                     .build()
 
                 val response = networkHelper.client.newCall(request).execute()
-
-                if (response.isSuccessful) {
-                    val body = response.body.string()
-                    val jsonObject = org.json.JSONObject(body)
-                    val id = jsonObject.getString("id")
-                    val username = jsonObject.optString("global_name", jsonObject.getString("username"))
-                    val avatarId = jsonObject.optString("avatar")
-                    val avatarUrl = if (avatarId.isNotEmpty()) {
-                        "https://cdn.discordapp.com/avatars/$id/$avatarId.png"
-                    } else {
-                        null
-                    }
-
-                    val account = DiscordAccount(
-                        id = id,
-                        username = username,
-                        avatarUrl = avatarUrl,
-                        token = token,
-                        isActive = true,
-                    )
-                    connectionsManager.discord.addAccount(account)
-                    connectionsPreferences.connectionsToken(connectionsManager.discord).set(token)
-                    connectionsPreferences.setConnectionsCredentials(
-                        connectionsManager.discord,
-                        username,
-                        "Logged In",
-                    )
-                    connectionsManager.discord.restartRichPresence()
-
-                    withContext(Dispatchers.Main) {
-                        toast(MR.strings.login_success)
-                        try {
-                            applicationInfo.dataDir.let { File("$it/app_webview/").deleteRecursively() }
-                        } catch (e: Exception) {
-                            // Ignore cleanup errors
+                response.use { res ->
+                    if (res.isSuccessful) {
+                        val body = res.body.string()
+                        val jsonObject = org.json.JSONObject(body)
+                        val id = jsonObject.getString("id")
+                        val username = jsonObject.optString("global_name", jsonObject.getString("username"))
+                        val avatarId = jsonObject.optString("avatar")
+                        val avatarUrl = if (avatarId.isNotEmpty()) {
+                            "https://cdn.discordapp.com/avatars/$id/$avatarId.png"
+                        } else {
+                            null
                         }
-                        setResult(RESULT_OK)
-                        finish()
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        isLoggingIn = false
-                        toast("Failed to authenticate Discord account (HTTP ${response.code})")
+
+                        val account = DiscordAccount(
+                            id = id,
+                            username = username,
+                            avatarUrl = avatarUrl,
+                            token = token,
+                            isActive = true,
+                        )
+                        connectionsManager.discord.addAccount(account)
+                        connectionsPreferences.connectionsToken(connectionsManager.discord).set(token)
+                        connectionsPreferences.setConnectionsCredentials(
+                            connectionsManager.discord,
+                            username,
+                            "Logged In",
+                        )
+                        connectionsManager.discord.restartRichPresence()
+
+                        withContext(Dispatchers.Main) {
+                            toast(MR.strings.login_success)
+                            try {
+                                applicationInfo.dataDir.let { File("$it/app_webview/").deleteRecursively() }
+                            } catch (e: Exception) {
+                                // Ignore cleanup errors
+                            }
+                            setResult(RESULT_OK)
+                            finish()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            isLoggingIn = false
+                            toast("Failed to authenticate Discord account (HTTP ${res.code})")
+                        }
                     }
                 }
             } catch (e: Exception) {

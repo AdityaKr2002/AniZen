@@ -36,7 +36,7 @@ class RPCExternalAsset(
     }
 
     suspend fun getDiscordUri(imageUrl: String): String? {
-        if (imageUrl.startsWith("mp:")) return imageUrl
+        if (imageUrl.isBlank() || imageUrl.startsWith("mp:")) return imageUrl.takeIf { it.isNotBlank() }
         cache[imageUrl]?.let { return it }
 
         val request = Request.Builder().url(api).header("Authorization", token)
@@ -44,9 +44,12 @@ class RPCExternalAsset(
             .build()
         return runCatching {
             val res = client.newCall(request).await()
-            json.decodeFromString<List<ExternalAsset>>(res.body.string())
-                .firstOrNull()?.externalAssetPath?.let { "mp:$it" }
-                ?.also { cache[imageUrl] = it }
+            res.use { response ->
+                if (!response.isSuccessful) return@runCatching null
+                json.decodeFromString<List<ExternalAsset>>(response.body.string())
+                    .firstOrNull()?.externalAssetPath?.let { "mp:$it" }
+                    ?.also { cache[imageUrl] = it }
+            }
         }.getOrNull()
     }
 

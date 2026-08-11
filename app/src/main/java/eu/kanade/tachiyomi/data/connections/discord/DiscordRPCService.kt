@@ -495,8 +495,9 @@ class DiscordRPCService : Service() {
         // Helper functions
 
         private suspend fun getCategories(id: Long?): List<String> {
+            if (id == null) return listOf(UNCATEGORIZED_ID.toString())
             return Injekt.get<GetCategories>()
-                .await(id!!)
+                .await(id)
                 .map { it.id.toString() }
                 .run { ifEmpty { plus(UNCATEGORIZED_ID.toString()) } }
         }
@@ -520,10 +521,10 @@ class DiscordRPCService : Service() {
                     connectionsPreferences.useChapterTitles().get() ->
                         "$it (${chapterProgress.first}/${chapterProgress.second})"
 
-                    ceil(it.toDouble()) == floor(it.toDouble()) -> "Chapter ${it.toInt()}" + " " +
+                    ceil(it.toDouble()) == floor(it.toDouble()) -> "Chapter ${it.toInt()} " +
                         "(${chapterProgress.first}/${chapterProgress.second})"
 
-                    else -> "Chapter $it (${chapterProgress.first}/${chapterProgress.second}"
+                    else -> "Chapter $it (${chapterProgress.first}/${chapterProgress.second})"
                 }
             }
         }
