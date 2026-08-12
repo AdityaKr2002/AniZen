@@ -62,6 +62,9 @@ object SettingsAiScreen : SearchableSettings {
 
         val geminiKey by aiPreferences.geminiApiKey().collectAsState()
         val deepseekKey by aiPreferences.deepseekApiKey().collectAsState()
+        val opencodeKey by aiPreferences.opencodeApiKey().collectAsState()
+        val literouterKey by aiPreferences.literouterApiKey().collectAsState()
+        val tokenreplyKey by aiPreferences.tokenreplyApiKey().collectAsState()
         val openaiKey by aiPreferences.openaiApiKey().collectAsState()
         val anthropicKey by aiPreferences.anthropicApiKey().collectAsState()
         val openrouterKey by aiPreferences.openrouterApiKey().collectAsState()
@@ -71,6 +74,9 @@ object SettingsAiScreen : SearchableSettings {
         val activeKey = when (aiEngine) {
             "gemini" -> geminiKey
             "deepseek" -> deepseekKey
+            "opencode" -> opencodeKey
+            "literouter" -> literouterKey
+            "tokenreply" -> tokenreplyKey
             "openai" -> openaiKey
             "anthropic" -> anthropicKey
             "openrouter" -> openrouterKey
@@ -89,6 +95,9 @@ object SettingsAiScreen : SearchableSettings {
         val currentModelPref = when (aiEngine) {
             "gemini" -> aiPreferences.geminiModel()
             "deepseek" -> aiPreferences.deepseekModel()
+            "opencode" -> aiPreferences.opencodeModel()
+            "literouter" -> aiPreferences.literouterModel()
+            "tokenreply" -> aiPreferences.tokenreplyModel()
             "openai" -> aiPreferences.openaiModel()
             "anthropic" -> aiPreferences.anthropicModel()
             "openrouter" -> aiPreferences.openrouterModel()
@@ -107,6 +116,9 @@ object SettingsAiScreen : SearchableSettings {
         val activeApiKeyPref = when (aiEngine) {
             "gemini" -> aiPreferences.geminiApiKey()
             "deepseek" -> aiPreferences.deepseekApiKey()
+            "opencode" -> aiPreferences.opencodeApiKey()
+            "literouter" -> aiPreferences.literouterApiKey()
+            "tokenreply" -> aiPreferences.tokenreplyApiKey()
             "openai" -> aiPreferences.openaiApiKey()
             "anthropic" -> aiPreferences.anthropicApiKey()
             "openrouter" -> aiPreferences.openrouterApiKey()
@@ -117,6 +129,9 @@ object SettingsAiScreen : SearchableSettings {
         val activeApiKeyTitle = when (aiEngine) {
             "gemini" -> stringResource(MR.strings.pref_ai_gemini_api_key)
             "deepseek" -> "DeepSeek API Key"
+            "opencode" -> "OpenCode Zen API Key"
+            "literouter" -> "LiteRouter API Key"
+            "tokenreply" -> "TokenReply API Key"
             "openai" -> "OpenAI API Key"
             "anthropic" -> "Anthropic API Key"
             "openrouter" -> "OpenRouter API Key"
@@ -126,7 +141,10 @@ object SettingsAiScreen : SearchableSettings {
 
         val activeApiKeySubtitle = when (aiEngine) {
             "gemini" -> "Supports multiple comma-separated keys for health rotation"
-            "deepseek" -> "Used for DeepSeek V4 3-layer endpoint failover"
+            "deepseek" -> "Used for official DeepSeek API"
+            "opencode" -> "Used for OpenCode Zen endpoint"
+            "literouter" -> "Used for LiteRouter endpoint"
+            "tokenreply" -> "Used for TokenReply endpoint"
             "openai" -> "Used for GPT-4o / o-series models"
             "anthropic" -> "Used for Claude 3.5 Sonnet / Haiku models"
             "openrouter" -> "Unified access to open & closed models"
@@ -148,7 +166,10 @@ object SettingsAiScreen : SearchableSettings {
                     subtitle = "Choose the active AI service provider",
                     entries = persistentMapOf(
                         "gemini" to "Google Gemini",
-                        "deepseek" to "DeepSeek V4",
+                        "deepseek" to "DeepSeek V4 (Official)",
+                        "opencode" to "OpenCode Zen",
+                        "literouter" to "LiteRouter",
+                        "tokenreply" to "TokenReply",
                         "openai" to "OpenAI (ChatGPT)",
                         "anthropic" to "Anthropic (Claude)",
                         "openrouter" to "OpenRouter",

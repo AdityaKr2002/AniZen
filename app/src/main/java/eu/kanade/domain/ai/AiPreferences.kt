@@ -18,7 +18,19 @@ class AiPreferences(
 
     fun deepseekApiKey() = preferenceStore.getString("deepseek_api_key", "")
 
-    fun deepseekModel() = preferenceStore.getString("deepseek_model", "deepseek-v4-flash-free")
+    fun deepseekModel() = preferenceStore.getString("deepseek_model", "deepseek-chat")
+
+    fun opencodeApiKey() = preferenceStore.getString("opencode_api_key", "")
+
+    fun opencodeModel() = preferenceStore.getString("opencode_model", "deepseek-v4-flash-free")
+
+    fun literouterApiKey() = preferenceStore.getString("literouter_api_key", "")
+
+    fun literouterModel() = preferenceStore.getString("literouter_model", "deepseek-v4-flash-free")
+
+    fun tokenreplyApiKey() = preferenceStore.getString("tokenreply_api_key", "")
+
+    fun tokenreplyModel() = preferenceStore.getString("tokenreply_model", "deepseek-v4-flash-free")
 
     fun openaiApiKey() = preferenceStore.getString("openai_api_key", "")
 

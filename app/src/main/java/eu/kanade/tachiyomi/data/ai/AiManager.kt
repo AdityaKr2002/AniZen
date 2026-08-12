@@ -69,6 +69,9 @@ class AiManager(
         val apiKey = when (engine) {
             "gemini" -> aiPreferences.geminiApiKey().get()
             "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "opencode" -> aiPreferences.opencodeApiKey().get()
+            "literouter" -> aiPreferences.literouterApiKey().get()
+            "tokenreply" -> aiPreferences.tokenreplyApiKey().get()
             "openai" -> aiPreferences.openaiApiKey().get()
             "anthropic" -> aiPreferences.anthropicApiKey().get()
             "openrouter" -> aiPreferences.openrouterApiKey().get()
@@ -103,7 +106,10 @@ class AiManager(
         try {
             when (engine) {
                 "gemini" -> callGeminiStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
-                "deepseek" -> callDeepSeekStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "deepseek" -> callOpenAiCompatibleEndpointStream("https://api.deepseek.com/chat/completions", aiPreferences.deepseekModel().get().ifBlank { "deepseek-chat" }, messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "opencode" -> callOpenAiCompatibleEndpointStream("https://opencode.ai/zen/v1/chat/completions", aiPreferences.opencodeModel().get().ifBlank { "deepseek-v4-flash-free" }, messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "literouter" -> callOpenAiCompatibleEndpointStream("https://api.literouter.com/v1/chat/completions", aiPreferences.literouterModel().get().ifBlank { "deepseek-v4-flash-free" }, messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
+                "tokenreply" -> callOpenAiCompatibleEndpointStream("https://api.tokenreply.com/v1/chat/completions", aiPreferences.tokenreplyModel().get().ifBlank { "deepseek-v4-flash-free" }, messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
                 "openai" -> callOpenAiStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
                 "anthropic" -> callAnthropicStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
                 "openrouter" -> callOpenRouterStream(messages, apiKey, systemInstruction, withTools = true).collect { emit(it) }
@@ -145,6 +151,9 @@ class AiManager(
         val apiKey = when (engine) {
             "gemini" -> aiPreferences.geminiApiKey().get()
             "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "opencode" -> aiPreferences.opencodeApiKey().get()
+            "literouter" -> aiPreferences.literouterApiKey().get()
+            "tokenreply" -> aiPreferences.tokenreplyApiKey().get()
             "openai" -> aiPreferences.openaiApiKey().get()
             "anthropic" -> aiPreferences.anthropicApiKey().get()
             "openrouter" -> aiPreferences.openrouterApiKey().get()
@@ -171,7 +180,10 @@ class AiManager(
         try {
             when (engine) {
                 "gemini" -> callGeminiStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
-                "deepseek" -> callDeepSeekStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "deepseek" -> callOpenAiCompatibleEndpointStream("https://api.deepseek.com/chat/completions", aiPreferences.deepseekModel().get().ifBlank { "deepseek-chat" }, listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "opencode" -> callOpenAiCompatibleEndpointStream("https://opencode.ai/zen/v1/chat/completions", aiPreferences.opencodeModel().get().ifBlank { "deepseek-v4-flash-free" }, listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "literouter" -> callOpenAiCompatibleEndpointStream("https://api.literouter.com/v1/chat/completions", aiPreferences.literouterModel().get().ifBlank { "deepseek-v4-flash-free" }, listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
+                "tokenreply" -> callOpenAiCompatibleEndpointStream("https://api.tokenreply.com/v1/chat/completions", aiPreferences.tokenreplyModel().get().ifBlank { "deepseek-v4-flash-free" }, listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
                 "openai" -> callOpenAiStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
                 "anthropic" -> callAnthropicStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
                 "openrouter" -> callOpenRouterStream(listOf(ChatMessage(role = "user", content = prompt)), apiKey, "You are a senior behavioral data analyst.").collect { emit(it) }
@@ -507,6 +519,9 @@ class AiManager(
         val apiKey = when (engine) {
             "gemini" -> aiPreferences.geminiApiKey().get().split(",").firstOrNull()?.trim() ?: ""
             "deepseek" -> aiPreferences.deepseekApiKey().get()
+            "opencode" -> aiPreferences.opencodeApiKey().get()
+            "literouter" -> aiPreferences.literouterApiKey().get()
+            "tokenreply" -> aiPreferences.tokenreplyApiKey().get()
             "openai" -> aiPreferences.openaiApiKey().get()
             "anthropic" -> aiPreferences.anthropicApiKey().get()
             "openrouter" -> aiPreferences.openrouterApiKey().get()
@@ -531,12 +546,15 @@ class AiManager(
                         models.ifEmpty { getDefaultModelsForEngine(engine) }
                     }
                 }
-                "openai", "openrouter", "together", "groq", "deepseek" -> {
+                "openai", "openrouter", "together", "groq", "deepseek", "opencode", "literouter", "tokenreply" -> {
                     val url = when (engine) {
                         "openai" -> "https://api.openai.com/v1/models"
                         "openrouter" -> "https://openrouter.ai/api/v1/models"
                         "together" -> "https://api.together.xyz/v1/models"
                         "groq" -> "https://api.groq.com/openai/v1/models"
+                        "opencode" -> "https://opencode.ai/zen/v1/models"
+                        "literouter" -> "https://api.literouter.com/v1/models"
+                        "tokenreply" -> "https://api.tokenreply.com/v1/models"
                         else -> "https://api.deepseek.com/models"
                     }
                     val request = Request.Builder()
@@ -565,102 +583,31 @@ class AiManager(
             "anthropic" -> listOf("claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229")
             "openrouter" -> listOf("openai/gpt-4o-mini", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-r1")
             "together" -> listOf("meta-llama/Llama-3.3-70B-Instruct-Turbo", "deepseek-ai/DeepSeek-R1")
-            "deepseek" -> listOf("deepseek-v4-flash-free", "deepseek-chat", "deepseek-reasoner")
+            "deepseek" -> listOf("deepseek-chat", "deepseek-reasoner")
+            "opencode" -> listOf("deepseek-v4-flash-free", "deepseek-chat")
+            "literouter" -> listOf("deepseek-v4-flash-free", "deepseek-chat")
+            "tokenreply" -> listOf("deepseek-v4-flash-free", "deepseek-chat")
             else -> listOf("llama-3.3-70b-versatile", "llama-3.1-8b-instant")
         }
     }
 
-    private suspend fun callDeepSeekStream(
+    private suspend fun callOpenAiCompatibleEndpointStream(
+        endpointUrl: String,
+        modelName: String,
         messages: List<ChatMessage>,
         apiKey: String,
         systemInstruction: String? = null,
         withTools: Boolean = false
     ): Flow<String> = flow {
-        val selectedModel = aiPreferences.deepseekModel().get().ifBlank { "deepseek-v4-flash-free" }
-        val providers = listOf(
-            Triple("OpenCode Zen", "https://opencode.ai/zen/v1/chat/completions", selectedModel),
-            Triple("LiteRouter", "https://api.literouter.com/v1/chat/completions", selectedModel),
-            Triple("TokenReply", "https://api.tokenreply.com/v1/chat/completions", selectedModel),
-            Triple("DeepSeek", "https://api.deepseek.com/chat/completions", if (selectedModel == "deepseek-v4-flash-free") "deepseek-chat" else selectedModel)
-        )
-
-        val finalMessages = if (withTools) {
-            val lastQuery = messages.last().content.lowercase()
-            val toolContext = StringBuilder()
-            if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
-                if (aiPreferences.aiAssistantLogs().get()) {
-                    toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
-                }
-            }
-            if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
-                if (aiPreferences.aiAssistantLibrary().get()) {
-                    toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
-                }
-            }
-            messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
-        } else {
-            messages
-        }
-
-        val groqMessages = mutableListOf<GroqMessage>()
-        if (systemInstruction != null) groqMessages.add(GroqMessage(role = "system", content = systemInstruction))
-        finalMessages.forEach { msg -> groqMessages.add(GroqMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)) }
-
-        var success = false
-        for ((_, endpointUrl, modelName) in providers) {
-            try {
-                val requestBody = GroqRequest(messages = groqMessages, model = modelName, stream = true)
-                val request = Request.Builder()
-                    .url(endpointUrl)
-                    .header("Authorization", "Bearer $apiKey")
-                    .header("Content-Type", "application/json")
-                    .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
-                    .build()
-
-                val timedClient = networkHelper.client.newBuilder()
-                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                    .build()
-
-                var emitted = false
-                timedClient.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@use
-                    val source = response.body.source()
-                    while (!source.exhausted()) {
-                        val line = source.readUtf8Line() ?: break
-                        if (line.startsWith("data: ")) {
-                            val data = line.substring(6).trim()
-                            if (data == "[DONE]") break
-                            try {
-                                val chunk = json.decodeFromString(GroqStreamResponse.serializer(), data)
-                                val text = chunk.choices.firstOrNull()?.delta?.content
-                                if (text != null) {
-                                    emit(text)
-                                    emitted = true
-                                }
-                            } catch (e: Exception) {
-                                // Skip partial JSON
-                            }
-                        }
-                    }
-                }
-                if (emitted) {
-                    success = true
-                    break
-                }
-            } catch (e: Exception) {
-                // Try next provider
-            }
-        }
-
-        if (!success) {
-            val groqKey = aiPreferences.groqApiKey().get()
-            if (groqKey.isNotBlank()) {
-                callGroqStream(messages, groqKey, systemInstruction, withTools).collect { emit(it) }
-            } else {
-                emit("DeepSeek Exception: All 3-layer endpoints failed.")
-            }
-        }
+        val finalMessages = prepareFinalMessages(messages, systemInstruction, withTools)
+        val requestBody = GroqRequest(messages = finalMessages, model = modelName, stream = true)
+        val request = Request.Builder()
+            .url(endpointUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("Content-Type", "application/json")
+            .post(json.encodeToString(GroqRequest.serializer(), requestBody).toRequestBody(jsonMediaType))
+            .build()
+        executeOpenAiFormatStream(request).collect { emit(it) }
     }
 
     private suspend fun callGroq(messages: List<ChatMessage>, apiKey: String, systemInstruction: String? = null): String? = withIOContext {
