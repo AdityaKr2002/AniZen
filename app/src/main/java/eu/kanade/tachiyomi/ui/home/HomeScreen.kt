@@ -507,7 +507,7 @@ object HomeScreen : Screen() {
                                     count,
                                 )
                                 Text(
-                                    text = count.toString(),
+                                    text = if (count > 99) "99+" else count.toString(),
                                     modifier = Modifier.semantics { contentDescription = desc },
                                 )
                             }
@@ -526,7 +526,7 @@ object HomeScreen : Screen() {
                                     count,
                                 )
                                 Text(
-                                    text = count.toString(),
+                                    text = if (count > 99) "99+" else count.toString(),
                                     modifier = Modifier.semantics { contentDescription = desc },
                                 )
                             }
