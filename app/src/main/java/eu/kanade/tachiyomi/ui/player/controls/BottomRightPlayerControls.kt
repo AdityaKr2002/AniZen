@@ -49,6 +49,7 @@ fun BottomRightPlayerControls(
                 castManager = castManager,
                 onBackPress = onBackPress,
                 onCastClick = onCastClick,
+                containerButtons = buttons,
             )
         }
     }

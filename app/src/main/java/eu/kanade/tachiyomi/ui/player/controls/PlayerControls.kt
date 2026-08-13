@@ -581,7 +581,8 @@ fun PlayerControls(
                                 viewModel = viewModel,
                                 castManager = castManager,
                                 onBackPress = onBackPress,
-                                onCastClick = { showCastSheet = true }
+                                onCastClick = { showCastSheet = true },
+                                containerButtons = portraitBottomButtonsList,
                             )
                         }
                     }

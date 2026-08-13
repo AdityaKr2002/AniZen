@@ -81,6 +81,7 @@ fun RenderPlayerButton(
     castManager: CastManager,
     onBackPress: () -> Unit,
     onCastClick: () -> Unit,
+    containerButtons: List<PlayerButton> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val autoPlayEnabled by viewModel.playerPreferences.autoplayEnabled().collectAsState()
@@ -93,6 +94,7 @@ fun RenderPlayerButton(
     val skipIntroButton by viewModel.skipIntroText.collectAsState()
     val customButtonTitle by viewModel.primaryButtonTitle.collectAsState()
     val customButton by viewModel.primaryButton.collectAsState()
+    val hasSkipIntroInLayout = containerButtons.contains(PlayerButton.SkipIntro)
 
     when (button) {
         PlayerButton.BackArrow -> {
@@ -300,7 +302,15 @@ fun RenderPlayerButton(
             }
         }
         PlayerButton.CustomButton -> {
-            if (customButton != null && customButtonTitle != null) {
+            if (skipIntroButton != null) {
+                if (!hasSkipIntroInLayout) {
+                    FilledControlsButton(
+                        text = skipIntroButton!!,
+                        onClick = viewModel::onSkipIntro,
+                        onLongClick = viewModel::onSkipIntro,
+                    )
+                }
+            } else if (customButton != null && customButtonTitle != null) {
                 FilledControlsButton(
                     text = customButtonTitle!!,
                     onClick = { customButton!!.execute() },
