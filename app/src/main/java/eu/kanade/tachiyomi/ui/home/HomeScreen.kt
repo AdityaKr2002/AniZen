@@ -51,14 +51,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -150,6 +148,8 @@ object HomeScreen : Screen() {
         val screenModel = rememberScreenModel { HomeScreenModel(context) }
         val adaptiveEngine = screenModel.adaptiveEngine
         val adaptiveDecision by adaptiveEngine.currentDecision.collectAsState()
+        val updatesCount by screenModel.updatesCount.collectAsState()
+        val extensionUpdatesCount by screenModel.extensionUpdatesCount.collectAsState()
 
         val activity = context as? ComponentActivity
         val preferences = Injekt.get<PreferenceStore>()
@@ -189,7 +189,9 @@ object HomeScreen : Screen() {
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
                                 for (navItem in visibleNavItems) {
-                                    HomeNavigationRailItem(tabNavigator, navItem, navLabelVisibility, adaptiveDecision)
+                                    key(navItem.id) {
+                                        HomeNavigationRailItem(tabNavigator, navItem, navLabelVisibility, adaptiveDecision, updatesCount, extensionUpdatesCount)
+                                    }
                                 }
                             }
                         }
@@ -210,7 +212,7 @@ object HomeScreen : Screen() {
                                 ) {
                                     for (navItem in visibleNavItems) {
                                         key(navItem.id) {
-                                            HomeNavigationBarItem(this, tabNavigator, navItem, navLabelVisibility, adaptiveDecision)
+                                            HomeNavigationBarItem(this, tabNavigator, navItem, navLabelVisibility, adaptiveDecision, updatesCount, extensionUpdatesCount)
                                         }
                                     }
                                 }
@@ -337,17 +339,19 @@ object HomeScreen : Screen() {
         navItem: NavItem,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
+        updatesCount: Int,
+        extensionUpdatesCount: Int,
     ) {
         val tab = navItem.tab
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val behavior = behaviorMap[navItem.id] ?: NavBehavior()
+        val behavior = remember(behaviorMap, navItem.id) { behaviorMap[navItem.id] ?: NavBehavior() }
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
-        val executor = remember { NavActionExecutor(context, scope, navigator) }
+        val executor = remember(context, scope, navigator) { NavActionExecutor(context, scope, navigator) }
         
         val title = stringResource(navItem.titleRes)
 
@@ -384,7 +388,7 @@ object HomeScreen : Screen() {
                         }
                     }
                 ),
-                icon = { NavigationIconItem(navItem, adaptiveDecision) },
+                icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
                 label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                     {
                         Text(
@@ -406,6 +410,8 @@ object HomeScreen : Screen() {
         navItem: NavItem,
         navLabelVisibility: NavLabelVisibility,
         adaptiveDecision: AdaptiveDecision?,
+        updatesCount: Int,
+        extensionUpdatesCount: Int,
     ) {
         val tab = navItem.tab
         val navigator = LocalNavigator.currentOrThrow
@@ -413,11 +419,11 @@ object HomeScreen : Screen() {
         val context = LocalContext.current
         
         val behaviorMap by uiPreferences.bottomNavBehaviors().collectAsStatePref()
-        val behavior = behaviorMap[navItem.id] ?: NavBehavior()
+        val behavior = remember(behaviorMap, navItem.id) { behaviorMap[navItem.id] ?: NavBehavior() }
 
         val selected = tabNavigator.current.key == tab.key
         val haptic = LocalHapticFeedback.current
-        val executor = remember { NavActionExecutor(context, scope, navigator) }
+        val executor = remember(context, scope, navigator) { NavActionExecutor(context, scope, navigator) }
 
         val title = stringResource(navItem.titleRes)
 
@@ -452,7 +458,7 @@ object HomeScreen : Screen() {
                     }
                 }
             ),
-            icon = { NavigationIconItem(navItem, adaptiveDecision) },
+            icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
             label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
                     Text(
@@ -472,6 +478,8 @@ object HomeScreen : Screen() {
     private fun NavigationIconItem(
         navItem: NavItem,
         adaptiveDecision: AdaptiveDecision?,
+        updatesCount: Int,
+        extensionUpdatesCount: Int,
     ) {
         val tab = navItem.tab
         val tabNavigator = LocalTabNavigator.current
@@ -487,46 +495,37 @@ object HomeScreen : Screen() {
         )
 
         BadgedBox(
-            modifier = Modifier.scale(scale),
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
             badge = {
                 when {
                     UpdatesTab::class.isInstance(tab) -> {
-                        val count by produceState(initialValue = 0) {
-                            val pref = Injekt.get<LibraryPreferences>()
-                            combine(
-                                pref.newUpdatesCount().changes(),
-                                pref.newMangaUpdatesCount().changes(),
-                            ) { countAnime, countManga -> countAnime + countManga }
-                                .collectLatest { value = if (pref.newShowUpdatesCount().get()) it else 0 }
-                        }
-                        if (count > 0) {
+                        if (updatesCount > 0) {
                             Badge {
                                 val desc = pluralStringResource(
                                     MR.plurals.notification_chapters_generic,
-                                    count = count,
-                                    count,
+                                    count = updatesCount,
+                                    updatesCount,
                                 )
                                 Text(
-                                    text = if (count > 99) "99+" else count.toString(),
+                                    text = if (updatesCount > 99) "99+" else updatesCount.toString(),
                                     modifier = Modifier.semantics { contentDescription = desc },
                                 )
                             }
                         }
                     }
                     BrowseTab::class.isInstance(tab) -> {
-                        val count by produceState(initialValue = 0) {
-                            val pref = Injekt.get<SourcePreferences>()
-                            pref.animeExtensionUpdatesCount().changes().collectLatest { value = it }
-                        }
-                        if (count > 0) {
+                        if (extensionUpdatesCount > 0) {
                             Badge {
                                 val desc = pluralStringResource(
                                     MR.plurals.update_check_notification_ext_updates,
-                                    count = count,
-                                    count,
+                                    count = extensionUpdatesCount,
+                                    extensionUpdatesCount,
                                 )
                                 Text(
-                                    text = if (count > 99) "99+" else count.toString(),
+                                    text = if (extensionUpdatesCount > 99) "99+" else extensionUpdatesCount.toString(),
                                     modifier = Modifier.semantics { contentDescription = desc },
                                 )
                             }
