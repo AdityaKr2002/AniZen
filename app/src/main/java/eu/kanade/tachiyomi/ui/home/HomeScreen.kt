@@ -357,7 +357,7 @@ object HomeScreen : Screen() {
         
         val title = stringResource(navItem.titleRes)
 
-        val onClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+        val onClick: () -> Unit = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
             {
                 if (!selected) {
                     executor.logClick(navItem.id)
@@ -365,10 +365,11 @@ object HomeScreen : Screen() {
                 } else {
                     scope.launch { tab.onReselect(navigator) }
                 }
+                Unit
             }
         }
 
-        val onLongClick = remember(behavior, navItem.id, haptic, executor) {
+        val onLongClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
             {
                 if (behavior.onLongClick != NavAction.Default) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -377,7 +378,7 @@ object HomeScreen : Screen() {
             }
         }
 
-        val onDoubleClick = remember(behavior, navItem.id, haptic, executor) {
+        val onDoubleClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
             {
                 if (behavior.onDoubleTap != NavAction.Default) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -438,17 +439,18 @@ object HomeScreen : Screen() {
 
         val title = stringResource(navItem.titleRes)
 
-        val onClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+        val onClick: () -> Unit = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
             {
                 if (!selected) {
                     tabNavigator.current = tab
                 } else {
                     scope.launch { tab.onReselect(navigator) }
                 }
+                Unit
             }
         }
 
-        val onLongClick = remember(behavior, navItem.id, haptic, executor) {
+        val onLongClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
             {
                 if (behavior.onLongClick != NavAction.Default) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -457,7 +459,7 @@ object HomeScreen : Screen() {
             }
         }
 
-        val onDoubleClick = remember(behavior, navItem.id, haptic, executor) {
+        val onDoubleClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
             {
                 if (behavior.onDoubleTap != NavAction.Default) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -466,7 +468,7 @@ object HomeScreen : Screen() {
             }
         }
 
-        val combinedClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+        val combinedClick: () -> Unit = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
             {
                 if (!selected) {
                     executor.logClick(navItem.id)
@@ -474,6 +476,7 @@ object HomeScreen : Screen() {
                 } else {
                     scope.launch { tab.onReselect(navigator) }
                 }
+                Unit
             }
         }
 
