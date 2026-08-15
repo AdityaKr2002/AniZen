@@ -93,27 +93,6 @@ enum class AnimeCover(val ratio: Float) {
         val isError = state is AsyncImagePainter.State.Error
 
         val scope = rememberCoroutineScope()
-        LaunchedEffect(state, data, shouldExtractColor) {
-            val currentState = state
-            if (currentState is AsyncImagePainter.State.Success) {
-                val cover = when (data) {
-                    is Anime -> data.asAnimeCover()
-                    is DomainMangaCover -> data
-                    else -> null
-                }
-                if (cover != null) {
-                    scope.launch {
-                        eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
-                            cover = cover,
-                            state = currentState,
-                            extractColor = shouldExtractColor,
-                        )
-                    }
-                }
-                if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), currentState)
-                if (data is DomainMangaCover) onCoverLoaded?.invoke(data, currentState)
-            }
-        }
 
         Box(
             modifier = modifier
@@ -170,7 +149,27 @@ enum class AnimeCover(val ratio: Float) {
                         },
                     ),
                 contentScale = scale,
-                onState = { state = it },
+                onState = { newState ->
+                    state = newState
+                    if (newState is AsyncImagePainter.State.Success && shouldExtractColor) {
+                        val cover = when (data) {
+                            is Anime -> data.asAnimeCover()
+                            is DomainMangaCover -> data
+                            else -> null
+                        }
+                        if (cover != null) {
+                            scope.launch {
+                                eu.kanade.tachiyomi.util.system.CoverColorExtractor.extract(
+                                    cover = cover,
+                                    state = newState,
+                                    extractColor = true,
+                                )
+                            }
+                        }
+                        if (data is Anime) onCoverLoaded?.invoke(data.asAnimeCover(), newState)
+                        if (data is DomainMangaCover) onCoverLoaded?.invoke(data, newState)
+                    }
+                },
             )
 
             if (isError) {

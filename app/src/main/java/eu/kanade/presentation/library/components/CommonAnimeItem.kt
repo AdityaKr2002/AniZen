@@ -103,10 +103,13 @@ fun AnimeCompactGridItem(
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
     usePanorama: Boolean? = null,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        animatedTransitions = animatedTransitions,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         AnimeGridCover(
@@ -120,7 +123,7 @@ fun AnimeCompactGridItem(
                         },
                     data = coverData,
                     ratio = ratio,
-                    shape = RectangleShape, // Optimization: Parent clips
+                    shape = RectangleShape,
                 )
             },
             ratio = ratio,
@@ -215,10 +218,13 @@ fun AnimeComfortableGridItem(
     onClickContinueWatching: (() -> Unit)? = null,
     usePanorama: Boolean? = null,
 ) {
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        animatedTransitions = animatedTransitions,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         Column {
@@ -233,7 +239,7 @@ fun AnimeComfortableGridItem(
                             },
                         data = coverData,
                         ratio = ratio,
-                        shape = RectangleShape, // Optimization: Parent clips
+                        shape = RectangleShape,
                     )
                 },
                 ratio = ratio,
@@ -336,10 +342,9 @@ internal fun GridItemSelectable(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    animatedTransitions: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
     val scale by animateFloatAsState(
         if (isSelected && animatedTransitions) 0.95f else 1f,
         label = "selection_scale",

@@ -267,13 +267,13 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
             memoryCache {
                 MemoryCache.Builder()
-                    .maxSizePercent(this@App, 0.25) // Balanced 25% RAM allocation for stability
+                    .maxSizePercent(this@App, 0.10) // 10% RAM — sufficient for grid scrolling without heap bloat
                     .build()
             }
             diskCache {
                 DiskCache.Builder()
                     .directory(this@App.cacheDir.resolve("image_cache").absolutePath.toPath())
-                    .maxSizeBytes(500L * 1024 * 1024) // Maintain 500MB disk cache for high retention
+                    .maxSizeBytes(200L * 1024 * 1024) // 200MB disk cache
                     .build()
             }
 
