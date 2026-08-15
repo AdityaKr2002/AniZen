@@ -64,7 +64,6 @@ fun LibraryPager(
             state = state,
             key = { categories.getOrNull(it)?.id ?: it.toLong() },
             verticalAlignment = Alignment.Top,
-            beyondViewportPageCount = 1,
         ) { page ->
             val category = categories.getOrNull(page) ?: return@HorizontalPager
             val library = getLibraryForPage(page)
@@ -86,7 +85,7 @@ fun LibraryPager(
                     LibraryList(
                         items = library,
                         entries = columns,
-                        containerHeight = containerHeight,
+                        containerHeight = 0,
                         contentPadding = contentPadding,
                         selection = selectedAnime,
                         onClick = onClickAnime,
@@ -137,13 +136,7 @@ fun LibraryPager(
         }
     }
 
-    if (columns > 0) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            content(constraints.maxHeight)
-        }
-    } else {
-        content(0)
-    }
+    content(0)
 }
 @Composable
 private fun LibraryPagerEmptyScreen(
