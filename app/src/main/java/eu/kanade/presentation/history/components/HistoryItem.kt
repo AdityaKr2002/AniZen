@@ -77,7 +77,7 @@ fun HistoryItem(
                 overflow = TextOverflow.Ellipsis,
                 style = textStyle,
             )
-            val seenAt = remember { history.seenAt?.toTimestampString() ?: "" }
+            val seenAt = remember(history.seenAt) { history.seenAt?.toTimestampString() ?: "" }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!history.seen) {
                     Icon(

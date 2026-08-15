@@ -147,36 +147,41 @@ private fun HistoryScreenContent(
         contentPadding = contentPadding,
     ) {
         if (useContainer) {
-            for (model in history) {
+            items(
+                items = history,
+                key = { "history-${it.hashCode()}" },
+                contentType = {
+                    when (it) {
+                        is HistoryUiModel.Header -> "history_header"
+                        is HistoryUiModel.Item -> "history_item"
+                    }
+                },
+            ) { model ->
                 when (model) {
                     is HistoryUiModel.Header -> {
-                        item(key = "historyHeader-${model.hashCode()}") {
-                            ListGroupHeader(
-                                modifier = Modifier,
-                                text = relativeDateText(model.date),
-                            )
-                        }
+                        ListGroupHeader(
+                            modifier = Modifier,
+                            text = relativeDateText(model.date),
+                        )
                     }
                     is HistoryUiModel.Item -> {
-                        item(key = "historyGroup-${model.hashCode()}") {
-                            Surface(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .fillMaxWidth(),
-                                shape = MaterialTheme.shapes.large,
-                                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                tonalElevation = 2.dp,
-                            ) {
-                                androidx.compose.foundation.layout.Column {
-                                    HistoryItem(
-                                        modifier = Modifier,
-                                        history = model.item,
-                                        onClickCover = { onClickCover(model.item) },
-                                        onClickResume = { onClickResume(model.item) },
-                                        onClickDelete = { onClickDelete(model.item) },
-                                        usePanorama = usePanorama,
-                                    )
-                                }
+                        Surface(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                .fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            tonalElevation = 2.dp,
+                        ) {
+                            androidx.compose.foundation.layout.Column {
+                                HistoryItem(
+                                    modifier = Modifier,
+                                    history = model.item,
+                                    onClickCover = { onClickCover(model.item) },
+                                    onClickResume = { onClickResume(model.item) },
+                                    onClickDelete = { onClickDelete(model.item) },
+                                    usePanorama = usePanorama,
+                                )
                             }
                         }
                     }

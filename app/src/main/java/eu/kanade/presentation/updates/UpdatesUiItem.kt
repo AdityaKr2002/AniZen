@@ -336,7 +336,6 @@ private fun UpdatesUiItem(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
-                var textHeight by remember { mutableIntStateOf(0) }
                 if (update.bookmark) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
@@ -354,7 +353,6 @@ private fun UpdatesUiItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
                     overflow = TextOverflow.Ellipsis,
-                    onTextLayout = { textHeight = it.size.height },
                     modifier = Modifier
                         .weight(weight = 1f, fill = false),
                 )
@@ -377,9 +375,12 @@ private fun UpdatesUiItem(
 
                 val fileSize = updatesItem.fileSize
                 if (fileSize != null) {
+                    val formattedFileSize = remember(fileSize) {
+                        "%.2f MB".format(fileSize.toDouble() / (1024 * 1024))
+                    }
                     DotSeparatorText()
                     Text(
-                        text = java.util.Formatter().format("%.2f MB", fileSize.toDouble() / (1024 * 1024)).toString(),
+                        text = formattedFileSize,
                         maxLines = 1,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.graphicsLayer { alpha = textAlpha },
