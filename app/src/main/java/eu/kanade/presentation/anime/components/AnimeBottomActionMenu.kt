@@ -3,10 +3,10 @@ package eu.kanade.presentation.anime.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -95,8 +95,8 @@ fun AnimeBottomActionMenu(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = expandVertically(expandFrom = Alignment.Bottom),
-        exit = shrinkVertically(shrinkTowards = Alignment.Bottom),
+        enter = slideInVertically { it } + fadeIn(),
+        exit = slideOutVertically { it } + fadeOut(),
     ) {
         val scope = rememberCoroutineScope()
         val playerPreferences: PlayerPreferences = Injekt.get()
@@ -260,8 +260,8 @@ fun LibraryBottomActionMenu(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = expandVertically(animationSpec = tween(delayMillis = 300)),
-        exit = shrinkVertically(animationSpec = tween()),
+        enter = slideInVertically(animationSpec = tween(delayMillis = 300)) { it } + fadeIn(animationSpec = tween(delayMillis = 300)),
+        exit = slideOutVertically(animationSpec = tween()) { it } + fadeOut(animationSpec = tween()),
     ) {
         val scope = rememberCoroutineScope()
         Surface(
