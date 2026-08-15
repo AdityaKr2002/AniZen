@@ -45,7 +45,7 @@ fun LazyListState.isScrolledToEnd(): Boolean {
 
 @Composable
 fun LazyListState.isScrollingUp(): Boolean {
-    var isScrollingUp by remember { mutableStateOf(false) }
+    var isScrollingUp by remember { mutableStateOf(true) }
 
     LaunchedEffect(this) {
         var previousIndex = firstVisibleItemIndex
