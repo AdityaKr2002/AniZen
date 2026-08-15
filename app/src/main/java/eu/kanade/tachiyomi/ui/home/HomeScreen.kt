@@ -520,9 +520,9 @@ object HomeScreen : Screen() {
         val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
         val selected = tabNavigator.current.key == tab.key
         val scale by animateFloatAsState(
-            targetValue = if (selected && animatedTransitions) 1.2f else 1f,
+            targetValue = if (selected && animatedTransitions) 1.15f else 1f,
             animationSpec = tween(
-                durationMillis = 600,
+                durationMillis = 200,
                 easing = androidx.compose.animation.core.FastOutSlowInEasing
             ),
             label = "iconScale",

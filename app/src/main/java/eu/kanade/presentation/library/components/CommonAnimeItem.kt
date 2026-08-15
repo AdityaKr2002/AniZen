@@ -338,12 +338,6 @@ internal fun GridItemSelectable(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val uiPreferences = remember { Injekt.get<UiPreferences>() }
-    val animatedTransitions by uiPreferences.animatedTransitions().collectAsStatePref()
-    val scale by animateFloatAsState(
-        if (isSelected && animatedTransitions) 0.95f else 1f,
-        label = "selection_scale",
-    )
     val shape = MaterialTheme.shapes.medium
     val borderColor = MaterialTheme.colorScheme.primary
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -351,10 +345,10 @@ internal fun GridItemSelectable(
     Box(
         modifier = modifier
             .then(
-                if (scale < 1f) {
+                if (isSelected) {
                     Modifier.graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
+                        scaleX = 0.95f
+                        scaleY = 0.95f
                         this.shape = shape
                         this.clip = true
                     }
