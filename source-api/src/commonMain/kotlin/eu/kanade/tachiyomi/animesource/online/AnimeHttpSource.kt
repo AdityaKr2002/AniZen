@@ -686,7 +686,14 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @return url of the anime
      */
     open fun getAnimeUrl(anime: SAnime): String {
-        return animeDetailsRequest(anime).url.toString()
+        return runCatching { animeDetailsRequest(anime).url.toString() }
+            .getOrElse {
+                if (anime.url.startsWith("http://") || anime.url.startsWith("https://")) {
+                    anime.url
+                } else {
+                    "$baseUrl${anime.url}"
+                }
+            }
     }
 
     /**

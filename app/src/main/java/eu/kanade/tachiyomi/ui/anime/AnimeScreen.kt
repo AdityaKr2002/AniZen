@@ -557,8 +557,12 @@ class AnimeScreen(
 
         return try {
             source.getAnimeUrl(anime.toSAnime())
-        } catch (e: Exception) {
-            null
+        } catch (e: Throwable) {
+            if (anime.url.startsWith("http://") || anime.url.startsWith("https://")) {
+                anime.url
+            } else {
+                null
+            }
         }
     }
 
@@ -644,9 +648,8 @@ class AnimeScreen(
      * Copy Anime URL to Clipboard
      */
     private fun copyAnimeUrl(context: Context, anime_: Anime?, source_: Source?) {
-        val anime = anime_ ?: return
-        val source = source_ as? HttpSource ?: return
-        val url = source.getAnimeUrl(anime.toSAnime())
-        context.copyToClipboard(url, url)
+        getAnimeUrl(anime_, source_)?.let { url ->
+            context.copyToClipboard(url, url)
+        }
     }
 }
