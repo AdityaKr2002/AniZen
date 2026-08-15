@@ -553,15 +553,20 @@ class AnimeScreen(
 
     private fun getAnimeUrl(anime_: Anime?, source_: Source?): String? {
         val anime = anime_ ?: return null
-        val source = source_ as? HttpSource ?: return null
+        val httpSource = source_ as? HttpSource ?: return null
 
-        return try {
-            source.getAnimeUrl(anime.toSAnime())
-        } catch (e: Throwable) {
-            if (anime.url.startsWith("http://") || anime.url.startsWith("https://")) {
-                anime.url
-            } else {
-                null
+        return runCatching {
+            httpSource.getAnimeUrl(anime.toSAnime())
+        }.getOrElse {
+            val url = anime.url
+            when {
+                url.startsWith("http://") || url.startsWith("https://") -> url
+                url.isNotBlank() -> {
+                    val base = httpSource.baseUrl.trimEnd('/')
+                    val path = url.trimStart('/')
+                    "$base/$path"
+                }
+                else -> null
             }
         }
     }

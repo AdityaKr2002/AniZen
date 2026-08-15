@@ -688,10 +688,14 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
     open fun getAnimeUrl(anime: SAnime): String {
         return runCatching { animeDetailsRequest(anime).url.toString() }
             .getOrElse {
-                if (anime.url.startsWith("http://") || anime.url.startsWith("https://")) {
-                    anime.url
-                } else {
-                    "$baseUrl${anime.url}"
+                val url = anime.url
+                when {
+                    url.startsWith("http://") || url.startsWith("https://") -> url
+                    else -> {
+                        val base = baseUrl.trimEnd('/')
+                        val path = url.trimStart('/')
+                        "$base/$path"
+                    }
                 }
             }
     }
@@ -704,7 +708,15 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @return url of the episode
      */
     open fun getEpisodeUrl(episode: SEpisode): String {
-        return episode.url
+        val url = episode.url
+        return when {
+            url.startsWith("http://") || url.startsWith("https://") -> url
+            else -> {
+                val base = baseUrl.trimEnd('/')
+                val path = url.trimStart('/')
+                "$base/$path"
+            }
+        }
     }
 
     /**
