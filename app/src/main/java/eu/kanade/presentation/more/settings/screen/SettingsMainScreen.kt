@@ -207,11 +207,14 @@ object SettingsMainScreen : Screen() {
                         item(key = "settings-category-$category") {
                             MoreSection(title = category) {
                                 items.forEach { item ->
+                                    val onClick = remember(item.screen, twoPane, navigator) {
+                                        { navigator.navigate(item.screen, twoPane) }
+                                    }
                                     MoreItem(
                                         title = stringResource(item.titleRes),
                                         subtitle = item.formatSubtitle(),
                                         icon = item.icon,
-                                        onClick = { navigator.navigate(item.screen, twoPane) },
+                                        onClick = onClick,
                                     )
                                 }
                             }

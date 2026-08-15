@@ -2,11 +2,14 @@ package tachiyomi.presentation.core.util
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 
 @Composable
 fun LazyListState.shouldExpandFAB(): Boolean {
@@ -42,36 +45,58 @@ fun LazyListState.isScrolledToEnd(): Boolean {
 
 @Composable
 fun LazyListState.isScrollingUp(): Boolean {
-    var previousIndex by remember { mutableIntStateOf(firstVisibleItemIndex) }
-    var previousScrollOffset by remember { mutableIntStateOf(firstVisibleItemScrollOffset) }
-    return remember {
-        derivedStateOf {
-            if (previousIndex != firstVisibleItemIndex) {
-                previousIndex > firstVisibleItemIndex
-            } else {
-                previousScrollOffset >= firstVisibleItemScrollOffset
-            }.also {
-                previousIndex = firstVisibleItemIndex
-                previousScrollOffset = firstVisibleItemScrollOffset
+    var isScrollingUp by remember { mutableStateOf(false) }
+
+    LaunchedEffect(this) {
+        var previousIndex = firstVisibleItemIndex
+        var previousScrollOffset = firstVisibleItemScrollOffset
+
+        snapshotFlow {
+            val index = firstVisibleItemIndex.toLong()
+            val offset = firstVisibleItemScrollOffset.toLong()
+            (index shl 32) or (offset and 0xFFFFFFFFL)
+        }.collect { packed ->
+            val currentIndex = (packed shr 32).toInt()
+            val currentOffset = packed.toInt()
+
+            if (previousIndex != currentIndex) {
+                isScrollingUp = previousIndex > currentIndex
+            } else if (previousScrollOffset != currentOffset) {
+                isScrollingUp = previousScrollOffset > currentOffset
             }
+            previousIndex = currentIndex
+            previousScrollOffset = currentOffset
         }
-    }.value
+    }
+
+    return isScrollingUp
 }
 
 @Composable
 fun LazyListState.isScrollingDown(): Boolean {
-    var previousIndex by remember { mutableIntStateOf(firstVisibleItemIndex) }
-    var previousScrollOffset by remember { mutableIntStateOf(firstVisibleItemScrollOffset) }
-    return remember {
-        derivedStateOf {
-            if (previousIndex != firstVisibleItemIndex) {
-                previousIndex < firstVisibleItemIndex
-            } else {
-                previousScrollOffset <= firstVisibleItemScrollOffset
-            }.also {
-                previousIndex = firstVisibleItemIndex
-                previousScrollOffset = firstVisibleItemScrollOffset
+    var isScrollingDown by remember { mutableStateOf(false) }
+
+    LaunchedEffect(this) {
+        var previousIndex = firstVisibleItemIndex
+        var previousScrollOffset = firstVisibleItemScrollOffset
+
+        snapshotFlow {
+            val index = firstVisibleItemIndex.toLong()
+            val offset = firstVisibleItemScrollOffset.toLong()
+            (index shl 32) or (offset and 0xFFFFFFFFL)
+        }.collect { packed ->
+            val currentIndex = (packed shr 32).toInt()
+            val currentOffset = packed.toInt()
+
+            if (previousIndex != currentIndex) {
+                isScrollingDown = previousIndex < currentIndex
+            } else if (previousScrollOffset != currentOffset) {
+                isScrollingDown = previousScrollOffset < currentOffset
             }
+            previousIndex = currentIndex
+            previousScrollOffset = currentOffset
         }
-    }.value
+    }
+
+    return isScrollingDown
 }

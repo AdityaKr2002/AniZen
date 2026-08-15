@@ -204,7 +204,7 @@ fun FeedScreen(
                 ) {
                     itemsIndexed(
                         items = items,
-                        key = { index, it -> "feed-${it.feed.id}-$index" },
+                        key = { _, it -> "feed-${it.feed.id}" },
                         contentType = { _, _ -> "feed_island" }
                     ) { _, item ->
                         FeedIsland(
@@ -300,7 +300,7 @@ private fun FeedIsland(
                 ) {
                     itemsIndexed(
                         items = item.animeList,
-                        key = { index, anime -> "anime-${item.feed.id}-${anime.id}-$index" },
+                        key = { _, anime -> "anime-${item.feed.id}-${anime.id}" },
                         contentType = { _, _ -> "anime_card" }
                     ) { _, anime ->
                         FeedCard(

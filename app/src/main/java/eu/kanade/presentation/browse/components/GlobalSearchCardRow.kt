@@ -44,16 +44,17 @@ fun GlobalSearchCardRow(
         return
     }
 
+    val uiPreferences = remember { Injekt.get<UiPreferences>() }
+    val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+
     LazyRow(
         contentPadding = PaddingValues(MaterialTheme.padding.small),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
     ) {
-        itemsIndexed(
+        items(
             items = titles,
-            key = { index, it -> "gs-${it.id}-$index" },
-        ) { _, it: tachiyomi.domain.anime.model.Anime ->
-            val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val globalPanorama by uiPreferences.panoramaCover().collectAsStatePref() as State<Boolean>
+            key = { "gs-${it.id}" },
+        ) { it: tachiyomi.domain.anime.model.Anime ->
             val animeState = getAnime(it)
             val title by animeState
             val (entry, _) = eu.kanade.presentation.anime.components.AnimeCover.getEntry(title.id, usePanoramaOverride = globalPanorama)

@@ -129,10 +129,10 @@ fun SourcesScreen(
             } else {
                 itemsIndexed(
                     items = state.items,
-                    key = { index, model ->
+                    key = { _, model ->
                         when (model) {
-                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}-$index"
-                            is SourceUiModel.Item -> "source-${model.headerKey}-${model.source.id}-$index"
+                            is SourceUiModel.Header -> "header-${model.language}-${model.displayName}"
+                            is SourceUiModel.Item -> "source-${model.headerKey}-${model.source.id}"
                         }
                     },
                     contentType = { _, model ->
@@ -144,12 +144,14 @@ fun SourcesScreen(
                 ) { _, model ->
                     when (model) {
                         is SourceUiModel.Header -> {
+                            val headerModifier = remember { Modifier.animateItem() }
                             SourceHeader(
                                 displayName = model.displayName,
-                                modifier = Modifier.animateItem()
+                                modifier = headerModifier
                             )
                         }
                         is SourceUiModel.Item -> {
+                            val itemModifier = remember { Modifier.animateItem() }
                             if (useContainer) {
                                 Surface(
                                     modifier = Modifier
@@ -165,7 +167,7 @@ fun SourcesScreen(
                                         onLongClickItem = onLongClickItem,
                                         onClickPin = onClickPin,
                                         hideLatest = state.hideLatest,
-                                        modifier = Modifier.animateItem(),
+                                        modifier = itemModifier,
                                     )
                                 }
                             } else {
@@ -175,7 +177,7 @@ fun SourcesScreen(
                                     onLongClickItem = onLongClickItem,
                                     onClickPin = onClickPin,
                                     hideLatest = state.hideLatest,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = itemModifier,
                                 )
                             }
                         }
@@ -207,6 +209,7 @@ fun SourcesScreen(
                     placeholderText = stringResource(MR.strings.action_search_hint),
                 )
 
+                val filterChipShape = remember { RoundedCornerShape(12.dp) }
                 FilterChip(
                     selected = state.nsfwOnly,
                     onClick = onToggleNsfwOnly,
@@ -220,7 +223,7 @@ fun SourcesScreen(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = filterChipShape,
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
                         selectedLabelColor = MaterialTheme.colorScheme.error,
@@ -274,14 +277,19 @@ private fun SourceItem(
     hideLatest: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val onClick = remember(item.source, onClickItem) { { onClickItem(item.source, Listing.Popular) } }
+    val onLongClick = remember(item.source, onLongClickItem) { { onLongClickItem(item.source) } }
+    val onLatestClick = remember(item.source, onClickItem) { { onClickItem(item.source, Listing.Latest) } }
+    val onPinClick = remember(item.source, onClickPin) { { onClickPin(item.source) } }
+
     BaseSourceItem(
         modifier = modifier,
         item = item,
-        onClickItem = { onClickItem(item.source, Listing.Popular) },
-        onLongClickItem = { onLongClickItem(item.source) },
+        onClickItem = onClick,
+        onLongClickItem = onLongClick,
         action = {
             if (item.source.supportsLatest && !hideLatest) {
-                TextButton(onClick = { onClickItem(item.source, Listing.Latest) }) {
+                TextButton(onClick = onLatestClick) {
                     Text(
                         text = stringResource(MR.strings.latest),
                         style = LocalTextStyle.current.copy(
@@ -292,7 +300,7 @@ private fun SourceItem(
             }
             SourcePinButton(
                 isPinned = Pin.Pinned in item.source.pin,
-                onClick = { onClickPin(item.source) },
+                onClick = onPinClick,
             )
         },
     )

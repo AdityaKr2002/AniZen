@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import eu.kanade.domain.ui.ContainerStyle
 import eu.kanade.domain.ui.UiPreferences
 import tachiyomi.presentation.core.util.collectAsState
@@ -70,10 +71,10 @@ fun PreferenceScreen(
                 is Preference.PreferenceGroup -> {
                     if (!preference.enabled) return@fastForEachIndexed
 
-                    item {
+                    item(key = "group-${preference.title}") {
                         PreferenceGroupHeader(title = preference.title)
                     }
-                    item {
+                    item(key = "group-content-${preference.title}") {
                         if (useContainer) {
                             Surface(
                                 modifier = Modifier
@@ -85,10 +86,12 @@ fun PreferenceScreen(
                             ) {
                                 Column {
                                     preference.preferenceItems.forEach { item ->
-                                        PreferenceItem(
-                                            item = item,
-                                            highlightKey = highlightKey,
-                                        )
+                                        key(item.title) {
+                                            PreferenceItem(
+                                                item = item,
+                                                highlightKey = highlightKey,
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -99,15 +102,17 @@ fun PreferenceScreen(
                                     .padding(horizontal = 12.dp),
                             ) {
                                 preference.preferenceItems.forEach { item ->
-                                    PreferenceItem(
-                                        item = item,
-                                        highlightKey = highlightKey,
-                                    )
+                                    key(item.title) {
+                                        PreferenceItem(
+                                            item = item,
+                                            highlightKey = highlightKey,
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                    item {
+                    item(key = "group-spacer-${preference.title}") {
                         if (i < items.lastIndex) {
                             Spacer(modifier = Modifier.height(12.dp))
                         }
@@ -115,7 +120,7 @@ fun PreferenceScreen(
                 }
 
                 // Create Preference Item
-                is Preference.PreferenceItem<*> -> item {
+                is Preference.PreferenceItem<*> -> item(key = "item-${preference.title}") {
                     PreferenceItem(
                         item = preference,
                         highlightKey = highlightKey,

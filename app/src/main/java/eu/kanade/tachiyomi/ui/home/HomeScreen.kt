@@ -176,7 +176,9 @@ object HomeScreen : Screen() {
             val visibleNavItems: List<NavItem> = remember(bottomNavTabs) {
                 bottomNavTabs.mapNotNull { id -> NavItem.fromId(id) }.filter { it.tab.isEnabled() }
             }
-            val isCurrentTabVisible = visibleNavItems.any { it.tab::class == tabNavigator.current::class }
+            val isCurrentTabVisible = remember(visibleNavItems, tabNavigator.current) {
+                visibleNavItems.any { it.tab::class == tabNavigator.current::class }
+            }
 
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
@@ -290,8 +292,8 @@ object HomeScreen : Screen() {
                 }
             }
 
-            val goToStartScreen = {
-                tabNavigator.current = defaultTab
+            val goToStartScreen = remember(tabNavigator, defaultTab) {
+                { tabNavigator.current = defaultTab }
             }
             BackHandler(
                 enabled = tabNavigator.current != defaultTab,
@@ -355,50 +357,59 @@ object HomeScreen : Screen() {
         
         val title = stringResource(navItem.titleRes)
 
+        val onClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+            {
+                if (!selected) {
+                    executor.logClick(navItem.id)
+                    tabNavigator.current = tab
+                } else {
+                    scope.launch { tab.onReselect(navigator) }
+                }
+            }
+        }
+
+        val onLongClick = remember(behavior, navItem.id, haptic, executor) {
+            {
+                if (behavior.onLongClick != NavAction.Default) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    executor.execute(behavior.onLongClick, navItem.id)
+                }
+            }
+        }
+
+        val onDoubleClick = remember(behavior, navItem.id, haptic, executor) {
+            {
+                if (behavior.onDoubleTap != NavAction.Default) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    executor.execute(behavior.onDoubleTap, navItem.id)
+                }
+            }
+        }
+
+        val label: @Composable (() -> Unit)? = remember(navLabelVisibility, title) {
+            if (navLabelVisibility != NavLabelVisibility.NEVER) {
+                {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else null
+        }
+
         with(rowScope) {
             NavigationBarItem(
                 selected = selected,
-                onClick = {
-                    if (!selected) {
-                        executor.logClick(navItem.id)
-                        tabNavigator.current = tab
-                    } else {
-                        scope.launch { tab.onReselect(navigator) }
-                    }
-                },
+                onClick = onClick,
                 modifier = Modifier.combinedClickable(
-                    onLongClick = {
-                        if (behavior.onLongClick != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onLongClick, navItem.id)
-                        }
-                    },
-                    onDoubleClick = {
-                        if (behavior.onDoubleTap != NavAction.Default) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            executor.execute(behavior.onDoubleTap, navItem.id)
-                        }
-                    },
-                    onClick = {
-                        if (!selected) {
-                            executor.logClick(navItem.id)
-                            tabNavigator.current = tab
-                        } else {
-                            scope.launch { tab.onReselect(navigator) }
-                        }
-                    }
+                    onLongClick = onLongClick,
+                    onDoubleClick = onDoubleClick,
+                    onClick = onClick
                 ),
                 icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
-                label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
-                    {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                } else null,
+                label = label,
                 alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
             )
         }
@@ -427,39 +438,47 @@ object HomeScreen : Screen() {
 
         val title = stringResource(navItem.titleRes)
 
-        NavigationRailItem(
-            selected = selected,
-            onClick = {
+        val onClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+            {
                 if (!selected) {
                     tabNavigator.current = tab
                 } else {
                     scope.launch { tab.onReselect(navigator) }
                 }
-            },
-            modifier = Modifier.combinedClickable(
-                onLongClick = {
-                    if (behavior.onLongClick != NavAction.Default) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onLongClick, navItem.id)
-                    }
-                },
-                onDoubleClick = {
-                    if (behavior.onDoubleTap != NavAction.Default) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        executor.execute(behavior.onDoubleTap, navItem.id)
-                    }
-                },
-                onClick = {
-                    if (!selected) {
-                        executor.logClick(navItem.id)
-                        tabNavigator.current = tab
-                    } else {
-                        scope.launch { tab.onReselect(navigator) }
-                    }
+            }
+        }
+
+        val onLongClick = remember(behavior, navItem.id, haptic, executor) {
+            {
+                if (behavior.onLongClick != NavAction.Default) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    executor.execute(behavior.onLongClick, navItem.id)
                 }
-            ),
-            icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
-            label = if (navLabelVisibility != NavLabelVisibility.NEVER) {
+            }
+        }
+
+        val onDoubleClick = remember(behavior, navItem.id, haptic, executor) {
+            {
+                if (behavior.onDoubleTap != NavAction.Default) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    executor.execute(behavior.onDoubleTap, navItem.id)
+                }
+            }
+        }
+
+        val combinedClick = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
+            {
+                if (!selected) {
+                    executor.logClick(navItem.id)
+                    tabNavigator.current = tab
+                } else {
+                    scope.launch { tab.onReselect(navigator) }
+                }
+            }
+        }
+
+        val label: @Composable (() -> Unit)? = remember(navLabelVisibility, title) {
+            if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
                     Text(
                         text = title,
@@ -468,7 +487,19 @@ object HomeScreen : Screen() {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-            } else null,
+            } else null
+        }
+
+        NavigationRailItem(
+            selected = selected,
+            onClick = onClick,
+            modifier = Modifier.combinedClickable(
+                onLongClick = onLongClick,
+                onDoubleClick = onDoubleClick,
+                onClick = combinedClick
+            ),
+            icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
+            label = label,
             alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
         )
     }

@@ -45,11 +45,11 @@ internal fun LibraryComfortableGrid(
 
         itemsIndexed(
             items = items,
-            key = { index, item -> 
+            key = { _, item -> 
                 when (item) {
-                    is LibraryDisplayItem.Anime -> "library-grid-${item.libraryItem.libraryAnime.anime.id}-$index"
-                    is LibraryDisplayItem.Folder -> "library-folder-${item.folder.id}-$index"
-                    is LibraryDisplayItem.Header -> "library-header-${item.name}-$index"
+                    is LibraryDisplayItem.Anime -> "library-grid-${item.libraryItem.libraryAnime.anime.id}"
+                    is LibraryDisplayItem.Folder -> "library-folder-${item.folder.id}"
+                    is LibraryDisplayItem.Header -> "library-header-${item.name}"
                 }
             },
             contentType = { _, item -> 
