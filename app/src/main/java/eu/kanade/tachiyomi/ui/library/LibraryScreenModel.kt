@@ -1276,12 +1276,13 @@ class LibraryScreenModel(
         ): LibraryToolbarTitle {
             val category = categories.getOrNull(page) ?: return LibraryToolbarTitle(defaultTitle)
             val categoryName = category.let {
-                if (it.isSystemCategory) defaultCategoryTitle else it.name
+                if (it.isSystemCategory && it.name.isBlank()) defaultCategoryTitle else it.name
             }
-            val title = if (showCategoryTabs) defaultTitle else categoryName
+            val tabsVisible = showCategoryTabs && categories.isNotEmpty() && (categories.size > 1 || !categories.first().isSystemCategory)
+            val title = if (tabsVisible) defaultTitle else categoryName
             val count = when {
                 !showAnimeCount -> null
-                !showCategoryTabs -> getAnimeCountForCategory(category)
+                !tabsVisible -> getAnimeCountForCategory(category)
                 // Whole library count
                 else -> libraryCount
             }

@@ -190,7 +190,7 @@ data object LibraryTab : Tab {
                         defaultCategoryTitle = stringResource(MR.strings.label_default),
                         page = screenModel.activeCategoryIndex,
                     )
-                    val tabVisible = state.showCategoryTabs && state.categories.size > 1
+                    val tabVisible = state.showCategoryTabs && state.categories.isNotEmpty() && (state.categories.size > 1 || !state.categories.first().isSystemCategory)
                     LibraryToolbar(
                         hasActiveFilters = state.hasActiveFilters,
                         selectedCount = state.selection.size,

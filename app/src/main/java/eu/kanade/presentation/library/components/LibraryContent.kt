@@ -90,7 +90,7 @@ fun LibraryContent(
             }
         }
 
-        if (showPageTabs && categories.size > 1) {
+        if (showPageTabs && categories.isNotEmpty() && (categories.size > 1 || !categories.first().isSystemCategory)) {
             LibraryTabs(
                 categories = categories,
                 pagerState = pagerState,
