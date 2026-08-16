@@ -152,7 +152,7 @@ jobs:
           mkdir -p .github && echo "$SUMMARY" > .github/AI_NOTE_ACCUMULATOR
 
       - name: Build Preview APK
-        run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=true -PabiList=arm64-v8a --no-daemon
+        run: ./gradlew assemblePreview -Pinclude-telemetry=false -Penable-updater=true --no-daemon
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -162,8 +162,16 @@ jobs:
         run: |
           cd app/build/outputs/apk/preview/
           for f in *.apk; do
-            if [[ "$f" == *"arm64-v8a"* ]]; then
+            if [[ "$f" == *"universal"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-universal.apk"
+            elif [[ "$f" == *"arm64-v8a"* ]]; then
               mv "$f" "AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk"
+            elif [[ "$f" == *"armeabi-v7a"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-armeabi-v7a.apk"
+            elif [[ "$f" == *"x86_64"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-x86_64.apk"
+            elif [[ "$f" == *"x86"* ]]; then
+              mv "$f" "AniZen-Preview-${{ env.TAG }}-x86.apk"
             else
               rm -f "$f"
             fi
@@ -173,7 +181,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AniZen-Preview-${{ env.TAG }}
-          path: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
+          path: app/build/outputs/apk/preview/*.apk
 
       - name: Reset Accumulator on Success
         if: success()
@@ -202,7 +210,7 @@ jobs:
             **Version**: ${{ env.VERSION_NAME }}
             **Revision**: ${{ env.COMMIT_COUNT }}
             **Branch**: `preview`
-          files: app/build/outputs/apk/preview/AniZen-Preview-${{ env.TAG }}-arm64-v8a.apk
+          files: app/build/outputs/apk/preview/*.apk
           prerelease: false
           generate_release_notes: false
 
