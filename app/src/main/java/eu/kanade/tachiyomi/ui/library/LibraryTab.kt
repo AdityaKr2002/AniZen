@@ -327,7 +327,7 @@ data object LibraryTab : Tab {
                                     state.categories.forEach { cat ->
                                         val catItems = state.library[cat] ?: emptyList()
                                         if (catItems.isNotEmpty()) {
-                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Header(cat.name))
+                                            displayItems.add(eu.kanade.tachiyomi.ui.library.LibraryDisplayItem.Header(cat.visualName(context)))
                                             val processedFolderIds = mutableSetOf<Long>()
                                             val grouped = catItems.groupBy { it.libraryAnime.folderId }
                                             for (item in catItems) {

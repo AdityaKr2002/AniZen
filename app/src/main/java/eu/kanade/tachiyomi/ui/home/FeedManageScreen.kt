@@ -156,7 +156,7 @@ class FeedManageScreen : Screen() {
                         val items = state.items[category.id]
                         if (items.isNullOrEmpty()) {
                             EmptyScreen(
-                                stringRes = MR.strings.information_empty_category,
+                                stringRes = SYMR.strings.feed_tab_empty,
                             )
                         } else {
                             var currentItems by remember(items) { mutableStateOf(items) }

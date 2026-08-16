@@ -557,7 +557,9 @@ class LibraryScreenModel(
         }
 
         return combine(getCategories.subscribe(), animelibAnimesFlow) { categories, animelibAnime ->
-            val displayCategories = if (animelibAnime.isNotEmpty() && !animelibAnime.containsKey(0)) {
+            val hasUserCategories = categories.any { !it.isSystemCategory }
+            val hasAnimeInDefault = !animelibAnime[0L].isNullOrEmpty()
+            val displayCategories = if (hasUserCategories && !hasAnimeInDefault) {
                 categories.fastFilterNot { it.isSystemCategory }
             } else {
                 categories
@@ -944,7 +946,7 @@ class LibraryScreenModel(
             val animeList = state.value.selection.map { it.anime }
 
             // Hide the default category because it has a different behavior than the ones from db.
-            val categories = state.value.categories.filter { it.id != 0L }
+            val categories = getCategories.await().filterNot { it.isSystemCategory }
 
             // Get indexes of the common categories to preselect.
             val common = getCommonCategories(animeList)
