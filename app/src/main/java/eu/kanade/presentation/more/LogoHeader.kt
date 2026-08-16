@@ -40,6 +40,7 @@ import tachiyomi.presentation.core.util.secondaryItemAlpha
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 
@@ -51,11 +52,10 @@ fun LogoHeader() {
             .padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_splash_logo_raw),
+        Image(
+            painter = painterResource(R.drawable.ic_splash_logo),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(100.dp)
+            modifier = Modifier.size(100.dp),
         )
     }
 }

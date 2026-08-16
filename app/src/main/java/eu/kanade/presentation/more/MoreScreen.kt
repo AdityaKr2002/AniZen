@@ -1,5 +1,6 @@
 package eu.kanade.presentation.more
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -302,11 +303,10 @@ private fun ProfileHeader() {
         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_splash_logo_raw),
+        Image(
+            painter = painterResource(R.drawable.ic_splash_logo),
             contentDescription = null,
             modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary
         )
     }
 }
