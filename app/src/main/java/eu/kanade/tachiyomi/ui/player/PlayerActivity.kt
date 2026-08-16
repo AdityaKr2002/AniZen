@@ -286,7 +286,7 @@ class PlayerActivity : BaseActivity() {
 
         onBackPressedDispatcher.addCallback(this) {
             if (viewModel.dialogShown.value != Dialogs.None) {
-                viewModel.dismissDialog()
+                viewModel.showDialog(Dialogs.None)
                 return@addCallback
             }
             if (viewModel.sheetShown.value != Sheets.None) {
@@ -294,7 +294,7 @@ class PlayerActivity : BaseActivity() {
                 return@addCallback
             }
             if (viewModel.panelShown.value != Panels.None) {
-                viewModel.dismissPanel()
+                viewModel.showPanel(Panels.None)
                 return@addCallback
             }
             if (viewModel.controlsShown.value) {
