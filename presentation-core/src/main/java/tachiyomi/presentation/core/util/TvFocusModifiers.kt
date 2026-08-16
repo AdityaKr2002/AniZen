@@ -1,5 +1,7 @@
 package tachiyomi.presentation.core.util
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
@@ -9,16 +11,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Clean Material 3 / Komikku-style focus highlight.
- * Applies a smooth container surface tint when focused via D-Pad or keyboard.
+ * Universal focus highlight modifier.
+ * - By default (borderWidth = 0.dp, focusedScale = 1.0f): Uses clean Komikku / Material 3 container surface tint.
+ * - When borderWidth > 0.dp or focusedScale > 1.0f: Renders high-contrast glowing theme outline & animated scale (used for Anime Cards & Setup).
  */
 fun Modifier.tvFocusHighlight(
     shape: Shape = RoundedCornerShape(12.dp),
@@ -29,7 +34,12 @@ fun Modifier.tvFocusHighlight(
     onFocusChange: ((Boolean) -> Unit)? = null,
 ): Modifier = composed {
     var isFocused by remember { mutableStateOf(false) }
-    val tintColor = focusedBorderColor ?: MaterialTheme.colorScheme.primary
+    val borderColor = focusedBorderColor ?: MaterialTheme.colorScheme.primary
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused && focusedScale > 1f) focusedScale else 1f,
+        animationSpec = tween(durationMillis = 150),
+        label = "tvFocusScale",
+    )
 
     this
         .onFocusChanged { state ->
@@ -37,19 +47,54 @@ fun Modifier.tvFocusHighlight(
             onFocusChange?.invoke(state.isFocused)
         }
         .then(
+            if (focusedScale > 1f) {
+                Modifier.scale(scale)
+            } else {
+                Modifier
+            },
+        )
+        .then(
             if (isFocused) {
                 Modifier.drawBehind {
                     val outline = shape.createOutline(size, layoutDirection, this)
-                    drawOutline(
-                        outline = outline,
-                        color = tintColor.copy(alpha = focusedBackgroundAlpha),
-                    )
+                    if (focusedBackgroundAlpha > 0f) {
+                        drawOutline(
+                            outline = outline,
+                            color = borderColor.copy(alpha = focusedBackgroundAlpha),
+                        )
+                    }
+                    if (borderWidth > 0.dp) {
+                        drawOutline(
+                            outline = outline,
+                            color = borderColor,
+                            style = Stroke(width = borderWidth.toPx()),
+                        )
+                    }
                 }
             } else {
                 Modifier
             },
         )
 }
+
+/**
+ * Glowing focus highlight specifically for Anime Cards (Library & Browse grids) and Setup screens.
+ */
+fun Modifier.tvGlowFocusHighlight(
+    shape: Shape = RoundedCornerShape(12.dp),
+    borderWidth: Dp = 2.5.dp,
+    focusedBorderColor: Color? = null,
+    focusedScale: Float = 1.04f,
+    focusedBackgroundAlpha: Float = 0.14f,
+    onFocusChange: ((Boolean) -> Unit)? = null,
+): Modifier = tvFocusHighlight(
+    shape = shape,
+    borderWidth = borderWidth,
+    focusedBorderColor = focusedBorderColor,
+    focusedScale = focusedScale,
+    focusedBackgroundAlpha = focusedBackgroundAlpha,
+    onFocusChange = onFocusChange,
+)
 
 /**
  * Subtle focus highlight modifier for list rows, settings items, and episode rows.

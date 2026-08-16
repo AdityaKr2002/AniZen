@@ -39,6 +39,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 import tachiyomi.presentation.core.util.tvFocusHighlight
+import tachiyomi.presentation.core.util.tvGlowFocusHighlight
 
 @Composable
 fun InfoScreen(
@@ -107,7 +108,7 @@ fun InfoScreen(
                         Button(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .tvFocusHighlight(),
+                                .tvGlowFocusHighlight(),
                             enabled = canAccept,
                             onClick = onAcceptClick,
                         ) {
@@ -117,7 +118,7 @@ fun InfoScreen(
                             OutlinedButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .tvFocusHighlight(),
+                                    .tvGlowFocusHighlight(),
                                 onClick = onRejectClick,
                             ) {
                                 Text(text = rejectText)
@@ -139,29 +140,34 @@ fun InfoScreen(
     } else {
         Scaffold(
             bottomBar = {
-                val strokeWidth = Dp.Hairline
-                val borderColor = MaterialTheme.colorScheme.outline
                 Column(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
                         .drawBehind {
+                            val strokeWidth = Dp.Hairline.value
+                            val y = 0f
                             drawLine(
-                                borderColor,
-                                Offset(0f, 0f),
-                                Offset(size.width, 0f),
-                                strokeWidth.value,
+                                color = MaterialTheme.colorScheme.outline,
+                                start = Offset(0f, y),
+                                end = Offset(size.width, y),
+                                strokeWidth = strokeWidth,
                             )
                         }
-                        .windowInsetsPadding(NavigationBarDefaults.windowInsets)
                         .padding(
-                            horizontal = MaterialTheme.padding.medium,
                             vertical = MaterialTheme.padding.small,
-                        ),
+                            horizontal = MaterialTheme.padding.medium,
+                        )
+                        .windowInsetsPadding(
+                            NavigationBarDefaults.windowInsets
+                                .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                        )
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                 ) {
                     Button(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .tvFocusHighlight(),
+                            .tvGlowFocusHighlight(),
                         enabled = canAccept,
                         onClick = onAcceptClick,
                     ) {
@@ -171,7 +177,7 @@ fun InfoScreen(
                         OutlinedButton(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .tvFocusHighlight(),
+                                .tvGlowFocusHighlight(),
                             onClick = onRejectClick,
                         ) {
                             Text(text = rejectText)

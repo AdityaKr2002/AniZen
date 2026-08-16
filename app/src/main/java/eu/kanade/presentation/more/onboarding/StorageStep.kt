@@ -28,6 +28,7 @@ import tachiyomi.presentation.core.components.material.Button
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.tvFocusHighlight
+import tachiyomi.presentation.core.util.tvGlowFocusHighlight
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -66,7 +67,7 @@ internal class StorageStep : OnboardingStep {
                 Button(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .tvFocusHighlight(),
+                        .tvGlowFocusHighlight(),
                     onClick = {
                         val storage = folderProvider.directory()
                         if (!storage.exists()) {
@@ -82,7 +83,7 @@ internal class StorageStep : OnboardingStep {
                     androidx.compose.material3.OutlinedButton(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .tvFocusHighlight(),
+                            .tvGlowFocusHighlight(),
                         onClick = {
                             try {
                                 pickStorageLocation.launch(null)
@@ -98,7 +99,7 @@ internal class StorageStep : OnboardingStep {
                 androidx.compose.material3.OutlinedButton(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .tvFocusHighlight(),
+                        .tvGlowFocusHighlight(),
                     onClick = {
                         try {
                             pickStorageLocation.launch(null)
@@ -120,7 +121,7 @@ internal class StorageStep : OnboardingStep {
             androidx.compose.material3.OutlinedButton(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .tvFocusHighlight(),
+                    .tvGlowFocusHighlight(),
                 onClick = { handler.openUri(SettingsDataScreen.HELP_URL) },
             ) {
                 Text(stringResource(MR.strings.onboarding_storage_help_action))
