@@ -69,6 +69,7 @@ import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.SECONDARY_ALPHA
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.selectedBackground
+import tachiyomi.presentation.core.util.tvListItemFocusHighlight
 
 @Composable
 fun AnimeEpisodeListItem(
@@ -214,6 +215,7 @@ private fun EpisodeItemRow(
 ) {
     Row(
         modifier = modifier
+            .tvListItemFocusHighlight()
             .selectedBackground(selected)
             .combinedClickable(
                 onClick = onClick,

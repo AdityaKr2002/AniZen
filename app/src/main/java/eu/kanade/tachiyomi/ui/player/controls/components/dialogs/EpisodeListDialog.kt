@@ -43,6 +43,7 @@ import tachiyomi.presentation.core.components.VerticalFastScroller
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.tvListItemFocusHighlight
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -149,6 +150,7 @@ private fun EpisodeListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .tvListItemFocusHighlight()
             .clickable(onClick = { onEpisodeClicked(episode.id) })
             .padding(vertical = MaterialTheme.padding.small),
     ) {

@@ -285,16 +285,25 @@ class PlayerActivity : BaseActivity() {
         setupPlayerOrientation()
 
         onBackPressedDispatcher.addCallback(this) {
+            if (viewModel.dialogShown.value != Dialogs.None) {
+                viewModel.dismissDialog()
+                return@addCallback
+            }
+            if (viewModel.sheetShown.value != Sheets.None) {
+                viewModel.dismissSheet()
+                return@addCallback
+            }
+            if (viewModel.panelShown.value != Panels.None) {
+                viewModel.dismissPanel()
+                return@addCallback
+            }
+            if (viewModel.controlsShown.value) {
+                viewModel.hideControls()
+                return@addCallback
+            }
             if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                if (viewModel.sheetShown.value == Sheets.None &&
-                    viewModel.panelShown.value == Panels.None &&
-                    viewModel.dialogShown.value == Dialogs.None
-                ) {
-                    val entered = enterPictureInPictureMode(createPipParams())
-                    if (!entered) {
-                        finish()
-                    }
-                } else {
+                val entered = enterPictureInPictureMode(createPipParams())
+                if (!entered) {
                     finish()
                 }
             } else {
@@ -1046,6 +1055,49 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val controlsAreVisible = viewModel.controlsShown.value ||
+            viewModel.sheetShown.value != Sheets.None ||
+            viewModel.panelShown.value != Panels.None ||
+            viewModel.dialogShown.value != Dialogs.None
+
+        if (controlsAreVisible) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    viewModel.changeVolumeBy(1)
+                    viewModel.displayVolumeSlider()
+                    return true
+                }
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    viewModel.changeVolumeBy(-1)
+                    viewModel.displayVolumeSlider()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_STOP -> {
+                    finishAndRemoveTask()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                    viewModel.pauseUnpause()
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                    // Let Compose UI handle directional focus traversal and button clicks
+                    event?.let { player.onKey(it) }
+                    return super.onKeyDown(keyCode, event)
+                }
+                else -> {
+                    event?.let { player.onKey(it) }
+                    return super.onKeyDown(keyCode, event)
+                }
+            }
+        }
+
         when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 viewModel.changeVolumeBy(1)
@@ -1064,26 +1116,21 @@ class PlayerActivity : BaseActivity() {
             KeyEvent.KEYCODE_DPAD_CENTER,
             KeyEvent.KEYCODE_ENTER,
             KeyEvent.KEYCODE_NUMPAD_ENTER,
-            KeyEvent.KEYCODE_SPACE,
-            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> viewModel.pauseUnpause()
-
             KeyEvent.KEYCODE_DPAD_UP,
             KeyEvent.KEYCODE_DPAD_DOWN,
             KeyEvent.KEYCODE_MENU -> {
-                if (!viewModel.controlsShown.value) {
-                    viewModel.showControls()
-                } else {
-                    event?.let { player.onKey(it) }
-                    super.onKeyDown(keyCode, event)
-                }
+                viewModel.showControls()
             }
+
+            KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> viewModel.pauseUnpause()
 
             KeyEvent.KEYCODE_MEDIA_STOP -> finishAndRemoveTask()
 
             // other keys should be bound by the user in input.conf ig
             else -> {
                 event?.let { player.onKey(it) }
-                super.onKeyDown(keyCode, event)
+                return super.onKeyDown(keyCode, event)
             }
         }
         return true

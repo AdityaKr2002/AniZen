@@ -100,6 +100,8 @@ import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.more.MoreTab
 import eu.kanade.tachiyomi.ui.updates.UpdatesTab
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.tvFocusHighlight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -404,11 +406,16 @@ object HomeScreen : Screen() {
             NavigationBarItem(
                 selected = selected,
                 onClick = onClick,
-                modifier = Modifier.combinedClickable(
-                    onLongClick = onLongClick,
-                    onDoubleClick = onDoubleClick,
-                    onClick = onClick
-                ),
+                modifier = Modifier
+                    .tvFocusHighlight(
+                        shape = RoundedCornerShape(16.dp),
+                        focusedScale = 1.05f,
+                    )
+                    .combinedClickable(
+                        onLongClick = onLongClick,
+                        onDoubleClick = onDoubleClick,
+                        onClick = onClick,
+                    ),
                 icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
                 label = label,
                 alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
@@ -496,11 +503,16 @@ object HomeScreen : Screen() {
         NavigationRailItem(
             selected = selected,
             onClick = onClick,
-            modifier = Modifier.combinedClickable(
-                onLongClick = onLongClick,
-                onDoubleClick = onDoubleClick,
-                onClick = combinedClick
-            ),
+            modifier = Modifier
+                .tvFocusHighlight(
+                    shape = RoundedCornerShape(16.dp),
+                    focusedScale = 1.05f,
+                )
+                .combinedClickable(
+                    onLongClick = onLongClick,
+                    onDoubleClick = onDoubleClick,
+                    onClick = combinedClick,
+                ),
             icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
             label = label,
             alwaysShowLabel = navLabelVisibility == NavLabelVisibility.ALWAYS,
