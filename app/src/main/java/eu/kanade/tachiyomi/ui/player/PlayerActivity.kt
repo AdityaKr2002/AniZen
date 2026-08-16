@@ -1086,9 +1086,10 @@ class PlayerActivity : BaseActivity() {
                 KeyEvent.KEYCODE_DPAD_DOWN,
                 KeyEvent.KEYCODE_DPAD_CENTER,
                 KeyEvent.KEYCODE_ENTER,
-                KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                KeyEvent.KEYCODE_TAB -> {
                     // Let Compose UI handle directional focus traversal and button clicks
-                    event?.let { player.onKey(it) }
+                    // Do NOT forward D-Pad keys to MPV, which would trigger unintended seek -60/60 actions
                     return super.onKeyDown(keyCode, event)
                 }
                 else -> {
@@ -1137,8 +1138,24 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        if (player.onKey(event!!)) return true
-        return super.onKeyUp(keyCode, event)
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT,
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER,
+            KeyEvent.KEYCODE_TAB,
+            KeyEvent.KEYCODE_BACK -> {
+                // Keep D-Pad and navigation keys within Android / Compose UI lifecycle
+                return super.onKeyUp(keyCode, event)
+            }
+            else -> {
+                if (event != null && player.onKey(event)) return true
+                return super.onKeyUp(keyCode, event)
+            }
+        }
     }
 
     private fun setupMediaSession() {
