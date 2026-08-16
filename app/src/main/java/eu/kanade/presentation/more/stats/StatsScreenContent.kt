@@ -225,8 +225,8 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
                 } else {
-                    Image(
-                        painter = painterResource(R.drawable.ic_splash_logo),
+                    AsyncImage(
+                        model = R.drawable.ic_splash_logo,
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                     )

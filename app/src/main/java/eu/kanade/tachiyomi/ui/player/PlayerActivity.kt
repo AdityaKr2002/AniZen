@@ -1055,13 +1055,30 @@ class PlayerActivity : BaseActivity() {
                 viewModel.changeVolumeBy(-1)
                 viewModel.displayVolumeSlider()
             }
-            KeyEvent.KEYCODE_DPAD_RIGHT -> viewModel.handleLeftDoubleTap()
-            KeyEvent.KEYCODE_DPAD_LEFT -> viewModel.handleRightDoubleTap()
-            KeyEvent.KEYCODE_SPACE -> viewModel.pauseUnpause()
-            KeyEvent.KEYCODE_MEDIA_STOP -> finishAndRemoveTask()
-
+            KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_MEDIA_REWIND -> viewModel.handleLeftDoubleTap()
+
+            KeyEvent.KEYCODE_DPAD_RIGHT,
             KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> viewModel.handleRightDoubleTap()
+
+            KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER,
+            KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> viewModel.pauseUnpause()
+
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_MENU -> {
+                if (!viewModel.controlsShown.value) {
+                    viewModel.showControls()
+                } else {
+                    event?.let { player.onKey(it) }
+                    super.onKeyDown(keyCode, event)
+                }
+            }
+
+            KeyEvent.KEYCODE_MEDIA_STOP -> finishAndRemoveTask()
 
             // other keys should be bound by the user in input.conf ig
             else -> {

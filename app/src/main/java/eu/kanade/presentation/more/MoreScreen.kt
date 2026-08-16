@@ -1,6 +1,5 @@
 package eu.kanade.presentation.more
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -133,7 +132,7 @@ fun MoreScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ProfileHeader()
+                LogoHeader()
             }
 
             item {
@@ -297,16 +296,4 @@ fun MoreScreen(
     }
 }
 
-@Composable
-private fun ProfileHeader() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ic_splash_logo),
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-        )
-    }
-}
+

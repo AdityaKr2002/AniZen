@@ -17,6 +17,13 @@ private const val TABLET_UI_MIN_SCREEN_WIDTH_PORTRAIT_DP = 700
 // make sure icons on the nav rail fit
 private const val TABLET_UI_MIN_SCREEN_WIDTH_LANDSCAPE_DP = 600
 
+fun Context.isTv(): Boolean {
+    val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
+    if (uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) return true
+    if (packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)) return true
+    return isTvBox(this)
+}
+
 fun Configuration.isTabletUi(): Boolean {
     return smallestScreenWidthDp >= TABLET_UI_REQUIRED_SCREEN_WIDTH_DP
 }
