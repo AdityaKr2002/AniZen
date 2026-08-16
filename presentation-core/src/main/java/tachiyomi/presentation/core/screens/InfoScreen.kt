@@ -140,6 +140,7 @@ fun InfoScreen(
     } else {
         Scaffold(
             bottomBar = {
+                val outlineColor = MaterialTheme.colorScheme.outline
                 Column(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.background)
@@ -147,19 +148,16 @@ fun InfoScreen(
                             val strokeWidth = Dp.Hairline.value
                             val y = 0f
                             drawLine(
-                                color = MaterialTheme.colorScheme.outline,
+                                color = outlineColor,
                                 start = Offset(0f, y),
                                 end = Offset(size.width, y),
                                 strokeWidth = strokeWidth,
                             )
                         }
+                        .windowInsetsPadding(NavigationBarDefaults.windowInsets)
                         .padding(
-                            vertical = MaterialTheme.padding.small,
                             horizontal = MaterialTheme.padding.medium,
-                        )
-                        .windowInsetsPadding(
-                            NavigationBarDefaults.windowInsets
-                                .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                            vertical = MaterialTheme.padding.small,
                         )
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
