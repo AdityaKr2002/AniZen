@@ -37,8 +37,8 @@ fun BrowseSourceList(
         contentPadding = contentPadding + PaddingValues(vertical = 8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item(key = "browse-list-load-prepend") {
-            if (animeList.loadState.prepend is LoadState.Loading) {
+        if (animeList.loadState.prepend is LoadState.Loading) {
+            item(key = "browse-list-load-prepend") {
                 BrowseSourceLoadingItem()
             }
         }
@@ -70,8 +70,8 @@ fun BrowseSourceList(
             )
         }
 
-        item(key = "browse-list-load-append") {
-            if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+        if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+            item(key = "browse-list-load-append") {
                 BrowseSourceLoadingItem()
             }
         }

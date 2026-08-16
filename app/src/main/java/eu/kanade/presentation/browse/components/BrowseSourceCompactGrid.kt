@@ -40,8 +40,8 @@ fun BrowseSourceCompactGrid(
         verticalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridVerticalSpacer),
         horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
     ) {
-        item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
-            if (animeList.loadState.prepend is LoadState.Loading) {
+        if (animeList.loadState.prepend is LoadState.Loading) {
+            item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }
@@ -72,8 +72,8 @@ fun BrowseSourceCompactGrid(
             )
         }
 
-        item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
-            if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+        if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+            item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }
