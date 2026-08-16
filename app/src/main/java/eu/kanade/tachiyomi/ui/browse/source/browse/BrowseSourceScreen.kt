@@ -300,8 +300,8 @@ data class BrowseSourceScreen(
             bottomBar = {
                 androidx.compose.animation.AnimatedVisibility(
                     visible = state.selectionMode,
-                    enter = androidx.compose.animation.slideInVertically { it } + androidx.compose.animation.fadeIn(),
-                    exit = androidx.compose.animation.slideOutVertically { it } + androidx.compose.animation.fadeOut(),
+                    enter = androidx.compose.animation.expandVertically(),
+                    exit = androidx.compose.animation.shrinkVertically(),
                 ) {
                     val allFavorite = remember(state.selection, state.favoriteIds) {
                         state.selection.all { it.id in state.favoriteIds }

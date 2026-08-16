@@ -3,10 +3,8 @@ package eu.kanade.presentation.browse
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -270,8 +268,8 @@ private fun MigrateBottomActionMenu(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = slideInVertically(animationSpec = tween(delayMillis = 300)) { it } + fadeIn(animationSpec = tween(delayMillis = 300)),
-        exit = slideOutVertically(animationSpec = tween()) { it } + fadeOut(animationSpec = tween()),
+        enter = expandVertically(animationSpec = tween(delayMillis = 300)),
+        exit = shrinkVertically(animationSpec = tween()),
     ) {
         Surface(
             modifier = modifier,
