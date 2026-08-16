@@ -142,6 +142,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.presentation.core.util.shouldExpandFAB
+import tachiyomi.presentation.core.util.tvFocusHighlight
 import tachiyomi.source.localanime.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -1761,6 +1762,12 @@ private fun DraggableAnimeFAB(
             modifier = Modifier
                 .onSizeChanged { fabWidth = it.width.toFloat() }
                 .offset { IntOffset(x = animatedOffset.roundToInt(), y = 0) }
+                .tvFocusHighlight(
+                    shape = RoundedCornerShape(16.dp),
+                    focusedScale = 1.08f,
+                    borderWidth = 3.dp,
+                    focusedBackgroundAlpha = 0.2f,
+                )
                 .pointerInput(isFabOnLeft, containerWidth, fabWidth) {
                     detectHorizontalDragGestures(
                         onDragStart = {
