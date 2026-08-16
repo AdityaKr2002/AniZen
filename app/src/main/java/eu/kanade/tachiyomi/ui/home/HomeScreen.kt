@@ -206,8 +206,8 @@ object HomeScreen : Screen() {
 
                             AnimatedVisibility(
                                 visible = bottomNavVisible && isCurrentTabVisible,
-                                enter = slideInVertically { it } + fadeIn(),
-                                exit = slideOutVertically { it } + fadeOut(),
+                                enter = slideInVertically { it } + expandVertically(),
+                                exit = slideOutVertically { it } + shrinkVertically(),
                             ) {
                                 NavigationBar(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
