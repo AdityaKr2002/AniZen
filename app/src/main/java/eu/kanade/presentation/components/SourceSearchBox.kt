@@ -145,7 +145,7 @@ fun SourcesSearchBox(
                 },
                 leadingIcon = {
                     SearchBoxLeadingIcon(
-                        isSearching = isFocused || !searchQuery.isNullOrBlank(),
+                        isSearching = !searchQuery.isNullOrBlank(),
                         onClickCloseSearch = onClickCloseSearch,
                     )
                 },

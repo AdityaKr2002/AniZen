@@ -1,7 +1,5 @@
 package tachiyomi.presentation.core.util
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
@@ -11,34 +9,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Adds high-contrast animated border highlight and optional scale effect
- * when the composable receives focus via D-Pad or keyboard.
+ * Clean Material 3 / Komikku-style focus highlight.
+ * Applies a smooth container surface tint when focused via D-Pad or keyboard.
  */
 fun Modifier.tvFocusHighlight(
     shape: Shape = RoundedCornerShape(12.dp),
-    borderWidth: Dp = 2.5.dp,
+    borderWidth: Dp = 0.dp,
     focusedBorderColor: Color? = null,
-    focusedScale: Float = 1.03f,
-    focusedBackgroundAlpha: Float = 0.08f,
+    focusedScale: Float = 1.0f,
+    focusedBackgroundAlpha: Float = 0.12f,
     onFocusChange: ((Boolean) -> Unit)? = null,
 ): Modifier = composed {
     var isFocused by remember { mutableStateOf(false) }
-    val borderColor = focusedBorderColor ?: MaterialTheme.colorScheme.primary
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) focusedScale else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "tvFocusScale",
-    )
+    val tintColor = focusedBorderColor ?: MaterialTheme.colorScheme.primary
 
     this
         .onFocusChanged { state ->
@@ -46,29 +37,14 @@ fun Modifier.tvFocusHighlight(
             onFocusChange?.invoke(state.isFocused)
         }
         .then(
-            if (focusedScale > 1f) {
-                Modifier.scale(scale)
-            } else {
-                Modifier
-            },
-        )
-        .then(
             if (isFocused) {
-                Modifier
-                    .drawBehind {
-                        val outline = shape.createOutline(size, layoutDirection, this)
-                        if (focusedBackgroundAlpha > 0f) {
-                            drawOutline(
-                                outline = outline,
-                                color = borderColor.copy(alpha = focusedBackgroundAlpha),
-                            )
-                        }
-                        drawOutline(
-                            outline = outline,
-                            color = borderColor,
-                            style = Stroke(width = borderWidth.toPx()),
-                        )
-                    }
+                Modifier.drawBehind {
+                    val outline = shape.createOutline(size, layoutDirection, this)
+                    drawOutline(
+                        outline = outline,
+                        color = tintColor.copy(alpha = focusedBackgroundAlpha),
+                    )
+                }
             } else {
                 Modifier
             },
@@ -76,14 +52,13 @@ fun Modifier.tvFocusHighlight(
 }
 
 /**
- * Subtle focus highlight modifier specifically designed for list rows,
- * settings items, and episode rows.
+ * Subtle focus highlight modifier for list rows, settings items, and episode rows.
  */
 fun Modifier.tvListItemFocusHighlight(
     shape: Shape = RoundedCornerShape(8.dp),
-    borderWidth: Dp = 2.dp,
+    borderWidth: Dp = 0.dp,
     focusedBorderColor: Color? = null,
-    focusedBackgroundAlpha: Float = 0.15f,
+    focusedBackgroundAlpha: Float = 0.12f,
     onFocusChange: ((Boolean) -> Unit)? = null,
 ): Modifier = tvFocusHighlight(
     shape = shape,
@@ -98,10 +73,10 @@ fun Modifier.tvListItemFocusHighlight(
  * Circular focus highlight modifier for circular icon buttons and player controls.
  */
 fun Modifier.tvCircleFocusHighlight(
-    borderWidth: Dp = 2.5.dp,
+    borderWidth: Dp = 0.dp,
     focusedBorderColor: Color? = null,
-    focusedScale: Float = 1.08f,
-    focusedBackgroundAlpha: Float = 0.2f,
+    focusedScale: Float = 1.0f,
+    focusedBackgroundAlpha: Float = 0.16f,
     onFocusChange: ((Boolean) -> Unit)? = null,
 ): Modifier = tvFocusHighlight(
     shape = RoundedCornerShape(50),
