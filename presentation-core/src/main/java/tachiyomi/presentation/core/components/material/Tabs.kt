@@ -27,7 +27,6 @@ fun TabText(
             text = text,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
         )
         if (badgeCount != null && badgeCount > 0) {
             Pill(
