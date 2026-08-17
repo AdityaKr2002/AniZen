@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="other">Bab %1$s dan %2$d lagi</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="other">%d hari</item>
+    </plurals>
+    <plurals name="num_repos">
+        <item quantity="other">%d repositori</item>
+    </plurals>
     <plurals name="lock_after_mins">
         <item quantity="other">Selepas %1$s minit</item>
     </plurals>
     <plurals name="notification_chapters_generic">
         <item quantity="other">%1$d bab baharu</item>
-    </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="other">Bab %1$s dan %2$d lagi</item>
     </plurals>
     <plurals name="notification_new_chapters_summary">
         <item quantity="other">Untuk entri %d</item>
@@ -42,10 +48,10 @@
     <plurals name="download_amount">
         <item quantity="other">%d bab seterusnya</item>
     </plurals>
-    <plurals name="day">
-        <item quantity="other">%d hari</item>
+    <plurals name="upcoming_relative_time">
+        <item quantity="other">Dalam %1$d hari</item>
     </plurals>
-    <plurals name="num_repos">
-        <item quantity="other">%d repositori</item>
+    <plurals name="pref_pages">
+        <item quantity="other">%1$s halaman</item>
     </plurals>
 </resources>

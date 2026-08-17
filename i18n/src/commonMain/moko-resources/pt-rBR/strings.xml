@@ -28,7 +28,7 @@
     <string name="action_download">Fazer download</string>
     <string name="action_bookmark">Adicionar capítulo aos favoritos</string>
     <string name="action_remove_bookmark">Remover capítulo dos favoritos</string>
-    <string name="action_delete">Deletar</string>
+    <string name="action_delete">Remover</string>
     <string name="action_update_library">Atualizar biblioteca</string>
     <string name="action_edit">Editar</string>
     <string name="action_add">Adicionar</string>
@@ -137,7 +137,7 @@
     <string name="pref_backup_interval">Frequência de backup automático</string>
     <string name="backup_created">Backup criado</string>
     <string name="restore_completed">Restauração concluída</string>
-    <string name="backup_choice">Do que você deseja fazer backup\?</string>
+    <string name="backup_choice">Do que você deseja fazer backup?</string>
     <string name="restoring_backup">Restaurando backup</string>
     <string name="creating_backup">Criando backup</string>
     <string name="used_cache">Utilizado: %1$s</string>
@@ -162,7 +162,7 @@
     <string name="unknown">Desconhecido</string>
     <string name="licensed">Licenciado</string>
     <string name="remove_from_library">Remover da biblioteca</string>
-    <string name="delete_downloads_for_manga">Excluir os capítulos disponíveis offline\?</string>
+    <string name="delete_downloads_for_manga">Excluir os capítulos disponíveis offline?</string>
     <string name="display_mode_chapter">Capítulo %1$s</string>
     <string name="chapter_downloading_progress">Fazendo download (%1$d/%2$d)</string>
     <string name="show_title">Título da fonte</string>
@@ -171,7 +171,7 @@
     <string name="sort_by_number">Pelo número do capítulo</string>
     <string name="manga_download">Fazer download</string>
     <string name="download_unread">Não lidos</string>
-    <string name="confirm_delete_chapters">Você tem certeza que quer excluir os capítulos selecionados\?</string>
+    <string name="confirm_delete_chapters">Você tem certeza que quer excluir os capítulos selecionados?</string>
     <string name="manga_tracking_tab">Monitoramento</string>
     <string name="reading">Lendo</string>
     <string name="completed">Concluído</string>
@@ -183,7 +183,7 @@
     <string name="status">Estado</string>
     <string name="error_category_exists">Já existe uma categoria com este nome!</string>
     <string name="snack_categories_deleted">Categorias excluídas</string>
-    <string name="dialog_with_checkbox_remove_description">Isso irá remover a data de leitura deste capítulo. Você tem certeza\?</string>
+    <string name="dialog_with_checkbox_remove_description">Isso irá remover a data de leitura deste capítulo. Você tem certeza?</string>
     <string name="picture_saved">Imagem salva</string>
     <string name="custom_filter">Filtro personalizado</string>
     <string name="set_as_cover">Usar como capa</string>
@@ -191,7 +191,7 @@
     <string name="chapter_progress">Página: %1$d</string>
     <string name="no_next_chapter">Próximo capítulo não encontrado</string>
     <string name="decode_image_error">A imagem não pôde ser carregada</string>
-    <string name="confirm_set_image_as_cover">Usar esta imagem como capa\?</string>
+    <string name="confirm_set_image_as_cover">Usar esta imagem como capa?</string>
     <string name="download_queue_error">Não foi possível fazer o download dos capítulos. Você pode tentar novamente na seção de downloads</string>
     <string name="notification_new_chapters">Novos capítulos encontrados</string>
     <string name="notification_cover_update_failed">Erro ao atualizar a capa</string>
@@ -237,7 +237,7 @@
     <string name="untrusted_extension">Extensão não confiável</string>
     <string name="untrusted_extension_message">Extensões maliciosas podem ler quaisquer credenciais de login armazenadas ou executar códigos arbitrários.
 \n
-\nAo confiar no certificado desta extensão, você estará aceitando estes riscos.</string>
+\nAo confiar nessa extensão, você estará aceitando estes riscos.</string>
     <string name="pref_double_tap_anim_speed">Velocidade da animação do toque duplo</string>
     <string name="double_tap_anim_speed_0">Sem animação</string>
     <string name="double_tap_anim_speed_normal">Normal</string>
@@ -269,7 +269,7 @@
     <string name="label_help">Ajuda</string>
     <string name="pref_color_filter_mode">Modo de aplicação do filtro de cor</string>
     <string name="filter_mode_overlay">Sobreposição</string>
-    <string name="filter_mode_multiply">Multiplicar</string>
+    <string name="filter_mode_multiply">Multiplicação</string>
     <string name="filter_mode_lighten">Clarear</string>
     <string name="filter_mode_darken">Escurecer</string>
     <string name="action_webview_back">Voltar</string>
@@ -282,7 +282,7 @@
     <string name="migration_selection_prompt">Selecione uma fonte da qual migrar</string>
     <string name="pref_date_format">Formato de data</string>
     <string name="pref_category_library_update">Atualização global</string>
-    <string name="logout_title">Desconectar de %1$s\?</string>
+    <string name="logout_title">Desconectar de %1$s?</string>
     <string name="logout">Desconectar</string>
     <string name="logout_success">Você foi desconectado</string>
     <string name="paused">Pausado</string>
@@ -402,14 +402,14 @@
     <string name="no_chapters_error">Nenhum capítulo encontrado</string>
     <string name="chapter_settings_updated">Configurações padrões de capítulo atualizadas</string>
     <string name="set_chapter_settings_as_default">Definir como padrão</string>
-    <string name="confirm_set_chapter_settings">Você tem certeza que quer salvar como padrão essas configurações\?</string>
+    <string name="confirm_set_chapter_settings">Você tem certeza que quer salvar como padrão essas configurações?</string>
     <string name="chapter_settings">Configurações de capítulo</string>
     <string name="share_page_info">%1$s: %2$s, página %3$d</string>
     <string name="action_search_settings">Pesquisar nas configurações</string>
     <string name="downloaded_chapters">Capítulos disponíveis offline</string>
     <string name="pref_incognito_mode">Modo anônimo</string>
     <string name="pref_clear_history">Limpar o histórico</string>
-    <string name="clear_history_confirmation">Você tem certeza\? Todo o histórico será perdido.</string>
+    <string name="clear_history_confirmation">Você tem certeza? Todo o histórico será perdido.</string>
     <string name="clear_history_completed">Histórico excluído</string>
     <string name="spen_next_page">Próxima página</string>
     <string name="spen_previous_page">Página anterior</string>
@@ -584,7 +584,7 @@
     <string name="theme_lavender">Lavanda</string>
     <string name="description_placeholder">Sem descrição</string>
     <string name="delete_category">Deletar categoria</string>
-    <string name="delete_category_confirmation">Você deseja deletar a categoria \"%s\"\?</string>
+    <string name="delete_category_confirmation">Você deseja deletar a categoria \"%s\"?</string>
     <string name="internal_error">Erro interno: Verifique os registros de travamento para mais informações</string>
     <string name="pref_user_agent_string">User Agent padrão</string>
     <string name="pref_reset_user_agent_string">Redefinir o User Agent padrão</string>
@@ -597,7 +597,7 @@
     <string name="download_ahead">Fazer download a frente</string>
     <string name="auto_download_while_reading">Download automático durante a leitura</string>
     <string name="download_ahead_info">Funciona somente se o capítulo atual e próximo já estão disponíveis offline.</string>
-    <string name="are_you_sure">Você tem certeza\?</string>
+    <string name="are_you_sure">Você tem certeza?</string>
     <string name="multi_lang">Múltiplos</string>
     <string name="updates_last_update_info">Última atualização da biblioteca: %s</string>
     <string name="remove_manga">Você está prestes a remover \"%s\" de sua biblioteca</string>
@@ -626,10 +626,10 @@
     <string name="information_no_entries_found">Nenhum item encontrado nesta categoria</string>
     <string name="fdroid_warning">Compilações do F-Droid não são suportadas oficialmente.
 \nToque para saber mais.</string>
-    <string name="track_remove_date_conf_title">Remover data\?</string>
+    <string name="track_remove_date_conf_title">Remover data?</string>
     <string name="track_remove_start_date_conf_text">Isto irá remover sua data de início selecionada anteriormente no %s</string>
     <string name="track_remove_finish_date_conf_text">Isto irá remover sua data de término selecionada anteriormente no %s</string>
-    <string name="pref_invalidate_download_cache">Reindexar os downloads</string>
+    <string name="pref_invalidate_download_cache">Reindexar downloads</string>
     <string name="label_local">Local</string>
     <string name="label_downloaded">Disponíveis offline</string>
     <string name="label_overview_section">Visão geral</string>
@@ -682,21 +682,21 @@
     <string name="manga_display_modified_interval_title">Definido para atualizar todo</string>
     <string name="manga_display_interval_title">Estimar todo</string>
     <string name="action_ok">OK</string>
-    <string name="track_delete_title">Remover o monitoramento do %s\?</string>
+    <string name="track_delete_title">Remover o monitoramento do %s?</string>
     <string name="track_delete_text">Isso irá remover o monitoramento localmente.</string>
     <string name="track_delete_remote_text">Também remover do %s</string>
     <string name="delete_downloaded">Deletar os disponíveis offline</string>
-    <string name="has_results">Com resultados</string>
+    <string name="has_results">Há resultados</string>
     <string name="syncing_library">Sincronizando a biblioteca</string>
     <string name="library_sync_complete">Sincronização da biblioteca finalizada</string>
     <string name="information_cloudflare_help">Toque aqui para obter ajuda com o Cloudflare</string>
-    <string name="download_cache_invalidated">Índice de downloads invalidado</string>
+    <string name="download_cache_invalidated">Recriando índice de downloads</string>
     <string name="track_activity_name">Login do monitorador</string>
     <string name="create_backup_file_error">Não foi possível criar o arquivo do backup</string>
     <string name="exception_http">HTTP %d, verifique o site na WebView</string>
     <string name="exception_offline">Sem conexão de internet</string>
     <string name="exception_unknown_host">Não foi possível resolver %s</string>
-    <string name="unlock_app_title">Desbloquear AniZen</string>
+    <string name="unlock_app_title">Desbloquear o %s</string>
     <string name="action_move_to_bottom_all_for_series">Mover série para o final</string>
     <string name="pref_relative_format">Datas relativas</string>
     <string name="pref_relative_format_summary">\"%1$s\" ao invés de \"%2$s\"</string>
@@ -708,7 +708,7 @@
     <string name="file_null_uri_error">Nenhum arquivo selecionado</string>
     <string name="label_data_storage">Dados e armazenamento</string>
     <string name="pref_flash_page_summ">Reduz o efeito fantasma em telas e-ink</string>
-    <string name="pref_flash_page">Piscar ao mudar de página</string>
+    <string name="pref_flash_page">Flash ao mudar de página</string>
     <string name="action_sort_tracker_score">Avaliação no monitorador</string>
     <string name="relative_time_span_never">Nunca</string>
     <string name="last_auto_backup_info">Último backup automático feito em: %s</string>
@@ -751,7 +751,7 @@
     <string name="available_disk_space_info">Disponível: %1$s / Total: %2$s</string>
     <string name="ext_permission_install_apps_warning">Permissões são necessárias para instalar extensões. Toque aqui para conceder.</string>
     <string name="private_settings">Incluir configurações sensíveis (tokens de login dos monitoradores, por exemplo)</string>
-    <string name="manga_interval_expected_update">Novos capítulos previstos para serem lançados em torno de %1$s, verificando a cada %2$s.</string>
+    <string name="manga_interval_expected_update">Novos capítulos com previsão de serem lançados em torno de %1$s, verificando em torno de cada %2$s.</string>
     <string name="manga_interval_custom_amount">Frequência de atualização personalizada:</string>
     <string name="invalid_backup_file_error">Erro completo:</string>
     <string name="error_repo_exists">Este repositório já existe!</string>
@@ -888,7 +888,7 @@
     <string name="video_list_empty_error">Nenhum vídeo encontrado</string>
     <string name="notification_new_episodes">Novos episódios encontrados</string>
     <string name="information_no_recent_anime">Nada assistido recentemente</string>
-    <string name="information_webview_required">A WebView é necessária para AniZen</string>
+    <string name="information_webview_required">A WebView é necessária para o funcionamento do app</string>
     <string name="download_notifier_download_paused_chapters">Download pausado</string>
     <string name="channel_new_chapters_episodes">Atualizações de capítulo/episódio</string>
     <string name="no_next_episode">Próximo episódio não encontrado!</string>
@@ -1003,10 +1003,10 @@
     <string name="pref_debanding_cpu">CPU</string>
     <string name="action_reorganize_by">Reordenar</string>
     <string name="pref_general_summary">Idioma do aplicativo, notificações</string>
-    <string name="action_open_repo">Repositório de código-aberto</string>
+    <string name="action_open_repo">Abrir repositório da fonte</string>
     <string name="pref_preserve_reading_position">Preservar a posição de leitura nos capítulos lidos</string>
-    <string name="pref_create_folder_per_manga">Salvar páginas em pastas separadas</string>
-    <string name="pref_create_folder_per_manga_summary">Criar pastas de acordo com o título das entradas</string>
+    <string name="pref_create_folder_per_manga">Salvar as páginas em pastas separadas</string>
+    <string name="pref_create_folder_per_manga_summary">Cria as pastas usando os títulos dos itens</string>
     <string name="pref_download_slots">Máximo de downloads</string>
     <string name="download_speed_limit">Limite de velocidade de download</string>
     <string name="download_speed_limit_hint">Defina como 0 para desativar o limite de velocidade.</string>
@@ -1057,30 +1057,30 @@
     <string name="pref_player_audio_channels_auto_safe">Auto-seguro</string>
     <string name="relative_time_now">Novo</string>
     <string name="pref_flash_duration_summary">%1$s ms</string>
-    <string name="pref_flash_page_interval">Piscar a cada</string>
-    <string name="pref_flash_with">Piscar com</string>
+    <string name="pref_flash_page_interval">Flash a cada</string>
+    <string name="pref_flash_with">Flash com</string>
     <string name="pref_flash_style_black">Preto</string>
     <string name="pref_flash_style_white">Branco</string>
-    <string name="pref_flash_style_white_black">Preto e branco</string>
-    <string name="manga_interval_expected_update_null">Este mangá já foi concluído ou não há data de lançamento prevista.</string>
-    <string name="action_view_upcoming">Ver próximos lançamentos</string>
-    <string name="upcoming_guide">Guia de lançamentos</string>
+    <string name="pref_flash_style_white_black">Branco e Preto</string>
+    <string name="manga_interval_expected_update_null">Esse mangá foi completado, ou não tem uma data de lançamento prevista.</string>
+    <string name="action_view_upcoming">Exibir as próximas atualizações</string>
+    <string name="upcoming_guide">Guia de próximos lançamentos</string>
     <string name="upcoming_calendar_next">Próximo mês</string>
-    <string name="upcoming_calendar_prev">Mês passado</string>
-    <string name="file_picker_uri_permission_unsupported">Algo deu errado ao adquirir acesso persistente à pasta. O aplicativo pode se comportar de forma inesperada.</string>
+    <string name="upcoming_calendar_prev">Mês anterior</string>
+    <string name="file_picker_uri_permission_unsupported">Falha ao adquirir acesso a uma pasta persistente. O aplicativo pode se comportar de maneira inesperada.</string>
     <string name="mpv_media_title">%1$s - E%2$s - %3$s</string>
     <string name="pref_mpv_scripts">Ativar scripts MPV</string>
     <string name="action_replace_repo">Substituir</string>
     <string name="action_replace_repo_title">A impressão digital da chave de assinatura já existe</string>
     <string name="action_replace_repo_message">O repositório %1$s tem a mesma impressão digital da chave de assinatura que %2$s.
 \nSe isso for esperado, %2$s será substituído, caso contrário, entre em contato com o mantenedor do seu repositório.</string>
-    <string name="pref_flash_duration">Duração do piscada</string>
+    <string name="pref_flash_duration">Duração do flash</string>
     <string name="pref_display_profile">Perfil de exibição personalizado</string>
     <string name="anime_interval_expected_update_null">Este anime já foi concluído ou não há data de lançamento prevista.</string>
     <string name="pref_mpv_scripts_summary">Precisa de permissão de armazenamento externo.</string>
-    <string name="pref_webtoon_disable_zoom_out">Desativar zoom para fora</string>
+    <string name="pref_webtoon_disable_zoom_out">Desativar redução de zoom</string>
     <string name="pref_debanding_yuv420p">YUV420P</string>
-    <string name="label_upcoming">Próximos lançamentos</string>
+    <string name="label_upcoming">Próximo</string>
     <string name="action_add_anyway">Adicionar de qualquer maneira</string>
     <string name="action_migrate_duplicate">Migrar para entrada existente</string>
     <string name="label_player_settings">Configurações do Player</string>
@@ -1088,7 +1088,7 @@
     <string name="pref_player_internal_summary">Progresso, controles, orientação</string>
     <string name="action_search_player_settings">Procurar configurações do Player</string>
     <string name="pref_player_internal">Player interno</string>
-    <string name="action_copy_link">Copiar Link</string>
+    <string name="action_copy_link">Copiar link</string>
     <string name="pref_controls_allow_gestures_in_panels">Permitir gestos em painéis</string>
     <string name="rotation_video">Vídeo</string>
     <string name="pref_category_controls">Controles</string>
@@ -1099,11 +1099,11 @@
     <string name="pref_show_system_bar">Mostrar barra de status do sistema com controles</string>
     <string name="pref_library_rows">Tamanho da lista</string>
     <string name="ext_remove">Remover</string>
-    <string name="ext_confirm_remove">Remover Extensão?</string>
-    <string name="remove_private_extension_message">Você realmente quer remover a extensão \"%s\"?</string>
+    <string name="ext_confirm_remove">Remover extensão?</string>
+    <string name="remove_private_extension_message">Você realmente deseja remover a extensão \"%s\"?</string>
     <string name="add_repo_confirmation">Você quer adicionar o repositório \"%s\"?</string>
-    <string name="invalid_backup_file_unknown">Arquivo de Backup está corrompido</string>
-    <string name="invalid_backup_file_json">Backup JSON não é suportado</string>
+    <string name="invalid_backup_file_unknown">O arquivo de backup está corrompido</string>
+    <string name="invalid_backup_file_json">Backup JSON não suportado</string>
     <string name="extensionRepo_settings">Repositórios de extensão</string>
     <string name="custom_button_settings">Botões customizados</string>
     <string name="trackers_updated_summary_anime">Rastreador atualizado para o episódio %d</string>
@@ -1130,7 +1130,7 @@
     <string name="pref_player_audio_lang">Preferência de linguagens</string>
     <string name="pref_player_audio_boost_cap">Limite do boost de volume</string>
     <string name="pref_player_advanced">Avançado</string>
-    <string name="pref_download_new_unread_chapters_only">Não baixar capítulos lidos duplicados</string>
+    <string name="pref_download_new_unread_chapters_only">Pule o download de capítulos duplicados já lidos</string>
     <string name="pref_auto_update_manga_on_mark_read">Atualizar progresso quando marcado como lido/assistido</string>
     <string name="pref_download_new_unseen_episodes_only">Não baixar episódios assistidos duplicados</string>
     <string name="player_sheets_filters_title">Filtros</string>
@@ -1138,7 +1138,7 @@
     <string name="pref_player_audio">Áudio</string>
     <string name="pref_player_subtitle">Legendas</string>
     <string name="confirm_tracker_update_anime">Atualizar rastreadores para o episódio %d?</string>
-    <string name="confirm_tracker_update">Atualizar rastreadores para o capitulo %d?</string>
+    <string name="confirm_tracker_update">Atualizar rastreadores para o capítulo %d?</string>
     <string name="player_sheets_subtitles_color_background">Fundo</string>
     <string name="pref_player_subtitle_whitelist_info">Whitelist para legendas. Se uma whitelist for definida, a primeira legenda que contem uma palavra da lista será usada. Múltiplos valores podem ser delimitados por vírgulas.</string>
     <string name="player_sheets_filters_brightness">Brilho</string>
@@ -1245,4 +1245,7 @@
     <string name="player_sheets_sub_delay_subtitle_text_seen">Texto visto</string>
     <string name="player_sheets_sub_delay_audio_sound_heard">Som ouvido</string>
     <string name="player_sheets_sub_delay_sound_sound_spotted">Som escutado</string>
+    <string name="label_auto">Automático</string>
+    <string name="pref_behavior">Comportamento</string>
+    <string name="theme_catppuccin">Catppuccin</string>
 </resources>

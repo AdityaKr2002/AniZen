@@ -1,5 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">Kapitel %1$s och 1 till</item>
+        <item quantity="other">Kapitlen %1$s och %2$d till</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">1 dag</item>
+        <item quantity="other">%d dagar</item>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="lock_after_mins">
         <item quantity="one">Efter %1$s minut</item>
         <item quantity="other">Efter %1$s minuter</item>
@@ -7,10 +43,6 @@
     <plurals name="notification_chapters_generic">
         <item quantity="one">%1$d nytt kapitel</item>
         <item quantity="other">%1$d nya kapitel</item>
-    </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Kapitel %1$s och 1 till</item>
-        <item quantity="other">Kapitlen %1$s och %2$d till</item>
     </plurals>
     <plurals name="notification_new_chapters_summary">
         <item quantity="one">För %d post</item>
@@ -52,44 +84,16 @@
         <item quantity="one">Nästa olästa kapitel</item>
         <item quantity="other">Nästa %d olästa kapitel</item>
     </plurals>
-    <plurals name="day">
-        <item quantity="one">1 dag</item>
-        <item quantity="other">%d dagar</item>
-    </plurals>
     <plurals name="download_amount">
         <item quantity="one">Nästa kapitel</item>
         <item quantity="other">Nästa %d kapitel</item>
     </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
     <plurals name="upcoming_relative_time">
         <item quantity="one">Imorgon</item>
         <item quantity="other">Om %1$d dagar</item>
+    </plurals>
+    <plurals name="pref_pages">
+        <item quantity="one">1 sida</item>
+        <item quantity="other">%1$s sidor</item>
     </plurals>
 </resources>

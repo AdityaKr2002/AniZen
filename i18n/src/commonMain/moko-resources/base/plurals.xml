@@ -37,8 +37,8 @@
         <item quantity="other">%d categories</item>
     </plurals>
     <plurals name="next_unread_chapters">
-        <item quantity="one">Next unread chapter</item>
-        <item quantity="other">Next %d unread chapters</item>
+        <item quantity="one">Next unread episode</item>
+        <item quantity="other">Next %d unread episodes</item>
     </plurals>
     <plurals name="restore_completed_message">
         <item quantity="one">Done in %1$s with %2$s error</item>
@@ -61,32 +61,32 @@
         <item quantity="other">Missing %1$s items</item>
     </plurals>
     <plurals name="manga_num_chapters">
-        <item quantity="one">%1$s chapter</item>
-        <item quantity="other">%1$s chapters</item>
+        <item quantity="one">%1$s episode</item>
+        <item quantity="other">%1$s episodes</item>
     </plurals>
     <plurals name="download_amount">
-        <item quantity="one">Next chapter</item>
-        <item quantity="other">Next %d chapters</item>
+        <item quantity="one">Next episode</item>
+        <item quantity="other">Next %d episodes</item>
     </plurals>
     <plurals name="num_trackers">
         <item quantity="one">%d tracker</item>
         <item quantity="other">%d trackers</item>
     </plurals>
     <plurals name="missing_chapters_warning">
-        <item quantity="one">Skipping %d chapter, either the source is missing it or it has been filtered out</item>
-        <item quantity="other">Skipping %d chapters, either the source is missing them or they have been filtered out</item>
+        <item quantity="one">Skipping %d episode, either the source is missing it or it has been filtered out</item>
+        <item quantity="other">Skipping %d episodes, either the source is missing them or they have been filtered out</item>
     </plurals>
     <plurals name="notification_new_chapters_summary">
         <item quantity="one">For %d entry</item>
         <item quantity="other">For %d entries</item>
     </plurals>
     <plurals name="notification_chapters_generic">
-        <item quantity="one">%1$d new chapter</item>
-        <item quantity="other">%1$d new chapters</item>
+        <item quantity="one">%1$d new episode</item>
+        <item quantity="other">%1$d new episodes</item>
     </plurals>
     <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Chapters %1$s and %2$d more</item>
-        <item quantity="other">Chapters %1$s and %2$d more</item>
+        <item quantity="one">Episodes %1$s and %2$d more</item>
+        <item quantity="other">Episodes %1$s and %2$d more</item>
     </plurals>
     <plurals name="update_check_notification_ext_updates">
         <item quantity="one">Extension update available</item>

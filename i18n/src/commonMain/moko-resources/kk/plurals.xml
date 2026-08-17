@@ -1,5 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">%1$s тарау және біреу</item>
+        <item quantity="other">%1$s тарау мен %2$d</item>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="relative_time">
         <item quantity="one">Кеше</item>
         <item quantity="other">%1$d күн бұрын</item>
@@ -32,10 +64,6 @@
         <item quantity="one">%1$s тарау</item>
         <item quantity="other">%1$s тарау</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">%1$s тарау және біреу</item>
-        <item quantity="other">%1$s тарау мен %2$d</item>
-    </plurals>
     <plurals name="missing_chapters_warning">
         <item quantity="one">Дереккөзі жоқ немесе сүзілген %d тарау өткізіліп жіберілді</item>
         <item quantity="other">Дереккөзі жоқ немесе сүзілген %d тарау өткізіліп жіберілді</item>
@@ -56,32 +84,8 @@
         <item quantity="one">Келесі тарау</item>
         <item quantity="other">Келесі %d тарау</item>
     </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="upcoming_relative_time">
+        <item quantity="one">Ертең</item>
+        <item quantity="other">%1$d күнде</item>
     </plurals>
 </resources>

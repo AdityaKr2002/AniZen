@@ -1,5 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">Kapittel %1$s og 1 til</item>
+        <item quantity="other">Kapitler %1$s og %2$d til</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">%d dag</item>
+        <item quantity="other">%d dager</item>
+    </plurals>
+    <plurals name="num_repos">
+        <item quantity="one">%d pakkebrønn</item>
+        <item quantity="other">%d pakkebrønner</item>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="lock_after_mins">
         <item quantity="one">Etter %1$s minutt</item>
         <item quantity="other">Etter %1$s minutter</item>
@@ -40,10 +80,6 @@
         <item quantity="one">Utvidelsesoppdatering tilgjengelig</item>
         <item quantity="other">%d utvidelsesoppdateringer tilgjengelige</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Kapittel %1$s og 1 til</item>
-        <item quantity="other">Kapitler %1$s og %2$d til</item>
-    </plurals>
     <plurals name="relative_time">
         <item quantity="one">I går</item>
         <item quantity="other">%1$d dager siden</item>
@@ -55,41 +91,5 @@
     <plurals name="download_amount">
         <item quantity="one">Neste kapittel</item>
         <item quantity="other">Neste %d kapitler</item>
-    </plurals>
-    <plurals name="day">
-        <item quantity="one">%d dag</item>
-        <item quantity="other">%d dager</item>
-    </plurals>
-    <plurals name="num_repos">
-        <item quantity="one">%d pakkebrønn</item>
-        <item quantity="other">%d pakkebrønner</item>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
     </plurals>
 </resources>

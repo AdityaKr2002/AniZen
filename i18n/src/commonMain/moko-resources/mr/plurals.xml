@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="num_categories">
-        <item quantity="one">%d श्रेणी</item>
-        <item quantity="other">%d श्रेण्या</item>
-    </plurals>
-    <plurals name="lock_after_mins">
-        <item quantity="one">1 मिनीटानंतर</item>
-        <item quantity="other">%1$s मिनीटांनंतर</item>
-    </plurals>
     <plurals name="notification_new_episodes_summary">
         <item quantity="one"/>
         <item quantity="other"/>
@@ -35,5 +27,13 @@
     <plurals name="anime_num_episodes">
         <item quantity="one"/>
         <item quantity="other"/>
+    </plurals>
+    <plurals name="num_categories">
+        <item quantity="one">%d श्रेणी</item>
+        <item quantity="other">%d श्रेण्या</item>
+    </plurals>
+    <plurals name="lock_after_mins">
+        <item quantity="one">1 मिनीटानंतर</item>
+        <item quantity="other">%1$s मिनीटांनंतर</item>
     </plurals>
 </resources>

@@ -1,5 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="zero">Nodaļu %1$s</item>
+        <item quantity="one">Nodaļa %1$s un vēl 1</item>
+        <item quantity="other">Nodaļa %1$s un vēl %2$d</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="zero">%d dienas</item>
+        <item quantity="one">%d diena</item>
+        <item quantity="other">%d dienas</item>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="zero"/>
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="restore_completed_message">
         <item quantity="zero">Pabeigts %1$s ar %2$s kļūdām</item>
         <item quantity="one">Pabeigts %1$s ar %2$s kļūdu</item>
@@ -55,11 +100,6 @@
         <item quantity="one">Pieejams %d paplašinājums atjaunināšanai</item>
         <item quantity="other">Pieejami %d paplašinājumi atjaunināšanai</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="zero">Nodaļu %1$s</item>
-        <item quantity="one">Nodaļa %1$s un vēl 1</item>
-        <item quantity="other">Nodaļa %1$s un vēl %2$d</item>
-    </plurals>
     <plurals name="download_amount">
         <item quantity="zero">Nākošā %d nodaļa</item>
         <item quantity="one">Nākošā %d nodaļa</item>
@@ -69,45 +109,5 @@
         <item quantity="zero">Nākamā nelasītā nodaļa</item>
         <item quantity="one">Nākamā nelasītā nodaļa</item>
         <item quantity="other">Nākamās %d nelasītas nodaļas</item>
-    </plurals>
-    <plurals name="day">
-        <item quantity="zero">%d dienas</item>
-        <item quantity="one">%d diena</item>
-        <item quantity="other">%d dienas</item>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="zero"/>
-        <item quantity="one"/>
-        <item quantity="other"/>
     </plurals>
 </resources>

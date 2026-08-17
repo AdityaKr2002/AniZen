@@ -340,4 +340,12 @@
     <string name="pref_webtoon_side_padding">Yon bo\'shliq</string>
     <string name="third_to_last">O\'qilgan bobdan uchinchisi</string>
     <string name="manga_categories">Kategoriyalar</string>
+    <string name="relative_time_today">Bugun</string>
+    <string name="untrusted_extension_message">Bu kengaytma ishonchsiz sertifikat tomonidan imzolangan va faollashtirilmagan.
+\n
+\nZararli kengaytma Mihonda saqlanadigan barcha hisobga kirish ma\'lumotlarini o\'qishi, yoki ixtiyoriy kodni bajarishi mumkin.
+\n
+\nBu sertifikatga ishonish orqali, ushbu xavflarni qabul qilasiz.</string>
+    <string name="pref_create_folder_per_manga">Sahifalarni alohida papkalarga saqlash</string>
+    <string name="pref_create_folder_per_manga_summary">Qism nomiga asoslanib papka yaratish</string>
 </resources>
