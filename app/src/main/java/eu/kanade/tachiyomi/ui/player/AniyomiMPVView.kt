@@ -351,6 +351,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         "hwdec" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/current-anime/intro-length" to MPVLib.mpvFormat.MPV_FORMAT_INT64,
         "user-data/aniyomi/show_text" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
+        "user-data/aniyomi/show_seek_text" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/aniyomi/toggle_ui" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/aniyomi/show_panel" to MPVLib.mpvFormat.MPV_FORMAT_STRING,
         "user-data/aniyomi/software_keyboard" to MPVLib.mpvFormat.MPV_FORMAT_STRING,

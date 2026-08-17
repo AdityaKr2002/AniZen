@@ -100,16 +100,19 @@ fun GestureHandler(
     val controlsShown by viewModel.controlsShown.collectAsState()
     val areControlsLocked by viewModel.areControlsLocked.collectAsState()
     val seekAmount by viewModel.doubleTapSeekAmount.collectAsState()
+    val seekText by viewModel.seekText.collectAsState()
     val isSeekingForwards by viewModel.isSeekingForwards.collectAsState()
     var isDoubleTapSeeking by remember { mutableStateOf(false) }
 
-    LaunchedEffect(seekAmount) {
-        delay(800)
-        isDoubleTapSeeking = false
-        viewModel.updateSeekAmount(0)
-        viewModel.updateSeekText(null)
-        delay(100)
-        viewModel.hideSeekBar()
+    LaunchedEffect(seekAmount, seekText) {
+        if (seekAmount != 0 || seekText != null) {
+            delay(800)
+            isDoubleTapSeeking = false
+            viewModel.updateSeekAmount(0)
+            viewModel.updateSeekText(null)
+            delay(100)
+            viewModel.hideSeekBar()
+        }
     }
 
     val gestureVolumeBrightness = gesturePreferences.gestureVolumeBrightness().get()

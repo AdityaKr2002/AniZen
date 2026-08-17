@@ -3,6 +3,9 @@ aniyomi = {}
 function aniyomi.show_text(text)
     mp.set_property("user-data/aniyomi/show_text", text)
 end
+function aniyomi.show_seek_text(is_forward, text)
+    mp.set_property("user-data/aniyomi/show_seek_text", tostring(is_forward) .. "|" .. text)
+end
 function aniyomi.hide_ui()
     mp.set_property("user-data/aniyomi/toggle_ui", "hide")
 end

@@ -659,20 +659,23 @@ class PlayerActivity : BaseActivity() {
             val primaryButtonId = viewModel.primaryButton.value?.id ?: 0L
 
             val customButtonsContent = buildString {
-                append(
+                appendLine(
                     """
+                        local scripts_dir = '${scriptsDir()!!.filePath}'
+                        package.path = package.path .. ';' .. scripts_dir .. '/?.lua;' .. scripts_dir .. '/?/init.lua'
                         local lua_modules = mp.find_config_file('scripts')
                         if lua_modules then
-                            package.path = package.path .. ';' .. lua_modules .. '/?.lua;' .. lua_modules .. '/?/init.lua;' .. '${scriptsDir()!!.filePath}' .. '/?.lua'
+                            package.path = package.path .. ';' .. lua_modules .. '/?.lua;' .. lua_modules .. '/?/init.lua'
                         end
                         local aniyomi = require 'aniyomi'
                     """.trimIndent(),
                 )
+                appendLine()
 
                 buttons.forEach { button ->
-                    append(
+                    appendLine(button.getButtonOnStartup(primaryButtonId))
+                    appendLine(
                         """
-                            ${button.getButtonOnStartup(primaryButtonId)}
                             function button${button.id}()
                                 ${button.getButtonContent(primaryButtonId)}
                             end
@@ -683,6 +686,7 @@ class PlayerActivity : BaseActivity() {
                             mp.register_script_message('call_button_${button.id}_long', button${button.id}long)
                         """.trimIndent(),
                     )
+                    appendLine()
                 }
             }
 

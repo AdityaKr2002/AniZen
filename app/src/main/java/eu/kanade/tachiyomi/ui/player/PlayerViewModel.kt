@@ -370,6 +370,7 @@ class PlayerViewModel @JvmOverloads constructor(
         viewModelScope.launchIO {
             try {
                 val buttons = getCustomButtons.getAll()
+                _customButtons.update { _ -> CustomButtonFetchState.Success(buttons.toImmutableList()) }
                 buttons.firstOrNull { it.isFavorite }?.let {
                     _primaryButton.update { _ -> it }
                     // If the button text is not empty, it has been set buy a lua script in which
@@ -379,7 +380,6 @@ class PlayerViewModel @JvmOverloads constructor(
                     }
                 }
                 activity.setupCustomButtons(buttons)
-                _customButtons.update { _ -> CustomButtonFetchState.Success(buttons.toImmutableList()) }
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e)
                 _customButtons.update { _ -> CustomButtonFetchState.Error(e.message ?: "Unable to fetch buttons") }
@@ -1307,6 +1307,14 @@ class PlayerViewModel @JvmOverloads constructor(
 
         when (property.substringAfterLast("/")) {
             "show_text" -> playerUpdate.update { PlayerUpdates.ShowText(data) }
+            "show_seek_text" -> {
+                val (isForwardStr, text) = data.split("|", limit = 2)
+                val isForward = isForwardStr.toBooleanStrictOrNull() ?: true
+                _isSeekingForwards.value = isForward
+                _doubleTapSeekAmount.update { if (isForward) 1 else -1 }
+                _seekText.update { text }
+                if (showSeekBar) showSeekBar()
+            }
             "toggle_ui" -> {
                 when (data) {
                     "show" -> showControls()
@@ -1345,13 +1353,16 @@ class PlayerViewModel @JvmOverloads constructor(
             }
             "launch_int_picker" -> {
                 val (title, nameFormat, start, stop, step, pickerProperty) = data.split("|")
-                val defaultValue = MPVLib.getPropertyInt(pickerProperty)
+                val startInt = start.toDoubleOrNull()?.toInt() ?: 0
+                val stopInt = stop.toDoubleOrNull()?.toInt() ?: 0
+                val stepInt = step.toDoubleOrNull()?.toInt() ?: 1
+                val defaultValue = MPVLib.getPropertyInt(pickerProperty) ?: startInt
                 showDialog(
                     Dialogs.IntegerPicker(
                         defaultValue = defaultValue,
-                        minValue = start.toInt(),
-                        maxValue = stop.toInt(),
-                        step = step.toInt(),
+                        minValue = startInt,
+                        maxValue = stopInt,
+                        step = stepInt,
                         nameFormat = nameFormat,
                         title = title,
                         onChange = { MPVLib.setPropertyInt(pickerProperty, it) },
@@ -1368,14 +1379,14 @@ class PlayerViewModel @JvmOverloads constructor(
             }
             "seek_to_with_text" -> {
                 val (seekValue, text) = data.split("|", limit = 2)
-                seekToWithText(seekValue.toInt(), text)
+                seekToWithText(seekValue.toDoubleOrNull()?.toInt() ?: 0, text)
             }
             "seek_by_with_text" -> {
                 val (seekValue, text) = data.split("|", limit = 2)
-                seekByWithText(seekValue.toInt(), text)
+                seekByWithText(seekValue.toDoubleOrNull()?.toInt() ?: 0, text)
             }
-            "seek_by" -> seekByWithText(data.toInt(), null)
-            "seek_to" -> seekToWithText(data.toInt(), null)
+            "seek_by" -> seekByWithText(data.toDoubleOrNull()?.toInt() ?: 0, null)
+            "seek_to" -> seekToWithText(data.toDoubleOrNull()?.toInt() ?: 0, null)
             "toggle_button" -> {
                 fun showButton() {
                     if (_primaryButton.value == null) {
