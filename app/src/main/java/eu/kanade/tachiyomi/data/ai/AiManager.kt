@@ -8,8 +8,10 @@ import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.NetworkHelper
 import com.hippo.unifile.UniFile
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -23,6 +25,7 @@ import tachiyomi.core.common.util.system.logcat
 import logcat.LogPriority
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
 import java.io.File
 import java.io.BufferedReader
@@ -33,6 +36,7 @@ class AiManager(
     private val networkHelper: NetworkHelper = Injekt.get(),
     private val aiPreferences: AiPreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+    private val sourceManager: SourceManager = Injekt.get(),
     private val getLibraryAnime: tachiyomi.domain.anime.interactor.GetLibraryAnime = Injekt.get(),
     private val json: Json = Injekt.get(),
 ) {
@@ -97,7 +101,7 @@ class AiManager(
             3. GROUNDED NAVIGATION: Use get_app_navigation_guide. If a [STALENESS_WARNING] is present, inform the user that menu paths may have changed in their version.
             4. CRASH ANALYSIS: Prioritize "PINNED" blocks in logs as they contain the root cause of failures.
             5. LIBRARY AWARENESS: Use the [USER_LIBRARY_DATA] block to answer questions about the user's collection, recommendations, or statistics.
-            6. EXTENSION & SOURCE INTELLIGENCE: Use [EXTENSION_COMMUNITY_INTELLIGENCE] (from EverythingMoe) to provide accurate working mirrors, stream capabilities (1080p, dubs, soft-subs), site health/dead status, and community ratings.
+            6. EXTENSION & COMMUNITY INTELLIGENCE: Use [EXTENSION_COMMUNITY_INTELLIGENCE] (from EverythingMoe) for accurate site status, active mirrors, stream tags (1080p, dubs, soft-subs), and community reviews. Clearly differentiate extensions that are actually INSTALLED on the user's device versus external directory listings.
             7. PRIVACY: PII (Auth headers, Cookies, and URL params) is strictly redacted.
         """.trimIndent()
         
@@ -353,31 +357,51 @@ class AiManager(
         """.trimIndent()
     }
 
-    private fun getExtensionStatusSummary(): String {
-        val installed: List<eu.kanade.tachiyomi.extension.model.Extension.Installed> = extensionManager.installedExtensionsFlow.value
-        return if (installed.isEmpty()) "No extensions installed."
-        else installed.joinToString("\n") { "- ${it.name} (${it.pkgName}) v${it.versionName} [Obsolete: ${it.isObsolete}, Update: ${it.hasUpdate}]" }
+    private suspend fun getInstalledExtensions(): List<eu.kanade.tachiyomi.extension.model.Extension.Installed> {
+        return try {
+            if (!extensionManager.isInitialized.value) {
+                withTimeoutOrNull(2000) {
+                    extensionManager.isInitialized.first { it }
+                }
+            }
+            extensionManager.installedExtensionsFlow.value
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    private suspend fun getExtensionIntelligenceSummary(): String {
-        return try {
-            val installed = extensionManager.installedExtensionsFlow.value
-            everythingMoeScraper.getInstalledExtensionsIntelligence(installed)
-        } catch (e: Exception) {
-            "Extension intelligence unavailable: ${e.message}"
+    private suspend fun getExtensionStatusSummary(installed: List<eu.kanade.tachiyomi.extension.model.Extension.Installed>): String {
+        if (installed.isEmpty()) {
+            val sources = try { sourceManager.getOnlineSources() } catch (e: Exception) { emptyList() }
+            return if (sources.isEmpty()) {
+                "No extensions or sources currently installed in AniZen."
+            } else {
+                "Registered Sources in App:\n" + sources.joinToString("\n") { s ->
+                    val bUrl = (s as? eu.kanade.tachiyomi.animesource.online.AnimeHttpSource)?.baseUrl ?: (s as? eu.kanade.tachiyomi.source.online.HttpSource)?.baseUrl ?: "N/A"
+                    "- ${s.name} (Lang: ${s.lang}, BaseUrl: `$bUrl`)"
+                }
+            }
+        }
+        return installed.joinToString("\n") { ext ->
+            val sourcesStr = ext.sources.joinToString(", ") { s ->
+                val bUrl = (s as? eu.kanade.tachiyomi.animesource.online.AnimeHttpSource)?.baseUrl ?: (s as? eu.kanade.tachiyomi.source.online.HttpSource)?.baseUrl ?: ""
+                if (bUrl.isNotBlank()) "${s.name} (`$bUrl`)" else s.name
+            }
+            "- **${ext.name}** (${ext.pkgName}) v${ext.versionName} [Sources: $sourcesStr, Obsolete: ${ext.isObsolete}, Update: ${ext.hasUpdate}]"
         }
     }
 
     private suspend fun buildToolContext(lastQuery: String): String {
         val toolContext = StringBuilder()
         val queryLower = lastQuery.lowercase()
+        val installed = getInstalledExtensions()
 
         if (queryLower.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
             if (aiPreferences.aiAssistantLogs().get()) {
                 toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
             }
             toolContext.append("\n[NAVIGATION_MAP]:\n${getAppMap()}\n")
-            toolContext.append("\n[EXTENSIONS_STATUS]:\n${getExtensionStatusSummary()}\n")
+            toolContext.append("\n[EXTENSIONS_STATUS]:\n${getExtensionStatusSummary(installed)}\n")
             toolContext.append("\n[ENVIRONMENT]: ${getDeviceInfo()}\n")
         }
 
@@ -390,7 +414,7 @@ class AiManager(
         if (queryLower.contains("""extension|source|site|domain|mirror|everythingmoe|stream|1080p|dub|sub|quality|down|dead|alive|link|recommend|best|working|broken""".toRegex()) ||
             queryLower.contains("""log|error|fail|video|load|black|broke|froze|slow|crash|die|dead|bug|stuck""".toRegex())) {
             if (aiPreferences.aiAssistantEverythingMoe().get()) {
-                val intel = getExtensionIntelligenceSummary()
+                val intel = everythingMoeScraper.getIntelligenceContext(lastQuery, installed)
                 if (intel.isNotBlank()) {
                     toolContext.append("\n[EXTENSION_COMMUNITY_INTELLIGENCE (EverythingMoe)]:\n$intel\n")
                 }
