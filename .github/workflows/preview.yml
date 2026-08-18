@@ -78,9 +78,9 @@ jobs:
           restore-keys: |
             ai-note-acc-${{ github.ref_name }}-
 
-      - name: Generate Changelog with AI
+      - name: Generate Changelog with Gemini AI
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           ACCUMULATED_NOTES=""
           if [ -f .github/AI_NOTE_ACCUMULATOR ]; then
@@ -117,29 +117,26 @@ jobs:
           
           PAYLOAD=$(jq -n \
             --rawfile prompt .github/ai/full_prompt.txt \
-            --arg model "llama-3.3-70b-versatile" \
             '{
-              model: $model,
-              messages: [{role: "user", content: $prompt}],
-              temperature: 0.7,
-              max_tokens: 1024
+              contents: [{parts: [{text: $prompt}]}],
+              generationConfig: {temperature: 0.7, maxOutputTokens: 1024}
             }')
           
-          echo "Requesting AI summary from Groq (llama-3.3-70b-versatile)..."
-          RESPONSE=$(curl -s -X POST "https://api.groq.com/openai/v1/chat/completions" \
-            -H "Authorization: Bearer $GROQ_API_KEY" \
+          echo "Requesting AI summary from Gemini (gemini-flash-latest)..."
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$GEMINI_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
           
-          # Debug: Log the response status/error (excluding full body if successful)
-          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // empty')
-          if [ -n "$ERROR_MSG" ]; then
-            echo "Groq API Error: $ERROR_MSG"
-          else
-            echo "Groq API Request: Success"
-          fi
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
           
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          # Fallback to gemini-flash-lite-latest if primary fails or is empty
+          if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
+            echo "Primary model failed or empty. Requesting fallback from Gemini (gemini-flash-lite-latest)..."
+            RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=$GEMINI_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          fi
           
           if [ -z "$SUMMARY" ] || [ "$SUMMARY" == "null" ]; then
             SUMMARY="We've implemented fresh UI refinements and optimized the engine for a better experience! ✨"
