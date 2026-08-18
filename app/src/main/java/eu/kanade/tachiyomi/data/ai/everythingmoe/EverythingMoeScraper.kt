@@ -105,7 +105,7 @@ class EverythingMoeScraper(
             var part = rawPart.trim()
             if (part.isEmpty()) continue
             if (part.contains("<<")) {
-                part = part.substringAfter("<<")
+                part = part.substringAfter("<<").trim()
             }
             if (part.startsWith("http://") || part.startsWith("https://")) {
                 out.add(part)
@@ -205,11 +205,22 @@ class EverythingMoeScraper(
         val filterRaw = jsonObject["filter"]?.jsonPrimitive?.content ?: ""
         val tags = filterRaw.split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
+        val expandObj = jsonObject["expand"]?.let { if (it is JsonObject) it else null }
+        val expandAltlink = expandObj?.get("altlink")?.jsonPrimitive?.content
+        val expandPos = expandObj?.get("positive")?.jsonPrimitive?.content
+        val expandNeg = expandObj?.get("negative")?.jsonPrimitive?.content
+        val expandInfo = expandObj?.get("info")?.jsonPrimitive?.content
+
+        val pros = expandPos?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+        val cons = expandNeg?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+        val info = expandInfo?.trim()?.ifBlank { null }
+
         val altLink = jsonObject["ex-altlink"]?.jsonPrimitive?.content
         val altLink2 = jsonObject["ex-altlink2"]?.jsonPrimitive?.content
         val extraLink = jsonObject["extra-link"]?.jsonPrimitive?.content
-        val mirrors = unpackAlts(altLink2) + unpackAlts(altLink)
-        val extraLinks = unpackAlts(extraLink)
+
+        val allMirrors = (unpackAlts(expandAltlink) + unpackAlts(altLink2) + unpackAlts(altLink)).distinct()
+        val extraLinks = unpackAlts(extraLink).distinct()
 
         val rank = jsonObject["rank"]?.jsonPrimitive?.content ?: ""
         val category = jsonObject["type"]?.jsonPrimitive?.content ?: ""
@@ -250,8 +261,11 @@ class EverythingMoeScraper(
             url = link,
             icon = icon,
             tags = tags,
-            mirrors = mirrors,
+            mirrors = allMirrors,
             extraLinks = extraLinks,
+            pros = pros,
+            cons = cons,
+            info = info,
             rank = rank,
             category = category,
             description = description,
@@ -312,7 +326,7 @@ class EverythingMoeScraper(
         val sourceDomain = baseUrl?.let { extractDomain(it) }?.ifBlank { null }
         val normalizedSourceName = sourceName.lowercase().replace("[^a-z0-9]".toRegex(), "")
 
-        // 1. Direct domain match against cached sites
+        // 1. Direct domain match against cached sites (including mirrors!)
         if (sourceDomain != null) {
             for (site in siteMemoryCache.values) {
                 if (site.url.isNotBlank() && extractDomain(site.url) == sourceDomain) {
@@ -324,7 +338,16 @@ class EverythingMoeScraper(
             }
         }
 
-        // 2. Name / Slug match against cached sites
+        // 2. Exact slug lookup from directory
+        val lowerCandidate = sourceName.lowercase().replace(" ", "-").replace("[^a-z0-9-]".toRegex(), "")
+        if (slugLookup.containsKey(lowerCandidate)) {
+            val site = getSiteBySlug(lowerCandidate)
+            if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
+                return@withIOContext site
+            }
+        }
+
+        // 3. Name / Slug match against cached sites
         for (site in siteMemoryCache.values) {
             val normalizedSiteName = site.name.lowercase().replace("[^a-z0-9]".toRegex(), "")
             val normalizedSlug = site.slug.lowercase().replace("[^a-z0-9]".toRegex(), "")
@@ -332,15 +355,6 @@ class EverythingMoeScraper(
                 normalizedSlug == normalizedSourceName ||
                 (normalizedSourceName.length >= 4 && (normalizedSiteName == normalizedSourceName || normalizedSlug == normalizedSourceName))
             ) {
-                return@withIOContext site
-            }
-        }
-
-        // 3. Fallback: exact slug lookup from directory
-        val lowerCandidate = sourceName.lowercase().replace(" ", "-").replace("[^a-z0-9-]".toRegex(), "")
-        if (slugLookup.containsKey(lowerCandidate)) {
-            val site = getSiteBySlug(lowerCandidate)
-            if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
                 return@withIOContext site
             }
         }
@@ -378,7 +392,7 @@ class EverythingMoeScraper(
         val queryWords = query.lowercase().split("[^a-zA-Z0-9_-]".toRegex()).filter { it.length >= 3 }
         val mentionedSites = mutableListOf<EverythingMoeSite>()
         for (word in queryWords) {
-            if (word in listOf("the", "and", "for", "with", "from", "anime", "extension", "extensions", "source", "sources", "stream", "working", "check", "what", "which", "down", "dead")) continue
+            if (word in listOf("the", "and", "for", "with", "from", "anime", "extension", "extensions", "source", "sources", "stream", "working", "check", "what", "which", "down", "dead", "mirror", "mirrors", "link", "links")) continue
             val site = matchSource(word, null)
             if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank()) && mentionedSites.none { it.slug.equals(site.slug, ignoreCase = true) }) {
                 val alreadyInstalled = installedMatched.any { it.third.slug.equals(site.slug, ignoreCase = true) }
@@ -408,16 +422,29 @@ class EverythingMoeScraper(
         val statusStr = if (site.isDead) "🔴 DEAD (${site.deadReason ?: "Discontinued"})" else "🟢 ALIVE"
         val rankStr = if (site.rank.isNotBlank()) "Rank: ${site.rank}" else "Unranked"
         val tagsStr = if (site.tags.isNotEmpty()) site.tags.joinToString(", ") else "None listed"
-        val mirrorsStr = if (site.mirrors.isNotEmpty()) {
-            site.mirrors.take(4).joinToString(", ") { extractDomain(it) }
-        } else "None listed"
         val ratingStr = if (site.reviewCount > 0) "+${site.reviewVoteSum} (${site.reviewCount} reviews)" else "No reviews"
 
         val titlePrefix = if (extName != null && extName != sourceName) "$extName ($sourceName)" else sourceName
         sb.append("- **$titlePrefix** (`${baseUrl ?: site.url}`):\n")
         sb.append("  * **Status**: $statusStr | **$rankStr** | **Community Rating**: $ratingStr\n")
         sb.append("  * **Supported Features/Tags**: $tagsStr\n")
-        sb.append("  * **Active Mirrors**: $mirrorsStr\n")
+
+        if (site.mirrors.isNotEmpty()) {
+            val mirrorsDisplay = site.mirrors.joinToString(", ")
+            sb.append("  * **Active Mirrors**: $mirrorsDisplay\n")
+        }
+
+        if (site.pros.isNotEmpty()) {
+            sb.append("  * **Pros**: ${site.pros.joinToString(" • ")}\n")
+        }
+
+        if (site.cons.isNotEmpty()) {
+            sb.append("  * **Cons**: ${site.cons.joinToString(" • ")}\n")
+        }
+
+        if (!site.info.isNullOrBlank()) {
+            sb.append("  * **Community Note**: ${site.info}\n")
+        }
 
         val topReviews = site.reviews.filter { !it.review.isNullOrBlank() }.sortedByDescending { it.vote ?: 0 }.take(2)
         if (topReviews.isNotEmpty()) {
