@@ -258,12 +258,14 @@ class EverythingMoeScraper(
                     val rReview = rRawReview?.let { unescapeHtml(it) }
                     val rTime = element["time"]?.jsonPrimitive?.longOrNull
                     val rVote = element["vote"]?.jsonPrimitive?.intOrNull
+                    val rType = element["type"]?.jsonPrimitive?.content
                     reviewsList.add(
                         EverythingMoeReview(
                             name = rName,
                             review = rReview,
                             time = rTime,
                             vote = rVote,
+                            type = rType,
                         )
                     )
                 }
@@ -312,7 +314,7 @@ class EverythingMoeScraper(
                     .readTimeout(20, TimeUnit.SECONDS)
                     .build()
 
-                // 1. Fetch Master Database Cache (/data/cache/main.json) - 912 sites instantly
+                // 1. Fetch Master Database Cache (/data/cache/main.json) - 912 sites + section arrays instantly
                 val mainCacheReq = Request.Builder()
                     .url("$BASE_URL/data/cache/main.json")
                     .header("User-Agent", USER_AGENT)
@@ -323,50 +325,76 @@ class EverythingMoeScraper(
                         val mainJsonStr = response.body.string()
                         val rootObj = json.parseToJsonElement(mainJsonStr).jsonObject
                         for ((slug, el) in rootObj) {
-                            if (el !is JsonObject) continue
-                            val lowerSlug = slug.lowercase()
-                            slugLookup[lowerSlug] = slug
+                            if (el is JsonObject) {
+                                val lowerSlug = slug.lowercase()
+                                slugLookup[lowerSlug] = slug
 
-                            val altName = el["altname"]?.jsonPrimitive?.content
-                            val title = altName ?: slug.replace("-", " ").replaceFirstChar { it.uppercase() }
+                                val altName = el["altname"]?.jsonPrimitive?.content
+                                val title = altName ?: slug.replace("-", " ").replaceFirstChar { it.uppercase() }
 
-                            val posRaw = (el["positive"] ?: el["ex-positive"])?.jsonPrimitive?.content
-                            val negRaw = (el["negative"] ?: el["ex-negative"])?.jsonPrimitive?.content
-                            val infoRaw = (el["info"] ?: el["ex-info"] ?: el["note"])?.jsonPrimitive?.content
+                                val posRaw = (el["positive"] ?: el["ex-positive"])?.jsonPrimitive?.content
+                                val negRaw = (el["negative"] ?: el["ex-negative"])?.jsonPrimitive?.content
+                                val infoRaw = (el["info"] ?: el["ex-info"] ?: el["note"])?.jsonPrimitive?.content
 
-                            val pros = posRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
-                            val cons = negRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
-                            val info = infoRaw?.trim()?.ifBlank { null }
+                                val pros = posRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+                                val cons = negRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+                                val info = infoRaw?.trim()?.ifBlank { null }
 
-                            val altLink = el["altlink"]?.jsonPrimitive?.content
-                            val altLinkEx = el["ex-altlink"]?.jsonPrimitive?.content
-                            val altLinkEx2 = el["ex-altlink2"]?.jsonPrimitive?.content
-                            val extraLink = (el["extra-link"] ?: el["extralink"])?.jsonPrimitive?.content
+                                val altLink = el["altlink"]?.jsonPrimitive?.content
+                                val altLinkEx = el["ex-altlink"]?.jsonPrimitive?.content
+                                val altLinkEx2 = el["ex-altlink2"]?.jsonPrimitive?.content
+                                val extraLink = (el["extra-link"] ?: el["extralink"])?.jsonPrimitive?.content
 
-                            val mirrors = (unpackAlts(altLink) + unpackAlts(altLinkEx) + unpackAlts(altLinkEx2)).distinct()
-                            val extraLinks = unpackAlts(extraLink).distinct()
+                                val mirrors = (unpackAlts(altLink) + unpackAlts(altLinkEx) + unpackAlts(altLinkEx2)).distinct()
+                                val extraLinks = unpackAlts(extraLink).distinct()
 
-                            val existing = siteMemoryCache[lowerSlug]
-                            siteMemoryCache[lowerSlug] = existing?.copy(
-                                pros = if (existing.pros.isNotEmpty()) existing.pros else pros,
-                                cons = if (existing.cons.isNotEmpty()) existing.cons else cons,
-                                info = existing.info ?: info,
-                                mirrors = if (existing.mirrors.isNotEmpty()) existing.mirrors else mirrors,
-                                extraLinks = if (existing.extraLinks.isNotEmpty()) existing.extraLinks else extraLinks,
-                            ) ?: EverythingMoeSite(
-                                slug = slug,
-                                name = title,
-                                mirrors = mirrors,
-                                extraLinks = extraLinks,
-                                pros = pros,
-                                cons = cons,
-                                info = info,
-                            )
+                                val existing = siteMemoryCache[lowerSlug]
+                                siteMemoryCache[lowerSlug] = existing?.copy(
+                                    pros = if (existing.pros.isNotEmpty()) existing.pros else pros,
+                                    cons = if (existing.cons.isNotEmpty()) existing.cons else cons,
+                                    info = existing.info ?: info,
+                                    mirrors = if (existing.mirrors.isNotEmpty()) existing.mirrors else mirrors,
+                                    extraLinks = if (existing.extraLinks.isNotEmpty()) existing.extraLinks else extraLinks,
+                                ) ?: EverythingMoeSite(
+                                    slug = slug,
+                                    name = title,
+                                    mirrors = mirrors,
+                                    extraLinks = extraLinks,
+                                    pros = pros,
+                                    cons = cons,
+                                    info = info,
+                                )
+                            } else if (slug.startsWith("section") && el is JsonArray) {
+                                for (item in el) {
+                                    if (item !is JsonObject) continue
+                                    val sid = item["id"]?.jsonPrimitive?.content ?: item["slug"]?.jsonPrimitive?.content ?: continue
+                                    val link = item["link"]?.jsonPrimitive?.content ?: ""
+                                    val title = item["title"]?.jsonPrimitive?.content ?: ""
+                                    val icon = item["icon"]?.jsonPrimitive?.content ?: ""
+                                    val lowerSlug = sid.lowercase()
+                                    val existing = siteMemoryCache[lowerSlug]
+                                    if (existing != null) {
+                                        siteMemoryCache[lowerSlug] = existing.copy(
+                                            url = existing.url.ifBlank { link },
+                                            name = if (title.isNotBlank()) title else existing.name,
+                                            icon = existing.icon.ifBlank { icon },
+                                        )
+                                    } else {
+                                        siteMemoryCache[lowerSlug] = EverythingMoeSite(
+                                            slug = sid,
+                                            name = title.ifBlank { sid },
+                                            url = link,
+                                            icon = icon,
+                                        )
+                                    }
+                                    slugLookup[lowerSlug] = sid
+                                }
+                            }
                         }
                     }
                 }
 
-                // 2. Fetch Directory HTML for full list of active slugs
+                // 2. Fetch Directory HTML for full list of active slugs, data-link URLs, and display titles
                 val dirReq = Request.Builder()
                     .url(BASE_URL)
                     .header("User-Agent", USER_AGENT)
@@ -375,6 +403,30 @@ class EverythingMoeScraper(
                 timedClient.newCall(dirReq).execute().use { response ->
                     if (response.isSuccessful) {
                         val html = response.body.string()
+                        val cardRegex = """<a[^>]+href="/s/([a-zA-Z0-9_-]+)"[^>]*data-link="([^"]+)"[^>]*>(.*?)</a>""".toRegex(RegexOption.DOT_MATCHES_ALL)
+                        for (match in cardRegex.findAll(html)) {
+                            val exactSlug = match.groupValues[1]
+                            val directUrl = match.groupValues[2].trim()
+                            val inner = match.groupValues[3]
+                            val title = inner.replace("""<[^>]+>""".toRegex(), " ").replace("""\s+""".toRegex(), " ").trim()
+                            val lowerSlug = exactSlug.lowercase()
+                            slugLookup[lowerSlug] = exactSlug
+
+                            val existing = siteMemoryCache[lowerSlug]
+                            if (existing != null) {
+                                siteMemoryCache[lowerSlug] = existing.copy(
+                                    url = directUrl.ifBlank { existing.url },
+                                    name = if (title.isNotBlank()) title else existing.name,
+                                )
+                            } else {
+                                siteMemoryCache[lowerSlug] = EverythingMoeSite(
+                                    slug = exactSlug,
+                                    name = title.ifBlank { exactSlug },
+                                    url = directUrl,
+                                )
+                            }
+                        }
+
                         val slugRegex = """href="/s/([a-zA-Z0-9_-]+)"""".toRegex()
                         val slugs = slugRegex.findAll(html).map { it.groupValues[1] }.distinct().toList()
                         for (exactSlug in slugs) {
@@ -551,9 +603,22 @@ class EverythingMoeScraper(
         val tagsStr = if (site.tags.isNotEmpty()) site.tags.joinToString(", ") else "None listed"
         val ratingStr = if (site.reviewCount > 0) "+${site.reviewVoteSum} (${site.reviewCount} reviews)" else "No reviews"
 
+        val totalReviews = site.reviews.size
+        val sentimentStr = if (totalReviews > 0) {
+            val pos = site.reviews.count { it.type == "1" || (it.vote ?: 0) > 0 }
+            val mixed = site.reviews.count { it.type == "0" || (it.vote ?: 0) == 0 }
+            val neg = site.reviews.count { it.type == "-1" || (it.vote ?: 0) < 0 }
+            val posPct = (pos * 100) / totalReviews
+            val mixedPct = (mixed * 100) / totalReviews
+            val negPct = (neg * 100) / totalReviews
+            " | **Sentiment**: 🟢 ${posPct}% Pos ($pos) / 🟡 ${mixedPct}% Mixed ($mixed) / 🔴 ${negPct}% Neg ($neg)"
+        } else {
+            ""
+        }
+
         val titlePrefix = if (extName != null && extName != sourceName) "$extName ($sourceName)" else sourceName
         sb.append("- **$titlePrefix** (`${baseUrl ?: site.url}`):\n")
-        sb.append("  * **Status**: $statusStr | **$rankStr** | **Community Rating**: $ratingStr\n")
+        sb.append("  * **Status**: $statusStr | **$rankStr** | **Community Rating**: $ratingStr$sentimentStr\n")
         sb.append("  * **Supported Features/Tags**: $tagsStr\n")
 
         if (site.mirrors.isNotEmpty()) {

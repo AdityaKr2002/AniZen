@@ -30,6 +30,7 @@ data class EverythingMoeReview(
     val review: String? = null,
     val time: Long? = null,
     val vote: Int? = null,
+    val type: String? = null,
 )
 
 @Serializable
