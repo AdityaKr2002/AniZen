@@ -224,6 +224,11 @@ object SettingsAiScreen : SearchableSettings {
                     title = "Ingest Library Context",
                     subtitle = "Allows the assistant to analyze your collection",
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = aiPreferences.aiAssistantEverythingMoe(),
+                    title = "Extension Community Intelligence",
+                    subtitle = "Allows the assistant to use EverythingMoe for mirrors, features, and site health",
+                ),
                 Preference.PreferenceItem.MultiLineEditTextPreference(
                     pref = aiPreferences.aiSystemPrompt(),
                     title = "Custom System Prompt",

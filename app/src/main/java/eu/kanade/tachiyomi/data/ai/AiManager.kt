@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.data.ai
 
 import android.content.Context
+import eu.kanade.tachiyomi.data.ai.everythingmoe.EverythingMoeScraper
 import eu.kanade.domain.ai.AiPreferences
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.extension.ExtensionManager
@@ -37,6 +38,9 @@ class AiManager(
 ) {
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
     private val keyFailures = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val everythingMoeScraper: EverythingMoeScraper by lazy {
+        EverythingMoeScraper(context, networkHelper, json)
+    }
 
     // Circuit Breaker Config
     private val MAP_VERSION = 132
@@ -85,7 +89,7 @@ class AiManager(
         val customPrompt = aiPreferences.aiSystemPrompt().get()
         val defaultSystemInstruction = """
             You are the 'AniZen System Assistant', a senior systems engineer.
-            You have access to native diagnostic tools for logs, system maps, and the user's anime library.
+            You have access to native diagnostic tools for logs, system maps, the user's anime library, and EverythingMoe extension intelligence.
             
             OPERATIONAL PROTOCOLS:
             1. FORMATTING: STRICTLY NO TABLES. Use bullet points or lists for structured data. NEVER output Markdown tables.
@@ -93,7 +97,8 @@ class AiManager(
             3. GROUNDED NAVIGATION: Use get_app_navigation_guide. If a [STALENESS_WARNING] is present, inform the user that menu paths may have changed in their version.
             4. CRASH ANALYSIS: Prioritize "PINNED" blocks in logs as they contain the root cause of failures.
             5. LIBRARY AWARENESS: Use the [USER_LIBRARY_DATA] block to answer questions about the user's collection, recommendations, or statistics.
-            6. PRIVACY: PII (Auth headers, Cookies, and URL params) is strictly redacted.
+            6. EXTENSION & SOURCE INTELLIGENCE: Use [EXTENSION_COMMUNITY_INTELLIGENCE] (from EverythingMoe) to provide accurate working mirrors, stream capabilities (1080p, dubs, soft-subs), site health/dead status, and community ratings.
+            7. PRIVACY: PII (Auth headers, Cookies, and URL params) is strictly redacted.
         """.trimIndent()
         
         val systemInstruction = if (customPrompt.isNotBlank()) customPrompt else defaultSystemInstruction
@@ -354,6 +359,47 @@ class AiManager(
         else installed.joinToString("\n") { "- ${it.name} (${it.pkgName}) v${it.versionName} [Obsolete: ${it.isObsolete}, Update: ${it.hasUpdate}]" }
     }
 
+    private suspend fun getExtensionIntelligenceSummary(): String {
+        return try {
+            val installed = extensionManager.installedExtensionsFlow.value
+            everythingMoeScraper.getInstalledExtensionsIntelligence(installed)
+        } catch (e: Exception) {
+            "Extension intelligence unavailable: ${e.message}"
+        }
+    }
+
+    private suspend fun buildToolContext(lastQuery: String): String {
+        val toolContext = StringBuilder()
+        val queryLower = lastQuery.lowercase()
+
+        if (queryLower.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
+            if (aiPreferences.aiAssistantLogs().get()) {
+                toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
+            }
+            toolContext.append("\n[NAVIGATION_MAP]:\n${getAppMap()}\n")
+            toolContext.append("\n[EXTENSIONS_STATUS]:\n${getExtensionStatusSummary()}\n")
+            toolContext.append("\n[ENVIRONMENT]: ${getDeviceInfo()}\n")
+        }
+
+        if (queryLower.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
+            if (aiPreferences.aiAssistantLibrary().get()) {
+                toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
+            }
+        }
+
+        if (queryLower.contains("""extension|source|site|domain|mirror|everythingmoe|stream|1080p|dub|sub|quality|down|dead|alive|link|recommend|best|working|broken""".toRegex()) ||
+            queryLower.contains("""log|error|fail|video|load|black|broke|froze|slow|crash|die|dead|bug|stuck""".toRegex())) {
+            if (aiPreferences.aiAssistantEverythingMoe().get()) {
+                val intel = getExtensionIntelligenceSummary()
+                if (intel.isNotBlank()) {
+                    toolContext.append("\n[EXTENSION_COMMUNITY_INTELLIGENCE (EverythingMoe)]:\n$intel\n")
+                }
+            }
+        }
+
+        return toolContext.toString().trim()
+    }
+
     private fun getDeviceInfo(): String = "Model: ${android.os.Build.MODEL}, SDK: ${android.os.Build.VERSION.SDK_INT}, App: AniZen"
 
     suspend fun getErrorCount(): Int = withIOContext {
@@ -418,24 +464,9 @@ class AiManager(
         }
 
         val finalMessages = if (withTools) {
-            val lastQuery = messages.last().content.lowercase()
-            val toolContext = StringBuilder()
-            
-            if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
-                if (aiPreferences.aiAssistantLogs().get()) {
-                    toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
-                }
-                toolContext.append("\n[NAVIGATION_MAP]:\n${getAppMap()}\n")
-                toolContext.append("\n[EXTENSIONS_STATUS]:\n${getExtensionStatusSummary()}\n")
-                toolContext.append("\n[ENVIRONMENT]: ${getDeviceInfo()}\n")
-            }
-
-            if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
-                if (aiPreferences.aiAssistantLibrary().get()) {
-                    toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
-                }
-            }
-            messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
+            val lastQuery = messages.last().content
+            val toolContext = buildToolContext(lastQuery)
+            messages.dropLast(1) + ChatMessage("user", messages.last().content + if (toolContext.isNotBlank()) "\n\n$toolContext" else "")
         } else {
             messages
         }
@@ -653,19 +684,9 @@ class AiManager(
             withTools: Boolean = false
         ): Flow<String> = flow {
             val finalMessages = if (withTools) {
-                val lastQuery = messages.last().content.lowercase()
-                val toolContext = StringBuilder()
-                if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
-                    if (aiPreferences.aiAssistantLogs().get()) {
-                        toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
-                    }
-                }
-                if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
-                    if (aiPreferences.aiAssistantLibrary().get()) {
-                        toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
-                    }
-                }
-                messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
+                val lastQuery = messages.last().content
+                val toolContext = buildToolContext(lastQuery)
+                messages.dropLast(1) + ChatMessage("user", messages.last().content + if (toolContext.isNotBlank()) "\n\n$toolContext" else "")
             } else {
                 messages
             }
@@ -739,7 +760,14 @@ class AiManager(
         systemInstruction: String? = null,
         withTools: Boolean = false
     ): Flow<String> = flow {
-        val anthropicMessages = messages.map { msg ->
+        val contextMessages = if (withTools) {
+            val lastQuery = messages.last().content
+            val toolContext = buildToolContext(lastQuery)
+            messages.dropLast(1) + ChatMessage("user", messages.last().content + if (toolContext.isNotBlank()) "\n\n$toolContext" else "")
+        } else {
+            messages
+        }
+        val anthropicMessages = contextMessages.map { msg ->
             AnthropicMessage(role = if (msg.role == "user") "user" else "assistant", content = msg.content)
         }
         val model = aiPreferences.anthropicModel().get().ifBlank { "claude-3-5-sonnet-20241022" }
@@ -833,19 +861,9 @@ class AiManager(
         withTools: Boolean
     ): List<GroqMessage> {
         val contextMessages = if (withTools) {
-            val lastQuery = messages.last().content.lowercase()
-            val toolContext = StringBuilder()
-            if (lastQuery.contains("""log|error|fail|video|load|setting|where|how|device|black|broke|froze|slow|crash|die|dead|bug|stuck|lag|hang|freeze""".toRegex())) {
-                if (aiPreferences.aiAssistantLogs().get()) {
-                    toolContext.append("\n[DIAGNOSTICS_DATA]:\n${getSanitizedLogs()}\n")
-                }
-            }
-            if (lastQuery.contains("""library|anime|watch|collection|have|my|list|recommend""".toRegex())) {
-                if (aiPreferences.aiAssistantLibrary().get()) {
-                    toolContext.append("\n[USER_LIBRARY_DATA]:\n${getLibrarySummary()}\n")
-                }
-            }
-            messages.dropLast(1) + ChatMessage("user", messages.last().content + "\n\n" + toolContext.toString())
+            val lastQuery = messages.last().content
+            val toolContext = buildToolContext(lastQuery)
+            messages.dropLast(1) + ChatMessage("user", messages.last().content + if (toolContext.isNotBlank()) "\n\n$toolContext" else "")
         } else {
             messages
         }
