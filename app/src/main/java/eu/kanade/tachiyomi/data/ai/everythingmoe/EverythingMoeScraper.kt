@@ -320,13 +320,28 @@ class EverythingMoeScraper(
         }
     }
 
-    suspend fun matchSource(sourceName: String, baseUrl: String?): EverythingMoeSite? = withIOContext {
+    private fun cleanTitle(raw: String): String {
+        return raw.replace(Regex("""\b(en|dub|sub|hd|all|app|tv|to|is|me|org|com|net|co)\b""", RegexOption.IGNORE_CASE), "")
+            .replace("[^a-zA-Z0-9]".toRegex(), "")
+            .lowercase()
+            .trim()
+    }
+
+    suspend fun matchSource(sourceName: String, baseUrl: String?): EverythingMoeSite? {
+        return matchExtensionOrSource(null, sourceName, baseUrl, null)
+    }
+
+    suspend fun matchExtensionOrSource(
+        extensionTitle: String?,
+        sourceName: String,
+        baseUrl: String?,
+        pkgName: String? = null,
+    ): EverythingMoeSite? = withIOContext {
         refreshDirectoryIfNeeded()
 
         val sourceDomain = baseUrl?.let { extractDomain(it) }?.ifBlank { null }
-        val normalizedSourceName = sourceName.lowercase().replace("[^a-z0-9]".toRegex(), "")
 
-        // 1. Direct domain match against cached sites (including mirrors!)
+        // Tier 1: Direct Domain & Mirror Match
         if (sourceDomain != null) {
             for (site in siteMemoryCache.values) {
                 if (site.url.isNotBlank() && extractDomain(site.url) == sourceDomain) {
@@ -338,24 +353,55 @@ class EverythingMoeScraper(
             }
         }
 
-        // 2. Exact slug lookup from directory
-        val lowerCandidate = sourceName.lowercase().replace(" ", "-").replace("[^a-z0-9-]".toRegex(), "")
-        if (slugLookup.containsKey(lowerCandidate)) {
-            val site = getSiteBySlug(lowerCandidate)
-            if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
-                return@withIOContext site
+        // Tier 2: Candidate Slugs from Extension Title, Source Name, and Package Name
+        val slugCandidates = mutableListOf<String>()
+        if (!extensionTitle.isNullOrBlank()) {
+            slugCandidates.add(extensionTitle.lowercase().replace("[^a-z0-9]".toRegex(), ""))
+            slugCandidates.add(extensionTitle.lowercase().replace(" ", "-").replace("[^a-z0-9-]".toRegex(), ""))
+            slugCandidates.add(cleanTitle(extensionTitle))
+        }
+        if (sourceName.isNotBlank()) {
+            slugCandidates.add(sourceName.lowercase().replace("[^a-z0-9]".toRegex(), ""))
+            slugCandidates.add(sourceName.lowercase().replace(" ", "-").replace("[^a-z0-9-]".toRegex(), ""))
+            slugCandidates.add(cleanTitle(sourceName))
+        }
+        if (!pkgName.isNullOrBlank()) {
+            slugCandidates.add(pkgName.substringAfterLast(".").lowercase().replace("[^a-z0-9]".toRegex(), ""))
+        }
+
+        for (cand in slugCandidates.distinct().filter { it.isNotBlank() }) {
+            if (slugLookup.containsKey(cand)) {
+                val site = getSiteBySlug(cand)
+                if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
+                    return@withIOContext site
+                }
             }
         }
 
-        // 3. Name / Slug match against cached sites
+        // Tier 3: Normalized Title and Source Name Matching against Cached Sites
+        val normalizedCandidates = listOfNotNull(extensionTitle, sourceName).map { cleanTitle(it) }.filter { it.length >= 3 }
         for (site in siteMemoryCache.values) {
-            val normalizedSiteName = site.name.lowercase().replace("[^a-z0-9]".toRegex(), "")
-            val normalizedSlug = site.slug.lowercase().replace("[^a-z0-9]".toRegex(), "")
-            if (normalizedSiteName == normalizedSourceName ||
-                normalizedSlug == normalizedSourceName ||
-                (normalizedSourceName.length >= 4 && (normalizedSiteName == normalizedSourceName || normalizedSlug == normalizedSourceName))
-            ) {
-                return@withIOContext site
+            val siteClean = cleanTitle(site.name)
+            val slugClean = cleanTitle(site.slug)
+            for (cand in normalizedCandidates) {
+                if (siteClean == cand || slugClean == cand) {
+                    return@withIOContext site
+                }
+                if (cand.length >= 4 && (siteClean.contains(cand) || cand.contains(siteClean))) {
+                    return@withIOContext site
+                }
+            }
+        }
+
+        // Tier 4: Fallback Substring Search in Directory Slugs
+        for (cand in normalizedCandidates.filter { it.length >= 4 }) {
+            for ((lowerSlug, _) in slugLookup) {
+                if (lowerSlug.contains(cand) || cand.contains(lowerSlug)) {
+                    val site = getSiteBySlug(lowerSlug)
+                    if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
+                        return@withIOContext site
+                    }
+                }
             }
         }
 
@@ -369,14 +415,23 @@ class EverythingMoeScraper(
         refreshDirectoryIfNeeded()
         val sb = StringBuilder()
 
-        // 1. Installed extensions summary
+        // 1. Installed extensions matching with Title + Source + BaseUrl + PkgName fallbacks
         val installedMatched = mutableListOf<Triple<String?, String, EverythingMoeSite>>()
         for (ext in installedExtensions) {
+            var matchedForExt = false
             for (source in ext.sources) {
                 val baseUrl = (source as? AnimeHttpSource)?.baseUrl
-                val site = matchSource(source.name, baseUrl)
+                val site = matchExtensionOrSource(ext.name, source.name, baseUrl, ext.pkgName)
                 if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
+                    matchedForExt = true
                     installedMatched.add(Triple(ext.name, baseUrl ?: site.url, site))
+                }
+            }
+            // Fallback: If sources didn't match, attempt matching directly on the extension title
+            if (!matchedForExt) {
+                val site = matchExtensionOrSource(ext.name, ext.name, null, ext.pkgName)
+                if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank())) {
+                    installedMatched.add(Triple(ext.name, site.url, site))
                 }
             }
         }
@@ -393,7 +448,7 @@ class EverythingMoeScraper(
         val mentionedSites = mutableListOf<EverythingMoeSite>()
         for (word in queryWords) {
             if (word in listOf("the", "and", "for", "with", "from", "anime", "extension", "extensions", "source", "sources", "stream", "working", "check", "what", "which", "down", "dead", "mirror", "mirrors", "link", "links")) continue
-            val site = matchSource(word, null)
+            val site = matchExtensionOrSource(word, word, null, null)
             if (site != null && (site.tags.isNotEmpty() || site.url.isNotBlank()) && mentionedSites.none { it.slug.equals(site.slug, ignoreCase = true) }) {
                 val alreadyInstalled = installedMatched.any { it.third.slug.equals(site.slug, ignoreCase = true) }
                 if (!alreadyInstalled) {
