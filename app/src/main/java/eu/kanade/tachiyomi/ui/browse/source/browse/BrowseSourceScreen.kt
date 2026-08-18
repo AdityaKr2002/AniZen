@@ -39,6 +39,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -198,6 +201,9 @@ data class BrowseSourceScreen(
 
         val entries = screenModel.getColumnsPreferenceForCurrentOrientation(LocalConfiguration.current.orientation)
         val hazeEnabled by uiPreferences.hazeEnabled().collectAsStatePref()
+        val focusManager = LocalFocusManager.current
+        val firstItemFocusRequester = remember { FocusRequester() }
+        val selectedChipFocusRequester = remember { FocusRequester() }
 
         Scaffold(
             topBar = {
@@ -228,12 +234,19 @@ data class BrowseSourceScreen(
                         },
                     )
 
-                    val focusManager = LocalFocusManager.current
                     val chipFocusModifier = Modifier
                         .tvFocusHighlight(shape = FilterChipDefaults.shape)
+                        .focusProperties {
+                            down = firstItemFocusRequester
+                        }
                         .onKeyEvent { keyEvent ->
                             if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown) {
-                                focusManager.moveFocus(FocusDirection.Down)
+                                try {
+                                    firstItemFocusRequester.requestFocus()
+                                    true
+                                } catch (e: Exception) {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
                             } else {
                                 false
                             }
@@ -245,20 +258,21 @@ data class BrowseSourceScreen(
                             .padding(horizontal = MaterialTheme.padding.small),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                     ) {
+                        val isPopularSelected = state.listing == Listing.Popular
                         FilterChip(
-                            selected = state.listing == Listing.Popular,
+                            selected = isPopularSelected,
                             onClick = {
                                 screenModel.resetFilters()
                                 screenModel.setListing(Listing.Popular)
                             },
-                            modifier = chipFocusModifier,
+                            modifier = if (isPopularSelected) chipFocusModifier.focusRequester(selectedChipFocusRequester) else chipFocusModifier,
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Outlined.Favorite,
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(FilterChipDefaults.IconSize),
-                                )
+                                 )
                             },
                             label = {
                                 Text(text = stringResource(MR.strings.popular))
@@ -266,13 +280,14 @@ data class BrowseSourceScreen(
                         )
                         val catalogueSource = screenModel.source as? CatalogueSource
                         if (catalogueSource?.supportsLatest == true) {
+                            val isLatestSelected = state.listing == Listing.Latest
                             FilterChip(
-                                selected = state.listing == Listing.Latest,
+                                selected = isLatestSelected,
                                 onClick = {
                                     screenModel.resetFilters()
                                     screenModel.setListing(Listing.Latest)
                                 },
-                                modifier = chipFocusModifier,
+                                modifier = if (isLatestSelected) chipFocusModifier.focusRequester(selectedChipFocusRequester) else chipFocusModifier,
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Outlined.NewReleases,
@@ -287,10 +302,11 @@ data class BrowseSourceScreen(
                             )
                         }
                         if (state.filters.isNotEmpty()) {
+                            val isFilterSelected = state.listing is Listing.Search && state.currentSavedSearch == null
                             FilterChip(
-                                selected = state.listing is Listing.Search && state.currentSavedSearch == null,
+                                selected = isFilterSelected,
                                 onClick = screenModel::openFilterSheet,
-                                modifier = chipFocusModifier,
+                                modifier = if (isFilterSelected) chipFocusModifier.focusRequester(selectedChipFocusRequester) else chipFocusModifier,
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Outlined.FilterList,
@@ -307,10 +323,11 @@ data class BrowseSourceScreen(
 
                         if (state.savedSearches.isNotEmpty()) {
                             state.savedSearches.forEach { savedSearch ->
+                                val isSavedSearchSelected = state.currentSavedSearch?.id == savedSearch.id
                                 FilterChip(
-                                    selected = state.currentSavedSearch?.id == savedSearch.id,
+                                    selected = isSavedSearchSelected,
                                     onClick = { screenModel.loadSearch(savedSearch) },
-                                    modifier = chipFocusModifier,
+                                    modifier = if (isSavedSearchSelected) chipFocusModifier.focusRequester(selectedChipFocusRequester) else chipFocusModifier,
                                     label = { Text(text = savedSearch.name) },
                                 )
                             }
@@ -460,6 +477,8 @@ data class BrowseSourceScreen(
                 selection = state.selection.toImmutableList(),
                 favoriteIds = state.favoriteIds,
                 onBatchIncrement = { /* Manual increment only via Select All button */ },
+                firstItemFocusRequester = firstItemFocusRequester,
+                selectedChipFocusRequester = selectedChipFocusRequester,
             )
         }
 

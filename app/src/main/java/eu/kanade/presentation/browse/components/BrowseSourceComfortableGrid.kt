@@ -9,6 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -31,6 +35,9 @@ fun BrowseSourceComfortableGrid(
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
     usePanorama: Boolean? = null,
+    firstItemFocusRequester: FocusRequester? = null,
+    selectedChipFocusRequester: FocusRequester? = null,
+    columnsCount: Int = 0,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     LazyVerticalGrid(
@@ -59,6 +66,18 @@ fun BrowseSourceComfortableGrid(
             val currentOnAnimeLongClick = remember(onAnimeLongClick, anime, index) { 
                 { onAnimeLongClick(anime, index) } 
             }
+
+            val topRowThreshold = if (columnsCount > 0) columnsCount else 6
+            val itemModifier = (if (index == 0 && firstItemFocusRequester != null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                .then(
+                    if (index < topRowThreshold && selectedChipFocusRequester != null) {
+                        Modifier.focusProperties {
+                            up = selectedChipFocusRequester
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
             
             BrowseSourceComfortableGridItem(
                 anime = anime,
@@ -67,6 +86,7 @@ fun BrowseSourceComfortableGrid(
                 onClick = currentOnAnimeClick,
                 onLongClick = currentOnAnimeLongClick,
                 usePanorama = usePanorama,
+                modifier = itemModifier,
             )
         }
 
@@ -86,8 +106,10 @@ internal fun BrowseSourceComfortableGridItem(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = onClick,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     AnimeComfortableGridItem(
+        modifier = modifier,
         title = anime.title,
         coverData = remember(anime.id, isFavorite) {
             anime.asAnimeCover().copy(isAnimeFavorite = isFavorite)

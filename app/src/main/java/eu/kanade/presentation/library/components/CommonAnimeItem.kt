@@ -104,11 +104,13 @@ fun AnimeCompactGridItem(
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        modifier = modifier,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         AnimeGridCover(
@@ -216,11 +218,13 @@ fun AnimeComfortableGridItem(
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueWatching: (() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        modifier = modifier,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         Column {
@@ -426,6 +430,7 @@ fun AnimeListItem(
     entries: Int = 0,
     containerHeight: Int = 0,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     val height = remember(usePanorama) {
@@ -435,6 +440,7 @@ fun AnimeListItem(
         modifier = Modifier
             .fillMaxWidth()
             .tvListItemFocusHighlight()
+            .then(modifier)
             .selectedBackground(isSelected)
             .height(height)
             .clickable(

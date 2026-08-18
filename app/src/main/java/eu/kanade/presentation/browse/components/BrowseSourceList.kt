@@ -9,6 +9,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -31,6 +34,8 @@ fun BrowseSourceList(
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
     usePanorama: Boolean = false,
+    firstItemFocusRequester: FocusRequester? = null,
+    selectedChipFocusRequester: FocusRequester? = null,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     LazyColumn(
@@ -58,6 +63,17 @@ fun BrowseSourceList(
                 { onAnimeLongClick(anime, index) } 
             }
 
+            val itemModifier = (if (index == 0 && firstItemFocusRequester != null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                .then(
+                    if (index == 0 && selectedChipFocusRequester != null) {
+                        Modifier.focusProperties {
+                            up = selectedChipFocusRequester
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+
             BrowseSourceListItem(
                 anime = anime,
                 isFavorite = anime.id in favoriteIds,
@@ -67,6 +83,7 @@ fun BrowseSourceList(
                 entries = entries,
                 containerHeight = 0,
                 usePanorama = usePanorama,
+                modifier = itemModifier,
             )
         }
 
@@ -88,8 +105,10 @@ internal fun BrowseSourceListItem(
     entries: Int,
     containerHeight: Int,
     usePanorama: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     AnimeListItem(
+        modifier = modifier,
         title = anime.title,
         isSelected = isSelected,
         coverData = remember(anime.id, isFavorite) {

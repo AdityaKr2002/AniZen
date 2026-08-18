@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -73,6 +74,8 @@ fun BrowseSourceContent(
     selection: ImmutableList<Anime>,
     favoriteIds: ImmutableSet<Long>,
     onBatchIncrement: (Int) -> Unit = {},
+    firstItemFocusRequester: FocusRequester? = null,
+    selectedChipFocusRequester: FocusRequester? = null,
 ) {
     val context = LocalContext.current
 
@@ -171,6 +174,9 @@ fun BrowseSourceContent(
                             favoriteIds = favoriteIds,
                             onBatchIncrement = onBatchIncrement,
                             usePanorama = effectivePanorama,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            selectedChipFocusRequester = selectedChipFocusRequester,
+                            columnsCount = entries,
                         )
                     }
                     LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
@@ -185,6 +191,9 @@ fun BrowseSourceContent(
                             favoriteIds = favoriteIds,
                             onBatchIncrement = onBatchIncrement,
                             usePanorama = effectivePanorama,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            selectedChipFocusRequester = selectedChipFocusRequester,
+                            columnsCount = entries,
                         )
                     }
                     LibraryDisplayMode.List -> {
@@ -197,6 +206,8 @@ fun BrowseSourceContent(
                             favoriteIds = favoriteIds,
                             usePanorama = effectivePanorama,
                             entries = entries,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            selectedChipFocusRequester = selectedChipFocusRequester,
                         )
                     }
                     else -> {}
