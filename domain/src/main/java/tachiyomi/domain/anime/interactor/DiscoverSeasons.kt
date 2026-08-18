@@ -1,6 +1,7 @@
 package tachiyomi.domain.anime.interactor
 
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import tachiyomi.domain.anime.model.toDomainAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.repository.AnimeRepository
@@ -32,7 +33,7 @@ class DiscoverSeasons(
             // 2. Try searching for root title and original title for better coverage
             val searchQueries = listOf(rootTitle, ogTitle).distinctBy { SeasonRecognition.getAlphanumeric(it) }
             val searchResults = searchQueries.flatMap { query ->
-                source.getSearchAnime(1, query, source.getFilterList()).animes
+                source.getSearchAnime(1, query, AnimeFilterList()).animes
             }.map { it.toDomainAnime(anime.source) }
             
             // 3. Pool and Filter

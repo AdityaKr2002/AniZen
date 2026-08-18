@@ -305,9 +305,27 @@ class BrowseSourceScreenModel(
     }
 
     fun search(query: String? = null, filters: FilterList? = null) {
+        val resolvedFilters = when {
+            filters != null -> {
+                if (filters.isPlaceholderOrEmpty()) {
+                    FilterList()
+                } else {
+                    FilterList(filters)
+                }
+            }
+            !query.isNullOrBlank() -> {
+                val currentFilters = state.value.filters
+                if (currentFilters.isPlaceholderOrEmpty()) {
+                    FilterList()
+                } else {
+                    FilterList(currentFilters)
+                }
+            }
+            else -> FilterList(state.value.filters)
+        }
         val nextListing = Listing.Search(
             query = query,
-            filters = filters?.let { FilterList(it) } ?: FilterList(state.value.filters),
+            filters = resolvedFilters,
             randomId = java.util.Random().nextLong(),
         )
         mutableState.update { it.copy(listing = nextListing) }
