@@ -114,6 +114,23 @@ class EverythingMoeScraper(
         return out
     }
 
+    private fun unescapeHtml(text: String): String {
+        var res = text
+            .replace("&#039;", "'")
+            .replace("&#39;", "'")
+            .replace("&quot;", "\"")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&nbsp;", " ")
+        val decimalRegex = """&#(\d+);""".toRegex()
+        res = decimalRegex.replace(res) { m ->
+            val code = m.groupValues[1].toIntOrNull()
+            if (code != null) code.toChar().toString() else m.value
+        }
+        return res.trim()
+    }
+
     private fun extractJsonBlob(text: String, startIdx: Int): String? {
         val idx = text.indexOf('{', startIdx)
         if (idx == -1) return null
@@ -237,7 +254,8 @@ class EverythingMoeScraper(
             for (element in rawReviews) {
                 if (element is JsonObject) {
                     val rName = element["name"]?.jsonPrimitive?.content
-                    val rReview = element["review"]?.jsonPrimitive?.content
+                    val rRawReview = element["review"]?.jsonPrimitive?.content
+                    val rReview = rRawReview?.let { unescapeHtml(it) }
                     val rTime = element["time"]?.jsonPrimitive?.longOrNull
                     val rVote = element["vote"]?.jsonPrimitive?.intOrNull
                     reviewsList.add(
@@ -289,31 +307,85 @@ class EverythingMoeScraper(
             }
 
             try {
-                val request = Request.Builder()
-                    .url(BASE_URL)
-                    .header("User-Agent", USER_AGENT)
-                    .build()
-
                 val timedClient = networkHelper.client.newBuilder()
                     .connectTimeout(15, TimeUnit.SECONDS)
                     .readTimeout(20, TimeUnit.SECONDS)
                     .build()
 
-                timedClient.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@withLock
-                    val html = response.body.string()
+                // 1. Fetch Master Database Cache (/data/cache/main.json) - 912 sites instantly
+                val mainCacheReq = Request.Builder()
+                    .url("$BASE_URL/data/cache/main.json")
+                    .header("User-Agent", USER_AGENT)
+                    .build()
 
-                    // Find all /s/<slug> links in directory
-                    val slugRegex = """href="/s/([a-zA-Z0-9_-]+)"""".toRegex()
-                    val slugs = slugRegex.findAll(html).map { it.groupValues[1] }.distinct().toList()
+                timedClient.newCall(mainCacheReq).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val mainJsonStr = response.body.string()
+                        val rootObj = json.parseToJsonElement(mainJsonStr).jsonObject
+                        for ((slug, el) in rootObj) {
+                            if (el !is JsonObject) continue
+                            val lowerSlug = slug.lowercase()
+                            slugLookup[lowerSlug] = slug
 
-                    for (exactSlug in slugs) {
-                        val lowerSlug = exactSlug.lowercase()
-                        slugLookup[lowerSlug] = exactSlug
+                            val altName = el["altname"]?.jsonPrimitive?.content
+                            val title = altName ?: slug.replace("-", " ").replaceFirstChar { it.uppercase() }
+
+                            val posRaw = (el["positive"] ?: el["ex-positive"])?.jsonPrimitive?.content
+                            val negRaw = (el["negative"] ?: el["ex-negative"])?.jsonPrimitive?.content
+                            val infoRaw = (el["info"] ?: el["ex-info"] ?: el["note"])?.jsonPrimitive?.content
+
+                            val pros = posRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+                            val cons = negRaw?.split("#")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+                            val info = infoRaw?.trim()?.ifBlank { null }
+
+                            val altLink = el["altlink"]?.jsonPrimitive?.content
+                            val altLinkEx = el["ex-altlink"]?.jsonPrimitive?.content
+                            val altLinkEx2 = el["ex-altlink2"]?.jsonPrimitive?.content
+                            val extraLink = (el["extra-link"] ?: el["extralink"])?.jsonPrimitive?.content
+
+                            val mirrors = (unpackAlts(altLink) + unpackAlts(altLinkEx) + unpackAlts(altLinkEx2)).distinct()
+                            val extraLinks = unpackAlts(extraLink).distinct()
+
+                            val existing = siteMemoryCache[lowerSlug]
+                            siteMemoryCache[lowerSlug] = existing?.copy(
+                                pros = if (existing.pros.isNotEmpty()) existing.pros else pros,
+                                cons = if (existing.cons.isNotEmpty()) existing.cons else cons,
+                                info = existing.info ?: info,
+                                mirrors = if (existing.mirrors.isNotEmpty()) existing.mirrors else mirrors,
+                                extraLinks = if (existing.extraLinks.isNotEmpty()) existing.extraLinks else extraLinks,
+                            ) ?: EverythingMoeSite(
+                                slug = slug,
+                                name = title,
+                                mirrors = mirrors,
+                                extraLinks = extraLinks,
+                                pros = pros,
+                                cons = cons,
+                                info = info,
+                            )
+                        }
                     }
-                    lastCacheFetch = now
-                    saveDiskCache()
                 }
+
+                // 2. Fetch Directory HTML for full list of active slugs
+                val dirReq = Request.Builder()
+                    .url(BASE_URL)
+                    .header("User-Agent", USER_AGENT)
+                    .build()
+
+                timedClient.newCall(dirReq).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val html = response.body.string()
+                        val slugRegex = """href="/s/([a-zA-Z0-9_-]+)"""".toRegex()
+                        val slugs = slugRegex.findAll(html).map { it.groupValues[1] }.distinct().toList()
+                        for (exactSlug in slugs) {
+                            val lowerSlug = exactSlug.lowercase()
+                            slugLookup[lowerSlug] = exactSlug
+                        }
+                    }
+                }
+
+                lastCacheFetch = now
+                saveDiskCache()
             } catch (e: Exception) {
                 logcat(LogPriority.WARN) { "Failed to refresh EverythingMoe directory: ${e.message}" }
             }
@@ -501,12 +573,38 @@ class EverythingMoeScraper(
             sb.append("  * **Community Note**: ${site.info}\n")
         }
 
-        val topReviews = site.reviews.filter { !it.review.isNullOrBlank() }.sortedByDescending { it.vote ?: 0 }.take(2)
-        if (topReviews.isNotEmpty()) {
-            sb.append("  * **Top User Feedback**:\n")
-            topReviews.forEach { r ->
-                val clean = (r.review ?: "").replace("\n", " ").take(150)
-                sb.append("    - \"$clean\" (Votes: ${r.vote ?: 0})\n")
+        val validReviews = site.reviews.filter { !it.review.isNullOrBlank() && (it.review?.length ?: 0) >= 20 }
+        if (validReviews.isNotEmpty()) {
+            val topVoted = validReviews.sortedByDescending { it.vote ?: 0 }.take(3)
+            val mostRecent = validReviews.filterNot { it in topVoted }.sortedByDescending { it.time ?: 0L }.take(2)
+
+            if (topVoted.isNotEmpty()) {
+                sb.append("  * **Top Community Feedback (Helpful)**:\n")
+                topVoted.forEach { r ->
+                    val clean = (r.review ?: "").replace("\n", " ").take(160)
+                    val author = r.name ?: "User"
+                    sb.append("    - [$author] (+${r.vote ?: 0} votes): \"$clean\"\n")
+                }
+            }
+
+            if (mostRecent.isNotEmpty()) {
+                sb.append("  * **Recent Status Signals (Live Health)**:\n")
+                mostRecent.forEach { r ->
+                    val clean = (r.review ?: "").replace("\n", " ").take(160)
+                    val author = r.name ?: "User"
+                    val dateStr = if (r.time != null && r.time > 0) {
+                        try {
+                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT)
+                            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                            sdf.format(java.util.Date(r.time * 1000L))
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else null
+
+                    val timeTag = if (dateStr != null) " ($dateStr)" else ""
+                    sb.append("    - [$author]$timeTag: \"$clean\"\n")
+                }
             }
         }
     }
