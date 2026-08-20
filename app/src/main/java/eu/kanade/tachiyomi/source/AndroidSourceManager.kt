@@ -16,8 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.repository.StubSourceRepository
 import tachiyomi.domain.source.service.SourceManager
@@ -26,11 +27,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.ConcurrentHashMap
-
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 
 class AndroidSourceManager(
     private val context: Context,
@@ -100,25 +96,13 @@ class AndroidSourceManager(
         }
     }
 
-    private fun awaitInitialization() {
-        if (!_isInitialized.value) {
-            runBlocking {
-                withTimeoutOrNull(5000) {
-                    _isInitialized.first { it }
-                }
-            }
-        }
-    }
-
     override fun get(sourceKey: Long): Source? {
-        awaitInitialization()
         return sourcesMapFlow.value[sourceKey]
     }
 
     override fun getOrStub(sourceKey: Long): Source {
-        awaitInitialization()
         return sourcesMapFlow.value[sourceKey] ?: stubSourcesMap.getOrPut(sourceKey) {
-            // Return empty stub immediately to avoid runBlocking lag
+            // Return empty stub immediately to avoid UI thread lag
             scope.launch {
                 createStubSource(sourceKey)
             }
@@ -127,12 +111,10 @@ class AndroidSourceManager(
     }
 
     override fun getOnlineSources(): List<HttpSource> {
-        awaitInitialization()
         return sourcesMapFlow.value.values.filterIsInstance<HttpSource>()
     }
 
     override fun getCatalogueSources(): List<CatalogueSource> {
-        awaitInitialization()
         return sourcesMapFlow.value.values.filterIsInstance<CatalogueSource>()
     }
 
@@ -143,7 +125,6 @@ class AndroidSourceManager(
 
     // SY -->
     override fun getVisibleOnlineSources(): List<HttpSource> {
-        awaitInitialization()
         return sourcesMapFlow.value.values
             .filterIsInstance<HttpSource>()
             .filter {
@@ -152,7 +133,6 @@ class AndroidSourceManager(
     }
 
     override fun getVisibleCatalogueSources(): List<CatalogueSource> {
-        awaitInitialization()
         return sourcesMapFlow.value.values
             .filterIsInstance<CatalogueSource>()
             .filter {
@@ -161,7 +141,6 @@ class AndroidSourceManager(
     }
 
     fun getDelegatedCatalogueSources(): List<DelegatedHttpSource> {
-        awaitInitialization()
         return sourcesMapFlow.value.values
             .filterIsInstance<EnhancedHttpSource>()
             .mapNotNull { enhancedHttpSource ->

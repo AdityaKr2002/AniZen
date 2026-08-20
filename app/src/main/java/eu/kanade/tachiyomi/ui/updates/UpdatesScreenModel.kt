@@ -85,11 +85,12 @@ class UpdatesScreenModel(
             ) { updates, _ -> updates }
                 .collectLatest { updates ->
                     val items = withIOContext { updates.toUpdateItems() }
+                    val uiModels = withIOContext { items.toUiModel() }
                     mutableState.update {
                         it.copy(
                             isLoading = false,
                             items = items,
-                            uiModels = items.toUiModel(it.expandedState),
+                            uiModels = uiModels,
                         )
                     }
                 }
@@ -130,43 +131,17 @@ class UpdatesScreenModel(
             .toPersistentList()
     }
 
-    private fun List<UpdatesItem>.toUiModel(expandedState: Set<String>): List<UpdatesUiModel> {
+    private fun List<UpdatesItem>.toUiModel(): List<UpdatesUiModel> {
         val uiModels = mutableListOf<UpdatesUiModel>()
-        
-        // Group all updates by anime
-        val animeGroups = this.groupBy { it.update.animeId }
-        
-        // Find the latest fetch date for each anime group
-        val animeLatestDate = animeGroups.mapValues { (_, items) ->
-            items.maxOf { it.update.dateFetch }.toLocalDate()
-        }
-        
-        // Group these anime blocks by their latest fetch date
-        val dateGroups = animeLatestDate.entries
-            .groupBy { it.value } // Group by LocalDate
-            .mapValues { entry -> 
-                entry.value.map { it.key } // List of animeIds for this date
-            }
-            .toSortedMap(compareByDescending { it })
+        val dateGroups = this.groupBy { it.update.dateFetch.toLocalDate() }
 
-        dateGroups.forEach { (date, animeIds) ->
+        dateGroups.forEach { (date, dayItems) ->
             uiModels.add(UpdatesUiModel.Header(date))
-            
-            animeIds.forEach { animeId ->
-                val items = animeGroups[animeId]!!
-                val latestFetchDate = items.maxOf { it.update.dateFetch }.toLocalDate()
-                val hasUnwatched = items.any { !it.update.seen }
-                val filteredItems = if (hasUnwatched) {
-                    items.filterNot { it.update.seen && it.update.dateFetch.toLocalDate() < latestFetchDate }
-                } else {
-                    items
-                }
-                val animeItems = filteredItems.sortedWith(
-                    compareBy<UpdatesItem> { it.update.seen }
-                        .thenByDescending { it.update.lastSecondSeen > 0 }
-                        .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber },
-                )
-                
+
+            val groupedByAnime = dayItems.groupBy { it.update.animeId }
+            groupedByAnime.forEach { (_, items) ->
+                val animeItems = items.sortedWith(EPISODE_UPDATE_COMPARATOR)
+
                 val isExpandable = animeItems.size > 1
                 animeItems.forEachIndexed { index, updatesItem ->
                     val position = when {
@@ -186,6 +161,30 @@ class UpdatesScreenModel(
         return uiModels
     }
 
+    private fun List<UpdatesUiModel>.updateSelection(selectedIds: Set<Long>): List<UpdatesUiModel> {
+        return this.map { model ->
+            when (model) {
+                is UpdatesUiModel.Header -> model
+                is UpdatesUiModel.Leader -> {
+                    val isSelected = model.item.update.episodeId in selectedIds
+                    if (model.item.selected != isSelected) {
+                        model.copy(item = model.item.copy(selected = isSelected))
+                    } else {
+                        model
+                    }
+                }
+                is UpdatesUiModel.Item -> {
+                    val isSelected = model.item.update.episodeId in selectedIds
+                    if (model.item.selected != isSelected) {
+                        model.copy(item = model.item.copy(selected = isSelected))
+                    } else {
+                        model
+                    }
+                }
+            }
+        }
+    }
+
     fun updateLibrary(): Boolean {
         val started = LibraryUpdateJob.startNow(Injekt.get<Application>())
         screenModelScope.launch {
@@ -201,17 +200,25 @@ class UpdatesScreenModel(
      */
     private fun updateDownloadState(download: Download) {
         mutableState.update { state ->
-            val newItems = state.items.mutate { list ->
-                val modifiedIndex = list.indexOfFirst { it.update.episodeId == download.episode.id }
-                if (modifiedIndex < 0) return@mutate
+            val modifiedIndex = state.items.indexOfFirst { it.update.episodeId == download.episode.id }
+            if (modifiedIndex < 0) return@update state
 
-                val item = list[modifiedIndex]
-                list[modifiedIndex] = item.copy(
-                    downloadStateProvider = { download.status },
-                    downloadProgressProvider = { download.progress },
-                )
+            val oldItem = state.items[modifiedIndex]
+            val newItem = oldItem.copy(
+                downloadStateProvider = { download.status },
+                downloadProgressProvider = { download.progress },
+            )
+            val newItems = state.items.mutate { list ->
+                list[modifiedIndex] = newItem
             }
-            state.copy(items = newItems, uiModels = newItems.toUiModel(state.expandedState))
+            val newUiModels = state.uiModels.map { model ->
+                when (model) {
+                    is UpdatesUiModel.Header -> model
+                    is UpdatesUiModel.Leader -> if (model.item.update.episodeId == download.episode.id) model.copy(item = newItem) else model
+                    is UpdatesUiModel.Item -> if (model.item.update.episodeId == download.episode.id) model.copy(item = newItem) else model
+                }
+            }
+            state.copy(items = newItems, uiModels = newUiModels)
         }
     }
 
@@ -440,7 +447,7 @@ class UpdatesScreenModel(
                 }
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedState))
+            state.copy(items = persistentItems, uiModels = state.uiModels.updateSelection(selectedEpisodeIds))
         }
     }
 
@@ -451,7 +458,7 @@ class UpdatesScreenModel(
                 it.copy(selected = selected)
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedState))
+            state.copy(items = persistentItems, uiModels = state.uiModels.updateSelection(selectedEpisodeIds))
         }
 
         selectedPositions[0] = -1
@@ -465,7 +472,7 @@ class UpdatesScreenModel(
                 it.copy(selected = !it.selected)
             }
             val persistentItems = newItems.toPersistentList()
-            state.copy(items = persistentItems, uiModels = persistentItems.toUiModel(state.expandedState))
+            state.copy(items = persistentItems, uiModels = state.uiModels.updateSelection(selectedEpisodeIds))
         }
         selectedPositions[0] = -1
         selectedPositions[1] = -1
@@ -480,10 +487,7 @@ class UpdatesScreenModel(
             val newExpandedState = it.expandedState.toMutableSet().apply {
                 if (it.expandedState.contains(key)) remove(key) else add(key)
             }
-            it.copy(
-                expandedState = newExpandedState,
-                uiModels = it.items.toUiModel(newExpandedState),
-            )
+            it.copy(expandedState = newExpandedState)
         }
     }
 
@@ -520,6 +524,10 @@ class UpdatesScreenModel(
     }
 }
 
+private val EPISODE_UPDATE_COMPARATOR = compareBy<UpdatesItem> { it.update.seen }
+    .thenByDescending { it.update.lastSecondSeen > 0 }
+    .thenBy { if (it.update.seen) -it.update.episodeNumber else it.update.episodeNumber }
+
 @Immutable
 data class UpdatesItem(
     val update: UpdatesWithRelations,
@@ -532,4 +540,4 @@ data class UpdatesItem(
 )
 
 /** String to identify which anime's update on which day it is collapsing */
-fun UpdatesWithRelations.groupByDateAndAnime() = animeId.toString()
+fun UpdatesWithRelations.groupByDateAndAnime() = "${dateFetch.toLocalDate().toEpochDay()}-$animeId"
