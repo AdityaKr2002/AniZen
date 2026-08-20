@@ -168,7 +168,7 @@ class UpdatesScreenModel(
                 is UpdatesUiModel.Leader -> {
                     val isSelected = model.item.update.episodeId in selectedIds
                     if (model.item.selected != isSelected) {
-                        model.copy(item = model.item.copy(selected = isSelected))
+                        UpdatesUiModel.Leader(model.item.copy(selected = isSelected), model.position, model.isExpandable)
                     } else {
                         model
                     }
@@ -176,7 +176,7 @@ class UpdatesScreenModel(
                 is UpdatesUiModel.Item -> {
                     val isSelected = model.item.update.episodeId in selectedIds
                     if (model.item.selected != isSelected) {
-                        model.copy(item = model.item.copy(selected = isSelected))
+                        UpdatesUiModel.Item(model.item.copy(selected = isSelected), model.position, model.isExpandable)
                     } else {
                         model
                     }
@@ -214,8 +214,8 @@ class UpdatesScreenModel(
             val newUiModels = state.uiModels.map { model ->
                 when (model) {
                     is UpdatesUiModel.Header -> model
-                    is UpdatesUiModel.Leader -> if (model.item.update.episodeId == download.episode.id) model.copy(item = newItem) else model
-                    is UpdatesUiModel.Item -> if (model.item.update.episodeId == download.episode.id) model.copy(item = newItem) else model
+                    is UpdatesUiModel.Leader -> if (model.item.update.episodeId == download.episode.id) UpdatesUiModel.Leader(newItem, model.position, model.isExpandable) else model
+                    is UpdatesUiModel.Item -> if (model.item.update.episodeId == download.episode.id) UpdatesUiModel.Item(newItem, model.position, model.isExpandable) else model
                 }
             }
             state.copy(items = newItems, uiModels = newUiModels)
