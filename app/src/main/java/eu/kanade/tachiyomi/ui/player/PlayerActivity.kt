@@ -252,20 +252,20 @@ class PlayerActivity : BaseActivity() {
 
                 viewModel.updateIsLoadingHosters(false)
 
-                lifecycleScope.launch {
-                    viewModel.loadHosters(
-                        source = viewModel.currentSource.value!!,
-                        hosterList = initResult.first.hosterList ?: emptyList(),
-                        hosterIndex = initResult.first.videoIndex.first,
-                        videoIndex = initResult.first.videoIndex.second,
-                    )
-                }
+                viewModel.loadHosters(
+                    source = viewModel.currentSource.value!!,
+                    hosterList = initResult.first.hosterList ?: emptyList(),
+                    hosterIndex = initResult.first.videoIndex.first,
+                    videoIndex = initResult.first.videoIndex.second,
+                )
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { "Error during initialization" }
                 viewModel.updateIsLoadingEpisode(false)
                 viewModel.updateIsLoadingHosters(false)
                 viewModel.setIsStopped(true)
-                setInitialEpisodeError(e)
+                withUIContext {
+                    setInitialEpisodeError(e)
+                }
             }
         }
 
@@ -280,26 +280,31 @@ class PlayerActivity : BaseActivity() {
         setContentView(binding.root)
         setupPlayerMPV()
 
+        player.onPlayerReady = {
+            viewModel.currentVideo.value?.let { video ->
+                val pos = viewModel.pos.value.takeIf { it > 0f }?.toLong()
+                setVideo(video, pos)
+            }
+        }
+
         setupPlayerAudio()
         setupMediaSession()
         setupPlayerOrientation()
 
         onBackPressedDispatcher.addCallback(this) {
-            if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                if (viewModel.sheetShown.value == Sheets.None &&
-                    viewModel.panelShown.value == Panels.None &&
-                    viewModel.dialogShown.value == Dialogs.None
-                ) {
-                    val entered = enterPictureInPictureMode(createPipParams())
-                    if (!entered) {
-                        finish()
-                    }
-                } else {
-                    finish()
-                }
-            } else {
-                finish()
+            if (viewModel.dialogShown.value != Dialogs.None) {
+                viewModel.showDialog(Dialogs.None)
+                return@addCallback
             }
+            if (viewModel.sheetShown.value != Sheets.None) {
+                viewModel.dismissSheet()
+                return@addCallback
+            }
+            if (viewModel.panelShown.value != Panels.None) {
+                viewModel.showPanel(Panels.None)
+                return@addCallback
+            }
+            finish()
         }
 
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
@@ -349,14 +354,7 @@ class PlayerActivity : BaseActivity() {
                     viewModel = viewModel,
                     castManager = castManager, // Pass the castManager instance
                     onBackPress = {
-                        if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                            val entered = enterPictureInPictureMode(createPipParams())
-                            if (!entered) {
-                                finish()
-                            }
-                        } else {
-                            finish()
-                        }
+                        finish()
                     },
                     modifier = Modifier.onGloballyPositioned {
                         pipRect = run {
@@ -520,63 +518,77 @@ class PlayerActivity : BaseActivity() {
             applicationContext.filesDir.path
         }
 
-        val mpvConfFile = File("$configDir/mpv.conf")
-        advancedPlayerPreferences.mpvConf().get().let { mpvConfFile.writeText(it) }
-        val mpvInputFile = File("$configDir/input.conf")
-        advancedPlayerPreferences.mpvInput().get().let { mpvInputFile.writeText(it) }
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                val mpvConfFile = File("$configDir/mpv.conf")
+                advancedPlayerPreferences.mpvConf().get().let { mpvConfFile.writeText(it) }
+                val mpvInputFile = File("$configDir/input.conf")
+                advancedPlayerPreferences.mpvInput().get().let { mpvInputFile.writeText(it) }
 
-        copyScripts()
-        copyAssets(configDir)
-        copyFontsDirectory()
-
-        MPVLib.setOptionString("sub-ass-force-margins", "yes")
-        MPVLib.setOptionString("sub-use-margins", "yes")
+                copyScripts()
+                copyAssets(configDir)
+                copyFontsDirectory()
+            }
+        }
 
         player.initialize(
             configDir = configDir,
             cacheDir = applicationContext.cacheDir.path,
             logLvl = logLevel,
         )
+        MPVLib.setOptionString("sub-ass-force-margins", "yes")
+        MPVLib.setOptionString("sub-use-margins", "yes")
         MPVLib.setOptionString("idle", "yes")
         MPVLib.addLogObserver(playerObserver)
         MPVLib.addObserver(playerObserver)
     }
 
+    private fun ensureBridgeScript() {
+        val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
+        val luaFile = File(scriptsDir, "aniyomi.lua")
+        try {
+            assets.open("aniyomi.lua").use { luaAsset ->
+                luaFile.outputStream().use { luaOut ->
+                    luaAsset.copyTo(luaOut)
+                }
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to copy aniyomi.lua bridge" }
+        }
+    }
+
     private fun copyScripts() {
-        // First, delete all present scripts
-        val scriptsDir = {
-            UniFile.fromFile(applicationContext.filesDir)?.createDirectory("scripts")
-        }
-        val scriptOptsDir = {
-            UniFile.fromFile(applicationContext.filesDir)?.createDirectory("script-opts")
-        }
-        scriptsDir()?.delete()
-        scriptOptsDir()?.delete()
+        ensureBridgeScript()
+        if (!advancedPlayerPreferences.mpvScripts().get()) return
 
-        // Then, copy the scripts from the Aniyomi directory
-        if (advancedPlayerPreferences.mpvScripts().get()) {
-            storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
-                val outFile = scriptsDir()?.createFile(file.name)
-                outFile?.let {
-                    file.openInputStream().copyTo(it.openOutputStream())
+        val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
+        val scriptOptsDir = File(applicationContext.filesDir, "script-opts").apply { mkdirs() }
+
+        storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
+            val name = file.name ?: return@forEach
+            if (name == "aniyomi.lua" || name == "custombuttons.lua") return@forEach
+            val outFile = File(scriptsDir, name)
+            try {
+                file.openInputStream().use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
                 }
-            }
-            storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
-                val outFile = scriptOptsDir()?.createFile(file.name)
-                outFile?.let {
-                    file.openInputStream().copyTo(it.openOutputStream())
-                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to copy script: $name" }
             }
         }
-
-        // Copy over the bridge file
-        assets.list("")?.forEach { fileName ->
-            if (fileName.endsWith(".lua")) {
-                val luaFile = scriptsDir()?.createFile(fileName)
-                val luaAsset = assets.open(fileName)
-                luaFile?.openOutputStream()?.bufferedWriter()?.use { scriptLua ->
-                    luaAsset.bufferedReader().use { scriptLua.write(it.readText()) }
+        storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
+            val name = file.name ?: return@forEach
+            val outFile = File(scriptOptsDir, name)
+            try {
+                file.openInputStream().use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
                 }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to copy script opt: $name" }
             }
         }
     }
@@ -642,28 +654,30 @@ class PlayerActivity : BaseActivity() {
     }
 
     fun setupCustomButtons(buttons: List<CustomButton>) {
+        if (buttons.isEmpty()) return
         CoroutineScope(Dispatchers.IO).launchIO {
-            val scriptsDir = {
-                UniFile.fromFile(applicationContext.filesDir)?.createDirectory("scripts")
-            }
-
+            ensureBridgeScript()
+            val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
             val primaryButtonId = viewModel.primaryButton.value?.id ?: 0L
 
             val customButtonsContent = buildString {
-                append(
+                appendLine(
                     """
+                        local scripts_dir = '${scriptsDir.absolutePath.replace("\\", "/")}'
+                        package.path = package.path .. ';' .. scripts_dir .. '/?.lua;' .. scripts_dir .. '/?/init.lua'
                         local lua_modules = mp.find_config_file('scripts')
                         if lua_modules then
-                            package.path = package.path .. ';' .. lua_modules .. '/?.lua;' .. lua_modules .. '/?/init.lua;' .. '${scriptsDir()!!.filePath}' .. '/?.lua'
+                            package.path = package.path .. ';' .. lua_modules .. '/?.lua;' .. lua_modules .. '/?/init.lua'
                         end
                         local aniyomi = require 'aniyomi'
                     """.trimIndent(),
                 )
+                appendLine()
 
                 buttons.forEach { button ->
-                    append(
+                    appendLine(button.getButtonOnStartup(primaryButtonId))
+                    appendLine(
                         """
-                            ${button.getButtonOnStartup(primaryButtonId)}
                             function button${button.id}()
                                 ${button.getButtonContent(primaryButtonId)}
                             end
@@ -674,16 +688,16 @@ class PlayerActivity : BaseActivity() {
                             mp.register_script_message('call_button_${button.id}_long', button${button.id}long)
                         """.trimIndent(),
                     )
+                    appendLine()
                 }
             }
 
-            val file = scriptsDir()?.createFile("custombuttons.lua")
-            file?.openOutputStream()?.bufferedWriter()?.use {
-                it.write(customButtonsContent)
-            }
-
-            file?.let {
-                MPVLib.command(arrayOf("load-script", it.filePath))
+            val file = File(scriptsDir, "custombuttons.lua")
+            try {
+                file.writeText(customButtonsContent)
+                MPVLib.command(arrayOf("load-script", file.absolutePath))
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to write or load custombuttons.lua" }
             }
         }
     }
@@ -847,15 +861,26 @@ class PlayerActivity : BaseActivity() {
             "pause" -> {
                 if (value && player.paused == true) {
                     viewModel.pause()
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    runOnUiThread {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        if (isPipSupportedAndEnabled) {
+                            runCatching {
+                                setPictureInPictureParams(createPipParams())
+                            }
+                        }
+                    }
                 } else if (!value && player.paused == false) {
                     viewModel.unpause()
-                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    runOnUiThread {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        if (isPipSupportedAndEnabled) {
+                            runCatching {
+                                setPictureInPictureParams(createPipParams())
+                            }
+                        }
+                    }
                 }
 
-                runCatching {
-                    setPictureInPictureParams(createPipParams())
-                }
                 updateDiscordRPC(exitingPlayer = false)
             }
 
@@ -924,7 +949,7 @@ class PlayerActivity : BaseActivity() {
             "display-fps" -> PlayerStats.displayFps.value = value
             "estimated-display-fps" -> PlayerStats.estimatedDisplayFps.value = value
             "mistime" -> PlayerStats.mistime.value = value
-            "video-params/aspect" -> if (isPipSupportedAndEnabled) createPipParams()
+            "video-params/aspect" -> if (isPipSupportedAndEnabled) runOnUiThread { runCatching { setPictureInPictureParams(createPipParams()) } }
         }
     }
 
@@ -1046,6 +1071,50 @@ class PlayerActivity : BaseActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val controlsAreVisible = viewModel.controlsShown.value ||
+            viewModel.sheetShown.value != Sheets.None ||
+            viewModel.panelShown.value != Panels.None ||
+            viewModel.dialogShown.value != Dialogs.None
+
+        if (controlsAreVisible) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    viewModel.changeVolumeBy(1)
+                    viewModel.displayVolumeSlider()
+                    return true
+                }
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    viewModel.changeVolumeBy(-1)
+                    viewModel.displayVolumeSlider()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_STOP -> {
+                    finishAndRemoveTask()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                    viewModel.pauseUnpause()
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                KeyEvent.KEYCODE_TAB -> {
+                    // Let Compose UI handle directional focus traversal and button clicks
+                    // Do NOT forward D-Pad keys to MPV, which would trigger unintended seek -60/60 actions
+                    return super.onKeyDown(keyCode, event)
+                }
+                else -> {
+                    event?.let { player.onKey(it) }
+                    return super.onKeyDown(keyCode, event)
+                }
+            }
+        }
+
         when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 viewModel.changeVolumeBy(1)
@@ -1055,26 +1124,54 @@ class PlayerActivity : BaseActivity() {
                 viewModel.changeVolumeBy(-1)
                 viewModel.displayVolumeSlider()
             }
-            KeyEvent.KEYCODE_DPAD_RIGHT -> viewModel.handleLeftDoubleTap()
-            KeyEvent.KEYCODE_DPAD_LEFT -> viewModel.handleRightDoubleTap()
-            KeyEvent.KEYCODE_SPACE -> viewModel.pauseUnpause()
-            KeyEvent.KEYCODE_MEDIA_STOP -> finishAndRemoveTask()
-
+            KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_MEDIA_REWIND -> viewModel.handleLeftDoubleTap()
+
+            KeyEvent.KEYCODE_DPAD_RIGHT,
             KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> viewModel.handleRightDoubleTap()
+
+            KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER,
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_MENU -> {
+                viewModel.showControls()
+            }
+
+            KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> viewModel.pauseUnpause()
+
+            KeyEvent.KEYCODE_MEDIA_STOP -> finishAndRemoveTask()
 
             // other keys should be bound by the user in input.conf ig
             else -> {
                 event?.let { player.onKey(it) }
-                super.onKeyDown(keyCode, event)
+                return super.onKeyDown(keyCode, event)
             }
         }
         return true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        if (player.onKey(event!!)) return true
-        return super.onKeyUp(keyCode, event)
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT,
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER,
+            KeyEvent.KEYCODE_TAB,
+            KeyEvent.KEYCODE_BACK -> {
+                // Keep D-Pad and navigation keys within Android / Compose UI lifecycle
+                return super.onKeyUp(keyCode, event)
+            }
+            else -> {
+                if (event != null && player.onKey(event)) return true
+                return super.onKeyUp(keyCode, event)
+            }
+        }
     }
 
     private fun setupMediaSession() {
@@ -1289,6 +1386,13 @@ class PlayerActivity : BaseActivity() {
     fun setVideo(video: Video?, position: Long? = null) {
         if (player.isExiting) return
         if (video == null) return
+
+        if (!player.initialized) {
+            player.queueOrPlayVideo(video, position) { v, pos ->
+                runOnUiThread { setVideo(v, pos) }
+            }
+            return
+        }
 
         setHttpOptions(video)
 
@@ -1551,7 +1655,7 @@ class PlayerActivity : BaseActivity() {
 
         if (playerPreferences.switchOnFailure().get()) {
             if (!viewModel.loadBestVideo()) {
-                finish()
+                runOnUiThread { finish() }
             }
         } else {
             viewModel.updateIsLoadingEpisode(false)

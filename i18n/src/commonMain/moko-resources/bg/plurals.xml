@@ -1,12 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <plurals name="update_check_notification_ext_updates">
-        <item quantity="one">1 наличен ъпдейт за разширение</item>
-        <item quantity="other">%d налични ъпдейта за разширения</item>
-    </plurals>
     <plurals name="notification_chapters_multiple_and_more">
         <item quantity="one">Глави %1$s и още 1</item>
         <item quantity="other">Глави %1$s и още %2$d</item>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="update_check_notification_ext_updates">
+        <item quantity="one">1 налично обновление за разширение</item>
+        <item quantity="other">%d налични обновления за разширения</item>
     </plurals>
     <plurals name="notification_chapters_generic">
         <item quantity="one">1 нова глава</item>
@@ -52,32 +80,16 @@
         <item quantity="one">Следващата непрочетена глава</item>
         <item quantity="other">Следващите %d непрочетени глави</item>
     </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="download_amount">
+        <item quantity="one">Следваща глава</item>
+        <item quantity="other">Следващи %d глави</item>
     </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="pref_pages">
+        <item quantity="one">1 страница</item>
+        <item quantity="other">%1$s страници</item>
     </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="upcoming_relative_time">
+        <item quantity="one">Утре</item>
+        <item quantity="other">След %1$d дни</item>
     </plurals>
 </resources>

@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="other">ตอนที่ %1$s และอีก %2$d ตอน</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="other">%d วัน</item>
+    </plurals>
+    <plurals name="num_repos">
+        <item quantity="other">%d รีโพ</item>
+    </plurals>
     <plurals name="num_categories">
         <item quantity="other">หมวดหมู่ %d</item>
     </plurals>
@@ -21,9 +30,6 @@
     <plurals name="restore_completed_message">
         <item quantity="other">ใช้เวลาไป %1$s โดยมีข้อผิดพลาด %2$s รายการ</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="other">ตอนที่ %1$s และอีก %2$d ตอน</item>
-    </plurals>
     <plurals name="notification_chapters_generic">
         <item quantity="other">%1$d ตอนใหม่</item>
     </plurals>
@@ -41,11 +47,5 @@
     </plurals>
     <plurals name="download_amount">
         <item quantity="other">%d ตอนถัดไป</item>
-    </plurals>
-    <plurals name="day">
-        <item quantity="other">%d วัน</item>
-    </plurals>
-    <plurals name="num_repos">
-        <item quantity="other">%d รีโพ</item>
     </plurals>
 </resources>

@@ -132,7 +132,7 @@ fun MoreScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ProfileHeader()
+                LogoHeader()
             }
 
             item {
@@ -296,17 +296,4 @@ fun MoreScreen(
     }
 }
 
-@Composable
-private fun ProfileHeader() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_splash_logo_raw),
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-    }
-}
+

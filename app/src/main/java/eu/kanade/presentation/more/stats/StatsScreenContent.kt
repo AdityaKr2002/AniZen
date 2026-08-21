@@ -2,6 +2,7 @@ package eu.kanade.presentation.more.stats
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -224,11 +225,10 @@ private fun ProfileHeaderSection(state: StatsScreenState.SuccessAnime) {
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
                 } else {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_splash_logo_raw),
+                    AsyncImage(
+                        model = R.drawable.ic_splash_logo,
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.primary // 10% Accent
                     )
                 }
             }

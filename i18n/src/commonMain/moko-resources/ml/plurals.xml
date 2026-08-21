@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="day">
+        <item quantity="one">1 ദിവസം</item>
+        <item quantity="other">%d ദിവസം</item>
+    </plurals>
+    <plurals name="missing_chapters">
+        <item quantity="one">%1$s അധ്യായം കാണുന്നില്ല</item>
+        <item quantity="other">%1$s അധ്യായങ്ങൾ കാണുന്നില്ല</item>
+    </plurals>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">അധ്യായങ്ങൾ %1$s-ഉം പിന്നെ 1-ഉം</item>
+        <item quantity="other">%1$s അധ്യായങ്ങളും പിന്നെ %2$d-ഉം</item>
+    </plurals>
+    <plurals name="num_repos">
+        <item quantity="one">%d റിപ്പോ</item>
+        <item quantity="other">%d റിപ്പോകൾ</item>
+    </plurals>
     <plurals name="relative_time">
         <item quantity="one">ഇന്നലെ</item>
         <item quantity="other">%1$d ദിവസം മുമ്പ്</item>
@@ -40,14 +56,6 @@
         <item quantity="one">%1$s ശേഷിക്കുന്നു</item>
         <item quantity="other">%1$s ശേഷിക്കുന്നു</item>
     </plurals>
-    <plurals name="day">
-        <item quantity="one">1 ദിവസം</item>
-        <item quantity="other">%d ദിവസം</item>
-    </plurals>
-    <plurals name="missing_chapters">
-        <item quantity="one">%1$s അധ്യായം കാണുന്നില്ല</item>
-        <item quantity="other">%1$s അധ്യായങ്ങൾ കാണുന്നില്ല</item>
-    </plurals>
     <plurals name="manga_num_chapters">
         <item quantity="one">%1$s അധ്യായം</item>
         <item quantity="other">%1$s അധ്യായങ്ങൾ</item>
@@ -59,14 +67,6 @@
     <plurals name="notification_chapters_generic">
         <item quantity="one">%1$d പുതിയ അധ്യായം</item>
         <item quantity="other">%1$d പുതിയ അധ്യായങ്ങൾ</item>
-    </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">അധ്യായങ്ങൾ %1$s-ഉം പിന്നെ 1-ഉം</item>
-        <item quantity="other">%1$s അധ്യായങ്ങളും പിന്നെ %2$d-ഉം</item>
-    </plurals>
-    <plurals name="num_repos">
-        <item quantity="one">%d റിപ്പോ</item>
-        <item quantity="other">%d റിപ്പോകൾ</item>
     </plurals>
     <plurals name="pref_pages">
         <item quantity="one">1 പേജ്</item>

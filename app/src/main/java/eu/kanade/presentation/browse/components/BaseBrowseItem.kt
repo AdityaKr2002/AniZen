@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import tachiyomi.presentation.core.components.material.padding
+import tachiyomi.presentation.core.util.tvListItemFocusHighlight
 
 @Composable
 fun BaseBrowseItem(
@@ -22,6 +23,7 @@ fun BaseBrowseItem(
 ) {
     Row(
         modifier = modifier
+            .tvListItemFocusHighlight()
             .combinedClickable(
                 onClick = onClickItem,
                 onLongClick = onLongClickItem,

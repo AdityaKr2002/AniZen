@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="other">第 %1$s 章以及另外 %2$d 章</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="other">%d 天</item>
+    </plurals>
+    <plurals name="num_repos">
+        <item quantity="other">%d 處儲存庫</item>
+    </plurals>
     <plurals name="lock_after_mins">
         <item quantity="other">%1$s 分鐘後</item>
     </plurals>
@@ -21,11 +30,8 @@
     <plurals name="notification_chapters_generic">
         <item quantity="other">%1$d 篇新章節</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="other">第 %1$s 章以及另外 %2$d 章</item>
-    </plurals>
     <plurals name="num_trackers">
-        <item quantity="other">%d 個歷程平台</item>
+        <item quantity="other">%d 個平臺</item>
     </plurals>
     <plurals name="missing_chapters_warning">
         <item quantity="other">略過了 %d 章，也許是來源沒有這些章節，或其已被篩選規則排除</item>
@@ -41,12 +47,6 @@
     </plurals>
     <plurals name="download_amount">
         <item quantity="other">後續 %d 章</item>
-    </plurals>
-    <plurals name="day">
-        <item quantity="other">%d 天</item>
-    </plurals>
-    <plurals name="num_repos">
-        <item quantity="other">%d 處儲存庫</item>
     </plurals>
     <plurals name="upcoming_relative_time">
         <item quantity="other">%1$d 天後</item>

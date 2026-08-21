@@ -1,5 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">%1$s kapituluak eta bat gehiago</item>
+        <item quantity="other">%1$s kapituluak eta %2$d gehiago</item>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="restore_completed_message">
         <item quantity="one">%1$s-n egin da errore %2$s-ekin</item>
         <item quantity="other">%1$s-n egin da %2$s errorerekin</item>
@@ -44,36 +76,20 @@
         <item quantity="one">Luzapen baten eguneraketa eskuragarri</item>
         <item quantity="other">%d luzapenen eguneraketak eskuragarri</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">%1$s kapituluak eta bat gehiago</item>
-        <item quantity="other">%1$s kapituluak eta %2$d gehiago</item>
+    <plurals name="upcoming_relative_time">
+        <item quantity="one">Bihar</item>
+        <item quantity="other">%1$d egunetan</item>
     </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="next_unread_chapters">
+        <item quantity="one">Irakurri gabeko hurrengo kapitulua</item>
+        <item quantity="other">Irakurri gabeko hurrengo %d kapituluak</item>
     </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="pref_pages">
+        <item quantity="one">Orri 1</item>
+        <item quantity="other">%1$s orri</item>
     </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="download_amount">
+        <item quantity="one">Hurrengo kapitulua</item>
+        <item quantity="other">Hurrengo %d kapituluak</item>
     </plurals>
 </resources>

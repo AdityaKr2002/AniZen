@@ -884,7 +884,7 @@ class AnimeScreenModel(
                         launch {
                             val keywords = eu.kanade.tachiyomi.util.lang.StringSimilarity.getSearchKeywords(anime.title)
                             try {
-                                val searchResult = source.getSearchAnime(1, keywords, source.getFilterList())
+                                val searchResult = source.getSearchAnime(1, keywords, AnimeFilterList())
                                 val domainAnimes = searchResult.animes
                                     .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                     .awaitAll()
@@ -952,7 +952,12 @@ class AnimeScreenModel(
                                                     }
                                                 }
 
-                                                val searchResult = source.getSearchAnime(1, query, filterList)
+                                                val safeFilterList = if (query.isNotBlank() && filterList.isPlaceholderOrEmpty()) {
+                                                    AnimeFilterList()
+                                                } else {
+                                                    filterList
+                                                }
+                                                val searchResult = source.getSearchAnime(1, query, safeFilterList)
                                                 searchResult.animes
                                                     .map { async { networkToLocalAnime.await(it.toDomainAnime(anime.source)) } }
                                                     .awaitAll()

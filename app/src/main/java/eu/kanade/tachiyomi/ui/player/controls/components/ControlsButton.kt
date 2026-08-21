@@ -43,6 +43,8 @@ import eu.kanade.tachiyomi.ui.player.controls.LocalPlayerButtonsClickEvent
 import tachiyomi.presentation.core.components.material.Button
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.padding
+import tachiyomi.presentation.core.util.tvCircleFocusHighlight
+import tachiyomi.presentation.core.util.tvFocusHighlight
 
 @Composable
 fun ControlsButton(
@@ -62,6 +64,10 @@ fun ControlsButton(
 
     Box(
         modifier = modifier
+            .tvCircleFocusHighlight(
+                focusedScale = 1.15f,
+                focusedBackgroundAlpha = 0.35f,
+            )
             .combinedClickable(
                 enabled = enabled,
                 onClick = {
@@ -104,6 +110,10 @@ fun ControlsButton(
     val clickEvent = LocalPlayerButtonsClickEvent.current
     Box(
         modifier = modifier
+            .tvCircleFocusHighlight(
+                focusedScale = 1.1f,
+                focusedBackgroundAlpha = 0.35f,
+            )
             .combinedClickable(
                 onClick = {
                     clickEvent()
@@ -140,7 +150,12 @@ fun FilledControlsButton(
     val clickEvent = LocalPlayerButtonsClickEvent.current
 
     Box(
-        modifier = modifier.padding(end = MaterialTheme.padding.small),
+        modifier = modifier
+            .padding(end = MaterialTheme.padding.small)
+            .tvFocusHighlight(
+                shape = MaterialTheme.shapes.small,
+                focusedScale = 1.06f,
+            ),
     ) {
         Button(onClick = {}) {
             Text(text = text)

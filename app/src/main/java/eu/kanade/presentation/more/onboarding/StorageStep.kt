@@ -27,6 +27,8 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Button
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.tvFocusHighlight
+import tachiyomi.presentation.core.util.tvGlowFocusHighlight
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -61,24 +63,43 @@ internal class StorageStep : OnboardingStep {
                 ),
             )
 
-            if (isTvBox) {
-                if (!storagePref.isSet()) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
+            if (!storagePref.isSet()) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .tvGlowFocusHighlight(),
+                    onClick = {
+                        val storage = folderProvider.directory()
+                        if (!storage.exists()) {
+                            storage.mkdirs()
+                        }
+                        storagePref.set(storagePref.get())
+                    },
+                ) {
+                    Text(stringResource(MR.strings.onboarding_storage_action_create_folder))
+                }
+
+                if (!isTvBox) {
+                    androidx.compose.material3.OutlinedButton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .tvGlowFocusHighlight(),
                         onClick = {
-                            val storage = folderProvider.directory()
-                            if (!storage.exists()) {
-                                storage.mkdirs()
+                            try {
+                                pickStorageLocation.launch(null)
+                            } catch (e: ActivityNotFoundException) {
+                                context.toast(MR.strings.file_picker_error)
                             }
-                            storagePref.set(storagePref.get())
                         },
                     ) {
-                        Text(stringResource(MR.strings.onboarding_storage_action_create_folder))
+                        Text(stringResource(MR.strings.onboarding_storage_action_select))
                     }
                 }
             } else {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
+                androidx.compose.material3.OutlinedButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .tvGlowFocusHighlight(),
                     onClick = {
                         try {
                             pickStorageLocation.launch(null)
@@ -97,8 +118,10 @@ internal class StorageStep : OnboardingStep {
             )
 
             Text(stringResource(MR.strings.onboarding_storage_help_info, stringResource(MR.strings.app_name)))
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            androidx.compose.material3.OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .tvGlowFocusHighlight(),
                 onClick = { handler.openUri(SettingsDataScreen.HELP_URL) },
             ) {
                 Text(stringResource(MR.strings.onboarding_storage_help_action))

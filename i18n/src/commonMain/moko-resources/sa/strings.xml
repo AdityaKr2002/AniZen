@@ -513,12 +513,12 @@
     <string name="information_cloudflare_bypass_failure">क्लौड्-फ़्लेर्व्यवस्थायाः अतिक्रमणम् अनुत्तीर्णम्</string>
     <string name="pref_verbose_logging_summary">संविधावृत्तलेखं प्रति अतिविस्तीर्णवृत्तलेखान् मुद्रयतु (अनुप्रयोगप्रवृत्तिम् अल्पयति)</string>
     <string name="download_notifier_unknown_error">यादृच्छिकदोषकारणात् अध्यायस्य अवारोपणम् न शक्नुयात्</string>
-    <string name="clear_history_confirmation">त्वं निश्चितं किम् \? चरित्रं सर्वं लुप्तं भविष्यति।</string>
+    <string name="clear_history_confirmation">त्वं निश्चितं किम् ? चरित्रं सर्वं लुप्तं भविष्यति।</string>
     <string name="update_check_eol">एतत् आण्ड्रायिड्-संस्करणम् अधुना न भरितम्</string>
     <string name="information_webview_outdated">इतोऽपि उत्तमतरसङ्गतिं प्रप्तुं कृपया वेब्-व्यू-अनुप्रयोगं नवीकरोतु</string>
     <string name="downloaded_only_summary">तव ग्रन्थालये सर्वाः माङ्गाः शोधनीकरोति</string>
     <string name="pref_clear_database_summary">तव ग्रन्थालये न रक्षितानां माङ्गानां चरित्रं नाशय</string>
-    <string name="confirm_delete_chapters">त्वं निश्चितरूपेण सङ्गृहीतान् अध्यायान् नाशयितुम् इच्छसि किम् \?</string>
+    <string name="confirm_delete_chapters">त्वं निश्चितरूपेण सङ्गृहीतान् अध्यायान् नाशयितुम् इच्छसि किम् ?</string>
     <string name="pref_dump_crash_logs_summary">व्युत्पादकेभ्यः प्रसारयितुं दोषदत्तम् एकस्यां सञ्चिकायां रक्षति</string>
     <string name="confirm_set_chapter_settings">इमानि समायोजनानि प्राथमिकानि इव रक्षितुं त्वं निश्चितं किम्</string>
     <string name="pref_disable_battery_optimization_summary">पृष्ठभूमौ ग्रन्थालयस्य नवीकरणेषु प्रतिलेखनेषु च साहाय्यं करोति</string>
@@ -534,7 +534,7 @@
     <string name="skipped_reason_not_started">काः अपि अध्यायाः न पठिताः अतः लङ्घितम्</string>
     <string name="download_queue_error">अध्यायानाम् अवारोपणं न अशक्नोत्। त्वया अवारोपितानि नाम्नः विभागे पुनः यतितुं शक्यते</string>
     <string name="migration_selection_prompt">यस्मात् स्थानान्तरगमनं करणीयं तत् चिनोतु</string>
-    <string name="notification_size_warning">पूर्वसूचना — मूलेभ्यः महद्नवीकरणानि हानिकारकाणि भवन्ति तस्मात् नवीकरणानि मन्दानि भवेयुः अपि च विद्युत्कोषोपयोगः अधिकं भवेत्</string>
+    <string name="notification_size_warning">पूर्वसूचना -- मूलेभ्यः महद्नवीकरणानि हानिकारकाणि भवन्ति तस्मात् नवीकरणानि मन्दानि भवेयुः अपि च विद्युत्कोषोपयोगः अधिकं भवेत्</string>
     <string name="notification_update_error">%1$d नवीकरणानि अनुत्तीर्णानि</string>
     <string name="learn_more">अधिकं जानातु</string>
     <string name="action_move_to_top_all_for_series">धारावाहिकम् अग्रस्थानं चालयतु</string>
@@ -575,4 +575,7 @@
     <string name="information_webview_required">टाचीयोमेः कृते वेब्-व्यू-तन्त्रांशः अपेक्षितः</string>
     <string name="download_notifier_download_paused_chapters">अवारोपणं विरमितम्</string>
     <string name="channel_new_chapters_episodes">अध्यायनवीकरणानि</string>
+    <string name="relative_time_today">अद्य</string>
+    <string name="pref_create_folder_per_manga">पुटानि भिन्नसञ्चयेषु रक्षतु</string>
+    <string name="pref_create_folder_per_manga_summary">माङ्गाशीर्षकम् अनुसृत्य सञ्चयान् स्रक्ष्यति</string>
 </resources>

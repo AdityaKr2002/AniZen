@@ -11,7 +11,12 @@ import tachiyomi.domain.source.repository.SourcePagingSourceType
 class SourceSearchPagingSource(source: CatalogueSource, val query: String, val filters: FilterList) :
     SourcePagingSource(source) {
     override suspend fun requestNextPage(currentPage: Int): AnimesPage {
-        return source.getSearchAnime(currentPage, query, filters)
+        val safeFilters = if (query.isNotBlank() && filters.isPlaceholderOrEmpty()) {
+            FilterList()
+        } else {
+            filters
+        }
+        return source.getSearchAnime(currentPage, query, safeFilters)
     }
 }
 

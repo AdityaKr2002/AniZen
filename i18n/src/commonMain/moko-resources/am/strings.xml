@@ -303,4 +303,9 @@
     <string name="pref_bottom_nav_no_manga">ማንጋን ወደ ተጨማሪ ትር ይውሰዱ</string>
     <string name="action_sort_last_seen">ለመጨረሻ ግዜ የታየው</string>
     <string name="action_sort_last_checked">መጨረሻ የተፈተሸ</string>
+    <string name="untrusted_extension_message">ይህ ቅጥያ ባልታመነ የእውቅና ማረጋገጫ ተፈርሟል እና አልነቃም።
+\n
+\nተንኮል አዘል ቅጥያ በታቺሚሚ ውስጥ የተከማቸውን ማንኛውንም የመግቢያ ማስረጃዎችን በማንበብ ወይም የዘፈቀደ ኮድን ሊፈጽም ይችላል ፡፡
+\n
+\nበዚህ የምስክር ወረቀት በመተማመን እነዚህን አደጋዎች ይቀበላሉ ፡፡</string>
 </resources>

@@ -1,5 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">Kapitoly %1$s a 1 ďalšia</item>
+        <item quantity="few">Kapitoly %1$s a %2$d ďalšie</item>
+        <item quantity="other">Kapitoly %1$s a %2$d ďalších</item>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="notification_new_chapters_summary">
         <item quantity="one">Pre %d titul</item>
         <item quantity="few">Pre %d tituly</item>
@@ -40,11 +80,6 @@
         <item quantity="few">%1$s zostávajúce</item>
         <item quantity="other">%1$s zostávajúcich</item>
     </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Kapitoly %1$s a 1 ďalšia</item>
-        <item quantity="few">Kapitoly %1$s a %2$d ďalšie</item>
-        <item quantity="other">Kapitoly %1$s a %2$d ďalších</item>
-    </plurals>
     <plurals name="manga_num_chapters">
         <item quantity="one">%1$s kapitola</item>
         <item quantity="few">%1$s kapitoly</item>
@@ -65,39 +100,16 @@
         <item quantity="few">%d kategórie</item>
         <item quantity="other">%d kegórií</item>
     </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
+    <plurals name="upcoming_relative_time">
+        <item quantity="one">Zajtra</item>
+        <item quantity="few">O %1$d dni</item>
+        <item quantity="many">O %1$d dní</item>
+        <item quantity="other">O %1$d dní</item>
     </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
+    <plurals name="pref_pages">
+        <item quantity="one">1 strana</item>
+        <item quantity="few">%1$s strany</item>
+        <item quantity="many">%1$s strán</item>
+        <item quantity="other">%1$s strán</item>
     </plurals>
 </resources>

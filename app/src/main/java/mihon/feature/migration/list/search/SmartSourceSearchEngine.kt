@@ -1,6 +1,7 @@
 package mihon.feature.migration.list.search
 
 import eu.kanade.tachiyomi.source.CatalogueSource
+import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SAnime
 import tachiyomi.domain.anime.model.Anime
 import tachiyomi.domain.anime.model.toDomainAnime
@@ -22,6 +23,6 @@ class SmartSourceSearchEngine(extraSearchParams: String?) : BaseSmartSearchEngin
     }
 
     private fun makeSearchAction(source: CatalogueSource): SearchAction<SAnime> = { query ->
-        source.getSearchAnime(1, query, source.getFilterList()).animes
+        source.getSearchAnime(1, query, FilterList()).animes
     }
 }

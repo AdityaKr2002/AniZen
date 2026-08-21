@@ -12,6 +12,8 @@ import eu.kanade.domain.ui.model.ThemeMode
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
+import tachiyomi.presentation.core.util.tvFocusHighlight
+
 private val options = mapOf(
     ThemeMode.SYSTEM to MR.strings.theme_system,
     ThemeMode.LIGHT to MR.strings.theme_light,
@@ -31,12 +33,17 @@ internal fun AppThemeModePreferenceWidget(
                     .padding(horizontal = PrefsHorizontalPadding),
             ) {
                 options.onEachIndexed { index, (mode, labelRes) ->
+                    val shape = SegmentedButtonDefaults.itemShape(
+                        index,
+                        options.size,
+                    )
                     SegmentedButton(
                         checked = mode == value,
                         onCheckedChange = { onItemClick(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index,
-                            options.size,
+                        shape = shape,
+                        modifier = Modifier.tvFocusHighlight(
+                            shape = shape,
+                            focusedScale = 1.04f,
                         ),
                     ) {
                         Text(stringResource(labelRes))

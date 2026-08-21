@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -100,114 +101,70 @@ internal fun LazyListScope.updatesUiItems(
     useContainer: Boolean,
     usePanorama: Boolean = false,
 ) {
-    uiModels.forEach { model ->
+    items(
+        items = uiModels,
+        key = { model ->
+            when (model) {
+                is UpdatesUiModel.Header -> "animeUpdatesHeader-${model.date}"
+                is UpdatesUiModel.Item -> "animeUpdate-${model.item.update.episodeId}"
+            }
+        },
+        contentType = { model ->
+            when (model) {
+                is UpdatesUiModel.Header -> "header"
+                is UpdatesUiModel.Item -> "item"
+            }
+        },
+    ) { model ->
         when (model) {
             is UpdatesUiModel.Header -> {
-                item(key = "animeUpdatesHeader-${model.date}") {
-                    ListGroupHeader(
-                        modifier = Modifier,
-                        text = relativeDateText(model.date),
-                    )
-                }
+                ListGroupHeader(
+                    modifier = Modifier,
+                    text = relativeDateText(model.date),
+                )
             }
             is UpdatesUiModel.Item -> {
                 val updatesItem = model.item
                 val isLeader = model is UpdatesUiModel.Leader
                 val isExpanded = expandedState.contains(updatesItem.update.groupByDateAndAnime())
 
-                item(key = "animeUpdate-${updatesItem.update.episodeId}") {
-                    AnimatedVisibility(
-                        visible = isLeader || isExpanded,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically(),
-                    ) {
-                        if (useContainer) {
-                            val shape = when {
-                                model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
-                                model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
-                                    bottomEnd = ZeroCornerSize,
-                                    bottomStart = ZeroCornerSize,
-                                )
-                                model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
-                                model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
-                                    topEnd = ZeroCornerSize,
-                                    topStart = ZeroCornerSize,
-                                )
-                                else -> RectangleShape
-                            }
-                            val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP || (isLeader && !isExpanded)) 4.dp else 0.dp
-                            val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM || (isLeader && !isExpanded)) 4.dp else 0.dp
+                AnimatedVisibility(
+                    visible = isLeader || isExpanded,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    val shape = when {
+                        model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
+                        model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
+                            bottomEnd = ZeroCornerSize,
+                            bottomStart = ZeroCornerSize,
+                        )
+                        model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
+                        model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
+                            topEnd = ZeroCornerSize,
+                            topStart = ZeroCornerSize,
+                        )
+                        else -> RectangleShape
+                    }
 
-                            Surface(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                                    .padding(top = topPadding, bottom = bottomPadding)
-                                    .fillMaxWidth(),
-                                shape = shape,
-                                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                tonalElevation = 2.dp,
-                            ) {
-                                UpdatesUiItem(
-                                    modifier = Modifier.clip(shape),
-                                    update = updatesItem.update,
-                                    selected = updatesItem.selected,
-                                    onClick = {
-                                        when {
-                                            selectionMode -> onUpdateSelected(
-                                                updatesItem,
-                                                UpdatesScreenModel.UpdateSelectionOptions(
-                                                    selected = !updatesItem.selected,
-                                                    userSelected = true,
-                                                    fromLongPress = false,
-                                                    isGroup = isLeader && model.isExpandable,
-                                                    isExpanded = isExpanded,
-                                                ),
-                                            )
-                                            else -> onClickUpdate(updatesItem, false)
-                                        }
-                                    },
-                                    onLongClick = {
-                                        onUpdateSelected(
-                                            updatesItem,
-                                            UpdatesScreenModel.UpdateSelectionOptions(
-                                                selected = !updatesItem.selected,
-                                                userSelected = true,
-                                                fromLongPress = true,
-                                                isGroup = isLeader && model.isExpandable,
-                                                isExpanded = isExpanded,
-                                            ),
-                                        )
-                                    },
-                                    onClickCover = { onClickCover(updatesItem) },
-                                    onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
-                                    downloadStateProvider = updatesItem.downloadStateProvider,
-                                    downloadProgressProvider = updatesItem.downloadProgressProvider,
-                                    isLeader = isLeader,
-                                    isExpandable = model.isExpandable,
-                                    expanded = isExpanded,
-                                    onToggleExpand = { onToggleExpand(updatesItem.update.groupByDateAndAnime()) },
-                                    usePanorama = usePanorama,
-                                    updatesItem = updatesItem,
-                                    )
-                                    }
-                                    } else {
-                                    val shape = when {
-                                    model.position == UpdatesUiModel.ItemPosition.SINGLE || (isLeader && !isExpanded) -> MaterialTheme.shapes.large
-                                    model.position == UpdatesUiModel.ItemPosition.TOP -> MaterialTheme.shapes.large.copy(
-                                    bottomEnd = ZeroCornerSize,
-                                    bottomStart = ZeroCornerSize,
-                                    )
-                                    model.position == UpdatesUiModel.ItemPosition.MIDDLE -> RectangleShape
-                                    model.position == UpdatesUiModel.ItemPosition.BOTTOM -> MaterialTheme.shapes.large.copy(
-                                    topEnd = ZeroCornerSize,
-                                    topStart = ZeroCornerSize,
-                                    )
-                                    else -> RectangleShape
-                                    }
-                                    UpdatesUiItem(
-                                    modifier = Modifier.clip(shape),
-                                    update = updatesItem.update,
-                                    selected = updatesItem.selected,                                onClick = {
+                    if (useContainer) {
+                        val topPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.TOP || (isLeader && !isExpanded)) 4.dp else 0.dp
+                        val bottomPadding = if (model.position == UpdatesUiModel.ItemPosition.SINGLE || model.position == UpdatesUiModel.ItemPosition.BOTTOM || (isLeader && !isExpanded)) 4.dp else 0.dp
+
+                        Surface(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .padding(top = topPadding, bottom = bottomPadding)
+                                .fillMaxWidth(),
+                            shape = shape,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            tonalElevation = 2.dp,
+                        ) {
+                            UpdatesUiItem(
+                                modifier = Modifier.clip(shape),
+                                update = updatesItem.update,
+                                selected = updatesItem.selected,
+                                onClick = {
                                     when {
                                         selectionMode -> onUpdateSelected(
                                             updatesItem,
@@ -246,6 +203,49 @@ internal fun LazyListScope.updatesUiItems(
                                 updatesItem = updatesItem,
                             )
                         }
+                    } else {
+                        UpdatesUiItem(
+                            modifier = Modifier.clip(shape),
+                            update = updatesItem.update,
+                            selected = updatesItem.selected,
+                            onClick = {
+                                when {
+                                    selectionMode -> onUpdateSelected(
+                                        updatesItem,
+                                        UpdatesScreenModel.UpdateSelectionOptions(
+                                            selected = !updatesItem.selected,
+                                            userSelected = true,
+                                            fromLongPress = false,
+                                            isGroup = isLeader && model.isExpandable,
+                                            isExpanded = isExpanded,
+                                        ),
+                                    )
+                                    else -> onClickUpdate(updatesItem, false)
+                                }
+                            },
+                            onLongClick = {
+                                onUpdateSelected(
+                                    updatesItem,
+                                    UpdatesScreenModel.UpdateSelectionOptions(
+                                        selected = !updatesItem.selected,
+                                        userSelected = true,
+                                        fromLongPress = true,
+                                        isGroup = isLeader && model.isExpandable,
+                                        isExpanded = isExpanded,
+                                    ),
+                                )
+                            },
+                            onClickCover = { onClickCover(updatesItem) },
+                            onDownloadEpisode = { onDownloadEpisode(listOf(updatesItem), it) },
+                            downloadStateProvider = updatesItem.downloadStateProvider,
+                            downloadProgressProvider = updatesItem.downloadProgressProvider,
+                            isLeader = isLeader,
+                            isExpandable = model.isExpandable,
+                            expanded = isExpanded,
+                            onToggleExpand = { onToggleExpand(updatesItem.update.groupByDateAndAnime()) },
+                            usePanorama = usePanorama,
+                            updatesItem = updatesItem,
+                        )
                     }
                 }
             }

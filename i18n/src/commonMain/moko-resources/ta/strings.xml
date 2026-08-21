@@ -29,7 +29,7 @@
     <string name="cookies_cleared">குக்கீகள் அகற்றப்பட்டன</string>
     <string name="local_source">உள்ளக மூல</string>
     <string name="other_source">மற்றொன்று</string>
-    <string name="clipboard_copy_error">கிளிப்போர்டுக்கு நகலெடுப்பதில் தோல்வி</string>
+    <string name="clipboard_copy_error">இடைநிலைப்பலகைக்கு நகலெடுப்பதில் தோல்வி</string>
     <string name="wish_list">விருப்பப்பட்டியல்</string>
     <string name="file_null_uri_error">எந்த கோப்பும் தேர்ந்தெடுக்கப்படவில்லை</string>
     <string name="local_manga_source">உள்ளக மங்கா சான்று</string>
@@ -116,7 +116,7 @@
     <string name="label_sources">மூலங்கள்</string>
     <string name="label_backup">காப்புப்பிரதி மற்றும் மீட்டமை</string>
     <string name="label_data_storage">தரவு மற்றும் சேமிப்பு</string>
-    <string name="label_migration">இடம்பெயர்வு</string>
+    <string name="label_migration">குடியேறவும்</string>
     <string name="label_stats">புள்ளிவிவரங்கள்</string>
     <string name="label_extensions">நீட்டிப்புகள்</string>
     <string name="label_extension_info">நீட்டிப்பு செய்தி</string>
@@ -141,7 +141,7 @@
     <string name="action_sort_alpha">அகரவரிசை</string>
     <string name="action_sort_count">மொத்த உள்ளீடுகள்</string>
     <string name="action_sort_total">மொத்த அத்தியாயங்கள்</string>
-    <string name="action_sort_last_read">கடைசியாக படியுங்கள்</string>
+    <string name="action_sort_last_read">கடைசியாக படித்தார்</string>
     <string name="action_sort_unread_count">படிக்காத எண்ணிக்கை</string>
     <string name="action_sort_next_updated">அடுத்து எதிர்பார்க்கப்படும் புதுப்பிப்பு</string>
     <string name="action_sort_latest_chapter">அண்மைக் கால அத்தியாயம்</string>
@@ -185,19 +185,19 @@
     <string name="action_next_chapter">அடுத்த அத்தியாயம்</string>
     <string name="action_retry">மீண்டும் முயற்சிக்கவும்</string>
     <string name="action_remove">அகற்று</string>
-    <string name="action_remove_everything">எல்லாவற்றையும் அகற்று</string>
+    <string name="action_remove_everything">எல்லாவற்றையும் அகற்றவும்</string>
     <string name="action_start">தொடங்கு</string>
     <string name="action_open_in_browser">உலாவியில் திற</string>
-    <string name="action_copy_to_clipboard">கிளிப்போர்டுக்கு நகலெடுக்கவும்</string>
+    <string name="action_copy_to_clipboard">இடைநிலைப்பலகைக்கு நகலெடுக்கவும்</string>
     <string name="action_copy_link">இணைப்பை நகலெடுக்கவும்</string>
     <string name="action_open_in_web_view">வெப்வியூவில் திறக்கவும்</string>
-    <string name="action_migrate">இடம்பெயர்வு</string>
+    <string name="action_migrate">குடியேறவும்</string>
     <string name="action_display_mode">காட்சி முறை</string>
     <string name="action_display">காட்சி</string>
     <string name="action_display_grid">கச்சிதமான கட்டம்</string>
     <string name="action_display_comfortable_grid">வசதியான கட்டம்</string>
     <string name="action_display_list">பட்டியல்</string>
-    <string name="action_display_cover_only_grid">கவர் மட்டும் கட்டம்</string>
+    <string name="action_display_cover_only_grid">கவர்-மட்டும் கட்டம்</string>
     <string name="action_display_download_badge">பதிவிறக்கம் செய்யப்பட்ட அத்தியாயங்கள்</string>
     <string name="action_display_local_badge">உள்ளக மூல</string>
     <string name="action_display_language_badge">மொழி</string>
@@ -205,7 +205,7 @@
     <string name="action_display_show_number_of_items">பொருட்களின் எண்ணிக்கையைக் காட்டு</string>
     <string name="action_disable">முடக்கு</string>
     <string name="action_pin">முள்</string>
-    <string name="action_unpin">Unpin</string>
+    <string name="action_unpin">மூள்நீக்கு</string>
     <string name="action_apply">இடு</string>
     <string name="action_cancel">ரத்துசெய்</string>
     <string name="action_ok">சரி</string>
@@ -213,7 +213,7 @@
     <string name="cancel_all_for_series">இந்த தொடருக்கு அனைத்தையும் ரத்துசெய்</string>
     <string name="action_sort">வரிசைப்படுத்து</string>
     <string name="action_reorganize_by">மறுவரிசை</string>
-    <string name="action_order_by_upload_date">பதிவேற்றும் தேதி</string>
+    <string name="action_order_by_upload_date">பதிவேற்றுவதன் மூலம்</string>
     <string name="action_order_by_chapter_number">அத்தியாய எண் மூலம்</string>
     <string name="action_newest">புதியது</string>
     <string name="action_oldest">பழமையானது</string>
@@ -240,7 +240,7 @@
     <string name="action_not_now">இப்போது இல்லை</string>
     <string name="action_migrate_duplicate">இருக்கும் நுழைவை நகர்த்தவும்</string>
     <string name="action_add_anyway">எப்படியும் சேர்க்கவும்</string>
-    <string name="internal_error">இன்டர்நெர்ர்: மேலும் தகவலுக்கு செயலிழப்பு பதிவுகளை சரிபார்க்கவும்</string>
+    <string name="internal_error">இன்டர்னெர்ர்: மேலும் தகவலுக்கு செயலிழப்பு பதிவுகளை சரிபார்க்கவும்</string>
     <string name="app_not_available">பயன்பாடு கிடைக்கவில்லை</string>
     <string name="relative_time_now">இப்போது</string>
     <string name="pref_onboarding_guide">ஆன் போர்டிங் வழிகாட்டி</string>
@@ -368,7 +368,7 @@
     <string name="theme_yinyang">யின் &amp; யாங்</string>
     <string name="theme_yotsuba">நான்கு இலைகள்</string>
     <string name="theme_cloudflare">கிளவுட்ஃப்ளேர்</string>
-    <string name="theme_tidalwave">அலை அலை</string>
+    <string name="theme_tidalwave">அலைகடல் அலை</string>
     <string name="pref_dark_theme_pure_black">தூய கருப்பு இருண்ட பயன்முறை</string>
     <string name="pref_relative_format">உறவினர் நேர முத்திரைகள்</string>
     <string name="pref_date_format">தேதி வடிவம்</string>
@@ -384,7 +384,7 @@
     <string name="secure_screen_summary">பயன்பாடுகளை மாற்றும்போது பயன்பாட்டு உள்ளடக்கத்தை பாதுகாப்பான திரை மறைக்கவும், திரை சாட்களைத் தடுக்கவும்</string>
     <string name="pref_category_nsfw_content">NSFW (18+) ஆதாரங்கள்</string>
     <string name="pref_show_nsfw_source">ஆதாரங்கள் மற்றும் நீட்டிப்பு பட்டியல்களில் காண்பி</string>
-    <string name="parental_controls_info">இது பயன்பாட்டிற்குள் NSFW (18+) உள்ளடக்கத்தை வெளிவருவதிலிருந்து அதிகாரப்பூர்வமற்ற அல்லது தவறாக கொடியிடப்பட்ட நீட்டிப்புகளைத் தடுக்காது.</string>
+    <string name="parental_controls_info">இது பயன்பாட்டிற்குள் NSFW (18+) உள்ளடக்கத்தை வெளிவருவதிலிருந்து அதிகாரப்பூர்வமற்ற அல்லது தவறான கொடிய நீட்டிப்புகளைத் தடுக்காது.</string>
     <string name="relative_time_today">இன்று</string>
     <string name="pref_category_display">காட்சி</string>
     <string name="pref_library_columns">கட்டம் அளவு</string>
@@ -471,7 +471,7 @@
     <string name="pref_show_navigation_mode_summary">வாசகர் திறக்கப்படும்போது சுருக்கமாகக் காட்டுங்கள்</string>
     <string name="pref_dual_page_split">பரந்த பக்கங்களைப் பிரிக்கவும்</string>
     <string name="pref_dual_page_invert">பிளவு பக்க வேலைவாய்ப்பு தலைகீழ்</string>
-    <string name="pref_dual_page_invert_summary">பிளவு பரந்த பக்கங்களின் இடம் வாசிப்பு திசையுடன் பொருந்தவில்லை என்றால்</string>
+    <string name="pref_dual_page_invert_summary">பிளவு அகலமான பக்கங்களின் இடம் வாசிப்பு திசையுடன் பொருந்தவில்லை என்றால்</string>
     <string name="pref_page_rotate">பொருத்தமாக பரந்த பக்கங்களை சுழற்றுங்கள்</string>
     <string name="pref_page_rotate_invert">சுழற்றப்பட்ட அகலமான பக்கங்களின் புரட்டல் நோக்குநிலை</string>
     <string name="pref_double_tap_zoom">பெரிதாக்க இரட்டை தட்டவும்</string>
@@ -481,7 +481,7 @@
     <string name="pref_flash_page_summ">ஈ-மை காட்சிகளில் பேயைக் குறைக்கிறது</string>
     <string name="pref_double_tap_anim_speed">அனிமேசன் விரைவு இரட்டை தட்டவும்</string>
     <string name="pref_flash_duration">ஃபிளாச் காலம்</string>
-    <string name="pref_flash_duration_summary">%1$s MS</string>
+    <string name="pref_flash_duration_summary">%1$s மிநொ</string>
     <string name="pref_flash_page_interval">ஒவ்வொரு ஃபிளாச்</string>
     <string name="pref_flash_with">உடன் ஃபிளாச்</string>
     <string name="pref_flash_style_black">கருப்பு</string>
@@ -619,7 +619,7 @@
     <string name="backup_restore_missing_sources">ஆதாரங்களைக் காணவில்லை:</string>
     <string name="backup_restore_missing_trackers">டிராக்கர்கள் உள்நுழையவில்லை:</string>
     <string name="restore_completed">மீட்டமை முடிந்தது</string>
-    <string name="restore_duration">%1$02d டி மணித்துளி, %2$02d டி நொடி</string>
+    <string name="restore_duration">%1$02d மணித்துளி, %2$02d நொடி</string>
     <string name="backup_in_progress">காப்புப்பிரதி ஏற்கனவே நடந்து வருகிறது</string>
     <string name="backup_choice">நீங்கள் என்ன காப்புப் பிரதி எடுக்க விரும்புகிறீர்கள்?</string>
     <string name="app_settings">பயன்பாட்டு அமைப்புகள்</string>
@@ -637,7 +637,7 @@
     <string name="restoring_backup">காப்புப்பிரதியை மீட்டமைத்தல்</string>
     <string name="restoring_backup_error">காப்புப்பிரதியை மீட்டெடுப்பது தோல்வியடைந்தது</string>
     <string name="restoring_backup_canceled">ரத்து செய்யப்பட்ட மீட்டமை</string>
-    <string name="backup_info">நீங்கள் காப்புப்பிரதிகளின் நகல்களை மற்ற இடங்களிலும் வைத்திருக்க வேண்டும்.</string>
+    <string name="backup_info">நீங்கள் காப்புப்பிரதிகளின் நகல்களை மற்ற இடங்களிலும் வைத்திருக்க வேண்டும். சேமிக்கப்பட்ட கடவுச்சொற்கள் உட்பட முக்கியமான தரவு காப்புப்பிரதிகளில் இருக்கலாம்; பகிர்வு செய்தால் கவனமாக இருங்கள்.</string>
     <string name="last_auto_backup_info">கடைசியாக தானாக காப்புப் பிரதி எடுக்கப்பட்டது: %s</string>
     <string name="label_data">தகவல்கள்</string>
     <string name="pref_storage_usage">சேமிப்பக பயன்பாடு</string>
@@ -655,8 +655,8 @@
     <string name="error_user_agent_string_invalid">தவறான பயனர் முகவர் சரம்</string>
     <string name="pref_reset_user_agent_string">இயல்புநிலை பயனர் முகவர் சரத்தை மீட்டமைக்கவும்</string>
     <string name="requires_app_restart">நடைமுறைக்கு வர பயன்பாட்டு மறுதொடக்கம் தேவை</string>
-    <string name="pref_invalidate_download_cache">REINDEX பதிவிறக்கங்கள்</string>
-    <string name="download_cache_invalidated">பதிவிறக்கங்கள் அட்டவணை செல்லாதது</string>
+    <string name="pref_invalidate_download_cache">மறுகுறியீடு பதிவிறக்கங்கள்</string>
+    <string name="download_cache_invalidated">பதிவிறக்க அட்டவணையை மீண்டும் உருவாக்குகிறது</string>
     <string name="pref_clear_database">தரவுத்தளத்தை அழிக்கவும்</string>
     <string name="pref_clear_database_summary">உங்கள் நூலகத்தில் சேமிக்கப்படாத உள்ளீடுகளுக்கான வரலாற்றை நீக்கவும்</string>
     <string name="clear_database_source_item_count">தரவுத்தளத்தில் %1$d நூலகமற்ற உள்ளீடுகள்</string>
@@ -710,7 +710,7 @@
     <string name="intervals_header">இடைவெளிகள்</string>
     <string name="overlay_header">மேலடுக்கு</string>
     <string name="tabs_header">தாவல்கள்</string>
-    <string name="no_more_results">மேலும் முடிவுகள் இல்லை</string>
+    <string name="no_more_results">இனி முடிவுகள் இல்லை</string>
     <string name="no_results_found">முடிவுகள் எதுவும் கிடைக்கவில்லை</string>
     <string name="last_used_source">கடைசியாக பயன்படுத்தப்பட்டது</string>
     <string name="pinned_sources">பின்</string>
@@ -744,14 +744,14 @@
     <string name="manga_info_expand">மேலும்</string>
     <string name="manga_info_collapse">குறைவாக</string>
     <string name="delete_downloads_for_manga">பதிவிறக்கம் செய்யப்பட்ட அத்தியாயங்களை நீக்கவா?</string>
-    <string name="copied_to_clipboard_plain">கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது</string>
-    <string name="copied_to_clipboard">கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது:\n %1$s</string>
+    <string name="copied_to_clipboard_plain">இடைநிலைப்பலகைக்கு நகலெடுக்கப்பட்டது</string>
+    <string name="copied_to_clipboard">இடைநிலைப்பலகைக்கு நகலெடுக்கப்பட்டது:\n %1$s</string>
     <string name="source_not_installed">சான்று நிறுவப்படவில்லை: %1$s</string>
     <string name="description_placeholder">விளக்கம் இல்லை</string>
     <string name="display_mode_chapter">அத்தியாயம் %1$s</string>
     <string name="manga_display_interval_title">ஒவ்வொன்றையும் மதிப்பிடுங்கள்</string>
     <string name="manga_display_modified_interval_title">ஒவ்வொன்றையும் புதுப்பிக்க அமைக்கவும்</string>
-    <string name="manga_interval_expected_update">புதிய அத்தியாயங்கள் சுமார் %1$s இல் வெளியிடப்படும் என்று கணிக்கப்பட்டுள்ளது, ஒவ்வொரு %2$s ஐச் சுற்றி சோதனை செய்கிறது.</string>
+    <string name="manga_interval_expected_update">புதிய அத்தியாயங்கள் சுமார் %1$s இல் வெளியிடப்படும் என்று கணிக்கப்பட்டுள்ளது, ஒவ்வொரு %2$s ஐச் சுற்றி உள்ளது.</string>
     <string name="anime_interval_expected_update">புதிய அத்தியாயங்கள் சுமார் %1$s இல் வெளியிடப்படும் என்று கணிக்கப்பட்டுள்ளது, ஒவ்வொரு %2$s ஐச் சுற்றி வருகிறது.</string>
     <string name="manga_interval_expected_update_null">இந்த மங்கா முடிந்தது, அல்லது கணிக்கப்பட்ட வெளியீட்டு தேதி இல்லை.</string>
     <string name="anime_interval_expected_update_null">இந்த அனிம் முடிந்தது, அல்லது கணிக்கப்பட்ட வெளியீட்டு தேதி எதுவும் இல்லை.</string>
@@ -762,7 +762,7 @@
     <string name="show_chapter_number">அத்தியாயம் எண்</string>
     <string name="sort_by_source">மூலத்தால்</string>
     <string name="sort_by_number">அத்தியாய எண் மூலம்</string>
-    <string name="sort_by_upload_date">பதிவேற்றும் தேதி</string>
+    <string name="sort_by_upload_date">பதிவேற்றுவதன் மூலம்</string>
     <string name="manga_download">பதிவிறக்கம்</string>
     <string name="download_unread">படிக்காதது</string>
     <string name="custom_cover">தனிப்பயன் கவர்</string>
@@ -857,7 +857,7 @@
     <string name="migration_help_guide">மூல இடம்பெயர்வு வழிகாட்டி</string>
     <string name="migration_dialog_what_to_include">சேர்க்க தரவைத் தேர்ந்தெடுக்கவும்</string>
     <string name="migration_selection_prompt">இடம்பெயர ஒரு மூலத்தைத் தேர்ந்தெடுக்கவும்</string>
-    <string name="migrate">இடம்பெயர்வு</string>
+    <string name="migrate">குடியேறவும்</string>
     <string name="copy">நகலெடு</string>
     <string name="empty_screen">சரி, இது மோசமானது</string>
     <string name="not_installed">நிறுவப்படவில்லை</string>
@@ -978,7 +978,7 @@
     <string name="action_filter_unseen">காணப்படாதது</string>
     <string name="action_global_manga_search">உலகளாவிய மங்கா தேடல்</string>
     <string name="action_global_anime_search">உலகளாவிய அனிம் தேடல்</string>
-    <string name="unlock_app_title">ஆமாம் சி.கே. சகோதரர் படித்தல்</string>
+    <string name="unlock_app_title">%s திறக்கவும்</string>
     <string name="action_sort_total_episodes">மொத்த அத்தியாயங்கள்</string>
     <string name="action_sort_last_seen">கடைசியாக பார்த்தேன்</string>
     <string name="action_sort_last_checked">கடைசியாக சரிபார்க்கப்பட்டது</string>
@@ -1126,4 +1126,7 @@
     <string name="video_crop_screen">திரைக்கு வெட்டப்பட்டது</string>
     <string name="video_stretch_screen">திரைக்கு நீட்டப்பட்டது</string>
     <string name="action_change_intro_length">அறிமுக நீளத்தை மாற்றவும்</string>
+    <string name="label_auto">தானி</string>
+    <string name="theme_catppuccin">கேட்ப்புச்சின்</string>
+    <string name="pref_behavior">நடத்தை</string>
 </resources>

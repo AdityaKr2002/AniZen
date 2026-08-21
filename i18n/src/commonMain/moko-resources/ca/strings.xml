@@ -97,11 +97,7 @@
     <string name="ext_untrusted">No és de confiança</string>
     <string name="ext_uninstall">Desinstal·la</string>
     <string name="untrusted_extension">Extensió que no és de confiança</string>
-    <string name="untrusted_extension_message">Aquesta extensió l’ha signada algun autor desconegut i no s’ha carregat.
-\n
-\nLes extensions malicioses poden llegir qualsevol credencial d’inici de sessió desada o executar codi arbitrari.
-\n
-\nSi confieu en el certificat d’aquesta extensió, accepteu aquests riscos.</string>
+    <string name="untrusted_extension_message">Les extensions malicioses poden llegir qualsevol credencial d’inici de sessió desada o executar codi arbitrari.\n\nSi confieu en aquesta extensió, accepteu aquests riscos.</string>
     <string name="pref_fullscreen">Pantalla completa</string>
     <string name="pref_page_transitions">Anima les transicions de pàgina</string>
     <string name="pref_show_page_number">Mostra el número de pàgina</string>
@@ -162,7 +158,7 @@
     <string name="pref_backup_interval">Freqüència de la còpia de seguretat automàtica</string>
     <string name="backup_created">S’ha creat la còpia de seguretat</string>
     <string name="restore_completed">S’ha completat la restauració</string>
-    <string name="backup_choice">De què voleu fer una còpia de seguretat\?</string>
+    <string name="backup_choice">De què voleu fer una còpia de seguretat?</string>
     <string name="restoring_backup">S’està restaurant la còpia de seguretat</string>
     <string name="creating_backup">S’està creant la còpia de seguretat</string>
     <string name="used_cache">Ús: %1$s</string>
@@ -193,9 +189,8 @@
     <string name="remove_from_library">Elimina de la biblioteca</string>
     <string name="manga_added_library">S’ha afegit a la biblioteca</string>
     <string name="manga_removed_library">S’ha eliminat de la biblioteca</string>
-    <string name="delete_downloads_for_manga">Voleu suprimir els capítols baixats\?</string>
-    <string name="copied_to_clipboard">S’ha copiat al porta-retalls:
-\n%1$s</string>
+    <string name="delete_downloads_for_manga">Voleu suprimir els capítols baixats?</string>
+    <string name="copied_to_clipboard">S’ha copiat al porta-retalls:\n%1$s</string>
     <string name="source_not_installed">Font no instal·lada: %1$s</string>
     <string name="display_mode_chapter">Capítol %1$s</string>
     <string name="chapter_downloading_progress">S’està baixant (%1$d/%2$d)</string>
@@ -205,7 +200,7 @@
     <string name="sort_by_number">Per número de capítol</string>
     <string name="manga_download">Baixa</string>
     <string name="download_unread">Els no llegits</string>
-    <string name="confirm_delete_chapters">Esteu segur que voleu suprimir els capítols seleccionats\?</string>
+    <string name="confirm_delete_chapters">Esteu segur que voleu suprimir els capítols seleccionats?</string>
     <string name="manga_tracking_tab">En seguiment</string>
     <string name="reading">Llegint</string>
     <string name="completed">Completats</string>
@@ -220,7 +215,7 @@
     <string name="track_type">Tipus</string>
     <string name="error_category_exists">Ja hi ha una categoria amb aquest nom!</string>
     <string name="snack_categories_deleted">S’han suprimit les categories</string>
-    <string name="dialog_with_checkbox_remove_description">S’eliminarà la data de lectura d’aquest capítol. N’esteu segur\?</string>
+    <string name="dialog_with_checkbox_remove_description">S’eliminarà la data de lectura d’aquest capítol. N’esteu segur?</string>
     <string name="picture_saved">S’ha desat la imatge</string>
     <string name="custom_filter">Filtre personalitzat</string>
     <string name="set_as_cover">Defineix com a portada</string>
@@ -228,7 +223,7 @@
     <string name="chapter_progress">Pàgina: %1$d</string>
     <string name="no_next_chapter">No s’ha trobat el capítol següent</string>
     <string name="decode_image_error">No s’ha pogut carregar la imatge</string>
-    <string name="confirm_set_image_as_cover">Voleu fer servir aquesta imatge com a portada\?</string>
+    <string name="confirm_set_image_as_cover">Voleu fer servir aquesta imatge com a portada?</string>
     <string name="transition_finished">Finalitzat:</string>
     <string name="transition_current">Actual:</string>
     <string name="transition_next">Següent:</string>
@@ -284,7 +279,7 @@
     <string name="obsolete_extension_message">Aquesta extensió ja no està disponible. És possible que no funcioni correctament i pot causar problemes a l’aplicació. És recomanable que la desinstal·leu.</string>
     <string name="pref_date_format">Format de data</string>
     <string name="pref_category_library_update">Actualització global</string>
-    <string name="logout_title">Voleu tancar la sessió a %1$s\?</string>
+    <string name="logout_title">Voleu tancar la sessió a %1$s?</string>
     <string name="logout">Tanca la sessió</string>
     <string name="logout_success">S’ha tancat la sessió</string>
     <string name="paused">Pausat</string>
@@ -296,9 +291,9 @@
     <string name="theme_dark">Fosc</string>
     <string name="theme_system">Sistema</string>
     <string name="pref_manage_notifications">Gestiona les notificacions</string>
-    <string name="pref_category_security">Seguretat i privacitat</string>
+    <string name="pref_category_security">Seguretat i privadesa</string>
     <string name="lock_with_biometrics">Requereix desblocatge</string>
-    <string name="lock_when_idle">Bloquejar per inactivitat</string>
+    <string name="lock_when_idle">Bloca per inactivitat</string>
     <string name="lock_always">Sempre</string>
     <string name="lock_never">Mai</string>
     <string name="secure_screen">Mode discret</string>
@@ -307,7 +302,7 @@
     <string name="information_cloudflare_bypass_failure">No s’ha pogut evitar el Cloudflare</string>
     <string name="information_webview_outdated">Actualitzeu l’aplicació WebView per a tenir més bona compatibilitat</string>
     <string name="channel_new_chapters">Novetats de capítols</string>
-    <string name="secure_screen_summary">El mode discret amaga el contingut de l’aplicació en canviar entre aplicacions i bloqueja les captures de pantalla</string>
+    <string name="secure_screen_summary">El mode discret amaga el contingut de l’aplicació en canviar entre aplicacions i bloca les captures de pantalla</string>
     <string name="pref_category_display">Visualització</string>
     <string name="notification_chapters_single">Capítol %1$s</string>
     <string name="notification_chapters_single_and_more">Capítol %1$s i %2$d més</string>
@@ -331,7 +326,7 @@
     <string name="action_select_inverse">Inverteix la selecció</string>
     <string name="pinned_sources">Fixades</string>
     <string name="action_pin">Fixa</string>
-    <string name="add_tracking">Segueix</string>
+    <string name="add_tracking">Afegeix un seguiment</string>
     <string name="pref_webtoon_side_padding">Espaiat lateral</string>
     <string name="vertical_plus_viewer">Tira vertical amb separació</string>
     <string name="action_unpin">Desfixa</string>
@@ -404,12 +399,12 @@
     <string name="no_chapters_error">No s’ha trobat cap capítol</string>
     <string name="chapter_settings_updated">S’ha actualitzat la configuració per defecte dels capítols</string>
     <string name="set_chapter_settings_as_default">Estableix com a per defecte</string>
-    <string name="confirm_set_chapter_settings">Esteu segur que voleu desar aquesta configuració com a configuració per defecte\?</string>
+    <string name="confirm_set_chapter_settings">Esteu segur que voleu desar aquesta configuració com a configuració per defecte?</string>
     <string name="chapter_settings">Configuració dels capítols</string>
     <string name="share_page_info">%1$s: %2$s, pàgina %3$d</string>
     <string name="action_search_settings">Configuració de la cerca</string>
     <string name="downloaded_chapters">Capítols baixats</string>
-    <string name="clear_history_confirmation">N’esteu segur\? Es perdrà tot l’historial.</string>
+    <string name="clear_history_confirmation">N’esteu segur? Es perdrà tot l’historial.</string>
     <string name="pref_incognito_mode">Mode d’incògnit</string>
     <string name="pref_clear_history">Suprimeix l’historial</string>
     <string name="clear_history_completed">S’ha buidat l’historial</string>
@@ -597,7 +592,7 @@
     <string name="error_user_agent_string_blank">La cadena de l’agent d’usuari no pot estar buida</string>
     <string name="pref_appearance_summary">Tema, formats de data i hora</string>
     <string name="pref_library_summary">Categories, actualitzacions globals i lliscament en capítols</string>
-    <string name="are_you_sure">N’esteu segur\?</string>
+    <string name="are_you_sure">N’esteu segur?</string>
     <string name="invalid_location">Ubicació invàlida: %s</string>
     <string name="auto_download_while_reading">Baixa automàticament mentre es llegeix</string>
     <string name="download_ahead_info">Només funciona si el capítol actual i el següent ja estan baixats.</string>
@@ -624,12 +619,11 @@
     <string name="updates_last_update_info">Biblioteca actualitzada per darrera vegada: %s</string>
     <string name="download_notifier_cache_renewal">S’estan comprovant les baixades</string>
     <string name="action_open_random_manga">Obre un element aleatori</string>
-    <string name="fdroid_warning">Les compilacions de F-Droid no tenen assistència oficial.
-\nPremeu per a obtenir-ne més informació.</string>
+    <string name="fdroid_warning">Les compilacions de F-Droid no tenen assistència oficial.\nPremeu per a obtenir-ne més informació.</string>
     <string name="information_no_entries_found">No s’ha trobat cap element en aquesta categoria</string>
-    <string name="pref_invalidate_download_cache">Invalida l’índex de baixades</string>
+    <string name="pref_invalidate_download_cache">Reindexa les baixades</string>
     <string name="track_remove_finish_date_conf_text">S’eliminarà la data de finalització seleccionada de %s</string>
-    <string name="track_remove_date_conf_title">Voleu eliminar-ne la data\?</string>
+    <string name="track_remove_date_conf_title">Voleu eliminar-ne la data?</string>
     <string name="track_remove_start_date_conf_text">S’eliminarà la data d’inici seleccionada de %s</string>
     <string name="label_stats">Estadístiques</string>
     <string name="label_local">Local</string>
@@ -678,11 +672,11 @@
     <string name="action_filter_interval_custom">Freqüència d’actualització personalitzat</string>
     <string name="action_sort_next_updated">Pròxima actualització prevista</string>
     <string name="action_ok">D’acord</string>
-    <string name="pref_update_only_in_release_period">Preveu el moment del pròxim llançament</string>
+    <string name="pref_update_only_in_release_period">Preveu el moment de la pròxima publicació</string>
     <string name="intervals_header">Intervals</string>
     <string name="manga_display_interval_title">Estima cada</string>
     <string name="manga_display_modified_interval_title">S’actualitzarà cada</string>
-    <string name="track_delete_title">Voleu deixar de seguir %s\?</string>
+    <string name="track_delete_title">Voleu deixar de seguir %s?</string>
     <string name="track_delete_remote_text">Elimina també de %s</string>
     <string name="track_delete_text">Se n’eliminarà el seguiment local.</string>
     <string name="skipped_reason_not_in_release_period">S’ha omès perquè no se n’espera cap publicació avui</string>
@@ -692,9 +686,9 @@
     <string name="library_sync_complete">S’ha completat la sincronització de la biblioteca</string>
     <string name="create_backup_file_error">No s’ha pogut crear un fitxer de còpia de seguretat</string>
     <string name="track_activity_name">Inici de sessió al servei de seguiment</string>
-    <string name="download_cache_invalidated">S’ha invalidat l\'índex de baixades</string>
+    <string name="download_cache_invalidated">S’està recreant l’índex de baixades</string>
     <string name="information_cloudflare_help">Premeu aquí per a obtenir ajuda amb el Cloudflare</string>
-    <string name="unlock_app_title">Desbloqueja AniZen</string>
+    <string name="unlock_app_title">Desbloca %s</string>
     <string name="exception_offline">No hi ha connexió a Internet</string>
     <string name="exception_http">HTTP %d, comproveu el lloc web en una WebView</string>
     <string name="exception_unknown_host">No s’ha pogut accedir a %s</string>
@@ -750,7 +744,7 @@
     <string name="onboarding_permission_notifications_description">Rebeu notificacions quan hi hagi actualitzacions de la biblioteca i més.</string>
     <string name="onboarding_permission_action_grant">Permet</string>
     <string name="available_disk_space_info">Disponible: %1$s / Total: %2$s</string>
-    <string name="manga_interval_expected_update">S’ha previst que se’n publicaran nous capítols pels volts de %1$s, es comprova cada %2$s.</string>
+    <string name="manga_interval_expected_update">S’ha previst que se’n publicaran nous capítols d’aquí a %1$s, es comprova cada %2$s.</string>
     <string name="invalid_backup_file_error">Error complet:</string>
     <string name="ext_permission_install_apps_warning">Calen permisos per a instal·lar extensions. Premeu aquí per a concedir-les.</string>
     <string name="private_settings">Inclou-hi configuració sensible (per exemple, testimonis d’autenticació dels serveis de seguiment)</string>
@@ -764,7 +758,7 @@
     <string name="onboarding_storage_help_action">Guia d’emmagatzematge</string>
     <string name="onboarding_storage_help_info">Heu actualitzat d’una versió més antiga i no sabeu què heu de seleccionar? Consulteu la guia d’emmagatzematge per a més informació.</string>
     <string name="theme_nord">Nòrdic</string>
-    <string name="pref_library_update_smart_update">Actualitzacions intel·lgents</string>
+    <string name="pref_library_update_smart_update">Actualitzacions intel·ligents</string>
     <string name="ext_revoke_trust">Revoca les extensions de confiança desconegudes</string>
     <string name="action_add_repo">Afegeix un repositori</string>
     <string name="label_add_repo_input">URL del repositori</string>
@@ -798,7 +792,7 @@
     <string name="dialog_with_checkbox_reset">Reinicia tots els capítols d\'aquest element</string>
     <string name="download_insufficient_space">No s\'han pogut baixar els capítols perquè hi ha poc espai d\'emmagatzematge</string>
     <string name="download_queue_size_warning">Advertència: Les baixades massa grosses poden fer que les fonts es tornin més lentes i/o bloquin el AniZen. Premeu per a obtenir-ne més informació.</string>
-    <string name="information_webview_required">El AniZen requereix el WebView</string>
+    <string name="information_webview_required">La WebView és necessària per al funcionament de l’aplicació</string>
     <string name="download_notifier_download_paused_chapters">Baixada pausada</string>
     <string name="channel_new_chapters_episodes">Novetats de capítols</string>
     <string name="pref_remove_exclude_categories_anime">Categories d\'anime excloses</string>
@@ -987,7 +981,7 @@
     <string name="confirm_exit">Torneu a prémer endarrere per a sortir</string>
     <string name="theme_doom">Doom</string>
     <string name="local_source_badge">Local</string>
-    <string name="action_open_repo">Repositori de codi obert</string>
+    <string name="action_open_repo">Obre el repositori d’origen</string>
     <string name="pref_preserve_reading_position">Conserva la posició de lectura en el capítols llegits</string>
     <string name="pref_create_folder_per_manga">Desa les pàgines en carpetes separades</string>
     <string name="pref_create_folder_per_manga_summary">Crea carpetes segons el títol dels elements</string>
@@ -1031,4 +1025,33 @@
     <string name="pref_show_next_episode_airing_time">Mostra l\'hora d\'emissió del proper episodi</string>
     <string name="bandwidth_data_saver_server">Bandwidth Hero Proxy Server</string>
     <string name="data_saver_ignore_gif">Ignora animacions GIF</string>
+    <string name="file_picker_uri_permission_unsupported">No s’ha pogut obtenir accés persistent a la carpeta. És possible que l’aplicació es comporti de manera inesperada.</string>
+    <string name="label_upcoming">Pròxim</string>
+    <string name="upcoming_guide">Guia de pròximes actualitzacions</string>
+    <string name="upcoming_calendar_next">Mes següent</string>
+    <string name="action_add_anyway">Afegeix igualment</string>
+    <string name="pref_webtoon_disable_zoom_out">Desactiva l’allunyament</string>
+    <string name="pref_display_profile">Perfil de visualització personalitzat</string>
+    <string name="action_view_upcoming">Mostra les pròximes actualitzacions</string>
+    <string name="upcoming_calendar_prev">Mes anterior</string>
+    <string name="pref_flash_duration">Durada del flaix</string>
+    <string name="pref_flash_style_white">Blanc</string>
+    <string name="pref_flash_duration_summary">%1$s ms</string>
+    <string name="pref_flash_with">Flaix amb</string>
+    <string name="pref_flash_style_black">Negre</string>
+    <string name="pref_flash_page_interval">Flaix cada</string>
+    <string name="pref_flash_style_white_black">Blanc i negre</string>
+    <string name="manga_interval_expected_update_null">Aquest manga està completat o bé no té cap data de publicació prevista.</string>
+    <string name="invalid_backup_file_json">Còpia de seguretat en JSON no suportada</string>
+    <string name="invalid_backup_file_unknown">El fitxer de còpia de seguretat és corrupte</string>
+    <string name="action_copy_link">Copia l’enllaç</string>
+    <string name="pref_download_new_unread_chapters_only">Omet la baixada de capítols ja llegits duplicats</string>
+    <string name="confirm_tracker_update">Voleu actualitzar els serveis de seguiment al capítol %d?</string>
+    <string name="action_sort_random">Aleatòriament</string>
+    <string name="label_auto">Automàtic</string>
+    <string name="ext_remove">Elimina</string>
+    <string name="ext_confirm_remove">Voleu eliminar l’extensió?</string>
+    <string name="remove_private_extension_message">Segur que voleu eliminar l’extensió «%s»?</string>
+    <string name="theme_catppuccin">Gatputxino</string>
+    <string name="pref_behavior">Comportament</string>
 </resources>

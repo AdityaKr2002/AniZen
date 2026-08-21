@@ -7,6 +7,10 @@ data class AnimeFilterList(val list: List<AnimeFilter<*>>) : List<AnimeFilter<*>
 
     constructor(vararg fs: AnimeFilter<*>) : this(if (fs.isNotEmpty()) fs.asList() else emptyList())
 
+    fun isPlaceholderOrEmpty(): Boolean {
+        return isEmpty() || all { it is AnimeFilter.Header || it is AnimeFilter.Separator }
+    }
+
     override fun equals(other: Any?): Boolean {
         return false
     }

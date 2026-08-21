@@ -64,6 +64,8 @@ import eu.kanade.domain.ui.UiPreferences
 import androidx.compose.runtime.collectAsState
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.selectedBackground
+import tachiyomi.presentation.core.util.tvFocusHighlight
+import tachiyomi.presentation.core.util.tvListItemFocusHighlight
 import tachiyomi.domain.source.model.Source
 import tachiyomi.domain.anime.model.AnimeCover as EntryCoverModel
 
@@ -102,11 +104,13 @@ fun AnimeCompactGridItem(
     coverBadgeStart: @Composable (RowScope.() -> Unit)? = null,
     coverBadgeEnd: @Composable (RowScope.() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        modifier = modifier,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         AnimeGridCover(
@@ -214,11 +218,13 @@ fun AnimeComfortableGridItem(
     coverBadgeEnd: (@Composable RowScope.() -> Unit)? = null,
     onClickContinueWatching: (() -> Unit)? = null,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     GridItemSelectable(
         isSelected = isSelected,
         onClick = onClick,
         onLongClick = onLongClick,
+        modifier = modifier,
     ) {
         val (entry, ratio) = AnimeCover.getEntry(coverData.animeId, usePanoramaOverride = usePanorama)
         Column {
@@ -350,6 +356,11 @@ internal fun GridItemSelectable(
 
     Box(
         modifier = modifier
+            .tvFocusHighlight(
+                shape = shape,
+                focusedScale = 1.04f,
+                borderWidth = 2.5.dp,
+            )
             .then(
                 if (scale < 1f) {
                     Modifier.graphicsLayer {
@@ -419,6 +430,7 @@ fun AnimeListItem(
     entries: Int = 0,
     containerHeight: Int = 0,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     val height = remember(usePanorama) {
@@ -427,6 +439,8 @@ fun AnimeListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .tvListItemFocusHighlight()
+            .then(modifier)
             .selectedBackground(isSelected)
             .height(height)
             .clickable(

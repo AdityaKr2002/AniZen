@@ -1,5 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">Skyrius %1$s ir 1 daugiau</item>
+        <item quantity="few">Skyriai %1$s ir %2$d daugiau</item>
+        <item quantity="other">Skyriai %1$s ir %2$d daugiau</item>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="few"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="relative_time">
         <item quantity="one">Vakar</item>
         <item quantity="few">Prieš %1$d dienas</item>
@@ -14,11 +54,6 @@
         <item quantity="one">%d kategorija</item>
         <item quantity="few">%d kategorijos</item>
         <item quantity="other">%d kategorijos</item>
-    </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Skyrius %1$s ir 1 daugiau</item>
-        <item quantity="few">Skyriai %1$s ir %2$d daugiau</item>
-        <item quantity="other">Skyriai %1$s ir %2$d daugiau</item>
     </plurals>
     <plurals name="notification_chapters_generic">
         <item quantity="one">%1$d naujas skyrius</item>
@@ -64,40 +99,5 @@
         <item quantity="one">Kitas neskaitytas skyrius</item>
         <item quantity="few">Kiti %d neskaityti skyriai</item>
         <item quantity="other">Kiti %d neskaitytų skyrių</item>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="few"/>
-        <item quantity="other"/>
     </plurals>
 </resources>

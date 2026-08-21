@@ -53,6 +53,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.secondaryItemAlpha
+import tachiyomi.presentation.core.util.tvFocusHighlight
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.fullType
 
@@ -134,6 +135,10 @@ fun AppThemePreviewItem(
 ) {
     Column(
         modifier = Modifier
+            .tvFocusHighlight(
+                shape = RoundedCornerShape(17.dp),
+                focusedScale = 1.05f,
+            )
             .fillMaxWidth()
             .aspectRatio(9f / 16f)
             .border(

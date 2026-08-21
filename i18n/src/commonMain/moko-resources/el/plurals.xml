@@ -1,5 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <plurals name="notification_chapters_multiple_and_more">
+        <item quantity="one">Κεφάλαια %1$s και 1 ακόμη</item>
+        <item quantity="other">Κεφάλαια %1$s και %2$d ακόμη</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">1 ημέρα</item>
+        <item quantity="other">%d ημέρες</item>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="download_amount_anime">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="anime_num_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="next_unseen_episodes">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_new_episodes_summary">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_generic">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
+    <plurals name="notification_episodes_multiple_and_more">
+        <item quantity="one"/>
+        <item quantity="other"/>
+    </plurals>
     <plurals name="notification_chapters_generic">
         <item quantity="one">%1$d νέο κεφάλαιο</item>
         <item quantity="other">%1$d νέα κεφάλαια</item>
@@ -15,10 +51,6 @@
     <plurals name="lock_after_mins">
         <item quantity="one">Μετά από %1$s λεπτό</item>
         <item quantity="other">Μετά από %1$s λεπτά</item>
-    </plurals>
-    <plurals name="notification_chapters_multiple_and_more">
-        <item quantity="one">Κεφάλαια %1$s και 1 ακόμη</item>
-        <item quantity="other">Κεφάλαια %1$s και %2$d ακόμη</item>
     </plurals>
     <plurals name="download_queue_summary">
         <item quantity="one">%1$s που απομένει</item>
@@ -56,36 +88,12 @@
         <item quantity="one">Επόμενο κεφάλαιο</item>
         <item quantity="other">Επόμενα %d κεφάλαια</item>
     </plurals>
-    <plurals name="day">
-        <item quantity="one">1 ημέρα</item>
-        <item quantity="other">%d ημέρες</item>
+    <plurals name="upcoming_relative_time">
+        <item quantity="one">Αύριο</item>
+        <item quantity="other">Σε %1$d ημέρες</item>
     </plurals>
-    <plurals name="seconds">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="download_amount_anime">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="anime_num_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="next_unseen_episodes">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_new_episodes_summary">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_generic">
-        <item quantity="one"/>
-        <item quantity="other"/>
-    </plurals>
-    <plurals name="notification_episodes_multiple_and_more">
-        <item quantity="one"/>
-        <item quantity="other"/>
+    <plurals name="pref_pages">
+        <item quantity="one">1 σελίδα</item>
+        <item quantity="other">%1$s σελίδες</item>
     </plurals>
 </resources>

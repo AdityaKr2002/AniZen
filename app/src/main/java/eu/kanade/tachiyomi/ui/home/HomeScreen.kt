@@ -100,6 +100,8 @@ import eu.kanade.tachiyomi.ui.library.LibraryTab
 import eu.kanade.tachiyomi.ui.more.MoreTab
 import eu.kanade.tachiyomi.ui.updates.UpdatesTab
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.tvFocusHighlight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -404,10 +406,9 @@ object HomeScreen : Screen() {
             NavigationBarItem(
                 selected = selected,
                 onClick = onClick,
-                modifier = Modifier.combinedClickable(
-                    onLongClick = onLongClick,
-                    onDoubleClick = onDoubleClick,
-                    onClick = onClick
+                modifier = Modifier.tvFocusHighlight(
+                    shape = RoundedCornerShape(16.dp),
+                    focusedScale = 1.05f,
                 ),
                 icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
                 label = label,
@@ -450,36 +451,6 @@ object HomeScreen : Screen() {
             }
         }
 
-        val onLongClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
-            {
-                if (behavior.onLongClick != NavAction.Default) {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    executor.execute(behavior.onLongClick, navItem.id)
-                }
-            }
-        }
-
-        val onDoubleClick: () -> Unit = remember(behavior, navItem.id, haptic, executor) {
-            {
-                if (behavior.onDoubleTap != NavAction.Default) {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    executor.execute(behavior.onDoubleTap, navItem.id)
-                }
-            }
-        }
-
-        val combinedClick: () -> Unit = remember(selected, navItem.id, tabNavigator, tab, scope, navigator, executor) {
-            {
-                if (!selected) {
-                    executor.logClick(navItem.id)
-                    tabNavigator.current = tab
-                } else {
-                    scope.launch { tab.onReselect(navigator) }
-                }
-                Unit
-            }
-        }
-
         val label: @Composable (() -> Unit)? = remember(navLabelVisibility, title) {
             if (navLabelVisibility != NavLabelVisibility.NEVER) {
                 {
@@ -496,10 +467,9 @@ object HomeScreen : Screen() {
         NavigationRailItem(
             selected = selected,
             onClick = onClick,
-            modifier = Modifier.combinedClickable(
-                onLongClick = onLongClick,
-                onDoubleClick = onDoubleClick,
-                onClick = combinedClick
+            modifier = Modifier.tvFocusHighlight(
+                shape = RoundedCornerShape(16.dp),
+                focusedScale = 1.05f,
             ),
             icon = { NavigationIconItem(navItem, adaptiveDecision, updatesCount, extensionUpdatesCount) },
             label = label,

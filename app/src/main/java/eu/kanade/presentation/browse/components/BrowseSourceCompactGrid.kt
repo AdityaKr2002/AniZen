@@ -9,6 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -32,6 +36,9 @@ fun BrowseSourceCompactGrid(
     onBatchIncrement: (Int) -> Unit = {},
     showTitle: Boolean = true,
     usePanorama: Boolean? = null,
+    firstItemFocusRequester: FocusRequester? = null,
+    selectedChipFocusRequester: FocusRequester? = null,
+    columnsCount: Int = 0,
 ) {
     val selectionIds = remember(selection) { selection.map { it.id }.toSet() }
     LazyVerticalGrid(
@@ -40,8 +47,8 @@ fun BrowseSourceCompactGrid(
         verticalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridVerticalSpacer),
         horizontalArrangement = Arrangement.spacedBy(CommonAnimeItemDefaults.GridHorizontalSpacer),
     ) {
-        item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
-            if (animeList.loadState.prepend is LoadState.Loading) {
+        if (animeList.loadState.prepend is LoadState.Loading) {
+            item(key = "browse-grid-compact-load-prepend", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }
@@ -61,6 +68,18 @@ fun BrowseSourceCompactGrid(
                 { onAnimeLongClick(anime, index) } 
             }
 
+            val topRowThreshold = if (columnsCount > 0) columnsCount else 6
+            val itemModifier = (if (index == 0 && firstItemFocusRequester != null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                .then(
+                    if (index < topRowThreshold && selectedChipFocusRequester != null) {
+                        Modifier.focusProperties {
+                            up = selectedChipFocusRequester
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+
             BrowseSourceCompactGridItem(
                 anime = anime,
                 isFavorite = anime.id in favoriteIds,
@@ -69,11 +88,12 @@ fun BrowseSourceCompactGrid(
                 onLongClick = currentOnAnimeLongClick,
                 showTitle = showTitle,
                 usePanorama = usePanorama,
+                modifier = itemModifier,
             )
         }
 
-        item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
-            if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+        if (animeList.loadState.refresh is LoadState.Loading || animeList.loadState.append is LoadState.Loading) {
+            item(key = "browse-grid-compact-load-append", span = { GridItemSpan(maxLineSpan) }) {
                 BrowseSourceLoadingItem()
             }
         }
@@ -89,8 +109,10 @@ internal fun BrowseSourceCompactGridItem(
     onLongClick: () -> Unit = onClick,
     showTitle: Boolean = true,
     usePanorama: Boolean? = null,
+    modifier: Modifier = Modifier,
 ) {
     AnimeCompactGridItem(
+        modifier = modifier,
         title = anime.title.takeIf { showTitle },
         coverData = remember(anime.id, isFavorite) {
             anime.asAnimeCover().copy(isAnimeFavorite = isFavorite)

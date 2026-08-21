@@ -34,7 +34,7 @@
     <string name="action_add_category">Tambah kategori</string>
     <string name="action_edit_categories">Ubah kategori</string>
     <string name="action_rename_category">Ubah nama kategori</string>
-    <string name="action_move_category">Masukkan ke kategori</string>
+    <string name="action_move_category">Tentukan kategori</string>
     <string name="action_edit_cover">Ubah gambar sampul</string>
     <string name="action_pause">Hentikan sementara</string>
     <string name="action_previous_chapter">Bab sebelumnya</string>
@@ -135,7 +135,7 @@
     <string name="pref_backup_interval">Frekuensi pencadangan otomatis</string>
     <string name="backup_created">Cadangan dibuat</string>
     <string name="restore_completed">Pemulihan selesai</string>
-    <string name="backup_choice">Apa saja yang ingin Anda cadangkan\?</string>
+    <string name="backup_choice">Apa saja yang ingin Anda cadangkan?</string>
     <string name="restoring_backup">Memulihkan cadangan</string>
     <string name="creating_backup">Membuat cadangan</string>
     <string name="used_cache">Terpakai: %1$s</string>
@@ -160,7 +160,7 @@
     <string name="unknown">Tak diketahui</string>
     <string name="licensed">Berlisensi</string>
     <string name="remove_from_library">Hapus dari pustaka</string>
-    <string name="delete_downloads_for_manga">Hapus bab terunduh\?</string>
+    <string name="delete_downloads_for_manga">Hapus bab terunduh?</string>
     <string name="display_mode_chapter">Bab %1$s</string>
     <string name="chapter_downloading_progress">Mengunduh (%1$d/%2$d)</string>
     <string name="show_title">Judul</string>
@@ -169,7 +169,7 @@
     <string name="sort_by_number">Nomor bab</string>
     <string name="manga_download">Unduh</string>
     <string name="download_unread">Belum dibaca</string>
-    <string name="confirm_delete_chapters">Yakin ingin menghapus bab yang dipilih\?</string>
+    <string name="confirm_delete_chapters">Yakin ingin menghapus bab yang dipilih?</string>
     <string name="manga_tracking_tab">Pelacakan</string>
     <string name="reading">Membaca</string>
     <string name="completed">Selesai</string>
@@ -181,7 +181,7 @@
     <string name="status">Status</string>
     <string name="error_category_exists">Kategori dengan nama ini sudah ada!</string>
     <string name="snack_categories_deleted">Kategori dihapus</string>
-    <string name="dialog_with_checkbox_remove_description">Ini akan menghapus tanggal baca bab ini. Apakah Anda yakin\?</string>
+    <string name="dialog_with_checkbox_remove_description">Ini akan menghapus tanggal baca bab ini. Apakah Anda yakin?</string>
     <string name="picture_saved">Gambar disimpan</string>
     <string name="custom_filter">Filter khusus</string>
     <string name="set_as_cover">Terapkan sebagai sampul</string>
@@ -189,7 +189,7 @@
     <string name="chapter_progress">Halaman: %1$d</string>
     <string name="no_next_chapter">Bab berikutnya tak ditemukan</string>
     <string name="decode_image_error">Gambar tidak dapat dimuat</string>
-    <string name="confirm_set_image_as_cover">Gunakan gambar ini sebagai sampul\?</string>
+    <string name="confirm_set_image_as_cover">Gunakan gambar ini sebagai sampul?</string>
     <string name="download_queue_error">Tidak dapat mengunduh bab. Anda bisa mencoba lagi di bagian unduhan</string>
     <string name="notification_new_chapters">Bab baru ditemukan</string>
     <string name="notification_cover_update_failed">Gagal memperbarui sampul</string>
@@ -233,7 +233,9 @@
     <string name="ext_untrusted">Tidak terpercaya</string>
     <string name="ext_uninstall">Lepas</string>
     <string name="untrusted_extension">Ekstensi tidak terpercaya</string>
-    <string name="untrusted_extension_message">Ekstensi berbahaya dapat membaca semua kredensial login yang disimpan atau menjalankan kode berbahaya.\n\nDengan mempercayai ekstensi ini, Anda menerima risiko ini.</string>
+    <string name="untrusted_extension_message">Ekstensi berbahaya dapat membaca semua kredensial login yang disimpan atau menjalankan kode berbahaya.
+\n
+\nDengan mempercayai sertifikat ekstensi ini, Anda menerima risiko ini.</string>
     <string name="pref_double_tap_anim_speed">Kecepatan animasi ketukan dua kali</string>
     <string name="double_tap_anim_speed_0">Tanpa animasi</string>
     <string name="double_tap_anim_speed_normal">Normal</string>
@@ -311,7 +313,7 @@
     <string name="battery_optimization_disabled">Optimalisasi baterai sudah dimatikan</string>
     <string name="email">Alamat surel</string>
     <string name="secure_screen">Amankan layar</string>
-    <string name="logout_title">Keluar dari %1$s\?</string>
+    <string name="logout_title">Keluar dari %1$s?</string>
     <string name="pref_category_display">Tampilan</string>
     <string name="notification_chapters_single">Bab %1$s</string>
     <string name="notification_chapters_single_and_more">Bab %1$s dan %2$d lainnya</string>
@@ -373,7 +375,7 @@
     <string name="loader_not_implemented_error">Sumber tidak ditemukan</string>
     <string name="requires_app_restart">Mulai ulang aplikasi untuk menerapkan pengaturan</string>
     <string name="label_network">Jaringan</string>
-    <string name="action_disable">Matikan</string>
+    <string name="action_disable">Nonaktif</string>
     <string name="tapping_inverted_both">Keduanya</string>
     <string name="tapping_inverted_vertical">Tegak</string>
     <string name="tapping_inverted_horizontal">Mendatar</string>
@@ -400,14 +402,14 @@
     <string name="no_chapters_error">Tidak ada bab yang ditemukan</string>
     <string name="chapter_settings_updated">Pengaturan bab bawaan diperbarui</string>
     <string name="set_chapter_settings_as_default">Terapkan sebagai bawaan</string>
-    <string name="confirm_set_chapter_settings">Apakah anda yakin ingin menyimpan pengaturan ini sebagai bawaan\?</string>
+    <string name="confirm_set_chapter_settings">Apakah anda yakin ingin menyimpan pengaturan ini sebagai bawaan?</string>
     <string name="chapter_settings">Pengaturan bab</string>
     <string name="share_page_info">%1$s: %2$s, halaman %3$d</string>
     <string name="action_search_settings">Cari pengaturan</string>
     <string name="downloaded_chapters">Bab terunduh</string>
     <string name="pref_incognito_mode">Mode penyamaran</string>
     <string name="pref_clear_history">Hapus riwayat</string>
-    <string name="clear_history_confirmation">Apakah anda yakin\? Semua riwayat akan terhapus.</string>
+    <string name="clear_history_confirmation">Apakah anda yakin? Semua riwayat akan terhapus.</string>
     <string name="clear_history_completed">Riwayat telah dihapus</string>
     <string name="pref_category_nsfw_content">Sumber NSFW (18+)</string>
     <string name="spen_next_page">Halaman selanjutnya</string>
@@ -444,7 +446,7 @@
     <string name="exclude">Kecuali: %s</string>
     <string name="include">Termasuk: %s</string>
     <string name="pref_dual_page_split">Membagi halaman lebar</string>
-    <string name="cancel_all_for_series">Batalkan semua untuk seri ini</string>
+    <string name="cancel_all_for_series">Batal semua untuk seri ini</string>
     <string name="update_check_eol">Versi Android ini tidak lagi didukung</string>
     <string name="clipboard_copy_error">Gagal menyalin ke papan klip</string>
     <string name="pref_dns_over_https">DNS melalui HTTPS (DoH)</string>
@@ -485,11 +487,11 @@
     <string name="enhanced_tracking_info">Menyediakan fitur yang disempurnakan untuk sumber tertentu. Entri secara otomatis dilacak ketika ditambahkan ke perpustakaan Anda.</string>
     <string name="enhanced_services">Pelacak yang ditingkatkan</string>
     <string name="pref_dark_theme_pure_black">Mode gelap hitam pekat</string>
-    <string name="theme_yotsuba">Yotsuba</string>
+    <string name="theme_yotsuba">Empat Daun</string>
     <string name="theme_yinyang">Yin dan Yang</string>
     <string name="theme_tako">Tako</string>
     <string name="theme_strawberrydaiquiri">Stroberi Daiquiri</string>
-    <string name="theme_midnightdusk">Senja Malam</string>
+    <string name="theme_midnightdusk">Senja Tengah Malam</string>
     <string name="theme_greenapple">Hijau Apel</string>
     <string name="theme_monet">Dinamis</string>
     <string name="pref_app_theme">Tema aplikasi</string>
@@ -531,7 +533,7 @@
     <string name="ext_update_all">Perbarui semuanya</string>
     <string name="database_clean">Tidak ada yang perlu dibersihkan</string>
     <string name="clear_database_source_item_count">%1$d entri non-perpustakaan dalam database</string>
-    <string name="extension_api_error">Gagal mendapatkan daftar ekstensi</string>
+    <string name="extension_api_error">Gagal mendapatkan ekstensi yang tersedia</string>
     <string name="pref_update_only_completely_read">Lewati daftar dengan chapter yang belum dibaca</string>
     <string name="privacy_policy">Kebijakan privasi</string>
     <string name="publishing_finished">Penerbitan selesai</string>
@@ -583,26 +585,26 @@
     <string name="custom_cover">Sampul kustom</string>
     <string name="not_installed">Tidak terinstall</string>
     <string name="pref_app_language">Bahasa aplikasi</string>
-    <string name="theme_lavender">lavender</string>
+    <string name="theme_lavender">Bunga Lavender</string>
     <string name="description_placeholder">Tidak ada deskripsi</string>
-    <string name="delete_category_confirmation">Apakah anda ingin menghapus kategori \"%s\"\?</string>
+    <string name="delete_category_confirmation">Apakah anda ingin menghapus kategori \"%s\"?</string>
     <string name="internal_error">InternalError: Periksa log kerusakan untuk informasi lebih lanjut</string>
     <string name="delete_category">Hapus kategori</string>
     <string name="pref_user_agent_string">String agen pengguna default</string>
     <string name="pref_reset_user_agent_string">Setel ulang string agen pengguna default</string>
-    <string name="action_remove_everything">Hapus semuanya</string>
+    <string name="action_remove_everything">Hapus semua</string>
     <string name="appwidget_updates_description">Lihat entri pustaka Anda yang baru saja diperbarui</string>
     <string name="appwidget_unavailable_locked">Widget tidak tersedia saat kunci aplikasi diaktifkan</string>
     <string name="update_already_running">Pembaruan sudah berjalan</string>
     <string name="error_user_agent_string_blank">String agen pengguna wajib diisi</string>
-    <string name="theme_tidalwave">Gelombang pasang</string>
+    <string name="theme_tidalwave">Gelombang Pasang</string>
     <string name="download_ahead">Unduh di depan</string>
     <string name="auto_download_while_reading">Unduh otomatis ketika sedang membaca</string>
     <string name="download_ahead_info">Hanya berfungsi jika bab saat ini + bab berikutnya sudah diunduh.</string>
     <string name="remove_manga">Kamu akan menghapus \"%s\" dari pustaka</string>
     <string name="updates_last_update_info">Pustaka terakhir diperbarui: %s</string>
     <string name="multi_lang">Semua</string>
-    <string name="are_you_sure">Apa kamu yakin\?</string>
+    <string name="are_you_sure">Apa kamu yakin?</string>
     <string name="popular">Populer</string>
     <string name="missing_storage_permission">Izin penyimpanan tidak diberikan</string>
     <string name="skipped_reason_not_always_update">Dilewati karena seri ini tidak memerlukan pembaruan</string>
@@ -628,7 +630,7 @@
     <string name="information_no_entries_found">Tidak ada entri yang ditemukan dalam kategori ini</string>
     <string name="fdroid_warning">Build F-Droid tidak didukung secara resmi.
 \n Ketuk untuk mempelajari lebih lanjut.</string>
-    <string name="track_remove_date_conf_title">Hapus tanggal\?</string>
+    <string name="track_remove_date_conf_title">Hapus tanggal?</string>
     <string name="pref_invalidate_download_cache">Mengindeks ulang unduhan</string>
     <string name="track_remove_start_date_conf_text">Ini akan menghapus tanggal mulai yang Anda pilih sebelumnya dari %s</string>
     <string name="track_remove_finish_date_conf_text">Ini akan menghapus tanggal selesai yang Anda pilih sebelumnya dari %s</string>
@@ -652,7 +654,7 @@
     <string name="label_completed_titles">Entri selesai</string>
     <string name="not_applicable">Tidak tersedia</string>
     <string name="day_short">%dhari</string>
-    <string name="action_not_now">Tidak sekarang</string>
+    <string name="action_not_now">Nanti</string>
     <string name="information_no_manga_category">Kategori ini kosong</string>
     <string name="copied_to_clipboard_plain">Tersalin di papan klip</string>
     <string name="enhanced_services_not_installed">Tersedia tetapi sumber tidak terpasang: %s</string>
@@ -676,14 +678,14 @@
     <string name="pref_double_tap_zoom">Ketuk dua kali untuk memperbesar</string>
     <string name="pref_library_columns_per_row">%d per baris</string>
     <string name="action_set_interval">Terapkan jeda waktu</string>
-    <string name="action_filter_interval_custom">Interval pengambilan disesuaikan</string>
+    <string name="action_filter_interval_custom">Penyesuaian frekuensi update</string>
     <string name="skipped_reason_not_in_release_period">Dilewati karena tidak ada rilis yang diharapkan hari ini</string>
     <string name="action_sort_next_updated">Pembaruan yang diharapkan berikutnya</string>
     <string name="intervals_header">Interval</string>
     <string name="pref_update_only_in_release_period">Prediksikan waktu rilis selanjutnya</string>
     <string name="manga_display_interval_title">Perkirakan setiap</string>
     <string name="manga_display_modified_interval_title">Atur untuk memperbarui setiap</string>
-    <string name="track_delete_title">Hapus %s pelacakan\?</string>
+    <string name="track_delete_title">Hapus %s pelacakan?</string>
     <string name="action_ok">Oke</string>
     <string name="track_delete_text">Ini akan menghapus pelacakan lokal.</string>
     <string name="track_delete_remote_text">Hapus juga dari %s</string>
@@ -692,7 +694,7 @@
     <string name="syncing_library">Sinkronisasi pustaka</string>
     <string name="library_sync_complete">Sinkronisasi pustaka selesai</string>
     <string name="information_cloudflare_help">Ketuk di sini untuk bantuan dengan Cloudflare</string>
-    <string name="download_cache_invalidated">Indeks unduhan tidak valid</string>
+    <string name="download_cache_invalidated">Membuat ulang indeks unduhan</string>
     <string name="track_activity_name">Pelacak login</string>
     <string name="create_backup_file_error">Tidak dapat membuat file cadangan</string>
     <string name="unlock_app_title">Buka kunci %s</string>
@@ -703,7 +705,7 @@
     <string name="pref_relative_format">Penanda waktu</string>
     <string name="pref_relative_format_summary">\"%1$s\" seharusnya \"%2$s\"</string>
     <string name="action_sort_category">Mengurutkan kategori</string>
-    <string name="notification_updating_progress">Memperbarui pustaka… (%s)</string>
+    <string name="notification_updating_progress">Memperbarui pustaka... (%s)</string>
     <string name="sort_category_confirmation">Apakah Anda ingin mengurutkan kategori menurut abjad\?</string>
     <string name="file_null_uri_error">Tidak ada file yang dipilih</string>
     <string name="source_settings">Pengaturan sumber</string>
@@ -741,7 +743,7 @@
     <string name="onboarding_action_next">Selanjutnya</string>
     <string name="onboarding_permission_ignore_battery_opts">Penggunaan baterai di latar belakang</string>
     <string name="onboarding_permission_install_apps_description">Untuk memasang ekstensi.</string>
-    <string name="onboarding_description">Mari kita atur beberapa hal terlebih dahulu. Anda juga selalu dapat mengubahnya di pengaturan nanti.</string>
+    <string name="onboarding_description">Mari kita atur beberapa hal terlebih dahulu. Anda juga selalu dapat mengubahnya di menu pengaturan nanti.</string>
     <string name="no_location_set">Lokasi penyimpanan belum ditentukan</string>
     <string name="onboarding_permission_notifications_description">Dapatkan notifikasi untuk pembaruan pustaka dan sebagainya.</string>
     <string name="onboarding_permission_action_grant">Izinkan</string>
@@ -765,7 +767,7 @@
     <string name="ext_permission_install_apps_warning">Izin diperlukan untuk memasang ekstensi. Klik disini untuk memberi izin.</string>
     <string name="action_delete_repo">Hapus repo</string>
     <string name="delete_repo_confirmation">Apa Anda yakin ingin menghapus repo \"%s\"?</string>
-    <string name="manga_interval_expected_update">Update selanjutnya diperkirakan sekitar %1$s, memeriksa setiap sekitar %2$s</string>
+    <string name="manga_interval_expected_update">Bab baru diperkirakan akan dirils sekitar %1$s, diperiksa setiap sekitar %2$s.</string>
     <string name="available_disk_space_info">Tersedia:%1$s/Total:%2$s</string>
     <string name="manga_interval_custom_amount">Frekuensi pembaruan khusus:</string>
     <string name="manga_categories">Kategori Manga</string>
@@ -915,7 +917,7 @@
     <string name="video_list_empty_error">Video tidak ditemukan</string>
     <string name="notification_new_episodes">Ada episode baru nihh</string>
     <string name="information_no_recent_anime">Tidak ada yang ditonton baru-baru ini</string>
-    <string name="information_webview_required">WebView dibutuhkan untuk AniZen</string>
+    <string name="information_webview_required">WebView diperlukan agar aplikasi dapat berfungsi</string>
     <string name="episode_settings_updated">Ubah pengaturan standar episode</string>
     <string name="download_notifier_download_paused_chapters">Pengunduhan dijeda</string>
     <string name="download_notifier_download_paused_episodes">Unduhan episode dijeda</string>
@@ -1006,7 +1008,7 @@
     <string name="label_all">Seluruh</string>
     <string name="label_category">Kategori</string>
     <string name="label_recent_anime_updates">Pembaruan Anime</string>
-    <string name="unlock_app_title">Buka Kunci AniZen</string>
+    <string name="unlock_app_title">Buka kunci %s</string>
     <string name="pref_pip_replace_with_previous">Mengganti opsi Lewati 10 detik dengan Episode sebelumnya</string>
     <string name="pref_anime_storage_usage">Penggunaan penyimpanan Anime</string>
     <string name="pref_manga_storage_usage">Penggunaan Penyimpanan Manga</string>
@@ -1053,16 +1055,16 @@
     <string name="relative_time_now">Sekarang</string>
     <string name="pref_flash_duration">Durasi lampu kilat</string>
     <string name="pref_flash_duration_summary">%1$s ms</string>
-    <string name="pref_flash_page_interval">Lampu kilat setiap</string>
-    <string name="pref_flash_with">Lampu kilat menggunakan</string>
+    <string name="pref_flash_page_interval">Flash setiap</string>
+    <string name="pref_flash_with">Flash dengan</string>
     <string name="pref_flash_style_black">Hitam</string>
     <string name="pref_flash_style_white">Putih</string>
-    <string name="pref_flash_style_white_black">Hitam dan Putih</string>
-    <string name="manga_interval_expected_update_null">Manga ini sudah selesai, atau belum ada tanggal rilis yang diprediksi.</string>
+    <string name="pref_flash_style_white_black">Hitam Putih</string>
+    <string name="manga_interval_expected_update_null">Manga ini sudah selesai, atau belum ada tanggal rilis yang diperkirakan.</string>
     <string name="action_view_upcoming">Lihat Pembaruan Mendatang</string>
     <string name="upcoming_guide">Panduan Mendatang</string>
-    <string name="upcoming_calendar_prev">Bulan Sebelumnya</string>
-    <string name="file_picker_uri_permission_unsupported">’Gagal memperoleh akses folder persisten. Aplikasi mungkin berperilaku tidak terduga.</string>
+    <string name="upcoming_calendar_prev">Bulan Kemarin</string>
+    <string name="file_picker_uri_permission_unsupported">Gagal mendapatkan akses folder yang terus-menerus. Aplikasi mungkin berperilaku tak terduga.</string>
     <string name="pref_player_audio_channels_reverse_stereo">Stereo terbalik</string>
     <string name="pref_mpv_scripts">Aktifkan skrip MPV</string>
     <string name="pref_mpv_scripts_summary">Memerlukan izin penyimpanan eksternal.</string>
@@ -1089,7 +1091,7 @@
     <string name="pref_player_audio_pitch_correction">Aktifkan koreksi nada audio</string>
     <string name="pref_player_audio_boost_cap">Batasan penguat volume</string>
     <string name="pref_player_advanced">Lanjutan</string>
-    <string name="remove_private_extension_message">Apakah Anda yakin ingin menghapus ekstensi \"%s\"?</string>
+    <string name="remove_private_extension_message">Apa anda yakin ingin menghapus ekstensi \"%s\"?</string>
     <string name="invalid_backup_file_json">Pencadangan JSON tidak didukung</string>
     <string name="invalid_backup_file_unknown">File cadangan rusak</string>
     <string name="extensionRepo_settings">Repo ekstensi</string>
@@ -1122,16 +1124,16 @@
     <string name="pref_player_audio_channels">Saluran audio</string>
     <string name="pref_player_advanced_summary">Skrip, mpv.conf, input.conf</string>
     <string name="ext_remove">Hapus</string>
-    <string name="ext_confirm_remove">Hapus ekstensi?</string>
+    <string name="ext_confirm_remove">Hapus Ekstensi?</string>
     <string name="add_repo_confirmation">Apakah Anda ingin menambahkan repo \"%s\"?</string>
-    <string name="pref_download_new_unread_chapters_only">Lewati pengunduhan bab bacaan duplikat</string>
+    <string name="pref_download_new_unread_chapters_only">Lewati pengunduhan bagian yang sudah dibaca berulang kali</string>
     <string name="anime_interval_expected_update_null">Anime ini sudah selesai, atau belum ada tanggal rilis yang diprediksi.</string>
     <string name="upcoming_calendar_next">Bulan Depan</string>
     <string name="pref_download_new_unseen_episodes_only">Lewati pengunduhan episode duplikat yang sudah dilihat</string>
     <string name="pref_player_audio_channels_mono">Mono</string>
     <string name="pref_player_audio_channels_stereo">Stereo</string>
     <string name="pref_player_audio_channels_auto">Otomatis</string>
-    <string name="action_copy_link">Salin tautan</string>
+    <string name="action_copy_link">Salin link</string>
     <string name="action_add_anyway">Tambahkan saja</string>
     <string name="action_migrate_duplicate">Migrasikan entri yang ada</string>
     <string name="trackers_updated_summary_anime">Pelacak diperbarui ke episode %d</string>
@@ -1140,7 +1142,7 @@
     <string name="action_replace_repo">Mengganti</string>
     <string name="action_replace_repo_title">Kunci Penandatanganan Sidik Jari Sudah Ada</string>
     <string name="action_replace_repo_message">Repositori %1$s memiliki Sidik Jari Kunci Penandatanganan yang sama dengan %2$s.\nJika ini yang diharapkan, %2$s akan diganti, jika tidak hubungi pengelola repo Anda.</string>
-    <string name="pref_display_profile">Tampilan profil kustom</string>
+    <string name="pref_display_profile">Profil tampilan khusus</string>
     <string name="pref_player_audio_channels_auto_safe">Otomatis-mengamankan</string>
     <string name="mpv_media_title">%1$s - E%2$s - %3$s</string>
     <string name="pref_bottom_nav_no_browse">Pindahkan Telusuri ke tab Lainnya</string>
@@ -1245,4 +1247,7 @@
     <string name="player_sheets_speed_make_default">Buat kecepatan default</string>
     <string name="pref_audio_pitch_correction_title">Aktifkan koresi nada audio</string>
     <string name="pref_audio_pitch_correction_summary">Hindari audio menjadi terlalu bernada tinggi pada kecepatan cepat dan bernada rendah pada kecepatan lambat</string>
+    <string name="label_auto">Otomatis</string>
+    <string name="theme_catppuccin">Catppuccin</string>
+    <string name="pref_behavior">Perilaku</string>
 </resources>
