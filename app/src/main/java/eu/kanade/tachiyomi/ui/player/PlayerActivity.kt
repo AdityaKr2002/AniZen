@@ -234,7 +234,7 @@ class PlayerActivity : BaseActivity() {
 
         viewModel.saveCurrentEpisodeWatchingProgress()
 
-        lifecycleScope.launchNonCancellable {
+        lifecycleScope.launch(Dispatchers.IO + NonCancellable) {
             try {
                 viewModel.updateIsLoadingEpisode(true)
                 viewModel.updateIsLoadingHosters(true)
@@ -247,25 +247,25 @@ class PlayerActivity : BaseActivity() {
                     withUIContext {
                         setInitialEpisodeError(exception)
                     }
-                    return@launchNonCancellable
+                    return@launch
                 }
 
                 viewModel.updateIsLoadingHosters(false)
 
-                lifecycleScope.launch {
-                    viewModel.loadHosters(
-                        source = viewModel.currentSource.value!!,
-                        hosterList = initResult.first.hosterList ?: emptyList(),
-                        hosterIndex = initResult.first.videoIndex.first,
-                        videoIndex = initResult.first.videoIndex.second,
-                    )
-                }
+                viewModel.loadHosters(
+                    source = viewModel.currentSource.value!!,
+                    hosterList = initResult.first.hosterList ?: emptyList(),
+                    hosterIndex = initResult.first.videoIndex.first,
+                    videoIndex = initResult.first.videoIndex.second,
+                )
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { "Error during initialization" }
                 viewModel.updateIsLoadingEpisode(false)
                 viewModel.updateIsLoadingHosters(false)
                 viewModel.setIsStopped(true)
-                setInitialEpisodeError(e)
+                withUIContext {
+                    setInitialEpisodeError(e)
+                }
             }
         }
 
