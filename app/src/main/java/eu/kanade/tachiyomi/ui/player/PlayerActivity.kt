@@ -552,6 +552,8 @@ class PlayerActivity : BaseActivity() {
     }
 
     private fun copyScripts() {
+        if (!advancedPlayerPreferences.mpvScripts().get()) return
+
         // First, delete all present scripts
         val scriptsDir = {
             UniFile.fromFile(applicationContext.filesDir)?.createDirectory("scripts")
@@ -562,31 +564,29 @@ class PlayerActivity : BaseActivity() {
         scriptsDir()?.delete()
         scriptOptsDir()?.delete()
 
-        // Then, copy the scripts from the Aniyomi directory
-        if (advancedPlayerPreferences.mpvScripts().get()) {
-            storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
-                val outFile = scriptsDir()?.createFile(file.name)
-                outFile?.let {
-                    file.openInputStream().copyTo(it.openOutputStream())
-                }
+        // Then, copy the scripts from the storage directory
+        storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
+            val outFile = scriptsDir()?.createFile(file.name)
+            outFile?.let {
+                file.openInputStream().copyTo(it.openOutputStream())
             }
-            storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
-                val outFile = scriptOptsDir()?.createFile(file.name)
-                outFile?.let {
-                    file.openInputStream().copyTo(it.openOutputStream())
-                }
+        }
+        storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
+            val outFile = scriptOptsDir()?.createFile(file.name)
+            outFile?.let {
+                file.openInputStream().copyTo(it.openOutputStream())
             }
         }
 
         // Copy over the bridge file
-        assets.list("")?.forEach { fileName ->
-            if (fileName.endsWith(".lua")) {
-                val luaFile = scriptsDir()?.createFile(fileName)
-                val luaAsset = assets.open(fileName)
-                luaFile?.openOutputStream()?.bufferedWriter()?.use { scriptLua ->
-                    luaAsset.bufferedReader().use { scriptLua.write(it.readText()) }
+        val luaFile = scriptsDir()?.createFile("aniyomi.lua")
+        try {
+            assets.open("aniyomi.lua").use { luaAsset ->
+                luaFile?.openOutputStream()?.use { luaOut ->
+                    luaAsset.copyTo(luaOut)
                 }
             }
+        } catch (_: Exception) {
         }
     }
 

@@ -1948,10 +1948,27 @@ class PlayerViewModel @JvmOverloads constructor(
 
                             _hosterState.updateAt(hosterIdx, hosterState)
 
-                            if (hosterState is HosterState.Ready && hosterIdx == hosterIndex && videoIndex >= 0) {
-                                hosterState.videoList.getOrNull(videoIndex)?.let { video ->
-                                    if (tryAcquireAndLoadVideo(source, video, hosterIndex, videoIndex, hasFoundPreferredVideo)) {
-                                        return@async
+                            if (hosterState is HosterState.Ready) {
+                                if (hosterIdx == hosterIndex && videoIndex >= 0) {
+                                    hosterState.videoList.getOrNull(videoIndex)?.let { video ->
+                                        if (tryAcquireAndLoadVideo(source, video, hosterIndex, videoIndex, hasFoundPreferredVideo)) {
+                                            return@async
+                                        }
+                                    }
+                                } else if (hosterIndex == -1 && !hasFoundPreferredVideo.get()) {
+                                    if (defaultSelector.isNotBlank()) {
+                                        val ranked = DefaultStreamSelector.findRankedInHosters(defaultSelector, listOf(hosterState))
+                                        ranked.firstOrNull()?.let { (_, vIdx) ->
+                                            hosterState.videoList.getOrNull(vIdx)?.let { video ->
+                                                tryAcquireAndLoadVideo(source, video, hosterIdx, vIdx, hasFoundPreferredVideo)
+                                            }
+                                        }
+                                    } else if (hosterIdx == 0) {
+                                        val prefIndex = hosterState.videoList.indexOfFirst { it.preferred }
+                                        val chosenIdx = if (prefIndex != -1) prefIndex else 0
+                                        hosterState.videoList.getOrNull(chosenIdx)?.let { video ->
+                                            tryAcquireAndLoadVideo(source, video, 0, chosenIdx, hasFoundPreferredVideo)
+                                        }
                                     }
                                 }
                             }
