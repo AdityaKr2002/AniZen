@@ -173,14 +173,23 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         MPVLib.setPropertyString("demuxer-max-back-bytes", "$shrinkBytes")
     }
 
+    private var pendingVideoToPlay: Pair<eu.kanade.tachiyomi.animesource.model.Video, Long?>? = null
+
+    fun queueOrPlayVideo(video: eu.kanade.tachiyomi.animesource.model.Video, position: Long?, playBlock: (eu.kanade.tachiyomi.animesource.model.Video, Long?) -> Unit) {
+        if (!initialized) {
+            pendingVideoToPlay = video to position
+        } else {
+            playBlock(video, position)
+        }
+    }
+
     override fun initOptions(vo: String) {
         initialized = true
-        // 100% GITHUB ANIKKU ARCHITECTURE (Target: 2.8ms Single Pass)
         setVo(if (decoderPreferences.gpuNext().get()) "gpu-next" else "gpu")
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
-        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,mediacodec-copy,auto" else "no")
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "auto" else "no")
         
         // Gated Defaults with HQ toggle
         val isHighQuality = decoderPreferences.highQualityScaling().get()
@@ -196,55 +205,8 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
             Debanding.GPU -> MPVLib.setOptionString("deband", "yes")
         }
 
-        val smoothMotionEnabled = decoderPreferences.smoothMotion().get()
-        val displayRefreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            context.display?.refreshRate ?: 60f
-        } else {
-            60f
-        }
+        MPVLib.setOptionString("video-sync", "audio")
 
-        if (smoothMotionEnabled) {
-            val interpolationFPSLimit = decoderPreferences.interpolationFPSLimit().get()
-            val targetFPS = if (interpolationFPSLimit > 0 && interpolationFPSLimit < displayRefreshRate) {
-                context.findActivity()?.window?.let { window ->
-                    val params = window.attributes
-                    params.preferredRefreshRate = interpolationFPSLimit.toFloat()
-                    window.attributes = params
-                }
-                interpolationFPSLimit.toFloat()
-            } else {
-                displayRefreshRate
-            }
-            MPVLib.setOptionString("display-fps", targetFPS.toString())
-            MPVLib.setOptionString("override-display-fps", targetFPS.toString())
-            MPVLib.setOptionString("video-sync", "display-resample")
-            MPVLib.setOptionString("interpolation", "yes")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                holder.surface?.let {
-                    if (it.isValid) {
-                        it.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
-                    } else {
-                        holder.addCallback(object : android.view.SurfaceHolder.Callback {
-                            override fun surfaceCreated(h: android.view.SurfaceHolder) {
-                                h.removeCallback(this)
-                                if (h.surface?.isValid == true) {
-                                    h.surface.setFrameRate(targetFPS, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
-                                }
-                            }
-
-                            override fun surfaceChanged(h: android.view.SurfaceHolder, f: Int, w: Int, hi: Int) {}
-                            override fun surfaceDestroyed(h: android.view.SurfaceHolder) {}
-                        })
-                    }
-                }
-            }
-            val mode = decoderPreferences.interpolationMode().get()
-            MPVLib.setOptionString("tscale", mode.value)
-        } else {
-            MPVLib.setOptionString("video-sync", "audio")
-        }
-
-        // Apply filters directly to avoid helper-function overhead
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
@@ -294,7 +256,13 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         for ((name, format) in observedProps) MPVLib.observeProperty(name, format)
     }
 
+    var onPlayerReady: (() -> Unit)? = null
+
     override fun postInitOptions() {
+        onPlayerReady?.invoke()
+        pendingVideoToPlay?.let { (vid, pos) ->
+            pendingVideoToPlay = null
+        }
         advancedPreferences.playerStatisticsPage().get().let {
             if (it in 1..5) {
                 MPVLib.command(arrayOf("script-binding", "stats/display-stats-toggle"))

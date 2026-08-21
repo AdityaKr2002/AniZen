@@ -280,6 +280,13 @@ class PlayerActivity : BaseActivity() {
         setContentView(binding.root)
         setupPlayerMPV()
 
+        player.onPlayerReady = {
+            viewModel.currentVideo.value?.let { video ->
+                val pos = viewModel.pos.value.takeIf { it > 0f }?.toLong()
+                setVideo(video, pos)
+            }
+        }
+
         setupPlayerAudio()
         setupMediaSession()
         setupPlayerOrientation()
@@ -1367,6 +1374,13 @@ class PlayerActivity : BaseActivity() {
     fun setVideo(video: Video?, position: Long? = null) {
         if (player.isExiting) return
         if (video == null) return
+
+        if (!player.initialized) {
+            player.queueOrPlayVideo(video, position) { v, pos ->
+                runOnUiThread { setVideo(v, pos) }
+            }
+            return
+        }
 
         setHttpOptions(video)
 
