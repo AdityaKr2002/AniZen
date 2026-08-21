@@ -531,14 +531,13 @@ class PlayerActivity : BaseActivity() {
             }
         }
 
-        MPVLib.setOptionString("sub-ass-force-margins", "yes")
-        MPVLib.setOptionString("sub-use-margins", "yes")
-
         player.initialize(
             configDir = configDir,
             cacheDir = applicationContext.cacheDir.path,
             logLvl = logLevel,
         )
+        MPVLib.setOptionString("sub-ass-force-margins", "yes")
+        MPVLib.setOptionString("sub-use-margins", "yes")
         MPVLib.setOptionString("idle", "yes")
         MPVLib.addLogObserver(playerObserver)
         MPVLib.addObserver(playerObserver)
