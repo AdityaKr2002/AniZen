@@ -11,27 +11,27 @@ class PlayerObserver(val activity: PlayerActivity) :
     MPVLib.LogObserver {
 
     override fun eventProperty(property: String) {
-        activity.onObserverEvent(property)
+        activity.runOnUiThread { activity.onObserverEvent(property) }
     }
 
     override fun eventProperty(property: String, value: Long) {
-        activity.onObserverEvent(property, value)
+        activity.runOnUiThread { activity.onObserverEvent(property, value) }
     }
 
     override fun eventProperty(property: String, value: Boolean) {
-        activity.onObserverEvent(property, value)
+        activity.runOnUiThread { activity.onObserverEvent(property, value) }
     }
 
     override fun eventProperty(property: String, value: String) {
-        activity.onObserverEvent(property, value)
+        activity.runOnUiThread { activity.onObserverEvent(property, value) }
     }
 
     override fun eventProperty(property: String, value: Double) {
-        activity.onObserverEvent(property, value)
+        activity.runOnUiThread { activity.onObserverEvent(property, value) }
     }
 
     override fun event(eventId: Int) {
-        activity.event(eventId)
+        activity.runOnUiThread { activity.event(eventId) }
     }
 
     override fun efEvent(err: String?) {
