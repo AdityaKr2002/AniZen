@@ -234,7 +234,7 @@ class PlayerActivity : BaseActivity() {
 
         viewModel.saveCurrentEpisodeWatchingProgress()
 
-        lifecycleScope.launch(Dispatchers.IO + NonCancellable) {
+        lifecycleScope.launchNonCancellable {
             try {
                 viewModel.updateIsLoadingEpisode(true)
                 viewModel.updateIsLoadingHosters(true)
@@ -247,7 +247,7 @@ class PlayerActivity : BaseActivity() {
                     withUIContext {
                         setInitialEpisodeError(exception)
                     }
-                    return@launch
+                    return@launchNonCancellable
                 }
 
                 viewModel.updateIsLoadingHosters(false)
