@@ -518,14 +518,18 @@ class PlayerActivity : BaseActivity() {
             applicationContext.filesDir.path
         }
 
-        val mpvConfFile = File("$configDir/mpv.conf")
-        advancedPlayerPreferences.mpvConf().get().let { mpvConfFile.writeText(it) }
-        val mpvInputFile = File("$configDir/input.conf")
-        advancedPlayerPreferences.mpvInput().get().let { mpvInputFile.writeText(it) }
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                val mpvConfFile = File("$configDir/mpv.conf")
+                advancedPlayerPreferences.mpvConf().get().let { mpvConfFile.writeText(it) }
+                val mpvInputFile = File("$configDir/input.conf")
+                advancedPlayerPreferences.mpvInput().get().let { mpvInputFile.writeText(it) }
 
-        copyScripts()
-        copyAssets(configDir)
-        copyFontsDirectory()
+                copyScripts()
+                copyAssets(configDir)
+                copyFontsDirectory()
+            }
+        }
 
         MPVLib.setOptionString("sub-ass-force-margins", "yes")
         MPVLib.setOptionString("sub-use-margins", "yes")
