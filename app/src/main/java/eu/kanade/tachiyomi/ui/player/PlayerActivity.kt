@@ -544,42 +544,53 @@ class PlayerActivity : BaseActivity() {
         MPVLib.addObserver(playerObserver)
     }
 
-    private fun copyScripts() {
-        if (!advancedPlayerPreferences.mpvScripts().get()) return
-
-        // First, delete all present scripts
-        val scriptsDir = {
-            UniFile.fromFile(applicationContext.filesDir)?.createDirectory("scripts")
-        }
-        val scriptOptsDir = {
-            UniFile.fromFile(applicationContext.filesDir)?.createDirectory("script-opts")
-        }
-        scriptsDir()?.delete()
-        scriptOptsDir()?.delete()
-
-        // Then, copy the scripts from the storage directory
-        storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
-            val outFile = scriptsDir()?.createFile(file.name)
-            outFile?.let {
-                file.openInputStream().copyTo(it.openOutputStream())
-            }
-        }
-        storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
-            val outFile = scriptOptsDir()?.createFile(file.name)
-            outFile?.let {
-                file.openInputStream().copyTo(it.openOutputStream())
-            }
-        }
-
-        // Copy over the bridge file
-        val luaFile = scriptsDir()?.createFile("aniyomi.lua")
+    private fun ensureBridgeScript() {
+        val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
+        val luaFile = File(scriptsDir, "aniyomi.lua")
         try {
             assets.open("aniyomi.lua").use { luaAsset ->
-                luaFile?.openOutputStream()?.use { luaOut ->
+                luaFile.outputStream().use { luaOut ->
                     luaAsset.copyTo(luaOut)
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to copy aniyomi.lua bridge" }
+        }
+    }
+
+    private fun copyScripts() {
+        ensureBridgeScript()
+        if (!advancedPlayerPreferences.mpvScripts().get()) return
+
+        val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
+        val scriptOptsDir = File(applicationContext.filesDir, "script-opts").apply { mkdirs() }
+
+        storageManager.getScriptsDirectory()?.listFiles()?.forEach { file ->
+            val name = file.name ?: return@forEach
+            if (name == "aniyomi.lua" || name == "custombuttons.lua") return@forEach
+            val outFile = File(scriptsDir, name)
+            try {
+                file.openInputStream().use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to copy script: $name" }
+            }
+        }
+        storageManager.getScriptOptsDirectory()?.listFiles()?.forEach { file ->
+            val name = file.name ?: return@forEach
+            val outFile = File(scriptOptsDir, name)
+            try {
+                file.openInputStream().use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to copy script opt: $name" }
+            }
         }
     }
 
@@ -644,17 +655,16 @@ class PlayerActivity : BaseActivity() {
     }
 
     fun setupCustomButtons(buttons: List<CustomButton>) {
+        if (buttons.isEmpty()) return
         CoroutineScope(Dispatchers.IO).launchIO {
-            val scriptsDir = {
-                UniFile.fromFile(applicationContext.filesDir)?.createDirectory("scripts")
-            }
-
+            ensureBridgeScript()
+            val scriptsDir = File(applicationContext.filesDir, "scripts").apply { mkdirs() }
             val primaryButtonId = viewModel.primaryButton.value?.id ?: 0L
 
             val customButtonsContent = buildString {
                 appendLine(
                     """
-                        local scripts_dir = '${scriptsDir()!!.filePath}'
+                        local scripts_dir = '${scriptsDir.absolutePath.replace("\\", "/")}'
                         package.path = package.path .. ';' .. scripts_dir .. '/?.lua;' .. scripts_dir .. '/?/init.lua'
                         local lua_modules = mp.find_config_file('scripts')
                         if lua_modules then
@@ -683,13 +693,12 @@ class PlayerActivity : BaseActivity() {
                 }
             }
 
-            val file = scriptsDir()?.createFile("custombuttons.lua")
-            file?.openOutputStream()?.bufferedWriter()?.use {
-                it.write(customButtonsContent)
-            }
-
-            file?.let {
-                MPVLib.command(arrayOf("load-script", it.filePath))
+            val file = File(scriptsDir, "custombuttons.lua")
+            try {
+                file.writeText(customButtonsContent)
+                MPVLib.command(arrayOf("load-script", file.absolutePath))
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to write or load custombuttons.lua" }
             }
         }
     }
