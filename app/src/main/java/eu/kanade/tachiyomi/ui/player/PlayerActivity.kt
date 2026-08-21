@@ -860,15 +860,26 @@ class PlayerActivity : BaseActivity() {
             "pause" -> {
                 if (value && player.paused == true) {
                     viewModel.pause()
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    runOnUiThread {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        if (isPipSupportedAndEnabled) {
+                            runCatching {
+                                setPictureInPictureParams(createPipParams())
+                            }
+                        }
+                    }
                 } else if (!value && player.paused == false) {
                     viewModel.unpause()
-                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    runOnUiThread {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        if (isPipSupportedAndEnabled) {
+                            runCatching {
+                                setPictureInPictureParams(createPipParams())
+                            }
+                        }
+                    }
                 }
 
-                runCatching {
-                    setPictureInPictureParams(createPipParams())
-                }
                 updateDiscordRPC(exitingPlayer = false)
             }
 
@@ -937,7 +948,7 @@ class PlayerActivity : BaseActivity() {
             "display-fps" -> PlayerStats.displayFps.value = value
             "estimated-display-fps" -> PlayerStats.estimatedDisplayFps.value = value
             "mistime" -> PlayerStats.mistime.value = value
-            "video-params/aspect" -> if (isPipSupportedAndEnabled) createPipParams()
+            "video-params/aspect" -> if (isPipSupportedAndEnabled) runOnUiThread { runCatching { setPictureInPictureParams(createPipParams()) } }
         }
     }
 
