@@ -1629,7 +1629,7 @@ class PlayerActivity : BaseActivity() {
 
         if (playerPreferences.switchOnFailure().get()) {
             if (!viewModel.loadBestVideo()) {
-                finish()
+                runOnUiThread { finish() }
             }
         } else {
             viewModel.updateIsLoadingEpisode(false)
