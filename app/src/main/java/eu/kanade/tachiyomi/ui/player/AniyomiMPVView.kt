@@ -189,12 +189,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         
         MPVLib.setPropertyBoolean("pause", true)
         MPVLib.setOptionString("profile", "fast")
-        val hwdecMode = when {
-            !decoderPreferences.tryHWDecoding().get() -> "no"
-            decoderPreferences.useYUV420P().get() -> "mediacodec-copy"
-            else -> "mediacodec,mediacodec-copy"
-        }
-        MPVLib.setOptionString("hwdec", hwdecMode)
+        MPVLib.setOptionString("hwdec", if (decoderPreferences.tryHWDecoding().get()) "mediacodec,mediacodec-copy" else "no")
         
         // Gated Defaults with HQ toggle
         val isHighQuality = decoderPreferences.highQualityScaling().get()
