@@ -297,18 +297,7 @@ class PlayerActivity : BaseActivity() {
                 viewModel.showPanel(Panels.None)
                 return@addCallback
             }
-            if (viewModel.controlsShown.value) {
-                viewModel.hideControls()
-                return@addCallback
-            }
-            if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                val entered = enterPictureInPictureMode(createPipParams())
-                if (!entered) {
-                    finish()
-                }
-            } else {
-                finish()
-            }
+            finish()
         }
 
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
@@ -358,14 +347,7 @@ class PlayerActivity : BaseActivity() {
                     viewModel = viewModel,
                     castManager = castManager, // Pass the castManager instance
                     onBackPress = {
-                        if (isPipSupportedAndEnabled && player.paused == false && playerPreferences.pipOnExit().get()) {
-                            val entered = enterPictureInPictureMode(createPipParams())
-                            if (!entered) {
-                                finish()
-                            }
-                        } else {
-                            finish()
-                        }
+                        finish()
                     },
                     modifier = Modifier.onGloballyPositioned {
                         pipRect = run {
